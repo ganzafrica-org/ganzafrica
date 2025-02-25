@@ -11,7 +11,9 @@ coverage
 out/
 build
 dist
-
+.idea/
+.vscode/
+.idea
 # misc
 .DS_Store
 *.pem
