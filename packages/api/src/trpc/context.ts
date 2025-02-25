@@ -1,20 +1,23 @@
 import { type FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
-import { getAuthUser } from '../modules/auth/middleware';
-import { UserSession } from '../modules/auth/types';
+import { getAuthUser, UserSession } from '../modules/auth';
 
 export interface Context {
     req: Request;
-    res: Response;
+    resHeaders: Headers;
     user: UserSession | null;
 }
 
-export async function createContext({ req, res }: FetchCreateContextFnOptions): Promise<Context> {
+export async function createContext({ req }: FetchCreateContextFnOptions): Promise<Context> {
+    // Create response headers object
+    const resHeaders = new Headers();
+
     // Get the user session from the request
-    const user = await getAuthUser({ req, res } as Context);
+    // We need to update middleware.ts to accept resHeaders instead of res
+    const user = await getAuthUser({ req, resHeaders });
 
     return {
         req,
-        res,
+        resHeaders,
         user,
     };
 }
