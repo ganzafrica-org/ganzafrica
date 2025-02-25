@@ -12,6 +12,7 @@ export const AUTH = {
     MAX_FAILED_ATTEMPTS: 5,
     LOCKOUT_DURATION: 60 * 15, // 15 minutes in seconds
     MINIMUM_PASSWORD_LENGTH: 8,
+    OTP_EXPIRY: 60 * 10, // 10 minutes in seconds
 };
 
 export const PAGINATION = {

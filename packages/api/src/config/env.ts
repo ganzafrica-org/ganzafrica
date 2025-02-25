@@ -18,6 +18,13 @@ const envSchema = z.object({
     // Server
     PORT: z.coerce.number().default(3000),
 
+    // Email
+    RESEND_API_KEY: z.string().min(1),
+    EMAIL_FROM: z.string().min(1).default('noreply@ganzafrica.org'),
+
+    // Website
+    WEBSITE_URL: z.string().min(1).default('http://ganzafrica.org'),
+
     // Optional
     CLOUDFLARE_R2_ACCOUNT_ID: z.string().optional(),
     CLOUDFLARE_R2_ACCESS_KEY: z.string().optional(),
