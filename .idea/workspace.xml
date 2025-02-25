@@ -4,51 +4,24 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="42530edf-8064-41f4-890d-b4df3c3495f7" name="Changes" comment="[chore] setting up the database migration phase 1">
-      <change afterPath="$PROJECT_DIR$/packages/api/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/drizzle.config.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/package.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/config/constants.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/config/env.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/config/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/config/logger.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/client.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/id.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/indexes.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/migrate.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/migrations-setup.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/application_documents.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/applications.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/audit.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/auth.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/common.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/communication.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/content.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/departments.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/enums.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/events.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/fellowship.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/mentorship.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/projects.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/reporting_lines.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/security.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/users.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/setup-triggers.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/db/triggers.sql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/index.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/paseto.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/passwords.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/schema.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/service.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/api/src/trpc/routers/auth.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/packages/ui/src/components/card.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="42530edf-8064-41f4-890d-b4df3c3495f7" name="Changes" comment="[chore] setting up the database migration phase 2">
+      <change afterPath="$PROJECT_DIR$/packages/api/src/db/schema/two_factor_credentials.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/index.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/middleware.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/totp.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/types.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/packages/api/src/modules/email/service.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/packages/api/src/trpc/context.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/packages/api/src/trpc/routers/index.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/packages/api/src/trpc/trpc.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/portal/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/portal/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/api/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/packages/api/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/api/src/config/constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/api/src/config/constants.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/api/src/config/env.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/api/src/config/env.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/api/src/modules/auth/paseto.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/paseto.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/packages/api/src/modules/auth/schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/packages/api/src/modules/auth/schema.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -84,7 +57,7 @@
     "git-widget-placeholder": "main",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
-    "last_opened_file_path": "C:/Users/josek",
+    "last_opened_file_path": "C:/Users/josek/Documents/ganzafrica/packages/api/src/trpc/routers",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "pnpm",
@@ -93,7 +66,13 @@
   }
 }]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\josek\Documents\ganzafrica\packages\api\src\trpc\routers" />
+      <recent name="C:\Users\josek\Documents\ganzafrica\apps\portal" />
+      <recent name="C:\Users\josek\Documents\ganzafrica\apps\web" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\josek\Documents\ganzafrica\packages\api\src\db\schema" />
       <recent name="C:\Users\josek\Documents\ganzafrica\packages\api" />
     </key>
   </component>
@@ -122,7 +101,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="[chore] setting up the database migration phase 1" />
-    <option name="LAST_COMMIT_MESSAGE" value="[chore] setting up the database migration phase 1" />
+    <MESSAGE value="[chore] setting up the database migration phase 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="[chore] setting up the database migration phase 2" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
