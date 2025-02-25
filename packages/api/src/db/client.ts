@@ -1,8 +1,8 @@
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { Pool } from 'pg'
-import { env } from '../config/env'
-import * as schema from './schema'
-import { generateId } from './id'
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool, PoolClient } from 'pg';
+import { env } from '../config';
+import * as schema from './schema';
+import { generateId } from './id';
 
 // Create a Postgres connection pool
 const connectionPool = new Pool({
@@ -10,7 +10,7 @@ const connectionPool = new Pool({
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
     connectionTimeoutMillis: 2000, // How long to wait for a connection to become available
-})
+});
 
 // Add error handling
 connectionPool.on('error', (err) => {
@@ -22,11 +22,12 @@ connectionPool.on('error', (err) => {
 export const db = drizzle(connectionPool, { schema });
 
 // Extend the pool with middleware functionality
-export async function withDbTransaction<T>(callback: (db: typeof schema) => Promise<T>): Promise<T> {
+export async function withDbTransaction<T>(callback: (txDb: any) => Promise<T>): Promise<T> {
     const client = await connectionPool.connect();
     try {
         await client.query('BEGIN');
-        const result = await callback(drizzle(client, { schema }));
+        const txDb = drizzle(client, { schema });
+        const result = await callback(txDb);
         await client.query('COMMIT');
         return result;
     } catch (e) {

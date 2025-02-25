@@ -1,12 +1,13 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
-import { router, publicProcedure } from '../trpc';
+import { router, procedure, publicProcedure } from '../trpc';
 import {
     signupSchema,
     loginSchema,
     requestPasswordResetSchema,
     resetPasswordSchema,
-} from '../../modules/auth/schema';
+    verifyEmailSchema,
+} from '../../modules/auth';
 import {
     createUser,
     authenticateUser,
@@ -14,9 +15,9 @@ import {
     requestPasswordReset,
     resetPassword,
     verifyEmail
-} from '../../modules/auth/service';
-import { AUTH } from '../../config/constants';
-import { protectedProcedure } from '../../modules/auth/middleware';
+} from '../../modules/auth';
+import { AUTH } from '../../config';
+import { protectedProcedure } from '../../modules/auth';
 
 export const authRouter = router({
     /**
@@ -30,15 +31,18 @@ export const authRouter = router({
 
                 return {
                     success: true,
-                    userId: result.userId.toString(),
+                    userId: result.userId,
                     message: 'Account created successfully. Please check your email to verify your account.',
                 };
-            } catch (error) {
-                if (error.message === 'Email already in use') {
-                    throw new TRPCError({
-                        code: 'CONFLICT',
-                        message: 'This email is already registered',
-                    });
+            } catch (error: unknown) {
+                // Type-guard for error
+                if (error instanceof Error) {
+                    if (error.message === 'Email already in use') {
+                        throw new TRPCError({
+                            code: 'CONFLICT',
+                            message: 'This email is already registered',
+                        });
+                    }
                 }
 
                 throw new TRPCError({
@@ -71,7 +75,7 @@ export const authRouter = router({
             }
 
             // Set HTTP-only cookie with the PASETO token
-            ctx.res.headers.append('Set-Cookie', `auth_token=${result.token}; HttpOnly; Path=/; Max-Age=${AUTH.TOKEN_EXPIRY}; SameSite=Strict${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+            ctx.resHeaders.append('Set-Cookie', `auth_token=${result.token}; HttpOnly; Path=/; Max-Age=${AUTH.TOKEN_EXPIRY}; SameSite=Strict${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
 
             return {
                 success: true,
@@ -118,7 +122,7 @@ export const authRouter = router({
             await logout(tokenToInvalidate);
 
             // Clear cookie
-            ctx.res.headers.append('Set-Cookie', 'auth_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict');
+            ctx.resHeaders.append('Set-Cookie', 'auth_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict');
 
             return {
                 success: true,
@@ -180,7 +184,7 @@ export const authRouter = router({
      * Verify email address
      */
     verifyEmail: publicProcedure
-        .input(z.object({ token: z.string() }))
+        .input(verifyEmailSchema)
         .mutation(async ({ input }) => {
             const success = await verifyEmail(input.token);
 

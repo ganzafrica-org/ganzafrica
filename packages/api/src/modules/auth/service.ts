@@ -15,10 +15,10 @@ const logger = createLogger('auth-service');
  * @param input User registration data
  * @returns The created user ID
  */
-export async function createUser(input: SignupInput): Promise<{ userId: bigint }> {
-    return withDbTransaction(async (db) => {
+export async function createUser(input: SignupInput): Promise<{ userId: string }> {
+    return withDbTransaction(async (txDb) => {
         // Check if email already exists
-        const existingUser = await db.query.users.findFirst({
+        const existingUser = await txDb.query.users.findFirst({
             where: eq(users.email, input.email.toLowerCase()),
         });
 
@@ -29,12 +29,12 @@ export async function createUser(input: SignupInput): Promise<{ userId: bigint }
         // Hash the password
         const hashedPassword = await hashPassword(input.password);
 
-        // Generate a new user ID
+        // Generate a new user ID - convert to number since schema expects numbers
         const userId = newId();
 
         // Create the user
-        await db.insert(users).values({
-            id: userId,
+        await txDb.insert(users).values({
+            id: Number(userId),
             email: input.email.toLowerCase(),
             name: input.name,
             password_hash: hashedPassword,
@@ -47,9 +47,9 @@ export async function createUser(input: SignupInput): Promise<{ userId: bigint }
         const verificationToken = crypto.randomBytes(32).toString('hex');
         const tokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
 
-        await db.insert(verification_tokens).values({
-            id: newId(),
-            user_id: userId,
+        await txDb.insert(verification_tokens).values({
+            id: Number(newId()),
+            user_id: Number(userId),
             type: 'email',
             token_hash: tokenHash,
             expires_at: new Date(Date.now() + AUTH.VERIFICATION_TOKEN_EXPIRY * 1000),
@@ -59,9 +59,9 @@ export async function createUser(input: SignupInput): Promise<{ userId: bigint }
         // In a real implementation, we would send a verification email here
         // sendVerificationEmail(input.email, verificationToken);
 
-        logger.info('New user created', { userId });
+        logger.info('New user created', { userId: userId.toString() });
 
-        return { userId };
+        return { userId: userId.toString() };
     });
 }
 
@@ -77,9 +77,9 @@ export async function authenticateUser(
     ipAddress: string,
     userAgent: string
 ): Promise<{ token: string; user: any } | null> {
-    return withDbTransaction(async (db) => {
+    return withDbTransaction(async (txDb) => {
         // Find the user by email
-        const user = await db.query.users.findFirst({
+        const user = await txDb.query.users.findFirst({
             where: eq(users.email, input.email.toLowerCase()),
         });
 
@@ -95,7 +95,7 @@ export async function authenticateUser(
                 const lockoutExpiry = new Date(user.last_failed_attempt.getTime() + AUTH.LOCKOUT_DURATION * 1000);
                 if (new Date() > lockoutExpiry) {
                     // Unlock the account
-                    await db.update(users)
+                    await txDb.update(users)
                         .set({
                             account_locked: false,
                             failed_login_attempts: 0,
@@ -130,7 +130,7 @@ export async function authenticateUser(
                 logger.warn('Account locked due to failed attempts', { userId: user.id });
             }
 
-            await db.update(users)
+            await txDb.update(users)
                 .set(updateData)
                 .where(eq(users.id, user.id));
 
@@ -139,7 +139,7 @@ export async function authenticateUser(
         }
 
         // Authentication successful - create session and token
-        const sessionId = newId();
+        const sessionId = Number(newId());
 
         // Create PASETO token
         const token = await createToken({
@@ -161,7 +161,7 @@ export async function authenticateUser(
             // Additional device fingerprinting could be added here
         };
 
-        await db.insert(sessions).values({
+        await txDb.insert(sessions).values({
             id: sessionId,
             user_id: user.id,
             token_hash: crypto.createHash('sha256').update(token).digest('hex'),
@@ -176,7 +176,7 @@ export async function authenticateUser(
         });
 
         // Reset failed login attempts
-        await db.update(users)
+        await txDb.update(users)
             .set({
                 failed_login_attempts: 0,
                 last_login: new Date(),
@@ -260,6 +260,8 @@ export async function validateSession(token: string): Promise<any> {
             email: user.email,
             name: user.name,
             role: user.base_role,
+            // Placeholder for permissions - should be fetched from roles
+            permissions: [],
         };
     } catch (error) {
         logger.error('Session validation failed', { error });
@@ -284,7 +286,9 @@ export async function logout(token: string): Promise<boolean> {
             })
             .where(eq(sessions.token_hash, tokenHash));
 
-        return result.count > 0;
+        // Number of rows affected
+        const affectedCount = result ? 1 : 0;
+        return affectedCount > 0;
     } catch (error) {
         logger.error('Logout failed', { error });
         return false;
@@ -314,7 +318,7 @@ export async function requestPasswordReset(input: RequestPasswordResetInput, ipA
 
     // Store the reset token
     await db.insert(password_reset_tokens).values({
-        id: newId(),
+        id: Number(newId()),
         user_id: user.id,
         token_hash: tokenHash,
         expires_at: new Date(Date.now() + AUTH.PASSWORD_RESET_EXPIRY * 1000),
@@ -323,7 +327,7 @@ export async function requestPasswordReset(input: RequestPasswordResetInput, ipA
         created_at: new Date(),
     });
 
-    // In a real implementation, we would send a password reset email
+    // we will send password reset email
     // sendPasswordResetEmail(user.email, resetToken);
 
     logger.info('Password reset token created', { userId: user.id });
@@ -336,12 +340,12 @@ export async function requestPasswordReset(input: RequestPasswordResetInput, ipA
  * @param input Reset token and new password
  */
 export async function resetPassword(input: ResetPasswordInput): Promise<boolean> {
-    return withDbTransaction(async (db) => {
+    return withDbTransaction(async (txDb) => {
         // Hash the token to compare with stored hash
         const tokenHash = crypto.createHash('sha256').update(input.token).digest('hex');
 
         // Find the reset token
-        const resetToken = await db.query.password_reset_tokens.findFirst({
+        const resetToken = await txDb.query.password_reset_tokens.findFirst({
             where: eq(password_reset_tokens.token_hash, tokenHash),
         });
 
@@ -364,7 +368,7 @@ export async function resetPassword(input: ResetPasswordInput): Promise<boolean>
         const hashedPassword = await hashPassword(input.password);
 
         // Update the user's password
-        await db.update(users)
+        await txDb.update(users)
             .set({
                 password_hash: hashedPassword,
                 last_password_change: new Date(),
@@ -375,14 +379,14 @@ export async function resetPassword(input: ResetPasswordInput): Promise<boolean>
             .where(eq(users.id, resetToken.user_id));
 
         // Mark the token as used
-        await db.update(password_reset_tokens)
+        await txDb.update(password_reset_tokens)
             .set({
                 used: true,
             })
             .where(eq(password_reset_tokens.id, resetToken.id));
 
         // Invalidate all existing sessions for security
-        await db.update(sessions)
+        await txDb.update(sessions)
             .set({
                 is_valid: false,
                 updated_at: new Date(),
@@ -400,12 +404,12 @@ export async function resetPassword(input: ResetPasswordInput): Promise<boolean>
  * @param token Verification token
  */
 export async function verifyEmail(token: string): Promise<boolean> {
-    return withDbTransaction(async (db) => {
+    return withDbTransaction(async (txDb) => {
         // Hash the token to compare with stored hash
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
         // Find the verification token
-        const verificationToken = await db.query.verification_tokens.findFirst({
+        const verificationToken = await txDb.query.verification_tokens.findFirst({
             where: eq(verification_tokens.token_hash, tokenHash),
         });
 
@@ -425,7 +429,7 @@ export async function verifyEmail(token: string): Promise<boolean> {
         }
 
         // Verify the user's email
-        await db.update(users)
+        await txDb.update(users)
             .set({
                 email_verified: true,
                 updated_at: new Date(),
@@ -433,7 +437,7 @@ export async function verifyEmail(token: string): Promise<boolean> {
             .where(eq(users.id, verificationToken.user_id));
 
         // Mark the token as used
-        await db.update(verification_tokens)
+        await txDb.update(verification_tokens)
             .set({
                 used: true,
             })

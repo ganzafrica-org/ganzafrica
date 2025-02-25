@@ -1,7 +1,7 @@
 import { Pool } from 'pg'
 import fs from 'fs'
 import path from 'path'
-import { env } from '../config/env'
+import { env } from '../config'
 
 export async function setupTriggers() {
     const pool = new Pool({

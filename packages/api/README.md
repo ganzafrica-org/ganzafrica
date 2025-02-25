@@ -21,10 +21,16 @@ DATABASE_URL=postgres://username:password@localhost:5432/ganzafrica
 # General
 NODE_ENV=development
 PORT=3001
+WEBSITE_URL=http://localhost:3000
+PORTAL_URL=http://localhost:3001
 
-# Security
-SESSION_SECRET=your_secure_random_string_at_least_32_chars
-PASETO_SECRET=your_secure_random_string_at_least_32_chars
+# Auth
+SESSION_SECRET=super_secret_development_key_at_least_32_chars
+PASETO_SECRET=another_super_secret_development_key_at_least_32_chars
+
+# Email
+RESEND_API_KEY=your_resend_api_key
+EMAIL_FROM=noreply@ganzafrica.org
 ```
 
 ### 3. Set up the Database
@@ -39,7 +45,7 @@ Then generate and run migrations:
 
 ```bash
 # Generate migrations based on schema changes
-pnpm db:generate
+pnpm drizzle-kit generate
 
 # Apply migrations to the database
 pnpm db:migrate
@@ -51,7 +57,7 @@ pnpm db:migrate
 pnpm dev
 ```
 
-The API will be available at http://localhost:3001
+The API will be available at http://localhost:3001/api/trpc
 
 ## Key Features
 
@@ -60,24 +66,41 @@ The API will be available at http://localhost:3001
     - HTTP-only cookies for secure token storage
     - Role-based access control
     - Protection against common security vulnerabilities
+    - Two-factor authentication support
 
 - **Database Integration**
     - Type-safe database access with Drizzle ORM
     - Automatic schema migrations
-    - Indexing for optimal performance
-    - Audit logging
+    - Database triggers for integrity and auditing
+    - Optimized indexing for performance
 
 - **API Layer**
     - Type-safe API with tRPC
-    - Client can be generated for web and portal apps
     - End-to-end type safety from database to frontend
+    - Automatic client generation for web and portal apps
 
 ## API Structure
 
-- `src/config` - Configuration and environment
-- `src/db` - Database schema and client
-- `src/modules` - Business logic modules
-- `src/trpc` - API router and procedures
+```
+src/
+├── config/             # Configuration and environment
+├── db/                 # Database schema and client
+│   ├── schema/         # Database schema definitions
+│   │   ├── users.ts    # User-related tables
+│   │   ├── auth.ts     # Authentication tables
+│   │   └── ...         # Other schema files
+│   ├── client.ts       # Database client setup
+│   ├── migrate.ts      # Migration runner
+│   └── triggers.sql    # Database triggers
+├── modules/            # Business logic modules
+│   ├── auth/           # Authentication module
+│   ├── email/          # Email sending module
+│   └── ...             # Other modules
+└── trpc/               # API router and procedures
+    ├── context.ts      # Request context
+    ├── trpc.ts         # tRPC initialization
+    └── routers/        # API route handlers
+```
 
 ## Authentication
 
@@ -90,12 +113,22 @@ The API uses PASETO tokens stored in HTTP-only cookies for authentication. This 
 ### Auth Flow
 
 1. User registers or logs in
-2. API issues two tokens:
-    - Access token (short-lived)
-    - Refresh token (long-lived)
-3. Tokens are stored in HTTP-only cookies
-4. When the access token expires, client calls `/refresh` endpoint
-5. API issues new tokens if refresh token is valid
+2. API issues a PASETO token stored in HTTP-only cookie
+3. When accessing protected resources, the token is automatically included
+4. Server validates the token and retrieves the user session
+5. For logout, the token is invalidated server-side
+
+## Database Schema
+
+The database schema is comprehensive, supporting:
+
+- User management and authentication
+- Fellowship program administration
+- Project and content management
+- Application and recruitment processes
+- Event management
+- Mentorship programs
+- Communication systems
 
 ## Deployment
 
@@ -118,4 +151,5 @@ The API is designed to be deployed to Cloudflare Workers:
 - `pnpm lint` - Lint code
 - `pnpm db:generate` - Generate migrations
 - `pnpm db:migrate` - Apply migrations
+- `pnpm db:studio` - Launch Drizzle Studio (database UI)
 - `pnpm db:push` - Push schema changes directly to database (development only)

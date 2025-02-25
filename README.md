@@ -24,8 +24,10 @@ A modern web platform built to support GanzAfrica's mission in land management, 
 
 - **Framework:** Next.js 15
 - **Database:** PostgreSQL with DrizzleORM
+- **Authentication:** Custom PASETO-based auth system
+- **API:** tRPC with end-to-end type safety
 - **Styling:** Tailwind CSS + shadcn/ui
-- **State Management:** Zustand
+- **State Management:** Zustand & React Query
 - **Deployment:**
     - Frontend: Cloudflare Pages
     - Backend: Cloudflare Workers
@@ -37,6 +39,27 @@ A modern web platform built to support GanzAfrica's mission in land management, 
 - Node.js 18+
 - pnpm 10+
 - PostgreSQL (for local development)
+
+## Project Structure
+
+```
+ganzafrica/
+├── apps/
+│   ├── web/              # Public website
+│   └── portal/           # Admin portal
+├── packages/
+│   ├── api/              # Shared backend API
+│   │   ├── src/
+│   │   │   ├── config/   # Configuration
+│   │   │   ├── db/       # Database schema & client
+│   │   │   ├── modules/  # Business logic
+│   │   │   └── trpc/     # API router
+│   │   └── drizzle/      # Migration files
+│   ├── ui/               # Shared UI components
+│   ├── eslint-config/    # ESLint configurations
+│   └── typescript-config/# TypeScript configurations
+└── README.md
+```
 
 ## Getting Started
 
@@ -51,7 +74,24 @@ cd ganzafrica
 pnpm install
 ```
 
-3. Start development server:
+3. Set up your database:
+```bash
+# Create a PostgreSQL database
+createdb ganzafrica
+
+# Configure environment variables in packages/api/.env
+DATABASE_URL=postgres://username:password@localhost:5432/ganzafrica
+RESEND_API_KEY=your_resend_api_key
+SESSION_SECRET=your_secure_random_string_at_least_32_chars
+PASETO_SECRET=your_secure_random_string_at_least_32_chars
+
+# Generate and run migrations
+cd packages/api
+pnpm drizzle-kit generate
+pnpm db:migrate
+```
+
+4. Start development server:
 
 For the main website:
 ```bash
@@ -63,24 +103,15 @@ For the admin portal:
 pnpm --filter portal dev
 ```
 
+For the backend API (if testing independently):
+```bash
+pnpm --filter api dev
+```
+
 Access the applications at:
 - Website: http://localhost:3000
 - Portal: http://localhost:3001
-
-## Project Structure
-
-```
-ganzafrica/
-├── apps/
-│   ├── web/              # Public website
-│   └── portal/           # Admin portal
-└── packages/
-    ├── database/         # Database schema & migrations
-    ├── ui/               # Shared UI components
-    ├── eslint-config/    # ESLint configurations
-    ├── typescript-config/# TypeScript configurations
-    └── hooks/            # Shared React hooks
-```
+- API: http://localhost:3001/api/trpc
 
 ## Development Commands
 
@@ -89,24 +120,18 @@ ganzafrica/
 - `pnpm lint` - Lint all applications
 - `pnpm clean` - Clean build outputs
 
+### Database Commands
+
+- `pnpm --filter api db:generate` - Generate new migrations
+- `pnpm --filter api db:migrate` - Apply migrations to the database
+- `pnpm --filter api db:studio` - Launch Drizzle Studio (database UI)
+- `pnpm --filter api db:push` - Push schema changes directly (development only)
+
 ## Contributing
 
 1. Create a feature branch
 2. Make your changes
 3. Submit a pull request
-
-## Environment Setup
-
-Create a `.env` file in each app directory (web and portal):
-
-```env
-# Database (coming soon)
-DATABASE_URL=
-
-# Cloudflare (coming soon)
-CF_ACCOUNT_ID=
-CF_API_TOKEN=
-```
 
 ## License
 

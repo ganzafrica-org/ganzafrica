@@ -1,4 +1,4 @@
-import { V4 } from 'paseto';
+import { V4, decode } from 'paseto';
 import * as crypto from 'crypto';
 import { env } from '../../config/env';
 import { AUTH } from '../../config/constants';
@@ -131,7 +131,7 @@ export async function verifyToken<T = any>(
  */
 export function decodeToken<T = any>(token: string): T {
     try {
-        const { payload } = V4.decode(token);
+        const { payload } = decode(token);
         return payload as T;
     } catch (error) {
         logger.error('Token decoding failed', { error });
