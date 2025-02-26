@@ -4,12 +4,17 @@ import { users, sessions, password_reset_tokens, verification_tokens } from '../
 import { hashPassword, verifyPassword } from './passwords';
 import { createToken, verifyToken } from './paseto';
 import { SignupInput, LoginInput, RequestPasswordResetInput, ResetPasswordInput } from './schema';
-import { AUTH } from '../../config/constants';
-import { createLogger } from '../../config/logger';
+import { AUTH, createLogger } from '../../config';
 import * as crypto from 'crypto';
+import { sendVerificationEmail, sendPasswordResetEmail} from '../email/service';
 
 const logger = createLogger('auth-service');
 
+/**
+ * Create a new user account
+ * @param input User registration data
+ * @returns The created user ID
+ */
 /**
  * Create a new user account
  * @param input User registration data
@@ -56,15 +61,20 @@ export async function createUser(input: SignupInput): Promise<{ userId: string }
             created_at: new Date(),
         });
 
-        // In a real implementation, we would send a verification email here
-        // sendVerificationEmail(input.email, verificationToken);
+        // Send verification email
+        try {
+            await sendVerificationEmail(input.email, verificationToken);
+            logger.info('Verification email sent', { email: input.email });
+        } catch (error) {
+            logger.error('Failed to send verification email', { error, email: input.email });
+            // We continue even if email sending fails
+        }
 
         logger.info('New user created', { userId: userId.toString() });
 
         return { userId: userId.toString() };
     });
 }
-
 /**
  * Authenticate a user by email and password
  * @param input Login credentials
@@ -73,7 +83,7 @@ export async function createUser(input: SignupInput): Promise<{ userId: string }
  * @returns Session token or null if authentication fails
  */
 export async function authenticateUser(
-    input: LoginInput,
+    input: LoginInput & { skipPasswordValidation?: boolean },
     ipAddress: string,
     userAgent: string
 ): Promise<{ token: string; user: any } | null> {
@@ -112,8 +122,13 @@ export async function authenticateUser(
             }
         }
 
-        // Verify the password
-        const passwordValid = await verifyPassword(input.password, user.password_hash);
+        // Skip password validation if we're completing a 2FA flow
+        let passwordValid = input.skipPasswordValidation === true;
+
+        // Otherwise validate the password
+        if (!passwordValid) {
+            passwordValid = await verifyPassword(input.password, user.password_hash);
+        }
 
         if (!passwordValid) {
             // Update failed login attempts
@@ -158,7 +173,7 @@ export async function authenticateUser(
         const deviceInfo = {
             userAgent,
             ipAddress,
-            // Additional device fingerprinting could be added here
+            // TODO: Additional device fingerprinting will be added here
         };
 
         await txDb.insert(sessions).values({
@@ -327,8 +342,14 @@ export async function requestPasswordReset(input: RequestPasswordResetInput, ipA
         created_at: new Date(),
     });
 
-    // we will send password reset email
-    // sendPasswordResetEmail(user.email, resetToken);
+    // Send password reset email
+    try {
+        await sendPasswordResetEmail(user.email, resetToken);
+        logger.info('Password reset email sent', { userId: user.id });
+    } catch (error) {
+        logger.error('Failed to send password reset email', { error, userId: user.id });
+        // We continue even if email sending fails
+    }
 
     logger.info('Password reset token created', { userId: user.id });
 
