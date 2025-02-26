@@ -40,7 +40,7 @@ export async function sendEmail({
         });
 
         if (error) {
-            logger.error('Failed to send email', { error });
+            logger.error('Failed to send email', { error, to });
             return null;
         }
 
