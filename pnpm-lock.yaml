@@ -36,12 +36,18 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.17.19
+      '@workspace/api':
+        specifier: workspace:*
+        version: link:packages/api
       '@workspace/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:packages/typescript-config
+      '@workspace/ui':
+        specifier: workspace:*
+        version: link:packages/ui
       drizzle-kit:
         specifier: ^0.30.4
         version: 0.30.4
@@ -72,6 +78,9 @@ importers:
       '@trpc/react-query':
         specifier: ^10.45.2
         version: 10.45.2(@tanstack/react-query@5.66.9(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@workspace/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       '@workspace/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -96,6 +105,9 @@ importers:
       react-intl:
         specifier: ^7.1.6
         version: 7.1.6(react@18.3.1)(typescript@5.7.3)
+      superjson:
+        specifier: ^2.2.2
+        version: 2.2.2
     devDependencies:
       '@types/node':
         specifier: ^20
