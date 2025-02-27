@@ -1,4 +1,3 @@
-// packages/api/src/trpc/routers/auth.ts
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { router, procedure, publicProcedure } from '../trpc';
