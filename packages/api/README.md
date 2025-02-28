@@ -96,9 +96,9 @@ src/
 │   ├── auth/           # Authentication module
 │   ├── email/          # Email sending module
 │   └── ...             # Other modules
-└── trpc/               # API router and procedures
+└── index/               # API router and procedures
     ├── context.ts      # Request context
-    ├── trpc.ts         # tRPC initialization
+    ├── index.ts         # tRPC initialization
     └── routers/        # API route handlers
 ```
 

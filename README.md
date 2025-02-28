@@ -53,7 +53,7 @@ ganzafrica/
 │   │   │   ├── config/   # Configuration
 │   │   │   ├── db/       # Database schema & client
 │   │   │   ├── modules/  # Business logic
-│   │   │   └── trpc/     # API router
+│   │   │   └── index/     # API router
 │   │   └── drizzle/      # Migration files
 │   ├── ui/               # Shared UI components
 │   ├── eslint-config/    # ESLint configurations

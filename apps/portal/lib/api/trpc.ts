@@ -1,8 +1,7 @@
-// apps/portal/lib/api/trpc.ts
+import { createTRPCReact, type CreateTRPCReact, httpBatchLink } from '@trpc/react-query';
 import { QueryClient } from '@tanstack/react-query';
-import * as trpcReact from '@trpc/react-query';
-import type { AppRouter } from '@workspace/api';
 import superjson from 'superjson';
+import type { AppRouter } from '@workspace/api/src/trpc/routers';
 
 // Create a QueryClient for react-query
 export const queryClient = new QueryClient({
@@ -10,19 +9,19 @@ export const queryClient = new QueryClient({
         queries: {
             refetchOnWindowFocus: false,
             retry: false,
-            staleTime: 5 * 1000, // 5 seconds
+            staleTime: 5 * 60 * 1000, // 5 minutes
         },
     },
 });
 
-// Create the tRPC client
-export const trpc = trpcReact.createTRPCReact<AppRouter>();
+// Create the tRPC client with proper type annotation
+export const trpc: CreateTRPCReact<AppRouter, any, any> = createTRPCReact<AppRouter>();
 
-// Create the tRPC client with links
+// Function to create the tRPC client with a URL
 export function getTrpcClient(baseUrl: string) {
     return trpc.createClient({
         links: [
-            trpcReact.httpBatchLink({
+            httpBatchLink({
                 url: `${baseUrl}/api/trpc`,
                 // Include cookies in requests
                 fetch(url, options) {

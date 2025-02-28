@@ -10,11 +10,12 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@workspace/api": "workspace:*",
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "@workspace/ui": "workspace:*",
-    "@workspace/api": "workspace:*",
     "drizzle-kit": "^0.30.4",
+    "esbuild": "0.25.0",
     "pg": "^8.13.3",
     "prettier": "^3.2.5",
     "tsx": "^4.19.3",

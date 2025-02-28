@@ -1,175 +1,193 @@
-import { trpc } from './trpc';
-import { toast } from 'sonner';
 
+import { trpc } from '@/lib/api/trpc';
+import { apiCall } from './base';
+import type { ApiResponse } from './base';
+
+// Re-export types from the API
 export type {
     SignupInput,
     LoginInput,
     RequestPasswordResetInput,
     ResetPasswordInput,
     VerifyEmailInput,
-} from '@workspace/api/src/modules/auth';
+    SetupTotpInput,
+    VerifyTotpInput
+} from '@workspace/api/src/modules/auth/schema';
 
-// Auth API wrapper
-export const authApi = {
-    // Login user
-    login: async (email: string, password: string) => {
-        try {
-            const result = await trpc.auth.login.mutate({ email, password });
+export type { ApiResponse };
 
-            if (result.data?.requiresTwoFactor) {
-                return {
-                    success: false,
-                    requiresTwoFactor: true,
-                    twoFactorMethod: result.data.twoFactorMethod,
-                    tempToken: result.data.tempToken,
-                };
-            }
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    permissions?: string[];
+}
 
-            if (result.success && result.data?.user) {
-                return {
-                    success: true,
-                    user: result.data.user,
-                };
-            }
+export interface AuthResponse {
+    user?: User;
+    requiresTwoFactor?: boolean;
+    twoFactorMethod?: string;
+    tempToken?: string;
+}
 
-            return { success: false, message: result.message };
-        } catch (error: any) {
-            const errorMessage = error.message || 'Failed to log in. Please try again.';
-            toast.error(errorMessage);
-            return { success: false, message: errorMessage };
+/**
+ * Register a new user
+ */
+export async function signup(input: {
+    email: string;
+    password: string;
+    name: string;
+}): Promise<ApiResponse<{ userId: string }>> {
+    return apiCall(
+        () => trpc.auth.signup.mutate(input),
+        {
+            successMessage: 'Account created successfully. Please check your email to verify your account.',
         }
-    },
+    );
+}
 
-    // Register new user
-    register: async (name: string, email: string, password: string) => {
-        try {
-            const result = await trpc.auth.signup.mutate({ name, email, password });
-
-            if (result.success) {
-                toast.success(result.message || 'Registration successful. Please check your email to verify your account.');
-                return { success: true };
-            }
-
-            return { success: false, message: result.message };
-        } catch (error: any) {
-            const errorMessage = error.message || 'Failed to register. Please try again.';
-            toast.error(errorMessage);
-            return { success: false, message: errorMessage };
+/**
+ * Log in a user
+ */
+export async function login(input: {
+    email: string;
+    password: string;
+    totpCode?: string;
+}): Promise<ApiResponse<AuthResponse>> {
+    return apiCall(
+        () => trpc.auth.login.mutate(input),
+        {
+            showSuccessToast: false, // We'll handle success messages specifically based on 2FA
+            queryKey: 'currentUser',
         }
-    },
+    );
+}
 
-    // Request password reset
-    requestPasswordReset: async (email: string) => {
-        try {
-            const result = await trpc.auth.requestPasswordReset.mutate({ email });
-
-            if (result.success) {
-                toast.success(result.message || 'If your email is registered, you will receive reset instructions shortly.');
-                return { success: true };
-            }
-
-            return { success: false, message: result.message };
-        } catch (error: any) {
-            // Always show the same message for security reasons
-            toast.success('If your email is registered, you will receive reset instructions shortly.');
-            return { success: true };
+/**
+ * Verify two-factor authentication
+ */
+export async function verifyTwoFactor(input: {
+    token: string;
+    totpCode: string;
+}): Promise<ApiResponse<AuthResponse>> {
+    return apiCall(
+        () => trpc.auth.verifyTwoFactor.mutate(input),
+        {
+            successMessage: 'Login successful',
+            queryKey: 'currentUser',
         }
-    },
+    );
+}
 
-    // Reset password with token
-    resetPassword: async (token: string, password: string, confirmPassword: string) => {
-        try {
-            // Check if passwords match before making the API call
-            if (password !== confirmPassword) {
-                toast.error('Passwords do not match');
-                return { success: false, message: 'Passwords do not match' };
-            }
-
-            const result = await trpc.auth.resetPassword.mutate({ token, password, confirmPassword });
-
-            if (result.success) {
-                toast.success(result.message || 'Password has been reset successfully.');
-                return { success: true };
-            }
-
-            return { success: false, message: result.message };
-        } catch (error: any) {
-            const errorMessage = error.message || 'Failed to reset password. Please try again.';
-            toast.error(errorMessage);
-            return { success: false, message: errorMessage };
+/**
+ * Log out the current user
+ */
+export async function logout(): Promise<ApiResponse<void>> {
+    return apiCall(
+        () => trpc.auth.logout.mutate(),
+        {
+            successMessage: 'Logged out successfully',
+            queryKey: 'currentUser',
         }
-    },
+    );
+}
 
-    // Verify email with token
-    verifyEmail: async (token: string) => {
-        try {
-            const result = await trpc.auth.verifyEmail.mutate({ token });
-
-            if (result.success) {
-                toast.success(result.message || 'Email verified successfully. You can now log in to your account.');
-                return { success: true };
-            }
-
-            return { success: false, message: result.message };
-        } catch (error: any) {
-            const errorMessage = error.message || 'Failed to verify email. Please try again.';
-            toast.error(errorMessage);
-            return { success: false, message: errorMessage };
+/**
+ * Get the current authenticated user
+ */
+export async function getCurrentUser(): Promise<ApiResponse<User>> {
+    return apiCall(
+        () => trpc.auth.me.query(),
+        {
+            showSuccessToast: false,
         }
-    },
+    );
+}
 
-    // Verify two-factor authentication
-    verifyTwoFactor: async (token: string, code: string) => {
-        try {
-            const result = await trpc.auth.verifyTwoFactor.mutate({ token, code });
-
-            if (result.success && result.data?.user) {
-                return {
-                    success: true,
-                    user: result.data.user,
-                };
-            }
-
-            return { success: false, message: result.message };
-        } catch (error: any) {
-            const errorMessage = error.message || 'Failed to verify code. Please try again.';
-            toast.error(errorMessage);
-            return { success: false, message: errorMessage };
+/**
+ * Request a password reset email
+ */
+export async function requestPasswordReset(input: {
+    email: string;
+}): Promise<ApiResponse<void>> {
+    return apiCall(
+        () => trpc.auth.requestPasswordReset.mutate(input),
+        {
+            successMessage: 'If your email is registered, you will receive reset instructions shortly.',
         }
-    },
+    );
+}
 
-    // Logout user
-    logout: async () => {
-        try {
-            const result = await trpc.auth.logout.mutate();
-
-            if (result.success) {
-                return { success: true };
-            }
-
-            return { success: false, message: result.message };
-        } catch (error: any) {
-            const errorMessage = error.message || 'Failed to log out. Please try again.';
-            toast.error(errorMessage);
-            return { success: false, message: errorMessage };
+/**
+ * Reset password with token
+ */
+export async function resetPassword(input: {
+    token: string;
+    password: string;
+    confirmPassword: string;
+}): Promise<ApiResponse<void>> {
+    return apiCall(
+        () => trpc.auth.resetPassword.mutate(input),
+        {
+            successMessage: 'Password has been reset successfully. You can now log in with your new password.',
         }
-    },
+    );
+}
 
-    // Get current user
-    getCurrentUser: async () => {
-        try {
-            const result = await trpc.auth.me.query();
-
-            if (result.success && result.data?.user) {
-                return {
-                    success: true,
-                    user: result.data.user,
-                };
-            }
-
-            return { success: false };
-        } catch (error: any) {
-            return { success: false };
+/**
+ * Verify email address
+ */
+export async function verifyEmail(input: {
+    token: string;
+}): Promise<ApiResponse<void>> {
+    return apiCall(
+        () => trpc.auth.verifyEmail.mutate(input),
+        {
+            successMessage: 'Email verified successfully. You can now log in to your account.',
         }
-    },
-};
+    );
+}
+
+/**
+ * Setup two-factor authentication
+ */
+export async function setupTwoFactor(): Promise<ApiResponse<{
+    qrCodeUrl: string;
+    secret: string;
+}>> {
+    return apiCall(
+        () => trpc.auth.setupTwoFactor.mutate(),
+        {
+            successMessage: 'Two-factor authentication setup initiated',
+        }
+    );
+}
+
+/**
+ * Verify and activate two-factor authentication
+ */
+export async function verifyTwoFactorSetup(input: {
+    totpCode: string;
+}): Promise<ApiResponse<void>> {
+    return apiCall(
+        () => trpc.auth.verifyTwoFactorSetup.mutate(input),
+        {
+            successMessage: 'Two-factor authentication enabled successfully',
+            queryKey: 'currentUser',
+        }
+    );
+}
+
+/**
+ * Disable two-factor authentication
+ */
+export async function disableTwoFactor(): Promise<ApiResponse<void>> {
+    return apiCall(
+        () => trpc.auth.disableTwoFactor.mutate(),
+        {
+            successMessage: 'Two-factor authentication disabled successfully',
+            queryKey: 'currentUser',
+        }
+    );
+}
