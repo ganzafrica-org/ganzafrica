@@ -71,9 +71,9 @@ if (require.main === module) {
 
         try {
             // Handle tRPC requests
-            if (url.pathname.startsWith('/api/trpc')) {
+            if (url.pathname.startsWith('/api/index')) {
                 const response = await fetchRequestHandler({
-                    endpoint: '/api/trpc',
+                    endpoint: '/api/index',
                     req: fetchRequest,
                     router: appRouter,
                     createContext,
@@ -131,9 +131,9 @@ export default async function handler(request: Request): Promise<Response> {
         const url = new URL(request.url);
 
         // Handle tRPC requests
-        if (url.pathname.startsWith('/api/trpc')) {
+        if (url.pathname.startsWith('/api/index')) {
             return await fetchRequestHandler({
-                endpoint: '/api/trpc',
+                endpoint: '/api/index',
                 req: request,
                 router: appRouter,
                 createContext,
