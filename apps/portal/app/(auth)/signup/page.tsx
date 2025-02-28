@@ -8,11 +8,11 @@ export default function SignupPage() {
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-muted/30 px-4">
             <div className="mb-8 flex flex-col items-center">
-                <Logo className="h-12 w-auto" />
+                <Logo className="w-24 h-24 mx-auto" />
                 <h1 className="mt-4 text-2xl font-bold tracking-tight">
                     Create your GanzAfrica account
                 </h1>
-                <p className="mt-2 text-center text-muted-foreground">
+                <p className="mt-2 text-center text-muted-foreground text-wrap">
                     Join the community of fellows, alumni, and partners working on sustainable land management in Rwanda
                 </p>
             </div>

@@ -1,9 +1,10 @@
 import { createTRPCReact, type CreateTRPCReact, httpBatchLink } from '@trpc/react-query';
+import { createTRPCProxyClient } from '@trpc/client';
 import { QueryClient } from '@tanstack/react-query';
 import superjson from 'superjson';
 import type { AppRouter } from '@workspace/api/src/trpc/routers';
 
-// Create a QueryClient for react-query
+// QueryClient for react-query
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -14,10 +15,10 @@ export const queryClient = new QueryClient({
     },
 });
 
-// Create the tRPC client with proper type annotation
+// This is a React tRPC client to be used inside React components with hooks
 export const trpc: CreateTRPCReact<AppRouter, any, any> = createTRPCReact<AppRouter>();
 
-// Function to create the tRPC client with a URL
+// Function to create the React tRPC client with a URL
 export function getTrpcClient(baseUrl: string) {
     return trpc.createClient({
         links: [
@@ -35,3 +36,22 @@ export function getTrpcClient(baseUrl: string) {
         transformer: superjson,
     });
 }
+
+// This is a standalone (non-React) tRPC client to be used outside of React components for direct API calls
+export const trpcClient = createTRPCProxyClient<AppRouter>({
+    links: [
+        httpBatchLink({
+            url: typeof window !== 'undefined'
+                ? `${window.location.origin}/api/trpc`
+                : 'http://localhost:3001/api/trpc',
+            // Include cookies in requests
+            fetch(url, options) {
+                return fetch(url, {
+                    ...options,
+                    credentials: 'include',
+                });
+            },
+        }),
+    ],
+    transformer: superjson,
+});

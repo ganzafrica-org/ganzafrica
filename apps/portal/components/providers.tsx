@@ -6,7 +6,7 @@ import { Toaster } from "@workspace/ui/components/sonner"
 import { TrpcProvider } from "./trpc-provider"
 import { AuthProvider } from "@/components/auth"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return (
