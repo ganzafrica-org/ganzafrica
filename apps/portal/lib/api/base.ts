@@ -110,6 +110,7 @@ export async function apiCall<T>(
         showErrorToast?: boolean;
         onSuccess?: (data: T) => void;
         queryKey?: string | string[];
+        parseResponse?: (response: any) => T; // Optional response parser
     } = {}
 ): Promise<ApiResponse<T>> {
     const {
@@ -117,16 +118,27 @@ export async function apiCall<T>(
         showSuccessToast = true,
         onSuccess,
         queryKey,
+        parseResponse = (r) => r, // Default parser just returns the response
     } = options;
 
     try {
+        // Call the API function (tRPC mutation or query)
         const response = await apiFunction();
+
+        // Extract data from tRPC response structure
+        // tRPC returns the data directly from queries and mutations
+        const data = parseResponse(response);
 
         // If the API returns a structured response with success/data/message fields,
         // use that structure. Otherwise, create a standard response.
-        const result: ApiResponse<T> = response?.success !== undefined
-            ? response
-            : { success: true, data: response as T };
+        const result: ApiResponse<T> =
+            response?.success !== undefined
+                ? response
+                : {
+                    success: true,
+                    data,
+                    message: successMessage || (response?.message ? response.message : undefined)
+                };
 
         // Show success toast if requested and there's a message
         if (showSuccessToast && (successMessage || result.message)) {

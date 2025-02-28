@@ -11,7 +11,7 @@ export default function Page() {
         <div className="flex flex-col items-center justify-center min-h-svh">
             <div className="flex flex-col items-center justify-center gap-6 mb-8">
                 <Logo className="text-4xl" />
-                <h1 className="text-2xl font-bold">GanzAfrica Portal</h1>
+                <h1 className="text-2xl font-bold">Portal</h1>
                 <p className="text-center text-muted-foreground max-w-md">
                     Welcome to the GanzAfrica portal. Please log in to access
                     the dashboard and tools.
