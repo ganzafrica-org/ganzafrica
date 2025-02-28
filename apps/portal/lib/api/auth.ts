@@ -1,5 +1,4 @@
-
-import { trpc } from '@/lib/api/trpc';
+import { trpcClient } from './trpc';
 import { apiCall } from './base';
 import type { ApiResponse } from './base';
 
@@ -40,7 +39,7 @@ export async function signup(input: {
     name: string;
 }): Promise<ApiResponse<{ userId: string }>> {
     return apiCall(
-        () => trpc.auth.signup.mutate(input),
+        () => trpcClient.auth.signup.mutate(input),
         {
             successMessage: 'Account created successfully. Please check your email to verify your account.',
         }
@@ -56,7 +55,7 @@ export async function login(input: {
     totpCode?: string;
 }): Promise<ApiResponse<AuthResponse>> {
     return apiCall(
-        () => trpc.auth.login.mutate(input),
+        () => trpcClient.auth.login.mutate(input),
         {
             showSuccessToast: false, // We'll handle success messages specifically based on 2FA
             queryKey: 'currentUser',
@@ -72,7 +71,10 @@ export async function verifyTwoFactor(input: {
     totpCode: string;
 }): Promise<ApiResponse<AuthResponse>> {
     return apiCall(
-        () => trpc.auth.verifyTwoFactor.mutate(input),
+        () => trpcClient.auth.verifyTwoFactor.mutate({
+            token: input.token,
+            code: input.totpCode  // Rename totpCode to code for the API call
+        }),
         {
             successMessage: 'Login successful',
             queryKey: 'currentUser',
@@ -85,7 +87,7 @@ export async function verifyTwoFactor(input: {
  */
 export async function logout(): Promise<ApiResponse<void>> {
     return apiCall(
-        () => trpc.auth.logout.mutate(),
+        () => trpcClient.auth.logout.mutate(),
         {
             successMessage: 'Logged out successfully',
             queryKey: 'currentUser',
@@ -98,7 +100,7 @@ export async function logout(): Promise<ApiResponse<void>> {
  */
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
     return apiCall(
-        () => trpc.auth.me.query(),
+        () => trpcClient.auth.me.query(),
         {
             showSuccessToast: false,
         }
@@ -112,7 +114,7 @@ export async function requestPasswordReset(input: {
     email: string;
 }): Promise<ApiResponse<void>> {
     return apiCall(
-        () => trpc.auth.requestPasswordReset.mutate(input),
+        () => trpcClient.auth.requestPasswordReset.mutate(input),
         {
             successMessage: 'If your email is registered, you will receive reset instructions shortly.',
         }
@@ -128,7 +130,7 @@ export async function resetPassword(input: {
     confirmPassword: string;
 }): Promise<ApiResponse<void>> {
     return apiCall(
-        () => trpc.auth.resetPassword.mutate(input),
+        () => trpcClient.auth.resetPassword.mutate(input),
         {
             successMessage: 'Password has been reset successfully. You can now log in with your new password.',
         }
@@ -142,7 +144,7 @@ export async function verifyEmail(input: {
     token: string;
 }): Promise<ApiResponse<void>> {
     return apiCall(
-        () => trpc.auth.verifyEmail.mutate(input),
+        () => trpcClient.auth.verifyEmail.mutate(input),
         {
             successMessage: 'Email verified successfully. You can now log in to your account.',
         }
@@ -157,7 +159,7 @@ export async function setupTwoFactor(): Promise<ApiResponse<{
     secret: string;
 }>> {
     return apiCall(
-        () => trpc.auth.setupTwoFactor.mutate(),
+        () => trpcClient.auth.setupTwoFactor.mutate(),
         {
             successMessage: 'Two-factor authentication setup initiated',
         }
@@ -171,7 +173,7 @@ export async function verifyTwoFactorSetup(input: {
     totpCode: string;
 }): Promise<ApiResponse<void>> {
     return apiCall(
-        () => trpc.auth.verifyTwoFactorSetup.mutate(input),
+        () => trpcClient.auth.verifyTwoFactorSetup.mutate(input),
         {
             successMessage: 'Two-factor authentication enabled successfully',
             queryKey: 'currentUser',
@@ -184,7 +186,7 @@ export async function verifyTwoFactorSetup(input: {
  */
 export async function disableTwoFactor(): Promise<ApiResponse<void>> {
     return apiCall(
-        () => trpc.auth.disableTwoFactor.mutate(),
+        () => trpcClient.auth.disableTwoFactor.mutate(),
         {
             successMessage: 'Two-factor authentication disabled successfully',
             queryKey: 'currentUser',
