@@ -43,7 +43,7 @@ export const trpcClient = createTRPCProxyClient<AppRouter>({
         httpBatchLink({
             url: typeof window !== 'undefined'
                 ? `${window.location.origin}/api/trpc`
-                : 'http://localhost:3001/api/trpc',
+                : 'http://localhost:3002/api/trpc',
             // Include cookies in requests
             fetch(url, options) {
                 return fetch(url, {
