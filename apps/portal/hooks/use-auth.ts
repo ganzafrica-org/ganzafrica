@@ -223,8 +223,8 @@ export function useAuth(): UseAuthReturn {
     return {
         user: userData || null,
         isLoading: isUserLoading ||
-            loginMutation.isPending ||
-            logoutMutation.isPending,
+            loginMutation.isLoading ||
+            logoutMutation.isLoading,
         isAuthenticated: !!userData,
         error: userError as Error | null,
         login,

@@ -1,0 +1,95 @@
+{
+  "site": {
+    "name": "GanzAfrica",
+    "description": "Empowering youth through sustainable land management, agriculture, and environmental initiatives in Rwanda."
+  },
+  "navigation": {
+    "about": "About",
+    "what_we_do": "What We Do",
+    "programs": "Programs",
+    "projects": "Projects",
+    "community_hub": "Community Hub",
+    "stay_updated": "Stay Updated",
+    "contact": "Contact"
+  },
+  "about": {
+    "title": "About GanzAfrica",
+    "who_we_are": "Who We Are",
+    "our_people": "Our People",
+    "our_story": "Our Story",
+    "partners": "Partners",
+    "policies": "Policies",
+    "description": "GanzAfrica is dedicated to empowering youth through sustainable land management, agriculture, and environmental initiatives in Rwanda."
+  },
+  "what_we_do": {
+    "title": "What We Do",
+    "food_systems": "Food Systems",
+    "climate_change_adaptation": "Climate Change Adaptation",
+    "description": "We focus on sustainable food systems and climate change adaptation to create lasting impact in Rwanda."
+  },
+  "programs": {
+    "title": "Our Programs",
+    "fellowship": {
+      "title": "Fellowship Program",
+      "description": "Our fellowship program provides young leaders with the skills and opportunities to drive sustainable change."
+    },
+    "alumni": {
+      "title": "Alumni Program",
+      "description": "Our alumni network continues to collaborate and create impact long after their fellowship ends."
+    },
+    "policy_support": {
+      "title": "Policy Support Program",
+      "description": "We provide research and guidance to support sustainable policy development."
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "view_all": "View All Projects",
+    "no_projects": "No projects found."
+  },
+  "community": {
+    "title": "Community Hub",
+    "mentors": "Mentors Profile",
+    "fellows": "Fellows Profile",
+    "join": "Join Our Community"
+  },
+  "stay_updated": {
+    "title": "Stay Updated",
+    "newsroom": "Newsroom",
+    "reports": "Annual Reports",
+    "events": "Events Calendar",
+    "subscribe": "Subscribe to Newsletter"
+  },
+  "footer": {
+    "about": "About",
+    "programs": "Programs",
+    "what_we_do": "What We Do",
+    "explore": "Explore",
+    "policies": "Policies",
+    "faqs": "FAQs",
+    "contact": "Contact",
+    "login": "Member Login",
+    "opportunities": "Opportunities",
+    "research": "Research Papers",
+    "copyright": "© 2025 GanzAfrica. All rights reserved."
+  },
+  "home": {
+    "hero": {
+      "title": "Sustainable Solutions for Rwanda's Future",
+      "subtitle": "Empowering youth through sustainable land management, agriculture, and environmental initiatives",
+      "cta": "Explore Our Programs"
+    },
+    "impact": {
+      "title": "Our Impact",
+      "fellows_trained": "Fellows Trained",
+      "projects_completed": "Projects Completed",
+      "communities_reached": "Communities Reached"
+    }
+  },
+  "cta": {
+    "apply": "Apply Now",
+    "learn_more": "Learn More",
+    "contact_us": "Contact Us",
+    "get_involved": "Get Involved"
+  }
+}

@@ -1,8 +1,8 @@
-import { createTRPCReact, type CreateTRPCReact, httpBatchLink } from '@trpc/react-query';
-import { createTRPCProxyClient } from '@trpc/client';
+import { createTRPCReact } from '@trpc/react-query';
+import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
 import { QueryClient } from '@tanstack/react-query';
 import superjson from 'superjson';
-import type { AppRouter } from '@workspace/api/src/trpc/routers';
+import type { AppRouter } from '@workspace/api/src';
 
 // QueryClient for react-query
 export const queryClient = new QueryClient({
@@ -16,7 +16,7 @@ export const queryClient = new QueryClient({
 });
 
 // This is a React tRPC client to be used inside React components with hooks
-export const trpc: CreateTRPCReact<AppRouter, any, any> = createTRPCReact<AppRouter>();
+export const trpc = createTRPCReact<AppRouter>();
 
 // Function to create the React tRPC client with a URL
 export function getTrpcClient(baseUrl: string) {
@@ -24,7 +24,6 @@ export function getTrpcClient(baseUrl: string) {
         links: [
             httpBatchLink({
                 url: `${baseUrl}/api/trpc`,
-                // Include cookies in requests
                 fetch(url, options) {
                     return fetch(url, {
                         ...options,
@@ -44,7 +43,6 @@ export const trpcClient = createTRPCProxyClient<AppRouter>({
             url: typeof window !== 'undefined'
                 ? `${window.location.origin}/api/trpc`
                 : 'http://localhost:3002/api/trpc',
-            // Include cookies in requests
             fetch(url, options) {
                 return fetch(url, {
                     ...options,

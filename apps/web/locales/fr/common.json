@@ -1,0 +1,95 @@
+{
+  "site": {
+    "name": "GanzAfrica",
+    "description": "Autonomiser les jeunes grâce à la gestion durable des terres, l'agriculture et les initiatives environnementales au Rwanda."
+  },
+  "navigation": {
+    "about": "À Propos",
+    "what_we_do": "Nos Activités",
+    "programs": "Programmes",
+    "projects": "Projets",
+    "community_hub": "Communauté",
+    "stay_updated": "Actualités",
+    "contact": "Contact"
+  },
+  "about": {
+    "title": "À Propos de GanzAfrica",
+    "who_we_are": "Qui Sommes-Nous",
+    "our_people": "Notre Équipe",
+    "our_story": "Notre Histoire",
+    "partners": "Partenaires",
+    "policies": "Politiques",
+    "description": "GanzAfrica se consacre à l'autonomisation des jeunes par la gestion durable des terres, l'agriculture et les initiatives environnementales au Rwanda."
+  },
+  "what_we_do": {
+    "title": "Nos Activités",
+    "food_systems": "Systèmes Alimentaires",
+    "climate_change_adaptation": "Adaptation au Changement Climatique",
+    "description": "Nous nous concentrons sur les systèmes alimentaires durables et l'adaptation au changement climatique pour créer un impact durable au Rwanda."
+  },
+  "programs": {
+    "title": "Nos Programmes",
+    "fellowship": {
+      "title": "Programme de Bourses",
+      "description": "Notre programme de bourses offre aux jeunes leaders les compétences et les opportunités nécessaires pour conduire un changement durable."
+    },
+    "alumni": {
+      "title": "Programme des Anciens",
+      "description": "Notre réseau d'anciens continue à collaborer et à créer un impact longtemps après la fin de leur bourse."
+    },
+    "policy_support": {
+      "title": "Programme de Soutien aux Politiques",
+      "description": "Nous fournissons des recherches et des conseils pour soutenir le développement de politiques durables."
+    }
+  },
+  "projects": {
+    "title": "Projets",
+    "view_all": "Voir Tous les Projets",
+    "no_projects": "Aucun projet trouvé."
+  },
+  "community": {
+    "title": "Communauté",
+    "mentors": "Profil des Mentors",
+    "fellows": "Profil des Boursiers",
+    "join": "Rejoindre Notre Communauté"
+  },
+  "stay_updated": {
+    "title": "Actualités",
+    "newsroom": "Salle de Presse",
+    "reports": "Rapports Annuels",
+    "events": "Calendrier des Événements",
+    "subscribe": "S'abonner à la Newsletter"
+  },
+  "footer": {
+    "about": "À Propos",
+    "programs": "Programmes",
+    "what_we_do": "Nos Activités",
+    "explore": "Explorer",
+    "policies": "Politiques",
+    "faqs": "FAQs",
+    "contact": "Contact",
+    "login": "Connexion Membre",
+    "opportunities": "Opportunités",
+    "research": "Documents de Recherche",
+    "copyright": "© 2025 GanzAfrica. Tous droits réservés."
+  },
+  "home": {
+    "hero": {
+      "title": "Solutions Durables pour l'Avenir du Rwanda",
+      "subtitle": "Autonomiser les jeunes par la gestion durable des terres, l'agriculture et les initiatives environnementales",
+      "cta": "Explorer Nos Programmes"
+    },
+    "impact": {
+      "title": "Notre Impact",
+      "fellows_trained": "Boursiers Formés",
+      "projects_completed": "Projets Complétés",
+      "communities_reached": "Communautés Touchées"
+    }
+  },
+  "cta": {
+    "apply": "Postuler",
+    "learn_more": "En Savoir Plus",
+    "contact_us": "Nous Contacter",
+    "get_involved": "S'Impliquer"
+  }
+}
