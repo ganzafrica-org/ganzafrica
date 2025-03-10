@@ -16,6 +16,7 @@ const logger = createLogger('api');
 // Export router for client usage
 export { appRouter };
 export type { AppRouter } from './trpc/routers';
+export { createContext } from './trpc/context';
 
 /**
  * Helper to convert Node.js IncomingMessage to a ReadableStream for Fetch API
@@ -43,7 +44,7 @@ function nodeStreamToReadableStream(nodeStream: http.IncomingMessage): ReadableS
  * Standalone server when running directly
  */
 if (require.main === module) {
-    const PORT = Number(process.env.PORT || 3001);
+    const PORT = Number(process.env.PORT || 3002);
 
     // Simple HTTP server for development
     const server = http.createServer(async (req, res) => {
@@ -131,9 +132,9 @@ export default async function handler(request: Request): Promise<Response> {
         const url = new URL(request.url);
 
         // Handle tRPC requests
-        if (url.pathname.startsWith('/api/index')) {
+        if (url.pathname.startsWith('/api/trpc')) {
             return await fetchRequestHandler({
-                endpoint: '/api/index',
+                endpoint: '/api/trpc',
                 req: request,
                 router: appRouter,
                 createContext,
