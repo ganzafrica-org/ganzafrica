@@ -1,53 +1,72 @@
-import { Resend } from 'resend';
-import { env } from '../../config';
+import * as nodemailer from 'nodemailer';
 import { createLogger } from '../../config';
 
 const logger = createLogger('email-service');
 
-// Initialize Resend with API key
-let resend: Resend;
-try {
-    resend = new Resend(env.RESEND_API_KEY);
-} catch (error) {
-    logger.error('Failed to initialize Resend', { error });
-}
+// debug
+console.log('Email Configuration:');
+console.log('User:', process.env.EMAIL_FROM);
+console.log('Password provided:', !!process.env.EMAIL_PASSWORD);
+
+// Create a reusable transporter object using Gmail
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_FROM,
+        pass: process.env.EMAIL_PASSWORD
+    }
+});
+
+// Verify connection configuration
+transporter.verify()
+    .then(() => {
+        logger.info('SMTP server connection ready');
+    })
+    .catch((error) => {
+        logger.error('SMTP connection verification failed', { error });
+    });
 
 /**
- * Send an email using Resend
+ * Send an email
  */
 export async function sendEmail({
                                     to,
                                     subject,
                                     html,
-                                    from = env.EMAIL_FROM || 'noreply@ganzafrica.org',
+                                    from = process.env.EMAIL_FROM,
+                                    attachments = []
                                 }: {
     to: string | string[];
     subject: string;
     html: string;
     from?: string;
+    attachments?: Array<{
+        filename: string;
+        content?: Buffer | string;
+        path?: string;
+        contentType?: string;
+    }>;
 }): Promise<{ id: string } | null> {
     try {
-        if (!resend) {
-            logger.error('Resend not initialized');
-            return null;
-        }
+        const toAddresses = Array.isArray(to) ? to : [to];
 
-        const { data, error } = await resend.emails.send({
-            from,
-            to: Array.isArray(to) ? to : [to],
+        // Send mail with defined transport object
+        const info = await transporter.sendMail({
+            from: `"GanzAfrica" <${from}>`,
+            to: toAddresses.join(', '),
             subject,
             html,
+            attachments
         });
 
-        if (error) {
-            logger.error('Failed to send email', { error, to });
-            return null;
-        }
+        logger.info('Email sent successfully', {
+            messageId: info.messageId,
+            to: toAddresses
+        });
 
-        logger.info('Email sent successfully', { id: data?.id, to });
-        return { id: data?.id?.toString() ?? '' };
+        return { id: info.messageId };
     } catch (error) {
-        logger.error('Error sending email', { error });
+        logger.error('Failed to send email', { error, to });
         return null;
     }
 }
@@ -59,7 +78,7 @@ export async function sendVerificationEmail(
     email: string,
     token: string
 ): Promise<{ id: string } | null> {
-    const verificationUrl = `${env.WEBSITE_URL}/verify-email?token=${token}`;
+    const verificationUrl = `${process.env.WEBSITE_URL || 'http://localhost:3001'}/verify-email?token=${token}`;
 
     const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -68,6 +87,7 @@ export async function sendVerificationEmail(
       <a href="${verificationUrl}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">Verify Email</a>
       <p>If you did not sign up for GanzAfrica, please ignore this email.</p>
       <p>This link will expire in 24 hours.</p>
+      <p>Or copy and paste this link: ${verificationUrl}</p>
     </div>
   `;
 
@@ -85,7 +105,7 @@ export async function sendPasswordResetEmail(
     email: string,
     token: string
 ): Promise<{ id: string } | null> {
-    const resetUrl = `${env.WEBSITE_URL}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.WEBSITE_URL || 'http://localhost:3001'}/reset-password?token=${token}`;
 
     const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -94,6 +114,7 @@ export async function sendPasswordResetEmail(
       <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">Reset Password</a>
       <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
       <p>This link will expire in 24 hours.</p>
+      <p>Or copy and paste this link: ${resetUrl}</p>
     </div>
   `;
 
@@ -125,5 +146,27 @@ export async function sendOtpEmail(
         to: email,
         subject: 'Your GanzAfrica Verification Code',
         html,
+    });
+}
+
+/**
+ * Send email with attachment(s)
+ */
+export async function sendEmailWithAttachments(
+    to: string | string[],
+    subject: string,
+    html: string,
+    attachments: Array<{
+        filename: string;
+        content?: Buffer | string;
+        path?: string;
+        contentType?: string;
+    }>
+): Promise<{ id: string } | null> {
+    return sendEmail({
+        to,
+        subject,
+        html,
+        attachments
     });
 }

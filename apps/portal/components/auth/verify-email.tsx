@@ -1,17 +1,17 @@
 'use client';
 
 import * as React from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@workspace/ui/components/card';
 import { Loader } from 'lucide-react';
 
-import { useAuthContext } from './auth-provider';
+import { useAuth } from '@/components/auth/auth-provider';
 
 export function VerifyEmail() {
-    const { verifyEmail } = useAuthContext();
+    const { verifyEmail, isLoading } = useAuth();
     const searchParams = useSearchParams();
     const token = searchParams.get('token') || '';
     const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>('loading');
@@ -25,20 +25,29 @@ export function VerifyEmail() {
         }
 
         const verify = async () => {
-            const response = await verifyEmail(token);
+            try {
+                const success = await verifyEmail(token);
 
-            if (response.success) {
-                setStatus('success');
-            } else {
+                if (success) {
+                    setStatus('success');
+                } else {
+                    setStatus('error');
+                    setErrorMessage('Failed to verify email. Please try again.');
+                }
+            } catch (error) {
                 setStatus('error');
-                setErrorMessage(response.message || 'Failed to verify email. Please try again.');
+                setErrorMessage(
+                    error instanceof Error
+                        ? error.message
+                        : 'Failed to verify email. Please try again.'
+                );
             }
         };
 
         verify();
     }, [token, verifyEmail]);
 
-    if (status === 'loading') {
+    if (status === 'loading' || isLoading) {
         return (
             <Card className="w-full max-w-md mx-auto">
                 <CardHeader>
@@ -85,7 +94,7 @@ export function VerifyEmail() {
             </CardHeader>
             <CardContent>
                 <p className="text-center text-muted-foreground">
-                    You can now login to your account and start using all features.
+                    You can now log in to your account and start using all features.
                 </p>
             </CardContent>
             <CardFooter className="flex justify-center">

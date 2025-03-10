@@ -1,9 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 import { Button } from '@workspace/ui/components/button';
@@ -18,34 +17,25 @@ import {
 import { Input } from '@workspace/ui/components/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@workspace/ui/components/card';
 
-import { useAuthContext } from './auth-provider';
-import { resetPasswordSchema } from '@workspace/api/src/modules/auth/schema';
-import type { ResetPasswordInput } from '@workspace/api/src/modules/auth/schema';
+import { useAuth } from '@/components/auth/auth-provider';
 
 export function ResetPasswordForm() {
-    const { resetPassword } = useAuthContext();
-    const router = useRouter();
+    const { resetPassword, isLoading } = useAuth();
     const searchParams = useSearchParams();
     const token = searchParams.get('token') || '';
 
     // Reset password form
-    const form = useForm<ResetPasswordInput>({
-        resolver: zodResolver(resetPasswordSchema),
+    const form = useForm({
         defaultValues: {
-            token,
             password: '',
             confirmPassword: '',
         },
     });
 
     // Handle reset password submission
-    const onSubmit = async (data: ResetPasswordInput) => {
-        const response = await resetPassword(data);
-
-        if (response.success) {
-            // After successful password reset, redirect to login
-            router.push('/login');
-        }
+    const handleResetPassword = async (data: { password: string; confirmPassword: string }) => {
+        if (!token) return;
+        await resetPassword(token, data.password, data.confirmPassword);
     };
 
     return (
@@ -58,7 +48,7 @@ export function ResetPasswordForm() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(handleResetPassword)} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="password"
@@ -85,8 +75,8 @@ export function ResetPasswordForm() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full">
-                            Reset Password
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading ? 'Resetting password...' : 'Reset Password'}
                         </Button>
                     </form>
                 </Form>

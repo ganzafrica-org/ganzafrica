@@ -1,9 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { Button } from '@workspace/ui/components/button';
@@ -18,17 +16,13 @@ import {
 import { Input } from '@workspace/ui/components/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@workspace/ui/components/card';
 
-import { useAuthContext } from './auth-provider';
-import { signupSchema } from '@workspace/api/src/modules/auth/schema';
-import type { SignupInput } from '@workspace/api/src/modules/auth/schema';
+import { useAuth } from '@/components/auth/auth-provider';
 
 export function SignupForm() {
-    const { signup } = useAuthContext();
-    const router = useRouter();
+    const { signup, isLoading } = useAuth();
 
     // Signup form
-    const form = useForm<SignupInput>({
-        resolver: zodResolver(signupSchema),
+    const form = useForm({
         defaultValues: {
             name: '',
             email: '',
@@ -37,13 +31,8 @@ export function SignupForm() {
     });
 
     // Handle signup submission
-    const onSubmit = async (data: SignupInput) => {
-        const response = await signup(data);
-
-        if (response.success) {
-            // After successful signup, redirect to login or verification page
-            router.push('/login');
-        }
+    const handleSignup = async (data: { name: string; email: string; password: string }) => {
+        await signup(data.name, data.email, data.password);
     };
 
     return (
@@ -56,7 +45,7 @@ export function SignupForm() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(handleSignup)} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="name"
@@ -96,8 +85,8 @@ export function SignupForm() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full">
-                            Sign up
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading ? 'Creating account...' : 'Sign up'}
                         </Button>
                     </form>
                 </Form>
