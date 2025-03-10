@@ -1,9 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import { Button } from '@workspace/ui/components/button';
@@ -19,17 +17,13 @@ import { Input } from '@workspace/ui/components/input';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@workspace/ui/components/input-otp';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@workspace/ui/components/card';
 
-import { useAuthContext } from './auth-provider';
-import type { LoginInput, VerifyTotpInput } from '@workspace/api/src/modules/auth/schema';
-import { loginSchema, verifyTotpSchema } from '@workspace/api/src/modules/auth/schema';
+import { useAuth } from '@/components/auth/auth-provider';
 
 export function LoginForm() {
-    const { login, verifyTwoFactor, requiresTwoFactor, tempToken, twoFactorMethod } = useAuthContext();
-    const router = useRouter();
+    const { login, verifyTwoFactor, requiresTwoFactor, twoFactorMethod, isLoading } = useAuth();
 
     // Regular login form
-    const loginForm = useForm<LoginInput>({
-        resolver: zodResolver(loginSchema),
+    const loginForm = useForm({
         defaultValues: {
             email: '',
             password: '',
@@ -37,37 +31,20 @@ export function LoginForm() {
     });
 
     // 2FA verification form
-    const totpForm = useForm<VerifyTotpInput>({
-        resolver: zodResolver(verifyTotpSchema),
+    const totpForm = useForm({
         defaultValues: {
             totpCode: '',
-            token: tempToken || '',
         },
     });
 
-    // When tempToken changes, update the form
-    React.useEffect(() => {
-        if (tempToken) {
-            totpForm.setValue('token', tempToken);
-        }
-    }, [tempToken, totpForm]);
-
     // Handle login submission
-    const onLoginSubmit = async (data: LoginInput) => {
-        const response = await login(data);
-
-        if (response.success && !requiresTwoFactor) {
-            router.push('/dashboard');
-        }
+    const handleLogin = async (data: { email: string; password: string }) => {
+        await login(data.email, data.password);
     };
 
     // Handle 2FA verification submission
-    const onTotpSubmit = async (data: VerifyTotpInput) => {
-        const response = await verifyTwoFactor(data.token, data.totpCode);
-
-        if (response.success) {
-            router.push('/dashboard');
-        }
+    const handleVerify = async (data: { totpCode: string }) => {
+        await verifyTwoFactor(data.totpCode);
     };
 
     // Render 2FA verification form if required
@@ -82,7 +59,7 @@ export function LoginForm() {
                 </CardHeader>
                 <CardContent>
                     <Form {...totpForm}>
-                        <form onSubmit={totpForm.handleSubmit(onTotpSubmit)} className="space-y-6">
+                        <form onSubmit={totpForm.handleSubmit(handleVerify)} className="space-y-6">
                             <FormField
                                 control={totpForm.control}
                                 name="totpCode"
@@ -104,8 +81,8 @@ export function LoginForm() {
                                     </FormItem>
                                 )}
                             />
-                            <Button type="submit" className="w-full">
-                                Verify
+                            <Button type="submit" className="w-full" disabled={isLoading}>
+                                {isLoading ? 'Verifying...' : 'Verify'}
                             </Button>
                         </form>
                     </Form>
@@ -123,7 +100,7 @@ export function LoginForm() {
             </CardHeader>
             <CardContent>
                 <Form {...loginForm}>
-                    <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                    <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
                         <FormField
                             control={loginForm.control}
                             name="email"
@@ -155,8 +132,8 @@ export function LoginForm() {
                                 Forgot password?
                             </Link>
                         </div>
-                        <Button type="submit" className="w-full">
-                            Log in
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading ? 'Logging in...' : 'Log in'}
                         </Button>
                     </form>
                 </Form>

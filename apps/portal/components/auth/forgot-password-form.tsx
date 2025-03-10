@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 
@@ -17,27 +16,24 @@ import {
 import { Input } from '@workspace/ui/components/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@workspace/ui/components/card';
 
-import { useAuthContext } from './auth-provider';
-import { requestPasswordResetSchema } from '@workspace/api/src/modules/auth/schema';
-import type { RequestPasswordResetInput } from '@workspace/api/src/modules/auth/schema';
+import { useAuth } from '@/components/auth/auth-provider';
 
 export function ForgotPasswordForm() {
-    const { requestPasswordReset } = useAuthContext();
+    const { requestPasswordReset, isLoading } = useAuth();
     const [isSubmitted, setIsSubmitted] = React.useState(false);
 
     // Forgot password form
-    const form = useForm<RequestPasswordResetInput>({
-        resolver: zodResolver(requestPasswordResetSchema),
+    const form = useForm({
         defaultValues: {
             email: '',
         },
     });
 
     // Handle forgot password submission
-    const onSubmit = async (data: RequestPasswordResetInput) => {
-        const response = await requestPasswordReset(data.email);
+    const handleForgotPassword = async (data: { email: string }) => {
+        const success = await requestPasswordReset(data.email);
 
-        if (response.success) {
+        if (success) {
             setIsSubmitted(true);
         }
     };
@@ -77,7 +73,7 @@ export function ForgotPasswordForm() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(handleForgotPassword)} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="email"
@@ -91,8 +87,8 @@ export function ForgotPasswordForm() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full">
-                            Send Reset Link
+                        <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading ? 'Submitting...' : 'Send Reset Link'}
                         </Button>
                     </form>
                 </Form>
