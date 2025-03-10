@@ -20,14 +20,18 @@ const envSchema = z.object({
     // Server
     PORT: z.coerce.number().default(3000),
 
-    // Email
-    RESEND_API_KEY: isDevelopment
-        ? z.string().default('re_development_placeholder_key')
-        : z.string().min(1),
-    EMAIL_FROM: z.string().min(1).default('noreply@ganzafrica.org'),
+    // Email (Nodemailer)
+    EMAIL_FROM: z.string().email().default('noreply@ganzafrica.org'),
+    EMAIL_PASSWORD: z.string().min(1).optional(),
+    SMTP_HOST: z.string().default('smtp.gmail.com'),
+    SMTP_PORT: z.coerce.number().default(587),
+
+    // Legacy Email (Resend)
+    RESEND_API_KEY: z.string().optional(),
 
     // Website
-    WEBSITE_URL: z.string().min(1).default('http://ganzafrica.org'),
+    WEBSITE_URL: z.string().min(1).default('http://localhost:3001'),
+    PORTAL_URL: z.string().min(1).default('http://localhost:3001'),
 
     // Optional
     CLOUDFLARE_R2_ACCOUNT_ID: z.string().optional(),
@@ -51,7 +55,6 @@ function getEnv() {
             return envSchema.parse({
                 ...process.env,
                 DATABASE_URL: process.env.DATABASE_URL || 'postgres://postgres:123456qwerty@localhost:5432/ganzafrica',
-                RESEND_API_KEY: 're_development_placeholder_key',
             });
         }
 
