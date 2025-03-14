@@ -47,12 +47,12 @@ export default function Header({ locale, dict, transparent = false }: HeaderProp
                 <div className="flex h-20 items-center justify-between">
                     {/* Logo */}
                     <Link href={`/${locale}`} className="relative z-50 flex items-center gap-2" prefetch={true}>
-                        <div className="relative h-10 w-28">
+                        <div className="relative h-16 w-28">
                             <Image
                                 src="/images/logo.png"
                                 alt="GanzAfrica"
                                 fill
-                                sizes="(max-width: 768px) 100px, 120px"
+                                sizes="(max-width: 768px) 300px, 200px"
                                 className="object-contain"
                                 priority
                             />

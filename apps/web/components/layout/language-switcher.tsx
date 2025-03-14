@@ -52,7 +52,7 @@ export default function LanguageSwitcher() {
                         src={currentLanguage.flag}
                         alt={currentLanguage.code}
                         width={20}
-                        height={15}
+                        height={20}
                         className="rounded-sm"
                     />
                     <span className="font-medium uppercase">{currentLanguage.code}</span>

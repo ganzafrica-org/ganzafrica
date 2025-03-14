@@ -13,38 +13,49 @@ interface HomeHeroProps {
 }
 
 export default function HomeHero({ locale, dict }: HomeHeroProps) {
-    const videoContainerRef = useRef<HTMLDivElement>(null);
+    const sectionRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
-    const heroContentRef = useRef<HTMLDivElement>(null);
-    const [videoTransitioned, setVideoTransitioned] = useState(false);
+    const whiteOverlayRef = useRef<HTMLDivElement>(null);
+    const initialContentRef = useRef<HTMLDivElement>(null);
+    const finalContentRef = useRef<HTMLDivElement>(null);
+    const [transitioned, setTransitioned] = useState(false);
 
     // Handle initial animation
     useEffect(() => {
-        if (!videoContainerRef.current || !heroContentRef.current) return;
+        if (!sectionRef.current || !whiteOverlayRef.current || !initialContentRef.current || !finalContentRef.current) return;
 
-        // Set initial state
-        gsap.set(heroContentRef.current, { opacity: 0, y: 30 });
+        // Set initial states
+        gsap.set(whiteOverlayRef.current, {
+            y: '-100%', // Start completely off-screen above
+            clipPath: 'ellipse(100% 0% at 50% 0%)'
+        });
+        gsap.set(finalContentRef.current, { opacity: 0 });
 
+        // Create animation timeline
         const tl = gsap.timeline();
 
-        // After a delay, transition the video to collapsed state
+        // After a delay, start the transition
         setTimeout(() => {
-            tl.to(videoContainerRef.current, {
-                height: '40vh',
-                borderBottomLeftRadius: '50% 20%',
-                borderBottomRightRadius: '50% 20%',
-                ease: "power2.inOut",
-                duration: 1.2,
+            // First fade out the initial content
+            tl.to(initialContentRef.current, {
+                opacity: 0,
+                duration: 0.5
             })
-                .to(heroContentRef.current, {
+                // Then bring down the white overlay with curve animation
+                .to(whiteOverlayRef.current, {
+                    y: '0%',
+                    duration: 1.2,
+                    ease: "power2.inOut",
+                    clipPath: 'ellipse(100% 100% at 50% 0%)'
+                })
+                // Then fade in the final content
+                .to(finalContentRef.current, {
                     opacity: 1,
-                    y: 0,
-                    duration: 0.8,
-                    delay: -0.4,
+                    duration: 0.8
                 });
 
-            setVideoTransitioned(true);
-        }, 3000); // Set to 3 seconds for testing, change back to 10000 for production
+            setTransitioned(true);
+        }, 3000);
 
         // Cleanup
         return () => {
@@ -53,16 +64,13 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
     }, []);
 
     return (
-        <section className="relative pt-20">
-            {/* Video Container with animated height - starts full screen, collapses to semi-circle */}
-            <div
-                ref={videoContainerRef}
-                className="relative w-full h-screen overflow-hidden transition-all duration-1000"
-            >
+        <section ref={sectionRef} className="relative h-screen overflow-hidden">
+            {/* Video background - full screen and fixed */}
+            <div className="fixed inset-0 z-10">
                 {/* Green overlay on video */}
-                <div className="absolute inset-0 bg-secondary-green/60 z-10"></div>
+                <div className="absolute inset-0 bg-secondary-green/60"></div>
 
-                {/* Video Background - fallback to image if video doesn't load */}
+                {/* Video Background */}
                 <video
                     ref={videoRef}
                     autoPlay
@@ -72,7 +80,6 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
                     className="absolute inset-0 w-full h-full object-cover"
                 >
                     <source src="/videos/hero-video.mp4" type="video/mp4" />
-                    {/* Fallback if video tag is not supported or video fails to load */}
                     <Image
                         src="/images/hero-test.jpg"
                         alt="Hero background"
@@ -81,83 +88,77 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
                         className="object-cover"
                     />
                 </video>
-
-                {/* SVG curve at the bottom - only visible after transition */}
-                {videoTransitioned && (
-                    <div className="absolute bottom-0 left-0 w-full">
-                        <svg
-                            viewBox="0 0 1440 100"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-full text-white"
-                            preserveAspectRatio="none"
-                        >
-                            <path
-                                d="M0 100V20C240 60 480 80 720 80C960 80 1200 60 1440 20V100H0Z"
-                                fill="currentColor"
-                            />
-                        </svg>
-                    </div>
-                )}
-
-                {/* Decorative Leaves - only visible after transition */}
-                {videoTransitioned && (
-                    <>
-                        <Image
-                            src="/images/leaf.png"
-                            alt="Decorative leaf"
-                            width={150}
-                            height={150}
-                            className="absolute top-24 left-0 opacity-80 z-20"
-                        />
-
-                        <Image
-                            src="/images/leaf.png"
-                            alt="Decorative leaf"
-                            width={150}
-                            height={150}
-                            className="absolute bottom-24 right-0 rotate-180 opacity-80 z-20"
-                        />
-                    </>
-                )}
-
-                {/* Initial content - shown while video is fullscreen */}
-                {!videoTransitioned && (
-                    <div className="absolute inset-0 flex items-center justify-center z-20">
-                        <div className="text-center text-white">
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
-                                {dict.home.hero.title || "Sustainable Solutions for Rwanda's Future"}
-                            </h1>
-                            <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-                                {dict.home.hero.subtitle || "Empowering youth through sustainable land management"}
-                            </p>
-                        </div>
-                    </div>
-                )}
             </div>
 
-            {/* Hero Content - only appears after video collapses */}
+            {/* Initial content - to be shown while video is fullscreen */}
             <div
-                ref={heroContentRef}
-                className="container mx-auto px-4 mt-10 text-center opacity-0"
+                ref={initialContentRef}
+                className="fixed inset-0 flex items-center justify-center z-20"
             >
-                <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                    <span className="text-primary-green">A PROSPEROUS AND <br/> SUSTAINABLE </span>
-                    <span className="text-orange">FUTURE FOR <br/> AFRICA</span>
-                </h1>
+                <div className="text-center text-white">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
+                        {dict.home.hero.title || "Sustainable Solutions for Rwanda's Future"}
+                    </h1>
+                    <p className="text-xl md:text-2xl max-w-3xl mx-auto">
+                        {dict.home.hero.subtitle || "Empowering youth through sustainable land management"}
+                    </p>
+                </div>
+            </div>
 
-                <p className="text-lg md:text-xl max-w-3xl mx-auto mb-10 text-gray-800">
-                    {dict.home.hero.subtitle || "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
-                </p>
+            {/* White overlay that animates from top */}
+            <div
+                ref={whiteOverlayRef}
+                className="fixed inset-0 bg-white z-30"
+                style={{
+                    transform: 'translateY(-100%)',
+                    clipPath: 'ellipse(100% 0% at 50% 0%)'
+                }}
+            ></div>
 
-                <Link href={`/${locale}/about`} prefetch={true}>
-                    <Button
-                        size="lg"
-                        className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-6 py-3"
-                    >
-                        {dict.cta.discover_more || "Discover More"}
-                    </Button>
-                </Link>
+            {/* Final content - appears after transition */}
+            <div
+                ref={finalContentRef}
+                className="fixed inset-0 z-40 opacity-0 pt-24"
+            >
+                <div className="container mx-auto px-4 text-center">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                        <span className="text-primary-green">A PROSPEROUS AND <br/> SUSTAINABLE </span>
+                        <span className="text-orange">FUTURE FOR <br/> AFRICA</span>
+                    </h1>
+
+                    <p className="text-base md:text-lg max-w-3xl mx-auto mb-8 text-gray-800">
+                        {dict.home.hero.subtitle || "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
+                    </p>
+
+                    <Link href={`/${locale}/about`} prefetch={true}>
+                        <Button
+                            size="lg"
+                            className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-6 py-3"
+                        >
+                            {dict.cta.discover_more || "Discover More"}
+                        </Button>
+                    </Link>
+                </div>
+
+                {/* Ganza leaf to stick out from side */}
+                <div className="absolute -left-1 top-1/3 transform rotate-[31.83deg] -translate-x-1/4 z-50">
+                    <Image
+                        src="/images/leaf.png"
+                        alt="Decorative leaf"
+                        width={200}
+                        height={200}
+                    />
+                </div>
+
+                <div className="absolute right-4 top-1/4 rotate-[-60deg] transform translate-x-1/4 z-50">
+                    <Image
+                        src="/images/leaf.png"
+                        alt="Decorative leaf"
+                        width={200}
+                        height={200}
+                        className="rotate-180"
+                    />
+                </div>
             </div>
         </section>
     );
