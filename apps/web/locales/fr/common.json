@@ -75,9 +75,9 @@
   },
   "home": {
     "hero": {
-      "title": "Solutions Durables pour l'Avenir du Rwanda",
-      "subtitle": "Autonomiser les jeunes par la gestion durable des terres, l'agriculture et les initiatives environnementales",
-      "cta": "Explorer Nos Programmes"
+      "title": "Un Avenir Prospère et Durable pour l'Afrique",
+      "subtitle": "Nous formons de jeunes professionnels pour qu'ils atteignent des carrières à fort impact en abordant les défis du système agroalimentaire de l'Afrique et en améliorant les moyens de subsistance des communautés.",
+      "cta": "Découvrir Plus"
     },
     "impact": {
       "title": "Notre Impact",
@@ -90,6 +90,29 @@
     "apply": "Postuler",
     "learn_more": "En Savoir Plus",
     "contact_us": "Nous Contacter",
-    "get_involved": "S'Impliquer"
+    "get_involved": "S'Impliquer",
+    "discover_more": "Découvrir Plus",
+    "sign_in": "Se Connecter"
+  },
+  "errors": {
+    "page_not_found": "Page non trouvée",
+    "go_home": "Retour à l'accueil"
+  },
+  "meta": {
+    "home_description": "GanzAfrica - Autonomiser les jeunes par la gestion durable des terres, l'agriculture et les initiatives environnementales au Rwanda.",
+    "projects_description": "Découvrez nos projets à impact concentrés sur l'agriculture durable et l'adaptation au changement climatique au Rwanda."
+  },
+  "video": {
+    "play": "Lire la vidéo",
+    "pause": "Mettre en pause"
+  },
+  "auth": {
+    "sign_in": "Se Connecter",
+    "sign_up": "S'Inscrire",
+    "email": "Email",
+    "password": "Mot de passe",
+    "forgot_password": "Mot de passe oublié?",
+    "no_account": "Pas encore de compte?",
+    "create_account": "Créer un compte"
   }
 }

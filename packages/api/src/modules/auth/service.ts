@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import {and, eq} from 'drizzle-orm';
 import { db, withDbTransaction, newId } from '../../db/client';
 import { users, sessions, password_reset_tokens, verification_tokens } from '../../db/schema';
 import { hashPassword, verifyPassword } from './passwords';
@@ -468,4 +468,63 @@ export async function verifyEmail(token: string): Promise<boolean> {
 
         return true;
     });
+}
+
+/**
+ * Resend verification email
+ * @param email The email address to resend verification to
+ * @returns True if successful
+ */
+export async function resendVerificationEmail(email: string): Promise<boolean> {
+    try {
+        // Find user by email
+        const user = await db.query.users.findFirst({
+            where: eq(users.email, email.toLowerCase()),
+        });
+
+        if (!user) {
+            logger.warn('Resend verification failed: User not found', { email });
+            return false;
+        }
+
+        if (user.email_verified) {
+            logger.info('Email already verified', { userId: user.id });
+            return true;
+        }
+
+        // Generate new verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
+        // Invalidate old tokens
+        await db.update(verification_tokens)
+            .set({ used: true })
+            .where(
+                and(
+                    eq(verification_tokens.user_id, user.id),
+                    eq(verification_tokens.type, 'email'),
+                    eq(verification_tokens.used, false)
+                )
+            );
+
+        // Store the new verification token
+        await db.insert(verification_tokens).values({
+            id: Number(newId()),
+            user_id: user.id,
+            type: 'email',
+            token_hash: tokenHash,
+            expires_at: new Date(Date.now() + AUTH.VERIFICATION_TOKEN_EXPIRY * 1000),
+            created_at: new Date(),
+            updated_at: new Date(),
+        });
+
+        // Send verification email
+        await sendVerificationEmail(user.email, verificationToken);
+        logger.info('Verification email resent', { userId: user.id });
+
+        return true;
+    } catch (error) {
+        logger.error('Failed to resend verification email', { error, email });
+        return false;
+    }
 }

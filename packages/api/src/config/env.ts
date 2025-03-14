@@ -1,6 +1,14 @@
 import { z } from 'zod';
 
-const isDevelopment = process.env.NODE_ENV !== 'production';
+// Configure dotenv in Node.js environment
+let dotenv;
+if (typeof window === 'undefined') {
+    // We're in a Node.js environment
+    dotenv = require('dotenv');
+    dotenv.config();
+}
+
+const isDevelopment = process.env?.NODE_ENV !== 'production';
 
 /**
  * Environment variable schema validation
@@ -8,14 +16,14 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
  */
 const envSchema = z.object({
     // Database
-    DATABASE_URL: z.string().min(1),
+    DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
 
     // General
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
     // Auth
-    SESSION_SECRET: z.string().min(32).default('super_secret_development_key_at_least_32_chars'),
-    PASETO_SECRET: z.string().min(32).default('super_secret_development_key_at_least_32_chars'),
+    SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters').default('super_secret_development_key_at_least_32_chars'),
+    PASETO_SECRET: z.string().min(32, 'PASETO_SECRET must be at least 32 characters').default('super_secret_development_key_at_least_32_chars'),
 
     // Server
     PORT: z.coerce.number().default(3000),
@@ -42,25 +50,35 @@ const envSchema = z.object({
 
 // Parse environment variables or throw error with details
 function getEnv() {
-    // First we try to parse with default values
+    // Check if we're in a browser context
+    if (typeof window !== 'undefined') {
+        // We're in a browser environment, return an empty object
+        // This prevents crashes while not exposing any values
+        return {} as ReturnType<typeof envSchema.parse>;
+    }
+
+    // Server-side environment parsing
     try {
         return envSchema.parse(process.env);
     } catch (error: any) {
         // If parsing fails, log helpful error message
-        console.error('❌ Invalid environment variables:', error.format());
+        if (error.format) {
+            console.error('❌ Invalid environment variables:', error.format());
+        } else {
+            console.error('❌ Invalid environment variables:', error);
+        }
 
         if (isDevelopment) {
             console.warn('⚠️ Running in development mode with default values for some missing variables');
             // Create a partial environment with defaults for development
             return envSchema.parse({
                 ...process.env,
-                DATABASE_URL: process.env.DATABASE_URL || 'postgres://postgres:123456qwerty@localhost:5432/ganzafrica',
+                DATABASE_URL: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/ganzafrica',
             });
         }
 
         throw new Error('Invalid environment variables');
     }
 }
-
 
 export const env = getEnv();

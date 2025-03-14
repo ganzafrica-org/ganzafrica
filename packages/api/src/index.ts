@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-dotenv.config();
+require('dotenv').config({ debug: process.env.DEBUG })
 import { createContext } from './trpc/context';
 import { appRouter } from './trpc/routers';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';

@@ -78,7 +78,7 @@ export async function sendVerificationEmail(
     email: string,
     token: string
 ): Promise<{ id: string } | null> {
-    const verificationUrl = `${process.env.WEBSITE_URL || 'http://localhost:3001'}/verify-email?token=${token}`;
+    const verificationUrl = `${process.env.PORTAL_URL}/verify?token=${token}`;
 
     const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -105,7 +105,7 @@ export async function sendPasswordResetEmail(
     email: string,
     token: string
 ): Promise<{ id: string } | null> {
-    const resetUrl = `${process.env.WEBSITE_URL || 'http://localhost:3001'}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.PORTAL_URL}/reset-password?token=${token}`;
 
     const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

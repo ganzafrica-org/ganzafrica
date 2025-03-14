@@ -1,24 +1,15 @@
-import { Suspense } from 'react';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Rubik } from 'next/font/google';
 import { getDictionary } from '@/lib/get-dictionary';
-
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
-import Loading from '@/components/ui/loading';
-import { Providers } from '@/components/providers';
-import { CloudflareAnalytics, CloudflareSpeedInsights } from '@/components/analytics/cloudflare-analytics';
+import { CloudflareAnalytics } from '@/components/analytics/cloudflare-analytics';
+import ClientLayout from '@/components/layout/client-layout';
 
 import '@workspace/ui/globals.css';
 
-// Font optimization
-const fontSans = Geist({
+// Font optimization - Using Rubik
+const fontRubik = Rubik({
     subsets: ['latin'],
-    variable: '--font-sans',
-});
-
-const fontMono = Geist_Mono({
-    subsets: ['latin'],
-    variable: '--font-mono',
+    display: 'swap',
+    variable: '--font-rubik',
 });
 
 // Metadata generation
@@ -64,23 +55,14 @@ export default async function RootLayout({
     return (
         <html
             lang={locale}
-            className={`${fontSans.variable} ${fontMono.variable}`}
+            className={`${fontRubik.variable}`}
             suppressHydrationWarning
         >
-        <body className="min-h-screen bg-background font-sans antialiased">
-        <Providers>
-            <div className="relative flex min-h-screen flex-col">
-                <Header locale={locale} dict={dict} />
-                <div className="flex-1">
-                    <Suspense fallback={<Loading />}>
-                        {children}
-                    </Suspense>
-                </div>
-                <Footer locale={locale} dict={dict} />
-            </div>
-        </Providers>
+        <body className="min-h-screen font-sans antialiased">
+        <ClientLayout locale={locale} dict={dict}>
+            {children}
+        </ClientLayout>
         <CloudflareAnalytics token={process.env.NEXT_PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN} />
-        <CloudflareSpeedInsights />
         </body>
         </html>
     );

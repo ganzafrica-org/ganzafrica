@@ -19,8 +19,28 @@ class Logger {
     }
 
     private log(level: LogLevel, payload: LogPayload): void {
-        // Skip debug logs in production
-        if (level === 'debug' && env.NODE_ENV === 'production') {
+        // Check if we're in browser context
+        if (typeof window !== 'undefined') {
+            // Simple browser-friendly logging
+            switch(level) {
+                case 'debug':
+                    console.debug(`[${this.context}]`, payload.message, payload);
+                    break;
+                case 'info':
+                    console.info(`[${this.context}]`, payload.message, payload);
+                    break;
+                case 'warn':
+                    console.warn(`[${this.context}]`, payload.message, payload);
+                    break;
+                case 'error':
+                    console.error(`[${this.context}]`, payload.message, payload);
+                    break;
+            }
+            return;
+        }
+
+        // Skip debug logs in production for server environment
+        if (level === 'debug' && env?.NODE_ENV === 'production') {
             return;
         }
 
@@ -33,7 +53,7 @@ class Logger {
         };
 
         // In production, log as JSON for easier parsing
-        if (env.NODE_ENV === 'production') {
+        if (env?.NODE_ENV === 'production') {
             console[level](JSON.stringify(output));
         } else {
             // In development, log in a more readable format
