@@ -7,7 +7,7 @@ import {
     requestPasswordResetSchema,
     resetPasswordSchema,
     verifyEmailSchema,
-    setupTotpSchema,
+    setupTotpSchema, resendVerificationEmail,
 } from '../../modules/auth';
 import {
     createUser,
@@ -418,6 +418,31 @@ export const authRouter = router({
             }
         }),
 
+    /**
+     * Resend verification email
+     */
+    resendVerificationEmail: publicProcedure
+        .input(z.object({ email: z.string().email('Invalid email address') }))
+        .mutation(async ({ input }): Promise<AuthResponse> => {
+            try {
+                await resendVerificationEmail(input.email);
+
+                // Always return success to prevent email enumeration
+                return {
+                    success: true,
+                    message: 'If your email is registered and not verified, a new verification link has been sent.',
+                };
+            } catch (error) {
+                // Log but don't expose the error
+                logger.error('Resend verification email error', { error, email: input.email });
+
+                // Still return success to prevent email enumeration
+                return {
+                    success: true,
+                    message: 'If your email is registered and not verified, a new verification link has been sent.',
+                };
+            }
+        }),
     /**
      * Setup two-factor authentication
      */
