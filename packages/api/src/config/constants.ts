@@ -23,9 +23,9 @@ export const PAGINATION = {
 export const FILE_UPLOAD = {
     MAX_SIZE: 10 * 1024 * 1024, // 10MB
     ALLOWED_MIME_TYPES: [
-        'image/jpeg',
-        'image/png',
-        'image/webp',
+        'images/jpeg',
+        'images/png',
+        'images/webp',
         'application/pdf',
         'application/msword',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

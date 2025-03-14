@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import { AUTH } from '../../config';
+
+
+// These should match the values in AUTH config
+const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Validation schema for user registration
@@ -8,7 +11,7 @@ export const signupSchema = z.object({
     email: z.string().email('Invalid email address'),
     password: z
         .string()
-        .min(AUTH.MINIMUM_PASSWORD_LENGTH, `Password must be at least ${AUTH.MINIMUM_PASSWORD_LENGTH} characters`)
+        .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
         .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
         .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
         .regex(/[0-9]/, 'Password must contain at least one number')
@@ -39,7 +42,7 @@ export const resetPasswordSchema = z.object({
     token: z.string().min(1, 'Reset token is required'),
     password: z
         .string()
-        .min(AUTH.MINIMUM_PASSWORD_LENGTH, `Password must be at least ${AUTH.MINIMUM_PASSWORD_LENGTH} characters`)
+        .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
         .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
         .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
         .regex(/[0-9]/, 'Password must contain at least one number')

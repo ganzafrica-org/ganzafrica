@@ -10,7 +10,7 @@ dotenv.config();
 
 async function runMigrations() {
     const pool = new Pool({
-        connectionString: env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/ganzafrica',
+        connectionString: env.DATABASE_URL,
     });
 
     try {

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Globe } from 'lucide-react';
+import Image from 'next/image';
 
 import {
     DropdownMenu,
@@ -11,10 +11,10 @@ import {
 } from '@workspace/ui/components/dropdown-menu';
 import { Button } from '@workspace/ui/components/button';
 
-// Supported languages configuration with display names
+// Supported languages configuration with display names and flags
 const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'fr', name: 'Français' },
+    { code: 'en', name: 'English', flag: '/images/flags/en.svg' },
+    { code: 'fr', name: 'Français', flag: '/images/flags/fr.svg' },
 ];
 
 export default function LanguageSwitcher() {
@@ -23,6 +23,10 @@ export default function LanguageSwitcher() {
 
     // Get current locale from pathname
     const currentLocale = pathname.split('/')[1];
+
+    // Find current language object with fallback to English
+    const currentLanguage = languages.find(lang => lang.code === currentLocale) ?? languages[0]!;
+
 
     // Handle language change
     const handleLanguageChange = (locale: string) => {
@@ -39,20 +43,35 @@ export default function LanguageSwitcher() {
         router.push(newPathname);
     };
 
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Switch language">
-                    <Globe className="h-5 w-5" />
+                <Button variant="ghost" size="sm" className="h-8 gap-1 px-2">
+                    <Image
+                        src={currentLanguage.flag}
+                        alt={currentLanguage.code}
+                        width={20}
+                        height={15}
+                        className="rounded-sm"
+                    />
+                    <span className="font-medium uppercase">{currentLanguage.code}</span>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-40">
                 {languages.map((language) => (
                     <DropdownMenuItem
                         key={language.code}
                         onClick={() => handleLanguageChange(language.code)}
-                        className={currentLocale === language.code ? 'font-bold' : ''}
+                        className={`flex items-center gap-2 ${currentLocale === language.code ? 'font-bold' : ''}`}
                     >
+                        <Image
+                            src={language.flag}
+                            alt={language.code}
+                            width={20}
+                            height={15}
+                            className="rounded-sm"
+                        />
                         {language.name}
                     </DropdownMenuItem>
                 ))}

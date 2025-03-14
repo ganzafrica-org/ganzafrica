@@ -13,7 +13,7 @@ export function generateMetadata({
     imagePath?: string;
 }): Metadata {
     const siteName = 'GanzAfrica';
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ganzafrica.org';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
     const ogImage = imagePath || '/images/og-default.jpg';
 
     return {

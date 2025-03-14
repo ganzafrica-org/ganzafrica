@@ -1,8 +1,8 @@
 import { V4, decode } from 'paseto';
 import * as crypto from 'crypto';
-import { env } from '../../config/env';
-import { AUTH } from '../../config/constants';
-import { createLogger } from '../../config/logger';
+import { env } from '../../config';
+import { AUTH } from '../../config';
+import { createLogger } from '../../config';
 import { AuthTokenPayload } from './types';
 
 const logger = createLogger('paseto');

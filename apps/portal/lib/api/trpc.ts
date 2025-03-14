@@ -3,7 +3,7 @@ import { AppRouter } from '@workspace/api/src/trpc/routers';
 import superjson from 'superjson';
 
 // Configuration for API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Create and export tRPC client instance
 export const api = createTRPCProxyClient<AppRouter>({
