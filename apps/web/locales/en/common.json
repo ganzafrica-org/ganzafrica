@@ -192,6 +192,17 @@
       "fellows_trained": "Fellows Trained",
       "projects_completed": "Projects Completed",
       "communities_reached": "Communities Reached"
+    },
+    "fellow_section": {
+      "heading_first": "GanzAfrica",
+      "heading_second": "Empowering Youth to Transform Food Systems",
+      "description": "GanzAfrica empowers Africa's youth with the skills, knowledge, and opportunities to drive sustainable food systems transformation. Through training, mentorship, and work placements, we equip young leaders to tackle challenges in agriculture, environmental stewardship, and land management. Our holistic approach integrates data literacy, evidence-based decision-making, and leadership development, bridging the gap between education and employment. By fostering expertise and professional networks, GanzAfrica prepares youth to build resilient communities and contribute to a thriving Africa.",
+      "career_placement": "Career Placement & Impact",
+      "data_solutions": "Data-Driven Solutions",
+      "training": "Training & Mentorship",
+      "fellows_count": "75+",
+      "fellows_label": "Fellows",
+      "image_src": "/images/ganzafrica-fellows.jpg"
     }
   },
   "cta": {

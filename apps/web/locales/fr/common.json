@@ -190,6 +190,17 @@
       "fellows_trained": "Boursiers Formés",
       "projects_completed": "Projets Complétés",
       "communities_reached": "Communautés Touchées"
+    },
+    "fellow_section": {
+      "heading_first": "GanzAfrica",
+      "heading_second": "Autonomiser les Jeunes pour Transformer les Systèmes Alimentaires",
+      "description": "GanzAfrica donne aux jeunes d'Afrique les compétences, les connaissances et les opportunités nécessaires pour piloter la transformation durable des systèmes alimentaires. Grâce à la formation, au mentorat et aux placements professionnels, nous équipons les jeunes leaders pour relever les défis de l'agriculture, de la gestion environnementale et de la gestion des terres. Notre approche holistique intègre la littératie des données, la prise de décision fondée sur des preuves et le développement du leadership, comblant ainsi le fossé entre l'éducation et l'emploi. En favorisant l'expertise et les réseaux professionnels, GanzAfrica prépare les jeunes à construire des communautés résilientes et à contribuer à une Afrique prospère.",
+      "career_placement": "Placement Professionnel & Impact",
+      "data_solutions": "Solutions Basées sur les Données",
+      "training": "Formation & Mentorat",
+      "fellows_count": "75+",
+      "fellows_label": "Boursiers",
+      "image_src": "/images/ganzafrica-fellows.jpg"
     }
   },
   "cta": {
