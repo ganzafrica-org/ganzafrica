@@ -66,9 +66,9 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
     }, []);
 
     return (
-        <section ref={sectionRef} className="relative h-screen overflow-hidden">
-            {/* Video background - full screen and fixed */}
-            <div className="fixed inset-0 z-10">
+        <section ref={sectionRef} className="relative h-screen">
+            {/* Video background - not fixed anymore */}
+            <div className="absolute inset-0 z-10">
                 {/* Green overlay on video */}
                 <div className="absolute inset-0 bg-secondary-green/60"></div>
 
@@ -95,7 +95,7 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
             {/* Initial content - to be shown while video is fullscreen */}
             <div
                 ref={initialContentRef}
-                className="fixed inset-0 flex items-center justify-center z-20"
+                className="absolute inset-0 flex items-center justify-center z-20"
             >
                 <div className="text-center text-white">
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
@@ -107,12 +107,12 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
                 </div>
             </div>
 
-            {/* White overlay that animates from top */}
-            <div className="fixed inset-0 z-30">
+            {/* White overlay that animates from top with smoother curve */}
+            <div className="absolute inset-0 z-30">
                 <svg className="absolute inset-0 w-full h-full">
                     <defs>
                         <clipPath id="hero-clip" clipPathUnits="objectBoundingBox">
-                            <path d="M0,0 H1 V1 C0.9,0.85 0.5,0.8 0.1,0.85 L0,1 Z" />
+                            <path d="M0,0 H1 V0.9 Q0.75,0.65 0.5,0.6 Q0.25,0.65 0,0.9 L0,0 Z" />
                         </clipPath>
                     </defs>
                 </svg>
@@ -129,12 +129,12 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
             {/* Final content - appears after transition */}
             <div
                 ref={finalContentRef}
-                className="fixed inset-0 z-40 opacity-0 pt-24"
+                className="absolute inset-0 z-40 opacity-0 pt-24"
             >
                 <div className="container mx-auto px-4 text-center">
                     <h1 className="text-4xl md:text-5xl font-bold mb-6">
                         <span className="text-primary-green">A PROSPEROUS AND <br/> SUSTAINABLE </span>
-                        <span className="text-orange">FUTURE FOR <br/> AFRICA</span>
+                        <span className="text-primary-orange">FUTURE FOR <br/> AFRICA</span>
                     </h1>
 
                     <p className="text-base md:text-lg max-w-3xl mx-auto mb-8 text-gray-800">
