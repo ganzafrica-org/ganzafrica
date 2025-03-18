@@ -73,16 +73,24 @@ export default function Header({
           <nav className="hidden items-center space-x-1 md:flex">
             {/* About Dropdown */}
             <div className="group relative">
+<<<<<<< HEAD
               {/* 'About' is now a non-clickable span */}
               <span
                 className={cn(
                   "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer",
+=======
+              <Link
+                href={`/${locale}/about`}
+                className={cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+>>>>>>> origin/dev
                   pathname.includes("/about")
                     ? "text-primary-green"
                     : isScrolled || !transparent
                       ? "text-gray-700 hover:text-primary-green"
                       : "text-white hover:text-white/80",
                 )}
+<<<<<<< HEAD
               >
                 {dict.navigation.about}
                 <ChevronDown className="ml-1 h-4 w-4" />
@@ -99,6 +107,16 @@ export default function Header({
                     {dict.about.who_we_are}
                   </Link>
                   <Link
+=======
+                prefetch={true}
+              >
+                {dict.navigation.about}
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </Link>
+              <div className="absolute left-0 mt-1 w-48 hidden group-hover:block rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                <div className="py-1 flex flex-col">
+                  <Link
+>>>>>>> origin/dev
                     href={`/${locale}/about/our-story`}
                     className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     prefetch={true}
