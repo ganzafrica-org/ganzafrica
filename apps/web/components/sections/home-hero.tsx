@@ -26,8 +26,8 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
 
         // Set initial states
         gsap.set(whiteOverlayRef.current, {
-            y: '-100%', // Start completely off-screen above
-            clipPath: 'ellipse(100% 0% at 50% 0%)'
+            y: '-100%',
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)'
         });
         gsap.set(finalContentRef.current, { opacity: 0 });
 
@@ -41,12 +41,14 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
                 opacity: 0,
                 duration: 0.5
             })
+
                 // Then bring down the white overlay with curve animation
                 .to(whiteOverlayRef.current, {
                     y: '0%',
                     duration: 1.2,
                     ease: "power2.inOut",
-                    clipPath: 'ellipse(100% 100% at 50% 0%)'
+                    clipPath: 'url(#hero-clip)'
+
                 })
                 // Then fade in the final content
                 .to(finalContentRef.current, {
@@ -106,14 +108,23 @@ export default function HomeHero({ locale, dict }: HomeHeroProps) {
             </div>
 
             {/* White overlay that animates from top */}
-            <div
-                ref={whiteOverlayRef}
-                className="fixed inset-0 bg-white z-30"
-                style={{
-                    transform: 'translateY(-100%)',
-                    clipPath: 'ellipse(100% 0% at 50% 0%)'
-                }}
-            ></div>
+            <div className="fixed inset-0 z-30">
+                <svg className="absolute inset-0 w-full h-full">
+                    <defs>
+                        <clipPath id="hero-clip" clipPathUnits="objectBoundingBox">
+                            <path d="M0,0 H1 V1 C0.9,0.85 0.5,0.8 0.1,0.85 L0,1 Z" />
+                        </clipPath>
+                    </defs>
+                </svg>
+                <div
+                    ref={whiteOverlayRef}
+                    className="absolute inset-0 bg-white"
+                    style={{
+                        transform: 'translateY(-100%)',
+                        clipPath: 'url(#hero-clip)',
+                    }}
+                ></div>
+            </div>
 
             {/* Final content - appears after transition */}
             <div
