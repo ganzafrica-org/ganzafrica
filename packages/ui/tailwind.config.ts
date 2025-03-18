@@ -27,7 +27,7 @@ const config = {
 				"secondary-yellow": "#FFEF97",
 				"yellow-lighter": "#FFF7F5",
 				"yellow-grid": "#FEF937",
-				"orange": "#FF8D12",
+				"primary-orange": "#F8B712",
 				"light-orange": "#FFEBE7",
 				"orange-grid": "#FEF937",
 				"dark-blue": "#073392",
