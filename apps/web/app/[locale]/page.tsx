@@ -1,5 +1,6 @@
 import { getDictionary } from "@/lib/get-dictionary";
 import HomeHero from "@/components/sections/home-hero";
+import FellowsSection from "@/components/sections/fellows-section";
 import { Metadata } from "next";
 import { generateMetadata as baseGenerateMetadata } from "@/lib/metadata";
 
@@ -31,7 +32,7 @@ export default async function HomePage({
     <main>
       <HomeHero locale={locale} dict={dict} />
 
-      {/* Other homepage sections would go here */}
+      <FellowsSection locale={locale} dict={dict} />
     </main>
   );
 }
