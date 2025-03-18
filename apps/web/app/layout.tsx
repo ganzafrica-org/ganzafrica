@@ -3,7 +3,11 @@ import { getDictionary } from "@/lib/get-dictionary";
 import { CloudflareAnalytics } from "@/components/analytics/cloudflare-analytics";
 import ClientLayout from "@/components/layout/client-layout";
 
+<<<<<<< HEAD
 import "@workspace/ui/globals.css";
+=======
+import "@workspace/ui/globals.css"
+>>>>>>> origin/dev
 
 // Font optimization - Using Rubik
 const fontRubik = Rubik({
