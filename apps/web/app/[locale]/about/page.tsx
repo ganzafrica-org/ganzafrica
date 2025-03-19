@@ -5,7 +5,7 @@ import { PersonIcon, BikeIcon } from "@/components/ui/icons";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import CategoriesBanner from "@/components/layout/headerBanner";
 import LanguageSwitcher from "@/components/layout/language-switcher";
-import { FC } from 'react';
+import { FC } from "react";
 
 // Types for props
 interface MissionCardProps {
@@ -112,7 +112,7 @@ const ValueCard: FC<ValueCardProps> = ({
     </div>
 
     <h3
-      className={`text-2xl font-bold text-center ${titleColor} mb-4 transition-colors duration-300 hover:text-yellow-500`}
+      className={`text-2xl font-bold text-center ${titleColor} mb-4 transition-colors duration-300 hover:text-primary-orange`}
     >
       {title}
     </h3>
@@ -126,7 +126,12 @@ const ValueCard: FC<ValueCardProps> = ({
 );
 
 // Floating Tag component
-const FloatingTag: FC<FloatingTagProps> = ({ text, position, color, rotate = "0deg" }) => (
+const FloatingTag: FC<FloatingTagProps> = ({
+  text,
+  position,
+  color,
+  rotate = "0deg",
+}) => (
   <div
     className={`absolute ${position}`}
     style={{ transform: `rotate(${rotate})` }}
@@ -140,9 +145,14 @@ const FloatingTag: FC<FloatingTagProps> = ({ text, position, color, rotate = "0d
 );
 
 // Promise Card component
-const PromiseCard: FC<PromiseCardProps> = ({ type, items, content, hasCurvedCorner = false }) => {
+const PromiseCard: FC<PromiseCardProps> = ({
+  type,
+  items,
+  content,
+  hasCurvedCorner = false,
+}) => {
   const bgColor = type === "partners" ? "bg-yellow-50" : "bg-green-800";
-  const labelColor = type === "partners" ? "bg-yellow-400" : "bg-green-500";
+  const labelColor = type === "partners" ? "secondary-yellow" : "bg-green-500";
   const textColor = type === "partners" ? "text-gray-800" : "text-white";
   const label = `Promise to ${type}`;
 
@@ -167,8 +177,8 @@ const PromiseCard: FC<PromiseCardProps> = ({ type, items, content, hasCurvedCorn
         </ul>
       </div>
     );
-  } 
-  
+  }
+
   return (
     <div className="relative">
       <div
@@ -216,31 +226,31 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
     // Yellow
     {
       text: dict?.about?.tags?.youth_empowerment || "Youth Empowerment",
-      color: "bg-yellow-400",
+      color: "secondary-yellow",
       position: "left-56 bottom-10",
       rotate: "-5deg",
     },
     {
       text: dict?.about?.tags?.land_management || "Land Management",
-      color: "bg-yellow-400",
-      position: "left-64 bottom-20", 
+      color: "secondary-yellow",
+      position: "left-64 bottom-20",
       rotate: "0deg",
     },
     {
       text: dict?.about?.tags?.peer_learning || "Peer to peer learning",
-      color: "bg-yellow-400",
-      position: "left-1/3 top-20", 
+      color: "secondary-yellow",
+      position: "left-1/3 top-20",
       rotate: "8deg",
     },
     {
       text: dict?.about?.tags?.food_systems || "Food systems",
-      color: "bg-yellow-400",
-      position: "right-32 bottom-16", 
+      color: "secondary-yellow",
+      position: "right-32 bottom-16",
       rotate: "0deg",
     },
     {
       text: dict?.about?.tags?.stewardship || "Stewardship",
-      color: "bg-yellow-400",
+      color: "secondary-yellow",
       position: "left-1/2 bottom-20",
       rotate: "5deg",
     },
@@ -249,13 +259,13 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
     {
       text: dict?.about?.tags?.system_thinking || "System Thinking",
       color: "bg-primary-green",
-      position: "left-36 top-24", 
+      position: "left-36 top-24",
       rotate: "-8deg",
     },
     {
       text: dict?.about?.tags?.data_literacy || "Data Literacy",
       color: "bg-primary-green",
-      position: "left-1/4 bottom-10", 
+      position: "left-1/4 bottom-10",
       rotate: "0deg",
     },
     {
@@ -267,31 +277,31 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
     {
       text: dict?.about?.tags?.networking || "Networking",
       color: "bg-primary-green",
-      position: "left-1/3 bottom-10", 
+      position: "left-1/3 bottom-10",
       rotate: "3deg",
     },
     {
       text: dict?.about?.tags?.evidence_based || "Evidence-based",
       color: "bg-primary-green",
-      position: "left-1/2 bottom-10", 
+      position: "left-1/2 bottom-10",
       rotate: "0deg",
     },
     {
       text: dict?.about?.tags?.co_creation || "Co-creation",
       color: "bg-primary-green",
-      position: "right-1/3 bottom-20", 
+      position: "right-1/3 bottom-20",
       rotate: "0deg",
     },
     {
       text: dict?.about?.tags?.agriculture || "Agriculture",
       color: "bg-primary-green",
-      position: "right-20 top-24", 
+      position: "right-20 top-24",
       rotate: "-4deg",
     },
     {
       text: dict?.about?.tags?.mentorship || "Mentorship",
       color: "bg-primary-green",
-      position: "right-1/4 bottom-10", 
+      position: "right-1/4 bottom-10",
       rotate: "0deg",
     },
   ];
@@ -311,7 +321,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
       <div className="flex justify-end p-4">
         <LanguageSwitcher />
       </div>
-      
+
       {/* Hero Section with Background Image */}
       <section className="relative bg-green-900 text-white py-24">
         <div className="absolute inset-0 z-0">
@@ -325,12 +335,15 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         </div>
         <div className="container mx-auto px-4 relative z-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {dict?.about?.hero?.title_1 || "Empowering"} <span className="text-white">{dict?.about?.hero?.title_2 || "Africa's Future"}</span>
+            {dict?.about?.hero?.title_1 || "Empowering"}{" "}
+            <span className="text-white">
+              {dict?.about?.hero?.title_2 || "Africa's Future"}
+            </span>
           </h1>
           <h2 className="text-2xl md:text-3xl font-medium mb-6">
             {dict?.about?.hero?.subtitle || "Through Transformative"}
           </h2>
-          <h2 className="text-3xl md:text-4xl font-bold text-yellow-400 mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-primary-orange mb-8">
             {dict?.about?.hero?.who_we_are || "WHO WE ARE"}
           </h2>
         </div>
@@ -341,27 +354,32 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         <div className="container mx-auto px-4">
           <div className="flex justify-center mb-8">
             <DecoratedHeading
-              firstText={dict?.about?.transformative_partner?.heading_first || "A Transformative"}
-              secondText={dict?.about?.transformative_partner?.heading_second || "Partner"}
+              firstText={
+                dict?.about?.transformative_partner?.heading_first ||
+                "A Transformative"
+              }
+              secondText={
+                dict?.about?.transformative_partner?.heading_second || "Partner"
+              }
             />
           </div>
 
           <div className="max-w-4xl mx-auto text-left">
             <p className="text-gray-700 mb-6">
-              {dict?.about?.transformative_partner?.paragraph_1 || 
-              "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
+              {dict?.about?.transformative_partner?.paragraph_1 ||
+                "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
             </p>
             <p className="text-gray-700 mb-8">
-              {dict?.about?.transformative_partner?.paragraph_2 || 
-              "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
+              {dict?.about?.transformative_partner?.paragraph_2 ||
+                "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
             </p>
             <p className="text-gray-700 mb-8">
-              {dict?.about?.transformative_partner?.paragraph_3 || 
-              "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
+              {dict?.about?.transformative_partner?.paragraph_3 ||
+                "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
             </p>
             <p className="text-gray-700 mb-8">
-              {dict?.about?.transformative_partner?.paragraph_4 || 
-              "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
+              {dict?.about?.transformative_partner?.paragraph_4 ||
+                "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
             </p>
           </div>
         </div>
@@ -372,9 +390,11 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         <div className="flex justify-center mb-12">
           <div className="relative inline-block">
             <div className="flex justify-center">
-              <DecoratedHeading 
-                firstText={dict?.about?.aspirations?.heading_first || "Our"} 
-                secondText={dict?.about?.aspirations?.heading_second || "Aspirations"} 
+              <DecoratedHeading
+                firstText={dict?.about?.aspirations?.heading_first || "Our"}
+                secondText={
+                  dict?.about?.aspirations?.heading_second || "Aspirations"
+                }
               />
             </div>
           </div>
@@ -399,10 +419,13 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             <div className="md:w-1/2 flex flex-col space-y-8">
               <MissionCard
                 bgColor="bg-yellow-50"
-                labelColor="bg-yellow-400"
-                iconColor="bg-yellow-400"
+                labelColor="secondary-yellow"
+                iconColor="secondary-yellow"
                 label={dict?.about?.aspirations?.mission_label || "Our Mission"}
-                content={dict?.about?.aspirations?.mission_1 || "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"}
+                content={
+                  dict?.about?.aspirations?.mission_1 ||
+                  "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"
+                }
               />
 
               <MissionCard
@@ -411,7 +434,10 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
                 iconColor="bg-green-600"
                 textColor="text-white"
                 label={dict?.about?.aspirations?.mission_label || "Our Mission"}
-                content={dict?.about?.aspirations?.mission_2 || "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."}
+                content={
+                  dict?.about?.aspirations?.mission_2 ||
+                  "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."
+                }
                 hasCurvedCorner={true}
               />
             </div>
@@ -424,9 +450,9 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         <div className="flex justify-center mb-16">
           <div className="relative inline-block">
             <div className="flex justify-center mb-10">
-              <DecoratedHeading 
-                firstText={dict?.about?.values?.heading_first || "Our"} 
-                secondText={dict?.about?.values?.heading_second || "Values"} 
+              <DecoratedHeading
+                firstText={dict?.about?.values?.heading_first || "Our"}
+                secondText={dict?.about?.values?.heading_second || "Values"}
               />
             </div>
           </div>
@@ -436,10 +462,13 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           <div className="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto">
             <ValueCard
               bgColor="bg-yellow-50"
-              iconBgColor="bg-yellow-400"
+              iconBgColor="secondary-yellow"
               title={dict?.about?.values?.evidence_title || "Evidence based"}
               titleColor="text-yellow-400"
-              description={dict?.about?.values?.evidence_description || "In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes."}
+              description={
+                dict?.about?.values?.evidence_description ||
+                "In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes."
+              }
             />
 
             <ValueCard
@@ -449,15 +478,21 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
               title={dict?.about?.values?.integrity_title || "Integrity"}
               titleColor="text-white"
               textColor="text-white"
-              description={dict?.about?.values?.integrity_description || "We work with authenticity and transparency. We are collaborative but not subject to influence or partiality."}
+              description={
+                dict?.about?.values?.integrity_description ||
+                "We work with authenticity and transparency. We are collaborative but not subject to influence or partiality."
+              }
             />
 
             <ValueCard
               bgColor="bg-yellow-50"
-              iconBgColor="bg-yellow-400"
+              iconBgColor="secondary-yellow"
               title={dict?.about?.values?.stewardship_title || "Stewardship"}
               titleColor="text-yellow-400"
-              description={dict?.about?.values?.stewardship_description || "We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future."}
+              description={
+                dict?.about?.values?.stewardship_description ||
+                "We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future."
+              }
             />
           </div>
         </div>
@@ -468,10 +503,18 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         {/* Main heading */}
         <div className="container mx-auto px-4 mb-8">
           <h2 className="text-4xl font-bold text-center">
-            <span className="text-green-800">{dict?.about?.building_solutions?.heading_1 || "Building Sustainable "}</span>
-            <span className="text-yellow-400">{dict?.about?.building_solutions?.heading_2 || "Solutions With"}</span>
+            <span className="text-green-800">
+              {dict?.about?.building_solutions?.heading_1 ||
+                "Building Sustainable "}
+            </span>
+            <span className="text-primary-orange">
+              {dict?.about?.building_solutions?.heading_2 || "Solutions With"}
+            </span>
             <br />
-            <span className="text-yellow-400">{dict?.about?.building_solutions?.heading_3 || "African Communities!"}</span>
+            <span className="text-primary-orange">
+              {dict?.about?.building_solutions?.heading_3 ||
+                "African Communities!"}
+            </span>
           </h2>
         </div>
 
@@ -498,9 +541,9 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex justify-center mb-10">
-            <DecoratedHeading 
-              firstText={dict?.about?.approach?.heading_first || "Our"} 
-              secondText={dict?.about?.approach?.heading_second || "Approach"} 
+            <DecoratedHeading
+              firstText={dict?.about?.approach?.heading_first || "Our"}
+              secondText={dict?.about?.approach?.heading_second || "Approach"}
             />
           </div>
 
@@ -508,15 +551,15 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             {/* Left Column - Identify */}
             <div>
               <div style={{ backgroundColor: "#FFFDEB" }} className="p-6 h-80">
-                <div className="w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center mb-4">
+                <div className="w-24 h-24 secondary-yellow rounded-full flex items-center justify-center mb-4">
                   <PersonIcon className="w-12 h-12 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-yellow-400 mb-3">
+                <h2 className="text-2xl font-bold text-primary-orange mb-3">
                   {dict?.about?.approach?.identify_title || "Identify"}
                 </h2>
                 <p className="text-gray-800">
-                  {dict?.about?.approach?.identify_text || 
-                  "Identify leaders who are committed and passionate about the sustainable stewardship of land, agriculture, and the environment, and who can be trained and capacitated to provide expertise to public, and private sectors and communities."}
+                  {dict?.about?.approach?.identify_text ||
+                    "Identify leaders who are committed and passionate about the sustainable stewardship of land, agriculture, and the environment, and who can be trained and capacitated to provide expertise to public, and private sectors and communities."}
                 </p>
               </div>
 
@@ -554,8 +597,8 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
                   {dict?.about?.approach?.establish_title || "Establish"}
                 </h2>
                 <p className="text-gray-800">
-                  {dict?.about?.approach?.establish_text || 
-                  "Establish in-person digital training and incubation centres, enabling hands-on capacity enhancement programmes, professional development and networking designed to respond to specific challenges."}
+                  {dict?.about?.approach?.establish_text ||
+                    "Establish in-person digital training and incubation centres, enabling hands-on capacity enhancement programmes, professional development and networking designed to respond to specific challenges."}
                 </p>
               </div>
             </div>
@@ -564,15 +607,15 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             <div>
               {/* Deploy section */}
               <div style={{ backgroundColor: "#FFFDEB" }} className="p-6 h-80">
-                <div className="w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center mb-4">
+                <div className="w-24 h-24 secondary-yellow rounded-full flex items-center justify-center mb-4">
                   <PersonIcon className="w-12 h-12 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-yellow-400 mb-3">
+                <h2 className="text-2xl font-bold text-primary-orange mb-3">
                   {dict?.about?.approach?.deploy_title || "Deploy"}
                 </h2>
                 <p className="text-gray-800">
-                  {dict?.about?.approach?.deploy_text || 
-                  "Deploy trained young professionals to support the design and implementation of co-created, community-focused solutions for livelihood improvement."}
+                  {dict?.about?.approach?.deploy_text ||
+                    "Deploy trained young professionals to support the design and implementation of co-created, community-focused solutions for livelihood improvement."}
                 </p>
               </div>
 
@@ -594,9 +637,9 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
       {/* Our Promise */}
       <section className="py-16 bg-white">
         <div className="flex justify-center mb-10">
-          <DecoratedHeading 
-            firstText={dict?.about?.promise?.heading_first || "Our"} 
-            secondText={dict?.about?.promise?.heading_second || "Promise"} 
+          <DecoratedHeading
+            firstText={dict?.about?.promise?.heading_first || "Our"}
+            secondText={dict?.about?.promise?.heading_second || "Promise"}
           />
         </div>
         <div className="flex flex-col md:flex-row gap-6 p-4 max-w-6xl mx-auto">
@@ -617,19 +660,23 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           <div className="md:w-1/2 flex flex-col space-y-6">
             <PromiseCard
               type="partners"
-              items={dict?.about?.promise?.partners_items || [
-                "Create a pipeline of highly motivated GanzAfrica fellows with land, climate, and agricultural training, leadership skills, and analytical capabilities.",
-                "Enhance cross-generational linkages to help foster blended solutions combining novel and traditional ideas.",
-              ]}
+              items={
+                dict?.about?.promise?.partners_items || [
+                  "Create a pipeline of highly motivated GanzAfrica fellows with land, climate, and agricultural training, leadership skills, and analytical capabilities.",
+                  "Enhance cross-generational linkages to help foster blended solutions combining novel and traditional ideas.",
+                ]
+              }
             />
 
             <PromiseCard
               type="fellows"
-              content={dict?.about?.promise?.fellows_items || [
-                "Provide up to 2 years of holistic training with a focus on data & analytics and leadership skills",
-                "Welcome fellows into a network of value-driven young Africans committed to leading Africa's transformation",
-                "Deliver work secondments with one of our partners to apply skills learned",
-              ]}
+              content={
+                dict?.about?.promise?.fellows_items || [
+                  "Provide up to 2 years of holistic training with a focus on data & analytics and leadership skills",
+                  "Welcome fellows into a network of value-driven young Africans committed to leading Africa's transformation",
+                  "Deliver work secondments with one of our partners to apply skills learned",
+                ]
+              }
               hasCurvedCorner={true}
             />
           </div>
