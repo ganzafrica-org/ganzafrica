@@ -136,24 +136,46 @@
     "description": "We focus on sustainable food systems and climate change adaptation to create lasting impact in Rwanda."
   },
   "programs": {
-    "title": "Our Programs",
+    "flagship_heading_first": "Our Flagship",
+    "flagship_heading_second": "Programs",
     "fellowship": {
       "title": "Fellowship Program",
       "description": "Our fellowship program provides young leaders with the skills and opportunities to drive sustainable change."
     },
     "alumni": {
       "title": "Alumni Program",
-      "description": "Our alumni network continues to collaborate and create impact long after their fellowship ends."
+      "description": "Building a network of skilled professionals driving Africa's transformation in land, agriculture, and environment."
     },
     "policy_support": {
       "title": "Policy Support Program",
-      "description": "We provide research and guidance to support sustainable policy development."
+      "description": "We provide research and guidance to support sustainable policy development across Africa."
     }
   },
   "projects": {
-    "title": "Projects",
-    "view_all": "View All Projects",
-    "no_projects": "No projects found."
+    "heading_first": "Our",
+    "heading_second": "Projects",
+    "items": {
+      "food_systems": {
+        "title": "Food Systems",
+        "description": "Strengthening food security and sustainable agricultural practices across African communities."
+      },
+      "agriculture": {
+        "title": "Agriculture Farming",
+        "description": "Implementing innovative farming techniques and supporting local farmers for improved productivity."
+      },
+      "environmental": {
+        "title": "Environmental Sustainability",
+        "description": "Promoting conservation and sustainable resource management for future generations."
+      },
+      "climate": {
+        "title": "Climate Action",
+        "description": "Developing resilient solutions to address climate change challenges in African agriculture."
+      },
+      "land": {
+        "title": "Land Management",
+        "description": "Supporting sustainable land use practices and rights for community development."
+      }
+    }
   },
   "community": {
     "title": "Community Hub",
@@ -192,6 +214,32 @@
       "fellows_trained": "Fellows Trained",
       "projects_completed": "Projects Completed",
       "communities_reached": "Communities Reached"
+    },
+    "fellow_section": {
+      "heading_first": "GanzAfrica",
+      "heading_second": "Empowering Youth to Transform Food Systems",
+      "description": "GanzAfrica empowers Africa's youth with the skills, knowledge, and opportunities to drive sustainable food systems transformation. Through training, mentorship, and work placements, we equip young leaders to tackle challenges in agriculture, environmental stewardship, and land management. Our holistic approach integrates data literacy, evidence-based decision-making, and leadership development, bridging the gap between education and employment. By fostering expertise and professional networks, GanzAfrica prepares youth to build resilient communities and contribute to a thriving Africa.",
+      "career_placement": "Career Placement & Impact",
+      "data_solutions": "Data-Driven Solutions",
+      "training": "Training & Mentorship",
+      "fellows_count": "75+",
+      "fellows_label": "Fellows",
+      "image_src": "/images/ganzafrica-fellows.jpg"
+    },
+    "why_section": {
+      "heading": "Why GanzAfrica?",
+      "description": "There are many variations of passages of available but the majority have suffered alteration in some form by injected humor or random word which don't look even.",
+      "sticky_note_line1": "Agriculture",
+      "sticky_note_line2": "Professional",
+      "sticky_note_line3": "Leader",
+      "point1_title": "We train and inspire future leaders",
+      "point1_desc": "Create, connect, and develop a pool of committed and value-driven young Africans who can adapt new and emerging technologies in land, agriculture, and environment sub-sectors.",
+      "point2_title": "We drive continental collaboration",
+      "point2_desc": "Build a continental coalition of informed and empowered young experts who can innovate, co-create and scale solutions in land, agriculture, and environment sub-sectors.",
+      "point3_title": "We create intergenerational links",
+      "point3_desc": "Enhance cross-generational linkages between experienced and retired professionals and young practitioners, enhancing the co-creation of blended solutions combining novel and traditional ideals.",
+      "point4_title": "We promote innovative solutions",
+      "point4_desc": "Support the development of innovative, scalable solutions that address critical challenges in food systems, climate resilience, and sustainable agricultural practices across the continent."
     }
   },
   "cta": {

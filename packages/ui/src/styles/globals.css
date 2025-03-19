@@ -89,6 +89,27 @@
   }
 }
 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
 .bg-primary-green { background-color: var(--color-primary-green); }
 .bg-secondary-green { background-color: var(--color-secondary-green); }
 .bg-lighter-green-100 { background-color: var(--color-lighter-green-100); }
