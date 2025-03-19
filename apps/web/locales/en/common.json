@@ -234,5 +234,14 @@
     "forgot_password": "Forgot Password?",
     "login": "Login",
     "register": "Register"
+  },
+  "food_system": {
+    "title": "Food System",
+    "subtitle": "Rooted in Excellence, Growing with Agriculture",
+    "section_title": "Why Food Systems Matter",
+    "description": "We strengthen the agriculture value chain by empowering farmers, improving sustainability, and shaping policy for a better future."
   }
+  
 }
+
+
