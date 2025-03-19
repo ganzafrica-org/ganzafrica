@@ -220,5 +220,11 @@
     "forgot_password": "Mot de passe oublié?",
     "no_account": "Pas encore de compte?",
     "create_account": "Créer un compte"
+  } ,
+  "food_system": {
+    "title": "Food System",
+    "subtitle": "Rooted in Excellence, Growing with Agriculture 🌱",
+    "section_title": "Why Food Systems Matter",
+    "description": "We strengthen the agriculture value chain by empowering farmers, improving sustainability, and shaping policy for a better future."
   }
 }
