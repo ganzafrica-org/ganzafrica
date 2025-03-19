@@ -25,10 +25,10 @@ const config = {
 				"lighter-green-100": "#80DFC8",
 				"lighter-green-50": "#E5F9EE",
 				"secondary-yellow": "#FFEF97",
-				"yellow-lighter": "#FFFEF5", 
+				"yellow-lighter": "#FFF7F5",
 				"yellow-grid": "#FEF937",
 				"primary-orange": "#F8B712",
-				"light-orange": "#FEF8E7",
+				"light-orange": "#FFEBE7",
 				"orange-grid": "#FEF937",
 				"dark-blue": "#073392",
 				"blue": "#2F88E1",
@@ -95,21 +95,7 @@ const config = {
 			backgroundImage: {
 				// Adding the orange gradient as requested
 				'orange-gradient': 'linear-gradient(to bottom, #FEF597 4%, #F8B712 100%)',
-			},
-			animation: {
-				'fade-in': 'fadeIn 1s ease-out',
-				'slide-up': 'slideUp 1s ease-out',
-			  },
-			  keyframes: {
-				fadeIn: {
-				  '0%': { opacity: '0' },
-				  '100%': { opacity: '1' },
-				},
-				slideUp: {
-				  '0%': { opacity: '0', transform: 'translateY(20px)' },
-				  '100%': { opacity: '1', transform: 'translateY(0)' },
-				},
-			  },
+			}
 		}
 	},
 	plugins: [
