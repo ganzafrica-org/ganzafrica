@@ -203,6 +203,21 @@
       "fellows_count": "75+",
       "fellows_label": "Fellows",
       "image_src": "/images/ganzafrica-fellows.jpg"
+    },
+    "why_section": {
+      "heading": "Why GanzAfrica?",
+      "description": "There are many variations of passages of available but the majority have suffered alteration in some form by injected humor or random word which don't look even.",
+      "sticky_note_line1": "Agriculture",
+      "sticky_note_line2": "Professional",
+      "sticky_note_line3": "Leader",
+      "point1_title": "We train and inspire future leaders",
+      "point1_desc": "Create, connect, and develop a pool of committed and value-driven young Africans who can adapt new and emerging technologies in land, agriculture, and environment sub-sectors.",
+      "point2_title": "We drive continental collaboration",
+      "point2_desc": "Build a continental coalition of informed and empowered young experts who can innovate, co-create and scale solutions in land, agriculture, and environment sub-sectors.",
+      "point3_title": "We create intergenerational links",
+      "point3_desc": "Enhance cross-generational linkages between experienced and retired professionals and young practitioners, enhancing the co-creation of blended solutions combining novel and traditional ideals.",
+      "point4_title": "We promote innovative solutions",
+      "point4_desc": "Support the development of innovative, scalable solutions that address critical challenges in food systems, climate resilience, and sustainable agricultural practices across the continent."
     }
   },
   "cta": {
