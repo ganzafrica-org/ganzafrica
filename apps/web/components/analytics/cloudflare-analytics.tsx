@@ -1,31 +1,34 @@
 "use client";
 
-import Script from "next/script";
+import Script from 'next/script';
 
 export function CloudflareAnalytics({ token }: { token?: string }) {
-  // Only include the beacon if a token is provided
-  if (!token) return null;
+    // Only include the beacon if a token is provided
+    if (!token) return null;
 
-  return (
-    <>
-      {/* Cloudflare Web Analytics */}
-      <Script
-        id="cloudflare-analytics"
-        strategy="afterInteractive"
-        defer
-        src="https://static.cloudflareinsights.com/beacon.min.js"
-        data-cf-beacon={`{"token": "${token}"}`}
-      />
-    </>
-  );
+    return (
+        <>
+            {/* Cloudflare Web Analytics */}
+            <Script
+                id="cloudflare-analytics"
+                strategy="afterInteractive"
+                defer
+                src="https://static.cloudflareinsights.com/beacon.min.js"
+                data-cf-beacon={`{"token": "${token}"}`}
+            />
+        </>
+    );
 }
 
 export function CloudflareSpeedInsights() {
-  return (
-    <>
-      {/* Cloudflare Web Vitals Monitoring */}
-      <Script id="cloudflare-web-vitals" strategy="afterInteractive">
-        {`
+    return (
+        <>
+            {/* Cloudflare Web Vitals Monitoring */}
+            <Script
+                id="cloudflare-web-vitals"
+                strategy="afterInteractive"
+            >
+                {`
           // Simple web vitals reporting using Browser's native Performance API
           function sendToCloudflare(metric) {
             console.log('Web Vital:', metric.name, metric.value);
@@ -90,7 +93,7 @@ export function CloudflareSpeedInsights() {
             }).observe({ type: 'layout-shift', buffered: true });
           }
         `}
-      </Script>
-    </>
-  );
+            </Script>
+        </>
+    );
 }

@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
+import * as React from "react"
+import { ThemeProvider as NextThemesProvider } from "next-themes"
+import {ServiceWorkerRegistration} from "@/components/service-worker-registration";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -16,5 +16,5 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ServiceWorkerRegistration />
       {children}
     </NextThemesProvider>
-  );
+  )
 }

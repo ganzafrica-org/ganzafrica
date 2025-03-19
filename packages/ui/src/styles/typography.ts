@@ -1,4 +1,4 @@
-import { PluginAPI } from 'tailwindcss/types/config.js';
+import { PluginAPI } from 'tailwindcss/types/config';
 
 /**
  * Typography plugin for Tailwind CSS
