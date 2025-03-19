@@ -250,7 +250,7 @@ if (typeof document !== 'undefined') {
 }
 
 const TeamPage = () => {
-  const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
+  const [activeFilter, setActiveFilter] = useState<FilterCategory>('advisory'); // Default to 'advisory' as requested
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -379,10 +379,16 @@ const TeamPage = () => {
             <div className="lg:sticky lg:top-24">
               <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
               <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+                {/* Reordered filter buttons according to requirements */}
                 <FilterButton
                   label="All Members"
                   active={activeFilter === 'all'}
                   onClick={() => setActiveFilter('all')}
+                />
+                <FilterButton
+                  label="Advisory Board"
+                  active={activeFilter === 'advisory'}
+                  onClick={() => setActiveFilter('advisory')}
                 />
                 <FilterButton
                   label="Our Team"
@@ -403,11 +409,6 @@ const TeamPage = () => {
                   label="Alumni"
                   active={activeFilter === 'alumni'}
                   onClick={() => setActiveFilter('alumni')}
-                />
-                <FilterButton
-                  label="Advisory Board"
-                  active={activeFilter === 'advisory'}
-                  onClick={() => setActiveFilter('advisory')}
                 />
               </div>
             </div>
@@ -454,4 +455,4 @@ const TeamPage = () => {
   );
 };
 
-export default TeamPage; 
+export default TeamPage;

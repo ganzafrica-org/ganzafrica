@@ -12,32 +12,33 @@
     "stay_updated": "Actualités",
     "contact": "Contact"
   },
-"about": {
+  "about": {
     "title": "À Propos de GanzAfrica",
     "our_story": "Notre Histoire",
+    "who_we_are": "Qui nous sommes",
     "our_people": "Notre Équipe",
     "partners": "Partenaires",
     "policies": "Politiques",
     "description": "GanzAfrica se consacre à l'autonomisation des jeunes par la gestion durable des terres, l'agriculture et les initiatives environnementales au Rwanda.",
-    
+
     "origin_title": "Origine et Inspiration (Avant 2022)",
     "origin_text": "Il y a près de trois ans, j'ai créé GanzAfrica avec une mission claire : développer le capital humain local pour promouvoir l'utilisation des données et des preuves afin de soutenir les services publics et les agences de développement dans leur prise de décision, alors qu'ils mettent en œuvre des programmes essentiels pour améliorer le niveau de vie, la santé, le climat et l'environnement, tous secteurs critiques des systèmes alimentaires. Cette initiative est née de nombreuses années d'apprentissage et d'expérience acquises en travaillant étroitement avec des institutions publiques et des partenaires de mise en œuvre de politiques. Au fil du temps, j'ai remarqué d'importantes lacunes en matière de capacité locale, d'efficacité et de potentiel d'innovation, ce qui a entraîné des progrès lents et des résultats de développement inférieurs aux attentes, notamment dans les secteurs des systèmes alimentaires. Bien que GanzAfrica ait été officiellement fondée en 2022, ses racines remontent bien plus loin. Les idées ont germé à partir d'années d'observation de politiques bien intentionnées qui échouaient souvent dans leur mise en œuvre, principalement en raison d'un manque de capacité. Cela a entravé les progrès dans de nombreux pays africains, où même de bonnes solutions se sont révélées inefficaces en raison de leur application sans prise en compte du contexte.",
-    
+
     "vision_title": "La Vision et l'Approche",
     "vision_text": "J'ai réalisé que combler ces lacunes nécessiterait une approche unique, impliquant de doter les jeunes diplômés talentueux des outils nécessaires pour soutenir des initiatives à fort impact. Ces professionnels devraient être intégrés au sein même des institutions qui avaient besoin de transformation. Le programme GanzAfrica incarne cette vision. Il identifie de jeunes professionnels prometteurs avec les bonnes attitudes et les dote des compétences pour soutenir les institutions mandatées, prendre des décisions fondées sur des preuves, adopter une pensée systémique et conduire un changement durable. Les fellows sont stratégiquement placés comme agents de changement dans des institutions publiques partenaires, où ils acquièrent une expérience précieuse du monde réel tout en apportant des idées nouvelles. L'interaction entre les compétences personnelles, la formation théorique et l'application pratique est au cœur de ce qui rend GanzAfrica unique et percutant.",
-    
+
     "progress_title": "Progrès et Impact (2022-2024)",
     "progress_text": "En un peu plus de deux ans depuis que notre première cohorte de fellows a rejoint des institutions publiques, nous avons constaté des résultats tangibles. Non seulement nos fellows ont apporté des perspectives fraîches et des approches innovantes à leurs rôles, mais ils ont également facilité des efficacités opérationnelles qui soutiennent les décideurs institutionnels pour obtenir de meilleurs résultats au sein de ces institutions. Leurs contributions vont de l'analyse d'ensembles de données à la fourniture d'aperçus politiques, en passant par la promotion d'une culture de responsabilité. Il est important de noter que leur travail commence à avoir un impact durable sur le fonctionnement des institutions dans les systèmes alimentaires d'Afrique de l'Est, garantissant qu'ils sont plus durables, inclusifs et réactifs aux besoins de la population. Pourtant, tout cela n'aurait pas pu être réalisé sans les efforts collaboratifs de partenaires dévoués dans ces institutions, dont le soutien a joué un rôle crucial dans la réalisation de GA. Leur engagement et leur croyance en notre mission ont été déterminants pour conduire le succès de GanzAfrica.",
-    
+
     "success_title": "Histoires de Réussite des Fellows",
     "success_text": "Nous sommes également fiers des parcours individuels de nos fellows. Beaucoup ont utilisé leur expérience avec GanzAfrica pour obtenir des rôles significatifs et impactants dans le secteur public et au-delà. Cela renforce notre conviction fondamentale dans le pouvoir d'investir dans les jeunes professionnels et de les doter des compétences pour diriger. Chez GanzAfrica, nous voyons nos fellows non pas simplement comme des participants à un programme, mais comme des agents de changement qui continueront à conduire la transformation bien après leur passage chez nous.",
-    
+
     "lessons_title": "Leçons Apprises et Adaptation",
     "lessons_text": "Alors que nous réfléchissons à nos deux premières années de mise en œuvre, nous restons fermes dans notre engagement envers l'apprentissage continu et l'adaptation. Chaque défi et leçon façonne notre stratégie pour l'avenir. Par exemple, nous avons appris l'importance d'adapter notre formation pour répondre aux besoins spécifiques des institutions avec lesquelles nous travaillons. Nous avons également vu la valeur de favoriser des relations solides avec ces organisations pour garantir que le placement des fellows conduise à un changement systémique à long terme plutôt qu'à des solutions temporaires.",
-    
+
     "future_title": "Vision Future et Expansion",
     "future_text": "En regardant vers l'avenir, nous sommes enthousiastes à l'idée d'étendre la portée et l'impact du programme GanzAfrica. Notre objectif est de continuer à conduire un changement significatif, d'étendre nos opérations et de construire un réseau croissant de leaders techniquement qualifiés et innovants, passionnés par la transformation des systèmes alimentaires et la résolution d'autres défis sociétaux critiques. Le voyage vient de commencer, mais nous observons déjà l'impact positif de notre travail dans toute la région. Avec nos partenaires, nos fellows et les institutions d'accueil, nous nous engageons à une croissance continue, façonnant un avenir durable pour l'Afrique avec innovation, efficacité et excellence.",
-    
+
     "team_photo_alt": "Équipe GanzAfrica",
     "fellows_photo_alt": "Fellows GanzAfrica",
     "lessons_photo_alt": "Leçons GanzAfrica",
@@ -183,7 +184,7 @@
   },
   "stay_updated": {
     "title": "Actualités",
-    "newsroom": "Salle de Presse",
+    "newsroom": "Actualités & Mises à jour",
     "reports": "Rapports Annuels",
     "events": "Calendrier des Événements",
     "subscribe": "S'abonner à la Newsletter"
@@ -268,7 +269,7 @@
     "forgot_password": "Mot de passe oublié?",
     "no_account": "Pas encore de compte?",
     "create_account": "Créer un compte"
-  } ,
+  },
   "food_system": {
     "title": "Food System",
     "subtitle": "Rooted in Excellence, Growing with Agriculture 🌱",
