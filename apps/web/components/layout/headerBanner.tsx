@@ -6,7 +6,7 @@ const HeaderBanner = ({
   return (
     <div className="relative w-full overflow-hidden">
       {/* Yellow band */}
-      <div className="bg-yellow-300 h-16 transform -skew-y-1">
+      <div className="bg-primary-orange h-16 transform -skew-y-1">
         <div className="container mx-auto px-4 transform skew-y-1 h-full">
           <div className="flex justify-between items-center h-full">
             {categories.map((category, index) => (
