@@ -54,21 +54,21 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
             id: 'fellowship',
             title: dict?.programs?.fellowship?.title || defaultPrograms[0]?.title,
             description: dict?.programs?.fellowship?.description || defaultPrograms[0]?.description,
-            image: '/images/fellowship-program.jpg',
+            image: '/images/ganzafrica-fellows.jpg',
             link: `/${locale}/programs/fellowship`
         },
         {
             id: 'alumni',
             title: dict?.programs?.alumni?.title || defaultPrograms[1]?.title,
             description: dict?.programs?.alumni?.description || defaultPrograms[1]?.description,
-            image: '/images/alumni-program.jpg',
+            image: '/images/ganzafrica-fellows.jpg',
             link: `/${locale}/programs/alumni`
         },
         {
             id: 'policy',
             title: dict?.programs?.policy_support?.title || defaultPrograms[2]?.title,
             description: dict?.programs?.policy_support?.description || defaultPrograms[2]?.description,
-            image: '/images/policy-program.jpg',
+            image: '/images/ganzafrica-fellows.jpg',
             link: `/${locale}/programs/policy-support`
         }
     ] as const;
@@ -147,7 +147,7 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                                                 <div className="absolute inset-0 bg-black opacity-40"></div>
                                             </div>
 
-                                            <div className="absolute left-0 -bottom-6 top-2/5 right-0 flex items-center">
+                                            <div className="absolute -left-2 -bottom-6 top-2/5 right-0 flex items-center">
                                                 <div className="bg-white p-6 md:p-6 rounded-r-3xl max-w-[70%]">
                                                     <h3 className="text-xl md:text-2xl font-bold mb-3 text-gray-900">{program.title}</h3>
                                                     <p className="mb-4 text-sm md:text-base text-gray-700">{program.description}</p>

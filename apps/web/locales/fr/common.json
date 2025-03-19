@@ -134,24 +134,46 @@
     "description": "Nous nous concentrons sur les systèmes alimentaires durables et l'adaptation au changement climatique pour créer un impact durable au Rwanda."
   },
   "programs": {
-    "title": "Nos Programmes",
+    "flagship_heading_first": "Nos Programmes",
+    "flagship_heading_second": "Phares",
     "fellowship": {
       "title": "Programme de Bourses",
       "description": "Notre programme de bourses offre aux jeunes leaders les compétences et les opportunités nécessaires pour conduire un changement durable."
     },
     "alumni": {
       "title": "Programme des Anciens",
-      "description": "Notre réseau d'anciens continue à collaborer et à créer un impact longtemps après la fin de leur bourse."
+      "description": "Construire un réseau de professionnels qualifiés conduisant la transformation de l'Afrique dans les domaines des terres, de l'agriculture et de l'environnement."
     },
     "policy_support": {
       "title": "Programme de Soutien aux Politiques",
-      "description": "Nous fournissons des recherches et des conseils pour soutenir le développement de politiques durables."
+      "description": "Nous fournissons des recherches et des orientations pour soutenir le développement de politiques durables en Afrique."
     }
   },
   "projects": {
-    "title": "Projets",
-    "view_all": "Voir Tous les Projets",
-    "no_projects": "Aucun projet trouvé."
+    "heading_first": "Nos",
+    "heading_second": "Projets",
+    "items": {
+      "food_systems": {
+        "title": "Systèmes Alimentaires",
+        "description": "Renforcer la sécurité alimentaire et les pratiques agricoles durables dans les communautés africaines."
+      },
+      "agriculture": {
+        "title": "Agriculture",
+        "description": "Mettre en œuvre des techniques agricoles innovantes et soutenir les agriculteurs locaux pour améliorer la productivité."
+      },
+      "environmental": {
+        "title": "Durabilité Environnementale",
+        "description": "Promouvoir la conservation et la gestion durable des ressources pour les générations futures."
+      },
+      "climate": {
+        "title": "Action Climatique",
+        "description": "Développer des solutions résilientes pour faire face aux défis du changement climatique dans l'agriculture africaine."
+      },
+      "land": {
+        "title": "Gestion des Terres",
+        "description": "Soutenir les pratiques durables d'utilisation des terres et les droits pour le développement communautaire."
+      }
+    }
   },
   "community": {
     "title": "Communauté",
