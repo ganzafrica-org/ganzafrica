@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import { DecoratedHeading } from "@/components/layout/headertext";
 
 // Register ScrollTrigger plugin
 if (typeof window !== 'undefined') {
@@ -84,18 +85,18 @@ const SectionTitle = ({ title1, title2 }: { title1: string; title2: string }) =>
   }, []);
 
   return (
-    <div ref={titleRef} className="relative inline-flex items-center border-2 border-[#FFB800] rounded-lg p-0.5">
+    <div ref={titleRef} className="relative inline-flex items-center border-2 border-primary-orange rounded-lg p-0.5">
       <div className="px-6 py-2">
         <h2 className="text-xl font-bold">
           <span className="text-primary-green">{title1}</span>
-          <span className="text-[#FFB800]">{title2}</span>
+          <span className="text-primary-orange">{title2}</span>
         </h2>
       </div>
       {/* Corner squares */}
-      <div className="absolute -top-1 -left-1 w-2 h-2 bg-[#FFB800]" />
-      <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#FFB800]" />
-      <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-[#FFB800]" />
-      <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#FFB800]" />
+      <div className="absolute -top-1 -left-1 w-2 h-2 bg-primary-orange" />
+      <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary-orange" />
+      <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-primary-orange" />
+      <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-primary-orange" />
     </div>
   );
 };
@@ -110,6 +111,7 @@ const FellowshipProgramPage = () => {
   const projectsRef = useRef(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const totalSlides = Math.ceil(projects.length / 3);
+  const [isPageLoaded, setIsPageLoaded] = useState(false);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % totalSlides);
@@ -120,6 +122,12 @@ const FellowshipProgramPage = () => {
   };
 
   useEffect(() => {
+    // Set page as loaded
+    setIsPageLoaded(true);
+    
+    // Only run animations after page is fully loaded
+    if (!isPageLoaded) return;
+
     // Banner animation
     gsap.from(bannerRef.current, {
       y: -50,
@@ -186,10 +194,13 @@ const FellowshipProgramPage = () => {
         toggleActions: "play none none reverse"
       }
     });
-  }, []);
+  }, [isPageLoaded]);
+
+  // Add a class to hide content until page is loaded
+  const pageClass = isPageLoaded ? "opacity-100 transition-opacity duration-500" : "opacity-0";
 
   return (
-    <main className="bg-white">
+    <main className={`bg-white ${pageClass}`}>
       {/* Banner Section */}
       <div ref={bannerRef} className="bg-[#F5F5F5] py-8">
         <Container>
@@ -219,10 +230,9 @@ const FellowshipProgramPage = () => {
             {/* Right Column - Content */}
             <div ref={contentRef} className="lg:w-[58%]">
               {/* Section Title */}
-              <div className="mb-6">
-                <SectionTitle title1="Program" title2=" Overview" />
-              </div>
-
+                <div className="flex justify-center mb-10">
+                <DecoratedHeading firstText="Program" secondText="Overview" />
+                   </div>
               {/* Description */}
               <div className="space-y-4">
                 <p className="text-gray-800 text-base leading-relaxed">
@@ -239,25 +249,25 @@ const FellowshipProgramPage = () => {
               {/* Features List */}
               <div ref={featuresRef} className="space-y-3 mt-6">
                 <div className="feature-item flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-[#FFB800] flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-primary-orange flex items-center justify-center">
                     <Image src="/images/leafwhite.png" alt="Leaf icon" width={16} height={16} className="w-4 h-4" />
                   </div>
                   <p className="text-gray-800 text-base">Intensive skill-building modules</p>
                 </div>
                 <div className="feature-item flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-[#FFB800] flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-primary-orange flex items-center justify-center">
                     <Image src="/images/leafwhite.png" alt="Leaf icon" width={16} height={16} className="w-4 h-4" />
                   </div>
                   <p className="text-gray-800 text-base">Hands-on apprenticeships with industry leaders</p>
                 </div>
                 <div className="feature-item flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-[#FFB800] flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-primary-orange flex items-center justify-center">
                     <Image src="/images/leafwhite.png" alt="Leaf icon" width={16} height={16} className="w-4 h-4" />
                   </div>
                   <p className="text-gray-800 text-base">Community-based project implementation</p>
                 </div>
                 <div className="feature-item flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-[#FFB800] flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-primary-orange flex items-center justify-center">
                     <Image src="/images/leafwhite.png" alt="Leaf icon" width={16} height={16} className="w-4 h-4" />
                   </div>
                   <p className="text-gray-800 text-base">Cross-disciplinary collaboration opportunities</p>
@@ -271,19 +281,8 @@ const FellowshipProgramPage = () => {
       {/* Fellowship Journey Section */}
       <div ref={journeyRef} className="py-16">
         <Container>
-          {/* Section Title */}
-          <div className="flex justify-center mb-16">
-            <div className="relative">
-              <h2 className="text-3xl font-bold">
-                <span className="text-primary-green">Fellowship</span>
-                <span className="text-[#FFB800]"> Journey</span>
-              </h2>
-              {/* Corner decorations */}
-              <div className="absolute -top-3 -left-3 w-2 h-2 border-t-2 border-l-2 border-[#FFB800]" />
-              <div className="absolute -top-3 -right-3 w-2 h-2 border-t-2 border-r-2 border-[#FFB800]" />
-              <div className="absolute -bottom-3 -left-3 w-2 h-2 border-b-2 border-l-2 border-[#FFB800]" />
-              <div className="absolute -bottom-3 -right-3 w-2 h-2 border-b-2 border-r-2 border-[#FFB800]" />
-            </div>
+          <div className="flex justify-center mb-10">
+            <DecoratedHeading firstText="Fellowship" secondText="Journey" />
           </div>
 
           {/* Steps Container */}
@@ -292,7 +291,7 @@ const FellowshipProgramPage = () => {
             <div className="absolute top-0 left-10 w-[2px] h-full bg-primary-green" />
 
             {journeySteps.map((step, index) => (
-              <div key={step.id} className="relative">
+              <div key={step.id} className="relative journey-step">
                 {/* Horizontal Line */}
                 <div className="absolute left-[42px] top-10 right-0 h-[2px] bg-primary-green" />
 
@@ -303,7 +302,7 @@ const FellowshipProgramPage = () => {
                       <span className="text-[48px] font-bold text-white leading-none">{step.id}</span>
                     </div>
                     {/* Duration Badge */}
-                    <div className="absolute -right-28 top-4 px-4 py-1 bg-[#FFB800] rounded-full whitespace-nowrap">
+                    <div className="absolute -right-28 top-4 px-4 py-1 bg-primary-orange rounded-full whitespace-nowrap">
                       <span className="text-sm font-semibold text-white tracking-wide">2 MONTHS</span>
                     </div>
                   </div>
@@ -330,25 +329,12 @@ const FellowshipProgramPage = () => {
       </div>
 
       {/* Activities Section */}
-      <div ref={activitiesRef} className="bg-[#F5F5F5] py-16">
+      <div ref={activitiesRef} className="py-16 ">
         <Container>
           {/* Section Title with yellow corners */}
-          <div className="flex justify-center mb-12">
-            <div className="relative inline-flex items-center border-2 border-[#FFB800] rounded-lg p-0.5">
-              <div className="px-6 py-2">
-                <h2 className="text-2xl font-bold">
-                  <span className="text-primary-green">The </span>
-                  <span className="text-[#FFB800]">Activities</span>
-                </h2>
-              </div>
-              {/* Corner squares */}
-              <div className="absolute -top-1 -left-1 w-2 h-2 bg-[#FFB800]" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#FFB800]" />
-              <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-[#FFB800]" />
-              <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#FFB800]" />
-            </div>
+         <div className="flex justify-center mb-10">
+            <DecoratedHeading firstText="The" secondText="Activities" />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {activities.map((activity, index) => (
               <div 
@@ -385,7 +371,7 @@ const FellowshipProgramPage = () => {
                       <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%+3rem)] h-8 bg-[#F5F5F5] rounded-t-[32px]" />
                       
                       {/* Title Container */}
-                      <div className="relative bg-[#FFB800] text-white px-8 py-2 rounded-[32px] shadow-[0_0_15px_rgba(255,255,255,0.4)] border-[3px] border-white/40">
+                      <div className="relative bg-primary-orange text-white px-8 py-2 rounded-[32px] shadow-[0_0_15px_rgba(255,255,255,0.4)] border-[3px] border-white/40">
                         <h3 className="text-xl font-medium whitespace-nowrap">{activity.title}</h3>
                       </div>
                     </div>
@@ -401,30 +387,18 @@ const FellowshipProgramPage = () => {
       <div ref={projectsRef}>
         <Container>
           <div className="py-16">
-            <div className="flex justify-between items-center mb-12">
-              <div className="relative inline-flex items-center border-2 border-[#FFB800] rounded-lg p-0.5">
-                <div className="px-6 py-2">
-                  <h2 className="text-2xl font-bold">
-                    <span className="text-primary-green">Fellowship</span>
-                    <span className="text-[#FFB800]"> Projects</span>
-                  </h2>
-                </div>
-                {/* Corner squares */}
-                <div className="absolute -top-1 -left-1 w-2 h-2 bg-[#FFB800]" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#FFB800]" />
-                <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-[#FFB800]" />
-                <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-[#FFB800]" />
-              </div>
+               <div className="flex justify-center mb-10">
+            <DecoratedHeading firstText="Fellowship" secondText="Projects" />
+          </div>
               <Link 
                 href="/projects"
                 className="inline-flex items-center text-primary-green hover:text-primary-green/80 font-medium gap-2"
               >
                 <span className="text-sm italic">See More Projects</span>
-                <div className="w-8 h-8 rounded-full bg-[#FFB800] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-primary-orange flex items-center justify-center">
                   <ArrowRight className="w-5 h-5 text-white" />
                 </div>
               </Link>
-            </div>
 
             {/* Projects Grid with Sliding */}
             <div className="relative w-full">
@@ -452,7 +426,7 @@ const FellowshipProgramPage = () => {
                             <div className="relative">
                               {/* Arrow button with CSS hover effect */}
                               <div className="absolute top-4 right-4 z-10">
-                                <div className="arrow-button w-12 h-12 rounded-full bg-[#FFB800] group-hover:bg-[#00A651] flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl">
+                                <div className="arrow-button w-12 h-12 rounded-full bg-primary-orange group-hover:bg-[#00A651] flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl">
                                   <ArrowRight className="w-6 h-6 text-white transform -rotate-45 group-hover:-rotate-90 transition-transform duration-300" />
                                 </div>
                               </div>
@@ -472,7 +446,7 @@ const FellowshipProgramPage = () => {
                               <div className="bg-[#00A651] p-6 relative">
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[#FFB800] text-xs font-medium uppercase tracking-wider">{project.category}</span>
+                                    <span className="text-primary-orange text-xs font-medium uppercase tracking-wider">{project.category}</span>
                                   </div>
                                   <h3 className="text-xl font-bold text-white leading-tight">
                                     {project.title}
