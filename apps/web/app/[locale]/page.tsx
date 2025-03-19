@@ -1,9 +1,10 @@
 import { getDictionary } from "@/lib/get-dictionary";
-import HomeHero from "@/components/sections/home-hero";
-import FellowsSection from "@/components/sections/fellows-section";
-import WhyGanzAfricaSection from "@/components/sections/why-ganzafrica-section";
-import FlagshipProgramsSection from "@/components/sections/flagship-programs-section";
-import ProjectsSection from "@/components/sections/projects-section";
+import HomeHero from "@/components/sections/homepage/home-hero";
+import FellowsSection from "@/components/sections/homepage/fellows-section";
+import WhyGanzAfricaSection from "@/components/sections/homepage/why-ganzafrica-section";
+import FlagshipProgramsSection from "@/components/sections/homepage/flagship-programs-section";
+import ProjectsSection from "@/components/sections/homepage/projects-section";
+import PartnersSection from "@/components/sections/homepage/partners-section"; // Import the new component
 import { Metadata } from "next";
 import { generateMetadata as baseGenerateMetadata } from "@/lib/metadata";
 
@@ -38,6 +39,7 @@ export default async function HomePage({
             <WhyGanzAfricaSection locale={locale} dict={dict} />
             <FlagshipProgramsSection locale={locale} dict={dict} />
             <ProjectsSection locale={locale} dict={dict} />
+            <PartnersSection locale={locale} dict={dict} />
         </main>
     );
 }
