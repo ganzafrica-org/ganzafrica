@@ -11,111 +11,93 @@ const config = {
 		"../../packages/ui/src/components/**/*.{ts,tsx}",
 	],
 	theme: {
-    	extend: {
-    		fontFamily: {
-    			sans: [
-    				'var(--font-rubik)',
-                    ...defaultTheme.fontFamily.sans
-                ]
-    		},
-    		colors: {
-    			'primary-green': '#005C30',
-    			'secondary-green': '#009758',
-    			'lighter-green-100': '#80DFC8',
-    			'lighter-green-50': '#E5F9EE',
-    			'secondary-yellow': '#FFEF97',
-    			'yellow-lighter': '#FFF7F5',
-    			'yellow-grid': '#FEF937',
-    			'primary-orange': '#F8B712',
-    			'light-orange': '#FFEBE7',
-    			'orange-grid': '#FEF937',
-    			'dark-blue': '#073392',
-    			'blue': '#2F88E1',
-    			'blue-lighter': '#E9EBF4',
-    			'dark': '#1E1E1E',
-    			'gray': '#808080',
-    			'text-gray': '#F0F0F0',
-    			'border-grey': '#d9d9d9',
-    			'gray-lighter': '#FFEEE',
-    			'red': '#D42B1D',
-    			'red-darker': '#9C2018',
-    			'red-lighter': '#FFEE4E2',
-    			border: 'hsl(var(--border))',
-    			input: 'hsl(var(--input))',
-    			ring: 'hsl(var(--ring))',
-    			background: 'hsl(var(--background))',
-    			foreground: 'hsl(var(--foreground))',
-    			primary: {
-    				DEFAULT: 'hsl(var(--primary))',
-    				foreground: 'hsl(var(--primary-foreground))'
-    			},
-    			secondary: {
-    				DEFAULT: 'hsl(var(--secondary))',
-    				foreground: 'hsl(var(--secondary-foreground))'
-    			},
-    			destructive: {
-    				DEFAULT: 'hsl(var(--destructive))',
-    				foreground: 'hsl(var(--destructive-foreground))'
-    			},
-    			muted: {
-    				DEFAULT: 'hsl(var(--muted))',
-    				foreground: 'hsl(var(--muted-foreground))'
-    			},
-    			accent: {
-    				DEFAULT: 'hsl(var(--accent))',
-    				foreground: 'hsl(var(--accent-foreground))'
-    			},
-    			popover: {
-    				DEFAULT: 'hsl(var(--popover))',
-    				foreground: 'hsl(var(--popover-foreground))'
-    			},
-    			card: {
-    				DEFAULT: 'hsl(var(--card))',
-    				foreground: 'hsl(var(--card-foreground))'
-    			},
-    			sidebar: {
-    				DEFAULT: 'hsl(var(--sidebar-background))',
-    				foreground: 'hsl(var(--sidebar-foreground))',
-    				primary: 'hsl(var(--sidebar-primary))',
-    				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-    				accent: 'hsl(var(--sidebar-accent))',
-    				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-    				border: 'hsl(var(--sidebar-border))',
-    				ring: 'hsl(var(--sidebar-ring))'
-    			}
-    		},
-    		borderRadius: {
-    			lg: 'var(--radius)',
-    			md: 'calc(var(--radius) - 2px)',
-    			sm: 'calc(var(--radius) - 4px)'
-    		},
-    		backgroundImage: {
-    			'orange-gradient': 'linear-gradient(to bottom, #FEF597 4%, #F8B712 100%)'
-    		},
-    		keyframes: {
-    			'accordion-down': {
-    				from: {
-    					height: '0'
-    				},
-    				to: {
-    					height: 'var(--radix-accordion-content-height)'
-    				}
-    			},
-    			'accordion-up': {
-    				from: {
-    					height: 'var(--radix-accordion-content-height)'
-    				},
-    				to: {
-    					height: '0'
-    				}
-    			}
-    		},
-    		animation: {
-    			'accordion-down': 'accordion-down 0.2s ease-out',
-    			'accordion-up': 'accordion-up 0.2s ease-out'
-    		}
-    	}
-    },
+		extend: {
+			fontFamily: {
+				sans: [
+					"var(--font-rubik)",
+					...defaultTheme.fontFamily.sans,
+				],
+			},
+			colors: {
+				// GanzAfrica color palette
+				"primary-green": "#005C30",
+				"secondary-green": "#009758",
+				"lighter-green-100": "#80DFC8",
+				"lighter-green-50": "#E5F9EE",
+				"secondary-yellow": "#FFEF97",
+				"yellow-lighter": "#FFF7F5",
+				"yellow-grid": "#FEF937",
+				"primary-orange": "#F8B712",
+				"light-orange": "#FFEBE7",
+				"orange-grid": "#FEF937",
+				"dark-blue": "#073392",
+				"blue": "#2F88E1",
+				"blue-lighter": "#E9EBF4",
+				"dark": "#1E1E1E",
+				"gray": "#808080",
+				"text-gray": "#F0F0F0",
+				"border-grey": "#d9d9d9",
+				"gray-lighter": "#FFEEE",
+				"red": "#D42B1D",
+				"red-darker": "#9C2018",
+				"red-lighter": "#FFEE4E2",
+
+				// Standard UI colors
+				border: 'hsl(var(--border))',
+				input: 'hsl(var(--input))',
+				ring: 'hsl(var(--ring))',
+				background: 'hsl(var(--background))',
+				foreground: 'hsl(var(--foreground))',
+				primary: {
+					DEFAULT: 'hsl(var(--primary))',
+					foreground: 'hsl(var(--primary-foreground))',
+				},
+				secondary: {
+					DEFAULT: 'hsl(var(--secondary))',
+					foreground: 'hsl(var(--secondary-foreground))',
+				},
+				destructive: {
+					DEFAULT: 'hsl(var(--destructive))',
+					foreground: 'hsl(var(--destructive-foreground))',
+				},
+				muted: {
+					DEFAULT: 'hsl(var(--muted))',
+					foreground: 'hsl(var(--muted-foreground))',
+				},
+				accent: {
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))',
+				},
+				popover: {
+					DEFAULT: 'hsl(var(--popover))',
+					foreground: 'hsl(var(--popover-foreground))',
+				},
+				card: {
+					DEFAULT: 'hsl(var(--card))',
+					foreground: 'hsl(var(--card-foreground))',
+				},
+				sidebar: {
+					DEFAULT: 'hsl(var(--sidebar-background))',
+					foreground: 'hsl(var(--sidebar-foreground))',
+					primary: 'hsl(var(--sidebar-primary))',
+					"primary-foreground": 'hsl(var(--sidebar-primary-foreground))',
+					accent: 'hsl(var(--sidebar-accent))',
+					"accent-foreground": 'hsl(var(--sidebar-accent-foreground))',
+					border: 'hsl(var(--sidebar-border))',
+					ring: 'hsl(var(--sidebar-ring))',
+				},
+			},
+			borderRadius: {
+				lg: 'var(--radius)',
+				md: 'calc(var(--radius) - 2px)',
+				sm: 'calc(var(--radius) - 4px)',
+			},
+			backgroundImage: {
+				// Adding the orange gradient as requested
+				'orange-gradient': 'linear-gradient(to bottom, #FEF597 4%, #F8B712 100%)',
+			}
+		}
+	},
 	plugins: [
 		tailwindcssAnimate,
 		function({ addUtilities }: PluginAPI) {
