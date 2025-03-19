@@ -74,7 +74,7 @@ const FocusAreaCard: FC<FocusAreaCardProps> = ({
   description,
   icon,
 }) => (
-  <div className="bg-white rounded-3xl shadow-sm p-8 h-full flex flex-col relative overflow-hidden border border-gray-200">
+  <div className="bg-text-gray rounded-3xl shadow-sm p-8 h-full flex flex-col relative overflow-hidden border border-gray">
     {/* Icon at the top - centered */}
     <div className="flex justify-center mb-4">
       <div className="text-yellow-500">{icon}</div>
@@ -96,7 +96,7 @@ export default async function ClimateAdaptationPage({
 }: PageProps) {
   const dict = await getDictionary(locale);
 
-  // Focus areas data
+  // Focus areas data - Arranged to match the desired layout
   const focusAreas = [
     {
       title: "Soil Health & Crop Suitability",
@@ -117,7 +117,7 @@ export default async function ClimateAdaptationPage({
       icon: <BiLeaf className="h-8 w-8" />,
     },
     {
-      title: "Research Policy & GIS Mapping",
+      title: "Search Policy & GIS Mapping",
       description:
         "Utilizing advanced geographic information systems to identify climate vulnerability hotspots, model future scenarios, and develop evidence-based adaptation policies that strengthen regional agricultural planning and food security.",
       icon: <BiSearch className="h-8 w-8" />,
@@ -449,7 +449,8 @@ export default async function ClimateAdaptationPage({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {focusAreas.map((area, index) => (
+            {/* First row - 3 cards */}
+            {focusAreas.slice(0, 3).map((area, index) => (
               <FocusAreaCard
                 key={index}
                 title={area.title}
@@ -457,6 +458,18 @@ export default async function ClimateAdaptationPage({
                 icon={area.icon}
               />
             ))}
+            
+            {/* Second row - 2 cards centered */}
+            <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 mx-auto w-full md:w-2/3">
+              {focusAreas.slice(3, 5).map((area, index) => (
+                <FocusAreaCard
+                  key={index + 3}
+                  title={area.title}
+                  description={area.description}
+                  icon={area.icon}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
