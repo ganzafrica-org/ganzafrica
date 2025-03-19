@@ -273,7 +273,7 @@ export default async function ClimateAdaptationPage({
       <div className="md:w-3/5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Card 1 - Data-Driven Decision Making */}
-     <div className="bg-yellow-50 rounded-t-[41px] rounded-b-lg shadow-sm h-full transition-all duration-300 hover:bg-green-800 group">
+     <div className="bg-[#FEF8E7] hover:rounded-t-[41px]  rounded-b-lg shadow-sm h-full transition-all duration-300 hover:bg-green-800 group">
   <div className="p-6 flex flex-col h-full">
     <div className="flex items-start mb-4">
       {/* Icon Container */}
@@ -314,7 +314,7 @@ export default async function ClimateAdaptationPage({
 
 
      {/* Card 2 - Community-Centered Adaptation */}
-<div className="bg-green-800 rounded-t-[41px] rounded-b-lg shadow-sm h-full">
+<div className="bg-green-800 hover:rounded-t-[41px]  rounded-b-lg shadow-sm h-full">
   <div className="p-6 flex flex-col h-full">
     <div className="flex items-start mb-4">
       <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center mr-4 shrink-0">
@@ -351,7 +351,7 @@ export default async function ClimateAdaptationPage({
 
 
 {/* Card 3 - Practical Learning & Innovation */}
-<div className="bg-yellow-50 rounded-t-[41px] rounded-b-lg shadow-sm h-full transition-all duration-300 hover:bg-green-800 group">
+<div className="bg-[#FEF8E7] hover:rounded-t-[41px]  rounded-b-lg shadow-sm h-full transition-all duration-300 hover:bg-green-800 group">
   <div className="p-6 flex flex-col h-full">
     <div className="flex items-start mb-4">
       {/* Icon container */}
@@ -392,7 +392,7 @@ export default async function ClimateAdaptationPage({
 
 
           {/* Card 4 - Capacity Building & Sustainable Impact */}
-        <div className="bg-yellow-50 rounded-t-[41px] rounded-b-lg shadow-sm h-full transition-all duration-300 hover:bg-green-800 group">
+        <div className="bg-[#FEF8E7] hover:rounded-t-[41px] rounded-b-lg shadow-sm h-full transition-all duration-300 hover:bg-green-800 group">
   <div className="p-6 flex flex-col h-full">
     <div className="flex items-start mb-4">
       {/* Icon Container */}

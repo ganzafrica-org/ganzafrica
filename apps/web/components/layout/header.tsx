@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -23,7 +23,9 @@ export default function Header({
 }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const pathname = usePathname();
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Add scroll detection for header styling
   useEffect(() => {
@@ -37,6 +39,37 @@ export default function Header({
 
   // Determine if we're on the home page
   const isHomePage = pathname === `/${locale}` || pathname === `/${locale}/`;
+
+  // Function to handle dropdown opening
+  const handleDropdownOpen = (dropdownName: string) => {
+    // Clear any existing timeout
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    setActiveDropdown(dropdownName);
+  };
+
+  // Function to handle dropdown closing with delay
+  const handleDropdownClose = () => {
+    // Set a timeout to close the dropdown
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 300); // 300ms delay before closing
+  };
+
+  // Function to keep dropdown open when hovering over dropdown content
+  const handleDropdownContentEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+  };
+
+  // Function to toggle dropdown on click
+  const toggleDropdown = (dropdownName: string) => {
+    setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
+  };
 
   return (
     <header
@@ -72,96 +105,95 @@ export default function Header({
           {/* Desktop Navigation */}
           <nav className="hidden items-center space-x-1 md:flex">
             {/* About Dropdown */}
-            <div className="group relative">
-<<<<<<< HEAD
-              {/* 'About' is now a non-clickable span */}
+            <div className="relative">
+              {/* 'About' is a clickable span that toggles dropdown */}
               <span
                 className={cn(
                   "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer",
-=======
-              <Link
-                href={`/${locale}/about`}
-                className={cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
->>>>>>> origin/dev
                   pathname.includes("/about")
                     ? "text-primary-green"
                     : isScrolled || !transparent
                       ? "text-gray-700 hover:text-primary-green"
                       : "text-white hover:text-white/80",
                 )}
-<<<<<<< HEAD
+                onClick={() => toggleDropdown('about')}
+                onMouseEnter={() => handleDropdownOpen('about')}
+                onMouseLeave={handleDropdownClose}
               >
                 {dict.navigation.about}
                 <ChevronDown className="ml-1 h-4 w-4" />
               </span>
 
               {/* Dropdown content */}
-              <div className="absolute left-0 mt-1 w-48 hidden group-hover:block rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                <div className="py-1 flex flex-col">
-                  <Link
-                    href={`/${locale}/about/who-we-are`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    prefetch={true}
-                  >
-                    {dict.about.who_we_are}
-                  </Link>
-                  <Link
-=======
-                prefetch={true}
-              >
-                {dict.navigation.about}
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </Link>
-              <div className="absolute left-0 mt-1 w-48 hidden group-hover:block rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                <div className="py-1 flex flex-col">
-                  <Link
->>>>>>> origin/dev
-                    href={`/${locale}/about/our-story`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    prefetch={true}
-                  >
-                    {dict.about.our_story}
-                  </Link>
+              {activeDropdown === 'about' && (
+                <div 
+                  className="absolute left-0 mt-1 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+                  onMouseEnter={handleDropdownContentEnter}
+                  onMouseLeave={handleDropdownClose}
+                >
+                  <div className="py-1 flex flex-col">
+                    <Link
+                      href={`/${locale}/about/who-we-are`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      {dict.about.who_we_are}
+                    </Link>
+                    <Link
+                      href={`/${locale}/about/our-story`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      {dict.about.our_story}
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* What We Do Dropdown */}
-            <div className="group relative">
-              <Link
-                href={`/${locale}/what-we-do`}
+            <div className="relative">
+              <span
                 className={cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer",
                   pathname.includes("/what-we-do")
                     ? "text-primary-green"
                     : isScrolled || !transparent
                       ? "text-gray-700 hover:text-primary-green"
                       : "text-white hover:text-white/80",
                 )}
-                prefetch={true}
+                onClick={() => toggleDropdown('what-we-do')}
+                onMouseEnter={() => handleDropdownOpen('what-we-do')}
+                onMouseLeave={handleDropdownClose}
               >
                 {dict.navigation.what_we_do}
                 <ChevronDown className="ml-1 h-4 w-4" />
-              </Link>
-              <div className="absolute left-0 mt-1 w-48 hidden group-hover:block rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                <div className="py-1 flex flex-col">
-                  <Link
-                    href={`/${locale}/what-we-do/food-systems`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    prefetch={true}
-                  >
-                    {dict.what_we_do.food_systems}
-                  </Link>
-                  <Link
-                    href={`/${locale}/what-we-do/climate-change-adaptation`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    prefetch={true}
-                  >
-                    {dict.what_we_do.climate_change_adaptation}
-                  </Link>
+              </span>
+              
+              {activeDropdown === 'what-we-do' && (
+                <div 
+                  className="absolute left-0 mt-1 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+                  onMouseEnter={handleDropdownContentEnter}
+                  onMouseLeave={handleDropdownClose}
+                >
+                  <div className="py-1 flex flex-col">
+                    <Link
+                      href={`/${locale}/what-we-do/food-systems`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      {dict.what_we_do.food_systems}
+                    </Link>
+                    <Link
+                      href={`/${locale}/what-we-do/climate-change-adaptation`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      {dict.what_we_do.climate_change_adaptation}
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Programs Link */}
@@ -181,77 +213,93 @@ export default function Header({
             </Link>
 
             {/* Community Hub Dropdown */}
-            <div className="group relative">
-              <Link
-                href={`/${locale}/community-hub`}
+            <div className="relative">
+              <span
                 className={cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer",
                   pathname.includes("/community-hub")
                     ? "text-primary-green"
                     : isScrolled || !transparent
                       ? "text-gray-700 hover:text-primary-green"
                       : "text-white hover:text-white/80",
                 )}
-                prefetch={true}
+                onClick={() => toggleDropdown('community-hub')}
+                onMouseEnter={() => handleDropdownOpen('community-hub')}
+                onMouseLeave={handleDropdownClose}
               >
                 {dict.navigation.community_hub}
                 <ChevronDown className="ml-1 h-4 w-4" />
-              </Link>
-              <div className="absolute left-0 mt-1 w-48 hidden group-hover:block rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                <div className="py-1 flex flex-col">
-                  <Link
-                    href={`/${locale}/community-hub/mentors`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    prefetch={true}
-                  >
-                    {dict.community.mentors}
-                  </Link>
-                  <Link
-                    href={`/${locale}/community-hub/fellows`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    prefetch={true}
-                  >
-                    {dict.community.fellows}
-                  </Link>
+              </span>
+              
+              {activeDropdown === 'community-hub' && (
+                <div 
+                  className="absolute left-0 mt-1 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+                  onMouseEnter={handleDropdownContentEnter}
+                  onMouseLeave={handleDropdownClose}
+                >
+                  <div className="py-1 flex flex-col">
+                    <Link
+                      href={`/${locale}/community-hub/mentors`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      {dict.community.mentors}
+                    </Link>
+                    <Link
+                      href={`/${locale}/community-hub/fellows`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      {dict.community.fellows}
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Stay Updated Dropdown */}
-            <div className="group relative">
-              <Link
-                href={`/${locale}/newsroom`}
+            <div className="relative">
+              <span
                 className={cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer",
                   pathname.includes("/newsroom")
                     ? "text-primary-green"
                     : isScrolled || !transparent
                       ? "text-gray-700 hover:text-primary-green"
                       : "text-white hover:text-white/80",
                 )}
-                prefetch={true}
+                onClick={() => toggleDropdown('newsroom')}
+                onMouseEnter={() => handleDropdownOpen('newsroom')}
+                onMouseLeave={handleDropdownClose}
               >
                 {dict.navigation.stay_updated}
                 <ChevronDown className="ml-1 h-4 w-4" />
-              </Link>
-              <div className="absolute left-0 mt-1 w-48 hidden group-hover:block rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                <div className="py-1 flex flex-col">
-                  <Link
-                    href={`/${locale}/newsroom`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    prefetch={true}
-                  >
-                    {dict.stay_updated.newsroom}
-                  </Link>
-                  <Link
-                    href={`/${locale}/newsroom/reports`}
-                    className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    prefetch={true}
-                  >
-                    {dict.stay_updated.reports}
-                  </Link>
+              </span>
+              
+              {activeDropdown === 'newsroom' && (
+                <div 
+                  className="absolute left-0 mt-1 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+                  onMouseEnter={handleDropdownContentEnter}
+                  onMouseLeave={handleDropdownClose}
+                >
+                  <div className="py-1 flex flex-col">
+                    <Link
+                      href={`/${locale}/newsroom`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      {dict.stay_updated.newsroom}
+                    </Link>
+                    <Link
+                      href={`/${locale}/newsroom/reports`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      {dict.stay_updated.reports}
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </nav>
 
@@ -290,22 +338,68 @@ export default function Header({
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden bg-white pt-20">
           <nav className="container mx-auto px-4 py-6 flex flex-col space-y-4">
-            <Link
-              href={`/${locale}/about`}
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
-              onClick={() => setIsMobileMenuOpen(false)}
-              prefetch={true}
-            >
-              {dict.navigation.about}
-            </Link>
-            <Link
-              href={`/${locale}/what-we-do`}
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
-              onClick={() => setIsMobileMenuOpen(false)}
-              prefetch={true}
-            >
-              {dict.navigation.what_we_do}
-            </Link>
+            {/* Mobile About with submenu */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => setActiveDropdown(activeDropdown === 'mobile-about' ? null : 'mobile-about')}
+              >
+                {dict.navigation.about}
+                <ChevronDown className={`h-5 w-5 transform transition-transform ${activeDropdown === 'mobile-about' ? 'rotate-180' : ''}`} />
+              </button>
+              {activeDropdown === 'mobile-about' && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  <Link
+                    href={`/${locale}/about/who-we-are`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {dict.about.who_we_are}
+                  </Link>
+                  <Link
+                    href={`/${locale}/about/our-story`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {dict.about.our_story}
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile What We Do with submenu */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => setActiveDropdown(activeDropdown === 'mobile-what-we-do' ? null : 'mobile-what-we-do')}
+              >
+                {dict.navigation.what_we_do}
+                <ChevronDown className={`h-5 w-5 transform transition-transform ${activeDropdown === 'mobile-what-we-do' ? 'rotate-180' : ''}`} />
+              </button>
+              {activeDropdown === 'mobile-what-we-do' && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  <Link
+                    href={`/${locale}/what-we-do/food-systems`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {dict.what_we_do.food_systems}
+                  </Link>
+                  <Link
+                    href={`/${locale}/what-we-do/climate-change-adaptation`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {dict.what_we_do.climate_change_adaptation}
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <Link
               href={`/${locale}/programs`}
               className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
@@ -314,22 +408,68 @@ export default function Header({
             >
               {dict.navigation.programs}
             </Link>
-            <Link
-              href={`/${locale}/community-hub`}
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
-              onClick={() => setIsMobileMenuOpen(false)}
-              prefetch={true}
-            >
-              {dict.navigation.community_hub}
-            </Link>
-            <Link
-              href={`/${locale}/newsroom`}
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
-              onClick={() => setIsMobileMenuOpen(false)}
-              prefetch={true}
-            >
-              {dict.navigation.stay_updated}
-            </Link>
+            
+            {/* Mobile Community Hub with submenu */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => setActiveDropdown(activeDropdown === 'mobile-community' ? null : 'mobile-community')}
+              >
+                {dict.navigation.community_hub}
+                <ChevronDown className={`h-5 w-5 transform transition-transform ${activeDropdown === 'mobile-community' ? 'rotate-180' : ''}`} />
+              </button>
+              {activeDropdown === 'mobile-community' && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  <Link
+                    href={`/${locale}/community-hub/mentors`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {dict.community.mentors}
+                  </Link>
+                  <Link
+                    href={`/${locale}/community-hub/fellows`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {dict.community.fellows}
+                  </Link>
+                </div>
+              )}
+            </div>
+            
+            {/* Mobile Stay Updated with submenu */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => setActiveDropdown(activeDropdown === 'mobile-newsroom' ? null : 'mobile-newsroom')}
+              >
+                {dict.navigation.stay_updated}
+                <ChevronDown className={`h-5 w-5 transform transition-transform ${activeDropdown === 'mobile-newsroom' ? 'rotate-180' : ''}`} />
+              </button>
+              {activeDropdown === 'mobile-newsroom' && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  <Link
+                    href={`/${locale}/newsroom`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {dict.stay_updated.newsroom}
+                  </Link>
+                  <Link
+                    href={`/${locale}/newsroom/reports`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {dict.stay_updated.reports}
+                  </Link>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
       )}

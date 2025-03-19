@@ -14,15 +14,9 @@ export const DecoratedHeading: React.FC<DecoratedHeadingProps> = ({
   firstText,
   secondText,
   firstTextColor = "text-green-800",
-<<<<<<< HEAD
   secondTextColor = "text-primary-orange",
   borderColor = "border-yellow-400",
   cornerColor = "bg-primary-orange",
-=======
-  secondTextColor = "text-yellow-400",
-  borderColor = "border-yellow-400",
-  cornerColor = "bg-yellow-400",
->>>>>>> origin/dev
   className = "",
 }) => {
   return (
