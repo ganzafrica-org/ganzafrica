@@ -135,24 +135,46 @@
     "description": "Nous nous concentrons sur les systèmes alimentaires durables et l'adaptation au changement climatique pour créer un impact durable au Rwanda."
   },
   "programs": {
-    "title": "Nos Programmes",
+    "flagship_heading_first": "Nos Programmes",
+    "flagship_heading_second": "Phares",
     "fellowship": {
       "title": "Programme de Bourses",
       "description": "Notre programme de bourses offre aux jeunes leaders les compétences et les opportunités nécessaires pour conduire un changement durable."
     },
     "alumni": {
       "title": "Programme des Anciens",
-      "description": "Notre réseau d'anciens continue à collaborer et à créer un impact longtemps après la fin de leur bourse."
+      "description": "Construire un réseau de professionnels qualifiés conduisant la transformation de l'Afrique dans les domaines des terres, de l'agriculture et de l'environnement."
     },
     "policy_support": {
       "title": "Programme de Soutien aux Politiques",
-      "description": "Nous fournissons des recherches et des conseils pour soutenir le développement de politiques durables."
+      "description": "Nous fournissons des recherches et des orientations pour soutenir le développement de politiques durables en Afrique."
     }
   },
   "projects": {
-    "title": "Projets",
-    "view_all": "Voir Tous les Projets",
-    "no_projects": "Aucun projet trouvé."
+    "heading_first": "Nos",
+    "heading_second": "Projets",
+    "items": {
+      "food_systems": {
+        "title": "Systèmes Alimentaires",
+        "description": "Renforcer la sécurité alimentaire et les pratiques agricoles durables dans les communautés africaines."
+      },
+      "agriculture": {
+        "title": "Agriculture",
+        "description": "Mettre en œuvre des techniques agricoles innovantes et soutenir les agriculteurs locaux pour améliorer la productivité."
+      },
+      "environmental": {
+        "title": "Durabilité Environnementale",
+        "description": "Promouvoir la conservation et la gestion durable des ressources pour les générations futures."
+      },
+      "climate": {
+        "title": "Action Climatique",
+        "description": "Développer des solutions résilientes pour faire face aux défis du changement climatique dans l'agriculture africaine."
+      },
+      "land": {
+        "title": "Gestion des Terres",
+        "description": "Soutenir les pratiques durables d'utilisation des terres et les droits pour le développement communautaire."
+      }
+    }
   },
   "community": {
     "title": "Communauté",
@@ -191,6 +213,32 @@
       "fellows_trained": "Boursiers Formés",
       "projects_completed": "Projets Complétés",
       "communities_reached": "Communautés Touchées"
+    },
+    "fellow_section": {
+      "heading_first": "GanzAfrica",
+      "heading_second": "Autonomiser les Jeunes pour Transformer les Systèmes Alimentaires",
+      "description": "GanzAfrica donne aux jeunes d'Afrique les compétences, les connaissances et les opportunités nécessaires pour piloter la transformation durable des systèmes alimentaires. Grâce à la formation, au mentorat et aux placements professionnels, nous équipons les jeunes leaders pour relever les défis de l'agriculture, de la gestion environnementale et de la gestion des terres. Notre approche holistique intègre la littératie des données, la prise de décision fondée sur des preuves et le développement du leadership, comblant ainsi le fossé entre l'éducation et l'emploi. En favorisant l'expertise et les réseaux professionnels, GanzAfrica prépare les jeunes à construire des communautés résilientes et à contribuer à une Afrique prospère.",
+      "career_placement": "Placement Professionnel & Impact",
+      "data_solutions": "Solutions Basées sur les Données",
+      "training": "Formation & Mentorat",
+      "fellows_count": "75+",
+      "fellows_label": "Boursiers",
+      "image_src": "/images/ganzafrica-fellows.jpg"
+    },
+    "why_section": {
+      "heading": "Pourquoi GanzAfrica?",
+      "description": "Il existe de nombreuses variations de passages disponibles, mais la majorité a subi des altérations sous une forme ou une autre, par l'humour injecté ou des mots aléatoires qui ne semblent même pas cohérents.",
+      "sticky_note_line1": "Agriculture",
+      "sticky_note_line2": "Professionnel",
+      "sticky_note_line3": "Leader",
+      "point1_title": "Nous formons et inspirons les futurs leaders",
+      "point1_desc": "Créer, connecter et développer un vivier de jeunes Africains engagés et motivés par des valeurs qui peuvent s'adapter aux technologies nouvelles et émergentes dans les sous-secteurs des terres, de l'agriculture et de l'environnement.",
+      "point2_title": "Nous encourageons la collaboration continentale",
+      "point2_desc": "Construire une coalition continentale d'experts jeunes, informés et autonomes qui peuvent innover, co-créer et développer des solutions dans les sous-secteurs des terres, de l'agriculture et de l'environnement.",
+      "point3_title": "Nous créons des liens intergénérationnels",
+      "point3_desc": "Renforcer les liens intergénérationnels entre les professionnels expérimentés et retraités et les jeunes praticiens, favorisant la co-création de solutions hybrides combinant des idéaux novateurs et traditionnels.",
+      "point4_title": "Nous promouvons des solutions innovantes",
+      "point4_desc": "Soutenir le développement de solutions innovantes et évolutives qui répondent aux défis critiques des systèmes alimentaires, de la résilience climatique et des pratiques agricoles durables à travers le continent."
     }
   },
   "cta": {
