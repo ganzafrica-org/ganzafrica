@@ -136,24 +136,46 @@
     "description": "We focus on sustainable food systems and climate change adaptation to create lasting impact in Rwanda."
   },
   "programs": {
-    "title": "Our Programs",
+    "flagship_heading_first": "Our Flagship",
+    "flagship_heading_second": "Programs",
     "fellowship": {
       "title": "Fellowship Program",
       "description": "Our fellowship program provides young leaders with the skills and opportunities to drive sustainable change."
     },
     "alumni": {
       "title": "Alumni Program",
-      "description": "Our alumni network continues to collaborate and create impact long after their fellowship ends."
+      "description": "Building a network of skilled professionals driving Africa's transformation in land, agriculture, and environment."
     },
     "policy_support": {
       "title": "Policy Support Program",
-      "description": "We provide research and guidance to support sustainable policy development."
+      "description": "We provide research and guidance to support sustainable policy development across Africa."
     }
   },
   "projects": {
-    "title": "Projects",
-    "view_all": "View All Projects",
-    "no_projects": "No projects found."
+    "heading_first": "Our",
+    "heading_second": "Projects",
+    "items": {
+      "food_systems": {
+        "title": "Food Systems",
+        "description": "Strengthening food security and sustainable agricultural practices across African communities."
+      },
+      "agriculture": {
+        "title": "Agriculture Farming",
+        "description": "Implementing innovative farming techniques and supporting local farmers for improved productivity."
+      },
+      "environmental": {
+        "title": "Environmental Sustainability",
+        "description": "Promoting conservation and sustainable resource management for future generations."
+      },
+      "climate": {
+        "title": "Climate Action",
+        "description": "Developing resilient solutions to address climate change challenges in African agriculture."
+      },
+      "land": {
+        "title": "Land Management",
+        "description": "Supporting sustainable land use practices and rights for community development."
+      }
+    }
   },
   "community": {
     "title": "Community Hub",
