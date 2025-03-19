@@ -1,29 +1,31 @@
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import Container from '@/components/layout/container';
+import React from "react";
+import Image from "next/image";
+import Container from "@/components/layout/container";
 import { DecoratedHeading } from "@/components/layout/headertext";
-import { Leaf, Globe, Sprout } from 'lucide-react';
+import { Leaf, Globe, Sprout } from "lucide-react";
 
 // Separate client components
-const CategoryCard = ({ 
-  icon: Icon, 
-  title, 
-  description, 
-  borderColor, 
-  iconBgColor 
-}: { 
+const CategoryCard = ({
+  icon: Icon,
+  title,
+  description,
+  borderColor,
+  iconBgColor,
+}: {
   icon: React.ElementType;
   title: string;
   description: string;
   borderColor: string;
   iconBgColor: string;
 }) => (
-  <div 
+  <div
     className={`flex items-start gap-4 p-6 bg-white rounded-lg shadow-md border-l-8 ${borderColor}`}
   >
-    <div className={`w-12 h-12 rounded-full ${iconBgColor} flex items-center justify-center flex-shrink-0`}>
+    <div
+      className={`w-12 h-12 rounded-full ${iconBgColor} flex items-center justify-center flex-shrink-0`}
+    >
       <Icon className="w-6 h-6 text-white" />
     </div>
     <div>
@@ -35,7 +37,7 @@ const CategoryCard = ({
 
 const ApproachCard = ({
   title,
-  description
+  description,
 }: {
   title: string;
   description: string;
@@ -93,7 +95,8 @@ const Index = () => {
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="font-h1 mb-6">Food System</h1>
             <p className="font-medium-caption">
-              Building a sustainable and resilient food system for Africa's future generations.
+              Building a sustainable and resilient food system for Africa's
+              future generations.
             </p>
           </div>
         </Container>
@@ -116,7 +119,10 @@ const Index = () => {
                 />
               </div>
               <p className="font-regular-paragraph text-gray mb-8">
-                At GanzAfrica, we are committed to shaping a sustainable and prosperous Africa by empowering youth through training, mentorship, and placement programs in the fields of land management, environmental sustainability, and agriculture.
+                At GanzAfrica, we are committed to shaping a sustainable and
+                prosperous Africa by empowering youth through training,
+                mentorship, and placement programs in the fields of land
+                management, environmental sustainability, and agriculture.
               </p>
               <button className="bg-primary-orange text-white px-8 py-3 rounded-lg shadow-md font-medium-paragraph">
                 Check Out Our Projects
@@ -145,7 +151,9 @@ const Index = () => {
               />
             </div>
             <p className="font-regular-paragraph text-gray">
-              Through a holistic approach that integrates knowledge, innovation, and policy engagement, we equip future leaders to drive meaningful change.
+              Through a holistic approach that integrates knowledge, innovation,
+              and policy engagement, we equip future leaders to drive meaningful
+              change.
             </p>
           </div>
 
