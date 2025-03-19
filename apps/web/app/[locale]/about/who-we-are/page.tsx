@@ -112,7 +112,7 @@ const ValueCard: FC<ValueCardProps> = ({
     </div>
 
     <h3
-      className={`text-2xl font-bold text-center ${titleColor} mb-4 transition-colors duration-300 hover:text-primary-orange`}
+      className={`text-2xl font-bold text-center ${titleColor} mb-4 transition-colors duration-300 hover:text-yellow-500`}
     >
       {title}
     </h3>
@@ -152,7 +152,7 @@ const PromiseCard: FC<PromiseCardProps> = ({
   hasCurvedCorner = false,
 }) => {
   const bgColor = type === "partners" ? "bg-yellow-50" : "bg-green-800";
-  const labelColor = type === "partners" ? "secondary-yellow" : "bg-green-500";
+  const labelColor = type === "partners" ? "bg-primary-orange" : "bg-green-500";
   const textColor = type === "partners" ? "text-gray-800" : "text-white";
   const label = `Promise to ${type}`;
 
@@ -226,31 +226,31 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
     // Yellow
     {
       text: dict?.about?.tags?.youth_empowerment || "Youth Empowerment",
-      color: "secondary-yellow",
+      color: "bg-primary-orange",
       position: "left-56 bottom-10",
       rotate: "-5deg",
     },
     {
       text: dict?.about?.tags?.land_management || "Land Management",
-      color: "secondary-yellow",
+      color: "bg-primary-orange",
       position: "left-64 bottom-20",
       rotate: "0deg",
     },
     {
       text: dict?.about?.tags?.peer_learning || "Peer to peer learning",
-      color: "secondary-yellow",
+      color: "bg-primary-orange",
       position: "left-1/3 top-20",
       rotate: "8deg",
     },
     {
       text: dict?.about?.tags?.food_systems || "Food systems",
-      color: "secondary-yellow",
+      color: "bg-primary-orange",
       position: "right-32 bottom-16",
       rotate: "0deg",
     },
     {
       text: dict?.about?.tags?.stewardship || "Stewardship",
-      color: "secondary-yellow",
+      color: "bg-primary-orange",
       position: "left-1/2 bottom-20",
       rotate: "5deg",
     },
@@ -419,8 +419,8 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             <div className="md:w-1/2 flex flex-col space-y-8">
               <MissionCard
                 bgColor="bg-yellow-50"
-                labelColor="secondary-yellow"
-                iconColor="secondary-yellow"
+                labelColor="bg-primary-orange"
+                iconColor="bg-primary-orange"
                 label={dict?.about?.aspirations?.mission_label || "Our Mission"}
                 content={
                   dict?.about?.aspirations?.mission_1 ||
@@ -462,9 +462,9 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           <div className="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto">
             <ValueCard
               bgColor="bg-yellow-50"
-              iconBgColor="secondary-yellow"
+              iconBgColor="bg-primary-orange"
               title={dict?.about?.values?.evidence_title || "Evidence based"}
-              titleColor="text-yellow-400"
+              titleColor="text-primary-orange"
               description={
                 dict?.about?.values?.evidence_description ||
                 "In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes."
@@ -486,9 +486,9 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
 
             <ValueCard
               bgColor="bg-yellow-50"
-              iconBgColor="secondary-yellow"
+              iconBgColor="bg-primary-orange"
               title={dict?.about?.values?.stewardship_title || "Stewardship"}
-              titleColor="text-yellow-400"
+              titleColor="text-primary-orange"
               description={
                 dict?.about?.values?.stewardship_description ||
                 "We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future."
@@ -551,7 +551,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             {/* Left Column - Identify */}
             <div>
               <div style={{ backgroundColor: "#FFFDEB" }} className="p-6 h-80">
-                <div className="w-24 h-24 secondary-yellow rounded-full flex items-center justify-center mb-4">
+                <div className="w-24 h-24 bg-primary-orange rounded-full flex items-center justify-center mb-4">
                   <PersonIcon className="w-12 h-12 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-primary-orange mb-3">
@@ -607,7 +607,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             <div>
               {/* Deploy section */}
               <div style={{ backgroundColor: "#FFFDEB" }} className="p-6 h-80">
-                <div className="w-24 h-24 secondary-yellow rounded-full flex items-center justify-center mb-4">
+                <div className="w-24 h-24 bg-primary-orange rounded-full flex items-center justify-center mb-4">
                   <PersonIcon className="w-12 h-12 text-white" />
                 </div>
                 <h2 className="text-2xl font-bold text-primary-orange mb-3">
