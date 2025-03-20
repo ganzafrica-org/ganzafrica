@@ -12,6 +12,55 @@
     "stay_updated": "Actualités",
     "contact": "Contact"
   },
+  "partners": {
+    "heading_first": "Nos",
+    "heading_second": "Partenaires",
+    "heading": "Nos Partenaires"
+  },
+  "news": {
+    "heading_first": "Dernières",
+    "heading_second": "Actualités",
+    "see_all": "Voir Toutes les Actualités",
+    "tags": {
+      "fellowship": "Bourse",
+      "policy": "Politique",
+      "event": "Événement",
+      "announcement": "Annonce",
+      "publication": "Publication"
+    },
+    "items": {
+      "news1": {
+        "title": "Les Jeunes Font Progresser le PDDAA Post-Malabo",
+        "excerpt": "Les jeunes leaders progressent dans la mise en œuvre du Programme Détaillé pour le Développement de l'Agriculture en Afrique."
+      },
+      "news2": {
+        "title": "Nos boursiers réfléchissent à leur travail en retraite",
+        "excerpt": "Les boursiers de GanzAfrica se sont réunis pour réfléchir à leur impact et élaborer des stratégies pour les initiatives futures."
+      },
+      "news3": {
+        "title": "Les Jeunes Font Progresser le PDDAA Post-Malabo",
+        "excerpt": "Comment les jeunes leaders agricoles stimulent la mise en œuvre des politiques à travers le continent."
+      }
+    }
+  },
+  "testimonials": {
+    "heading_first": "Nos",
+    "heading_second": "Témoignages",
+    "roles": {
+      "fellow": "Boursier",
+      "partner": "Partenaire",
+      "mentor": "Mentor",
+      "alumni": "Ancien",
+      "community_member": "Membre de la Communauté"
+    },
+    "comments": {
+      "comment1": "Mon expérience avec GanzAfrica a été transformatrice. La formation et le mentorat m'ont aidé à développer des compétences cruciales en agriculture et en gestion des terres que j'applique quotidiennement dans mon travail.",
+      "comment2": "La collaboration avec GanzAfrica a considérablement amélioré notre capacité organisationnelle. Leurs boursiers apportent des perspectives nouvelles et des approches fondées sur les données à nos initiatives agricoles.",
+      "comment3": "En tant que mentor chez GanzAfrica, j'ai été témoin de la croissance incroyable des jeunes professionnels. Leur dévouement aux systèmes alimentaires durables est inspirant et me donne espoir pour l'avenir de l'Afrique.",
+      "comment4": "Le programme de bourse GanzAfrica m'a fourni à la fois des connaissances théoriques et une expérience pratique. Je dirige maintenant des projets d'adaptation au changement climatique qui ont un impact direct sur ma communauté.",
+      "comment5": "Les boursiers de GanzAfrica apportent une pensée innovante et une expertise technique à nos projets. Leur compréhension des contextes locaux combinée aux meilleures pratiques mondiales produit des résultats concrets."
+    }
+  },
   "about": {
     "title": "À Propos de GanzAfrica",
     "our_story": "Notre Histoire",
@@ -206,6 +255,12 @@
     "hero": {
       "title": "Un Avenir Prospère et Durable pour l'Afrique",
       "subtitle": "Nous formons de jeunes professionnels pour qu'ils atteignent des carrières à fort impact en abordant les défis du système agroalimentaire de l'Afrique et en améliorant les moyens de subsistance des communautés.",
+      "title_after": {
+        "line1": "UN AVENIR",
+        "line2": "PROSPÈRE ET DURABLE",
+        "line3": "POUR",
+        "line4": "L'AFRIQUE"
+      },
       "cta": "Découvrir Plus"
     },
     "impact": {
@@ -226,7 +281,8 @@
       "image_src": "/images/ganzafrica-fellows.jpg"
     },
     "why_section": {
-      "heading": "Pourquoi GanzAfrica?",
+      "heading_first": "Pourquoi",
+      "heading_second": "GanzAfrica?",
       "description": "Il existe de nombreuses variations de passages disponibles, mais la majorité a subi des altérations sous une forme ou une autre, par l'humour injecté ou des mots aléatoires qui ne semblent même pas cohérents.",
       "sticky_note_line1": "Agriculture",
       "sticky_note_line2": "Professionnel",
