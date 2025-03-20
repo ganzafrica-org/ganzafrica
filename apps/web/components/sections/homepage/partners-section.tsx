@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { DecoratedHeading } from '@/components/layout/headertext';
 
 interface PartnersSectionProps {
     locale: string;
@@ -12,7 +13,7 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
     const row1Ref = useRef<HTMLDivElement>(null);
     const row2Ref = useRef<HTMLDivElement>(null);
 
-    // Partner images (assuming these are the filenames in the images/partners directory)
+    // Keep your existing partner image filenames
     const partnerRow1 = [
         'minagri.jpg',
         'ministry-environment.jpg',
@@ -31,68 +32,94 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
     ];
 
     useEffect(() => {
-        // Animation logic for scrolling effect
-        const animateRow = (row: HTMLElement, direction: number) => {
-            let currentPosition = 0;
-            const speed = 0.5; // Adjust speed as needed
+        if (!row1Ref.current || !row2Ref.current) return;
 
-            const animate = () => {
-                currentPosition += speed * direction;
+        // Better animation logic for infinite scrolling with no gaps
+        const row1 = row1Ref.current;
+        const row2 = row2Ref.current;
 
-                // Reset position when needed to create infinite loop
-                if (Math.abs(currentPosition) >= row.scrollWidth / 2) {
-                    currentPosition = 0;
-                }
+        // Clone items multiple times to ensure we always have enough content
+        const cloneItemsForRow = (row: HTMLElement, count: number = 3) => {
+            const originalContent = row.innerHTML;
+            let newContent = originalContent;
 
-                row.style.transform = `translateX(${currentPosition}px)`;
-                requestAnimationFrame(animate);
-            };
+            // Clone multiple times to ensure enough content for any screen size
+            for (let i = 0; i < count; i++) {
+                newContent += originalContent;
+            }
 
-            animate();
+            row.innerHTML = newContent;
         };
 
-        if (row1Ref.current && row2Ref.current) {
-            // Duplicate content for seamless scrolling
-            const row1 = row1Ref.current;
-            const row2 = row2Ref.current;
+        cloneItemsForRow(row1);
+        cloneItemsForRow(row2);
 
-            row1.innerHTML += row1.innerHTML;
-            row2.innerHTML += row2.innerHTML;
+        // Get the container widths to calculate the right reset position
+        let row1Width = row1.scrollWidth / 4; // Divide by 4 since we cloned 3 times (original + 3 clones)
+        let row2Width = row2.scrollWidth / 4;
 
-            // Animate rows in opposite directions
-            animateRow(row1, -1); // Left to right
-            animateRow(row2, 1);  // Right to left
-        }
+        // Animation variables
+        let row1Position = 0;
+        let row2Position = 0;
+        const speed = 0.3; // Slower for better visibility of partner logos
 
+        // Animation functions
+        const animate = () => {
+            // First row (left to right)
+            row1Position -= speed;
+            if (row1Position <= -row1Width) {
+                // Reset position by exactly one set width to create perfect loop
+                row1Position += row1Width;
+            }
+            row1.style.transform = `translateX(${row1Position}px)`;
+
+            // Second row (right to left)
+            row2Position += speed;
+            if (row2Position >= row2Width) {
+                // Reset position by exactly one set width to create perfect loop
+                row2Position -= row2Width;
+            }
+            row2.style.transform = `translateX(${row2Position}px)`;
+
+            // Continue animation
+            requestAnimationFrame(animate);
+        };
+
+        const animationId = requestAnimationFrame(animate);
+
+        // Cleanup
         return () => {
-            // Clean up animation on unmount (if needed)
+            cancelAnimationFrame(animationId);
         };
     }, []);
 
     return (
-        <section className="py-10 bg-yellow-50 overflow-hidden">
+        <section className="py-16 md:py-24 bg-yellow-50 overflow-hidden">
             <div className="container mx-auto px-4 mb-8">
-                <h2 className="text-primary-green text-3xl font-bold text-center relative mb-10">
-          <span className="relative inline-block">
-            {dict?.partners?.heading || "Our Partners"}
-              <div className="absolute left-0 right-0 h-1 bg-primary-green bottom-0"></div>
-            <div className="absolute w-2 h-2 bg-primary-orange -bottom-0.5 -left-0.5"></div>
-            <div className="absolute w-2 h-2 bg-primary-orange -bottom-0.5 -right-0.5"></div>
-          </span>
-                </h2>
+                <div className="text-center mb-16">
+                    <DecoratedHeading
+                        firstText={dict?.partners?.heading_first ?? dict?.about?.partners?.heading_first ?? "Our"}
+                        secondText={dict?.partners?.heading_second ?? dict?.about?.partners?.heading_second ?? "Partners"}
+                        firstTextColor="text-primary-green"
+                        secondTextColor="text-primary-orange"
+                        borderColor="border-primary-green"
+                        cornerColor="bg-primary-orange"
+                        className="mx-auto"
+                    />
+                </div>
             </div>
 
-            <div className="mb-10 overflow-hidden">
+            <div className="mb-16 overflow-hidden">
                 <div ref={row1Ref} className="flex whitespace-nowrap">
                     {partnerRow1.map((partner, index) => (
-                        <div key={`row1-${index}`} className="inline-block px-4 py-3">
-                            <div className="bg-white rounded-lg shadow-sm p-4 w-44 h-24 flex items-center justify-center">
+                        <div key={`row1-${index}`} className="inline-block px-6 py-4">
+                            <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
                                 <Image
                                     src={`/images/partners/${partner}`}
                                     alt={`Partner ${index + 1}`}
-                                    width={140}
-                                    height={80}
-                                    className="object-contain"
+                                    width={200}
+                                    height={120}
+                                    className="object-contain max-w-full"
                                 />
                             </div>
                         </div>
@@ -103,14 +130,14 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
             <div className="overflow-hidden">
                 <div ref={row2Ref} className="flex whitespace-nowrap">
                     {partnerRow2.map((partner, index) => (
-                        <div key={`row2-${index}`} className="inline-block px-4 py-3">
-                            <div className="bg-white rounded-lg shadow-sm p-4 w-44 h-24 flex items-center justify-center">
+                        <div key={`row2-${index}`} className="inline-block px-6 py-4">
+                            <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
                                 <Image
                                     src={`/images/partners/${partner}`}
                                     alt={`Partner ${index + 1}`}
-                                    width={140}
-                                    height={80}
-                                    className="object-contain"
+                                    width={200}
+                                    height={120}
+                                    className="object-contain max-w-full"
                                 />
                             </div>
                         </div>
