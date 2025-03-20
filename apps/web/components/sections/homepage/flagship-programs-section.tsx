@@ -88,6 +88,19 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
         return [programs[left], programs[center], programs[right]];
     };
 
+    // Handle click on a card
+    const handleCardClick = (idx: number) => {
+        // If clicking left card, go to previous slide
+        if (idx === 0) {
+            prevSlide();
+        }
+        // If clicking right card, go to next slide
+        else if (idx === 2) {
+            nextSlide();
+        }
+        // Center card already active, do nothing
+    };
+
     const getIndicatorPosition = () => {
         return activeIndex * 33.33;
     };
@@ -102,7 +115,7 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                         firstText={dict?.programs?.flagship_heading_first || "Our Flagship"}
                         secondText={dict?.programs?.flagship_heading_second || "Programs"}
                         firstTextColor="text-primary-green"
-                        secondTextColor="text-primary-green"
+                        secondTextColor="text-primary-orange"
                         borderColor="border-primary-green"
                         cornerColor="bg-primary-orange"
                         className="mx-auto"
@@ -126,12 +139,13 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                                         damping: 30
                                     }}
                                     className={`
-                                        relative rounded-2xl overflow-hidden
+                                        relative rounded-2xl overflow-hidden cursor-pointer
                                         ${isCenter ?
                                         'w-full md:w-[550px] z-10 flex-grow-0 flex-shrink-0 h-full' :
                                         'w-[120px] sm:w-[200px] md:w-[280px] flex-shrink-0 h-[85%]'
                                     }
                                     `}
+                                    onClick={() => handleCardClick(idx)}
                                 >
                                     {isCenter ? (
                                         <div className="relative h-full">
@@ -163,6 +177,7 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                                                           style={{
                                                               borderTopRightRadius: "0",
                                                           }}
+                                                          onClick={(e) => e.stopPropagation()} // Prevent triggering card click
                                                     >
                                                         <button className="text-secondary-green hover:text-primary-green transition-colors flex items-center group px-4 py-2">
                                                             <span className="font-medium">{dict?.cta?.learn_more || "LEARN MORE"}</span>

@@ -13,6 +13,50 @@
     "contact": "Contact"
   },
 
+  "testimonials": {
+    "heading_first": "Our",
+    "heading_second": "Testimonials",
+    "roles": {
+      "fellow": "Fellow",
+      "partner": "Partner",
+      "mentor": "Mentor",
+      "alumni": "Alumni",
+      "community_member": "Community Member"
+    },
+    "comments": {
+      "comment1": "My experience with GanzAfrica has been transformative. The training and mentorship helped me develop crucial skills in agriculture and land management that I now apply daily in my work.",
+      "comment2": "Working with GanzAfrica has significantly improved our organizational capacity. Their fellows bring fresh perspectives and data-driven approaches to our agricultural initiatives.",
+      "comment3": "As a mentor with GanzAfrica, I've witnessed the incredible growth of young professionals. Their dedication to sustainable food systems is inspiring and gives me hope for Africa's future.",
+      "comment4": "The GanzAfrica fellowship provided me with both theoretical knowledge and practical experience. I now lead climate adaptation projects that directly impact my community.",
+      "comment5": "GanzAfrica fellows bring innovative thinking and technical expertise to our projects. Their understanding of local contexts combined with global best practices delivers real results."
+    }
+  },
+  "news": {
+    "heading_first": "Latest",
+    "heading_second": "News & Updates",
+    "see_all": "See New Updates",
+    "tags": {
+      "fellowship": "Fellowship",
+      "policy": "Policy",
+      "event": "Event",
+      "announcement": "Announcement",
+      "publication": "Publication"
+    },
+    "items": {
+      "news1": {
+        "title": "Youth Advancing CAADP Post-Malabo",
+        "excerpt": "Young leaders making strides in implementing the Comprehensive Africa Agriculture Development Programme."
+      },
+      "news2": {
+        "title": "Our fellows reflecting on their work in retreat",
+        "excerpt": "GanzAfrica fellows gathered to reflect on their impact and strategize for future initiatives."
+      },
+      "news3": {
+        "title": "Youth Advancing CAADP Post-Malabo",
+        "excerpt": "How young agricultural leaders are driving policy implementation across the continent."
+      }
+    }
+  },
   "about": {
     "title": "About GanzAfrica",
     "our_story": "Our Story",
@@ -207,6 +251,12 @@
     "hero": {
       "title": "Sustainable Solutions for Rwanda's Future",
       "subtitle": "Empowering youth through sustainable land management, agriculture, and environmental initiatives",
+      "title_after": {
+        "line1": "A PROSPEROUS AND",
+        "line2": "SUSTAINABLE",
+        "line3": "FUTURE FOR",
+        "line4": "AFRICA"
+      },
       "cta": "Explore Our Programs"
     },
     "impact": {
@@ -227,7 +277,8 @@
       "image_src": "/images/ganzafrica-fellows.jpg"
     },
     "why_section": {
-      "heading": "Why GanzAfrica?",
+      "heading_first": "Why",
+      "heading_second": "GanzAfrica?",
       "description": "There are many variations of passages of available but the majority have suffered alteration in some form by injected humor or random word which don't look even.",
       "sticky_note_line1": "Agriculture",
       "sticky_note_line2": "Professional",

@@ -80,7 +80,7 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                         firstText={dict?.projects?.heading_first ?? "Our"}
                         secondText={dict?.projects?.heading_second ?? "Projects"}
                         firstTextColor="text-primary-green"
-                        secondTextColor="text-primary-green"
+                        secondTextColor="text-primary-orange"
                         borderColor="border-primary-green"
                         cornerColor="bg-primary-orange"
                         className="mx-auto"
