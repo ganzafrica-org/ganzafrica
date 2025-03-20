@@ -1,4 +1,3 @@
-// app/[locale]/about/page.tsx
 import { getDictionary } from "@/lib/get-dictionary";
 import Image from "next/image";
 import { PersonIcon, BikeIcon } from "@/components/ui/icons";
