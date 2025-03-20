@@ -88,6 +88,19 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
         return [programs[left], programs[center], programs[right]];
     };
 
+    // Handle click on a card
+    const handleCardClick = (idx: number) => {
+        // If clicking left card, go to previous slide
+        if (idx === 0) {
+            prevSlide();
+        }
+        // If clicking right card, go to next slide
+        else if (idx === 2) {
+            nextSlide();
+        }
+        // Center card already active, do nothing
+    };
+
     const getIndicatorPosition = () => {
         return activeIndex * 33.33;
     };
@@ -102,7 +115,7 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                         firstText={dict?.programs?.flagship_heading_first || "Our Flagship"}
                         secondText={dict?.programs?.flagship_heading_second || "Programs"}
                         firstTextColor="text-primary-green"
-                        secondTextColor="text-primary-green"
+                        secondTextColor="text-primary-orange"
                         borderColor="border-primary-green"
                         cornerColor="bg-primary-orange"
                         className="mx-auto"
@@ -126,12 +139,13 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                                         damping: 30
                                     }}
                                     className={`
-                                        relative rounded-2xl overflow-hidden
+                                        relative rounded-2xl overflow-hidden cursor-pointer
                                         ${isCenter ?
                                         'w-full md:w-[550px] z-10 flex-grow-0 flex-shrink-0 h-full' :
-                                        'w-[120px] sm:w-[200px] md:w-[280px] flex-shrink-0 h-[85%] mt-8'
+                                        'w-[120px] sm:w-[200px] md:w-[280px] flex-shrink-0 h-[85%]'
                                     }
                                     `}
+                                    onClick={() => handleCardClick(idx)}
                                 >
                                     {isCenter ? (
                                         <div className="relative h-full">
@@ -147,17 +161,31 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                                                 <div className="absolute inset-0 bg-black opacity-40"></div>
                                             </div>
 
-                                            <div className="absolute -left-2 -bottom-6 top-2/5 right-0 flex items-center">
-                                                <div className="bg-white p-6 md:p-6 rounded-r-3xl max-w-[70%]">
-                                                    <h3 className="text-xl md:text-2xl font-bold mb-3 text-gray-900">{program.title}</h3>
-                                                    <p className="mb-4 text-sm md:text-base text-gray-700">{program.description}</p>
-                                                    <Link href={program.link} prefetch={true}>
-                                                        <button className="text-secondary-green hover:text-primary-green transition-colors flex items-center group">
+                                            <div className="absolute -left-1 bottom-12 top-2/5 right-0 flex items-center">
+                                                <div className="max-w-[70%]">
+                                                    <h3 className="bg-white rounded-r-3xl inline-block text-xl md:text-2xl font-bold text-gray-900 p-2"
+                                                        style={{
+                                                            borderBottomRightRadius: "0",
+                                                        }}
+                                                    >
+                                                        {program.title}
+                                                    </h3>
+                                                    <p className="bg-white rounded-r-3xl inline-block text-sm md:text-base text-gray-700 px-4 py-2">
+                                                        {program.description}
+                                                    </p>
+                                                    <Link href={program.link} prefetch={true} className="bg-white rounded-r-3xl inline-block"
+                                                          style={{
+                                                              borderTopRightRadius: "0",
+                                                          }}
+                                                          onClick={(e) => e.stopPropagation()} // Prevent triggering card click
+                                                    >
+                                                        <button className="text-secondary-green hover:text-primary-green transition-colors flex items-center group px-4 py-2">
                                                             <span className="font-medium">{dict?.cta?.learn_more || "LEARN MORE"}</span>
                                                             <ArrowRight className="h-5 w-5 ml-2 transform -rotate-45 group-hover:translate-x-1 group-hover:translate-y-[-4px] transition-transform duration-300 text-primary-green" />
                                                         </button>
                                                     </Link>
                                                 </div>
+
                                             </div>
                                         </div>
                                     ) : (
