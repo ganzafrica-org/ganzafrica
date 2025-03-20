@@ -101,10 +101,10 @@ export default function WhyGanzAfricaSection({ locale, dict }: WhyGanzAfricaSect
                     <div className="flex-1 lg:pl-8 flex flex-col">
                         <div className="mb-8">
                             <DecoratedHeading
-                                firstText={dict.home?.why_section?.heading || "Why GanzAfrica?"}
-                                secondText=""
+                                firstText={dict.home?.why_section?.heading_first || "Why"}
+                                secondText={dict.home?.why_section?.heading_second || "GanzAfrica?"}
                                 firstTextColor="text-primary-green"
-                                secondTextColor=""
+                                secondTextColor="text-primary-orange"
                                 borderColor="border-primary-green"
                                 cornerColor="bg-primary-orange"
                             />
