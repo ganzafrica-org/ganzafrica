@@ -10,7 +10,7 @@ const sharedRoutes = [
   "/what-we-do",
   "/programs",
   "/projects",
-  "/community-hub",
+  "/projects",
   "/newsroom",
   "/contact",
   "/faqs",
