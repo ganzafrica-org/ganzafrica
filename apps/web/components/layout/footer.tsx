@@ -167,7 +167,7 @@ export default function Footer({
             <ul className="space-y-3">
               <li>
                 <Link
-                  href={`/${locale}/explore/member-login`}
+                  href={`/${locale}/member-login`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
                   {dict.footer.login}
@@ -175,7 +175,7 @@ export default function Footer({
               </li>
               <li>
                 <Link
-                  href={`/${locale}/explore/opportunities`}
+                  href={`/${locale}/opportunities`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
                   {dict.footer.opportunities}
@@ -183,7 +183,7 @@ export default function Footer({
               </li>
               <li>
                 <Link
-                  href={`/${locale}/explore/research`}
+                  href={`/${locale}/research`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
                   {dict.footer.research}
