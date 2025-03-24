@@ -8,7 +8,6 @@
     "what_we_do": "What We Do",
     "programs": "Programs",
     "projects": "Projects",
-    "community_hub": "Community Hub",
     "stay_updated": "Stay Updated",
     "contact": "Contact"
   },
@@ -222,7 +221,7 @@
     }
   },
   "community": {
-    "title": "Community Hub",
+    "title": "projects",
     "mentors": "Mentors Profile",
     "fellows": "Fellows Profile",
     "join": "Join Our Community"

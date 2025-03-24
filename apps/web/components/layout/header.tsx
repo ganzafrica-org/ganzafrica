@@ -146,6 +146,13 @@ export default function Header({
                     >
                       {dict.about.our_story}
                     </Link>
+                    <Link
+                      href={`/${locale}/about/team`}
+                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      prefetch={true}
+                    >
+                      Team
+                    </Link>
                   </div>
                 </div>
               )}
@@ -241,43 +248,23 @@ export default function Header({
               )}
             </div>
 
-            {/* Community Hub Dropdown */}
+            {/* projects Dropdown */}
             <div className="relative">
-              <span
-                className={cn(
-                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer",
-                  pathname.includes("/community-hub")
-                    ? "text-primary-green"
-                    : isScrolled || !transparent
-                      ? "text-gray-700 hover:text-primary-green"
-                      : "text-white hover:text-white/80",
-                )}
-                onClick={() => toggleDropdown('community-hub')}
-                onMouseEnter={() => handleDropdownOpen('community-hub')}
-                onMouseLeave={handleDropdownClose}
-              >
-                {dict.navigation.community_hub}
-                <ChevronDown className="ml-1 h-4 w-4" />
-              </span>
-              
-              {activeDropdown === 'community-hub' && (
-                <div 
-                  className="absolute left-0 mt-1 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50"
-                  onMouseEnter={handleDropdownContentEnter}
-                  onMouseLeave={handleDropdownClose}
-                >
-                  <div className="py-1 flex flex-col">
-                    <Link
-                      href={`/${locale}/community-hub/team`}
-                      className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      prefetch={true}
-                    >
-                      Team
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
+  <Link
+    href={`/${locale}/projects`}
+    className={cn(
+      "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+      pathname.includes("/project")
+        ? "text-primary-green"
+        : isScrolled || !transparent
+          ? "text-gray-700 hover:text-primary-green"
+          : "text-white hover:text-white/80",
+    )}
+    prefetch={true}
+  >
+    {dict.navigation.projects}
+  </Link>
+</div>
 
             {/* News & Updates Dropdown */}
             <div className="relative">
@@ -461,7 +448,7 @@ export default function Header({
               )}
             </div>
             
-            {/* Mobile Community Hub with submenu */}
+            {/* Mobile projects with submenu */}
             <div className="flex flex-col">
               <button
                 className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
@@ -473,7 +460,7 @@ export default function Header({
               {activeDropdown === 'mobile-community' && (
                 <div className="ml-4 mt-2 flex flex-col space-y-2">
                   <Link
-                    href={`/${locale}/community-hub/mentors`}
+                    href={`/${locale}/projects/mentors`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
@@ -481,7 +468,7 @@ export default function Header({
                     {dict.community.mentors}
                   </Link>
                   <Link
-                    href={`/${locale}/community-hub/fellows`}
+                    href={`/${locale}/projects/fellows`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
@@ -489,7 +476,7 @@ export default function Header({
                     {dict.community.fellows}
                   </Link>
                   <Link
-                    href={`/${locale}/community-hub/team`}
+                    href={`/${locale}/projects/team`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
