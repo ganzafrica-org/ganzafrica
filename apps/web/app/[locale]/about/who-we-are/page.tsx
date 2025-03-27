@@ -4,6 +4,7 @@ import { PersonIcon, BikeIcon } from "@/components/ui/icons";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
+
 import { FC } from "react";
 
 // Types for props
@@ -301,7 +302,6 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
       <div className="flex justify-end p-4">
         <LanguageSwitcher />
       </div>
-
       {/* Hero Section */}
            <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
              {/* Background Image */}
@@ -329,6 +329,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
                </h2>
              </div>
            </section>
+
 
       {/* Our Approach Section with circular images */}
       <section className="py-8 sm:py-10 md:py-12 bg-white">
