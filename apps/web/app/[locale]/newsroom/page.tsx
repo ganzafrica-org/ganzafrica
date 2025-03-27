@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { newsItems, generateSlug } from '@/app/lib/news-data';
 import type { NewsItem } from '@/app/lib/news-data';
 
-type NewsCategory = 'all' | 'news' | 'blogs' | 'reports' | 'research-papers';
+type NewsCategory = 'all' | 'news' | 'blogs' | 'reports' | 'publications';
 
 const NavigationItem = ({ 
   label, 
@@ -60,14 +60,16 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
+          {/* Green overlay with 50% opacity */}
+          <div className="absolute inset-0 bg-[#005C3D] opacity-50"></div>
           
-          {/* Date Badge */}
-          <div className="absolute top-4 left-4 px-4 py-1 bg-primary-green text-white rounded-full text-sm font-medium">
+          {/* Date Badge - White background with green text */}
+          <div className="absolute top-4 left-4 px-4 py-1 bg-white text-primary-green rounded-full text-sm font-medium">
             {item.date}
           </div>
 
-          {/* Category Label */}
-          <div className="absolute top-[52px] left-4 px-4 py-1 bg-[#FFB800] text-black rounded-full text-sm font-medium">
+          {/* Category Label - Transparent background with yellow border and text */}
+          <div className="absolute top-[52px] left-4 px-4 py-1 bg-transparent text-secondary-yellow border border-secondary-yellow rounded-full text-sm font-medium">
             {item.category}
           </div>
 
@@ -101,18 +103,36 @@ const NewsroomPage = () => {
   );
 
   return (
-    <main className="bg-[#F5F5F5] min-h-screen py-12">
-      <Container>
-        {/* Page Title */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-black mb-4">
-            Ganz Africa Newsroom
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Stay updated with the latest news, insights, and developments in agricultural innovation and community empowerment.
-          </p>
+    <main className="bg-[#F5F5F5] min-h-screen">
+      {/* Hero Section */}
+      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/team.png"
+            alt="Ganz Africa Newsroom"
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
         </div>
+        
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/70 z-10"></div>
+        
+        {/* Content */}
+        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
+          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
+            Empowering Africa's Future Through Transformative
+          </h1>
+          <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+            NEWS &UPDATES
+          </h2>
+        </div>
+      </section>
 
+      <Container className="py-12">
         {/* Navigation */}
         <nav className="mb-12 flex items-center justify-center space-x-12 overflow-x-auto pb-4 scrollbar-hide border-b border-gray-200">
           <NavigationItem 
@@ -136,9 +156,9 @@ const NewsroomPage = () => {
             onClick={() => setActiveFilter('reports')}
           />
           <NavigationItem 
-            label="Research Papers" 
-            isActive={activeFilter === 'research-papers'} 
-            onClick={() => setActiveFilter('research-papers')}
+            label="Publications" 
+            isActive={activeFilter === 'publications'} 
+            onClick={() => setActiveFilter('publications')}
           />
         </nav>
 
