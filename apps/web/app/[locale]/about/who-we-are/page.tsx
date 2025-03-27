@@ -2,8 +2,9 @@ import { getDictionary } from "@/lib/get-dictionary";
 import Image from "next/image";
 import { PersonIcon, BikeIcon } from "@/components/ui/icons";
 import { DecoratedHeading } from "@/components/layout/headertext";
-import CategoriesBanner from "@/components/layout/headerBanner";
 import LanguageSwitcher from "@/components/layout/language-switcher";
+import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
+import Hero from "@/components/layout/hero"; // Import the Hero component
 import { FC } from "react";
 
 // Types for props
@@ -56,20 +57,20 @@ const MissionCard: FC<MissionCardProps> = ({
   hasCurvedCorner = false,
 }) => (
   <div className="relative">
-    <div className={`${bgColor} rounded-3xl p-8 overflow-hidden`}>
-      <div className="flex items-center mb-6">
+    <div className={`${bgColor} rounded-3xl p-6 sm:p-8 overflow-hidden`}>
+      <div className="flex items-center mb-4 sm:mb-6">
         <div
-          className={`${labelColor} text-white rounded-full px-4 py-2 flex items-center justify-center text-sm font-medium`}
+          className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium`}
         >
           <span className="mr-2">●</span> {label}
         </div>
       </div>
 
-      <p className={`text-xl font-bold ${textColor}`}>{content}</p>
+      <p className={`text-lg sm:text-xl font-bold ${textColor}`}>{content}</p>
 
       {hasCurvedCorner && (
         <div
-          className="absolute top-0 right-0 w-24 h-24 bg-white"
+          className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white"
           style={{
             borderBottomLeftRadius: "100%",
           }}
@@ -78,9 +79,9 @@ const MissionCard: FC<MissionCardProps> = ({
 
       {/* Circular icon */}
       <div
-        className={`absolute -top-4 -right-4 ${iconColor} rounded-full w-20 h-20 flex items-center justify-center shadow-lg`}
+        className={`absolute -top-4 -right-4 ${iconColor} rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg`}
       >
-        <BikeIcon />
+        <BikeIcon className="w-8 h-8 sm:w-10 sm:h-10" />
       </div>
     </div>
   </div>
@@ -97,49 +98,30 @@ const ValueCard: FC<ValueCardProps> = ({
   description,
 }) => (
   <div
-    className={`md:w-1/3 ${bgColor} rounded-3xl p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer`}
+    className={`w-full md:w-1/3 ${bgColor} rounded-3xl p-6 sm:p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer mb-6 md:mb-0`}
   >
-    <div className="flex justify-center mb-6">
+    <div className="flex justify-center mb-4 sm:mb-6">
       <div
-        className={`${iconBgColor} rounded-full w-24 h-24 flex items-center justify-center shadow-md transition-transform duration-300 hover:scale-110`}
+        className={`${iconBgColor} rounded-full w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center shadow-md transition-transform duration-300 hover:scale-110`}
       >
         <BikeIcon
-          className="w-14 h-14 transition-transform duration-300 hover:scale-125"
+          className="w-10 h-10 sm:w-14 sm:h-14 transition-transform duration-300 hover:scale-125"
           color={iconColor}
         />
       </div>
     </div>
 
     <h3
-      className={`text-2xl font-bold text-center ${titleColor} mb-4 transition-colors duration-300 hover:text-yellow-500`}
+      className={`text-xl sm:text-2xl font-bold text-center ${titleColor} mb-3 sm:mb-4 transition-colors duration-300 hover:text-yellow-500`}
     >
       {title}
     </h3>
 
     <p
-      className={`${textColor} text-center transition-all duration-300 hover:font-medium`}
+      className={`${textColor} text-center text-sm sm:text-base transition-all duration-300 hover:font-medium`}
     >
       {description}
     </p>
-  </div>
-);
-
-// Floating Tag component
-const FloatingTag: FC<FloatingTagProps> = ({
-  text,
-  position,
-  color,
-  rotate = "0deg",
-}) => (
-  <div
-    className={`absolute ${position}`}
-    style={{ transform: `rotate(${rotate})` }}
-  >
-    <span
-      className={`${color} text-white rounded-full px-4 py-2 inline-block font-medium text-sm shadow-md whitespace-nowrap`}
-    >
-      {text}
-    </span>
   </div>
 );
 
@@ -157,20 +139,20 @@ const PromiseCard: FC<PromiseCardProps> = ({
 
   if (type === "partners" && items) {
     return (
-      <div className={`${bgColor} rounded-3xl p-6`}>
-        <div className="flex items-center mb-4">
+      <div className={`${bgColor} rounded-3xl p-4 sm:p-6`}>
+        <div className="flex items-center mb-3 sm:mb-4">
           <div
-            className={`${labelColor} text-white rounded-full px-4 py-2 flex items-center justify-center text-xs font-bold`}
+            className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs font-bold`}
           >
             {label}
           </div>
         </div>
 
-        <ul className="space-y-6">
+        <ul className="space-y-4 sm:space-y-6">
           {items.map((item, index) => (
             <li key={index} className="flex items-start">
-              <span className="text-black font-bold mr-3 mt-1">•</span>
-              <span className="text-gray-800 font-medium text-lg">{item}</span>
+              <span className="text-black font-bold mr-2 sm:mr-3 mt-1">•</span>
+              <span className="text-gray-800 font-medium text-sm sm:text-lg">{item}</span>
             </li>
           ))}
         </ul>
@@ -181,32 +163,32 @@ const PromiseCard: FC<PromiseCardProps> = ({
   return (
     <div className="relative">
       <div
-        className={`${bgColor} ${textColor} rounded-3xl p-6 overflow-hidden`}
+        className={`${bgColor} ${textColor} rounded-3xl p-4 sm:p-6 overflow-hidden`}
       >
-        <div className="flex items-center mb-4">
+        <div className="flex items-center mb-3 sm:mb-4">
           <div
-            className={`${labelColor} text-white rounded-full px-4 py-2 flex items-center justify-center text-xs font-bold`}
+            className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs font-bold`}
           >
             {label}
           </div>
         </div>
 
         {Array.isArray(content) ? (
-          <ul className="space-y-4">
+          <ul className="space-y-3 sm:space-y-4">
             {content.map((item, index) => (
               <li key={index} className="flex items-start">
-                <span className="text-white font-bold mr-3 mt-1">•</span>
-                <span className="text-white font-medium">{item}</span>
+                <span className="text-white font-bold mr-2 sm:mr-3 mt-1">•</span>
+                <span className="text-white font-medium text-sm sm:text-base">{item}</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-xl font-bold">{content}</p>
+          <p className="text-lg sm:text-xl font-bold">{content}</p>
         )}
 
         {hasCurvedCorner && (
           <div
-            className="absolute top-0 right-0 w-16 h-16 bg-white"
+            className="absolute top-0 right-0 w-10 h-10 sm:w-16 sm:h-16 bg-white"
             style={{
               borderBottomLeftRadius: "100%",
             }}
@@ -321,37 +303,15 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         <LanguageSwitcher />
       </div>
 
-      {/* Hero Section with Background Image */}
-      <section className="relative bg-green-900 text-white py-24">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/api/placeholder/1920/600"
-            alt="Agricultural fields"
-            fill
-            className="object-cover opacity-50"
-            priority
-          />
-        </div>
-        <div className="container mx-auto px-4 relative z-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {dict?.about?.hero?.title_1 || "Empowering"}{" "}
-            <span className="text-white">
-              {dict?.about?.hero?.title_2 || "Africa's Future"}
-            </span>
-          </h1>
-          <h2 className="text-2xl md:text-3xl font-medium mb-6">
-            {dict?.about?.hero?.subtitle || "Through Transformative"}
-          </h2>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-orange mb-8">
-            {dict?.about?.hero?.who_we_are || "WHO WE ARE"}
-          </h2>
-        </div>
-      </section>
+      <Hero 
+        imageSrc="/images/team.png" 
+        imageAlt="Agricultural fields" 
+      />
 
-      {/* Our Approach Section */}
-      <section className="py-12 bg-white">
+      {/* Our Approach Section with circular images */}
+      <section className="py-8 sm:py-10 md:py-12 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-10 sm:mb-12">
             <DecoratedHeading
               firstText={
                 dict?.about?.transformative_partner?.heading_first ||
@@ -363,30 +323,63 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             />
           </div>
 
-          <div className="max-w-4xl mx-auto text-left">
-            <p className="text-gray-700 mb-6">
-              {dict?.about?.transformative_partner?.paragraph_1 ||
-                "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
-            </p>
-            <p className="text-gray-700 mb-8">
-              {dict?.about?.transformative_partner?.paragraph_2 ||
-                "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
-            </p>
-            <p className="text-gray-700 mb-8">
-              {dict?.about?.transformative_partner?.paragraph_3 ||
-                "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
-            </p>
-            <p className="text-gray-700 mb-8">
-              {dict?.about?.transformative_partner?.paragraph_4 ||
-                "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
-            </p>
+          <div className="flex flex-col md:flex-row gap-2 max-w-7xl mx-auto">
+            {/* Left side - Images */}
+            <div className="md:w-1/2 flex items-center justify-center">
+              <div className="relative">
+                <div className="rounded-full overflow-hidden w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] border-4 border-transparent">
+                  <Image
+                    src="/images/team.png" 
+                    alt="Hands holding grain"
+                    width={400}
+                    height={400}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                <div className="absolute -bottom-10 -left-10 rounded-full overflow-hidden w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] border-4 border-green-700">
+                  <Image
+                    src="/images/1.jpg"
+                    alt="Smiling person"
+                    width={150}
+                    height={150}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right side - Text content */}
+            <div className="md:w-1/2">
+              <div className="max-w-xl space-y-4">
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {dict?.about?.transformative_partner?.paragraph_1 ||
+                  "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
+                </p>
+                
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {dict?.about?.transformative_partner?.paragraph_2 ||
+                  "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
+                </p>
+                
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {dict?.about?.transformative_partner?.paragraph_3 ||
+                  "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
+                </p>
+                
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {dict?.about?.transformative_partner?.paragraph_4 ||
+                  "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* OUR ASPIRATIONS SECTION */}
-      <section className="py-16 bg-white">
-        <div className="flex justify-center mb-12">
+      <section className="py-8 sm:py-12 md:py-16 bg-white">
+        <div className="flex justify-center mb-6 sm:mb-8 md:mb-12">
           <div className="relative inline-block">
             <div className="flex justify-center">
               <DecoratedHeading
@@ -400,22 +393,22 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         </div>
 
         <div className="w-full px-4">
-          <div className="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
             {/* Left side - Team Image */}
-            <div className="md:w-1/2">
-              <div className="rounded-3xl overflow-hidden h-full">
+            <div className="w-full md:w-1/2 mb-6 md:mb-0">
+              <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[500px]"> 
                 <Image
                   src="/images/team.png"
                   alt="GanzAfrica team members"
-                  width={600}
-                  height={400}
+                  width={500}
+                  height={500}
                   className="w-full h-full object-cover"
                 />
               </div>
             </div>
 
             {/* Right side - Mission Cards */}
-            <div className="md:w-1/2 flex flex-col space-y-8">
+            <div className="w-full md:w-1/2 flex flex-col space-y-6 sm:space-y-8">
               <MissionCard
                 bgColor="bg-yellow-50"
                 labelColor="bg-primary-orange"
@@ -445,10 +438,10 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
       </section>
 
       {/* OUR VALUES SECTION */}
-      <section className="py-16 bg-white">
-        <div className="flex justify-center mb-16">
+      <section className="py-8 sm:py-12 md:py-16 bg-white">
+        <div className="flex justify-center mb-8 sm:mb-12 md:mb-16">
           <div className="relative inline-block">
-            <div className="flex justify-center mb-10">
+            <div className="flex justify-center mb-6 sm:mb-10">
               <DecoratedHeading
                 firstText={dict?.about?.values?.heading_first || "Our"}
                 secondText={dict?.about?.values?.heading_second || "Values"}
@@ -458,7 +451,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         </div>
 
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
             <ValueCard
               bgColor="bg-yellow-50"
               iconBgColor="bg-primary-orange"
@@ -497,73 +490,41 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         </div>
       </section>
 
-      {/* Building Sustainable Solutions Section */}
-      <section className="py-16 bg-white relative overflow-hidden">
-        {/* Main heading */}
-        <div className="container mx-auto px-4 mb-8">
-          <h2 className="text-4xl font-bold text-center">
-            <span className="text-green-800">
-              {dict?.about?.building_solutions?.heading_1 ||
-                "Building Sustainable "}
-            </span>
-            <span className="text-primary-orange">
-              {dict?.about?.building_solutions?.heading_2 || "Solutions With"}
-            </span>
-            <br />
-            <span className="text-primary-orange">
-              {dict?.about?.building_solutions?.heading_3 ||
-                "African Communities!"}
-            </span>
-          </h2>
-        </div>
-
-        {/* Floating tags cloud - horizontal layout */}
-        <div className="w-full relative h-60 mb-8 overflow-visible">
-          {tags.map((tag, index) => (
-            <FloatingTag
-              key={`tag-${index}`}
-              text={tag.text}
-              position={tag.position}
-              color={tag.color}
-              rotate={tag.rotate}
-            />
-          ))}
-        </div>
-
-        {/* Categories Banner Component - full width with slanted design */}
-        <div className="w-full">
-          <CategoriesBanner categories={categories} />
-        </div>
-      </section>
+      {/* Building Sustainable Solutions Section  */}
+      <BuildingSolutionsSection 
+        dict={dict?.about} 
+        categories={categories} 
+        tags={tags} 
+      />
 
       {/* Our Approach Grid Section */}
-      <section className="py-16 bg-white">
+      <section className="py-8 sm:py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex justify-center mb-10">
+          <div className="flex justify-center mb-6 sm:mb-10">
             <DecoratedHeading
               firstText={dict?.about?.approach?.heading_first || "Our"}
               secondText={dict?.about?.approach?.heading_second || "Approach"}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-2">
             {/* Left Column - Identify */}
             <div>
-              <div style={{ backgroundColor: "#FFFDEB" }} className="p-6 h-80">
-                <div className="w-24 h-24 bg-primary-orange rounded-full flex items-center justify-center mb-4">
-                  <PersonIcon className="w-12 h-12 text-white" />
+              <div style={{ backgroundColor: "#FFFDEB" }} className="p-4 sm:p-6 h-auto sm:h-60 md:h-80">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-primary-orange rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                  <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-primary-orange mb-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-primary-orange mb-2 sm:mb-3">
                   {dict?.about?.approach?.identify_title || "Identify"}
                 </h2>
-                <p className="text-gray-800">
+                <p className="text-gray-800 text-sm sm:text-base">
                   {dict?.about?.approach?.identify_text ||
                     "Identify leaders who are committed and passionate about the sustainable stewardship of land, agriculture, and the environment, and who can be trained and capacitated to provide expertise to public, and private sectors and communities."}
                 </p>
               </div>
 
               {/* Bottom-left image */}
-              <div className="h-80">
+              <div className="h-48 sm:h-60 md:h-80">
                 <Image
                   src="/images/team-members-2.jpg"
                   alt="GanzAfrica Office"
@@ -577,7 +538,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             {/* Middle Column - Main Image + Establish */}
             <div>
               {/* Main center image */}
-              <div className="h-80">
+              <div className="h-48 sm:h-60 md:h-80">
                 <Image
                   src="/images/team-members-1.jpg"
                   alt="GanzAfrica Team"
@@ -588,14 +549,14 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
               </div>
 
               {/* Establish section */}
-              <div style={{ backgroundColor: "#F9F9FB" }} className="p-6 h-80">
-                <div className="w-24 h-24 bg-green-800 rounded-full flex items-center justify-center mb-4">
-                  <PersonIcon className="w-12 h-12 text-white" />
+              <div style={{ backgroundColor: "#F9F9FB" }} className="p-4 sm:p-6 h-auto sm:h-60 md:h-80">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-green-800 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                  <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-green-800 mb-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-green-800 mb-2 sm:mb-3">
                   {dict?.about?.approach?.establish_title || "Establish"}
                 </h2>
-                <p className="text-gray-800">
+                <p className="text-gray-800 text-sm sm:text-base">
                   {dict?.about?.approach?.establish_text ||
                     "Establish in-person digital training and incubation centres, enabling hands-on capacity enhancement programmes, professional development and networking designed to respond to specific challenges."}
                 </p>
@@ -605,21 +566,21 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             {/* Right Column - Deploy + Image */}
             <div>
               {/* Deploy section */}
-              <div style={{ backgroundColor: "#FFFDEB" }} className="p-6 h-80">
-                <div className="w-24 h-24 bg-primary-orange rounded-full flex items-center justify-center mb-4">
-                  <PersonIcon className="w-12 h-12 text-white" />
+              <div style={{ backgroundColor: "#FFFDEB" }} className="p-4 sm:p-6 h-auto sm:h-60 md:h-80">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-primary-orange rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                  <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-primary-orange mb-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-primary-orange mb-2 sm:mb-3">
                   {dict?.about?.approach?.deploy_title || "Deploy"}
                 </h2>
-                <p className="text-gray-800">
+                <p className="text-gray-800 text-sm sm:text-base">
                   {dict?.about?.approach?.deploy_text ||
                     "Deploy trained young professionals to support the design and implementation of co-created, community-focused solutions for livelihood improvement."}
                 </p>
               </div>
 
               {/* Bottom-right image */}
-              <div className="h-80">
+              <div className="h-48 sm:h-60 md:h-80">
                 <Image
                   src="/images/team-group-photo.jpg"
                   alt="GanzAfrica Team Members"
@@ -634,17 +595,17 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
       </section>
 
       {/* Our Promise */}
-      <section className="py-16 bg-white">
-        <div className="flex justify-center mb-10">
+      <section className="py-8 sm:py-12 md:py-16 bg-white">
+        <div className="flex justify-center mb-6 sm:mb-10">
           <DecoratedHeading
             firstText={dict?.about?.promise?.heading_first || "Our"}
             secondText={dict?.about?.promise?.heading_second || "Promise"}
           />
         </div>
-        <div className="flex flex-col md:flex-row gap-6 p-4 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-6 p-4 max-w-6xl mx-auto">
           {/* Left side - Image */}
-          <div className="md:w-1/2">
-            <div className="rounded-3xl overflow-hidden">
+          <div className="w-full md:w-1/2 mb-4 md:mb-0">
+            <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[600px]">
               <Image
                 src="/images/Subtract.png"
                 alt="Two professionals shaking hands at Ministry of Environment event"
@@ -656,7 +617,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           </div>
 
           {/* Right side - Content */}
-          <div className="md:w-1/2 flex flex-col space-y-6">
+          <div className="w-full md:w-1/2 flex flex-col space-y-4 sm:space-y-6">
             <PromiseCard
               type="partners"
               items={
