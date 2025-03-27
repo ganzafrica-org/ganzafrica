@@ -4,7 +4,6 @@ import { PersonIcon, BikeIcon } from "@/components/ui/icons";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
-import Hero from "@/components/layout/hero"; // Import the Hero component
 import { FC } from "react";
 
 // Types for props
@@ -303,10 +302,33 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         <LanguageSwitcher />
       </div>
 
-      <Hero 
-        imageSrc="/images/team.png" 
-        imageAlt="Agricultural fields" 
-      />
+      {/* Hero Section */}
+           <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
+             {/* Background Image */}
+             <div className="absolute inset-0 z-0">
+               <Image
+                 src="/images/team.png"
+                 alt="Agricultural fields"
+                 fill
+                 className="object-cover"
+                 priority
+               />
+             </div>
+             
+             {/* Dark overlay */}
+             <div className="absolute inset-0 bg-black opacity-70 z-10"></div>
+             
+             {/* Content */}
+             <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
+             <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
+       <span className="font-bold">Empowering</span> <span className="font-normal">Africa's Future</span><br />
+       <span className="font-normal">Through</span> <span className="font-bold">Transformative</span>
+     </h1>
+               <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+                WHO WE ARE
+               </h2>
+             </div>
+           </section>
 
       {/* Our Approach Section with circular images */}
       <section className="py-8 sm:py-10 md:py-12 bg-white">
