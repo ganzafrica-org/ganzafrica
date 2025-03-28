@@ -137,56 +137,60 @@ const TeamMemberModal = ({
 
 const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenModal: () => void }) => {
   const [imageLoading, setImageLoading] = useState(true);
-
   return (
-    <div className="group">
-      <div className="relative bg-[#F5F5F5] rounded-[24px] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl">
-        <div className="relative w-full aspect-[4/4.8]">
-          {/* Loading Skeleton */}
-          {imageLoading && (
-            <div className="absolute inset-0 bg-gray-200 animate-pulse z-[1]" />
-          )}
-          
-          {/* Image Container */}
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent z-[1]" />
-            <Image
-              src={member.image}
-              alt={member.name}
-              fill
-              className={`object-cover object-center transition-all duration-700 ease-out ${
-                imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-[1.08]'
-              }`}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority={member.id <= 4}
-              onLoadingComplete={() => setImageLoading(false)}
-            />
-          </div>
+      <div className="group">
+        <div className="relative rounded-xl overflow-hidden transition-all duration-300 ease-out">
+          {/* Main Card */}
+          <div className="relative bg-gray-100 overflow-hidden">
+            {/* Loading Skeleton */}
+            {imageLoading && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse z-[1]" />
+            )}
 
-          {/* Top Right Cutout with Button */}
-          <div className="absolute -top-[1%] -right-[1%] z-[2]">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)]" />
-              <button
-                onClick={onOpenModal}
-                aria-label="View team member details"
-                className="relative w-12 h-12 rounded-full bg-primary-orange flex items-center justify-center cursor-pointer transform transition-all duration-300 ease-out hover:scale-110 hover:rotate-12 hover:bg-primary-green shadow-[0_8px_24px_rgba(0,0,0,0.12)] z-10"
-              >
-                <ArrowUpRight className="w-6 h-6 text-white transition-transform duration-300 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2.5} />
-              </button>
+            {/* Image Container */}
+            <div className="relative aspect-[4/3] w-full">
+              <Image
+                  src={member.image}
+                  alt={member.name}
+                  fill
+                  className={`object-cover object-center transition-transform duration-700 ease-out ${
+                      imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110 group-hover:rotate-1'
+                  }`}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority={member.id <= 4}
+                  onLoadingComplete={() => setImageLoading(false)}
+              />
+              {/* Optional overlay that appears on hover */}
+              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
             </div>
-          </div>
 
-          {/* Name Section with Rounded Rectangle */}
-          <div className="absolute -left-[5%] -bottom-[5%] w-[78%] z-[2]">
-            <div className="relative bg-white rounded-2xl py-5 px-8 shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-transform duration-500 ease-out group-hover:translate-x-2">
-              <h3 className="font-bold text-[22px] leading-tight text-primary-green mb-2">{member.name}</h3>
-              <p className="text-gray-600 text-base font-medium tracking-wide opacity-90">{member.role}</p>
+            {/* Top right arrow button with styled container */}
+            <div className="absolute top-0 right-0 z-10">
+              <div className="bg-white p-2 rounded-bl-xl relative">
+                <button
+                    onClick={onOpenModal}
+                    aria-label="View team member details"
+                    className="w-8 h-8 bg-primary-orange rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:bg-primary-green"
+                >
+                  <ArrowUpRight className="w-4 h-4 text-white transform transition-transform group-hover:rotate-45" strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+
+            {/* Name and Role section with top-right rounded corner */}
+            <div className="absolute left-0 bottom-0 z-10">
+              <div className="bg-white pt-3 pb-3 pl-4 pr-8 rounded-tr-xl">
+                <h3 className="text-primary-green text-lg font-bold leading-tight">
+                  {member.name}
+                </h3>
+                <p className="text-gray-600 text-xs mt-0.5">
+                  {member.role}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
@@ -364,7 +368,7 @@ const TeamPage = () => {
             secondText="Team"
             firstTextColor="text-primary-green"
             secondTextColor="text-primary-orange"
-            borderColor="border-primary-orange"
+            borderColor="border-primary-green"
             cornerColor="bg-primary-orange"
           />
           <p className="mt-6 text-gray-600 text-lg max-w-2xl mx-auto">

@@ -212,7 +212,7 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                     </div>
 
                     <div className="flex justify-center items-center gap-3 mt-8">
-                        <div className="w-32 md:w-40 h-1.5 bg-yellow-lighter rounded-full overflow-hidden relative">
+                        <div className="w-32 md:w-40 h-1.5 bg-primary-orange rounded-full overflow-hidden relative">
                             <div
                                 className="h-full bg-secondary-green absolute left-0 top-0 transition-all duration-500 ease-in-out w-10"
                                 style={{ left: `${getIndicatorPosition()}%` }}

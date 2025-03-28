@@ -1,40 +1,74 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
+import React from 'react';
+import { usePathname } from 'next/navigation';
+import Navigation from '@/components/layout/navigation';
+import HomeHero from '@/components/sections/homepage/home-hero';
 
-import { Button } from "@workspace/ui/components/button";
-import LanguageSwitcher from "./language-switcher";
-
-interface HeaderProps {
-  locale: string;
-  dict: any;
+// Define dictionary type
+interface DictionaryType {
+    navigation?: {
+        about?: string;
+        what_we_do?: string;
+        programs?: string;
+        community_hub?: string;
+    };
+    about?: {
+        who_we_are?: string;
+        our_story?: string;
+        [key: string]: string | undefined;
+    };
+    what_we_do?: {
+        food_systems?: string;
+        climate_change_adaptation?: string;
+        [key: string]: string | undefined;
+    };
+    home?: {
+        hero?: {
+            title?: string;
+            subtitle?: string;
+            title_after?: {
+                line1?: string;
+                line2?: string;
+                line3?: string;
+                line4?: string;
+            };
+        };
+    };
+    cta?: {
+        sign_in?: string;
+        discover_more?: string;
+    };
 }
 
-export default function Header({
-                                 locale,
-                                 dict,
-                               }: HeaderProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const pathname = usePathname();
+interface HeaderProps {
+    locale: string;
+    dict: DictionaryType;
+}
 
-  // Add scroll detection for header styling
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+export default function Header({ locale, dict }: HeaderProps) {
+    const pathname = usePathname();
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    // Check if we're on the homepage
+    const isHomePage = pathname === `/${locale}` || pathname === '/';
 
-  return (
-      <header
-          className="fixed top-0 z-50 w-full transition-all duration-300 bg-transparent"
-      >
-
-      </header>
-  );
+    return (
+        <>
+            {isHomePage ? (
+                // For homepage, use the HomeHero component which includes navigation and hero section
+                <HomeHero
+                    locale={locale}
+                    dict={dict}
+                    backgroundImage="/images/hero-test.jpg"
+                />
+            ) : (
+                // For other pages, just use the Navigation component without a hero section
+                <Navigation
+                    locale={locale}
+                    dict={dict}
+                    isHomePage={false}
+                />
+            )}
+        </>
+    );
 }

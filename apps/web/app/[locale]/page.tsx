@@ -9,6 +9,7 @@ import PartnersSection from "@/components/sections/homepage/partners-section";
 import { Metadata } from "next";
 import { generateMetadata as baseGenerateMetadata } from "@/lib/metadata";
 import LatestNewsSection from "@/components/sections/homepage/latest-news-section";
+import NewsletterSection from "@/components/sections/newsletter-section";
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -40,7 +41,7 @@ export default async function HomePage({
 
     return (
         <main>
-            <HomeHero locale={locale} dict={dict} />
+            {/* <HomeHero locale={locale} dict={dict} /> */}
             <FellowsSection locale={locale} dict={dict} />
             <WhyGanzAfricaSection locale={locale} dict={dict} />
             <FlagshipProgramsSection locale={locale} dict={dict} />
@@ -48,6 +49,7 @@ export default async function HomePage({
             <PartnersSection locale={locale} dict={dict} />
             <TestimonialsSection locale={locale} dict={dict} />
             <LatestNewsSection locale={locale} dict={dict} />
+            <NewsletterSection locale={locale} dict={dict} />
         </main>
     );
 }
