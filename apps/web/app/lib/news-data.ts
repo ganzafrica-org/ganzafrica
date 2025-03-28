@@ -180,7 +180,7 @@ The success of these programs demonstrates the vital role of youth in transformi
     title: "Climate-Smart Agriculture: Research Findings 2024",
     description: "New research reveals breakthrough strategies in climate-resilient farming methods for African agriculture.",
     date: "Feb 28, 2024",
-    category: "Research Papers",
+    category: "Publications",
     image: "/images/news/team-members-1.jpg",
     content: `Recent research conducted across multiple African regions has unveiled groundbreaking insights into climate-smart agricultural practices. This comprehensive study, completed in early 2024, provides crucial data on adapting farming methods to climate change while maintaining productivity.
 
