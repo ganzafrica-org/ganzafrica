@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { DecoratedHeading } from '@/components/layout/headertext';
 
@@ -10,10 +10,7 @@ interface PartnersSectionProps {
 }
 
 export default function PartnersSection({ locale, dict }: PartnersSectionProps) {
-    const row1Ref = useRef<HTMLDivElement>(null);
-    const row2Ref = useRef<HTMLDivElement>(null);
 
-    // Keep your existing partner image filenames
     const partnerRow1 = [
         'minagri.jpg',
         'ministry-environment.jpg',
@@ -31,68 +28,6 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
         'science-for-africa.jpg',
     ];
 
-    useEffect(() => {
-        if (!row1Ref.current || !row2Ref.current) return;
-
-        // Better animation logic for infinite scrolling with no gaps
-        const row1 = row1Ref.current;
-        const row2 = row2Ref.current;
-
-        // Clone items multiple times to ensure we always have enough content
-        const cloneItemsForRow = (row: HTMLElement, count: number = 3) => {
-            const originalContent = row.innerHTML;
-            let newContent = originalContent;
-
-            // Clone multiple times to ensure enough content for any screen size
-            for (let i = 0; i < count; i++) {
-                newContent += originalContent;
-            }
-
-            row.innerHTML = newContent;
-        };
-
-        cloneItemsForRow(row1);
-        cloneItemsForRow(row2);
-
-        // Get the container widths to calculate the right reset position
-        let row1Width = row1.scrollWidth / 4; // Divide by 4 since we cloned 3 times (original + 3 clones)
-        let row2Width = row2.scrollWidth / 4;
-
-        // Animation variables
-        let row1Position = 0;
-        let row2Position = 0;
-        const speed = 0.3; // Slower for better visibility of partner logos
-
-        // Animation functions
-        const animate = () => {
-            // First row (left to right)
-            row1Position -= speed;
-            if (row1Position <= -row1Width) {
-                // Reset position by exactly one set width to create perfect loop
-                row1Position += row1Width;
-            }
-            row1.style.transform = `translateX(${row1Position}px)`;
-
-            // Second row (right to left)
-            row2Position += speed;
-            if (row2Position >= row2Width) {
-                // Reset position by exactly one set width to create perfect loop
-                row2Position -= row2Width;
-            }
-            row2.style.transform = `translateX(${row2Position}px)`;
-
-            // Continue animation
-            requestAnimationFrame(animate);
-        };
-
-        const animationId = requestAnimationFrame(animate);
-
-        // Cleanup
-        return () => {
-            cancelAnimationFrame(animationId);
-        };
-    }, []);
-
     return (
         <section className="py-16 md:py-24 bg-yellow-50 overflow-hidden">
             <div className="container mx-auto px-4 mb-8">
@@ -109,41 +44,83 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                 </div>
             </div>
 
-            <div className="mb-16 overflow-hidden">
-                <div ref={row1Ref} className="flex whitespace-nowrap">
-                    {partnerRow1.map((partner, index) => (
-                        <div key={`row1-${index}`} className="inline-block px-6 py-4">
-                            <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
-                                <Image
-                                    src={`/images/partners/${partner}`}
-                                    alt={`Partner ${index + 1}`}
-                                    width={200}
-                                    height={120}
-                                    className="object-contain max-w-full"
-                                />
+            {/* First row - Right to Left */}
+            <div className="slider-container mb-8 overflow-hidden w-full">
+                <div className="slider w-full flex items-center overflow-hidden">
+                    <div className="slider-items-right flex items-center whitespace-nowrap">
+                        {/* Double the items to ensure smooth looping */}
+                        {[...partnerRow1, ...partnerRow1].map((partner, index) => (
+                            <div key={`row1-${index}`} className="inline-block px-6">
+                                <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
+                                    <Image
+                                        src={`/images/partners/${partner}`}
+                                        alt={`Partner ${index % partnerRow1.length + 1}`}
+                                        width={200}
+                                        height={120}
+                                        className="object-contain max-w-full"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            <div className="overflow-hidden">
-                <div ref={row2Ref} className="flex whitespace-nowrap">
-                    {partnerRow2.map((partner, index) => (
-                        <div key={`row2-${index}`} className="inline-block px-6 py-4">
-                            <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
-                                <Image
-                                    src={`/images/partners/${partner}`}
-                                    alt={`Partner ${index + 1}`}
-                                    width={200}
-                                    height={120}
-                                    className="object-contain max-w-full"
-                                />
+            {/* Second row - Left to Right */}
+            <div className="slider-container overflow-hidden w-full">
+                <div className="slider w-full flex items-center overflow-hidden">
+                    <div className="slider-items-left flex items-center whitespace-nowrap">
+                        {/* Double the items to ensure smooth looping */}
+                        {[...partnerRow2, ...partnerRow2].map((partner, index) => (
+                            <div key={`row2-${index}`} className="inline-block px-6">
+                                <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
+                                    <Image
+                                        src={`/images/partners/${partner}`}
+                                        alt={`Partner ${index % partnerRow2.length + 1}`}
+                                        width={200}
+                                        height={120}
+                                        className="object-contain max-w-full"
+                                    />
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
+
+            {/* Styled JSX for animations */}
+            <style jsx>{`
+                .slider-items-right {
+                    animation: scrollRight 30s linear infinite;
+                }
+
+                .slider-items-left {
+                    animation: scrollLeft 30s linear infinite;
+                }
+
+                @keyframes scrollRight {
+                    0% {
+                        transform: translateX(0);
+                    }
+                    100% {
+                        transform: translateX(-50%);
+                    }
+                }
+
+                @keyframes scrollLeft {
+                    0% {
+                        transform: translateX(-50%);
+                    }
+                    100% {
+                        transform: translateX(0);
+                    }
+                }
+
+                .slider-items-right:hover,
+                .slider-items-left:hover {
+                    animation-play-state: paused;
+                }
+            `}</style>
         </section>
     );
 }
