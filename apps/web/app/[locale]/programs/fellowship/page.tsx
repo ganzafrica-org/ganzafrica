@@ -1,20 +1,55 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Container from '@/components/layout/container';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Play, Volume2, Maximize } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { DecoratedHeading } from "@/components/layout/headertext";
+import { default as HeaderBanner } from "@/components/layout/headerBanner";
+import { FC } from 'react';
+import { BikeIcon, LandGovernanceIcon, SustainableAgricultureIcon, ClimateAdaptationIcon } from "@/components/ui/icons";
+import SectionWithScrollAnimation from "@/components/layout/SectionWithScroll";
 
-// Register ScrollTrigger plugin
+
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const journeySteps = [
+interface JourneyStep {
+  id: string;
+  title: string;
+  duration: string;
+  description: string;
+}
+
+interface Activity {
+  title: string;
+  description: string;
+  color: string;
+}
+
+interface Project {
+  id: number;
+  title: string;
+  image: string;
+  status: string;
+  category: string;
+}
+interface ValueCardProps {
+  bgColor: string;
+  iconBgColor: string;
+  iconColor?: string;
+  title: string;
+  titleColor: string;
+  textColor?: string;
+  description: string;
+  Icon?: React.FC<{className?: string, color?: string}>;
+  animationDirection?: string;
+}
+const journeySteps: JourneyStep[] = [
   {
     id: "01",
     title: "Training Phase",
@@ -29,7 +64,7 @@ const journeySteps = [
   }
 ];
 
-const activities = [
+const activities: Activity[] = [
   {
     title: "Land Governance",
     description: "We support the development of equitable and effective land governance frameworks using research-based strategies and promoting sustainable benefits",
@@ -47,7 +82,7 @@ const activities = [
   }
 ];
 
-const projects = [
+const projects: Project[] = [
   {
     id: 1,
     title: "Agriculture Management Information System",
@@ -69,13 +104,19 @@ const projects = [
     status: "Active",
     category: "Climate"
   }
-  // ... other projects
 ];
 
-const SectionTitle = ({ title1, title2 }: { title1: string; title2: string }) => {
-  const titleRef = useRef(null);
+interface SectionTitleProps {
+  title1: string;
+  title2: string;
+}
+
+const SectionTitle = ({ title1, title2 }: SectionTitleProps): JSX.Element => {
+  const titleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!titleRef.current) return;
+    
     gsap.from(titleRef.current, {
       y: 20,
       opacity: 0,
@@ -101,23 +142,238 @@ const SectionTitle = ({ title1, title2 }: { title1: string; title2: string }) =>
   );
 };
 
-const FellowshipProgramPage = () => {
-  const bannerRef = useRef(null);
-  const imageRef = useRef(null);
-  const contentRef = useRef(null);
-  const featuresRef = useRef(null);
-  const journeyRef = useRef(null);
-  const activitiesRef = useRef(null);
-  const projectsRef = useRef(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const totalSlides = Math.ceil(projects.length / 3);
-  const [isPageLoaded, setIsPageLoaded] = useState(false);
+// Reusable Value Card component - Added animationDirection prop
+const ValueCard: FC<ValueCardProps> = ({
+  bgColor,
+  iconBgColor,
+  iconColor = "white",
+  title,
+  titleColor,
+  textColor = "text-gray-800",
+  description,
+  Icon = BikeIcon,
+  animationDirection
+}) => {
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  const nextSlide = () => {
+  useEffect(() => {
+    if (!cardRef.current || !animationDirection) return;
+    
+    gsap.from(cardRef.current, {
+      x: animationDirection === 'left' ? -50 : animationDirection === 'right' ? 50 : 0,
+      opacity: 0,
+      duration: 0.8,
+      scrollTrigger: {
+        trigger: cardRef.current,
+        start: "top 80%",
+        end: "bottom 20%",
+        toggleActions: "play none none reverse"
+      }
+    });
+  }, [animationDirection]);
+
+  return (
+    <div
+      ref={cardRef}
+      className={`w-full md:w-1/3 ${bgColor} rounded-3xl p-6 sm:p-8 relative mb-6 md:mb-0 pt-16 sm:pt-20`}
+    >
+      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div
+          className={`${iconBgColor} rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center shadow-md`}
+        >
+          <Icon
+            className="w-6 h-6 sm:w-8 sm:h-8"
+            color={iconColor}
+          />
+        </div>
+      </div>
+
+      <h3
+        className={`text-xl sm:text-2xl font-bold text-center ${titleColor} mb-3 sm:mb-4`}
+      >
+        {title}
+      </h3>
+
+      <p
+        className={`${textColor} text-center text-sm sm:text-base`}
+      >
+        {description}
+      </p>
+    </div>
+  );
+};
+
+// Video Card component - Updated to play on hover and stop on scroll, with functional mute and fullscreen controls
+interface VideoCardProps {
+  videoSrc: string;
+  title: string;
+  description: string;
+  isWide?: boolean;
+}
+
+const VideoCard: FC<VideoCardProps> = ({ videoSrc, title, description, isWide = false }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Default to muted
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handlePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play().catch(e => console.error("Error playing video:", e));
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleVideoEnd = () => {
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+    }
+  };
+  
+  // Play on hover
+  const handleMouseEnter = () => {
+    if (videoRef.current && !isPlaying) {
+      videoRef.current.play().catch(e => console.error("Error on hover play:", e));
+      setIsPlaying(true);
+    }
+  };
+  
+  const handleMouseLeave = () => {
+    if (videoRef.current && isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
+  // Toggle mute function
+  const toggleMute = (e: React.MouseEvent<HTMLDivElement>): void => {
+    e.stopPropagation(); // Prevent triggering play/pause
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(videoRef.current.muted);
+    }
+  };
+
+  // Toggle fullscreen function
+  const toggleFullscreen = (e: React.MouseEvent<HTMLDivElement>): void => {
+    e.stopPropagation(); // Prevent triggering play/pause
+    if (videoRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch((err: Error) => console.error(err));
+      } else {
+        videoRef.current.requestFullscreen().catch((err: Error) => console.error(err));
+      }
+    }
+  };
+
+  // Stop on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (videoRef.current && isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isPlaying]);
+
+  return (
+    <div 
+      ref={containerRef}
+      className={`relative rounded-2xl overflow-hidden ${isWide ? 'md:col-span-2' : ''}`}
+      style={{ boxShadow: 'none' }} // Explicitly remove any shadow
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="aspect-video w-full relative">
+        <video 
+          ref={videoRef}
+          src={videoSrc}
+          className="w-full h-full object-cover"
+          onEnded={handleVideoEnd}
+          onClick={handlePlay}
+          playsInline
+          muted={isMuted} // Use state to control muted attribute
+          preload="metadata" // Ensure metadata is loaded
+        />
+        
+        {/* Green overlay that disappears when playing */}
+        <div className={`absolute inset-0 bg-primary-green/30 transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}></div>
+        
+        {/* Content that disappears when playing */}
+        <div 
+          className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}
+          onClick={handlePlay}
+        >
+          {/* Play button */}
+          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center cursor-pointer shadow-lg mb-4">
+            <Play className="w-8 h-8 text-black ml-1" />
+          </div>
+          
+          {/* Title and description inside the video */}
+          <div className="text-center px-6 max-w-md">
+            <h3 className={`${isWide ? 'text-xl' : 'text-lg'} font-bold text-white drop-shadow-md`}>{title}</h3>
+            <p className={`${isWide ? 'text-base' : 'text-sm'} text-white mt-2 drop-shadow-md`}>{description}</p>
+          </div>
+        </div>
+        
+        {/* Video control icons in bottom right - visible all the time */}
+        <div className="absolute bottom-3 right-3 flex space-x-2">
+          {/* Mute/Unmute button */}
+          <div 
+            className="w-8 h-8 rounded-full bg-white/70 flex items-center justify-center cursor-pointer hover:bg-white/90 transition-colors"
+            onClick={toggleMute}
+          >
+            {isMuted ? (
+              <div className="relative">
+                <Volume2 className="w-4 h-4 text-black" />
+                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-black transform -rotate-45"></div>
+              </div>
+            ) : (
+              <Volume2 className="w-4 h-4 text-black" />
+            )}
+          </div>
+          
+          {/* Fullscreen button */}
+          <div 
+            className="w-8 h-8 rounded-full bg-white/70 flex items-center justify-center cursor-pointer hover:bg-white/90 transition-colors"
+            onClick={toggleFullscreen}
+          >
+            <Maximize className="w-4 h-4 text-black" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FellowshipProgramPage = (): JSX.Element => {
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const journeyRef = useRef<HTMLDivElement>(null);
+  const activitiesRef = useRef<HTMLDivElement>(null);
+  const projectsRef = useRef<HTMLDivElement>(null);
+  const [currentSlide, setCurrentSlide] = useState<number>(0);
+  const totalSlides = 2; // Fixed to always have 2 slides
+  const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
+
+  const nextSlide = (): void => {
     setCurrentSlide((prev) => (prev + 1) % totalSlides);
   };
 
-  const prevSlide = () => {
+  const prevSlide = (): void => {
     setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
   };
 
@@ -129,71 +385,82 @@ const FellowshipProgramPage = () => {
     if (!isPageLoaded) return;
 
     // Banner animation
-    gsap.from(bannerRef.current, {
-      y: -50,
-      opacity: 0,
-      duration: 1,
-      ease: "power3.out"
-    });
+    if (bannerRef.current) {
+      gsap.from(bannerRef.current, {
+        y: -50,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out"
+      });
+    }
 
     // Image and content animations
-    gsap.from(imageRef.current, {
-      x: -50,
-      opacity: 0,
-      duration: 1,
-      delay: 0.3,
-      ease: "power3.out"
-    });
+    if (imageRef.current) {
+      gsap.from(imageRef.current, {
+        x: -50,
+        opacity: 0,
+        duration: 1,
+        delay: 0.3,
+        ease: "power3.out"
+      });
+    }
 
-    gsap.from(contentRef.current, {
-      x: 50,
-      opacity: 0,
-      duration: 1,
-      delay: 0.3,
-      ease: "power3.out"
-    });
+    if (contentRef.current) {
+      gsap.from(contentRef.current, {
+        x: 50,
+        opacity: 0,
+        duration: 1,
+        delay: 0.3,
+        ease: "power3.out"
+      });
+    }
 
     // Features list stagger animation
-    gsap.from(".feature-item", {
-      y: 20,
-      opacity: 0,
-      duration: 0.5,
-      stagger: 0.1,
-      scrollTrigger: {
-        trigger: featuresRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        toggleActions: "play none none reverse"
-      }
-    });
+    if (featuresRef.current) {
+      gsap.from(".feature-item", {
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+        stagger: 0.1,
+        scrollTrigger: {
+          trigger: featuresRef.current,
+          start: "top 80%",
+          end: "bottom 20%",
+          toggleActions: "play none none reverse"
+        }
+      });
+    }
 
     // Journey steps animation
-    gsap.from(".journey-step", {
-      x: -30,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.3,
-      scrollTrigger: {
-        trigger: journeyRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        toggleActions: "play none none reverse"
-      }
-    });
-
-    // Activities cards animation
-    gsap.from(".activity-card", {
-      y: 50,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.2,
-      scrollTrigger: {
-        trigger: activitiesRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        toggleActions: "play none none reverse"
-      }
-    });
+    if (journeyRef.current) {
+      gsap.from(".journey-step", {
+        x: -30,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.3,
+        scrollTrigger: {
+          trigger: journeyRef.current,
+          start: "top 80%",
+          end: "bottom 20%",
+          toggleActions: "play none none reverse"
+        }
+      });
+    }
+    
+    // Projects section animation for arrows
+    if (projectsRef.current) {
+      // Add animation for arrow buttons
+      gsap.fromTo(".arrow-button", 
+        { y: 0 },
+        { 
+          y: 5, 
+          duration: 1.2, 
+          repeat: -1, 
+          yoyo: true,
+          ease: "power1.inOut"
+        }
+      );
+    }
   }, [isPageLoaded]);
 
   // Add a class to hide content until page is loaded
@@ -201,13 +468,40 @@ const FellowshipProgramPage = () => {
 
   return (
     <main className={`bg-white ${pageClass}`}>
+        {/* Hero Section */}
+            <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
+              {/* Background Image */}
+              <div className="absolute inset-0 z-0">
+                <Image
+                  src="/images/team.png"
+                  alt="Agricultural fields"
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              
+              {/* Dark overlay */}
+              <div className="absolute inset-0 bg-black/70 z-10"></div>
+              
+              {/* Content */}
+              <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
+                <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
+                  <span className="font-bold">Empowering</span> <span className="font-normal">Tomorrow's </span><br />
+                  <span className="font-bold">Leaders</span>
+                </h1>
+                <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+                FELLOWSHIP
+                </h2>
+              </div>
+            </section>
+
       {/* Banner Section */}
-      <div ref={bannerRef} className="bg-[#F5F5F5] py-8">
-        <Container>
-          <h1 className="text-3xl font-bold text-primary-green text-center">
-            Fellowship Program
-          </h1>
-        </Container>
+      <div ref={bannerRef} className="w-full overflow-hidden">
+          <div className="flex justify-center">
+              <HeaderBanner />
+          </div>
       </div>
 
       {/* Program Overview Section */}
@@ -221,6 +515,7 @@ const FellowshipProgramPage = () => {
                   src="/images/news/team-members-1.jpg"
                   alt="Fellowship Program"
                   fill
+                  sizes="(max-width: 768px) 100vw, 42vw"
                   className="rounded-2xl object-cover"
                   priority
                 />
@@ -278,127 +573,108 @@ const FellowshipProgramPage = () => {
         </div>
       </Container>
 
-      {/* Fellowship Journey Section */}
+      {/* Fellowship Journey Section - Updated with interactive videos */}
       <div ref={journeyRef} className="py-16">
         <Container>
           <div className="flex justify-center mb-10">
             <DecoratedHeading firstText="Fellowship" secondText="Journey" />
           </div>
 
-          {/* Steps Container */}
-          <div className="relative px-8 space-y-[160px]">
-            {/* Initial vertical line from very top */}
-            <div className="absolute top-0 left-10 w-[2px] h-full bg-primary-green" />
-
-            {journeySteps.map((step, index) => (
-              <div key={step.id} className="relative journey-step">
-                {/* Horizontal Line */}
-                <div className="absolute left-[42px] top-10 right-0 h-[2px] bg-primary-green" />
-
-                <div className="relative flex">
-                  {/* Number Box */}
-                  <div className="relative z-10">
-                    <div className="w-[80px] h-[80px] bg-primary-green flex items-center justify-center">
-                      <span className="text-[48px] font-bold text-white leading-none">{step.id}</span>
-                    </div>
-                    {/* Duration Badge */}
-                    <div className="absolute -right-28 top-4 px-4 py-1 bg-primary-orange rounded-full whitespace-nowrap">
-                      <span className="text-sm font-semibold text-white tracking-wide">2 MONTHS</span>
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 pl-32">
-                    <div className="pt-32">
-                      <h3 className="text-2xl font-bold text-black mb-6">{step.title}</h3>
-                      <p className="text-gray-600 text-base max-w-2xl" style={{ lineHeight: '1.8' }}>
-                        {step.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right vertical line */}
-                  {index < journeySteps.length - 1 && (
-                    <div className="absolute right-0 top-10 w-[2px] h-[200px] bg-primary-green" />
-                  )}
-                </div>
-              </div>
-            ))}
+          {/* Updated Video Grid Layout - Matches the screenshot */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            {/* Large video on the left */}
+            <VideoCard 
+              videoSrc="/videos/farmer1.mp4"
+              title="Training Phase"
+              description="Workshops and skills development modules that establish a strong foundation of knowledge and practical capabilities."
+              isWide={true}
+            />
+            
+            {/* Two smaller videos stacked on the right */}
+            <div className="md:col-span-1 flex flex-col gap-6">
+              <VideoCard 
+                videoSrc="/videos/farmer2.mp4"
+                title="Placement"
+                description="Fellows are deployed to partner organizations where they contribute to meaningful projects."
+              />
+              
+              <VideoCard 
+                videoSrc="/videos/farmer1.mp4"
+                title="Graduation"
+                description="Celebrating fellows' achievements and welcoming them to our alumni network."
+              />
+            </div>
           </div>
         </Container>
       </div>
 
-      {/* Activities Section */}
-      <div ref={activitiesRef} className="py-16 ">
-        <Container>
-          {/* Section Title with yellow corners */}
-         <div className="flex justify-center mb-10">
-            <DecoratedHeading firstText="The" secondText="Activities" />
+      {/* Fellow Activities Section - With animation from left and right */}
+      <section className="py-8 sm:py-12 md:py-16 bg-white" ref={activitiesRef}>
+        <div className="flex justify-center mb-8 sm:mb-12 md:mb-16">
+          <div className="relative inline-block">
+            <div className="flex justify-center mb-6 sm:mb-10">
+              <DecoratedHeading
+                firstText="Fellow"
+                secondText="Activities"
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {activities.map((activity, index) => (
-              <div 
-                key={index}
-                className="activity-card relative overflow-hidden"
-              >
-                {/* Card Body with Full Border Radius */}
-                <div className="relative h-[400px] overflow-hidden pt-6">
-                  {/* Main Card Content */}
-                  <div className="h-full rounded-[32px] overflow-hidden relative">
-                    {/* Background Image */}
-                    <Image
-                      src="/images/news/maize.avif"
-                      alt="Activity background"
-                      fill
-                      className="object-cover"
-                    />
+        </div>
 
-                    {/* Semi-transparent Overlay */}
-                    <div className="absolute inset-0 bg-black/40" />
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
+            <ValueCard
+              bgColor="bg-yellow-50"
+              iconBgColor="bg-primary-orange"
+              title="Land Governance"
+              titleColor="text-primary-orange"
+              Icon={LandGovernanceIcon}
+              description="We support the development of equitable and effective land administration systems that strengthen tenure security while promoting sustainable land use"
+              animationDirection="left"
+            />
 
-                    {/* Content */}
-                    <div className="relative z-10 h-full flex flex-col justify-end p-8 pb-12">
-                      <p className="text-white text-lg leading-relaxed">
-                        {activity.description}
-                      </p>
-                    </div>
-                  </div>
+            <ValueCard
+              bgColor="bg-green-800"
+              iconBgColor="bg-white"
+              iconColor="#006837"
+              title="Sustainable Agriculture"
+              titleColor="text-white"
+              textColor="text-white"
+              Icon={SustainableAgricultureIcon}
+              description="Our work promotes agricultural policies that balance productivity goals with environmental stewardship and social inclusion"
+            />
 
-                  {/* Title Tab - Positioned above the card */}
-                  <div className="absolute -top-3 left-0 right-0 z-20">
-                    <div className="relative mx-auto w-fit">
-                      {/* Background Extension */}
-                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%+3rem)] h-8 bg-[#F5F5F5] rounded-t-[32px]" />
-                      
-                      {/* Title Container */}
-                      <div className="relative bg-primary-orange text-white px-8 py-2 rounded-[32px] shadow-[0_0_15px_rgba(255,255,255,0.4)] border-[3px] border-white/40">
-                        <h3 className="text-xl font-medium whitespace-nowrap">{activity.title}</h3>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <ValueCard
+              bgColor="bg-yellow-50"
+              iconBgColor="bg-primary-orange"
+              title="Climate Adaptation"
+              titleColor="text-primary-orange"
+              Icon={ClimateAdaptationIcon}
+              description="Our expertise supports the creation of climate resilience strategies that help communities adapt to changing environmental conditions"
+              animationDirection="right"
+            />
           </div>
-        </Container>
-      </div>
+        </div>
+      </section>
 
-      {/* Fellowship Projects Section */}
+      {/* Fellowship Projects Section - Modified to remove categories and make scroll/icons clickable */}
       <div ref={projectsRef}>
         <Container>
           <div className="py-16">
-               <div className="flex justify-center mb-10">
-            <DecoratedHeading firstText="Fellowship" secondText="Projects" />
+            <div className="flex justify-center mb-10">
+              <DecoratedHeading firstText="Fellowship" secondText="Projects" />
+            </div>
+          <div className="flex justify-end">
+            <Link 
+              href="/projects"
+              className="inline-flex items-center text-primary-green hover:text-primary-green/80 font-medium gap-2"
+            >
+              <span className="text-sm italic">See More Projects</span>
+              <div className="w-8 h-8 rounded-full bg-primary-orange flex items-center justify-center">
+                <ArrowRight className="w-5 h-5 text-white" />
+              </div>
+            </Link>
           </div>
-              <Link 
-                href="/projects"
-                className="inline-flex items-center text-primary-green hover:text-primary-green/80 font-medium gap-2"
-              >
-                <span className="text-sm italic">See More Projects</span>
-                <div className="w-8 h-8 rounded-full bg-primary-orange flex items-center justify-center">
-                  <ArrowRight className="w-5 h-5 text-white" />
-                </div>
-              </Link>
 
             {/* Projects Grid with Sliding */}
             <div className="relative w-full">
@@ -407,69 +683,113 @@ const FellowshipProgramPage = () => {
                   className="slider-container flex flex-nowrap transition-transform duration-700 ease-out"
                   style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                 >
-                  {Array.from({ length: Math.ceil(projects.length / 3) }).map((_, index) => (
-                    <div key={index} className="flex gap-8 min-w-full flex-shrink-0">
-                      {projects.slice(index * 3, (index + 1) * 3).map((project) => (
-                        <div 
-                          key={project.id}
-                          className="project-card flex-1 group relative bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden"
-                        >
-                          <div className="relative w-full overflow-hidden">
-                            {/* Top right cut-out */}
-                            <div className="absolute -top-px -right-px w-[140px] h-[70px] bg-white">
-                              <div className="absolute bottom-0 left-0 w-full h-full bg-white">
-                                <div className="absolute bottom-0 left-0 w-full h-full bg-[#F5F5F5] rounded-bl-[48px]" />
-                              </div>
+                  {/* First slide - always showing exactly 3 projects */}
+                  <div key="slide-0" className="flex gap-8 min-w-full flex-shrink-0">
+                    {projects.slice(0, 3).map((project) => (
+                      <div 
+                        key={`project-${project.id}`}
+                        className="project-card flex-1 group relative bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden cursor-pointer"
+                      >
+                        <div className="relative w-full overflow-hidden">
+                          {/* Top right cut-out */}
+                          <div className="absolute -top-px -right-px w-[140px] h-[70px] bg-white">
+                            <div className="absolute bottom-0 left-0 w-full h-full bg-white">
+                              <div className="absolute bottom-0 left-0 w-full h-full bg-[#F5F5F5] rounded-bl-[48px]" />
                             </div>
-                            
-                            {/* Main content container */}
-                            <div className="relative">
-                              {/* Arrow button with CSS hover effect */}
+                          </div>
+                          
+                          {/* Main content container */}
+                          <div className="relative">
+                            {/* Arrow button with CSS hover effect and animation */}
+                            <Link href={`/projects/${project.id}`}>
                               <div className="absolute top-4 right-4 z-10">
-                                <div className="arrow-button w-12 h-12 rounded-full bg-primary-orange group-hover:bg-[#00A651] flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl">
+                                <div className="arrow-button w-12 h-12 rounded-full bg-primary-orange group-hover:bg-[#00A651] flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer">
                                   <ArrowRight className="w-6 h-6 text-white transform -rotate-45 group-hover:-rotate-90 transition-transform duration-300" />
                                 </div>
                               </div>
+                            </Link>
 
-                              {/* Image section with CSS hover effect */}
-                              <div className="card-image relative aspect-[16/9] w-full overflow-hidden">
-                                <Image
-                                  src={project.image}
-                                  alt={project.title}
-                                  fill
-                                  className="object-cover transform group-hover:scale-105 transition-transform duration-500"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#00A651]/90" />
-                              </div>
-
-                              {/* Title section */}
-                              <div className="bg-[#00A651] p-6 relative">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-primary-orange text-xs font-medium uppercase tracking-wider">{project.category}</span>
-                                  </div>
-                                  <h3 className="text-xl font-bold text-white leading-tight">
-                                    {project.title}
-                                  </h3>
+                            {/* Image section with CSS hover effect */}
+                            <div className="card-image relative aspect-[16/9] w-full overflow-hidden">
+                              <Image
+                                src={project.image || '/images/default-image.jpg'}
+                                alt={project.title}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="object-cover transform group-hover:scale-105 transition-transform duration-500"
+                              />
+                              
+                              {/* Title section - completely plain white with no shadows or borders */}
+                              <div className="absolute -bottom-6 -left-3 bg-white py-2 px-4 w-64 z-10 rounded-tr-3xl rounded-br-3xl rounded-tl-3xl">
+                                <div className="font-medium text-sm">
+                                  {project.title}
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Second slide - also showing exactly 3 projects (with one duplicate) */}
+                  <div key="slide-1" className="flex gap-8 min-w-full flex-shrink-0">
+                    {[...projects.slice(1, 3), {...projects[0], id: 4}].map((project) => (
+                      <div 
+                        key={`project-${project.id}`}
+                        className="project-card flex-1 group relative bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden cursor-pointer"
+                      >
+                        <div className="relative w-full overflow-hidden">
+                          {/* Top right cut-out */}
+                          <div className="absolute -top-px -right-px w-[140px] h-[70px] bg-white">
+                            <div className="absolute bottom-0 left-0 w-full h-full bg-white">
+                              <div className="absolute bottom-0 left-0 w-full h-full bg-[#F5F5F5] rounded-bl-[48px]" />
+                            </div>
+                          </div>
+                          
+                          {/* Main content container */}
+                          <div className="relative">
+                            {/* Arrow button with CSS hover effect and animation */}
+                            <Link href={`/projects/${project.id}`}>
+                              <div className="absolute top-4 right-4 z-10">
+                                <div className="arrow-button w-12 h-12 rounded-full bg-primary-orange group-hover:bg-[#00A651] flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer">
+                                  <ArrowRight className="w-6 h-6 text-white transform -rotate-45 group-hover:-rotate-90 transition-transform duration-300" />
+                                </div>
+                              </div>
+                            </Link>
+
+                            {/* Image section with CSS hover effect */}
+                            <div className="card-image relative aspect-[16/9] w-full overflow-hidden">
+                              <Image
+                                src={project.image}
+                                alt={project.title}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="object-cover transform group-hover:scale-105 transition-transform duration-500"
+                              />
+                              
+                              {/* Title section - completely plain white with no shadows or borders */}
+                              <div className="absolute -bottom-6 -left-3 bg-white py-2 px-4 w-64 z-10 rounded-tr-3xl rounded-br-3xl rounded-tl-3xl">
+                                <div className="font-medium text-sm">
+                                  {project.title}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Navigation Controls */}
+              {/* Navigation Controls - Fixed to be clickable */}
               <div className="mt-8 flex justify-center">
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={prevSlide}
-                    disabled={currentSlide === 0}
                     className={`nav-arrow w-10 h-10 rounded-full border border-primary-green flex items-center justify-center ${
-                      currentSlide === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-green hover:text-white'
+                      currentSlide === 0 ? 'opacity-50' : 'hover:bg-primary-green hover:text-white'
                     } text-primary-green transition-all duration-300`}
                     aria-label="Previous slide"
                   >
@@ -477,7 +797,7 @@ const FellowshipProgramPage = () => {
                   </button>
 
                   {/* Progress bar */}
-                  <div className="progress-bar w-32 h-1 bg-gray-200 rounded-full">
+                  <div className="progress-bar w-32 h-1 bg-gray-200 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-primary-green rounded-full transition-all duration-500"
                       style={{ width: `${((currentSlide + 1) / totalSlides) * 100}%` }}
@@ -486,9 +806,8 @@ const FellowshipProgramPage = () => {
 
                   <button 
                     onClick={nextSlide}
-                    disabled={currentSlide === totalSlides - 1}
                     className={`nav-arrow w-10 h-10 rounded-full border border-primary-green flex items-center justify-center ${
-                      currentSlide === totalSlides - 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-green hover:text-white'
+                      currentSlide === totalSlides - 1 ? 'opacity-50' : 'hover:bg-primary-green hover:text-white'
                     } text-primary-green transition-all duration-300`}
                     aria-label="Next slide"
                   >
