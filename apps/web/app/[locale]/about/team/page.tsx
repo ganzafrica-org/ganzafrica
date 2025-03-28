@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Container from '@/components/layout/container';
 import { DecoratedHeading } from "@/components/layout/headertext";
 import Image from 'next/image';
@@ -20,30 +20,22 @@ type TeamMember = {
 
 type FilterCategory = 'all' | 'our-team' | 'mentors' | 'fellows' | 'alumni' | 'advisory';
 
-interface TeamMemberModalProps {
-  member: TeamMember; 
-  isOpen: boolean; 
-  onClose: () => void;
-}
-
 const TeamMemberModal = ({ 
   member, 
   isOpen, 
   onClose 
-}: TeamMemberModalProps): JSX.Element | null => {
+}: { 
+  member: TeamMember; 
+  isOpen: boolean; 
+  onClose: () => void;
+}) => {
   if (!isOpen) return null;
 
   return (
-          <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" 
-        onClick={onClose}
-        aria-modal="true"
-        role="dialog"
-      >
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div 
-        className="bg-white rounded-xl w-full max-w-[580px] overflow-hidden relative shadow-lg transform transition-all duration-500 ease-out" 
-        onClick={(e) => e.stopPropagation()}
-        tabIndex={-1}
+        className="bg-white rounded-xl w-full max-w-[580px] overflow-hidden relative shadow-[0_8px_32px_rgba(0,0,0,0.12)] transform transition-all duration-500 ease-out" 
+        onClick={e => e.stopPropagation()}
       >
         {/* Close Button */}
         <button 
@@ -79,6 +71,63 @@ const TeamMemberModal = ({
             </p>
           </div>
         </div>
+
+        {/* Content Sections */}
+        <div className="px-6">
+          {/* About Section */}
+          <div className="py-5 border-t border-[#E5E7EB]">
+            <h3 className="text-[18px] font-bold text-[#111827] mb-4 relative inline-block">
+              About
+              <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
+            </h3>
+            <div className="max-h-[180px] overflow-y-auto custom-scrollbar pr-2">
+              <p className="text-[15px] text-[#4B5563] leading-[1.7] tracking-wide">
+                {member.about}
+              </p>
+            </div>
+          </div>
+
+          {/* Get In Touch Section */}
+          <div className="py-5 border-t border-[#E5E7EB]">
+            <h3 className="text-[18px] font-bold text-[#111827] mb-4 relative inline-block">
+              Get In Touch
+              <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
+            </h3>
+            <div className="flex items-center gap-4">
+              <a 
+                href={member.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#0A66C2] flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
+                  <Linkedin className="w-5 h-5 text-white" />
+                </div>
+              </a>
+              <a 
+                href={member.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#14171A] flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#14171A]/25 group-hover:-translate-y-0.5">
+                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </div>
+              </a>
+              <a 
+                href={`mailto:${member.email}`}
+                className="group"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary-green flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-primary-green/25 group-hover:-translate-y-0.5">
+                  <Mail className="w-5 h-5 text-white" />
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom Padding */}
         <div className="h-6"></div>
       </div>
@@ -86,80 +135,74 @@ const TeamMemberModal = ({
   );
 };
 
-interface TeamMemberCardProps {
-  member: TeamMember; 
-  onOpenModal: () => void;
-}
-
-const TeamMemberCard = ({ 
-  member, 
-  onOpenModal 
-}: TeamMemberCardProps): JSX.Element => {
+const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenModal: () => void }) => {
   const [imageLoading, setImageLoading] = useState(true);
-
   return (
-    <div className="group">
-      <div className="relative bg-[#F5F5F5] rounded-[24px] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl">
-        <div className="relative w-full aspect-[4/4.8]">
-          {/* Loading Skeleton */}
-          {imageLoading && (
-            <div className="absolute inset-0 bg-gray-200 animate-pulse z-[1]" />
-          )}
-          
-          {/* Image Container */}
-          <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent z-[1]" />
-            <Image
-              src={member.image}
-              alt={member.name}
-              fill
-              className={`object-cover object-center transition-all duration-700 ease-out ${
-                imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-[1.08]'
-              }`}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority={member.id <= 4}
-              onLoadingComplete={() => setImageLoading(false)}
-            />
-          </div>
+      <div className="group">
+        <div className="relative rounded-xl overflow-hidden transition-all duration-300 ease-out">
+          {/* Main Card */}
+          <div className="relative bg-gray-100 overflow-hidden">
+            {/* Loading Skeleton */}
+            {imageLoading && (
+                <div className="absolute inset-0 bg-gray-200 animate-pulse z-[1]" />
+            )}
 
-          {/* Top Right Cutout with Button */}
-          <div className="absolute -top-[1%] -right-[1%] z-[2]">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)]" />
-              <button
-                onClick={onOpenModal}
-                aria-label="View team member details"
-                className="relative w-12 h-12 rounded-full bg-primary-orange flex items-center justify-center cursor-pointer transform transition-all duration-300 ease-out hover:scale-110 hover:rotate-12 hover:bg-primary-green shadow-[0_8px_24px_rgba(0,0,0,0.12)] z-10"
-              >
-                <ArrowUpRight className="w-6 h-6 text-white transition-transform duration-300 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2.5} />
-              </button>
+            {/* Image Container */}
+            <div className="relative aspect-[4/3] w-full">
+              <Image
+                  src={member.image}
+                  alt={member.name}
+                  fill
+                  className={`object-cover object-center transition-transform duration-700 ease-out ${
+                      imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110 group-hover:rotate-1'
+                  }`}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority={member.id <= 4}
+                  onLoadingComplete={() => setImageLoading(false)}
+              />
+              {/* Optional overlay that appears on hover */}
+              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
             </div>
-          </div>
 
-          {/* Name Section with Rounded Rectangle */}
-          <div className="absolute -left-[5%] -bottom-[5%] w-[78%] z-[2]">
-            <div className="relative bg-white rounded-2xl py-5 px-8 shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-transform duration-500 ease-out group-hover:translate-x-2">
-              <h3 className="font-bold text-[22px] leading-tight text-primary-green mb-2">{member.name}</h3>
-              <p className="text-gray-600 text-base font-medium tracking-wide opacity-90">{member.role}</p>
+            {/* Top right arrow button with styled container */}
+            <div className="absolute top-0 right-0 z-10">
+              <div className="bg-white p-2 rounded-bl-xl relative">
+                <button
+                    onClick={onOpenModal}
+                    aria-label="View team member details"
+                    className="w-8 h-8 bg-primary-orange rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:bg-primary-green"
+                >
+                  <ArrowUpRight className="w-4 h-4 text-white transform transition-transform group-hover:rotate-45" strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+
+            {/* Name and Role section with top-right rounded corner */}
+            <div className="absolute left-0 bottom-0 z-10">
+              <div className="bg-white pt-3 pb-3 pl-4 pr-8 rounded-tr-xl">
+                <h3 className="text-primary-green text-lg font-bold leading-tight">
+                  {member.name}
+                </h3>
+                <p className="text-gray-600 text-xs mt-0.5">
+                  {member.role}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
-
-interface FilterButtonProps {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}
 
 const FilterButton = ({ 
   label, 
   active, 
   onClick 
-}: FilterButtonProps): JSX.Element => (
+}: { 
+  label: string; 
+  active: boolean; 
+  onClick: () => void;
+}) => (
   <button
     onClick={onClick}
     className={`px-5 py-2 rounded-full border text-sm font-medium transition-all duration-300 ${
@@ -173,53 +216,44 @@ const FilterButton = ({
 );
 
 // Update scrollbar styles with more polish
-// Use a client-side effect to add the scrollbar styles
-const useScrollbarStyles = (): void => {
-  useEffect(() => {
-    const styles = `
-      .custom-scrollbar {
-        scrollbar-width: thin;
-        scrollbar-color: #E5E7EB transparent;
-      }
+const styles = `
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #E5E7EB transparent;
+  }
 
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 4px;
-      }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
 
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-        border-radius: 20px;
-      }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 20px;
+  }
 
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: #E5E7EB;
-        border-radius: 20px;
-        transition: background-color 0.3s ease;
-      }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #E5E7EB;
+    border-radius: 20px;
+    transition: background-color 0.3s ease;
+  }
 
-      .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-        background-color: #D1D5DB;
-      }
+  .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: #D1D5DB;
+  }
 
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background-color: #9CA3AF;
-      }
-    `;
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #9CA3AF;
+  }
+`;
 
-    const styleSheet = document.createElement("style");
-    styleSheet.innerText = styles;
-    document.head.appendChild(styleSheet);
+// Add the styles to the document
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement("style");
+  styleSheet.innerText = styles;
+  document.head.appendChild(styleSheet);
+}
 
-    return () => {
-      document.head.removeChild(styleSheet);
-    };
-  }, []);
-};
-
-const TeamPage = (): JSX.Element => {
-  // Apply scrollbar styles
-  useScrollbarStyles();
-  
+const TeamPage = () => {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('advisory'); // Default to 'advisory' as requested
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -325,123 +359,92 @@ const TeamPage = (): JSX.Element => {
   );
 
   return (
-    <main className="bg-background min-h-screen">
-      {/* Hero Section */}
-      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/team.png"
-            alt="Agricultural fields"
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
-          />
-        </div>
-        
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
-        
-        {/* Content */}
-        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-            <span className="font-bold">Empowering</span> <span className="font-normal">Africa's Future</span><br />
-            <span className="font-normal">Through</span> <span className="font-bold">Transformative</span>
-          </h1>
-          <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
-          COMMUNITY
-          </h2>
-        </div>
-      </section>
-
+    <main className="bg-background min-h-screen py-24">
       <Container>
-        <div className="py-24">
-          {/* Header */}
-          <div className="text-center mb-16">
-            <DecoratedHeading
-              firstText="Our"
-              secondText="Team"
-              firstTextColor="text-primary-green"
-              secondTextColor="text-primary-orange"
-              borderColor="border-primary-orange"
-              cornerColor="bg-primary-orange"
-            />
-            <p className="mt-6 text-gray-600 text-lg max-w-2xl mx-auto">
-              Meet our dedicated team of professionals working to transform agricultural practices and empower communities across Africa.
-            </p>
+        {/* Header */}
+        <div className="text-center mb-16">
+          <DecoratedHeading
+            firstText="Our"
+            secondText="Team"
+            firstTextColor="text-primary-green"
+            secondTextColor="text-primary-orange"
+            borderColor="border-primary-green"
+            cornerColor="bg-primary-orange"
+          />
+          <p className="mt-6 text-gray-600 text-lg max-w-2xl mx-auto">
+            Meet our dedicated team of professionals working to transform agricultural practices and empower communities across Africa.
+          </p>
+        </div>
+
+        {/* Main Content with Sidebar Layout */}
+        <div className="flex flex-col lg:flex-row gap-12">
+          {/* Filters Sidebar */}
+          <div className="lg:w-[280px] flex-shrink-0">
+            <div className="lg:sticky lg:top-24">
+              <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+                {/* Reordered filter buttons according to requirements */}
+                <FilterButton
+                  label="All Members"
+                  active={activeFilter === 'all'}
+                  onClick={() => setActiveFilter('all')}
+                />
+                <FilterButton
+                  label="Advisory Board"
+                  active={activeFilter === 'advisory'}
+                  onClick={() => setActiveFilter('advisory')}
+                />
+                <FilterButton
+                  label="Our Team"
+                  active={activeFilter === 'our-team'}
+                  onClick={() => setActiveFilter('our-team')}
+                />
+                <FilterButton
+                  label="Mentors"
+                  active={activeFilter === 'mentors'}
+                  onClick={() => setActiveFilter('mentors')}
+                />
+                <FilterButton
+                  label="Fellows"
+                  active={activeFilter === 'fellows'}
+                  onClick={() => setActiveFilter('fellows')}
+                />
+                <FilterButton
+                  label="Alumni"
+                  active={activeFilter === 'alumni'}
+                  onClick={() => setActiveFilter('alumni')}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Main Content with Sidebar Layout */}
-          <div className="flex flex-col lg:flex-row gap-12">
-            {/* Filters Sidebar */}
-            <div className="lg:w-[280px] flex-shrink-0">
-              <div className="lg:sticky lg:top-24">
-                <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                  {/* Reordered filter buttons according to requirements */}
-                  <FilterButton
-                    label="All Members"
-                    active={activeFilter === 'all'}
-                    onClick={() => setActiveFilter('all')}
+          {/* Team Members Grid */}
+          <div className="flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {isLoading ? (
+                // Loading skeletons
+                Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="animate-pulse">
+                    <div className="bg-gray-200 rounded-[24px] aspect-[4/4.8]" />
+                  </div>
+                ))
+              ) : (
+                filteredMembers.map((member) => (
+                  <TeamMemberCard 
+                    key={member.id} 
+                    member={member}
+                    onOpenModal={() => setSelectedMember(member)}
                   />
-                  <FilterButton
-                    label="Advisory Board"
-                    active={activeFilter === 'advisory'}
-                    onClick={() => setActiveFilter('advisory')}
-                  />
-                  <FilterButton
-                    label="Our Team"
-                    active={activeFilter === 'our-team'}
-                    onClick={() => setActiveFilter('our-team')}
-                  />
-                  <FilterButton
-                    label="Mentors"
-                    active={activeFilter === 'mentors'}
-                    onClick={() => setActiveFilter('mentors')}
-                  />
-                  <FilterButton
-                    label="Fellows"
-                    active={activeFilter === 'fellows'}
-                    onClick={() => setActiveFilter('fellows')}
-                  />
-                  <FilterButton
-                    label="Alumni"
-                    active={activeFilter === 'alumni'}
-                    onClick={() => setActiveFilter('alumni')}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Team Members Grid */}
-            <div className="flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                {isLoading ? (
-                  // Loading skeletons
-                  Array.from({ length: 6 }).map((_, index) => (
-                    <div key={`skeleton-${index}`} className="animate-pulse">
-                      <div className="bg-gray-200 rounded-[24px] aspect-[4/4.8]" />
-                    </div>
-                  ))
-                ) : (
-                  filteredMembers.map((member) => (
-                    <TeamMemberCard 
-                      key={`member-${member.id}`} 
-                      member={member}
-                      onOpenModal={() => setSelectedMember(member)}
-                    />
-                  ))
-                )}
-              </div>
-              
-              {/* Empty State */}
-              {!isLoading && filteredMembers.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 text-lg">No team members found in this category.</p>
-                </div>
+                ))
               )}
             </div>
+            
+            {/* Empty State */}
+            {!isLoading && filteredMembers.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">No team members found in this category.</p>
+              </div>
+            )}
           </div>
         </div>
       </Container>
