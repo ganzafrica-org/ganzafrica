@@ -103,7 +103,7 @@ export default function NewsletterSection({ locale, dict }: NewsletterSectionPro
                             <input
                                 type="email"
                                 placeholder="Enter email address"
-                                className="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-green"
+                                className="bg-white w-full px-4 py-3 rounded-md border border-gray focus:outline-none focus:ring-2 focus:ring-primary-green"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -111,7 +111,7 @@ export default function NewsletterSection({ locale, dict }: NewsletterSectionPro
                         </div>
                         <button
                             type="submit"
-                            className={`px-6 py-3 bg-primary-orange text-white font-medium rounded-md hover:bg-primary-orange/90 transition-colors ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                            className={`px-6 py-3 bg-primary-orange text-primary-green font-medium rounded-md hover:bg-primary-orange/90 transition-colors ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? 'Subscribing...' : 'Subscribe'}

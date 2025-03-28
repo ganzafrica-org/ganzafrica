@@ -139,7 +139,7 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                                         damping: 30
                                     }}
                                     className={`
-                                        relative rounded-2xl overflow-hidden cursor-pointer
+                                        relative rounded-2xl overflow-hidden cursor-pointer group
                                         ${isCenter ?
                                         'w-full md:w-[550px] z-10 flex-grow-0 flex-shrink-0 h-full' :
                                         'w-[120px] sm:w-[200px] md:w-[280px] flex-shrink-0 h-[85%]'
@@ -148,21 +148,22 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                                     onClick={() => handleCardClick(idx)}
                                 >
                                     {isCenter ? (
-                                        <div className="relative h-full">
-                                            <div className="absolute inset-0">
+                                        <div className="relative h-full overflow-hidden">
+                                            <div className="absolute inset-0 overflow-hidden">
                                                 <Image
                                                     src={program.image}
                                                     alt={program.title}
                                                     fill
                                                     sizes="(max-width: 768px) 100vw, 550px"
                                                     priority
-                                                    className="object-cover"
+                                                    className="object-cover transition-transform duration-1000 ease-out group-hover:scale-110 group-hover:rotate-1"
                                                 />
-                                                <div className="absolute inset-0 bg-black opacity-40"></div>
+                                                {/* Overlay that adjusts opacity on hover */}
+                                                <div className="absolute inset-0 bg-black opacity-40 group-hover:opacity-30 transition-opacity duration-700"></div>
                                             </div>
 
                                             <div className="absolute -left-1 bottom-12 top-2/5 right-0 flex items-center">
-                                                <div className="max-w-[70%]">
+                                                <div className="max-w-[70%] transform transition-transform duration-500">
                                                     <h3 className="bg-white rounded-r-3xl inline-block text-xl md:text-2xl font-bold text-gray-900 p-2"
                                                         style={{
                                                             borderBottomRightRadius: "0",
@@ -185,7 +186,6 @@ export default function FlagshipProgramsSection({ locale, dict }: FlagshipProgra
                                                         </button>
                                                     </Link>
                                                 </div>
-
                                             </div>
                                         </div>
                                     ) : (
