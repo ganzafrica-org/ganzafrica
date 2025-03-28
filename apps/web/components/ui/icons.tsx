@@ -19,6 +19,7 @@ export const TwitterIcon = () => (
     <path d="M22 5.8a8.49 8.49 0 01-2.36.64 4.13 4.13 0 001.81-2.27 8.21 8.21 0 01-2.61 1 4.1 4.1 0 00-7 3.74 11.64 11.64 0 01-8.45-4.29 4.16 4.16 0 001.27 5.49 4.18 4.18 0 01-1.86-.51v.05a4.11 4.11 0 003.29 4 4.21 4.21 0 01-1.86.07 4.11 4.11 0 003.83 2.84A8.22 8.22 0 012 18.28a11.57 11.57 0 006.29 1.85A11.59 11.59 0 0020 8.45v-.53a8.43 8.43 0 002-2.12z" />
   </svg>
 );
+
 export const PersonIcon = ({ className = "h-5 w-5 text-primary-green" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -35,6 +36,7 @@ export const PersonIcon = ({ className = "h-5 w-5 text-primary-green" }) => (
     <path d="M43.5355 21.4645C45.4882 23.4171 46.6569 26.1435 46.6569 29C46.6569 31.8565 45.4882 34.5829 43.5355 36.5355M16.4645 36.5355C14.5118 34.5829 13.3431 31.8565 13.3431 29C13.3431 26.1435 14.5118 23.4171 16.4645 21.4645" />
   </svg>
 );
+
 export const BikeIcon = ({ className = "w-12 h-12", color = "white" }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -43,5 +45,54 @@ export const BikeIcon = ({ className = "w-12 h-12", color = "white" }) => (
     className={className}
   >
     <path d="M4 4.5a.5.5 0 0 1 .5-.5H6a.5.5 0 0 1 0 1v.5h4.14l.386-1.158A.5.5 0 0 1 11 4h1a.5.5 0 0 1 0 1h-.64l-.311.935.807 1.29a3.5 3.5 0 1 1-.848.53l-.508-.812-2.076 3.322A.5.5 0 0 1 8 10.5H5.959a3.5 3.5 0 1 1-.5 0H4.5v.5h-2a.5.5 0 0 1 0-1h2v-.5H4.5a.5.5 0 0 1-.5-.5zM8.5 9a.5.5 0 0 1 .5.5v.5h1.05l-.212.636a.5.5 0 0 1-.171-.136l-.805-1.288a3.5 3.5 0 1 1 .779-.49l.226.361L10.413 8H9.5a.5.5 0 0 1-.5-.5V7h-1c-.003 0-.006 0-.007-.001A.498.498 0 0 1 8 7c0 .271.132.512.335.656.203.144.469.196.729.196h.341a3.5 3.5 0 0 1-.573-1H8.5zm2.5 3.5a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0zm1.5-3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm-7 1a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z" />
+  </svg>
+);
+
+// Land Governance Icon (Palm Tree)
+export const LandGovernanceIcon = ({ className = "w-12 h-12", color = "white" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4"/>
+    <path d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3"/>
+    <path d="M5.89 9.71c-2.15 2.15-2.3 5.47-.35 7.43l4.24-4.25.7-.7.71-.71 2.12-2.12c-1.95-1.96-5.27-1.8-7.42.35"/>
+    <path d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14"/>
+  </svg>
+);
+
+// Sustainable Agriculture Icon (Vegan)
+export const SustainableAgricultureIcon = ({ className = "w-12 h-12", color = "white" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M16 8q6 0 6-6-6 0-6 6"/>
+    <path d="M17.41 3.59a10 10 0 1 0 3 3"/>
+    <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14"/>
+  </svg>
+);
+
+// Climate Adaptation Icon (Wind and Water with Arrows)
+export const ClimateAdaptationIcon = ({ className = "w-12 h-12", color = "white" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill={color}
+    className={className}
+  >
+    <path d="M20 14h2v2h-2c-1.38 0-2.74-.35-4-1c-2.5 1.3-5.5 1.3-8 0c-1.26.65-2.63 1-4 1H2v-2h2c1.39 0 2.78-.47 4-1.33c2.44 1.71 5.56 1.71 8 0c1.22.86 2.61 1.33 4 1.33m0 6h2v2h-2c-1.38 0-2.74-.35-4-1c-2.5 1.3-5.5 1.3-8 0c-1.26.65-2.63 1-4 1H2v-2h2c1.39 0 2.78-.47 4-1.33c2.44 1.71 5.56 1.71 8 0c1.22.86 2.61 1.33 4 1.33M7 2L3 6h3v5h2V6h3m6-4l-4 4h3v5h2V6h3"/>
   </svg>
 );
