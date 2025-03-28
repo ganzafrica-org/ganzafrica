@@ -1,5 +1,4 @@
 import { getDictionary } from "@/lib/get-dictionary";
-import HomeHero from "@/components/sections/homepage/home-hero";
 import FellowsSection from "@/components/sections/homepage/fellows-section";
 import WhyGanzAfricaSection from "@/components/sections/homepage/why-ganzafrica-section";
 import FlagshipProgramsSection from "@/components/sections/homepage/flagship-programs-section";
@@ -10,6 +9,7 @@ import { Metadata } from "next";
 import { generateMetadata as baseGenerateMetadata } from "@/lib/metadata";
 import LatestNewsSection from "@/components/sections/homepage/latest-news-section";
 import NewsletterSection from "@/components/sections/newsletter-section";
+import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-unique-section";
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -41,9 +41,10 @@ export default async function HomePage({
 
     return (
         <main>
-            {/* <HomeHero locale={locale} dict={dict} /> */}
+
             <FellowsSection locale={locale} dict={dict} />
             <WhyGanzAfricaSection locale={locale} dict={dict} />
+            <GanzAfricaUniqueSection locale={locale} dict={dict} />
             <FlagshipProgramsSection locale={locale} dict={dict} />
             <ProjectsSection locale={locale} dict={dict} />
             <PartnersSection locale={locale} dict={dict} />
