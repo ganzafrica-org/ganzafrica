@@ -39,7 +39,7 @@ interface DictionaryType {
         about?: string;
         what_we_do?: string;
         programs?: string;
-        community_hub?: string;
+        projects?: string;
     };
     about?: {
         who_we_are?: string;
@@ -75,6 +75,12 @@ const aboutItems: MenuItem[] = [
         href: "/about/our-story",
         description: "The journey of how we started and what inspires our work every day.",
     },
+    {
+        title: "Team",
+        href: "/about/team",
+        description: "Meet the talented individuals behind our mission. Learn about our team members, their expertise, and their contributions to our success."
+
+    },
 ]
 
 const whatWeDoItems: MenuItem[] = [
@@ -103,11 +109,11 @@ const programsItems: MenuItem[] = [
     },
 ]
 
-const communityHubItems: MenuItem[] = [
+const projectItems: MenuItem[] = [
     {
-        title: "Team",
-        href: "/community-hub/team",
-        description: "Meet the dedicated professionals working to create a sustainable future.",
+        title: "Projects",
+        href: "/projects",
+        description: "Discover our projects and their impact.",
     },
 ]
 
@@ -119,7 +125,7 @@ const newsItems: MenuItem[] = [
     },
     {
         title: "Contact Us",
-        href: "/contact-us",
+        href: "/contact",
         description: "Get in touch with our team for inquiries, partnerships, or support.",
     },
 ]
@@ -297,18 +303,18 @@ export default function Navigation({
                         )}
                     </div>
 
-                    {/* Community Hub */}
+                    {/* Projects */}
                     <div className="flex flex-col">
                         <button
                             className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-                            onClick={() => toggleDropdown('mobile-community')}
+                            onClick={() => toggleDropdown('mobile-projects')}
                         >
-                            {dict?.navigation?.community_hub || "Community Hub"}
-                            <span className={`transform transition-transform ${activeDropdown === 'mobile-community' ? 'rotate-180' : ''}`}>▼</span>
+                            {dict?.navigation?.projects || "Projects"}
+                            <span className={`transform transition-transform ${activeDropdown === 'mobile-projects' ? 'rotate-180' : ''}`}>▼</span>
                         </button>
-                        {activeDropdown === 'mobile-community' && (
+                        {activeDropdown === 'mobile-projects' && (
                             <div className="ml-4 mt-2 flex flex-col space-y-2">
-                                {communityHubItems.map((item) => (
+                                {projectItems.map((item) => (
                                     <Link
                                         key={item.href}
                                         href={`/${locale}${item.href}`}
@@ -492,10 +498,10 @@ export default function Navigation({
                                     </NavigationMenuContent>
                                 </NavigationMenuItem>
 
-                                {/* Community Hub Dropdown */}
+                                {/* Projects Dropdown */}
                                 <NavigationMenuItem>
                                     <NavigationMenuTrigger className={getNavItemColor()}>
-                                        {dict?.navigation?.community_hub || "Community Hub"}
+                                        {dict?.navigation?.projects || "Projects"}
                                     </NavigationMenuTrigger>
                                     <NavigationMenuContent>
                                         <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
@@ -503,19 +509,19 @@ export default function Navigation({
                                                 <NavigationMenuLink asChild>
                                                     <a
                                                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                                                        href={`/${locale}/community-hub`}
+                                                        href={`/${locale}/projects`}
                                                     >
                                                         <div className="mb-2 mt-4 text-lg font-medium">
-                                                            Our Community
+                                                            Our Projects
                                                         </div>
                                                         <p className="text-sm leading-tight text-muted-foreground">
-                                                            Connect with our network of changemakers and learn about
-                                                            the people driving sustainable transformation.
+                                                            Discover our innovative projects and their impact on
+                                                            communities across Africa.
                                                         </p>
                                                     </a>
                                                 </NavigationMenuLink>
                                             </li>
-                                            {communityHubItems.map((item) => (
+                                            {projectItems.map((item) => (
                                                 <ListItem
                                                     key={item.href}
                                                     href={`/${locale}${item.href}`}
