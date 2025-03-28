@@ -6,6 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Leaf, Send } from "lucide-react";
+import { safeAccess } from "@/lib/utils/safeAccess";
 
 
 interface ContactUsPageProps {
