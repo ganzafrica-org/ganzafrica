@@ -71,37 +71,7 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
                 </div>
 
                 <div className="relative z-10 flex flex-col lg:flex-row items-start gap-8">
-                    {/* Image section positioned to overlap the step */}
-                    <div className="relative flex-1 w-full max-w-lg mx-auto lg:mx-0 lg:-mb-16">
-                        <div
-                            ref={statsRef}
-                            className="absolute -top-8 -left-4 md:-top-12 md:-left-8 z-20 w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#FFB800] flex items-center justify-center shadow-lg"
-                        >
-                            <div className="text-center">
-                                <span
-                                    ref={(el) => {
-                                        countRefs.current[0] = el;
-                                        return undefined;
-                                    }}
-                                    className="text-3xl md:text-4xl font-bold text-white block"
-                                >
-                                    75+
-                                </span>
-                                <span className="text-sm text-white block -mt-1">
-                                    Fellows
-                                </span>
-                            </div>
-                        </div>
-                        <div className="relative rounded-2xl overflow-hidden shadow-xl w-full h-[300px] md:h-[400px]">
-                            <Image
-                                src={dict.home?.fellow_section?.image_src || "/images/ganzafrica-fellows.jpg"}
-                                alt={dict.about?.fellows_photo_alt || "GanzAfrica fellows"}
-                                fill
-                                priority
-                                className="object-cover"
-                            />
-                        </div>
-                    </div>
+
 
                     {/* Content section */}
                     <div ref={contentRef} className="flex-1 lg:pl-8 pt-8">
@@ -150,6 +120,37 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
                                 <ArrowRight className="h-5 w-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
                             </Button>
                         </Link>
+                    </div>
+                    {/* Image section positioned to overlap the step */}
+                    <div className="relative flex-1 w-full max-w-lg mx-auto lg:mx-0 lg:-mb-16">
+                        <div
+                            ref={statsRef}
+                            className="absolute -top-8 -left-4 md:-top-12 md:-left-8 z-20 w-24 h-24 md:w-32 md:h-32 rounded-full bg-[#FFB800] flex items-center justify-center shadow-lg"
+                        >
+                            <div className="text-center">
+                                <span
+                                    ref={(el) => {
+                                        countRefs.current[0] = el;
+                                        return undefined;
+                                    }}
+                                    className="text-3xl md:text-4xl font-bold text-white block"
+                                >
+                                    75+
+                                </span>
+                                <span className="text-sm text-white block -mt-1">
+                                    Fellows
+                                </span>
+                            </div>
+                        </div>
+                        <div className="relative rounded-2xl overflow-hidden shadow-xl w-full h-[300px] md:h-[400px]">
+                            <Image
+                                src={dict.home?.fellow_section?.image_src || "/images/ganzafrica-fellows.jpg"}
+                                alt={dict.about?.fellows_photo_alt || "GanzAfrica fellows"}
+                                fill
+                                priority
+                                className="object-cover"
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
