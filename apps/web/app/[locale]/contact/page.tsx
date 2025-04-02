@@ -7,6 +7,7 @@ import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Leaf, Send } from "lucide-react";
 import { safeAccess } from "@/lib/utils/safeAccess";
+import { default as HeaderBelt } from "@/components/layout/headerBelt";
 
 
 interface ContactUsPageProps {
@@ -81,6 +82,8 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
           </div>
         </div>
       </div>
+      <HeaderBelt />
+      
 
       {/* Contact Form and Newsletter Section */}
       <div className="py-12 bg-white">
@@ -89,6 +92,10 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
             {/* Contact Form */}
             
             <div className="flex-1">
+            <h2 className="text-2xl font-bold mb-4">
+              <span className="text-primary-green">Connect </span>
+              <span className="text-yellow-500">With Us</span>
+            </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
