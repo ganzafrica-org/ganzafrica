@@ -41,6 +41,7 @@ const config = {
 				"red": "#D42B1D",
 				"red-darker": "#9C2018",
 				"red-lighter": "#FFEE4E2",
+				
 
 				// Standard UI colors
 				border: 'hsl(var(--border))',
