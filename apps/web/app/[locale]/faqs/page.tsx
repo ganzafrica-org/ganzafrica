@@ -74,13 +74,22 @@ export default function Page() {
 
       {/* Yellow Belt Section */}
       <div className="bg-yellow-400 py-4 relative overflow-hidden">
-        <div className="flex animate-scroll whitespace-nowrap">
-          <div className="flex space-x-8 px-4">
-            <span>• Food Systems</span>
-            <span>• Data & Evidence</span>
-            <span>• Co-creation</span>
-            <span>• Food systems</span>
-            <span>• Data & Evidence</span>
+        <div className="flex justify-center items-center">
+          <div className="marquee-container overflow-hidden w-full max-w-2xl mx-auto">
+            <div className="marquee-content flex whitespace-nowrap animate-marquee">
+              <div className="flex space-x-8 px-4 mx-4">
+                <span className="text-base font-medium">• Food Systems</span>
+                <span className="text-base font-medium">• Data & Evidence</span>
+                <span className="text-base font-medium">• Co-creation</span>
+                <span className="text-base font-medium">• Data & Evidence</span>
+              </div>
+              <div className="flex space-x-8 px-4 mx-4">
+                <span className="text-base font-medium">• Food Systems</span>
+                <span className="text-base font-medium">• Data & Evidence</span>
+                <span className="text-base font-medium">• Co-creation</span>
+                <span className="text-base font-medium">• Data & Evidence</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -155,6 +164,20 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-marquee {
+          animation: marquee 15s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }

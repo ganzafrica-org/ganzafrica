@@ -2,6 +2,8 @@ import React from "react";
 import { getDictionary } from "@/lib/get-dictionary";
 import SectionWithScrollAnimation from "@/components/layout/SectionWithScroll";
 import Image from "next/image";
+import { default as HeaderBelt } from "@/components/layout/headerBelt";
+
 
 export default async function OurStory({
   params: { locale },
@@ -21,15 +23,15 @@ export default async function OurStory({
       {/* Hero Section */}
       <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
         {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/team.png"
-            alt="Agricultural fields"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
+            <div className="absolute inset-0 z-0">
+                       <Image
+                         src="/images/team.png"
+                         alt="Agricultural fields"
+                         fill
+                         className="object-cover"
+                         priority
+                       />
+                     </div>
         
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black opacity-70 z-10"></div>
@@ -37,16 +39,18 @@ export default async function OurStory({
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
         <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-  <span className="font-bold">Empowering</span> <span className="font-normal">Africa's Future</span><br />
-  <span className="font-normal">Through</span> <span className="font-bold">Transformative</span>
+  <span className="font-bold text-yellow-400">Empowering</span> <span className="font-normal">Africa's Future</span><br />
+  <span className="font-normal">Through</span> <span className="font-bold text-yellow-400">Transformative</span>
 </h1>
 
           
-          <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+          <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
             OUR STORY
           </h2>
         </div>
       </section>
+      <HeaderBelt />
+
 
       <div className="pt-12 px-4 max-w-7xl mx-auto">
         {/* Section01 */}
