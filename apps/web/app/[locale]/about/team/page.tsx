@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Container from '@/components/layout/container';
 import { DecoratedHeading } from "@/components/layout/headertext";
 import Image from 'next/image';
-import { ArrowUpRight, X, Linkedin, Mail } from 'lucide-react';
+import { ArrowUpRight, X, Linkedin, Mail, Leaf } from 'lucide-react';
+import { default as HeaderBelt } from "@/components/layout/headerBelt";
 
 type TeamMember = {
   id: number;
@@ -94,36 +95,42 @@ const TeamMemberModal = ({
               <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
             </h3>
             <div className="flex items-center gap-4">
-              <a 
-                href={member.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group"
-              >
-                <div className="w-10 h-10 rounded-full bg-[#0A66C2] flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
-                  <Linkedin className="w-5 h-5 text-white" />
-                </div>
-              </a>
-              <a 
-                href={member.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group"
-              >
-                <div className="w-10 h-10 rounded-full bg-[#14171A] flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#14171A]/25 group-hover:-translate-y-0.5">
-                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                </div>
-              </a>
-              <a 
-                href={`mailto:${member.email}`}
-                className="group"
-              >
-                <div className="w-10 h-10 rounded-full bg-primary-green flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-primary-green/25 group-hover:-translate-y-0.5">
-                  <Mail className="w-5 h-5 text-white" />
-                </div>
-              </a>
+              {member.linkedin && (
+                <a 
+                  href={member.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#0A66C2] flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
+                    <Linkedin className="w-5 h-5 text-white" />
+                  </div>
+                </a>
+              )}
+              {member.twitter && (
+                <a 
+                  href={member.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-[#14171A] flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#14171A]/25 group-hover:-translate-y-0.5">
+                    <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  </div>
+                </a>
+              )}
+              {member.email && (
+                <a 
+                  href={`mailto:${member.email}`}
+                  className="group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary-green flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-primary-green/25 group-hover:-translate-y-0.5">
+                    <Mail className="w-5 h-5 text-white" />
+                  </div>
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -138,17 +145,17 @@ const TeamMemberModal = ({
 const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenModal: () => void }) => {
   const [imageLoading, setImageLoading] = useState(true);
   return (
-      <div className="group">
-        <div className="relative rounded-xl overflow-hidden transition-all duration-300 ease-out">
+      <div className="group h-full">
+        <div className="relative rounded-xl overflow-hidden transition-all duration-300 ease-out h-full shadow-sm hover:shadow-md">
           {/* Main Card */}
-          <div className="relative bg-gray-100 overflow-hidden">
+          <div className="relative bg-gray-100 overflow-hidden h-full">
             {/* Loading Skeleton */}
             {imageLoading && (
                 <div className="absolute inset-0 bg-gray-200 animate-pulse z-[1]" />
             )}
 
             {/* Image Container */}
-            <div className="relative aspect-[4/3] w-full">
+            <div className="relative aspect-[3/4] w-full">
               <Image
                   src={member.image}
                   alt={member.name}
@@ -183,7 +190,7 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
                 <h3 className="text-primary-green text-lg font-bold leading-tight">
                   {member.name}
                 </h3>
-                <p className="text-gray-600 text-xs mt-0.5">
+                <p className="text-gray-600 text-sm mt-0.5">
                   {member.role}
                 </p>
               </div>
@@ -253,7 +260,7 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(styleSheet);
 }
 
-const TeamPage = () => {
+const TeamPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('advisory'); // Default to 'advisory' as requested
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -359,102 +366,145 @@ const TeamPage = () => {
   );
 
   return (
-    <main className="bg-background min-h-screen py-24">
-      <Container>
-        {/* Header */}
-        <div className="text-center mb-16">
-          <DecoratedHeading
-            firstText="Our"
-            secondText="Team"
-            firstTextColor="text-primary-green"
-            secondTextColor="text-primary-orange"
-            borderColor="border-primary-green"
-            cornerColor="bg-primary-orange"
-          />
-          <p className="mt-6 text-gray-600 text-lg max-w-2xl mx-auto">
-            Meet our dedicated team of professionals working to transform agricultural practices and empower communities across Africa.
-          </p>
-        </div>
+    <main className="bg-background min-h-screen">
+      {/* Hero Section with Header */}
+      <div className="relative h-[500px]"
+        style={{
+          backgroundImage: "url('https://images.unsplash.com/photo-1560493676-04071c5f467b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}>
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
-        {/* Main Content with Sidebar Layout */}
-        <div className="flex flex-col lg:flex-row gap-12">
-          {/* Filters Sidebar */}
-          <div className="lg:w-[280px] flex-shrink-0">
-            <div className="lg:sticky lg:top-24">
-              <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                {/* Reordered filter buttons according to requirements */}
-                <FilterButton
-                  label="All Members"
-                  active={activeFilter === 'all'}
-                  onClick={() => setActiveFilter('all')}
-                />
-                <FilterButton
-                  label="Advisory Board"
-                  active={activeFilter === 'advisory'}
-                  onClick={() => setActiveFilter('advisory')}
-                />
-                <FilterButton
-                  label="Our Team"
-                  active={activeFilter === 'our-team'}
-                  onClick={() => setActiveFilter('our-team')}
-                />
-                <FilterButton
-                  label="Mentors"
-                  active={activeFilter === 'mentors'}
-                  onClick={() => setActiveFilter('mentors')}
-                />
-                <FilterButton
-                  label="Fellows"
-                  active={activeFilter === 'fellows'}
-                  onClick={() => setActiveFilter('fellows')}
-                />
-                <FilterButton
-                  label="Alumni"
-                  active={activeFilter === 'alumni'}
-                  onClick={() => setActiveFilter('alumni')}
-                />
+        {/* Header with cut-out sections */}
+        <header className="relative z-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="flex justify-between items-center py-4">
+              {/* Logo section with white background cut-out */}
+              <div className="relative bg-white p-4 -ml-4 rounded-br-3xl">
+                <div className="flex items-center">
+                  <Leaf className="h-8 w-8 text-emerald-600" />
+                  <span className="ml-2 text-xl font-bold text-emerald-600">GanzAfrica</span>
+                </div>
               </div>
             </div>
           </div>
+        </header>
 
-          {/* Team Members Grid */}
-          <div className="flex-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {isLoading ? (
-                // Loading skeletons
-                Array.from({ length: 6 }).map((_, index) => (
-                  <div key={index} className="animate-pulse">
-                    <div className="bg-gray-200 rounded-[24px] aspect-[4/4.8]" />
-                  </div>
-                ))
-              ) : (
-                filteredMembers.map((member) => (
-                  <TeamMemberCard 
-                    key={member.id} 
-                    member={member}
-                    onOpenModal={() => setSelectedMember(member)}
+        {/* Hero Content */}
+        <div className="relative z-10 flex items-center justify-center h-full text-center">
+          <div className="space-y-4">
+            <h1 className="text-3xl md:text-5xl text-white">
+              Our <span className="text-yellow-400 font-bold">Team</span> & <span className='text-yellow-400 font-bold'>Advisory</span><br />
+              Board
+            </h1>
+            <div className="text-6xl font-bold text-yellow-400">Members</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Yellow Belt Section */}
+      <HeaderBelt />
+
+      <div className="py-24">
+        <Container>
+          {/* Main Content with Sidebar Layout */}
+          <div className="flex flex-col lg:flex-row gap-12">
+            {/* Filters Sidebar */}
+            <div className="lg:w-[280px] flex-shrink-0">
+              <div className="lg:sticky lg:top-24">
+                <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+                  {/* Reordered filter buttons according to requirements */}
+                  <FilterButton
+                    label="All Members"
+                    active={activeFilter === 'all'}
+                    onClick={() => setActiveFilter('all')}
                   />
-                ))
+                  <FilterButton
+                    label="Advisory Board"
+                    active={activeFilter === 'advisory'}
+                    onClick={() => setActiveFilter('advisory')}
+                  />
+                  <FilterButton
+                    label="Our Team"
+                    active={activeFilter === 'our-team'}
+                    onClick={() => setActiveFilter('our-team')}
+                  />
+                  <FilterButton
+                    label="Mentors"
+                    active={activeFilter === 'mentors'}
+                    onClick={() => setActiveFilter('mentors')}
+                  />
+                  <FilterButton
+                    label="Fellows"
+                    active={activeFilter === 'fellows'}
+                    onClick={() => setActiveFilter('fellows')}
+                  />
+                  <FilterButton
+                    label="Alumni"
+                    active={activeFilter === 'alumni'}
+                    onClick={() => setActiveFilter('alumni')}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Team Members Grid */}
+            <div className="flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                {isLoading ? (
+                  // Loading skeletons
+                  Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="animate-pulse">
+                      <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
+                    </div>
+                  ))
+                ) : (
+                  filteredMembers.map((member) => (
+                    <TeamMemberCard 
+                      key={member.id} 
+                      member={member}
+                      onOpenModal={() => setSelectedMember(member)}
+                    />
+                  ))
+                )}
+              </div>
+              
+              {/* Empty State */}
+              {!isLoading && filteredMembers.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 text-lg">No team members found in this category.</p>
+                </div>
               )}
             </div>
-            
-            {/* Empty State */}
-            {!isLoading && filteredMembers.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No team members found in this category.</p>
-              </div>
-            )}
           </div>
-        </div>
-      </Container>
+        </Container>
+      </div>
 
       {/* Modal */}
-      <TeamMemberModal
-        member={selectedMember!}
-        isOpen={!!selectedMember}
-        onClose={() => setSelectedMember(null)}
-      />
+      {selectedMember && (
+        <TeamMemberModal
+          member={selectedMember}
+          isOpen={!!selectedMember}
+          onClose={() => setSelectedMember(null)}
+        />
+      )}
+
+      <style jsx global>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-marquee {
+          animation: marquee 15s linear infinite;
+        }
+      `}</style>
     </main>
   );
 };

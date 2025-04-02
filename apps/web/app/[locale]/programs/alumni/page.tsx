@@ -11,6 +11,8 @@ import { DecoratedHeading } from "@/components/layout/headertext";
 import { default as HeaderBanner } from "@/components/layout/headerBanner";
 import { FC } from 'react';
 import { BikeIcon, LandGovernanceIcon, SustainableAgricultureIcon, ClimateAdaptationIcon } from "@/components/ui/icons";
+import { default as HeaderBelt } from "@/components/layout/headerBelt";
+
 
 // Register ScrollTrigger plugin
 if (typeof window !== 'undefined') {
@@ -532,22 +534,15 @@ const AlumniProgramPage = (): JSX.Element => {
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
           <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-            <span className="font-bold">Strengthening</span> <span className="font-normal">Our Legacy, </span><br />
-            <span className="font-bold">Together</span>
+            <span className="font-normal">Strengthening</span> <span className="font-bold text-yellow-400">Our Legacy, </span><br />
+            <span className="font-normal">Together</span>
           </h1>
-          <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+          <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
             ALUMNI
           </h2>
         </div>
       </section>
-
-      {/* Banner Section */}
-      <div ref={bannerRef} className="w-full overflow-hidden">
-        <div className="flex justify-center">
-          <HeaderBanner />
-        </div>
-      </div>
-
+    <HeaderBelt />
       {/* Program Overview Section */}
       <Container>
         <div className="py-10">

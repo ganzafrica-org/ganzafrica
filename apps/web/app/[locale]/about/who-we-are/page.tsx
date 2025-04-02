@@ -4,6 +4,8 @@ import { PersonIcon, BikeIcon } from "@/components/ui/icons";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
+import { default as HeaderBelt } from "@/components/layout/headerBelt";
+
 
 import { FC } from "react";
 
@@ -320,15 +322,17 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
              
              {/* Content */}
              <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-             <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-       <span className="font-bold">Empowering</span> <span className="font-normal">Africa's Future</span><br />
-       <span className="font-normal">Through</span> <span className="font-bold">Transformative</span>
+             <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
+       <span className="font-bold text-yellow-400">Empowering</span> <span className="font-normal">Africa's Future</span><br />
+       <span className="font-normal">Through</span> <span className="font-bold text-yellow-400">Transformative</span>
      </h1>
-               <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+               <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
                 WHO WE ARE
                </h2>
              </div>
            </section>
+
+      <HeaderBelt />
 
 
       {/* Our Approach Section with circular images */}
