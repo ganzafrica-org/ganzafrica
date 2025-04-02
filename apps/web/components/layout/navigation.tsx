@@ -367,7 +367,7 @@ export default function Navigation({
             <div className="container min-w-full py-0">
                 <div className="flex h-20 items-stretch justify-between relative">
                     {/* Logo */}
-                    <div className="bg-white rounded-tr-none rounded-br-2xl shadow-sm min-h-full w-32 md:w-52 flex items-center p-8">
+                    <div className="min-h-full w-32 md:w-52 flex items-center p-8">
                         <Link
                             href={`/${locale}`}
                             className="relative z-50 flex items-center gap-2"
@@ -574,7 +574,7 @@ export default function Navigation({
                     </div>
 
                     {/* Right side items with inverted top-left corner */}
-                    <div className="bg-white rounded-tl-none rounded-bl-2xl min-h-full p-4 w-56 flex items-center justify-between">
+                    <div className="min-h-full p-4 w-56 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className="mr-2">
                                 <LanguageSwitcher />
