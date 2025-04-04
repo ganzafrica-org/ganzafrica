@@ -28,21 +28,26 @@ import {
   LineChart,
   ResponsiveContainer
 } from 'recharts';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar";
 
 // Project Statistics data
 const projectStatsData = [
   { month: "Jan", inProgress: 1, completed: 2 },
-  { month: "March", inProgress: 6, completed: 0 },
-  { month: "May", inProgress: 4, completed: 0 },
-  { month: "July", inProgress: 2, completed: 0 },
-  { month: "Aug", inProgress: 6, completed: 0 },
+  { month: "March", inProgress: 6, completed: 3 },
+  { month: "May", inProgress: 4, completed: 6 },
+  { month: "July", inProgress: 2, completed: 9 },
+  { month: "Aug", inProgress: 6, completed: 8 },
 ];
 
 // User Engagement data
 const userEngagementData = [
   { week: "Week 1", activity: 40 },
   { week: "Week 2", activity: 60 },
-  { week: "Week 3", activity: 120 },
+  { week: "Week 3", activity: 110 },
   { week: "Week 4", activity: 100 },
 ];
 
@@ -54,7 +59,7 @@ export default function DashboardPage() {
         name: 'Emmanuel N.',
         avatar: '/avatars/emmanuel.jpg'
       },
-      action: 'submitted a new comprehensive agricultural development project proposal for',
+      action: 'submitted a new comprehensive agricultural development project proposal for review',
       time: '2 hours ago'
     },
     {
@@ -79,7 +84,7 @@ export default function DashboardPage() {
         avatar: '/avatars/amina.jpg'
       },
       action: 'requested additional technical staff and budget allocation for the expanding solar initiative',
-      time: '5 hours ago'
+      time: '6 hours ago'
     }
   ];
 
@@ -126,8 +131,8 @@ export default function DashboardPage() {
     <div className="p-8 bg-gray-50">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="font-h4 mb-2">Welcome Back, Angel! 👋</h1>
-        <p className="font-regular-paragraph text-gray-600">Welcome back, Angel. Here's what's happening with your website today.</p>
+        <h1 className="text-2xl font-semibold mb-2">Welcome Back, Angel! 👋</h1>
+        <p className="text-gray-600">Welcome back, Angel. Here's what's happening with your website today.</p>
       </div>
 
       {/* Stats Grid */}
@@ -140,13 +145,13 @@ export default function DashboardPage() {
             </div>
           </div>
           <CardHeader>
-            <CardDescription className="font-regular-paragraph text-gray-600">All Users</CardDescription>
-            <CardTitle className="font-h4 mt-2">123</CardTitle>
+            <CardDescription className="text-gray-600">All Users</CardDescription>
+            <CardTitle className="text-2xl font-semibold mt-2">123</CardTitle>
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-5">
             <div className="flex items-center">
-              <span className="text-primary-green font-medium"> ↑ 6.5</span>
-              <span className="text-black ml-1 font-regular-paragraph">since last week</span>
+              <span className="text-primary-green font-medium">↑ 6.5</span>
+              <span className="text-black ml-1">since last week</span>
             </div>
           </CardFooter>
         </Card>
@@ -159,13 +164,13 @@ export default function DashboardPage() {
             </div>
           </div>
           <CardHeader>
-            <CardDescription className="font-regular-paragraph text-gray-600">Total Projects</CardDescription>
-            <CardTitle className="font-h4 mt-2">123</CardTitle>
+            <CardDescription className="text-gray-600">Total Projects</CardDescription>
+            <CardTitle className="text-2xl font-semibold mt-2">123</CardTitle>
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-5">
             <div className="flex items-center">
-              <span className="text-red font-medium"> ↓ 0</span>
-              <span className="text-gray-500 ml-1 font-regular-paragraph">since last week</span>
+              <span className="text-red-500 font-medium">↓ 0</span>
+              <span className="text-gray-500 ml-1">since last week</span>
             </div>
           </CardFooter>
         </Card>
@@ -178,13 +183,13 @@ export default function DashboardPage() {
             </div>
           </div>
           <CardHeader>
-            <CardDescription className="font-regular-paragraph text-gray-600">Total Opportunities</CardDescription>
-            <CardTitle className="font-h4 mt-2">123</CardTitle>
+            <CardDescription className="text-gray-600">Total Opportunities</CardDescription>
+            <CardTitle className="text-2xl font-semibold mt-2">123</CardTitle>
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-5">
             <div className="flex items-center">
-              <span className="text-blue font-medium"> ↑ 6.5</span>
-              <span className="text-gray-500 ml-1 font-regular-paragraph">since last week</span>
+              <span className="text-blue font-medium">↑ 6.5</span>
+              <span className="text-gray-500 ml-1">since last week</span>
             </div>
           </CardFooter>
         </Card>
@@ -197,13 +202,13 @@ export default function DashboardPage() {
             </div>
           </div>
           <CardHeader>
-            <CardDescription className="font-regular-paragraph text-gray-600">All News</CardDescription>
-            <CardTitle className="font-h4 mt-2">123</CardTitle>
+            <CardDescription className="text-gray-600">All News</CardDescription>
+            <CardTitle className="text-2xl font-semibold mt-2">123</CardTitle>
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-5">
             <div className="flex items-center">
-              <span className="text-secondary-green font-medium"> ↑ 6.5</span>
-              <span className="text-black ml-1 font-regular-paragraph">since last week</span>
+              <span className="text-secondary-green font-medium">↑ 6.5</span>
+              <span className="text-black ml-1">since last week</span>
             </div>
           </CardFooter>
         </Card>
@@ -214,8 +219,8 @@ export default function DashboardPage() {
         {/* Project Statistics */}
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="font-regular-paragraph font-semibold">Project Statistics (Last 6 Months)</CardTitle>
-            <button className="flex items-center font-regular-paragraph text-gray-600 hover:bg-gray-100 px-3 py-1 rounded">
+            <CardTitle className="font-semibold">Project Statistics (Last 6 Months)</CardTitle>
+            <button className="flex items-center text-gray-600 hover:bg-gray-100 px-3 py-1 rounded">
               2020-2024 <ChevronDown className="w-4 h-4 ml-1" />
             </button>
           </CardHeader>
@@ -224,7 +229,8 @@ export default function DashboardPage() {
               <BarChart 
                 accessibilityLayer 
                 data={projectStatsData}
-                margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                height={300}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -232,6 +238,12 @@ export default function DashboardPage() {
                   tickLine={false}
                   tickMargin={10}
                   axisLine={false}
+                />
+                <YAxis 
+                  tickLine={false}
+                  axisLine={false}
+                  ticks={[0, 2, 4, 6, 8]}
+                  domain={[0, 10]}
                 />
                 <ChartTooltip
                   cursor={false}
@@ -252,13 +264,16 @@ export default function DashboardPage() {
               </BarChart>
             </ChartContainer>
           </CardContent>
-          <CardFooter className="flex-col items-start gap-2 text-sm font-regular-paragraph">
-            <div className="flex gap-2 font-medium leading-none">
-              <TrendingUp className="h-4 w-4 text-primary-green" />
-              <span>Trending up by 5.2% this month</span>
-            </div>
-            <div className="leading-none text-gray-500">
-              Showing in-progress vs completed projects
+          <CardFooter className="flex justify-center items-center pt-0">
+            <div className="flex items-center space-x-8">
+              <div className="flex items-center space-x-2">
+                <div className="h-3 w-3 rounded-sm bg-[#009758]"></div>
+                <span>In Progress</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="h-3 w-3 rounded-sm bg-[#FFEF97]"></div>
+                <span>Completed</span>
+              </div>
             </div>
           </CardFooter>
         </Card>
@@ -266,8 +281,8 @@ export default function DashboardPage() {
         {/* User Engagement */}
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="font-regular-paragraph font-semibold">User Engagement (Last Month)</CardTitle>
-            <button className="flex items-center font-regular-paragraph text-gray-600 hover:bg-gray-100 px-3 py-1 rounded">
+            <CardTitle className="font-semibold">User Engagement (Last Month)</CardTitle>
+            <button className="flex items-center text-gray-600 hover:bg-gray-100 px-3 py-1 rounded">
               2024 <ChevronDown className="w-4 h-4 ml-1" />
             </button>
           </CardHeader>
@@ -277,9 +292,12 @@ export default function DashboardPage() {
                 accessibilityLayer
                 data={userEngagementData}
                 margin={{
-                  left: 12,
-                  right: 12,
+                  top: 5,
+                  left: 20,
+                  right: 20,
+                  bottom: 5
                 }}
+                height={300}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -287,6 +305,12 @@ export default function DashboardPage() {
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  ticks={[0, 40, 80, 120, 160]}
+                  domain={[0, 180]}
                 />
                 <ChartTooltip
                   cursor={false}
@@ -307,65 +331,59 @@ export default function DashboardPage() {
               </LineChart>
             </ChartContainer>
           </CardContent>
-          <CardFooter className="flex-col items-start gap-2 text-sm font-regular-paragraph">
-            <div className="flex gap-2 font-medium leading-none">
-              <TrendingUp className="h-4 w-4 text-blue" />
-              <span>User activity increased by 25% this month</span>
-            </div>
-            <div className="leading-none text-gray-500">
-              Application track weekly activity
+          <CardFooter className="flex justify-center items-center pt-0">
+            <div className="flex items-center space-x-2">
+              <div className="h-3 w-3 rounded-sm bg-[#2F88E1]"></div>
+              <span>Application track</span>
             </div>
           </CardFooter>
         </Card>
       </div>
 
-      {/* Recent Activities and Active Projects */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activities */}
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="font-regular-paragraph font-semibold">Recent Activities</CardTitle>
-          </CardHeader>
-          <div className="p-6 pt-0 space-y-4">
-            {recentActivities.map((activity, index) => (
-              <div key={index} className="flex items-start space-x-3">
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">
-                    {activity.user.name.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <p className="font-regular-paragraph">
-                    <span className="font-medium">{activity.user.name}</span>{' '}
-                    {activity.action}
-                  </p>
-                  <span className="text-xs text-gray-500 font-regular-paragraph">{activity.time}</span>
-                </div>
-              </div>
-            ))}
+      <div className="grid grid-cols-12 gap-6">
+        {/* Recent Activities - 65% width */}
+        <div className="col-span-12 lg:col-span-8 bg-white">
+          <div className="border-b px-4 py-4 flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Recent Activities</h2>
           </div>
-        </Card>
+          
+          {recentActivities.map((activity, index) => (
+            <div key={index} className="flex items-start px-4 py-4">
+              <Avatar className="mr-3 h-8 w-8 flex-shrink-0">
+                <AvatarImage src="https://github.com/shadcn.png" alt={activity.user.name} />
+                <AvatarFallback>{activity.user.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className={`pb-4 ${index < recentActivities.length - 1 ? "border-b" : ""}`}>
+                <p>
+                  <span className="font-medium">{activity.user.name}</span>{' '}
+                  {activity.action}
+                </p>
+                <span className="text-xs text-gray-500">{activity.time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
 
-        {/* Active Projects */}
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="font-regular-paragraph font-semibold">Active Projects</CardTitle>
-            <a href="#" className="font-regular-paragraph text-emerald-600 hover:underline">View all Projects</a>
-          </CardHeader>
-          <div className="p-6 pt-0 space-y-4">
-            {activeProjects.map((project, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">P</span>
-                </div>
-                <div>
-                  <h4 className="font-regular-paragraph font-medium">{project.name}</h4>
-                  <p className="font-regular-paragraph text-gray-500">{project.description}</p>
-                </div>
-              </div>
-            ))}
+        {/* Active Projects - 35% width */}
+        <div className="col-span-12 lg:col-span-4 bg-white">
+          <div className="border-b px-4 py-4 flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Active Projects</h2>
+            <a href="#" className="text-emerald-600 hover:underline">View all Projects</a>
           </div>
-        </Card>
+          
+          {activeProjects.map((project, index) => (
+            <div key={index} className="flex items-start px-4 py-4">
+              <Avatar className="mr-3 h-8 w-8 flex-shrink-0">
+                <AvatarImage src="https://github.com/shadcn.png" alt={project.name} />
+                <AvatarFallback>P</AvatarFallback>
+              </Avatar>
+              <div className={`pb-4 ${index < activeProjects.length - 1 ? "border-b" : ""}`}>
+                <h4 className="font-medium">{project.name}</h4>
+                <p className="text-gray-500 text-sm">{project.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

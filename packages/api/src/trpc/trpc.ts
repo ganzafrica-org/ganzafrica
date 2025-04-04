@@ -1,11 +1,9 @@
-import { initTRPC } from '@trpc/server';
+import { initTRPC, TRPCError } from '@trpc/server';
 import { type Context } from './context';
 import { createLogger } from '../config';
+import superjson from 'superjson';
 
 const logger = createLogger('trpc');
-
-const superjson = require('superjson').default;
-
 
 // Initialize tRPC with context and custom transformer
 const t = initTRPC.context<Context>().create({
@@ -30,8 +28,25 @@ const t = initTRPC.context<Context>().create({
     },
 });
 
+// Create middleware to check if user is authenticated
+const isAuthed = t.middleware(({ ctx, next }) => {
+    if (!ctx.user) {
+        throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: 'You must be logged in to access this resource',
+        });
+    }
+    return next({
+        ctx: {
+            // Add user to the next context
+            user: ctx.user,
+        },
+    });
+});
+
 // Export reusable router, procedure, and middleware
 export const router = t.router;
 export const procedure = t.procedure;
 export const middleware = t.middleware;
 export const publicProcedure = t.procedure;
+export const protectedProcedure = t.procedure.use(isAuthed);

@@ -66,15 +66,18 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                 <LayoutGrid className="w-5 h-5" />
                 {!isCollapsed && <span className="font-bold-paragraph">Dashboard</span>}
               </Link>
+              
+              {/* Projects link with exact pathname check */}
               <Link
                 href="/projects"
                 className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/projects' ? 'bg-white/10' : 'hover:bg-white/5'
+                  pathname === '/projects' || pathname.startsWith('/projects/') ? 'bg-white/10' : 'hover:bg-white/5'
                 }`}
               >
                 <FolderGit2 className="w-5 h-5" />
                 {!isCollapsed && <span className="font-bold-paragraph">Projects</span>}
               </Link>
+              
               <Link
                 href="/opportunities"
                 className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
@@ -84,15 +87,18 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                 <Briefcase className="w-5 h-5" />
                 {!isCollapsed && <span className="font-bold-paragraph">Opportunities</span>}
               </Link>
+              
+              {/* Users link with exact pathname check */}
               <Link
                 href="/users"
                 className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/users' ? 'bg-white/10' : 'hover:bg-white/5'
+                  pathname === '/users' || pathname.startsWith('/users/') ? 'bg-white/10' : 'hover:bg-white/5'
                 }`}
               >
                 <Users2 className="w-5 h-5" />
                 {!isCollapsed && <span className="font-bold-paragraph">Manage users</span>}
               </Link>
+              
               <Link
                 href="/news"
                 className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${

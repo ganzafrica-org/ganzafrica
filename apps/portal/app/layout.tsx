@@ -2,10 +2,10 @@
 
 import { Toaster } from "@workspace/ui/components/sonner";
 import { Rubik } from "next/font/google";
-import { redirect } from "next/navigation";
 import { useEffect } from "react";
 import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
+import { AuthProvider } from '@/components/auth/auth-provider';
 
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
@@ -27,7 +27,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${rubik.className} font-sans antialiased bg-gray-50`}>
-        <Providers>{children}</Providers>
+        <AuthProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </AuthProvider>
         <Toaster position="top-right" />
       </body>
     </html>

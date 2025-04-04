@@ -12,7 +12,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#FAFAFA]">
         <Sidebar isCollapsed={isSidebarCollapsed} />
         <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'pl-20' : 'pl-64'}`}>
           <Navbar onMenuClick={toggleSidebar} isSidebarCollapsed={isSidebarCollapsed} />
