@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, HelpCircle, Menu, User, Settings, LogOut, Info } from 'lucide-react';
 import Image from 'next/image';
-import { useAuth } from '@/components/auth/auth-provider'; // Update path if needed
+import { useAuth } from '@/components/auth/auth-provider';
 
 interface UserData {
   id: number;
@@ -18,12 +18,13 @@ interface UserData {
 interface NavbarProps {
   onMenuClick: () => void;
   isSidebarCollapsed: boolean;
-  // We can make currentUser optional since we'll get it from auth context
   currentUser?: UserData | null;
 }
 
 const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser }: NavbarProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Get auth context
@@ -67,8 +68,65 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
   // Handle logout
   const handleLogout = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    await logout();
+    setAuthError(null);
+    
+    try {
+      setIsLoggingOut(true);
+      await logout();
+      
+      // Close dropdown
+      setIsDropdownOpen(false);
+      
+      // Redirect to login page after successful logout
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+      
+      // Check if we have a structured error response
+      if (error instanceof Error) {
+        setAuthError(error.message);
+      } else {
+        setAuthError('An error occurred during logout. Please try again.');
+      }
+      
+      // If error is about not being logged in, redirect to login page
+      if (typeof error === 'object' && error !== null && 'json' in error) {
+        const jsonError = (error as any).json;
+        if (jsonError?.code === -32001 && jsonError?.message === "You must be logged in to access this resource") {
+          console.log("Session expired, redirecting to login");
+          // Clear any local auth state
+          localStorage.removeItem('auth_state');
+          sessionStorage.removeItem('auth_state');
+          
+          // Redirect to login
+          window.location.href = '/login';
+        }
+      }
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
+
+  // Check for auth token on mount
+  useEffect(() => {
+    // Check if we have a valid auth token (could be in a cookie, local storage, etc.)
+    const checkAuthStatus = () => {
+      const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        if (key) {
+          acc[key] = value || '';
+        }
+        return acc;
+      }, {} as Record<string, string>);
+      
+      if (!cookies.auth_token && !currentUser) {
+        console.log("No auth token found, redirecting to login");
+        window.location.href = '/login';
+      }
+    };
+    
+    checkAuthStatus();
+  }, [currentUser]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -142,6 +200,12 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
             
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-60 bg-white rounded-lg shadow-lg py-2 z-10 border border-gray-200">
+                {authError && (
+                  <div className="px-4 py-2 text-sm text-red-600 bg-red-50 mb-2 rounded mx-2">
+                    {authError}
+                  </div>
+                )}
+                
                 <div className="px-4 py-2 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
                     <div className="relative w-10 h-10 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center">
@@ -189,19 +253,13 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
                     className="flex items-center px-4 py-2 font-regular-paragraph text-gray-700 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors"
                   >
                     <LogOut className="w-4 h-4 mr-3 text-gray-500 group-hover:text-white" />
-                    Logout
+                    {isLoggingOut ? 'Logging out...' : 'Logout'}
                   </a>
                 </div>
               </div>
             )}
           </div>
-        ) : (
-          // Show login/signup links if not logged in
-          <div className="flex space-x-4">
-            <a href="/login" className="text-primary-green hover:underline">Login</a>
-            <a href="/signup" className="text-primary-green hover:underline">Sign up</a>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

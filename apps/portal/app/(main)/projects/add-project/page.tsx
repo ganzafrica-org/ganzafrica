@@ -7,82 +7,248 @@ import {
   Upload,
   X,
   Check,
-  Plus
+  Plus,
+  AlertCircle,
+  Loader
 } from 'lucide-react';
 import Link from 'next/link';
 
-const AddProjectPage = () => {
+// Type definitions
+interface TeamMember {
+  id: string;
+  name: string;
+  role: string;
+}
+
+interface Location {
+  id: string;
+  name: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+interface FormData {
+  name: string;
+  category_id: string;
+  description: string;
+  teamLead: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  status: 'planned' | 'active' | 'completed';
+  budget: string;
+  impacted_people: string;
+  cover_image: string;
+}
+
+interface CategoryDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (category: Category) => void;
+}
+
+// Category Dialog Component with fixed API URL
+const CategoryDialog: React.FC<CategoryDialogProps> = ({ isOpen, onClose, onSave }) => {
+  const [newCategory, setNewCategory] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!newCategory.trim()) {
+      setError('Category name is required');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      // Use explicit URL with port 3002 instead of relative URL
+      const response = await fetch('http://localhost:3002/api/categories', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          name: newCategory.trim(),
+          description: description.trim() || undefined
+        })
+      });
+
+      // Check if the response is OK before trying to parse JSON
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Error: ${response.status} ${response.statusText}`);
+        } else {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+      }
+      
+      const result = await response.json();
+
+      // Create a dummy category if the API doesn't return the expected format
+      const newCategoryObj = result.data?.category || {
+        id: Math.floor(Math.random() * 1000) + 1,
+        name: newCategory.trim(),
+        description: description.trim() || undefined
+      };
+
+      onSave(newCategoryObj);
+      setNewCategory('');
+      setDescription('');
+    } catch (err) {
+      console.error('Error creating category:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create category');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-bold">Add New Category</h2>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-4">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md flex items-start">
+              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+          
+          <div className="mb-4">
+            <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700 mb-1">
+              Category Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="categoryName"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              placeholder="Enter category name"
+              required
+            />
+          </div>
+          
+          <div className="mb-4">
+            <label htmlFor="categoryDescription" className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              id="categoryDescription"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              placeholder="Enter category description (optional)"
+              rows={3}
+            />
+          </div>
+          
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-green-700 rounded-md text-white hover:bg-green-800 flex items-center"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : 'Save Category'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const AddProjectPage: React.FC = () => {
   const router = useRouter();
   
   // States for form data
-  const [formData, setFormData] = useState({
-    projectName: '',
-    category: '',
+  const [formData, setFormData] = useState<FormData>({
+    name: '',
+    category_id: '',
     description: '',
     teamLead: '',
-    startDate: '',
-    endDate: '',
+    start_date: '',
+    end_date: '',
     location: '',
-    status: 'pending',
+    status: 'planned',
     budget: '',
+    impacted_people: '',
+    cover_image: ''
   });
 
   // States for dynamic data
-  const [categories, setCategories] = useState([
-    { id: '1', name: 'Food System' },
-    { id: '2', name: 'Climate Adaptation' }, 
-    { id: '3', name: 'Data & Evidence' },
-    { id: '4', name: 'Water Conservation' },
-    { id: '5', name: 'Renewable Energy' }
-  ]);
-  const [locations, setLocations] = useState([
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [locations] = useState<Location[]>([
     { id: '1', name: 'Kigali' },
     { id: '2', name: 'Musanze' },
     { id: '3', name: 'Rubavu' },
     { id: '4', name: 'Nyagatare' },
     { id: '5', name: 'Huye' }
   ]);
-  const [teamMembers, setTeamMembers] = useState([
+  const [teamMembers] = useState<TeamMember[]>([
     { id: '1', name: 'Mukamana Fransine', role: 'Project Manager' },
     { id: '2', name: 'John Doe', role: 'Data Analyst' },
     { id: '3', name: 'Jane Smith', role: 'Climate Researcher' },
     { id: '4', name: 'Robert Johnson', role: 'Field Coordinator' },
     { id: '5', name: 'Emily Williams', role: 'Research Assistant' }
   ]);
-  const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
   
-  // State for adding new category
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [newCategory, setNewCategory] = useState('');
+  // State for category dialog
+  const [showCategoryDialog, setShowCategoryDialog] = useState<boolean>(false);
 
-  // Attempt to fetch data from backend if available
+  // Fetch categories on component mount
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCategories = async () => {
       try {
-        // Try to fetch from backend API if it exists
-        // Replace these with your actual API endpoints when ready
-        /*
-        const [categoriesResponse, locationsResponse, teamResponse] = await Promise.all([
-          fetch('/api/categories').then(res => res.json()),
-          fetch('/api/locations').then(res => res.json()),
-          fetch('/api/team-members').then(res => res.json())
-        ]);
+        // Use the correct port 3002 to match your API server
+        const response = await fetch('http://localhost:3002/api/categories');
+        const result = await response.json();
         
-        if (categoriesResponse?.data) setCategories(categoriesResponse.data);
-        if (locationsResponse?.data) setLocations(locationsResponse.data);
-        if (teamResponse?.data) setTeamMembers(teamResponse.data);
-        */
+        if (result.success && result.data) {
+          setCategories(result.data);
+        }
       } catch (err) {
-        console.log('Using local data instead of API');
-        // Keep using the initial state values as fallback
+        console.error('Error fetching categories:', err);
       }
     };
 
-    fetchData();
+    fetchCategories();
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -90,77 +256,80 @@ const AddProjectPage = () => {
     });
   };
 
-  const handleTeamMemberSelect = (memberId) => {
+  const handleTeamMemberSelect = (memberId: string) => {
     const member = teamMembers.find(m => m.id === memberId);
     if (member && !selectedTeamMembers.some(m => m.id === memberId)) {
       setSelectedTeamMembers([...selectedTeamMembers, member]);
     }
   };
 
-  const handleRemoveTeamMember = (memberId) => {
+  const handleRemoveTeamMember = (memberId: string) => {
     setSelectedTeamMembers(selectedTeamMembers.filter(m => m.id !== memberId));
   };
 
-  const handleAddCategory = () => {
-    if (!newCategory.trim()) return;
+  const handleAddCategory = (newCategory: Category) => {
+    // Add the new category to the list
+    setCategories([...categories, newCategory]);
     
-    try {
-      // Create a new category locally
-      const newId = (Math.max(...categories.map(c => parseInt(c.id, 10))) + 1).toString();
-      const newCategoryObj = { id: newId, name: newCategory.trim() };
-      
-      // Add the new category to the list
-      setCategories([...categories, newCategoryObj]);
-      
-      // Set the form value to the new category
-      setFormData({
-        ...formData,
-        category: newCategoryObj.id
-      });
-      
-      // Reset states
-      setNewCategory('');
-      setShowCategoryModal(false);
-      
-      // When backend is available, add API call here:
-      // await fetch('/api/categories', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ name: newCategory.trim() })
-      // });
-    } catch (err) {
-      console.error('Error adding category:', err);
-    }
+    // Select the new category in the form
+    setFormData({
+      ...formData,
+      category_id: newCategory.id.toString()
+    });
+    
+    // Close the dialog
+    setShowCategoryDialog(false);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+    setError('');
     setIsLoading(true);
+    
     try {
       // Create project payload
       const projectData = {
-        ...formData,
-        teamMembers: selectedTeamMembers.map(member => member.id)
+        name: formData.name,
+        description: formData.description,
+        status: formData.status,
+        category_id: formData.category_id ? Number(formData.category_id) : undefined,
+        location: formData.location,
+        impacted_people: formData.impacted_people ? Number(formData.impacted_people) : undefined,
+        cover_image: formData.cover_image || undefined,
+        start_date: formData.start_date,
+        end_date: formData.end_date || undefined,
+        budget: formData.budget ? Number(formData.budget) : undefined,
+        team_members: selectedTeamMembers.map(member => Number(member.id))
       };
       
-      // Log the data that would be sent to the API
-      console.log('Project data to submit:', projectData);
+      // Submit to API with correct port
+      const response = await fetch('http://localhost:3002/api/projects', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(projectData)
+      });
       
-      // When backend is ready, add API call:
-      // await fetch('/api/projects', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(projectData)
-      // });
+      // Check if the response is OK before trying to parse JSON
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Error: ${response.status} ${response.statusText}`);
+        } else {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+      }
       
-      // For now, simulate success and redirect
-      setTimeout(() => {
-        router.push('../');
-      }, 1000);
+      const result = await response.json();
+      
+      // Redirect to projects page on success
+      router.push('/projects');
     } catch (err) {
       console.error('Error creating project:', err);
-      alert('Failed to create project. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to create project. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -168,9 +337,16 @@ const AddProjectPage = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      {/* Category Dialog */}
+      <CategoryDialog 
+        isOpen={showCategoryDialog}
+        onClose={() => setShowCategoryDialog(false)}
+        onSave={handleAddCategory}
+      />
+      
       {/* Header with back button */}
       <div className="mb-6">
-        <Link href="../" className="flex items-center text-gray-600 hover:text-gray-800">
+        <Link href="/projects" className="flex items-center text-gray-600 hover:text-gray-800">
           <ChevronLeft className="w-5 h-5 mr-1" />
           Back to Projects
         </Link>
@@ -182,21 +358,29 @@ const AddProjectPage = () => {
         <p className="text-gray-500">Fill in the details to create a new project</p>
       </div>
 
+      {/* Error message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 flex items-center">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {/* Form */}
       <div className="bg-white rounded-lg shadow p-6">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Project Name */}
             <div className="col-span-2">
-              <label htmlFor="projectName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                 Project Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                id="projectName"
-                name="projectName"
+                id="name"
+                name="name"
                 required
-                value={formData.projectName}
+                value={formData.name}
                 onChange={handleInputChange}
                 className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 placeholder="Enter project name"
@@ -205,29 +389,29 @@ const AddProjectPage = () => {
 
             {/* Category */}
             <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-1">
                 Category <span className="text-red-500">*</span>
               </label>
               
               <div className="flex">
                 <select
-                  id="category"
-                  name="category"
+                  id="category_id"
+                  name="category_id"
                   required
-                  value={formData.category}
+                  value={formData.category_id}
                   onChange={handleInputChange}
                   className="w-full p-2.5 border border-gray-300 rounded-l-md focus:ring-green-500 focus:border-green-500"
                 >
                   <option value="">Select category</option>
                   {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
+                    <option key={category.id} value={category.id.toString()}>
                       {category.name}
                     </option>
                   ))}
                 </select>
                 <button
                   type="button"
-                  onClick={() => setShowCategoryModal(true)}
+                  onClick={() => setShowCategoryDialog(true)}
                   className="px-4 bg-gray-200 rounded-r-md hover:bg-gray-300"
                   title="Add new category"
                 >
@@ -248,8 +432,8 @@ const AddProjectPage = () => {
                 onChange={handleInputChange}
                 className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
               >
-                <option value="pending">Pending</option>
-                <option value="in-progress">In Progress</option>
+                <option value="planned">Planned</option>
+                <option value="active">Active</option>
                 <option value="completed">Completed</option>
               </select>
             </div>
@@ -265,7 +449,7 @@ const AddProjectPage = () => {
                 required
                 value={formData.description}
                 onChange={handleInputChange}
-                rows="4"
+                rows={4}
                 className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 placeholder="Enter project description"
               ></textarea>
@@ -317,15 +501,15 @@ const AddProjectPage = () => {
 
             {/* Start Date */}
             <div>
-              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
                 Start Date <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
-                id="startDate"
-                name="startDate"
+                id="start_date"
+                name="start_date"
                 required
-                value={formData.startDate}
+                value={formData.start_date}
                 onChange={handleInputChange}
                 className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
               />
@@ -333,15 +517,14 @@ const AddProjectPage = () => {
 
             {/* End Date */}
             <div>
-              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
-                End Date <span className="text-red-500">*</span>
+              <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">
+                End Date
               </label>
               <input
                 type="date"
-                id="endDate"
-                name="endDate"
-                required
-                value={formData.endDate}
+                id="end_date"
+                name="end_date"
+                value={formData.end_date}
                 onChange={handleInputChange}
                 className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
               />
@@ -361,6 +544,38 @@ const AddProjectPage = () => {
                 onChange={handleInputChange}
                 className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 placeholder="Enter project budget"
+              />
+            </div>
+
+            {/* Impacted People */}
+            <div>
+              <label htmlFor="impacted_people" className="block text-sm font-medium text-gray-700 mb-1">
+                Number of People Impacted
+              </label>
+              <input
+                type="number"
+                id="impacted_people"
+                name="impacted_people"
+                value={formData.impacted_people}
+                onChange={handleInputChange}
+                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                placeholder="Enter number of people impacted"
+              />
+            </div>
+
+            {/* Cover Image URL */}
+            <div className="col-span-2">
+              <label htmlFor="cover_image" className="block text-sm font-medium text-gray-700 mb-1">
+                Cover Image URL
+              </label>
+              <input
+                type="url"
+                id="cover_image"
+                name="cover_image"
+                value={formData.cover_image}
+                onChange={handleInputChange}
+                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                placeholder="Enter image URL"
               />
             </div>
 
@@ -428,7 +643,7 @@ const AddProjectPage = () => {
                     {teamMembers
                       .filter(member => !selectedTeamMembers.some(m => m.id === member.id))
                       .map((member) => (
-                        <li key={member.id} className="flex justify-between items-center text-sm">
+                        <li key={member.id} className="flex justify-between items-center text-sm mb-2 list-none">
                           <span>
                             <span className="font-medium">{member.name}</span> - {member.role}
                           </span>
@@ -449,15 +664,20 @@ const AddProjectPage = () => {
 
           {/* Form buttons */}
           <div className="mt-8 flex justify-end space-x-3">
-            <Link href="../" className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+            <Link href="/projects" className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
               Cancel
             </Link>
             <button
               type="submit"
-              className="px-4 py-2 bg-green-700 rounded-md text-white hover:bg-green-800"
+              className="px-4 py-2 bg-green-700 rounded-md text-white hover:bg-green-800 flex items-center"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating...' : 'Create Project'}
+              {isLoading ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : 'Create Project'}
             </button>
           </div>
         </form>

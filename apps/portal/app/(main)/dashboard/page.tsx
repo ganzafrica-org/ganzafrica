@@ -33,6 +33,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
+import { useAuth } from '@/components/auth/auth-provider';
 
 // Project Statistics data
 const projectStatsData = [
@@ -52,6 +53,12 @@ const userEngagementData = [
 ];
 
 export default function DashboardPage() {
+  // Get auth context to access the current user
+  const { user } = useAuth();
+  
+  // Get the full name of the logged-in user
+  const userName = user?.name || "User";
+
   // Recent activities data
   const recentActivities = [
     {
@@ -131,8 +138,8 @@ export default function DashboardPage() {
     <div className="p-8 bg-gray-50">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold mb-2">Welcome Back, Angel! 👋</h1>
-        <p className="text-gray-600">Welcome back, Angel. Here's what's happening with your website today.</p>
+        <h1 className="text-2xl font-semibold mb-2">Welcome Back, {userName}! 👋</h1>
+        <p className="text-gray-600">Here's an overview of your dashboard activities and statistics today.</p>
       </div>
 
       {/* Stats Grid */}
