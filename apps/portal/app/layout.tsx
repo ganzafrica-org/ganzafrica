@@ -10,8 +10,7 @@ import { AuthProvider } from '@/components/auth/auth-provider';
 const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // In App Router, client components cannot use redirect() directly at the top level
-  // Instead, use useEffect for client-side redirects
+
   useEffect(() => {
     // Only redirect if we're not already on the login page
     const isAuthenticated = false; // Replace with real auth check
