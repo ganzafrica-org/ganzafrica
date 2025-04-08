@@ -19,7 +19,6 @@ export const ROLES = {
 };
 
 export const BASE_ROLES = {
-    PUBLIC: 'public',
     APPLICANT: 'applicant',
     FELLOW: 'fellow',
     EMPLOYEE: 'employee',

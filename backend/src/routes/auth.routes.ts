@@ -3,7 +3,7 @@ import { authController } from '../controllers';
 import { validate, authenticate } from '@/middlewares';
 import { authValidation } from '../validations';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * @swagger
