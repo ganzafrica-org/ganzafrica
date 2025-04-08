@@ -1,18 +1,22 @@
 // src/app/api/projects/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '../../db/client';
-import { projects, project_members } from '../../db/schema';
-import { createProjectSchema } from '../../modules/project/project';
+import { db } from '@/db/client';
+import { projects, project_members } from '@/db/schema';
+import { createProjectSchema } from '@/modules/project/project';
 
 export async function POST(request: NextRequest) {
   try {
     const userId = 1; // Temporary hardcoded user ID for testing
     const body = await request.json();
 
+    console.log('Request body:', body);
+
     // Validate input
     const validatedData = createProjectSchema.parse(body);
 
-    // Insert project - make sure the object matches your schema exactly
+    console.log('Validated data:', validatedData);
+
+    // Insert project
     const [newProject] = await db.insert(projects)
       .values({
         name: validatedData.name,
@@ -21,47 +25,74 @@ export async function POST(request: NextRequest) {
         category_id: validatedData.category_id || null,
         location: validatedData.location || null,
         impacted_people: validatedData.impacted_people || null,
-        media: validatedData.cover_image ? {
+        media: validatedData.cover_image ? JSON.stringify({
           url: validatedData.cover_image,
           type: "image",
           cover: true
-        } : null,
-        start_date: validatedData.start_date,
-        end_date: validatedData.end_date || null,
+        }) : null,
+        start_date: new Date(validatedData.start_date),
+        end_date: validatedData.end_date ? new Date(validatedData.end_date) : null,
+        budget: validatedData.budget || null,
         created_by: userId,
         created_at: new Date(),
         updated_at: new Date()
       })
       .returning();
 
+    console.log('New project created:', newProject);
+
     if (!newProject) {
       return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
     }
 
-    // Add creator as project lead - ensure all fields match your schema
-    await db.insert(project_members)
-      .values({
-        project_id: newProject.id,
-        user_id: userId,
-        role: 'lead', // This should be one of the enum values: 'lead', 'member', or 'supervisor'
-        start_date: new Date(),
-        created_at: new Date(),
-        updated_at: new Date()
-      });
+    // Always add the team lead first (if provided)
+    if (validatedData.team_lead) {
+      await db.insert(project_members)
+        .values({
+          project_id: newProject.id,
+          user_id: Number(validatedData.team_lead),
+          role: 'lead',
+          start_date: new Date(),
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      
+      console.log('Team lead added:', validatedData.team_lead);
+    } else {
+      // If no team lead provided, add creator as project lead
+      await db.insert(project_members)
+        .values({
+          project_id: newProject.id,
+          user_id: userId,
+          role: 'lead',
+          start_date: new Date(),
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      
+      console.log('Creator added as team lead:', userId);
+    }
 
-    // Add team members if provided
+    // Add other team members if provided
     if (validatedData.team_members && validatedData.team_members.length > 0) {
-      // Create separate team member records with proper typing
-      for (const memberId of validatedData.team_members) {
+      const teamMembersToAdd: number[] = validatedData.team_members.filter(
+        (memberId: number) => 
+          // Remove team lead from regular members if it was included
+          !validatedData.team_lead || Number(memberId) !== Number(validatedData.team_lead)
+      );
+      
+      for (const memberId of teamMembersToAdd) {
         await db.insert(project_members)
           .values({
             project_id: newProject.id,
             user_id: Number(memberId),
-            role: 'member', // Using an explicit role from your enum
+            role: 'member',
             start_date: new Date(),
             created_at: new Date(), 
             updated_at: new Date()
           });
+        
+        console.log('Team member added:', memberId);
       }
     }
 

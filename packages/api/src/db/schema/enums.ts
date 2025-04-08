@@ -129,3 +129,6 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', '
 export const verificationTypeEnum = pgEnum('verification_type', ['email', 'phone'])
 
 export const contextTypeEnum = pgEnum('context_type', ['project', 'department', 'personal_development', 'other'])
+
+export const feedbackTypeEnum = pgEnum('feedback_type', ['positive', 'negative', 'neutral'])
+export const feedbackStatusEnum = pgEnum('feedback_status', ['pending', 'resolved', 'archived'])
