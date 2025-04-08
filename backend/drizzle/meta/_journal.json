@@ -1,0 +1,13 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1744111309942,
+      "tag": "0000_polite_wiccan",
+      "breakpoints": true
+    }
+  ]
+}
