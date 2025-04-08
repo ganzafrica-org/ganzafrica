@@ -84,27 +84,44 @@ export default function OpportunitiesPage() {
   const currentItems = filteredOpportunities.slice(indexOfFirstItem, indexOfLastItem);
   
   // Action handlers
-  const handleView = (id) => {
+interface Opportunity {
+    id: number;
+    title: string;
+    location: string;
+    openings: number;
+    deadline: string;
+    created: string;
+}
+
+const handleView = (id: Opportunity['id']): void => {
     console.log(`View opportunity ${id}`);
     // Add your view logic here
-  };
+};
   
-  const handleEdit = (id) => {
+const handleEdit = (id: Opportunity['id']): void => {
     console.log(`Edit opportunity ${id}`);
     // Add your edit logic here
-  };
+};
   
-  const handleDelete = (id) => {
+interface DeleteHandler {
+    (id: Opportunity['id']): void;
+}
+
+const handleDelete: DeleteHandler = (id) => {
     console.log(`Delete opportunity ${id}`);
     // Add your delete logic here
-  };
+};
   
   // Pagination functions
-  const goToPage = (page) => {
+interface GoToPageHandler {
+    (page: number): void;
+}
+
+const goToPage: GoToPageHandler = (page) => {
     if (page < 1) page = 1;
     if (page > totalPages) page = totalPages;
     setCurrentPage(page);
-  };
+};
   
   const goToFirstPage = () => goToPage(1);
   const goToLastPage = () => goToPage(totalPages);
@@ -132,10 +149,12 @@ export default function OpportunitiesPage() {
   };
 
   // Handle search input
-  const handleSearch = (e) => {
+interface SearchEvent extends React.ChangeEvent<HTMLInputElement> {}
+
+const handleSearch = (e: SearchEvent): void => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset to first page on search
-  };
+    setCurrentPage(1);
+};
 
   return (
     <div className="flex-1">

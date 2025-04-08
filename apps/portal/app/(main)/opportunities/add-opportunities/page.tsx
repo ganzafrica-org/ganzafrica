@@ -22,27 +22,41 @@ export default function CreateOpportunityPage() {
     requirements: '',
   });
 
-  const [fileUploads, setFileUploads] = useState([]);
+  const [fileUploads, setFileUploads] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const fileInputRef = React.useRef(null); // Reference to file input for programmatic clicks
+  const fileInputRef = React.useRef<HTMLInputElement>(null); 
 
-  const handleInputChange = (e) => {
+interface FormData {
+    title: string;
+    deadline: string;
+    positions: string;
+    location: string;
+    briefDetails: string;
+    responsibilities: string;
+    requirements: string;
+}
+
+interface FileEvent extends React.ChangeEvent<HTMLInputElement> {
+    target: HTMLInputElement & EventTarget;
+}
+
+const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
+    setFormData((prevFormData: FormData) => ({
+        ...prevFormData,
+        [name]: value
+    }));
+};
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       
       // Validate each file
       const validFiles = filesArray.filter(file => {
         // Check for valid image types
-        const isValidImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
+        const isValidImage = (file as File).type.match(/image\/(jpeg|jpg|png|gif)/i);
         
         // Check for valid video types
         const isValidVideo = file.type.match(/video\/(mp4|webm|ogg|quicktime)/i);
@@ -76,61 +90,69 @@ export default function CreateOpportunityPage() {
 
   // Function to trigger file input click programmatically
   const triggerFileInput = () => {
-    fileInputRef.current.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   // Handle drag and drop functionality
-  const handleDragOver = (e) => {
+const handleDragOver = (e: React.DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     e.stopPropagation();
     e.currentTarget.classList.add('border-blue-500');
-  };
+};
 
-  const handleDragLeave = (e) => {
+const handleDragLeave = (e: React.DragEvent<HTMLDivElement>): void => {
     e.preventDefault();
     e.stopPropagation();
     e.currentTarget.classList.remove('border-blue-500');
-  };
+};
 
-  const handleDrop = (e) => {
+interface DropEvent extends React.DragEvent<HTMLDivElement> {
+    dataTransfer: DataTransfer & {
+        files: FileList;
+    };
+}
+
+const handleDrop = (e: DropEvent): void => {
     e.preventDefault();
     e.stopPropagation();
     e.currentTarget.classList.remove('border-blue-500');
     
     if (e.dataTransfer.files.length > 0) {
-      // Create a new event-like object to pass to handleFileChange
-      const fileEvent = {
-        target: {
-          files: e.dataTransfer.files
-        }
-      };
-      handleFileChange(fileEvent);
+        // Create a new event-like object to pass to handleFileChange
+        const fileEvent: FileEvent = {
+            target: {
+                files: e.dataTransfer.files
+            }
+        } as FileEvent;
+        handleFileChange(fileEvent);
     }
-  };
+};
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     
     try {
-      // Here you would normally submit to your API
-      console.log('Submitting form data:', formData);
-      console.log('Files:', fileUploads);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Success - redirect
-      alert('Opportunity created successfully!');
-      // router.push('/opportunities');
+        // Here you would normally submit to your API
+        console.log('Submitting form data:', formData);
+        console.log('Files:', fileUploads);
+        
+        // Simulate API call
+        await new Promise<void>(resolve => setTimeout(resolve, 1000));
+        
+        // Success - redirect
+        alert('Opportunity created successfully!');
+        // router.push('/opportunities');
     } catch (err) {
-      console.error('Error creating opportunity:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create opportunity. Please try again.');
+        console.error('Error creating opportunity:', err);
+        setError(err instanceof Error ? err.message : 'Failed to create opportunity. Please try again.');
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   const handleCancel = () => {
     router.push('/opportunities');

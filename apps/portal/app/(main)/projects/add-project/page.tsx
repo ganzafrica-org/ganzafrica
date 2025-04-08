@@ -1,13 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Loader, Calendar, X, UserPlus } from 'lucide-react';
 import MultipleSelector, { Option } from '@workspace/ui/components/multiple-selector';
-
-// New imports for date picker
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
 
 interface TeamMember {
   id: string;
@@ -19,23 +15,13 @@ interface TeamMember {
 interface FormData {
   projectName: string;
   projectLead: string;
-  dateRange: string;
+  startDate: string; // Changed from dateRange to startDate
   projectOverview: string;
   projectGoals: string;
   expectedOutcomes: string;
   teamMembers: TeamMember[];
   files: File[];
 }
-
-// Define memberData object that was missing
-const memberData = {
-  '1': { name: 'Mukamana Fransine', email: 'mukamana@example.com', role: 'Developer' },
-  '2': { name: 'John Doe', email: 'john@example.com', role: 'Designer' },
-  '3': { name: 'Jane Smith', email: 'jane@example.com', role: 'Project Manager' },
-  '4': { name: 'Alex Johnson', email: 'alex@example.com', role: 'Backend Developer' },
-  '5': { name: 'Maria Garcia', email: 'maria@example.com', role: 'Frontend Developer' },
-  '6': { name: 'Robert Wilson', email: 'robert@example.com', role: 'UX Designer' },
-};
 
 const ProjectForm: React.FC = () => {
   const router = useRouter();
@@ -44,18 +30,13 @@ const ProjectForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     projectName: '',
     projectLead: '',
-    dateRange: '',
+    startDate: '', // Changed from dateRange to startDate
     projectOverview: '',
     projectGoals: '',
     expectedOutcomes: '',
     teamMembers: [],
     files: []
   });
-
-  // New state variables for the date picker
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Team member options in the format expected by MultipleSelector
   const teamMemberOptions: Option[] = [
@@ -66,59 +47,22 @@ const ProjectForm: React.FC = () => {
     { label: 'Maria Garcia (Frontend Developer)', value: '5' },
     { label: 'Robert Wilson (UX Designer)', value: '6' },
   ];
+
+  // Define member data for mapping team member details
+  const memberData: Record<string, TeamMember> = {
+    '1': { id: '1', name: 'Mukamana Fransine', email: 'fransine@example.com', role: 'Developer' },
+    '2': { id: '2', name: 'John Doe', email: 'john.doe@example.com', role: 'Designer' },
+    '3': { id: '3', name: 'Jane Smith', email: 'jane.smith@example.com', role: 'Project Manager' },
+    '4': { id: '4', name: 'Alex Johnson', email: 'alex.johnson@example.com', role: 'Backend Developer' },
+    '5': { id: '5', name: 'Maria Garcia', email: 'maria.garcia@example.com', role: 'Frontend Developer' },
+    '6': { id: '6', name: 'Robert Wilson', email: 'robert.wilson@example.com', role: 'UX Designer' },
+  };
   
+
+
   const [selectedTeamOptions, setSelectedTeamOptions] = useState<Option[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-
-  // Update dateRange string when start or end date changes
-  useEffect(() => {
-    if (startDate && endDate) {
-      const formatDate = (date: Date) => {
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const year = String(date.getFullYear()).slice(2);
-        return `${month}/${day}/${year}`;
-      };
-
-      const dateRangeStr = `${formatDate(startDate)}-${formatDate(endDate)}`;
-      
-      setFormData(prev => ({
-        ...prev,
-        dateRange: dateRangeStr
-      }));
-    }
-  }, [startDate, endDate]);
-
-  // Handle parsing date range string into Date objects
-  useEffect(() => {
-    if (formData.dateRange) {
-      const parts = formData.dateRange.split('-');
-      if (parts.length === 2) {
-        try {
-          const [startStr, endStr] = parts;
-          
-          // Parse dates in format mm/dd/yy
-          const parseDate = (dateStr: string) => {
-            const [month, day, year] = dateStr.split('/').map(Number);
-            // Assume 20xx for years less than 50, 19xx for years greater than 50
-            const fullYear = year < 50 ? 2000 + year : 1900 + year;
-            return new Date(fullYear, month - 1, day);
-          };
-          
-          const newStartDate = parseDate(startStr);
-          const newEndDate = parseDate(endStr);
-          
-          if (!isNaN(newStartDate.getTime()) && !isNaN(newEndDate.getTime())) {
-            setStartDate(newStartDate);
-            setEndDate(newEndDate);
-          }
-        } catch (err) {
-          console.error('Error parsing date range:', err);
-        }
-      }
-    }
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -127,15 +71,10 @@ const ProjectForm: React.FC = () => {
       [name]: value
     });
     
-    // For date range, you could add validation here
-    if (name === 'dateRange') {
-      // Optional: validate date range format (mm/dd/yy-mm/dd/yy)
-      const dateRangePattern = /^\d{2}\/\d{2}\/\d{2}-\d{2}\/\d{2}\/\d{2}$/;
-      if (value && !dateRangePattern.test(value)) {
-        setError('Please use the format mm/dd/yy-mm/dd/yy for date range');
-      } else {
-        setError('');
-      }
+    // For start date, no need to validate as we're using the native date picker
+    if (name === 'startDate') {
+      // The input is already in a valid format from the date picker
+      setError('');
     }
   };
 
@@ -237,33 +176,6 @@ const ProjectForm: React.FC = () => {
     }
   };
 
-  // Custom date picker input that displays the selected date range
-  const CustomDatePickerInput = React.forwardRef<HTMLDivElement, { value?: string; onClick?: () => void }>(
-    ({ value, onClick }, ref) => (
-      <div className="relative" ref={ref}>
-        <input
-          type="text"
-          id="dateRange"
-          name="dateRange"
-          required
-          value={formData.dateRange}
-          onChange={handleInputChange}
-          className="w-full p-2.5 border border-gray-300 rounded-md pr-10"
-          placeholder="mm/dd/yy-mm/dd/yy"
-          readOnly
-          onClick={onClick}
-        />
-        <button 
-          type="button"
-          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-          onClick={onClick}
-        >
-          <Calendar className="w-5 h-5" />
-        </button>
-      </div>
-    )
-  );
-
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
@@ -328,28 +240,23 @@ const ProjectForm: React.FC = () => {
                   />
                 </div>
 
-                {/* Date Range - Replaced with DatePicker component */}
+                {/* Start Date - Changed from Date Range */}
                 <div className="col-span-2">
-                  <label htmlFor="dateRange" className="block text-sm font-medium mb-1">
-                    Project Duration<span className="text-red-500">*</span>
+                  <label htmlFor="startDate" className="block text-sm font-medium mb-1">
+                    Project Start Date<span className="text-red-500">*</span>
                   </label>
-                  
-                  <DatePicker
-                    selected={startDate}
-                    onChange={(dates) => {
-                      const [start, end] = dates as [Date, Date];
-                      setStartDate(start);
-                      setEndDate(end);
-                    }}
-                    startDate={startDate}
-                    endDate={endDate}
-                    selectsRange
-                    customInput={<CustomDatePickerInput />}
-                    dateFormat="MM/dd/yy"
-                    calendarClassName="bg-white shadow-lg border border-gray-200 rounded-md"
-                  />
-                  
-                  <p className="text-xs text-gray-500 mt-1">Format: mm/dd/yy-mm/dd/yy (start date-end date)</p>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      id="startDate"
+                      name="startDate"
+                      required
+                      value={formData.startDate}
+                      onChange={handleInputChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                      placeholder="mm/dd/yy"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -412,7 +319,7 @@ const ProjectForm: React.FC = () => {
         {/* Horizontal line divider */}
         <hr className="my-8 border-t border-gray-200" />
 
-        {/* Team Section */}
+        {/* Team Section - Completely redesigned */}
         <div className="mb-8">
           <div className="flex">
             {/* Left column - section title */}
@@ -450,7 +357,37 @@ const ProjectForm: React.FC = () => {
                       </p>
                     }
                   />
+                  <div className="absolute right-2 top-3 pointer-events-none text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
+
+                {/* Display team members */}
+                {formData.teamMembers.length > 0 && (
+                  <div className="bg-gray-50 rounded-md mt-4">
+            
+                    <div className="divide-y divide-gray-200">
+                      {formData.teamMembers.map((member) => (
+                        <div key={member.id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-green-50">
+                          <div className="col-span-4">{member.name}</div>
+                          <div className="col-span-4 text-gray-600">{member.email}</div>
+                          <div className="col-span-3 text-gray-600">{member.role}</div>
+                          <div className="col-span-1 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveMember(member.id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

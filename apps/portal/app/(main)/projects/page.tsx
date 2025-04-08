@@ -10,13 +10,19 @@ import {
   ChevronRight, 
   ChevronsLeft, 
   ChevronsRight,
-  ArrowRight 
+  ArrowRight,
+  Eye,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import Link from 'next/link';
 
 const ProjectsPage = () => {
   // State for the active tab
   const [activeTab, setActiveTab] = useState('completed');
+  
+  // State for dropdown visibility
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   
   // Mock data for the projects - exact match from screenshot
   const projects = [
@@ -30,6 +36,15 @@ const ProjectsPage = () => {
     { id: 8, name: 'Climate Adaptation Project', category: 'Food system', lead: 'Mukamana Fransine', location: 'Musanze', created: 'June 1, 2024', status: 'in-progress' },
     { id: 9, name: 'Climate Adaptation Project', category: 'Climate adaptation', lead: 'Mukamana Fransine', location: 'Musanze', created: 'June 1, 2024', status: 'in-progress' },
   ];
+
+  // Function to toggle dropdown
+  const toggleDropdown = (id: number) => {
+    if (openDropdownId === id) {
+      setOpenDropdownId(null);
+    } else {
+      setOpenDropdownId(id);
+    }
+  };
 
   // Filter projects based on the active tab
   const getFilteredProjects = () => {
@@ -192,10 +207,31 @@ const ProjectsPage = () => {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="text-gray-500 hover:text-gray-700">
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
+                  <button 
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={() => toggleDropdown(project.id)}
+                  >
                     <MoreHorizontal className="w-5 h-5" />
                   </button>
+                  
+                  {/* Dropdown menu */}
+                  {openDropdownId === project.id && (
+                    <div className="absolute right-10 z-10 mt-1 bg-white shadow-lg rounded-md w-36 py-1 text-sm text-gray-700 border border-gray-200">
+                      <button className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center">
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </button>
+                      <button className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center">
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                      </button>
+                      <button className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center text-red-600">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
