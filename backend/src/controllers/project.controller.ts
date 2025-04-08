@@ -224,7 +224,9 @@ export const removeProjectMember = async (req: Request, res: Response) => {
             message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
         });
     }
-};/**
+};
+
+/**
  * @swagger
  * /projects:
  *   get:

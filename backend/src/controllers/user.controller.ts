@@ -1,118 +1,4 @@
-export const listUsers = async (req: Request, res: Response) => {
-    try {
-        const params = {
-            page: parseInt(req.query.page as string, 10) || 1,
-            limit: parseInt(req.query.limit as string, 10) || 10,
-            search: req.query.search as string,
-            sort_by: req.query.sort_by as string,
-            sort_order: req.query.sort_order as 'asc' | 'desc',
-            role: req.query.role as string,
-            is_active: req.query.is_active === 'true'
-        };
-
-        const { users, total } = await userService.listUsers(params);
-
-        res.status(200).json({
-            users,
-            pagination: {
-                total,
-                page: params.page,
-                limit: params.limit,
-                pages: Math.ceil(total / params.limit)
-            }
-        });
-    } catch (error) {
-        logger.error('List users error', error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'User Listing Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'User Listing Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
-    }
-};
-
-/**
- * @swagger
- * /users/import:
- *   post:
- *     summary: Import multiple users (admin only)
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *               required:
- *                 - email
- *                 - password
- *                 - name
- *                 - base_role
- *               properties:
- *                 email:
- *                   type: string
- *                   format: email
- *                 password:
- *                   type: string
- *                   minLength: 8
- *                 name:
- *                   type: string
- *                 base_role:
- *                   type: string
- *                   enum: [public, applicant, fellow, employee, alumni]
- *                 avatar_url:
- *                   type: string
- *                   format: uri
- *                 email_verified:
- *                   type: boolean
- *                 sendVerificationEmail:
- *                   type: boolean
- *     responses:
- *       200:
- *         description: Users imported successfully
- *       400:
- *         description: Validation error
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       500:
- *         description: Server error
- */
-export const importUsers = async (req: Request, res: Response) => {
-    try {
-        const usersData = req.body;
-
-        const result = await userService.importUsers(usersData);
-
-        res.status(200).json({
-            message: `Successfully imported ${result.successful} users. Failed to import ${result.failed} users.`,
-            ...result
-        });
-    } catch (error) {
-        logger.error('Import users error', error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'User Import Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'User Import Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
-    }
-};import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { userService } from '../services';
 import { AppError } from '../middlewares';
 import { constants, Logger } from '../config';
@@ -439,3 +325,119 @@ export const deleteUser = async (req: Request, res: Response) => {
  *       500:
  *         description: Server error
  */
+
+export const listUsers = async (req: Request, res: Response) => {
+    try {
+        const params = {
+            page: parseInt(req.query.page as string, 10) || 1,
+            limit: parseInt(req.query.limit as string, 10) || 10,
+            search: req.query.search as string,
+            sort_by: req.query.sort_by as string,
+            sort_order: req.query.sort_order as 'asc' | 'desc',
+            role: req.query.role as string,
+            is_active: req.query.is_active === 'true'
+        };
+
+        const { users, total } = await userService.listUsers(params);
+
+        res.status(200).json({
+            users,
+            pagination: {
+                total,
+                page: params.page,
+                limit: params.limit,
+                pages: Math.ceil(total / params.limit)
+            }
+        });
+    } catch (error) {
+        logger.error('List users error', error);
+        if (error instanceof AppError) {
+            return res.status(error.statusCode).json({
+                error: 'User Listing Error',
+                message: error.message
+            });
+        }
+        res.status(500).json({
+            error: 'User Listing Error',
+            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+        });
+    }
+};
+
+/**
+ * @swagger
+ * /users/import:
+ *   post:
+ *     summary: Import multiple users (admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               required:
+ *                 - email
+ *                 - password
+ *                 - name
+ *                 - base_role
+ *               properties:
+ *                 email:
+ *                   type: string
+ *                   format: email
+ *                 password:
+ *                   type: string
+ *                   minLength: 8
+ *                 name:
+ *                   type: string
+ *                 base_role:
+ *                   type: string
+ *                   enum: [public, applicant, fellow, employee, alumni]
+ *                 avatar_url:
+ *                   type: string
+ *                   format: uri
+ *                 email_verified:
+ *                   type: boolean
+ *                 sendVerificationEmail:
+ *                   type: boolean
+ *     responses:
+ *       200:
+ *         description: Users imported successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
+export const importUsers = async (req: Request, res: Response) => {
+    try {
+        const usersData = req.body;
+
+        const result = await userService.importUsers(usersData);
+
+        res.status(200).json({
+            message: `Successfully imported ${result.successful} users. Failed to import ${result.failed} users.`,
+            ...result
+        });
+    } catch (error) {
+        logger.error('Import users error', error);
+        if (error instanceof AppError) {
+            return res.status(error.statusCode).json({
+                error: 'User Import Error',
+                message: error.message
+            });
+        }
+        res.status(500).json({
+            error: 'User Import Error',
+            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+        });
+    }
+};
