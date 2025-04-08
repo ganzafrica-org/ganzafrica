@@ -1,32 +1,39 @@
-import { Geist, Geist_Mono } from "next/font/google"
-import { Toaster } from "@workspace/ui/components/sonner"
+"use client";
 
-import "@workspace/ui/globals.css"
-import { Providers } from "@/components/providers"
+import { Toaster } from "@workspace/ui/components/sonner";
+import { Rubik } from "next/font/google";
+import { useEffect } from "react";
+import "@workspace/ui/globals.css";
+import { Providers } from "@/components/providers";
+import { AuthProvider } from '@/components/auth/auth-provider';
 
-const fontSans = Geist({
-    subsets: ["latin"],
-    variable: "--font-sans",
-})
+const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
-const fontMono = Geist_Mono({
-    subsets: ["latin"],
-    variable: "--font-mono",
-})
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // In App Router, client components cannot use redirect() directly at the top level
+  // Instead, use useEffect for client-side redirects
+  useEffect(() => {
+    // Only redirect if we're not already on the login page
+    const isAuthenticated = false; // Replace with real auth check
+    const currentPath = window.location.pathname;
+    
+    if (!isAuthenticated && currentPath !== "/login") {
+      window.location.href = "/login";
+    } else if (isAuthenticated && currentPath !== "/dashboard") {
+      window.location.href = "/dashboard";
+    }
+  }, []);
 
-export default function RootLayout({
-                                       children,
-                                   }: Readonly<{
-    children: React.ReactNode
-}>) {
-    return (
-        <html lang="en" suppressHydrationWarning>
-        <body
-            className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased`}
-        >
-        <Providers>{children}</Providers>
+  return (
+    <html lang="en">
+      <body className={`${rubik.className} font-sans antialiased bg-gray-50`}>
+        <AuthProvider>
+          <Providers>
+            {children}
+          </Providers>
+        </AuthProvider>
         <Toaster position="top-right" />
-        </body>
-        </html>
-    )
+      </body>
+    </html>
+  );
 }
