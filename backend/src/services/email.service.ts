@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { env, Logger } from '../config';
-import { AppError } from '../middlewares';
+import { AppError } from '@/middlewares';
 
 const logger = new Logger('EmailService');
 

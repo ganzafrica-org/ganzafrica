@@ -4,7 +4,7 @@ import { validate, authenticate, authorize } from '@/middlewares';
 import { userValidation } from '../validations';
 import { constants } from '../config';
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * @swagger
