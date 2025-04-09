@@ -1,6 +1,6 @@
 import { pgEnum } from 'drizzle-orm/pg-core'
-export const mediaTypeEnum = pgEnum('media_type', ['image', 'video']);
 
+export const mediaTypeEnum = pgEnum('media_type', ['image', 'video'])
 
 export const baseRoleEnum = pgEnum('base_role', [
     'applicant',
@@ -8,6 +8,7 @@ export const baseRoleEnum = pgEnum('base_role', [
     'fellow',
     'employee',
     'alumni',
+    'admin'
 ])
 
 export const twoFactorMethodEnum = pgEnum('two_factor_method', [
@@ -32,22 +33,26 @@ export const projectStatusEnum = pgEnum('project_status', [
     'planned',
     'active',
     'completed',
+    'cancelled', 
+    'on_hold'    
 ])
 
 export const projectMemberRoleEnum = pgEnum('project_member_role', [
     'lead',
     'member',
     'supervisor',
+    'contributor'
 ])
 
 export const milestoneStatusEnum = pgEnum('milestone_status', [
     'pending',
     'in_progress',
     'completed',
-    'failed'
+    'failed',
+    'delayed'      // Added delayed status
 ])
 
-export const jobTypeEnum = pgEnum('job_posting_type', [
+export const jobTypeEnum = pgEnum('job_type', [
     'fellowship',
     'employment',
 ])

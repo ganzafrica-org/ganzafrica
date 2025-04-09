@@ -1,11 +1,12 @@
-import { bigint, pgTable, text, boolean, jsonb, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, text, serial, boolean, jsonb, timestamp, integer } from 'drizzle-orm/pg-core'
 import { timestampFields } from './common'
 import { users } from './users'
-import {verificationTypeEnum} from "./enums";
+import { verificationTypeEnum } from "./enums";
+
 
 export const password_reset_tokens = pgTable('password_reset_tokens', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    user_id: bigint('user_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    user_id: integer('user_id')
         .notNull()
         .references(() => users.id),
     token_hash: text('token_hash').notNull(),
@@ -16,8 +17,8 @@ export const password_reset_tokens = pgTable('password_reset_tokens', {
 })
 
 export const verification_tokens = pgTable('verification_tokens', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    user_id: bigint('user_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    user_id: integer('user_id')
         .notNull()
         .references(() => users.id),
     type: verificationTypeEnum('type').notNull(),
@@ -28,8 +29,8 @@ export const verification_tokens = pgTable('verification_tokens', {
 })
 
 export const sessions = pgTable('sessions', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    user_id: bigint('user_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    user_id: integer('user_id')
         .notNull()
         .references(() => users.id),
     token_hash: text('token_hash').notNull(),
@@ -44,8 +45,8 @@ export const sessions = pgTable('sessions', {
 })
 
 export const two_factor_temp_tokens = pgTable('two_factor_temp_tokens', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    user_id: bigint('user_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    user_id: integer('user_id')
         .notNull()
         .references(() => users.id),
     token_hash: text('token_hash').notNull(),
@@ -53,3 +54,14 @@ export const two_factor_temp_tokens = pgTable('two_factor_temp_tokens', {
     used: boolean('used').notNull().default(false),
     ...timestampFields,
 })
+
+export const two_factor_credentials = pgTable('two_factor_credentials', {
+    id: serial('id').primaryKey(),
+    user_id: integer('user_id')
+        .notNull()
+        .references(() => users.id),
+    method: text('method').notNull(), 
+    secret: text('secret'),
+    verified: boolean('verified').notNull().default(false),
+    ...timestampFields,
+});
