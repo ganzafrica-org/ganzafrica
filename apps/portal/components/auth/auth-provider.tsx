@@ -80,16 +80,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const fetchUser = async () => {
             try {
                 setIsLoading(true);
-                const response = await api.auth.me.query();
-
+                // Temporarily skip API call and use dummy data
+                const dummyUser = {
+                    id: "1",
+                    name: "Angel Gaju Manzi",
+                    email: "angel.gaju@ganzafrica.org",
+                    role: "Admin",
+                    permissions: ["admin", "user"]
+                };
+                
+                setUser(dummyUser);
+                
+                // Comment out actual API call for now
+                /*const response = await api.auth.me.query();
                 if (response?.data?.user) {
                     setUser(response.data.user);
-                } else {
-                    setUser(null);
-                }
+                }*/
             } catch (error) {
                 console.error('Failed to fetch user:', error);
-                setUser(null);
+                // Keep the dummy user data even on error for now
             } finally {
                 setIsLoading(false);
             }
