@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { userService } from '../services';
+import { roleService } from '../services/roles.service';
+
 import { AppError } from '../middlewares';
 import { constants, Logger } from '../config';
 
@@ -24,7 +26,7 @@ const logger = new Logger('UserController');
  *               - email
  *               - password
  *               - name
- *               - base_role
+ *               - role_id
  *             properties:
  *               email:
  *                 type: string
@@ -34,9 +36,8 @@ const logger = new Logger('UserController');
  *                 minLength: 8
  *               name:
  *                 type: string
- *               base_role:
- *                 type: string
- *                 enum: [public, applicant, fellow, employee, alumni]
+ *               role_id:
+ *                 type: integer
  *               avatar_url:
  *                 type: string
  *                 format: uri
@@ -63,6 +64,9 @@ export const createUser = async (req: Request, res: Response) => {
         const userData = req.body;
 
         const user = await userService.createUser(userData);
+        
+        // Get role name for response
+        const role = await roleService.getRoleById(user.role_id);
 
         res.status(201).json({
             message: constants.SUCCESS_MESSAGES.USER_CREATED,
@@ -70,7 +74,7 @@ export const createUser = async (req: Request, res: Response) => {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                base_role: user.base_role,
+                role_name: role.name, 
                 email_verified: user.email_verified
             }
         });
@@ -162,9 +166,8 @@ export const getUserById = async (req: Request, res: Response) => {
  *             properties:
  *               name:
  *                 type: string
- *               base_role:
- *                 type: string
- *                 enum: [public, applicant, fellow, employee, alumni]
+ *               role_id:
+ *                 type: integer
  *               avatar_url:
  *                 type: string
  *                 format: uri
@@ -191,12 +194,23 @@ export const updateUser = async (req: Request, res: Response) => {
         const { id } = req.params;
         const userData = req.body;
 
+        // Need to check if the current user is updating their own profile
+        // or if they're an admin (who can update any profile)
+        const currentUser = await userService.getUserById(req.user?.id);
+        const adminRole = await roleService.getRoleByName('admin');
+        
         // Only allow users to update themselves unless they're an admin
-        if (req.user?.id !== id && req.user?.base_role !== 'admin') {
+        if (req.user?.id !== id && currentUser.role_id !== adminRole.id) {
             return res.status(403).json({
                 error: 'Forbidden',
                 message: constants.ERROR_MESSAGES.UNAUTHORIZED
             });
+        }
+        
+        // If user is updating their own profile but not an admin,
+        // prevent them from changing their role
+        if (req.user?.id === id && currentUser.role_id !== adminRole.id && userData.role_id) {
+            delete userData.role_id; // Remove role_id from update data
         }
 
         const user = await userService.updateUser(id, userData);
@@ -299,7 +313,7 @@ export const deleteUser = async (req: Request, res: Response) => {
  *         name: sort_by
  *         schema:
  *           type: string
- *           enum: [name, email, base_role, created_at]
+ *           enum: [name, email, role_id, created_at]
  *           default: created_at
  *       - in: query
  *         name: sort_order
@@ -308,9 +322,9 @@ export const deleteUser = async (req: Request, res: Response) => {
  *           enum: [asc, desc]
  *           default: desc
  *       - in: query
- *         name: role
+ *         name: role_id
  *         schema:
- *           type: string
+ *           type: integer
  *       - in: query
  *         name: is_active
  *         schema:
@@ -334,8 +348,8 @@ export const listUsers = async (req: Request, res: Response) => {
             search: req.query.search as string,
             sort_by: req.query.sort_by as string,
             sort_order: req.query.sort_order as 'asc' | 'desc',
-            role: req.query.role as string,
-            is_active: req.query.is_active === 'true'
+            role_id: req.query.role_id ? parseInt(req.query.role_id as string, 10) : undefined,
+            is_active: req.query.is_active === undefined ? undefined : req.query.is_active === 'true'
         };
 
         const { users, total } = await userService.listUsers(params);
@@ -385,7 +399,7 @@ export const listUsers = async (req: Request, res: Response) => {
  *                 - email
  *                 - password
  *                 - name
- *                 - base_role
+ *                 - role_id
  *               properties:
  *                 email:
  *                   type: string
@@ -395,9 +409,8 @@ export const listUsers = async (req: Request, res: Response) => {
  *                   minLength: 8
  *                 name:
  *                   type: string
- *                 base_role:
- *                   type: string
- *                   enum: [public, applicant, fellow, employee, alumni]
+ *                 role_id:
+ *                   type: integer
  *                 avatar_url:
  *                   type: string
  *                   format: uri

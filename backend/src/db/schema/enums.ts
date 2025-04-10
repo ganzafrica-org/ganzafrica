@@ -2,15 +2,6 @@ import { pgEnum } from 'drizzle-orm/pg-core'
 
 export const mediaTypeEnum = pgEnum('media_type', ['image', 'video'])
 
-export const baseRoleEnum = pgEnum('base_role', [
-    'applicant',
-    'public',
-    'fellow',
-    'employee',
-    'alumni',
-    'admin'
-])
-
 export const twoFactorMethodEnum = pgEnum('two_factor_method', [
     'authenticator',
     'sms',

@@ -1,12 +1,15 @@
 import { pgTable, serial, text, boolean, jsonb, integer, timestamp } from 'drizzle-orm/pg-core'
 import { timestampFields } from './common'
-import { baseRoleEnum, twoFactorMethodEnum } from './enums'
+import { twoFactorMethodEnum } from './enums'
+import { roles } from './roles'
 
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
     email: text('email').notNull().unique(),
     name: text('name').notNull(),
-    base_role: baseRoleEnum('base_role').notNull().default('public'),
+    role_id: integer('role_id')
+        .notNull()
+        .references(() => roles.id),
     password_hash: text('password_hash').notNull(),
     avatar_url: text('avatar_url'),
     two_factor_enabled: boolean('two_factor_enabled').notNull().default(false),
