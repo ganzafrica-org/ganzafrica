@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { testimonialController } from '../controllers/testimonial.controller';
-import { validate, authenticate, authorize } from '../middlewares';
-import { testimonialValidation } from '../validations/testimonials.validation';
+import { Router } from "express";
+import { testimonialController } from "../controllers/testimonial.controller";
+import { validate, authenticate, authorize } from "../middlewares";
+import { testimonialValidation } from "../validations/testimonials.validation";
 
 const router: Router = Router();
 
@@ -17,32 +17,29 @@ router.use(authenticate);
 
 // Testimonial routes
 router.post(
-  '/',
+  "/",
   validate(testimonialValidation.createTestimonialSchema),
-  testimonialController.createTestimonial
+  testimonialController.createTestimonial,
 );
 
-router.get(
-  '/',
-  testimonialController.listTestimonials
-);
+router.get("/", testimonialController.listTestimonials);
 
 router.get(
-  '/:id',
+  "/:id",
   validate(testimonialValidation.getTestimonialSchema),
-  testimonialController.getTestimonialById
+  testimonialController.getTestimonialById,
 );
 
 router.put(
-  '/:id',
+  "/:id",
   validate(testimonialValidation.updateTestimonialSchema),
-  testimonialController.updateTestimonial
+  testimonialController.updateTestimonial,
 );
 
 router.delete(
-  '/:id',
+  "/:id",
   validate(testimonialValidation.deleteTestimonialSchema),
-  testimonialController.deleteTestimonial
+  testimonialController.deleteTestimonial,
 );
 
 export default router;

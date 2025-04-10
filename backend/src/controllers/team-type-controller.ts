@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { teamTypeService } from '../services/team-type-service';
-import { AppError } from '../middlewares';
-import { constants, Logger } from '../config';
+import { Request, Response } from "express";
+import { teamTypeService } from "../services/team-type-service";
+import { AppError } from "../middlewares";
+import { constants, Logger } from "../config";
 
-const logger = new Logger('TeamTypeController');
+const logger = new Logger("TeamTypeController");
 
 /**
  * @swagger
@@ -41,26 +41,26 @@ export const createTeamType = async (req: Request, res: Response) => {
   try {
     const teamTypeData = {
       name: req.body.name,
-      description: req.body.description
+      description: req.body.description,
     };
 
     const teamType = await teamTypeService.createTeamType(teamTypeData);
 
     res.status(201).json({
-      message: 'Team type created successfully',
-      teamType
+      message: "Team type created successfully",
+      teamType,
     });
   } catch (error) {
-    logger.error('Create team type error', error);
+    logger.error("Create team type error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Type Creation Error',
-        message: error.message
+        error: "Team Type Creation Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Type Creation Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Type Creation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -88,16 +88,16 @@ export const listTeamTypes = async (req: Request, res: Response) => {
 
     res.status(200).json({ teamTypes });
   } catch (error) {
-    logger.error('List team types error', error);
+    logger.error("List team types error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Type Listing Error',
-        message: error.message
+        error: "Team Type Listing Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Type Listing Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Type Listing Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -138,13 +138,13 @@ export const getTeamTypeById = async (req: Request, res: Response) => {
     logger.error(`Get team type error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Type Retrieval Error',
-        message: error.message
+        error: "Team Type Retrieval Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Type Retrieval Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Type Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -194,26 +194,26 @@ export const updateTeamType = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const teamTypeData = {
       name: req.body.name,
-      description: req.body.description
+      description: req.body.description,
     };
 
     const teamType = await teamTypeService.updateTeamType(id, teamTypeData);
 
     res.status(200).json({
-      message: 'Team type updated successfully',
-      teamType
+      message: "Team type updated successfully",
+      teamType,
     });
   } catch (error) {
     logger.error(`Update team type error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Type Update Error',
-        message: error.message
+        error: "Team Type Update Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Type Update Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Type Update Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -250,19 +250,19 @@ export const deleteTeamType = async (req: Request, res: Response) => {
     await teamTypeService.deleteTeamType(id);
 
     res.status(200).json({
-      message: 'Team type deleted successfully'
+      message: "Team type deleted successfully",
     });
   } catch (error) {
     logger.error(`Delete team type error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Type Deletion Error',
-        message: error.message
+        error: "Team Type Deletion Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Type Deletion Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Type Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -273,7 +273,7 @@ export const teamTypeController = {
   listTeamTypes,
   getTeamTypeById,
   updateTeamType,
-  deleteTeamType
+  deleteTeamType,
 };
 
 // Default export for the controller object
