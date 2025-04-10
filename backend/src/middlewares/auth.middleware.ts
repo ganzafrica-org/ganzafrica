@@ -12,7 +12,6 @@ declare global {
             user?: {
                 id: string;
                 email: string;
-                base_role: string;
                 roles?: string[];
             };
         }
@@ -29,7 +28,6 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         req.user = {
             id: "4", // Use the ID from your token
             email: "gentilleuwamahoro28@gmail.com",
-            base_role: "applicant",
             roles: ["admin"] 
         };
 

@@ -1,5 +1,5 @@
 import { db } from '../db/client';
-import { users, user_profiles } from '../db/schema';
+import { users, user_profiles, roles } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../middlewares';
 import { constants } from '../config';
@@ -30,7 +30,7 @@ export const createUser = async (userData: CreateUserInput): Promise<User> => {
       email: userData.email,
       name: userData.name,
       password_hash,
-      base_role: userData.base_role as 'applicant' | 'public' | 'fellow' | 'employee' | 'alumni' | 'admin' || 'applicant',
+      role_id: userData.role_id, 
       email_verified: userData.email_verified || false,
       avatar_url: userData.avatar_url,
       created_at: new Date(),
@@ -111,7 +111,7 @@ export const updateUser = async (id: number | string, userData: UpdateUserInput)
   const [updatedUser] = await db.update(users)
     .set({
       ...userData,
-      base_role: userData.base_role as 'applicant' | 'public' | 'fellow' | 'employee' | 'alumni' | undefined,
+      // No need to cast role_id as it's now a direct integer
       updated_at: new Date()
     })
     .where(eq(users.id, Number(id)))
@@ -179,56 +179,64 @@ export const deleteUser = async (id: number | string): Promise<void> => {
   }
 };
 
+
 /**
  * List users with filtering and pagination
  */
 export const listUsers = async (params: any) => {
-  const { page = 1, limit = 10, search, sort_by = 'created_at', sort_order = 'desc', role, is_active } = params;
+  const { page = 1, limit = 10, search, sort_by = 'created_at', sort_order = 'desc', role_id, is_active } = params;
   
   // Build where conditions
   const whereConditions = [];
   
   if (search) {
     whereConditions.push(
-      `(name ILIKE '%${search}%' OR email ILIKE '%${search}%')`
+      `(u.name ILIKE '%${search}%' OR u.email ILIKE '%${search}%')`
     );
   }
   
-  if (role) {
+  if (role_id) {
     whereConditions.push(
-      `base_role = '${role}'`
+      `u.role_id = ${role_id}`
     );
   }
   
   if (typeof is_active === 'boolean') {
     whereConditions.push(
-      `is_active = ${is_active}`
+      `u.is_active = ${is_active}`
     );
   }
   
-  // Count total matching users
-  const countQuery = `
-    SELECT COUNT(*) FROM users
-    ${whereConditions.length ? `WHERE ${whereConditions.join(' AND ')}` : ''}
-  `;
+  // Build where clause
+  const whereClause = whereConditions.length ? `WHERE ${whereConditions.join(' AND ')}` : '';
   
-  const [countResult] = await db.execute(countQuery);
-  const total = parseInt(countResult.count, 10);
+  // Count total matching users
+  const countQuery = `SELECT COUNT(*) as total FROM users u ${whereClause}`;
+  console.log('Count query:', countQuery);
+  
+  const countResults = await db.execute(countQuery);
+  console.log('Count results:', countResults);
+  const total = parseInt(String(countResults.rows?.[0]?.total || '0'), 10);
   
   // Get paginated users
   const offset = (page - 1) * limit;
   
   const usersQuery = `
-    SELECT * FROM users
-    ${whereConditions.length ? `WHERE ${whereConditions.join(' AND ')}` : ''}
-    ORDER BY ${sort_by} ${sort_order === 'asc' ? 'ASC' : 'DESC'}
+    SELECT u.*, r.name as role_name
+    FROM users u
+    LEFT JOIN roles r ON u.role_id = r.id
+    ${whereClause}
+    ORDER BY u.${sort_by} ${sort_order === 'asc' ? 'ASC' : 'DESC'}
     LIMIT ${limit} OFFSET ${offset}
   `;
+  console.log('Users query:', usersQuery);
   
-  const users = await db.execute(usersQuery);
+  const usersResults = await db.execute(usersQuery);
+  console.log('Users results structure:', Object.keys(usersResults));
   
+  // Return the users and total
   return {
-    users,
+    users: usersResults.rows || [],
     total
   };
 };
@@ -274,4 +282,34 @@ export const importUsers = async (usersData: CreateUserInput[]): Promise<{
   }
 
   return results;
+};
+
+/**
+ * Get role by ID
+ */
+export const getRoleById = async (id: number): Promise<any> => {
+  const role = await db.query.roles.findFirst({
+    where: eq(roles.id, id)
+  });
+
+  if (!role) {
+    throw new AppError('Role not found', 404);
+  }
+
+  return role;
+};
+
+/**
+ * Get role by name
+ */
+export const getRoleByName = async (name: string): Promise<any> => {
+  const role = await db.query.roles.findFirst({
+    where: eq(roles.name, name)
+  });
+
+  if (!role) {
+    throw new AppError('Role not found', 404);
+  }
+
+  return role;
 };

@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-// Base role validation
-const baseRoleEnum = z.enum(['public', 'applicant', 'fellow', 'employee', 'alumni']);
 
 // Create user validation
 export const createUserSchema = z.object({
@@ -14,10 +12,17 @@ export const createUserSchema = z.object({
             .regex(/[0-9]/, 'Password must contain at least one number')
             .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
         name: z.string().min(1, 'Name is required'),
-        base_role: baseRoleEnum,
+        // Accept either role_id or role
+        role_id: z.number().int().positive('Role ID must be a positive integer')
+            .or(z.string().regex(/^\d+$/).transform(Number))
+            .optional(),
         avatar_url: z.string().url().optional(),
         email_verified: z.boolean().optional(),
         sendVerificationEmail: z.boolean().optional(),
+    })
+    .refine(data => data.role_id !== undefined || data.role !== undefined, {
+        message: "Either 'role_id' or 'role' must be provided",
+        path: ['role_id']
     }),
 });
 
@@ -28,12 +33,16 @@ export const updateUserSchema = z.object({
     }),
     body: z.object({
         name: z.string().min(1).optional(),
-        base_role: baseRoleEnum.optional(),
+        RoleId: z.number().int().positive()
+            .or(z.string().regex(/^\d+$/).transform(Number))
+            .optional(),
         avatar_url: z.string().url().optional().nullable(),
         email_verified: z.boolean().optional(),
         is_active: z.boolean().optional(),
     }),
 });
+
+
 
 // Get user by ID validation
 export const getUserSchema = z.object({
@@ -57,7 +66,7 @@ export const listUsersSchema = z.object({
         search: z.string().optional(),
         sort_by: z.string().optional(),
         sort_order: z.enum(['asc', 'desc']).optional(),
-        role: z.string().optional(),
+        role_id: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
         is_active: z.string().optional().transform(val => val === 'true'),
     }),
 });
@@ -69,7 +78,7 @@ export const importUsersSchema = z.object({
             email: z.string().email('Invalid email address'),
             password: z.string().min(8, 'Password must be at least 8 characters'),
             name: z.string().min(1, 'Name is required'),
-            base_role: baseRoleEnum,
+            role_id: z.number().int().positive('Role ID must be a positive integer'),
             avatar_url: z.string().url().optional(),
             email_verified: z.boolean().optional(),
             sendVerificationEmail: z.boolean().optional(),
