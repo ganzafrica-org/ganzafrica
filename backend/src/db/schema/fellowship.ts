@@ -1,4 +1,4 @@
-import { bigint, pgTable, text, integer, timestamp } from 'drizzle-orm/pg-core'
+import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 import { timestampFields } from './common'
 import { users } from './users'
 import {
@@ -8,7 +8,7 @@ import {
 } from './enums'
 
 export const cohorts = pgTable('cohorts', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
+    id: integer('id').primaryKey(),
     name: text('name').notNull(),
     start_date: timestamp('start_date').notNull(),
     end_date: timestamp('end_date').notNull(),
@@ -18,11 +18,11 @@ export const cohorts = pgTable('cohorts', {
 })
 
 export const fellows = pgTable('fellows', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    user_id: bigint('user_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    user_id: integer('user_id')
         .notNull()
         .references(() => users.id),
-    cohort_id: bigint('cohort_id', { mode: 'number' })
+    cohort_id: integer('cohort_id')
         .notNull()
         .references(() => cohorts.id),
     status: fellowStatusEnum('status').notNull(),
@@ -32,8 +32,8 @@ export const fellows = pgTable('fellows', {
 })
 
 export const fellowship_milestones = pgTable('fellowship_milestones', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    cohort_id: bigint('cohort_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    cohort_id: integer('cohort_id')
         .notNull()
         .references(() => cohorts.id),
     name: text('name').notNull(),
@@ -43,11 +43,11 @@ export const fellowship_milestones = pgTable('fellowship_milestones', {
 })
 
 export const fellow_milestone_progress = pgTable('fellow_milestone_progress', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    fellow_id: bigint('fellow_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    fellow_id: integer('fellow_id')
         .notNull()
         .references(() => fellows.id),
-    milestone_id: bigint('milestone_id', { mode: 'number' })
+    milestone_id: integer('milestone_id')
         .notNull()
         .references(() => fellowship_milestones.id),
     status: milestoneStatusEnum('status').notNull(),

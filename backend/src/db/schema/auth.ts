@@ -1,16 +1,16 @@
-import { bigint, pgTable, text, boolean, jsonb, timestamp } from 'drizzle-orm/pg-core'
+import { integer, pgTable, text, boolean, jsonb, timestamp } from 'drizzle-orm/pg-core'
 import { timestampFields } from './common'
 import { users } from './users'
 
 export const roles = pgTable('roles', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
+    id: integer('id').primaryKey(),
     name: text('name').notNull(),
     description: text('description'),
     ...timestampFields,
 })
 
 export const permissions = pgTable('permissions', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
+    id: integer('id').primaryKey(),
     name: text('name').notNull(),
     description: text('description'),
     resource: text('resource').notNull(),
@@ -19,24 +19,24 @@ export const permissions = pgTable('permissions', {
 })
 
 export const role_permissions = pgTable('role_permissions', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    role_id: bigint('role_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    role_id: integer('role_id')
         .notNull()
         .references(() => roles.id),
-    permission_id: bigint('permission_id', { mode: 'number' })
+    permission_id: integer('permission_id')
         .notNull()
         .references(() => permissions.id),
 })
 
 export const user_roles = pgTable('user_roles', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    user_id: bigint('user_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    user_id: integer('user_id')
         .notNull()
         .references(() => users.id),
-    role_id: bigint('role_id', { mode: 'number' })
+    role_id: integer('role_id')
         .notNull()
         .references(() => roles.id),
-    granted_by: bigint('granted_by', { mode: 'number' })
+    granted_by: integer('granted_by')
         .notNull()
         .references(() => users.id),
     granted_at: timestamp('granted_at').notNull(),

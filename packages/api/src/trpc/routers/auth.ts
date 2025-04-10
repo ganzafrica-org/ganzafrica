@@ -128,7 +128,7 @@ export const authRouter = router({
                 }
 
                 // Set HTTP-only cookie with the PASETO token
-                ctx.resHeaders.append('Set-Cookie', `auth_token=${result.token}; HttpOnly; Path=/; Max-Age=${AUTH.TOKEN_EXPIRY}; SameSite=Strict${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+                ctx.resHeaders.append('Set-Cookie', `auth_token=${result.token}; HttpOnly; Path=/; Max-Age=${AUTH.TOKEN_EXPIRY}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
 
                 return {
                     success: true,
@@ -221,7 +221,7 @@ export const authRouter = router({
                 }
 
                 // Set the authentication cookie
-                ctx.resHeaders.append('Set-Cookie', `auth_token=${result.token}; HttpOnly; Path=/; Max-Age=${AUTH.TOKEN_EXPIRY}; SameSite=Strict${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+                ctx.resHeaders.append('Set-Cookie', `auth_token=${result.token}; HttpOnly; Path=/; Max-Age=${AUTH.TOKEN_EXPIRY}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
 
                 return {
                     success: true,

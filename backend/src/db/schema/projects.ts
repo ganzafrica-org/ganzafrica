@@ -1,61 +1,116 @@
-import { bigint, pgTable, text, timestamp, jsonb, integer} from 'drizzle-orm/pg-core'
-import { timestampFields } from './common'
-import { users } from './users'
-import {
+import { 
+    integer, 
+    pgTable, 
+    text, 
+    timestamp, 
+    jsonb, 
+    serial, 
+    varchar, 
+    index,
+    uniqueIndex,
+    boolean
+  } from 'drizzle-orm/pg-core';
+  import { timestampFields } from './common';
+  import { users } from './users';
+  import {
     projectStatusEnum,
     projectMemberRoleEnum,
-    mediaTypeEnum
-} from './enums'
-
-export const project_categories = pgTable('project_categories', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    name: text('name').notNull().unique(),
+  } from './enums';
+  
+  export const project_categories = pgTable('project_categories', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull().unique(),
+    description: text('description'),
     ...timestampFields,
-})
-
-export const projects = pgTable('projects', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    name: text('name').notNull(),
+  });
+  
+  // Projects Table
+  export const projects = pgTable('projects', {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 200 }).notNull(),
     description: text('full_description'),
-    status: projectStatusEnum('status').notNull(),
-    category_id: bigint('category_id', { mode: 'number' })
-        .references(() => project_categories.id),
-
-    location: text('location'),
-    impacted_people: integer('impacted_people'),
-    media: jsonb('media'),
-    start_date: timestamp('start_date').notNull(),
-    end_date: timestamp('end_date'),
-
-    created_by: bigint('created_by', { mode: 'number' })
-        .notNull()
-        .references(() => users.id),
+    status: projectStatusEnum('status').notNull().default('planned'),
+    category_id: integer('category_id')
+      .references(() => project_categories.id)
+      .notNull(),
+  
+    location: varchar('location', { length: 255 }),
+    impacted_people: integer('impacted_people').default(0),
+    media: jsonb('media').$type<{
+      items: Array<{
+        id: string;
+        type: 'image' | 'video';
+        url: string;
+        cover: boolean;
+        size?: number;
+        duration?: number;
+        thumbnailUrl?: string; 
+        order?: number; 
+      }>
+    }>(),
+    start_date: timestamp('start_date', { withTimezone: true }).notNull(),
+    end_date: timestamp('end_date', { withTimezone: true }),
+    
+    created_by: integer('created_by')
+      .notNull()
+      .references(() => users.id),
     ...timestampFields,
-})
-
-export const project_members = pgTable('project_members', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    project_id: bigint('project_id', { mode: 'number' })
-        .notNull()
-        .references(() => projects.id),
-    user_id: bigint('user_id', { mode: 'number' })
-        .notNull()
-        .references(() => users.id),
-    role: projectMemberRoleEnum('role').notNull(),
-    start_date: timestamp('start_date').notNull(),
-    end_date: timestamp('end_date'),
+  }, (table) => {
+    return {
+      categoryIdx: index('projects_category_id_idx').on(table.category_id),
+      createdByIdx: index('projects_created_by_idx').on(table.created_by),
+      statusIdx: index('projects_status_idx').on(table.status),
+    };
+  });
+  
+  // Project Members Table
+  export const project_members = pgTable('project_members', {
+    id: serial('id').primaryKey(),
+    project_id: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    user_id: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    role: projectMemberRoleEnum('role').notNull().default('member'),
+    start_date: timestamp('start_date', { withTimezone: true }).notNull(),
+    end_date: timestamp('end_date', { withTimezone: true }),
+    is_active: boolean('is_active').notNull().default(true),
     ...timestampFields,
-})
-
-export const project_updates = pgTable('project_updates', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    project_id: bigint('project_id', { mode: 'number' })
-        .notNull()
-        .references(() => projects.id),
-    author_id: bigint('author_id', { mode: 'number' })
-        .notNull()
-        .references(() => users.id),
-    title: text('title'),
+  }, (table) => {
+    return {
+      projectIdx: index('project_members_project_id_idx').on(table.project_id),
+      userIdx: index('project_members_user_id_idx').on(table.user_id),
+      uniqueMembership: uniqueIndex('unique_project_user').on(table.project_id, table.user_id),
+    };
+  });
+  
+  // Project Updates Table
+  export const project_updates = pgTable('project_updates', {
+    id: serial('id').primaryKey(),
+    project_id: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'cascade' }),
+    author_id: integer('author_id')
+      .notNull()
+      .references(() => users.id),
+    title: varchar('title', { length: 200 }),
     content: jsonb('content').notNull(),
+    media: jsonb('media').$type<{
+      items: Array<{
+        id: string;
+        type: 'image' | 'video';
+        url: string;
+        cover: boolean;
+        title?: string;
+        description?: string;
+      }>
+    }>(),
+    update_type: varchar('update_type', { length: 50 }).default('general'),
     ...timestampFields,
-})
+  }, (table) => {
+    return {
+      projectIdx: index('project_updates_project_id_idx').on(table.project_id),
+      authorIdx: index('project_updates_author_id_idx').on(table.author_id),
+    };
+  });

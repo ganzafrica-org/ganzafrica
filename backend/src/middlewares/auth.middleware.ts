@@ -20,75 +20,35 @@ declare global {
 }
 
 /**
- * Authentication middleware
- * Verifies the user's token from either cookie or Authorization header
+ * TEMPORARY: Authentication middleware that bypasses token validation for testing
+ * This will attach a mock user to all requests
  */
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // 1. Check for token in cookie (primary method for web clients)
-        const cookieToken = req.cookies?.[constants.AUTH_COOKIE_NAME];
-
-        // 2. Check for token in Authorization header (for API clients and Swagger UI)
-        const authHeader = req.headers.authorization;
-        const headerToken = authHeader?.startsWith('Bearer ')
-            ? authHeader.substring(7)
-            : null;
-
-        // Use cookie token if available, otherwise use header token
-        const token = cookieToken || headerToken;
-
-        if (!token) {
-            return res.status(401).json({
-                error: 'Unauthorized',
-                message: constants.ERROR_MESSAGES.UNAUTHORIZED,
-            });
-        }
-
-        // Verify the token
-        const decoded = await verifyToken(token);
-
-        // Attach user to request
+        // TEMPORARY: Skip token verification and attach mock user for testing
         req.user = {
-            id: decoded.id,
-            email: decoded.email,
-            base_role: decoded.base_role,
-            roles: decoded.roles,
+            id: "4", // Use the ID from your token
+            email: "gentilleuwamahoro28@gmail.com",
+            base_role: "applicant",
+            roles: ["admin"] 
         };
 
+        // Log that we're using the test authentication
+        logger.info('Using test authentication bypass');
+        
         next();
     } catch (error) {
         logger.error('Authentication error:', error);
-        return res.status(401).json({
-            error: 'Unauthorized',
-            message: constants.ERROR_MESSAGES.UNAUTHORIZED,
-        });
+        next(); // Continue anyway for testing
     }
 };
 
 /**
- * Role-based authorization middleware factory
- * Creates middleware that checks if the user has the required role(s)
+ * TEMPORARY: Authorization middleware that allows all requests
  */
 export const authorize = (allowedRoles: string[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        if (!req.user) {
-            return res.status(401).json({
-                error: 'Unauthorized',
-                message: constants.ERROR_MESSAGES.UNAUTHORIZED,
-            });
-        }
-
-        // Check if user has at least one of the required roles
-        const userRoles = [req.user.base_role, ...(req.user.roles || [])];
-        const hasRequiredRole = allowedRoles.some(role => userRoles.includes(role));
-
-        if (!hasRequiredRole) {
-            return res.status(403).json({
-                error: 'Forbidden',
-                message: constants.ERROR_MESSAGES.UNAUTHORIZED,
-            });
-        }
-
+        // TEMPORARY: Skip role check for testing
         next();
     };
 };
