@@ -1,36 +1,38 @@
-import { bigint, pgTable, text, boolean, jsonb, timestamp, pgEnum, integer } from 'drizzle-orm/pg-core'
+import { integer, pgTable, text, boolean, jsonb, timestamp } from 'drizzle-orm/pg-core'
 import { timestampFields } from './common'
+import { users } from './users'
+import { departments } from './departments'
 import {
     jobPostingTypeEnum,
     applicationStageStatusEnum,
-    postingStatusEnum, jobTypeEnum,
+    postingStatusEnum,
+    jobTypeEnum,
+    documentTypeEnum
 } from './enums'
-import { users } from './users'
-import { departments} from "./departments";
 
 export const job_postings = pgTable('job_postings', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
+    id: integer('id').primaryKey(),
     title: text('title').notNull(),
     description: text('description').notNull(),
-    department_id: bigint('department_id', { mode: 'number' })
+    department_id: integer('department_id')
         .references(() => departments.id),
     type: jobTypeEnum('type').notNull(),
     posting_type: jobPostingTypeEnum('posting_type').notNull(),
-    visibility: jsonb('visibility').notNull(), // Array of roles
-    target_groups: jsonb('target_groups').notNull(), // Array of user groups
+    visibility: jsonb('visibility').notNull(), 
+    target_groups: jsonb('target_groups').notNull(), 
     partner_organization: text('partner_organization'),
     status: postingStatusEnum('status').notNull(),
     published_at: timestamp('published_at'),
     closes_at: timestamp('closes_at'),
-    created_by: bigint('created_by', { mode: 'number' })
+    created_by: integer('created_by')
         .notNull()
         .references(() => users.id),
     ...timestampFields,
 })
 
 export const application_stages = pgTable('application_stages', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    job_posting_id: bigint('job_posting_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    job_posting_id: integer('job_posting_id')
         .notNull()
         .references(() => job_postings.id),
     stage_order: integer('stage_order').notNull(),
@@ -41,14 +43,14 @@ export const application_stages = pgTable('application_stages', {
 })
 
 export const applications = pgTable('applications', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    job_posting_id: bigint('job_posting_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    job_posting_id: integer('job_posting_id')
         .notNull()
         .references(() => job_postings.id),
-    applicant_id: bigint('applicant_id', { mode: 'number' })
+    applicant_id: integer('applicant_id')
         .notNull()
         .references(() => users.id),
-    current_stage_id: bigint('current_stage_id', { mode: 'number' })
+    current_stage_id: integer('current_stage_id')
         .notNull()
         .references(() => application_stages.id),
     future_consideration: boolean('future_consideration').notNull().default(false),
@@ -57,17 +59,28 @@ export const applications = pgTable('applications', {
 })
 
 export const application_stage_history = pgTable('application_stage_history', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    application_id: bigint('application_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    application_id: integer('application_id')
         .notNull()
         .references(() => applications.id),
-    stage_id: bigint('stage_id', { mode: 'number' })
+    stage_id: integer('stage_id')
         .notNull()
         .references(() => application_stages.id),
     status: applicationStageStatusEnum('status').notNull(),
     feedback: text('feedback'),
-    updated_by: bigint('updated_by', { mode: 'number' })
+    updated_by: integer('updated_by')
         .notNull()
         .references(() => users.id),
     ...timestampFields,
+})
+
+export const application_documents = pgTable('application_documents', {
+    id: integer('id').primaryKey(),
+    application_id: integer('application_id')
+        .notNull()
+        .references(() => applications.id),
+    type: documentTypeEnum('type').notNull(),
+    file_url: text('file_url').notNull(),
+    uploaded_at: timestamp('uploaded_at').notNull(),
+    ...timestampFields, 
 })
