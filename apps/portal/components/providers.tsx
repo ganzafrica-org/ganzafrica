@@ -3,7 +3,6 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { Toaster } from "@workspace/ui/components/sonner"
-import { AuthProvider } from "@/components/auth"
 
 export function Providers({ children }: { children: React.ReactNode }) {
     return (
@@ -14,10 +13,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             disableTransitionOnChange
             enableColorScheme
         >
-            <AuthProvider>
-                {children}
-                <Toaster position="top-right" />
-            </AuthProvider>
+            {children}
+            <Toaster position="top-right" />
         </NextThemesProvider>
     )
 }
