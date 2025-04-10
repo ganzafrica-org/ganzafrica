@@ -7,7 +7,13 @@ import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
 import { AuthProvider } from '@/components/auth/auth-provider';
 
-const rubik = Rubik({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const rubik = Rubik({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: '--font-rubik',
+});
+
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   // In App Router, client components cannot use redirect() directly at the top level
@@ -25,8 +31,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   }, []);
 
   return (
-    <html lang="en">
-      <body className={`${rubik.className} font-sans antialiased bg-gray-50`}>
+    <html lang="en" className="light">
+      <body className={`${rubik.variable} font-sans antialiased bg-gray-50`}>
         <AuthProvider>
           <Providers>
             {children}
