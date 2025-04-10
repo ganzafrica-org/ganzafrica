@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { authService, userService, emailService } from '../services';
 import { AppError } from '@/middlewares';
 import { constants, Logger } from '../config';
+import { db } from '@/db/client';
+import { roles } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 const logger = new Logger('AuthController');
 
@@ -64,12 +67,38 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
+    // Get default 'applicant' role from database
+    let defaultRole;
+    try {
+      defaultRole = await db.query.roles.findFirst({
+        where: eq(roles.name, 'applicant')
+      });
+
+      if (!defaultRole) {
+        // If applicant role doesn't exist, get the first available role
+        const allRoles = await db.select().from(roles).limit(1);
+        if (allRoles.length > 0) {
+          defaultRole = allRoles[0];
+          logger.warn(`Could not find applicant role, using role: ${defaultRole.name}`);
+        } else {
+          // If no roles exist, use a fallback ID
+          defaultRole = { id: 1 };
+          logger.warn('No roles found in database, using default role ID: 1');
+        }
+      }
+    } catch (error) {
+      // Fallback to a default role ID if role lookup fails
+      defaultRole = { id: 1 };
+      logger.error('Error fetching roles', error);
+      logger.warn('Error fetching roles, using default role ID: 1');
+    }
+
     // Create user with applicant base role by default
     const user = await userService.createUser({
       email,
       password,
       name,
-      base_role: 'applicant',
+      role_id: defaultRole.id,
       sendVerificationEmail: true
     });
 
@@ -188,7 +217,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         name: user.name,
-        base_role: user.base_role,
+        role_id : user.role_id ,
         email_verified: user.email_verified,
         avatar_url: user.avatar_url
       },
@@ -338,7 +367,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
         id: user.id,
         email: user.email,
         name: user.name,
-        base_role: user.base_role,
+        role_id : user.role_id ,
         avatar_url: user.avatar_url,
         email_verified: user.email_verified
       }

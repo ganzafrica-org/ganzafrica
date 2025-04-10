@@ -8,6 +8,9 @@ import teamRoutes from './teams.routes';
 import teamTypeRoutes from './team-types.routes';
 import partenerRoutes from './partner.routes';
 import testimonialRoutes from './testimonial.routes';
+import faqRoutes from './faqs';
+import newsRourtes from './news.routes';
+
 
 
 const router: Router = Router();
@@ -21,6 +24,8 @@ router.use('/teams', teamRoutes);
 router.use('/team-types', teamTypeRoutes);
 router.use('/partners', partenerRoutes);
 router.use('/testimonials', testimonialRoutes);
+router.use('/faqs', faqRoutes);
+router.use('/news', newsRourtes);
 
 
 export default router;
