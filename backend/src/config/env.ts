@@ -27,6 +27,7 @@ const envSchema = z.object({
     // Application
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     API_PORT: z.coerce.number().default(3002),
+    PORT: z.coerce.number().default(3002),
 
     // URLs
     WEBSITE_URL: z.string().url(),
@@ -34,7 +35,8 @@ const envSchema = z.object({
 
     // Authentication
     SESSION_SECRET: z.string().min(32),
-    PASETO_SECRET: z.string().min(32),
+    JWT_SECRET: z.string().min(32),
+    JWT_REFRESH_SECRET: z.string().min(32),
     ACCESS_TOKEN_EXPIRY: z.string().default('15m'),
     REFRESH_TOKEN_EXPIRY: z.string().default('7d'),
 

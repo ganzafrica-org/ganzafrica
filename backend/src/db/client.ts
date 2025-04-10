@@ -3,7 +3,6 @@ import { Pool, PoolClient } from 'pg';
 import { env } from '../config';
 import Logger from '../config/logger';
 import * as schema from './schema';
-import { generateId } from './id';
 
 const logger = new Logger('DatabaseClient');
 
@@ -42,11 +41,13 @@ export async function withDbTransaction<T>(callback: (txDb: any) => Promise<T>):
 }
 
 // Setup context for audit logging
-export async function setDbContext(userId: string | null, ipAddress: string | null) {
+export async function setDbContext(userId: number | string | null, ipAddress: string | null) {
     const client = await connectionPool.connect();
     try {
         if (userId) {
-            await client.query("SET LOCAL app.current_user_id = $1", [userId]);
+            // Convert string IDs to numbers if needed
+            const parsedId = typeof userId === 'string' ? parseInt(userId) : userId;
+            await client.query("SET LOCAL app.current_user_id = $1", [parsedId]);
         }
         if (ipAddress) {
             await client.query("SET LOCAL app.current_ip_address = $1", [ipAddress]);
@@ -54,11 +55,6 @@ export async function setDbContext(userId: string | null, ipAddress: string | nu
     } finally {
         client.release();
     }
-}
-
-// Helper to generate IDs in a consistent way across the app
-export function newId(): bigint {
-    return generateId();
 }
 
 // Close the database connection when the application shuts down
