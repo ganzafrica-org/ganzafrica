@@ -108,11 +108,7 @@ BEGIN
 END;
 $milestone_func$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS milestone_completion_trigger ON fellow_milestone_progress;
-CREATE TRIGGER milestone_completion_trigger
-    AFTER UPDATE OF status ON fellow_milestone_progress
-    FOR EACH ROW
-EXECUTE FUNCTION milestone_completion_trigger();
+
 
 -- Security triggers
 CREATE OR REPLACE FUNCTION soft_delete_trigger()
@@ -129,11 +125,6 @@ CREATE TRIGGER prevent_user_delete_trigger
     FOR EACH ROW
 EXECUTE FUNCTION soft_delete_trigger();
 
-DROP TRIGGER IF EXISTS prevent_fellow_delete_trigger ON fellows;
-CREATE TRIGGER prevent_fellow_delete_trigger
-    BEFORE DELETE ON fellows
-    FOR EACH ROW
-EXECUTE FUNCTION soft_delete_trigger();
 
 DROP TRIGGER IF EXISTS prevent_project_delete_trigger ON projects;
 CREATE TRIGGER prevent_project_delete_trigger

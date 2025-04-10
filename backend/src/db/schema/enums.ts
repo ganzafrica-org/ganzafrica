@@ -7,18 +7,22 @@ export const twoFactorMethodEnum = pgEnum('two_factor_method', [
     'sms',
     'email',
 ])
+// News related enums
+export const newsStatusEnum = pgEnum('news_status', [
+    'published',
+    'not_published'
+  ]);
+  
+export const newsCategoryEnum = pgEnum('news_category', [
+    'all',
+    'news',
+    'blogs',
+    'reports',
+    'publications'
+  ]);
 
-export const cohortStatusEnum = pgEnum('cohort_status', [
-    'planned',
-    'active',
-    'completed',
-])
 
-export const fellowStatusEnum = pgEnum('fellow_status', [
-    'active',
-    'graduated',
-    'dropped',
-])
+
 
 export const projectStatusEnum = pgEnum('project_status', [
     'planned',
@@ -35,13 +39,7 @@ export const projectMemberRoleEnum = pgEnum('project_member_role', [
     'contributor'
 ])
 
-export const milestoneStatusEnum = pgEnum('milestone_status', [
-    'pending',
-    'in_progress',
-    'completed',
-    'failed',
-    'delayed'      // Added delayed status
-])
+
 
 export const jobTypeEnum = pgEnum('job_type', [
     'fellowship',

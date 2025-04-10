@@ -27,7 +27,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         // TEMPORARY: Skip token verification and attach mock user for testing
         req.user = {
             id: "4", // Use the ID from your token
-            email: "gentilleuwamahoro28@gmail.com",
+            email: "jeannine.uwase@gmail.com",
             roles: ["admin"] 
         };
 
