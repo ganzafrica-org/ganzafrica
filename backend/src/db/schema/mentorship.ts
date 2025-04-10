@@ -1,14 +1,14 @@
-import { bigint, pgTable, text, jsonb, timestamp } from 'drizzle-orm/pg-core'
+import { integer, pgTable, text, jsonb, timestamp } from 'drizzle-orm/pg-core'
 import { timestampFields } from './common'
 import { users } from './users'
 import {mentorshipTypeEnum, mentorshipStatusEnum, mentorshipSessionStatusEnum, mentorshipGoalStatusEnum} from './enums'
 
 export const mentorship_relationships = pgTable('mentorship_relationships', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    mentor_id: bigint('mentor_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    mentor_id: integer('mentor_id')
         .notNull()
         .references(() => users.id),
-    mentee_id: bigint('mentee_id', { mode: 'number' })
+    mentee_id: integer('mentee_id')
         .notNull()
         .references(() => users.id),
     type: mentorshipTypeEnum('type').notNull(),
@@ -20,8 +20,8 @@ export const mentorship_relationships = pgTable('mentorship_relationships', {
 })
 
 export const mentorship_sessions = pgTable('mentorship_sessions', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    relationship_id: bigint('relationship_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    relationship_id: integer('relationship_id')
         .notNull()
         .references(() => mentorship_relationships.id),
     session_date: timestamp('session_date').notNull(),
@@ -32,8 +32,8 @@ export const mentorship_sessions = pgTable('mentorship_sessions', {
 })
 
 export const mentorship_goals = pgTable('mentorship_goals', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    relationship_id: bigint('relationship_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    relationship_id: integer('relationship_id')
         .notNull()
         .references(() => mentorship_relationships.id),
     title: text('title').notNull(),

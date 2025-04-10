@@ -2,6 +2,8 @@
 
 export const AUTH_COOKIE_NAME = 'ganzafrica_auth';
 export const REFRESH_COOKIE_NAME = 'ganzafrica_refresh';
+export const CSRF_COOKIE_NAME = 'ganzafrica_csrf'; 
+
 
 export const COOKIE_OPTIONS = {
     httpOnly: true,
@@ -37,6 +39,22 @@ export const ERROR_MESSAGES = {
     INVALID_TOKEN: 'Invalid token',
     PASSWORD_RESET_EXPIRED: 'Password reset token expired',
     TOO_MANY_REQUESTS: 'Too many requests, please try again later',
+    FORBIDDEN: 'You do not have permission to perform this action',
+    USER_NOT_FOUND: 'User not found',
+    INVALID_PASSWORD: 'Invalid password',
+    PASSWORD_MISMATCH: 'Passwords do not match',
+    INVALID_EMAIL: 'Invalid email address',
+    INVALID_PHONE: 'Invalid phone number',
+    INVALID_VERIFICATION_CODE: 'Invalid verification code',
+    INVALID_TWO_FACTOR_CODE: 'Invalid two-factor authentication code',
+    USER_ALREADY_EXISTS: 'User already exists',
+    USER_NOT_ACTIVE: 'User is not active',
+    USER_NOT_VERIFIED: 'User is not verified',
+    USER_ALREADY_VERIFIED: 'User is already verified', 
+    ACCOUNT_INACTIVE: 'Account is inactive',
+    ACCOUNT_SUSPENDED: 'Account is suspended',
+    BAD_REQUEST: 'Bad request',
+    EMAIL_NOT_FOUND: 'Email not found',
 };
 
 export const SUCCESS_MESSAGES = {
@@ -63,6 +81,7 @@ export const TOKEN_TYPES = {
     VERIFICATION: 'verification',
     PASSWORD_RESET: 'password-reset',
     TWO_FACTOR: 'two-factor',
+    
 };
 
 export const TOKEN_EXPIRY = {
