@@ -1,11 +1,11 @@
-import { bigint, pgTable, text, jsonb, boolean, timestamp } from 'drizzle-orm/pg-core'
+import { integer, pgTable, text, jsonb, boolean, timestamp } from 'drizzle-orm/pg-core'
 import { timestampFields } from './common'
 import { users } from './users'
-import {subscriptionStatusEnum} from "./enums";
+import { subscriptionStatusEnum } from "./enums";
 
 export const notifications = pgTable('notifications', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    user_id: bigint('user_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    user_id: integer('user_id')
         .notNull()
         .references(() => users.id),
     type: text('type').notNull(),
@@ -16,11 +16,11 @@ export const notifications = pgTable('notifications', {
 })
 
 export const messages = pgTable('messages', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
-    sender_id: bigint('sender_id', { mode: 'number' })
+    id: integer('id').primaryKey(),
+    sender_id: integer('sender_id')
         .notNull()
         .references(() => users.id),
-    recipient_id: bigint('recipient_id', { mode: 'number' })
+    recipient_id: integer('recipient_id')
         .notNull()
         .references(() => users.id),
     content: text('content').notNull(),
@@ -29,7 +29,7 @@ export const messages = pgTable('messages', {
 })
 
 export const newsletter_subscriptions = pgTable('newsletter_subscriptions', {
-    id: bigint('id', { mode: 'number' }).primaryKey(),
+    id: integer('id').primaryKey(),
     email: text('email').notNull(),
     status: subscriptionStatusEnum('status').notNull(),
     subscribed_at: timestamp('subscribed_at').notNull(),
