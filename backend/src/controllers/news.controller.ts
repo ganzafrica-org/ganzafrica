@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { newsService } from '../services/news.service';
-import { AppError } from '../middlewares';
-import { constants, Logger } from '../config';
+import { Request, Response } from "express";
+import { newsService } from "../services/news.service";
+import { AppError } from "../middlewares";
+import { constants, Logger } from "../config";
 
-const logger = new Logger('NewsController');
+const logger = new Logger("NewsController");
 
 /**
  * @swagger
@@ -64,14 +64,15 @@ export const createNews = async (req: Request, res: Response) => {
 
     if (!userId) {
       return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'User not authenticated'
+        error: "Unauthorized",
+        message: "User not authenticated",
       });
     }
 
     // Check if we're in a testing environment to provide appropriate debugging info
-    const isTestMode = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
-    
+    const isTestMode =
+      process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development";
+
     if (isTestMode) {
       logger.info(`Creating news with user ID: ${userId}`);
     }
@@ -79,32 +80,34 @@ export const createNews = async (req: Request, res: Response) => {
     const newsData = {
       title: req.body.title,
       content: req.body.content,
-      status: req.body.status || 'not_published',
-      publish_date: req.body.publish_date ? new Date(req.body.publish_date) : undefined,
+      status: req.body.status || "not_published",
+      publish_date: req.body.publish_date
+        ? new Date(req.body.publish_date)
+        : undefined,
       category: req.body.category,
       key_lessons: req.body.key_lessons,
       media: req.body.media,
       tags: req.body.tags,
-      created_by: userId
+      created_by: userId,
     };
 
     const news = await newsService.createNews(newsData);
 
     res.status(201).json({
-      message: 'News item created successfully',
-      news
+      message: "News item created successfully",
+      news,
     });
   } catch (error) {
-    logger.error('Create news error', error);
+    logger.error("Create news error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'News Creation Error',
-        message: error.message
+        error: "News Creation Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'News Creation Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "News Creation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -174,11 +177,15 @@ export const listNews = async (req: Request, res: Response) => {
       category: req.query.category as any,
       status: req.query.status as any,
       search: req.query.search as string,
-      tags: req.query.tags ? (req.query.tags as string).split(',').map(Number) : undefined,
+      tags: req.query.tags
+        ? (req.query.tags as string).split(",").map(Number)
+        : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
-      offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+      offset: req.query.offset
+        ? parseInt(req.query.offset as string)
+        : undefined,
       sortBy: req.query.sortBy as string,
-      sortDir: req.query.sortDir as 'asc' | 'desc'
+      sortDir: req.query.sortDir as "asc" | "desc",
     };
 
     const { news, total } = await newsService.listNews(filter);
@@ -188,20 +195,20 @@ export const listNews = async (req: Request, res: Response) => {
       pagination: {
         total,
         limit: filter.limit || 20,
-        offset: filter.offset || 0
-      }
+        offset: filter.offset || 0,
+      },
     });
   } catch (error) {
-    logger.error('List news error', error);
+    logger.error("List news error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'News Listing Error',
-        message: error.message
+        error: "News Listing Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'News Listing Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "News Listing Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -242,13 +249,13 @@ export const getNewsById = async (req: Request, res: Response) => {
     logger.error(`Get news error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'News Retrieval Error',
-        message: error.message
+        error: "News Retrieval Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'News Retrieval Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "News Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -315,30 +322,32 @@ export const updateNews = async (req: Request, res: Response) => {
       title: req.body.title,
       content: req.body.content,
       status: req.body.status,
-      publish_date: req.body.publish_date ? new Date(req.body.publish_date) : undefined,
+      publish_date: req.body.publish_date
+        ? new Date(req.body.publish_date)
+        : undefined,
       category: req.body.category,
       key_lessons: req.body.key_lessons,
       media: req.body.media,
-      tags: req.body.tags
+      tags: req.body.tags,
     };
 
     const news = await newsService.updateNews(id, newsData);
 
     res.status(200).json({
-      message: 'News item updated successfully',
-      news
+      message: "News item updated successfully",
+      news,
     });
   } catch (error) {
     logger.error(`Update news error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'News Update Error',
-        message: error.message
+        error: "News Update Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'News Update Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "News Update Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -375,19 +384,19 @@ export const deleteNews = async (req: Request, res: Response) => {
     await newsService.deleteNews(id);
 
     res.status(200).json({
-      message: 'News item deleted successfully'
+      message: "News item deleted successfully",
     });
   } catch (error) {
     logger.error(`Delete news error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'News Deletion Error',
-        message: error.message
+        error: "News Deletion Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'News Deletion Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "News Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -415,16 +424,16 @@ export const listTags = async (req: Request, res: Response) => {
 
     res.status(200).json({ tags });
   } catch (error) {
-    logger.error('List tags error', error);
+    logger.error("List tags error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Tag Listing Error',
-        message: error.message
+        error: "Tag Listing Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Tag Listing Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Tag Listing Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -466,20 +475,20 @@ export const createTag = async (req: Request, res: Response) => {
     const tag = await newsService.createTag(name);
 
     res.status(201).json({
-      message: 'Tag created successfully',
-      tag
+      message: "Tag created successfully",
+      tag,
     });
   } catch (error) {
-    logger.error('Create tag error', error);
+    logger.error("Create tag error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Tag Creation Error',
-        message: error.message
+        error: "Tag Creation Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Tag Creation Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Tag Creation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -516,19 +525,19 @@ export const deleteTag = async (req: Request, res: Response) => {
     await newsService.deleteTag(id);
 
     res.status(200).json({
-      message: 'Tag deleted successfully'
+      message: "Tag deleted successfully",
     });
   } catch (error) {
     logger.error(`Delete tag error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Tag Deletion Error',
-        message: error.message
+        error: "Tag Deletion Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Tag Deletion Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Tag Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -542,7 +551,7 @@ export const newsController = {
   deleteNews,
   listTags,
   createTag,
-  deleteTag
+  deleteTag,
 };
 
 // Default export for the controller object

@@ -1,19 +1,19 @@
-import { Request, Response } from 'express';
-import { authService, userService, emailService } from '../services';
-import { AppError } from '@/middlewares';
-import { constants, Logger } from '../config';
-import { db } from '@/db/client';
-import { roles } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { Request, Response } from "express";
+import { authService, userService, emailService } from "../services";
+import { AppError } from "@/middlewares";
+import { constants, Logger } from "../config";
+import { db } from "@/db/client";
+import { roles } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
-const logger = new Logger('AuthController');
+const logger = new Logger("AuthController");
 
 /**
  * @swagger
  * /auth/register:
  *   post:
  *     summary: Register a new user
- *     tags: [Authentication] 
+ *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -58,7 +58,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     try {
       const existingUser = await userService.getUserByEmail(email);
       if (existingUser) {
-        throw new AppError('Email already in use', 400);
+        throw new AppError("Email already in use", 400);
       }
     } catch (error) {
       // If error is "user not found", that's what we want
@@ -71,7 +71,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     let defaultRole;
     try {
       defaultRole = await db.query.roles.findFirst({
-        where: eq(roles.name, 'applicant')
+        where: eq(roles.name, "applicant"),
       });
 
       if (!defaultRole) {
@@ -79,18 +79,20 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         const allRoles = await db.select().from(roles).limit(1);
         if (allRoles.length > 0) {
           defaultRole = allRoles[0];
-          logger.warn(`Could not find applicant role, using role: ${defaultRole.name}`);
+          logger.warn(
+            `Could not find applicant role, using role: ${defaultRole.name}`,
+          );
         } else {
           // If no roles exist, use a fallback ID
           defaultRole = { id: 1 };
-          logger.warn('No roles found in database, using default role ID: 1');
+          logger.warn("No roles found in database, using default role ID: 1");
         }
       }
     } catch (error) {
       // Fallback to a default role ID if role lookup fails
       defaultRole = { id: 1 };
-      logger.error('Error fetching roles', error);
-      logger.warn('Error fetching roles, using default role ID: 1');
+      logger.error("Error fetching roles", error);
+      logger.warn("Error fetching roles, using default role ID: 1");
     }
 
     // Create user with applicant base role by default
@@ -99,14 +101,14 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       password,
       name,
       role_id: defaultRole.id,
-      sendVerificationEmail: true
+      sendVerificationEmail: true,
     });
 
     // Send welcome email
     try {
       await emailService.sendWelcomeEmail(email, name);
     } catch (emailError) {
-      logger.error('Failed to send welcome email', emailError);
+      logger.error("Failed to send welcome email", emailError);
       // Don't block registration if email fails
     }
 
@@ -116,12 +118,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         name: user.name,
-        email_verified: user.email_verified
-      }
+        email_verified: user.email_verified,
+      },
     });
   } catch (error) {
-    logger.error('Registration error', error);
-    handleErrorResponse(error, res, 'Registration Error');
+    logger.error("Registration error", error);
+    handleErrorResponse(error, res, "Registration Error");
   }
 };
 
@@ -168,7 +170,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Validate required fields
     if (!email || !password) {
-      throw new AppError('Email and password are required', 400);
+      throw new AppError("Email and password are required", 400);
     }
 
     // Get user by email
@@ -180,7 +182,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Verify password
-    const passwordValid = await authService.verifyPassword(password, user.password_hash);
+    const passwordValid = await authService.verifyPassword(
+      password,
+      user.password_hash,
+    );
     if (!passwordValid) {
       // Optionally implement login attempt tracking
       // await userService.incrementLoginAttempts(user.id);
@@ -189,22 +194,23 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Check account status
     if (!user.is_active) {
-      throw new AppError(constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || 'Account is inactive', 401);
+      throw new AppError(
+        constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || "Account is inactive",
+        401,
+      );
     }
 
     // Create session and tokens using JWT
     const { accessToken, refreshToken } = await authService.createSession(
       user.id,
-      req.ip || 'unknown',
-      req.headers['user-agent'] || 'unknown'
+      req.ip || "unknown",
+      req.headers["user-agent"] || "unknown",
     );
 
     // Set cookies
     const cookieOptions = {
       ...constants.COOKIE_OPTIONS,
-      maxAge: remember_me
-        ? 7 * 24 * 60 * 60 * 1000  
-        : 24 * 60 * 60 * 1000      
+      maxAge: remember_me ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
     };
 
     res.cookie(constants.AUTH_COOKIE_NAME, accessToken, cookieOptions);
@@ -217,15 +223,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         name: user.name,
-        role_id : user.role_id ,
+        role_id: user.role_id,
         email_verified: user.email_verified,
-        avatar_url: user.avatar_url
+        avatar_url: user.avatar_url,
       },
-      token: accessToken
+      token: accessToken,
     });
   } catch (error) {
-    logger.error('Login error', error);
-    handleErrorResponse(error, res, 'Authentication Error');
+    logger.error("Login error", error);
+    handleErrorResponse(error, res, "Authentication Error");
   }
 };
 
@@ -258,15 +264,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
  *       500:
  *         description: Server error
  */
-export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     // Get refresh token from cookie or body
-    const refreshToken = req.cookies?.[constants.REFRESH_COOKIE_NAME] || req.body.refresh_token;
+    const refreshToken =
+      req.cookies?.[constants.REFRESH_COOKIE_NAME] || req.body.refresh_token;
 
     if (!refreshToken) {
       res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Refresh token is required'
+        error: "Unauthorized",
+        message: "Refresh token is required",
       });
       return;
     }
@@ -278,16 +288,16 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 
       // Check if token type is refresh
       if (decoded.type !== constants.TOKEN_TYPES.REFRESH) {
-        throw new Error('Invalid token type');
+        throw new Error("Invalid token type");
       }
     } catch (error) {
       // Clear cookies on invalid token
       res.clearCookie(constants.AUTH_COOKIE_NAME, constants.COOKIE_OPTIONS);
       res.clearCookie(constants.REFRESH_COOKIE_NAME, constants.COOKIE_OPTIONS);
-      
+
       res.status(401).json({
-        error: 'Unauthorized',
-        message: constants.ERROR_MESSAGES.INVALID_TOKEN
+        error: "Unauthorized",
+        message: constants.ERROR_MESSAGES.INVALID_TOKEN,
       });
       return;
     }
@@ -297,32 +307,44 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     try {
       user = await userService.getUserById(Number(decoded.id));
     } catch (error) {
-      throw new AppError('User not found', 404);
+      throw new AppError("User not found", 404);
     }
 
     // Verify account status
     if (!user.is_active) {
-      throw new AppError(constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || 'Account is inactive', 401);
+      throw new AppError(
+        constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || "Account is inactive",
+        401,
+      );
     }
 
     // Create new session and tokens
-    const { accessToken, refreshToken: newRefreshToken } = await authService.createSession(
-      user.id,
-      req.ip || 'unknown',
-      req.headers['user-agent'] || 'unknown'
-    );
+    const { accessToken, refreshToken: newRefreshToken } =
+      await authService.createSession(
+        user.id,
+        req.ip || "unknown",
+        req.headers["user-agent"] || "unknown",
+      );
 
     // Set cookies
-    res.cookie(constants.AUTH_COOKIE_NAME, accessToken, constants.COOKIE_OPTIONS);
-    res.cookie(constants.REFRESH_COOKIE_NAME, newRefreshToken, constants.COOKIE_OPTIONS);
+    res.cookie(
+      constants.AUTH_COOKIE_NAME,
+      accessToken,
+      constants.COOKIE_OPTIONS,
+    );
+    res.cookie(
+      constants.REFRESH_COOKIE_NAME,
+      newRefreshToken,
+      constants.COOKIE_OPTIONS,
+    );
 
     res.status(200).json({
-      message: 'Token refreshed successfully',
-      token: accessToken
+      message: "Token refreshed successfully",
+      token: accessToken,
     });
   } catch (error) {
-    logger.error('Token refresh error', error);
-    handleErrorResponse(error, res, 'Token Refresh Error');
+    logger.error("Token refresh error", error);
+    handleErrorResponse(error, res, "Token Refresh Error");
   }
 };
 
@@ -343,38 +365,41 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
  *       500:
  *         description: Server error
  */
-export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
+export const getCurrentUser = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     // Check if user is authenticated
     if (!req.user) {
       res.status(401).json({
-        error: 'Unauthorized',
-        message: constants.ERROR_MESSAGES.UNAUTHORIZED
+        error: "Unauthorized",
+        message: constants.ERROR_MESSAGES.UNAUTHORIZED,
       });
       return;
     }
 
     // Get user details
     const user = await userService.getUserById(Number(req.user.id));
-    
+
     // Update session activity timestamp if we have session ID
     if (req.sessionId) {
       await authService.updateSessionActivity(req.sessionId);
     }
-    
+
     res.status(200).json({
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        role_id : user.role_id ,
+        role_id: user.role_id,
         avatar_url: user.avatar_url,
-        email_verified: user.email_verified
-      }
+        email_verified: user.email_verified,
+      },
     });
   } catch (error) {
-    logger.error('Get current user error', error);
-    handleErrorResponse(error, res, 'Authentication Error');
+    logger.error("Get current user error", error);
+    handleErrorResponse(error, res, "Authentication Error");
   }
 };
 
@@ -404,12 +429,15 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
  *       500:
  *         description: Server error
  */
-export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { email } = req.body;
-    
+
     if (!email) {
-      throw new AppError('Email is required', 400);
+      throw new AppError("Email is required", 400);
     }
 
     // Get user by email
@@ -419,7 +447,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     } catch (error) {
       // We return success even if the email is not found for security reasons
       res.status(200).json({
-        message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SENT
+        message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SENT,
       });
       return;
     }
@@ -428,24 +456,24 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     if (!user.is_active) {
       // Still return success for security reasons
       res.status(200).json({
-        message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SENT
+        message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SENT,
       });
       return;
     }
-    
+
     // Send password reset email
     await authService.sendPasswordReset(
       user.id,
       user.email,
-      req.ip || 'unknown'
+      req.ip || "unknown",
     );
 
     res.status(200).json({
-      message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SENT
+      message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SENT,
     });
   } catch (error) {
-    logger.error('Forgot password error', error);
-    handleErrorResponse(error, res, 'Password Reset Error');
+    logger.error("Forgot password error", error);
+    handleErrorResponse(error, res, "Password Reset Error");
   }
 };
 
@@ -483,16 +511,19 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
  *       500:
  *         description: Server error
  */
-export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { token, password, confirm_password } = req.body;
 
     if (!token || !password) {
-      throw new AppError('Token and password are required', 400);
+      throw new AppError("Token and password are required", 400);
     }
 
     if (password !== confirm_password) {
-      throw new AppError('Passwords do not match', 400);
+      throw new AppError("Passwords do not match", 400);
     }
 
     // Verify token and get user ID
@@ -507,11 +538,11 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     await authService.resetPassword(token, Number(decoded.id), password);
 
     res.status(200).json({
-      message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS
+      message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS,
     });
   } catch (error) {
-    logger.error('Password reset error', error);
-    handleErrorResponse(error, res, 'Password Reset Error');
+    logger.error("Password reset error", error);
+    handleErrorResponse(error, res, "Password Reset Error");
   }
 };
 
@@ -537,16 +568,18 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     // Check if user is authenticated
     if (!req.user) {
       res.status(401).json({
-        error: 'Unauthorized',
-        message: constants.ERROR_MESSAGES.UNAUTHORIZED
+        error: "Unauthorized",
+        message: constants.ERROR_MESSAGES.UNAUTHORIZED,
       });
       return;
     }
 
     // Get token from cookie or header
-    const token = req.cookies?.[constants.AUTH_COOKIE_NAME] ||
-      (req.headers.authorization?.startsWith('Bearer ') ?
-        req.headers.authorization.substring(7) : null);
+    const token =
+      req.cookies?.[constants.AUTH_COOKIE_NAME] ||
+      (req.headers.authorization?.startsWith("Bearer ")
+        ? req.headers.authorization.substring(7)
+        : null);
 
     if (token) {
       // Invalidate the session
@@ -558,11 +591,11 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     res.clearCookie(constants.REFRESH_COOKIE_NAME);
 
     res.status(200).json({
-      message: constants.SUCCESS_MESSAGES.LOGOUT_SUCCESS
+      message: constants.SUCCESS_MESSAGES.LOGOUT_SUCCESS,
     });
   } catch (error) {
-    logger.error('Logout error', error);
-    handleErrorResponse(error, res, 'Logout Error');
+    logger.error("Logout error", error);
+    handleErrorResponse(error, res, "Logout Error");
   }
 };
 
@@ -591,12 +624,15 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
  *       500:
  *         description: Server error
  */
-export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+export const verifyEmail = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { token } = req.body;
 
     if (!token) {
-      throw new AppError('Token is required', 400);
+      throw new AppError("Token is required", 400);
     }
 
     // Decode token to get user ID
@@ -611,11 +647,11 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
     await authService.verifyEmailToken(token, Number(decoded.id));
 
     res.status(200).json({
-      message: constants.SUCCESS_MESSAGES.EMAIL_VERIFIED
+      message: constants.SUCCESS_MESSAGES.EMAIL_VERIFIED,
     });
   } catch (error) {
-    logger.error('Email verification error', error);
-    handleErrorResponse(error, res, 'Verification Error');
+    logger.error("Email verification error", error);
+    handleErrorResponse(error, res, "Verification Error");
   }
 };
 
@@ -625,16 +661,20 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
  * @param {Response} res - Express response object
  * @param {string} errorType - Type of error for the response
  */
-function handleErrorResponse(error: unknown, res: Response, errorType: string): void {
+function handleErrorResponse(
+  error: unknown,
+  res: Response,
+  errorType: string,
+): void {
   if (error instanceof AppError) {
     res.status(error.statusCode).json({
       error: errorType,
-      message: error.message
+      message: error.message,
     });
   } else {
     res.status(500).json({
       error: errorType,
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 }

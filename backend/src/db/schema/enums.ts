@@ -1,126 +1,137 @@
-import { pgEnum } from 'drizzle-orm/pg-core'
+import { pgEnum } from "drizzle-orm/pg-core";
 
-export const mediaTypeEnum = pgEnum('media_type', ['image', 'video'])
+export const mediaTypeEnum = pgEnum("media_type", ["image", "video"]);
 
-export const twoFactorMethodEnum = pgEnum('two_factor_method', [
-    'authenticator',
-    'sms',
-    'email',
-])
+export const twoFactorMethodEnum = pgEnum("two_factor_method", [
+  "authenticator",
+  "sms",
+  "email",
+]);
 // News related enums
-export const newsStatusEnum = pgEnum('news_status', [
-    'published',
-    'not_published'
-  ]);
-  
-export const newsCategoryEnum = pgEnum('news_category', [
-    'all',
-    'news',
-    'blogs',
-    'reports',
-    'publications'
-  ]);
+export const newsStatusEnum = pgEnum("news_status", [
+  "published",
+  "not_published",
+]);
 
+export const newsCategoryEnum = pgEnum("news_category", [
+  "all",
+  "news",
+  "blogs",
+  "reports",
+  "publications",
+]);
 
+export const projectStatusEnum = pgEnum("project_status", [
+  "planned",
+  "active",
+  "completed",
+  "cancelled",
+  "on_hold",
+]);
 
+export const projectMemberRoleEnum = pgEnum("project_member_role", [
+  "lead",
+  "member",
+  "supervisor",
+  "contributor",
+]);
 
-export const projectStatusEnum = pgEnum('project_status', [
-    'planned',
-    'active',
-    'completed',
-    'cancelled', 
-    'on_hold'    
-])
+export const jobTypeEnum = pgEnum("job_type", ["fellowship", "employment"]);
 
-export const projectMemberRoleEnum = pgEnum('project_member_role', [
-    'lead',
-    'member',
-    'supervisor',
-    'contributor'
-])
+export const jobPostingTypeEnum = pgEnum("job_posting_type", [
+  "internal",
+  "external",
+  "partner",
+]);
 
+export const postingStatusEnum = pgEnum("posting_status", [
+  "draft",
+  "published",
+  "closed",
+]);
 
+export const documentTypeEnum = pgEnum("document_type", [
+  "cv",
+  "cover_letter",
+  "certificate",
+  "other",
+]);
 
-export const jobTypeEnum = pgEnum('job_type', [
-    'fellowship',
-    'employment',
-])
+export const contentStatusEnum = pgEnum("content_status", [
+  "draft",
+  "published",
+  "archived",
+]);
 
-export const jobPostingTypeEnum = pgEnum('job_posting_type', [
-    'internal',
-    'external',
-    'partner'
-])
+export const resourceTypeEnum = pgEnum("resource_type", [
+  "document",
+  "video",
+  "guide",
+  "research",
+]);
 
-export const postingStatusEnum = pgEnum('posting_status', [
-    'draft',
-    'published',
-    'closed',
-])
+export const resourceAccessEnum = pgEnum("resource_access", [
+  "public",
+  "fellow",
+  "employee",
+  "alumni",
+]);
 
-export const documentTypeEnum = pgEnum('document_type', [
-    'cv',
-    'cover_letter',
-    'certificate',
-    'other',
-])
+export const eventTypeEnum = pgEnum("event_type", [
+  "public",
+  "internal",
+  "training",
+]);
 
-export const contentStatusEnum = pgEnum('content_status', [
-    'draft',
-    'published',
-    'archived',
-])
+export const attendeeStatusEnum = pgEnum("attendee_status", [
+  "registered",
+  "attended",
+  "cancelled",
+]);
 
-export const resourceTypeEnum = pgEnum('resource_type', [
-    'document',
-    'video',
-    'guide',
-    'research',
-])
+export const mentorshipTypeEnum = pgEnum("mentorship_type", [
+  "fellow_mentor",
+  "peer_mentor",
+  "alumni_mentor",
+]);
 
-export const resourceAccessEnum = pgEnum('resource_access', [
-    'public',
-    'fellow',
-    'employee',
-    'alumni',
-])
+export const mentorshipStatusEnum = pgEnum("mentorship_status", [
+  "active",
+  "completed",
+  "paused",
+]);
 
-export const eventTypeEnum = pgEnum('event_type', [
-    'public',
-    'internal',
-    'training',
-])
+export const mentorshipSessionStatusEnum = pgEnum("session_status", [
+  "scheduled",
+  "completed",
+  "cancelled",
+]);
 
-export const attendeeStatusEnum = pgEnum('attendee_status', [
-    'registered',
-    'attended',
-    'cancelled',
-])
+export const mentorshipGoalStatusEnum = pgEnum("goal_status", [
+  "active",
+  "completed",
+  "dropped",
+]);
 
-export const mentorshipTypeEnum = pgEnum('mentorship_type', [
-    'fellow_mentor',
-    'peer_mentor',
-    'alumni_mentor',
-])
+export const applicationStageStatusEnum = pgEnum("application_stage_status", [
+  "pending",
+  "passed",
+  "failed",
+]);
 
-export const mentorshipStatusEnum = pgEnum('mentorship_status', [
-    'active',
-    'completed',
-    'paused',
-])
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "unsubscribed",
+]);
 
-export const mentorshipSessionStatusEnum = pgEnum('session_status',['scheduled', 'completed', 'cancelled'])
+export const verificationTypeEnum = pgEnum("verification_type", [
+  "email",
+  "phone",
+]);
 
-export const mentorshipGoalStatusEnum = pgEnum('goal_status', ['active', 'completed', 'dropped'])
-
-export const applicationStageStatusEnum = pgEnum('application_stage_status', [
-    'pending',
-    'passed',
-    'failed',
-])
-
-export const subscriptionStatusEnum = pgEnum('subscription_status', ['active', 'unsubscribed'])
-
-export const verificationTypeEnum = pgEnum('verification_type', ['email', 'phone'])
-
-export const contextTypeEnum = pgEnum('context_type', ['project', 'department', 'personal_development', 'other'])
+export const contextTypeEnum = pgEnum("context_type", [
+  "project",
+  "department",
+  "personal_development",
+  "other",
+]);

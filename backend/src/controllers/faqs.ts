@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { faqService } from '../services/faqs';
-import { AppError } from '../middlewares';
-import { constants, Logger } from '../config';
+import { Request, Response } from "express";
+import { faqService } from "../services/faqs";
+import { AppError } from "../middlewares";
+import { constants, Logger } from "../config";
 
-const logger = new Logger('FaqController');
+const logger = new Logger("FaqController");
 
 /**
  * @swagger
@@ -41,27 +41,25 @@ const logger = new Logger('FaqController');
  *         description: Server error
  */
 export const createFaq = async (req: Request, res: Response) => {
-    try {
-    
-      const userId = req.user && req.user.id ? Number(req.user.id) : 1; 
-      
-      const faqData = {
-        question: req.body.question,
-        answer: req.body.answer,
-        is_active: req.body.is_active,
+  try {
+    const userId = req.user && req.user.id ? Number(req.user.id) : 1;
 
-      };
-  
-      const faq = await faqService.createFaq(faqData);
-  
-      res.status(201).json({
-        message: 'FAQ created successfully',
-        faq
-      });
-    } catch (error) {
-      // ... rest of error handling code
-    }
-  };
+    const faqData = {
+      question: req.body.question,
+      answer: req.body.answer,
+      is_active: req.body.is_active,
+    };
+
+    const faq = await faqService.createFaq(faqData);
+
+    res.status(201).json({
+      message: "FAQ created successfully",
+      faq,
+    });
+  } catch (error) {
+    // ... rest of error handling code
+  }
+};
 
 /**
  * @swagger
@@ -88,21 +86,21 @@ export const createFaq = async (req: Request, res: Response) => {
  */
 export const listFaqs = async (req: Request, res: Response) => {
   try {
-    const activeOnly = req.query.active_only === 'true';
+    const activeOnly = req.query.active_only === "true";
     const faqs = await faqService.listFaqs(activeOnly);
 
     res.status(200).json({ faqs });
   } catch (error) {
-    logger.error('List FAQs error', error);
+    logger.error("List FAQs error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'FAQ Listing Error',
-        message: error.message
+        error: "FAQ Listing Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'FAQ Listing Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "FAQ Listing Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -137,9 +135,9 @@ export const getFaqById = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     const faq = await faqService.getFaqById(id);
-    
+
     // Increment view count asynchronously (don't wait for completion)
-    faqService.incrementViewCount(id).catch(err => {
+    faqService.incrementViewCount(id).catch((err) => {
       logger.error(`Failed to increment view count for FAQ ${id}`, err);
     });
 
@@ -148,13 +146,13 @@ export const getFaqById = async (req: Request, res: Response) => {
     logger.error(`Get FAQ error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'FAQ Retrieval Error',
-        message: error.message
+        error: "FAQ Retrieval Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'FAQ Retrieval Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "FAQ Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -208,26 +206,26 @@ export const updateFaq = async (req: Request, res: Response) => {
       question: req.body.question,
       answer: req.body.answer,
       is_active: req.body.is_active,
-      view_count: req.body.view_count
+      view_count: req.body.view_count,
     };
 
     const faq = await faqService.updateFaq(id, faqData);
 
     res.status(200).json({
-      message: 'FAQ updated successfully',
-      faq
+      message: "FAQ updated successfully",
+      faq,
     });
   } catch (error) {
     logger.error(`Update FAQ error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'FAQ Update Error',
-        message: error.message
+        error: "FAQ Update Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'FAQ Update Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "FAQ Update Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -264,19 +262,19 @@ export const deleteFaq = async (req: Request, res: Response) => {
     await faqService.deleteFaq(id);
 
     res.status(200).json({
-      message: 'FAQ deleted successfully'
+      message: "FAQ deleted successfully",
     });
   } catch (error) {
     logger.error(`Delete FAQ error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'FAQ Deletion Error',
-        message: error.message
+        error: "FAQ Deletion Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'FAQ Deletion Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "FAQ Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -287,7 +285,7 @@ export const faqController = {
   listFaqs,
   getFaqById,
   updateFaq,
-  deleteFaq
+  deleteFaq,
 };
 
 // Default export for the controller object

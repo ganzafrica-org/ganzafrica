@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { faqController } from '../controllers/faqs';
-import { validate, authenticate, authorize } from '../middlewares';
-import { faqValidation } from '../validations/faqs';
+import { Router } from "express";
+import { faqController } from "../controllers/faqs";
+import { validate, authenticate, authorize } from "../middlewares";
+import { faqValidation } from "../validations/faqs";
 
 const router: Router = Router();
 
@@ -14,35 +14,32 @@ const router: Router = Router();
 
 // FAQs routes
 router.post(
-  '/',
+  "/",
   authenticate,
   validate(faqValidation.createFaqSchema),
-  faqController.createFaq
+  faqController.createFaq,
 );
 
-router.get(
-  '/',
-  faqController.listFaqs
-);
+router.get("/", faqController.listFaqs);
 
 router.get(
-  '/:id',
+  "/:id",
   validate(faqValidation.getFaqSchema),
-  faqController.getFaqById
+  faqController.getFaqById,
 );
 
 router.put(
-  '/:id',
+  "/:id",
   authenticate,
   validate(faqValidation.updateFaqSchema),
-  faqController.updateFaq
+  faqController.updateFaq,
 );
 
 router.delete(
-  '/:id',
+  "/:id",
   authenticate,
   validate(faqValidation.deleteFaqSchema),
-  faqController.deleteFaq
+  faqController.deleteFaq,
 );
 
 export default router;

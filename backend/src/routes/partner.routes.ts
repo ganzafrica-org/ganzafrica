@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { partnerController } from '../controllers/partner.controller';
-import { validate, authenticate, authorize } from '../middlewares';
-import { partnerValidation } from '../validations/partners.validation';
+import { Router } from "express";
+import { partnerController } from "../controllers/partner.controller";
+import { validate, authenticate, authorize } from "../middlewares";
+import { partnerValidation } from "../validations/partners.validation";
 
 const router: Router = Router();
 
@@ -17,32 +17,29 @@ router.use(authenticate);
 
 // Partner routes
 router.post(
-  '/',
+  "/",
   validate(partnerValidation.createPartnerSchema),
-  partnerController.createPartner
+  partnerController.createPartner,
 );
 
-router.get(
-  '/',
-  partnerController.listPartners
-);
+router.get("/", partnerController.listPartners);
 
 router.get(
-  '/:id',
+  "/:id",
   validate(partnerValidation.getPartnerSchema),
-  partnerController.getPartnerById
+  partnerController.getPartnerById,
 );
 
 router.put(
-  '/:id',
+  "/:id",
   validate(partnerValidation.updatePartnerSchema),
-  partnerController.updatePartner
+  partnerController.updatePartner,
 );
 
 router.delete(
-  '/:id',
+  "/:id",
   validate(partnerValidation.deletePartnerSchema),
-  partnerController.deletePartner
+  partnerController.deletePartner,
 );
 
 export default router;

@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { newsController } from '../controllers/news.controller';
-import { validate, authenticate, authorize } from '../middlewares';
-import { newsValidation } from '../validations/news.validation';
+import { Router } from "express";
+import { newsController } from "../controllers/news.controller";
+import { validate, authenticate, authorize } from "../middlewares";
+import { newsValidation } from "../validations/news.validation";
 
 const router: Router = Router();
 
@@ -16,52 +16,49 @@ const router: Router = Router();
 router.use(authenticate);
 
 // Tag routes - placing these first to avoid path conflicts
-router.get(
-  '/tags',
-  newsController.listTags
-);
+router.get("/tags", newsController.listTags);
 
 router.post(
-  '/tags',
+  "/tags",
   validate(newsValidation.createTagSchema),
-  newsController.createTag
+  newsController.createTag,
 );
 
 router.delete(
-  '/tags/:id',
+  "/tags/:id",
   validate(newsValidation.deleteTagSchema),
-  newsController.deleteTag
+  newsController.deleteTag,
 );
 
 // News routes
 router.post(
-  '/',
+  "/",
   validate(newsValidation.createNewsSchema),
-  newsController.createNews
+  newsController.createNews,
 );
 
 router.get(
-  '/',
+  "/",
   validate(newsValidation.listNewsSchema),
-  newsController.listNews
+  newsController.listNews,
 );
 
 router.get(
-  '/:id',
+  "/:id",
   validate(newsValidation.getNewsSchema),
-  newsController.getNewsById
+  newsController.getNewsById,
 );
 
 router.put(
-  '/:id',
+  "/:id",
   validate(newsValidation.updateNewsSchema),
-  newsController.updateNews
+  newsController.updateNews,
 );
 
 router.delete(
-  '/:id',
+  "/:id",
   validate(newsValidation.deleteNewsSchema),
-  newsController.deleteNews
+  newsController.deleteNews,
 );
 
 export default router;

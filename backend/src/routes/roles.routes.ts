@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { roleController } from '../controllers/roles';
-import { validate, authenticate, authorize } from '../middlewares';
-import { roleValidation } from '../validations/roles.validation';
+import { Router } from "express";
+import { roleController } from "../controllers/roles";
+import { validate, authenticate, authorize } from "../middlewares";
+import { roleValidation } from "../validations/roles.validation";
 
 const router: Router = Router();
 
@@ -17,51 +17,48 @@ router.use(authenticate);
 
 // Role routes
 router.post(
-    '/',
-    validate(roleValidation.createRoleSchema),
-    roleController.createRole
+  "/",
+  validate(roleValidation.createRoleSchema),
+  roleController.createRole,
 );
 
-router.get(
-    '/',
-    roleController.listRoles
-);
+router.get("/", roleController.listRoles);
 
 router.get(
-    '/:id',
-    validate(roleValidation.getRoleSchema),
-    roleController.getRoleById
+  "/:id",
+  validate(roleValidation.getRoleSchema),
+  roleController.getRoleById,
 );
 
 router.put(
-    '/:id',
-    validate(roleValidation.updateRoleSchema),
-    roleController.updateRole
+  "/:id",
+  validate(roleValidation.updateRoleSchema),
+  roleController.updateRole,
 );
 
 router.delete(
-    '/:id',
-    validate(roleValidation.deleteRoleSchema),
-    roleController.deleteRole
+  "/:id",
+  validate(roleValidation.deleteRoleSchema),
+  roleController.deleteRole,
 );
 
 // User role management routes
 router.get(
-    '/users/:userId',
-    validate(roleValidation.getUserRolesSchema),
-    roleController.getUserRoles
+  "/users/:userId",
+  validate(roleValidation.getUserRolesSchema),
+  roleController.getUserRoles,
 );
 
 router.post(
-    '/users/:userId/assign/:roleId',
-    validate(roleValidation.assignRoleSchema),
-    roleController.assignRoleToUser
+  "/users/:userId/assign/:roleId",
+  validate(roleValidation.assignRoleSchema),
+  roleController.assignRoleToUser,
 );
 
 router.delete(
-    '/users/:userId/remove/:roleId',
-    validate(roleValidation.removeRoleSchema),
-    roleController.removeRoleFromUser
+  "/users/:userId/remove/:roleId",
+  validate(roleValidation.removeRoleSchema),
+  roleController.removeRoleFromUser,
 );
 
 export default router;
