@@ -1,10 +1,10 @@
-import { db } from '../db/client';
-import { faqs } from '../db/schema/faqs';
-import { eq, desc  } from 'drizzle-orm';
-import { AppError } from '../middlewares';
-import { Logger } from '../config';
+import { db } from "../db/client";
+import { faqs } from "../db/schema/faqs";
+import { eq, desc } from "drizzle-orm";
+import { AppError } from "../middlewares";
+import { Logger } from "../config";
 
-const logger = new Logger('FaqService');
+const logger = new Logger("FaqService");
 
 // FAQ types for service input/output
 export type CreateFaqInput = {
@@ -33,47 +33,45 @@ export type FaqOutput = {
 // Create a new FAQ
 // Create a new FAQ
 export async function createFaq(faqData: CreateFaqInput): Promise<FaqOutput> {
-    try {
-      // Insert the FAQ
-      await db.insert(faqs).values({
-        question: faqData.question,
-        answer: faqData.answer,
-        is_active: faqData.is_active !== undefined ? faqData.is_active : true,
-        view_count: 0,
-        created_at: new Date(),
-        updated_at: new Date()
-      });
-  
-      const createdFaq = await db.select()
-        .from(faqs)
-        .where(eq(faqs.question, faqData.question))
-        .orderBy(desc(faqs.created_at)) 
-        .limit(1);
-  
-      if (!createdFaq.length) {
-        throw new AppError('Failed to create FAQ', 500);
-      }
-  
-      return mapToFaqOutput(createdFaq[0]);
-    } catch (error) {
-      logger.error('Error creating FAQ', error);
-      if (error instanceof AppError) {
-        throw error;
-      }
-      throw new AppError('Failed to create FAQ', 500);
+  try {
+    // Insert the FAQ
+    await db.insert(faqs).values({
+      question: faqData.question,
+      answer: faqData.answer,
+      is_active: faqData.is_active !== undefined ? faqData.is_active : true,
+      view_count: 0,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
+    const createdFaq = await db
+      .select()
+      .from(faqs)
+      .where(eq(faqs.question, faqData.question))
+      .orderBy(desc(faqs.created_at))
+      .limit(1);
+
+    if (!createdFaq.length) {
+      throw new AppError("Failed to create FAQ", 500);
     }
+
+    return mapToFaqOutput(createdFaq[0]);
+  } catch (error) {
+    logger.error("Error creating FAQ", error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Failed to create FAQ", 500);
   }
+}
 
 // Get FAQ by ID
 export async function getFaqById(id: number): Promise<FaqOutput> {
   try {
-    const result = await db.select()
-      .from(faqs)
-      .where(eq(faqs.id, id))
-      .limit(1);
+    const result = await db.select().from(faqs).where(eq(faqs.id, id)).limit(1);
 
     if (!result.length) {
-      throw new AppError('FAQ not found', 404);
+      throw new AppError("FAQ not found", 404);
     }
 
     return mapToFaqOutput(result[0]);
@@ -82,26 +80,24 @@ export async function getFaqById(id: number): Promise<FaqOutput> {
     if (error instanceof AppError) {
       throw error;
     }
-    throw new AppError('Failed to get FAQ', 500);
+    throw new AppError("Failed to get FAQ", 500);
   }
 }
 
 // Increment view count for an FAQ
 export async function incrementViewCount(id: number): Promise<boolean> {
   try {
-    const result = await db.select()
-      .from(faqs)
-      .where(eq(faqs.id, id))
-      .limit(1);
+    const result = await db.select().from(faqs).where(eq(faqs.id, id)).limit(1);
 
     if (!result.length) {
-      throw new AppError('FAQ not found', 404);
+      throw new AppError("FAQ not found", 404);
     }
 
-    await db.update(faqs)
+    await db
+      .update(faqs)
       .set({
         view_count: result[0].view_count + 1,
-        updated_at: new Date()
+        updated_at: new Date(),
       })
       .where(eq(faqs.id, id));
 
@@ -111,33 +107,39 @@ export async function incrementViewCount(id: number): Promise<boolean> {
     if (error instanceof AppError) {
       throw error;
     }
-    throw new AppError('Failed to increment view count', 500);
+    throw new AppError("Failed to increment view count", 500);
   }
 }
 
 // Update FAQ
-export async function updateFaq(id: number, faqData: UpdateFaqInput): Promise<FaqOutput> {
+export async function updateFaq(
+  id: number,
+  faqData: UpdateFaqInput,
+): Promise<FaqOutput> {
   try {
     // Check if FAQ exists
-    const existingFaq = await db.select()
+    const existingFaq = await db
+      .select()
       .from(faqs)
       .where(eq(faqs.id, id))
       .limit(1);
 
     if (!existingFaq.length) {
-      throw new AppError('FAQ not found', 404);
+      throw new AppError("FAQ not found", 404);
     }
 
     // Update FAQ
-    await db.update(faqs)
+    await db
+      .update(faqs)
       .set({
         ...faqData,
-        updated_at: new Date()
+        updated_at: new Date(),
       })
       .where(eq(faqs.id, id));
 
     // Get updated FAQ
-    const updatedFaq = await db.select()
+    const updatedFaq = await db
+      .select()
       .from(faqs)
       .where(eq(faqs.id, id))
       .limit(1);
@@ -148,7 +150,7 @@ export async function updateFaq(id: number, faqData: UpdateFaqInput): Promise<Fa
     if (error instanceof AppError) {
       throw error;
     }
-    throw new AppError('Failed to update FAQ', 500);
+    throw new AppError("Failed to update FAQ", 500);
   }
 }
 
@@ -156,18 +158,18 @@ export async function updateFaq(id: number, faqData: UpdateFaqInput): Promise<Fa
 export async function deleteFaq(id: number): Promise<boolean> {
   try {
     // Check if FAQ exists
-    const existingFaq = await db.select()
+    const existingFaq = await db
+      .select()
       .from(faqs)
       .where(eq(faqs.id, id))
       .limit(1);
 
     if (!existingFaq.length) {
-      throw new AppError('FAQ not found', 404);
+      throw new AppError("FAQ not found", 404);
     }
 
     // Delete the FAQ
-    await db.delete(faqs)
-      .where(eq(faqs.id, id));
+    await db.delete(faqs).where(eq(faqs.id, id));
 
     return true;
   } catch (error) {
@@ -175,25 +177,27 @@ export async function deleteFaq(id: number): Promise<boolean> {
     if (error instanceof AppError) {
       throw error;
     }
-    throw new AppError('Failed to delete FAQ', 500);
+    throw new AppError("Failed to delete FAQ", 500);
   }
 }
 
 // List all FAQs
-export async function listFaqs(activeOnly: boolean = false): Promise<FaqOutput[]> {
+export async function listFaqs(
+  activeOnly: boolean = false,
+): Promise<FaqOutput[]> {
   try {
     let query = db.select().from(faqs);
-    
+
     if (activeOnly) {
       query = query.where(eq(faqs.is_active, true));
     }
-    
+
     const result = await query;
-    
+
     return result.map(mapToFaqOutput);
   } catch (error) {
-    logger.error('Error listing FAQs', error);
-    throw new AppError('Failed to list FAQs', 500);
+    logger.error("Error listing FAQs", error);
+    throw new AppError("Failed to list FAQs", 500);
   }
 }
 
@@ -207,7 +211,7 @@ function mapToFaqOutput(faq: any): FaqOutput {
     view_count: faq.view_count,
     created_by: faq.created_by,
     created_at: faq.created_at,
-    updated_at: faq.updated_at
+    updated_at: faq.updated_at,
   };
 }
 
@@ -218,7 +222,7 @@ export const faqService = {
   updateFaq,
   deleteFaq,
   listFaqs,
-  incrementViewCount
+  incrementViewCount,
 };
 
 export default faqService;

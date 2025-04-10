@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { partnerService } from '../services/partner.service';
-import { AppError } from '../middlewares';
-import { constants, Logger } from '../config';
+import { Request, Response } from "express";
+import { partnerService } from "../services/partner.service";
+import { AppError } from "../middlewares";
+import { constants, Logger } from "../config";
 
-const logger = new Logger('PartnerController');
+const logger = new Logger("PartnerController");
 
 /**
  * @swagger
@@ -47,26 +47,26 @@ export const createPartner = async (req: Request, res: Response) => {
       name: req.body.name,
       logo: req.body.logo,
       website_url: req.body.website_url,
-      location: req.body.location
+      location: req.body.location,
     };
 
     const partner = await partnerService.createPartner(partnerData);
 
     res.status(201).json({
-      message: 'Partner created successfully',
-      partner
+      message: "Partner created successfully",
+      partner,
     });
   } catch (error) {
-    logger.error('Create partner error', error);
+    logger.error("Create partner error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Partner Creation Error',
-        message: error.message
+        error: "Partner Creation Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Partner Creation Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Partner Creation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -94,16 +94,16 @@ export const listPartners = async (req: Request, res: Response) => {
 
     res.status(200).json({ partners });
   } catch (error) {
-    logger.error('List partners error', error);
+    logger.error("List partners error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Partner Listing Error',
-        message: error.message
+        error: "Partner Listing Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Partner Listing Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Partner Listing Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -144,13 +144,13 @@ export const getPartnerById = async (req: Request, res: Response) => {
     logger.error(`Get partner error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Partner Retrieval Error',
-        message: error.message
+        error: "Partner Retrieval Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Partner Retrieval Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Partner Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -206,26 +206,26 @@ export const updatePartner = async (req: Request, res: Response) => {
       name: req.body.name,
       logo: req.body.logo,
       website_url: req.body.website_url,
-      location: req.body.location
+      location: req.body.location,
     };
 
     const partner = await partnerService.updatePartner(id, partnerData);
 
     res.status(200).json({
-      message: 'Partner updated successfully',
-      partner
+      message: "Partner updated successfully",
+      partner,
     });
   } catch (error) {
     logger.error(`Update partner error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Partner Update Error',
-        message: error.message
+        error: "Partner Update Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Partner Update Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Partner Update Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -262,19 +262,19 @@ export const deletePartner = async (req: Request, res: Response) => {
     await partnerService.deletePartner(id);
 
     res.status(200).json({
-      message: 'Partner deleted successfully'
+      message: "Partner deleted successfully",
     });
   } catch (error) {
     logger.error(`Delete partner error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Partner Deletion Error',
-        message: error.message
+        error: "Partner Deletion Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Partner Deletion Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Partner Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -285,7 +285,7 @@ export const partnerController = {
   listPartners,
   getPartnerById,
   updatePartner,
-  deletePartner
+  deletePartner,
 };
 
 // Default export for the controller object

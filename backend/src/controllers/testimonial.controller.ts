@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { testimonialService } from '../services/testimonial.service';
-import { AppError } from '../middlewares';
-import { constants, Logger } from '../config';
+import { Request, Response } from "express";
+import { testimonialService } from "../services/testimonial.service";
+import { AppError } from "../middlewares";
+import { constants, Logger } from "../config";
 
-const logger = new Logger('TestimonialController');
+const logger = new Logger("TestimonialController");
 
 /**
  * @swagger
@@ -63,26 +63,27 @@ export const createTestimonial = async (req: Request, res: Response) => {
       company: req.body.company,
       occupation: req.body.occupation,
       date: req.body.date,
-      rating: req.body.rating
+      rating: req.body.rating,
     };
 
-    const testimonial = await testimonialService.createTestimonial(testimonialData);
+    const testimonial =
+      await testimonialService.createTestimonial(testimonialData);
 
     res.status(201).json({
-      message: 'Testimonial created successfully',
-      testimonial
+      message: "Testimonial created successfully",
+      testimonial,
     });
   } catch (error) {
-    logger.error('Create testimonial error', error);
+    logger.error("Create testimonial error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Testimonial Creation Error',
-        message: error.message
+        error: "Testimonial Creation Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Testimonial Creation Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Testimonial Creation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -110,16 +111,16 @@ export const listTestimonials = async (req: Request, res: Response) => {
 
     res.status(200).json({ testimonials });
   } catch (error) {
-    logger.error('List testimonials error', error);
+    logger.error("List testimonials error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Testimonial Listing Error',
-        message: error.message
+        error: "Testimonial Listing Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Testimonial Listing Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Testimonial Listing Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -160,13 +161,13 @@ export const getTestimonialById = async (req: Request, res: Response) => {
     logger.error(`Get testimonial error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Testimonial Retrieval Error',
-        message: error.message
+        error: "Testimonial Retrieval Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Testimonial Retrieval Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Testimonial Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -235,26 +236,29 @@ export const updateTestimonial = async (req: Request, res: Response) => {
       company: req.body.company,
       occupation: req.body.occupation,
       date: req.body.date,
-      rating: req.body.rating
+      rating: req.body.rating,
     };
 
-    const testimonial = await testimonialService.updateTestimonial(id, testimonialData);
+    const testimonial = await testimonialService.updateTestimonial(
+      id,
+      testimonialData,
+    );
 
     res.status(200).json({
-      message: 'Testimonial updated successfully',
-      testimonial
+      message: "Testimonial updated successfully",
+      testimonial,
     });
   } catch (error) {
     logger.error(`Update testimonial error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Testimonial Update Error',
-        message: error.message
+        error: "Testimonial Update Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Testimonial Update Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Testimonial Update Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -291,19 +295,19 @@ export const deleteTestimonial = async (req: Request, res: Response) => {
     await testimonialService.deleteTestimonial(id);
 
     res.status(200).json({
-      message: 'Testimonial deleted successfully'
+      message: "Testimonial deleted successfully",
     });
   } catch (error) {
     logger.error(`Delete testimonial error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Testimonial Deletion Error',
-        message: error.message
+        error: "Testimonial Deletion Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Testimonial Deletion Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Testimonial Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -314,7 +318,7 @@ export const testimonialController = {
   listTestimonials,
   getTestimonialById,
   updateTestimonial,
-  deleteTestimonial
+  deleteTestimonial,
 };
 
 // Default export for the controller object

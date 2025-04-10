@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { categoryController } from '../controllers/categories';
-import { validate, authenticate, authorize } from '../middlewares';
-import { categoryValidation } from '../validations';
+import { Router } from "express";
+import { categoryController } from "../controllers/categories";
+import { validate, authenticate, authorize } from "../middlewares";
+import { categoryValidation } from "../validations";
 
 const router: Router = Router();
 
@@ -17,20 +17,17 @@ router.use(authenticate);
 
 // Category routes
 router.post(
-    '/',
-    validate(categoryValidation.createCategorySchema),
-    categoryController.createCategory
+  "/",
+  validate(categoryValidation.createCategorySchema),
+  categoryController.createCategory,
 );
 
-router.get(
-    '/',
-    categoryController.listCategories
-);
+router.get("/", categoryController.listCategories);
 
 router.get(
-    '/:id',
-    validate(categoryValidation.getCategorySchema),
-    categoryController.getCategoryById
+  "/:id",
+  validate(categoryValidation.getCategorySchema),
+  categoryController.getCategoryById,
 );
 
 export default router;

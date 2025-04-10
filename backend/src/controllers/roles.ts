@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { roleService } from '../services/roles.service';
-import { AppError } from '../middlewares';
-import { constants, Logger } from '../config';
+import { Request, Response } from "express";
+import { roleService } from "../services/roles.service";
+import { AppError } from "../middlewares";
+import { constants, Logger } from "../config";
 
-const logger = new Logger('RoleController');
+const logger = new Logger("RoleController");
 
 /**
  * @swagger
@@ -38,31 +38,31 @@ const logger = new Logger('RoleController');
  *         description: Server error
  */
 export const createRole = async (req: Request, res: Response) => {
-    try {
-        const roleData = {
-            name: req.body.name,
-            description: req.body.description
-        };
+  try {
+    const roleData = {
+      name: req.body.name,
+      description: req.body.description,
+    };
 
-        const role = await roleService.createRole(roleData);
+    const role = await roleService.createRole(roleData);
 
-        res.status(201).json({
-            message: 'Role created successfully',
-            role
-        });
-    } catch (error) {
-        logger.error('Create role error', error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'Role Creation Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'Role Creation Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+    res.status(201).json({
+      message: "Role created successfully",
+      role,
+    });
+  } catch (error) {
+    logger.error("Create role error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Role Creation Error",
+        message: error.message,
+      });
     }
+    res.status(500).json({
+      error: "Role Creation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 
 /**
@@ -83,23 +83,23 @@ export const createRole = async (req: Request, res: Response) => {
  *         description: Server error
  */
 export const listRoles = async (req: Request, res: Response) => {
-    try {
-        const roles = await roleService.listRoles();
+  try {
+    const roles = await roleService.listRoles();
 
-        res.status(200).json({ roles });
-    } catch (error) {
-        logger.error('List roles error', error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'Role Listing Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'Role Listing Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+    res.status(200).json({ roles });
+  } catch (error) {
+    logger.error("List roles error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Role Listing Error",
+        message: error.message,
+      });
     }
+    res.status(500).json({
+      error: "Role Listing Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 
 /**
@@ -128,31 +128,31 @@ export const listRoles = async (req: Request, res: Response) => {
  *         description: Server error
  */
 export const getRoleById = async (req: Request, res: Response) => {
-    try {
-        const id = Number(req.params.id);
-        if (isNaN(id)) {
-            return res.status(400).json({
-                error: 'Invalid Role ID',
-                message: 'Role ID must be a valid number'
-            });
-        }
-
-        const role = await roleService.getRoleById(id);
-
-        res.status(200).json({ role });
-    } catch (error) {
-        logger.error(`Get role error: ${req.params.id}`, error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'Role Retrieval Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'Role Retrieval Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        error: "Invalid Role ID",
+        message: "Role ID must be a valid number",
+      });
     }
+
+    const role = await roleService.getRoleById(id);
+
+    res.status(200).json({ role });
+  } catch (error) {
+    logger.error(`Get role error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Role Retrieval Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Role Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 
 /**
@@ -196,39 +196,39 @@ export const getRoleById = async (req: Request, res: Response) => {
  *         description: Server error
  */
 export const updateRole = async (req: Request, res: Response) => {
-    try {
-        const id = Number(req.params.id);
-        if (isNaN(id)) {
-            return res.status(400).json({
-                error: 'Invalid Role ID',
-                message: 'Role ID must be a valid number'
-            });
-        }
-
-        const roleData = {
-            name: req.body.name,
-            description: req.body.description
-        };
-
-        const role = await roleService.updateRole(id, roleData);
-
-        res.status(200).json({
-            message: 'Role updated successfully',
-            role
-        });
-    } catch (error) {
-        logger.error(`Update role error: ${req.params.id}`, error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'Role Update Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'Role Update Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        error: "Invalid Role ID",
+        message: "Role ID must be a valid number",
+      });
     }
+
+    const roleData = {
+      name: req.body.name,
+      description: req.body.description,
+    };
+
+    const role = await roleService.updateRole(id, roleData);
+
+    res.status(200).json({
+      message: "Role updated successfully",
+      role,
+    });
+  } catch (error) {
+    logger.error(`Update role error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Role Update Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Role Update Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 
 /**
@@ -259,33 +259,33 @@ export const updateRole = async (req: Request, res: Response) => {
  *         description: Server error
  */
 export const deleteRole = async (req: Request, res: Response) => {
-    try {
-        const id = Number(req.params.id);
-        if (isNaN(id)) {
-            return res.status(400).json({
-                error: 'Invalid Role ID',
-                message: 'Role ID must be a valid number'
-            });
-        }
-
-        await roleService.deleteRole(id);
-
-        res.status(200).json({
-            message: 'Role deleted successfully'
-        });
-    } catch (error) {
-        logger.error(`Delete role error: ${req.params.id}`, error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'Role Deletion Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'Role Deletion Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+  try {
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({
+        error: "Invalid Role ID",
+        message: "Role ID must be a valid number",
+      });
     }
+
+    await roleService.deleteRole(id);
+
+    res.status(200).json({
+      message: "Role deleted successfully",
+    });
+  } catch (error) {
+    logger.error(`Delete role error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Role Deletion Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Role Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 
 /**
@@ -314,33 +314,33 @@ export const deleteRole = async (req: Request, res: Response) => {
  *         description: Server error
  */
 export const getUserRoles = async (req: Request, res: Response) => {
-    try {
-        const userId = Number(req.params.userId);
-        if (isNaN(userId)) {
-            return res.status(400).json({
-                error: 'Invalid User ID',
-                message: 'User ID must be a valid number'
-            });
-        }
-
-        const userRoles = await roleService.getUserRoles(userId);
-
-        res.status(200).json({
-            userRoles
-        });
-    } catch (error) {
-        logger.error(`Get user roles error: ${req.params.userId}`, error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'User Roles Retrieval Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'User Roles Retrieval Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+  try {
+    const userId = Number(req.params.userId);
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        error: "Invalid User ID",
+        message: "User ID must be a valid number",
+      });
     }
+
+    const userRoles = await roleService.getUserRoles(userId);
+
+    res.status(200).json({
+      userRoles,
+    });
+  } catch (error) {
+    logger.error(`Get user roles error: ${req.params.userId}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "User Roles Retrieval Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "User Roles Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 
 /**
@@ -376,41 +376,44 @@ export const getUserRoles = async (req: Request, res: Response) => {
  *         description: Server error
  */
 export const assignRoleToUser = async (req: Request, res: Response) => {
-    try {
-        const userId = Number(req.params.userId);
-        const roleId = Number(req.params.roleId);
-        
-        if (isNaN(userId) || isNaN(roleId)) {
-            return res.status(400).json({
-                error: 'Invalid ID',
-                message: 'User ID and Role ID must be valid numbers'
-            });
-        }
+  try {
+    const userId = Number(req.params.userId);
+    const roleId = Number(req.params.roleId);
 
-        // Add additional logging to help diagnose issues
-        logger.info(`Attempting to assign role ${roleId} to user ${userId}`);
-
-        const userRole = await roleService.assignRoleToUser(userId, roleId);
-
-        logger.info(`Successfully assigned role ${roleId} to user ${userId}`);
-
-        res.status(201).json({
-            message: 'Role assigned to user successfully',
-            userRole
-        });
-    } catch (error) {
-        logger.error(`Assign role error: User ${req.params.userId}, Role ${req.params.roleId}`, error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'Role Assignment Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'Role Assignment Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+    if (isNaN(userId) || isNaN(roleId)) {
+      return res.status(400).json({
+        error: "Invalid ID",
+        message: "User ID and Role ID must be valid numbers",
+      });
     }
+
+    // Add additional logging to help diagnose issues
+    logger.info(`Attempting to assign role ${roleId} to user ${userId}`);
+
+    const userRole = await roleService.assignRoleToUser(userId, roleId);
+
+    logger.info(`Successfully assigned role ${roleId} to user ${userId}`);
+
+    res.status(201).json({
+      message: "Role assigned to user successfully",
+      userRole,
+    });
+  } catch (error) {
+    logger.error(
+      `Assign role error: User ${req.params.userId}, Role ${req.params.roleId}`,
+      error,
+    );
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Role Assignment Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Role Assignment Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 
 /**
@@ -444,40 +447,47 @@ export const assignRoleToUser = async (req: Request, res: Response) => {
  *         description: Server error
  */
 export const replaceUserRole = async (req: Request, res: Response) => {
-    try {
-        const userId = Number(req.params.userId);
-        const roleId = Number(req.params.roleId);
-        
-        if (isNaN(userId) || isNaN(roleId)) {
-            return res.status(400).json({
-                error: 'Invalid ID',
-                message: 'User ID and Role ID must be valid numbers'
-            });
-        }
+  try {
+    const userId = Number(req.params.userId);
+    const roleId = Number(req.params.roleId);
 
-        logger.info(`Attempting to replace all roles for user ${userId} with role ${roleId}`);
-
-        const userRole = await roleService.replaceUserRole(userId, roleId);
-
-        logger.info(`Successfully replaced roles for user ${userId} with role ${roleId}`);
-
-        res.status(201).json({
-            message: 'User roles replaced successfully',
-            userRole
-        });
-    } catch (error) {
-        logger.error(`Replace role error: User ${req.params.userId}, Role ${req.params.roleId}`, error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'Role Replacement Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'Role Replacement Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+    if (isNaN(userId) || isNaN(roleId)) {
+      return res.status(400).json({
+        error: "Invalid ID",
+        message: "User ID and Role ID must be valid numbers",
+      });
     }
+
+    logger.info(
+      `Attempting to replace all roles for user ${userId} with role ${roleId}`,
+    );
+
+    const userRole = await roleService.replaceUserRole(userId, roleId);
+
+    logger.info(
+      `Successfully replaced roles for user ${userId} with role ${roleId}`,
+    );
+
+    res.status(201).json({
+      message: "User roles replaced successfully",
+      userRole,
+    });
+  } catch (error) {
+    logger.error(
+      `Replace role error: User ${req.params.userId}, Role ${req.params.roleId}`,
+      error,
+    );
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Role Replacement Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Role Replacement Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 
 /**
@@ -511,50 +521,53 @@ export const replaceUserRole = async (req: Request, res: Response) => {
  *         description: Server error
  */
 export const removeRoleFromUser = async (req: Request, res: Response) => {
-    try {
-        const userId = Number(req.params.userId);
-        const roleId = Number(req.params.roleId);
-        
-        if (isNaN(userId) || isNaN(roleId)) {
-            return res.status(400).json({
-                error: 'Invalid ID',
-                message: 'User ID and Role ID must be valid numbers'
-            });
-        }
+  try {
+    const userId = Number(req.params.userId);
+    const roleId = Number(req.params.roleId);
 
-        logger.info(`Attempting to remove role ${roleId} from user ${userId}`);
-
-        await roleService.removeRoleFromUser(userId, roleId);
-
-        logger.info(`Successfully removed role ${roleId} from user ${userId}`);
-
-        res.status(200).json({
-            message: 'Role removed from user successfully'
-        });
-    } catch (error) {
-        logger.error(`Remove role error: User ${req.params.userId}, Role ${req.params.roleId}`, error);
-        if (error instanceof AppError) {
-            return res.status(error.statusCode).json({
-                error: 'Role Removal Error',
-                message: error.message
-            });
-        }
-        res.status(500).json({
-            error: 'Role Removal Error',
-            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
-        });
+    if (isNaN(userId) || isNaN(roleId)) {
+      return res.status(400).json({
+        error: "Invalid ID",
+        message: "User ID and Role ID must be valid numbers",
+      });
     }
+
+    logger.info(`Attempting to remove role ${roleId} from user ${userId}`);
+
+    await roleService.removeRoleFromUser(userId, roleId);
+
+    logger.info(`Successfully removed role ${roleId} from user ${userId}`);
+
+    res.status(200).json({
+      message: "Role removed from user successfully",
+    });
+  } catch (error) {
+    logger.error(
+      `Remove role error: User ${req.params.userId}, Role ${req.params.roleId}`,
+      error,
+    );
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Role Removal Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Role Removal Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
 // Create object to export all controller functions together
 export const roleController = {
-    createRole,
-    listRoles,
-    getRoleById,
-    updateRole,
-    deleteRole,
-    getUserRoles,
-    assignRoleToUser,
-    removeRoleFromUser,
+  createRole,
+  listRoles,
+  getRoleById,
+  updateRole,
+  deleteRole,
+  getUserRoles,
+  assignRoleToUser,
+  removeRoleFromUser,
 };
 
 // Default export for the controller object

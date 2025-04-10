@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { teamService } from '../services/team-service';
-import { AppError } from '../middlewares';
-import { constants, Logger } from '../config';
+import { Request, Response } from "express";
+import { teamService } from "../services/team-service";
+import { AppError } from "../middlewares";
+import { constants, Logger } from "../config";
 
-const logger = new Logger('TeamController');
+const logger = new Logger("TeamController");
 
 /**
  * @swagger
@@ -62,26 +62,26 @@ export const createTeam = async (req: Request, res: Response) => {
       email: req.body.email,
       profile_link: req.body.profile_link,
       skills: req.body.skills,
-      team_type_id: req.body.team_type_id
+      team_type_id: req.body.team_type_id,
     };
 
     const team = await teamService.createTeam(teamData);
 
     res.status(201).json({
-      message: 'Team member created successfully',
-      team
+      message: "Team member created successfully",
+      team,
     });
   } catch (error) {
-    logger.error('Create team error', error);
+    logger.error("Create team error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Creation Error',
-        message: error.message
+        error: "Team Creation Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Creation Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Creation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -111,22 +111,24 @@ export const createTeam = async (req: Request, res: Response) => {
  */
 export const listTeams = async (req: Request, res: Response) => {
   try {
-    const teamTypeId = req.query.team_type_id ? Number(req.query.team_type_id) : undefined;
+    const teamTypeId = req.query.team_type_id
+      ? Number(req.query.team_type_id)
+      : undefined;
 
     const teams = await teamService.listTeams(teamTypeId);
 
     res.status(200).json({ teams });
   } catch (error) {
-    logger.error('List teams error', error);
+    logger.error("List teams error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Listing Error',
-        message: error.message
+        error: "Team Listing Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Listing Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Listing Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -167,13 +169,13 @@ export const getTeamById = async (req: Request, res: Response) => {
     logger.error(`Get team error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Retrieval Error',
-        message: error.message
+        error: "Team Retrieval Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Retrieval Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -241,26 +243,26 @@ export const updateTeam = async (req: Request, res: Response) => {
       email: req.body.email,
       profile_link: req.body.profile_link,
       skills: req.body.skills,
-      team_type_id: req.body.team_type_id
+      team_type_id: req.body.team_type_id,
     };
 
     const team = await teamService.updateTeam(id, teamData);
 
     res.status(200).json({
-      message: 'Team member updated successfully',
-      team
+      message: "Team member updated successfully",
+      team,
     });
   } catch (error) {
     logger.error(`Update team error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Update Error',
-        message: error.message
+        error: "Team Update Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Update Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Update Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -297,19 +299,19 @@ export const deleteTeam = async (req: Request, res: Response) => {
     await teamService.deleteTeam(id);
 
     res.status(200).json({
-      message: 'Team member deleted successfully'
+      message: "Team member deleted successfully",
     });
   } catch (error) {
     logger.error(`Delete team error: ${req.params.id}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
-        error: 'Team Deletion Error',
-        message: error.message
+        error: "Team Deletion Error",
+        message: error.message,
       });
     }
     res.status(500).json({
-      error: 'Team Deletion Error',
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+      error: "Team Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
 };
@@ -320,7 +322,7 @@ export const teamController = {
   listTeams,
   getTeamById,
   updateTeam,
-  deleteTeam
+  deleteTeam,
 };
 
 // Default export for the controller object

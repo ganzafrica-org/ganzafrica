@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { teamController } from '../controllers/team-controller';
-import { validate, authenticate, authorize } from '../middlewares';
-import { teamValidation } from '../validations/team-validation';
+import { Router } from "express";
+import { teamController } from "../controllers/team-controller";
+import { validate, authenticate, authorize } from "../middlewares";
+import { teamValidation } from "../validations/team-validation";
 
 const router: Router = Router();
 
@@ -17,33 +17,33 @@ router.use(authenticate);
 
 // Team routes
 router.post(
-  '/',
+  "/",
   validate(teamValidation.createTeamSchema),
-  teamController.createTeam
+  teamController.createTeam,
 );
 
 router.get(
-  '/',
+  "/",
   validate(teamValidation.listTeamsSchema),
-  teamController.listTeams
+  teamController.listTeams,
 );
 
 router.get(
-  '/:id',
+  "/:id",
   validate(teamValidation.getTeamSchema),
-  teamController.getTeamById
+  teamController.getTeamById,
 );
 
 router.put(
-  '/:id',
+  "/:id",
   validate(teamValidation.updateTeamSchema),
-  teamController.updateTeam
+  teamController.updateTeam,
 );
 
 router.delete(
-  '/:id',
+  "/:id",
   validate(teamValidation.deleteTeamSchema),
-  teamController.deleteTeam
+  teamController.deleteTeam,
 );
 
 export default router;

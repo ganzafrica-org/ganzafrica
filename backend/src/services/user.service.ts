@@ -1,12 +1,15 @@
-import { db } from '../db/client';
-import { users, user_profiles, roles } from '../db/schema';
-import { eq } from 'drizzle-orm';
-import { AppError } from '../middlewares';
-import { constants } from '../config';
-import { hashPassword } from './auth.service';
-import { User, CreateUserInput, UpdateUserInput } from '../services/types';
-import { sendVerificationEmail, sendWelcomeEmail } from '../services/email.service';
-import { createToken } from './auth.service';
+import { db } from "../db/client";
+import { users, user_profiles, roles } from "../db/schema";
+import { eq } from "drizzle-orm";
+import { AppError } from "../middlewares";
+import { constants } from "../config";
+import { hashPassword } from "./auth.service";
+import { User, CreateUserInput, UpdateUserInput } from "../services/types";
+import {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "../services/email.service";
+import { createToken } from "./auth.service";
 
 /**
  * Create a new user
@@ -14,7 +17,7 @@ import { createToken } from './auth.service';
 export const createUser = async (userData: CreateUserInput): Promise<User> => {
   // Check if email already exists
   const existingUser = await db.query.users.findFirst({
-    where: eq(users.email, userData.email)
+    where: eq(users.email, userData.email),
   });
 
   if (existingUser) {
@@ -25,16 +28,17 @@ export const createUser = async (userData: CreateUserInput): Promise<User> => {
   const password_hash = await hashPassword(userData.password);
 
   // Insert user into database
-  const [newUser] = await db.insert(users)
+  const [newUser] = await db
+    .insert(users)
     .values({
       email: userData.email,
       name: userData.name,
       password_hash,
-      role_id: userData.role_id, 
+      role_id: userData.role_id,
       email_verified: userData.email_verified || false,
       avatar_url: userData.avatar_url,
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     })
     .returning();
 
@@ -48,25 +52,25 @@ export const createUser = async (userData: CreateUserInput): Promise<User> => {
       // Create a verification token (24 hour expiry)
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
-      
+
       const token = await createToken(
         {
           id: newUser.id.toString(),
-          type: 'verify_email' // assuming this is the token type for email verification
+          type: "verify_email", // assuming this is the token type for email verification
         },
-        '24h' // token expiry time
+        "24h", // token expiry time
       );
-      
+
       // Send the verification email
       await sendVerificationEmail(newUser.email, {
         token,
-        expiresAt
+        expiresAt,
       });
-      
+
       // Optionally also send a welcome email
       await sendWelcomeEmail(newUser.email, newUser.name);
     } catch (error) {
-      console.error('Failed to send verification email:', error);
+      console.error("Failed to send verification email:", error);
       // Don't fail the user creation if email sending fails
     }
   }
@@ -79,7 +83,7 @@ export const createUser = async (userData: CreateUserInput): Promise<User> => {
  */
 export const getUserById = async (id: number | string): Promise<User> => {
   const user = await db.query.users.findFirst({
-    where: eq(users.id, Number(id))
+    where: eq(users.id, Number(id)),
   });
 
   if (!user) {
@@ -94,7 +98,7 @@ export const getUserById = async (id: number | string): Promise<User> => {
  */
 export const getUserByEmail = async (email: string): Promise<User> => {
   const user = await db.query.users.findFirst({
-    where: eq(users.email, email)
+    where: eq(users.email, email),
   });
 
   if (!user) {
@@ -107,12 +111,16 @@ export const getUserByEmail = async (email: string): Promise<User> => {
 /**
  * Update user
  */
-export const updateUser = async (id: number | string, userData: UpdateUserInput): Promise<User> => {
-  const [updatedUser] = await db.update(users)
+export const updateUser = async (
+  id: number | string,
+  userData: UpdateUserInput,
+): Promise<User> => {
+  const [updatedUser] = await db
+    .update(users)
     .set({
       ...userData,
       // No need to cast role_id as it's now a direct integer
-      updated_at: new Date()
+      updated_at: new Date(),
     })
     .where(eq(users.id, Number(id)))
     .returning();
@@ -128,19 +136,20 @@ export const updateUser = async (id: number | string, userData: UpdateUserInput)
  * Create user profile
  */
 export const createUserProfile = async (profileData: any): Promise<any> => {
-  const [profile] = await db.insert(user_profiles)
+  const [profile] = await db
+    .insert(user_profiles)
     .values({
       user_id: profileData.user_id,
       bio: profileData.bio,
       social_links: profileData.social_links,
       preferences: profileData.preferences,
       created_at: new Date(),
-      updated_at: new Date()
+      updated_at: new Date(),
     })
     .returning();
 
   if (!profile) {
-    throw new AppError('Failed to create user profile', 500);
+    throw new AppError("Failed to create user profile", 500);
   }
 
   return profile;
@@ -151,11 +160,11 @@ export const createUserProfile = async (profileData: any): Promise<any> => {
  */
 export const getUserProfile = async (userId: number | string): Promise<any> => {
   const profile = await db.query.user_profiles.findFirst({
-    where: eq(user_profiles.user_id, Number(userId))
+    where: eq(user_profiles.user_id, Number(userId)),
   });
 
   if (!profile) {
-    throw new AppError('User profile not found', 404);
+    throw new AppError("User profile not found", 404);
   }
 
   return profile;
@@ -166,10 +175,11 @@ export const getUserProfile = async (userId: number | string): Promise<any> => {
  */
 export const deleteUser = async (id: number | string): Promise<void> => {
   // Implement as soft delete using is_active field
-  const [updatedUser] = await db.update(users)
+  const [updatedUser] = await db
+    .update(users)
     .set({
       is_active: false,
-      updated_at: new Date()
+      updated_at: new Date(),
     })
     .where(eq(users.id, Number(id)))
     .returning();
@@ -179,76 +189,83 @@ export const deleteUser = async (id: number | string): Promise<void> => {
   }
 };
 
-
 /**
  * List users with filtering and pagination
  */
 export const listUsers = async (params: any) => {
-  const { page = 1, limit = 10, search, sort_by = 'created_at', sort_order = 'desc', role_id, is_active } = params;
-  
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    sort_by = "created_at",
+    sort_order = "desc",
+    role_id,
+    is_active,
+  } = params;
+
   // Build where conditions
   const whereConditions = [];
-  
+
   if (search) {
     whereConditions.push(
-      `(u.name ILIKE '%${search}%' OR u.email ILIKE '%${search}%')`
+      `(u.name ILIKE '%${search}%' OR u.email ILIKE '%${search}%')`,
     );
   }
-  
+
   if (role_id) {
-    whereConditions.push(
-      `u.role_id = ${role_id}`
-    );
+    whereConditions.push(`u.role_id = ${role_id}`);
   }
-  
-  if (typeof is_active === 'boolean') {
-    whereConditions.push(
-      `u.is_active = ${is_active}`
-    );
+
+  if (typeof is_active === "boolean") {
+    whereConditions.push(`u.is_active = ${is_active}`);
   }
-  
+
   // Build where clause
-  const whereClause = whereConditions.length ? `WHERE ${whereConditions.join(' AND ')}` : '';
-  
+  const whereClause = whereConditions.length
+    ? `WHERE ${whereConditions.join(" AND ")}`
+    : "";
+
   // Count total matching users
   const countQuery = `SELECT COUNT(*) as total FROM users u ${whereClause}`;
-  console.log('Count query:', countQuery);
-  
+  console.log("Count query:", countQuery);
+
   const countResults = await db.execute(countQuery);
-  console.log('Count results:', countResults);
-  const total = parseInt(String(countResults.rows?.[0]?.total || '0'), 10);
-  
+  console.log("Count results:", countResults);
+  const total = parseInt(String(countResults.rows?.[0]?.total || "0"), 10);
+
   // Get paginated users
   const offset = (page - 1) * limit;
-  
+
   const usersQuery = `
     SELECT u.*, r.name as role_name
     FROM users u
     LEFT JOIN roles r ON u.role_id = r.id
     ${whereClause}
-    ORDER BY u.${sort_by} ${sort_order === 'asc' ? 'ASC' : 'DESC'}
+    ORDER BY u.${sort_by} ${sort_order === "asc" ? "ASC" : "DESC"}
     LIMIT ${limit} OFFSET ${offset}
   `;
-  console.log('Users query:', usersQuery);
-  
+  console.log("Users query:", usersQuery);
+
   const usersResults = await db.execute(usersQuery);
-  console.log('Users results structure:', Object.keys(usersResults));
-  
+  console.log("Users results structure:", Object.keys(usersResults));
+
   // Return the users and total
   return {
     users: usersResults.rows || [],
-    total
+    total,
   };
 };
 
 /**
  * Get user projects (placeholder implementation)
  */
-export const getUserProjects = async (userId: number | string): Promise<any[]> => {
+export const getUserProjects = async (
+  userId: number | string,
+): Promise<any[]> => {
   // Placeholder - implement based on your schema
   // This would typically query a user_projects or projects table
   // where project.user_id = userId or from a join table
-  
+
   // For now returning empty array
   return [];
 };
@@ -256,7 +273,9 @@ export const getUserProjects = async (userId: number | string): Promise<any[]> =
 /**
  * Import multiple users (for bulk operations)
  */
-export const importUsers = async (usersData: CreateUserInput[]): Promise<{
+export const importUsers = async (
+  usersData: CreateUserInput[],
+): Promise<{
   successful: number;
   failed: number;
   errors: any[];
@@ -264,7 +283,7 @@ export const importUsers = async (usersData: CreateUserInput[]): Promise<{
   const results = {
     successful: 0,
     failed: 0,
-    errors: [] as any[]
+    errors: [] as any[],
   };
 
   // Process each user
@@ -276,7 +295,7 @@ export const importUsers = async (usersData: CreateUserInput[]): Promise<{
       results.failed++;
       results.errors.push({
         email: userData.email,
-        error: error instanceof AppError ? error.message : 'Unknown error'
+        error: error instanceof AppError ? error.message : "Unknown error",
       });
     }
   }
@@ -289,11 +308,11 @@ export const importUsers = async (usersData: CreateUserInput[]): Promise<{
  */
 export const getRoleById = async (id: number): Promise<any> => {
   const role = await db.query.roles.findFirst({
-    where: eq(roles.id, id)
+    where: eq(roles.id, id),
   });
 
   if (!role) {
-    throw new AppError('Role not found', 404);
+    throw new AppError("Role not found", 404);
   }
 
   return role;
@@ -304,11 +323,11 @@ export const getRoleById = async (id: number): Promise<any> => {
  */
 export const getRoleByName = async (name: string): Promise<any> => {
   const role = await db.query.roles.findFirst({
-    where: eq(roles.name, name)
+    where: eq(roles.name, name),
   });
 
   if (!role) {
-    throw new AppError('Role not found', 404);
+    throw new AppError("Role not found", 404);
   }
 
   return role;
