@@ -5,7 +5,11 @@
     "baseUrl": ".",
     "paths": {
       "@workspace/ui/*": ["./src/*"]
-    }
+    },
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
   "include": ["."],
   "exclude": ["node_modules", "dist"]
