@@ -32,3 +32,23 @@ import {
       userRoleIdx: uniqueIndex('user_role_idx').on(table.user_id, table.role_id),
     };
   });
+
+  export const permissions = pgTable('permissions', {
+      id: integer('id').primaryKey(),
+      name: text('name').notNull(),
+      description: text('description'),
+      resource: text('resource').notNull(),
+      action: text('action').notNull(),
+      ...timestampFields,
+  })
+  
+  export const role_permissions = pgTable('role_permissions', {
+      id: integer('id').primaryKey(),
+      role_id: integer('role_id')
+          .notNull()
+          .references(() => roles.id),
+      permission_id: integer('permission_id')
+          .notNull()
+          .references(() => permissions.id),
+  })
+  

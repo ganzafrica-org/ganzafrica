@@ -36,8 +36,8 @@ interface SessionData {
 
 /**
  * Hash a password using bcrypt
- * @param {string} password - Plain text password to hash
- * @returns {Promise<string>} - Hashed password
+ * @param {string} password 
+ * @returns {Promise<string>} 
  */
 export async function hashPassword(password: string): Promise<string> {
     try {
