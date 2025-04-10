@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, HelpCircle, Menu, User, Settings, LogOut, Info } from 'lucide-react';
+import { Bell, HelpCircle, Menu, User, Settings, LogOut, Info, Check, X } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
+import Link from 'next/link';
+import { Button } from '@workspace/ui/components/button';
 
 interface UserData {
   id: number;
@@ -15,6 +17,38 @@ interface UserData {
   is_active: boolean;
 }
 
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  time: string;
+  isRead: boolean;
+  type: string;
+  priority: 'normal' | 'high';
+}
+
+// Add mock notifications (we'll move this to a proper state management later)
+const mockNotifications: Notification[] = [
+  {
+    id: 1,
+    title: "New Article Published",
+    message: "Your article 'Getting Started with React' has been published",
+    time: "2 hours ago",
+    isRead: false,
+    type: "article",
+    priority: "normal"
+  },
+  {
+    id: 2,
+    title: "System Maintenance",
+    message: "Scheduled maintenance will occur on Saturday at 2 AM",
+    time: "1 day ago",
+    isRead: false,
+    type: "system",
+    priority: "high"
+  }
+];
+
 interface NavbarProps {
   onMenuClick: () => void;
   isSidebarCollapsed: boolean;
@@ -23,9 +57,12 @@ interface NavbarProps {
 
 const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser }: NavbarProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState(mockNotifications);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   
   // Get auth context
   const { user, logout } = useAuth();
@@ -59,6 +96,22 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
   // Get user's display name - No longer using "Guest User" fallback
   const getDisplayName = () => {
     return currentUser?.name || '';
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  // Round up to the nearest even number
+  const displayCount = unreadCount % 2 === 0 ? unreadCount : unreadCount + 1;
+
+  const markAsRead = (id: number) => {
+    setNotifications(prev =>
+      prev.map(notif =>
+        notif.id === id ? { ...notif, isRead: true } : notif
+      )
+    );
+  };
+
+  const deleteNotification = (id: number) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id));
   };
 
   const toggleDropdown = () => {
@@ -109,29 +162,35 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
 
   // Check for auth token on mount
   useEffect(() => {
-    // Check if we have a valid auth token (could be in a cookie, local storage, etc.)
-    const checkAuthStatus = () => {
-      const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-        const [key, value] = cookie.trim().split('=');
-        if (key) {
-          acc[key] = value || '';
+    // Only check auth in production
+    if (process.env.NODE_ENV === 'production') {
+      const checkAuthStatus = () => {
+        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+          const [key, value] = cookie.trim().split('=');
+          if (key) {
+            acc[key] = value || '';
+          }
+          return acc;
+        }, {} as Record<string, string>);
+        
+        if (!cookies.auth_token && !currentUser) {
+          console.log("No auth token found, redirecting to login");
+          window.location.href = '/login';
         }
-        return acc;
-      }, {} as Record<string, string>);
+      };
       
-      if (!cookies.auth_token && !currentUser) {
-        console.log("No auth token found, redirecting to login");
-        window.location.href = '/login';
-      }
-    };
-    
-    checkAuthStatus();
+      checkAuthStatus();
+    }
   }, [currentUser]);
 
+  // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
       }
     };
 
@@ -142,54 +201,150 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
   }, []);
 
   return (
-    <div className="h-16 border-b bg-white flex items-center justify-between px-4">
+    <div className="h-16 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between px-6 sticky top-0 z-50 shadow-sm">
       <div className="flex items-center gap-4">
         <button 
           onClick={onMenuClick}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          aria-label="Toggle menu"
+          className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          aria-label="Toggle sidebar"
         >
-          <Menu className="w-5 h-5 text-gray-700" />
+          <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
         </button>
         
         <div className="flex items-center">
-          <h1 className="font-h5">Dashboard</h1>
+          <h1 className="text-xl font-semibold text-gray-800 dark:text-white">Dashboard</h1>
         </div>
       </div>
       
-      <div className="flex items-center space-x-4">
-        <button className="relative p-2 hover:bg-gray-100 rounded-full">
-          <Bell className="w-5 h-5 text-gray-600" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
-        </button>
+      <div className="flex items-center space-x-2">
+        <div className="relative" ref={notificationsRef}>
+          <button 
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className="relative p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+            aria-label={`View notifications (${unreadCount} unread)`}
+            title={`View notifications (${unreadCount} unread)`}
+          >
+            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-primary-green text-white text-xs font-medium px-1.5 flex items-center justify-center rounded-full ring-2 ring-white dark:ring-gray-800">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {isNotificationsOpen && (
+            <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-100 dark:border-gray-700">
+              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="font-semibold dark:text-white">Notifications</h3>
+                <Link 
+                  href="/notifications"
+                  className="text-sm text-primary-green hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                >
+                  View All
+                </Link>
+              </div>
+
+              <div className="max-h-[400px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <Bell className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p>No notifications</p>
+                  </div>
+                ) : (
+                  notifications.slice(0, 5).map((notification) => (
+                    <div 
+                      key={notification.id}
+                      className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-start justify-between ${
+                        !notification.isRead ? 'bg-green-50/50 dark:bg-green-900/10' : ''
+                      }`}
+                    >
+                      <div className="flex-1 mr-4">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-medium dark:text-white">{notification.title}</h4>
+                          {!notification.isRead && (
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full dark:bg-green-900/50 dark:text-green-400">
+                              New
+                            </span>
+                          )}
+                          {notification.priority === 'high' && (
+                            <span className="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded-full dark:bg-red-900/50 dark:text-red-400">
+                              High Priority
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block">{notification.time}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {!notification.isRead && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => markAsRead(notification.id)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/50 p-1"
+                            title="Mark as read"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteNotification(notification.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50 p-1"
+                          title="Delete notification"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {notifications.length > 0 && (
+                <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
+                  <Link 
+                    href="/notifications"
+                    className="text-sm text-center block w-full text-primary-green hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                  >
+                    See all notifications
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         
-        <button className="p-2 hover:bg-gray-100 rounded-full">
-          <HelpCircle className="w-5 h-5 text-gray-600" />
+        <button 
+          className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors group"
+          aria-label="Get help"
+        >
+          <HelpCircle className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200" />
         </button>
         
         {currentUser ? (
-          // Only show user profile dropdown if logged in
           <div className="relative" ref={dropdownRef}>
             <div 
-              className="flex items-center space-x-2 cursor-pointer p-1 pl-2 hover:bg-gray-100 rounded-lg"
+              className="flex items-center space-x-3 cursor-pointer p-1.5 pl-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
               onClick={toggleDropdown}
             >
-              <div className="relative w-9 h-9 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center">
+              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center">
                 {currentUser?.avatar_url ? (
                   <Image
                     src={currentUser.avatar_url}
                     alt={getDisplayName()}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover"
                   />
                 ) : (
-                  <span className="text-sm font-bold">{getInitials()}</span>
+                  <span className="text-sm font-medium">{getInitials()}</span>
                 )}
               </div>
-              <span className="font-medium-paragraph text-gray-800">{getDisplayName()}</span>
+              <span className="font-medium text-gray-700 dark:text-gray-200">{getDisplayName()}</span>
               <svg 
-                className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
+                className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -199,14 +354,14 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
             </div>
             
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-60 bg-white rounded-lg shadow-lg py-2 z-10 border border-gray-200">
+              <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-100 dark:border-gray-700">
                 {authError && (
-                  <div className="px-4 py-2 text-sm text-red-600 bg-red-50 mb-2 rounded mx-2">
+                  <div className="px-4 py-2 text-sm text-red-600 bg-red-50 dark:bg-red-900/50 dark:text-red-400 mb-2 rounded mx-2">
                     {authError}
                   </div>
                 )}
                 
-                <div className="px-4 py-2 border-b border-gray-100">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                   <div className="flex items-center space-x-3">
                     <div className="relative w-10 h-10 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center">
                       {currentUser?.avatar_url ? (
@@ -215,44 +370,44 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
                           alt={getDisplayName()}
                           width={40}
                           height={40}
-                          className="rounded-full"
+                          className="rounded-full object-cover"
                         />
                       ) : (
-                        <span className="text-sm font-bold">{getInitials()}</span>
+                        <span className="text-sm font-medium">{getInitials()}</span>
                       )}
                     </div>
                     <div>
-                      <p className="font-medium-paragraph text-gray-800">{getDisplayName()}</p>
-                      <p className="text-xs text-gray-500">{currentUser?.email}</p>
+                      <p className="font-medium text-gray-800 dark:text-white">{getDisplayName()}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{currentUser?.email}</p>
                     </div>
                   </div>
                 </div>
                 
                 <div className="py-1">
-                  <a href="#" className="flex items-center px-4 py-2 font-regular-paragraph text-gray-700 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors">
-                    <User className="w-4 h-4 mr-3 text-gray-500 group-hover:text-white" />
+                  <a href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors">
+                    <User className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500 group-hover:text-white" />
                     Profile
                   </a>
-                  <a href="#" className="flex items-center px-4 py-2 font-regular-paragraph text-gray-700 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors">
-                    <Settings className="w-4 h-4 mr-3 text-gray-500 group-hover:text-white" />
+                  <a href="/settings" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors">
+                    <Settings className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500 group-hover:text-white" />
                     Settings
                   </a>
                 </div>
                 
-                <div className="py-1 border-t border-gray-100">
-                  <a href="#" className="flex items-center px-4 py-2 font-regular-paragraph text-gray-700 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors">
-                    <Info className="w-4 h-4 mr-3 text-gray-500 group-hover:text-white" />
+                <div className="py-1 border-t border-gray-100 dark:border-gray-700">
+                  <a href="/help" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors">
+                    <Info className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500 group-hover:text-white" />
                     Help Center
                   </a>
                 </div>
                 
-                <div className="py-1 border-t border-gray-100">
+                <div className="py-1 border-t border-gray-100 dark:border-gray-700">
                   <a 
                     href="#" 
                     onClick={handleLogout}
-                    className="flex items-center px-4 py-2 font-regular-paragraph text-gray-700 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-green hover:text-white group mx-2 rounded-lg transition-colors"
                   >
-                    <LogOut className="w-4 h-4 mr-3 text-gray-500 group-hover:text-white" />
+                    <LogOut className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500 group-hover:text-white" />
                     {isLoggingOut ? 'Logging out...' : 'Logout'}
                   </a>
                 </div>

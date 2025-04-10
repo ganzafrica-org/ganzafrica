@@ -11,7 +11,8 @@ import {
   FileText,
   Settings,
   HelpCircle,
-  LogOut
+  LogOut,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -22,19 +23,19 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const pathname = usePathname();
 
   return (
-    <div className={`fixed left-0 top-0 h-full bg-[#045F3C] text-white transition-all duration-300 ${
+    <div className={`fixed left-0 top-0 h-full bg-[#045F3C] text-white/90 transition-all duration-300 ${
       isCollapsed ? 'w-20' : 'w-64'
     }`}>
       <div className="flex flex-col h-full">
         {/* Logo Section */}
-        <div className="p-6">
-          <div className="flex items-center space-x-2">
+        <div className="h-16 flex items-center px-6 border-b border-white/10">
+          <div className="flex items-center">
             {!isCollapsed ? (
               <Image
                 src="/images/logoLight.png"
                 alt="GanzAfrica"
-                width={150}
-                height={40}
+                width={130}
+                height={35}
                 className="object-contain"
                 priority
               />
@@ -42,8 +43,8 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
               <Image
                 src="/images/logoLight.png"
                 alt="GanzAfrica"
-                width={50}
-                height={50}
+                width={32}
+                height={32}
                 className="object-contain"
                 priority
               />
@@ -52,96 +53,99 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
         </div>
 
         {/* Menu Sections */}
-        <div className="flex-1 px-4">
+        <div className="flex-1 px-4 py-6 space-y-8 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           {/* Main Menu */}
-          <div className="mb-8">
-            {!isCollapsed && <h2 className="font-bold-paragraph px-4 mb-4 text-white/80">Main Menu</h2>}
+          <div>
+            {!isCollapsed && <h2 className="px-4 mb-3 text-sm font-medium text-white/60 uppercase tracking-wider">Main Menu</h2>}
             <nav className="space-y-1">
               <Link
                 href="/dashboard"
-                className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/dashboard' ? 'bg-white/10' : 'hover:bg-white/5'
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/dashboard' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <LayoutGrid className="w-5 h-5" />
-                {!isCollapsed && <span className="font-bold-paragraph">Dashboard</span>}
+                <LayoutGrid className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Dashboard</span>}
               </Link>
               
-              {/* Projects link with exact pathname check */}
               <Link
                 href="/projects"
-                className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/projects' || pathname.startsWith('/projects/') ? 'bg-white/10' : 'hover:bg-white/5'
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/projects' || pathname.startsWith('/projects/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <FolderGit2 className="w-5 h-5" />
-                {!isCollapsed && <span className="font-bold-paragraph">Projects</span>}
+                <FolderGit2 className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Projects</span>}
               </Link>
               
               <Link
                 href="/opportunities"
-                className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/opportunities' ? 'bg-white/10' : 'hover:bg-white/5'
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/opportunities' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Briefcase className="w-5 h-5" />
-                {!isCollapsed && <span className="font-bold-paragraph">Opportunities</span>}
+                <Briefcase className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Opportunities</span>}
               </Link>
               
-              {/* Users link with exact pathname check */}
               <Link
                 href="/users"
-                className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/users' || pathname.startsWith('/users/') ? 'bg-white/10' : 'hover:bg-white/5'
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/users' || pathname.startsWith('/users/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Users2 className="w-5 h-5" />
-                {!isCollapsed && <span className="font-bold-paragraph">Manage users</span>}
+                <Users2 className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Manage Users</span>}
               </Link>
               
               <Link
                 href="/news"
-                className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/news' ? 'bg-white/10' : 'hover:bg-white/5'
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/news' || pathname.startsWith('/news/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <FileText className="w-5 h-5" />
-                {!isCollapsed && <span className="font-bold-paragraph">News & Updates</span>}
+                <FileText className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">News & Updates</span>}
               </Link>
+
+
             </nav>
           </div>
 
           {/* Help & Support */}
-          <div className="mb-8">
-            {!isCollapsed && <h2 className="font-bold-paragraph px-4 mb-4 text-white/80">Help & Support</h2>}
+          <div>
+            {!isCollapsed && <h2 className="px-4 mb-3 text-sm font-medium text-white/60 uppercase tracking-wider">Help & Support</h2>}
             <nav className="space-y-1">
               <Link
                 href="/settings"
-                className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/settings' ? 'bg-white/10' : 'hover:bg-white/5'
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/settings' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Settings className="w-5 h-5" />
-                {!isCollapsed && <span className="font-bold-paragraph">Settings</span>}
+                <Settings className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Settings</span>}
               </Link>
               <Link
                 href="/help"
-                className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 rounded-lg ${
-                  pathname === '/help' ? 'bg-white/10' : 'hover:bg-white/5'
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/help' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <HelpCircle className="w-5 h-5" />
-                {!isCollapsed && <span className="font-bold-paragraph">Help</span>}
+                <HelpCircle className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Help</span>}
               </Link>
             </nav>
           </div>
         </div>
 
         {/* Logout Button */}
-        <div className="p-4">
-          <button className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors w-full`}>
-            <LogOut className="w-5 h-5" />
-            {!isCollapsed && <span className="font-bold-paragraph">Logout</span>}
+        <div className="p-4 border-t border-white/10">
+          <button 
+            className={`flex items-center ${isCollapsed ? 'justify-center' : ''} w-full px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors`}
+            aria-label="Logout"
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {!isCollapsed && <span className="ml-3 font-medium">Logout</span>}
           </button>
         </div>
       </div>

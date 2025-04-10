@@ -37,3 +37,4 @@ yarn-error.log*
 .wrangler
 wrangler.toml
 .qodo
+drizzle/
