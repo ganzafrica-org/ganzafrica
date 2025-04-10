@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader } from 'lucide-react';
 
-import { useAuthContext } from '@/components/auth/auth-provider';
+import { useAuth } from '@/components/auth/auth-provider';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -17,7 +17,7 @@ export function ProtectedRoute({
                                    fallbackUrl = '/login',
                                    roles = [],
                                }: ProtectedRouteProps) {
-    const { user, isLoading, isAuthenticated } = useAuthContext();
+    const { user, isLoading, isAuthenticated } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
 
