@@ -13,6 +13,7 @@ export const newsStatusEnum = pgEnum("news_status", [
   "not_published",
 ]);
 
+
 export const newsCategoryEnum = pgEnum("news_category", [
   "all",
   "news",
@@ -27,6 +28,12 @@ export const projectStatusEnum = pgEnum("project_status", [
   "completed",
   "cancelled",
   "on_hold",
+]);
+// Media tag enum
+export const mediaTagEnum = pgEnum("media_tag", [
+  "feature", 
+  "description", 
+  "others"
 ]);
 
 export const projectMemberRoleEnum = pgEnum("project_member_role", [
@@ -101,28 +108,53 @@ export const mentorshipStatusEnum = pgEnum("mentorship_status", [
   "paused",
 ]);
 
-export const mentorshipSessionStatusEnum = pgEnum("session_status", [
-  "scheduled",
-  "completed",
-  "cancelled",
+
+// Opportunity status enum
+export const opportunityStatusEnum = pgEnum('opportunity_status', [
+  'draft',
+  'published',
+  'closed',
+  'cancelled'
 ]);
 
-export const mentorshipGoalStatusEnum = pgEnum("goal_status", [
-  "active",
-  "completed",
-  "dropped",
+// Opportunity type enum
+export const opportunityTypeEnum = pgEnum('opportunity_type', [
+  'fellowship',
+  'employment'
 ]);
 
-export const applicationStageStatusEnum = pgEnum("application_stage_status", [
-  "pending",
-  "passed",
-  "failed",
+// Application status enum
+export const applicationStatusEnum = pgEnum('application_status', [
+  'submitted',
+  'under_review',
+  'shortlisted',
+  'interviewed',
+  'accepted',
+  'rejected',
+  'waitlisted',
+  'withdrawn'
 ]);
 
-export const subscriptionStatusEnum = pgEnum("subscription_status", [
-  "active",
-  "unsubscribed",
+// Gender enum
+export const genderEnum = pgEnum('gender', [
+  'male',
+  'female',
+  'non_binary',
+  'prefer_not_to_say',
+  'other'
 ]);
+
+// Education level enum
+export const educationLevelEnum = pgEnum('education_level', [
+  'high_school',
+  'associate_degree',
+  'bachelors_degree',
+  'masters_degree',
+  'doctorate',
+  'professional_certification',
+  'other'
+]);
+
 
 export const verificationTypeEnum = pgEnum("verification_type", [
   "email",

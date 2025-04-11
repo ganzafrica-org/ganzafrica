@@ -27,6 +27,7 @@ const logger = new Logger("ProjectController");
  *               - name
  *               - status
  *               - start_date
+ *               - category_id
  *             properties:
  *               name:
  *                 type: string
@@ -34,13 +35,101 @@ const logger = new Logger("ProjectController");
  *                 type: string
  *               status:
  *                 type: string
- *                 enum: [planned, active, completed]
+ *                 enum: [planned, active, completed, cancelled, on_hold]
  *               start_date:
  *                 type: string
  *                 format: date-time
  *               end_date:
  *                 type: string
  *                 format: date-time
+ *               category_id:
+ *                 type: integer
+ *               location:
+ *                 type: string
+ *               impacted_people:
+ *                 type: integer
+ *               goals:
+ *                 type: object
+ *                 properties:
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       required:
+ *                         - id
+ *                         - title
+ *                         - description
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         completed:
+ *                           type: boolean
+ *                         order:
+ *                           type: integer
+ *               outcomes:
+ *                 type: object
+ *                 properties:
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       required:
+ *                         - id
+ *                         - title
+ *                         - description
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         status:
+ *                           type: string
+ *                         order:
+ *                           type: integer
+ *               media:
+ *                 type: object
+ *                 properties:
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       required:
+ *                         - id
+ *                         - type
+ *                         - url
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         type:
+ *                           type: string
+ *                           enum: [image, video]
+ *                         url:
+ *                           type: string
+ *                         cover:
+ *                           type: boolean
+ *                         tag:
+ *                           type: string
+ *                           enum: [feature, description, others]
+ *                         title:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         size:
+ *                           type: integer
+ *                         duration:
+ *                           type: integer
+ *                         thumbnailUrl:
+ *                           type: string
+ *                         order:
+ *                           type: integer
+ *               other_information:
+ *                 type: object
  *               members:
  *                 type: array
  *                 items:
@@ -54,7 +143,7 @@ const logger = new Logger("ProjectController");
  *                       type: string
  *                     role:
  *                       type: string
- *                       enum: [lead, member, supervisor]
+ *                       enum: [lead, member, supervisor, contributor]
  *                     start_date:
  *                       type: string
  *                       format: date-time
@@ -203,13 +292,101 @@ export const getProjectById = async (req: Request, res: Response) => {
  *                 type: string
  *               status:
  *                 type: string
- *                 enum: [planned, active, completed]
+ *                 enum: [planned, active, completed, cancelled, on_hold]
  *               start_date:
  *                 type: string
  *                 format: date-time
  *               end_date:
  *                 type: string
  *                 format: date-time
+ *               category_id:
+ *                 type: integer
+ *               location:
+ *                 type: string
+ *               impacted_people:
+ *                 type: integer
+ *               goals:
+ *                 type: object
+ *                 properties:
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       required:
+ *                         - id
+ *                         - title
+ *                         - description
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         completed:
+ *                           type: boolean
+ *                         order:
+ *                           type: integer
+ *               outcomes:
+ *                 type: object
+ *                 properties:
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       required:
+ *                         - id
+ *                         - title
+ *                         - description
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         title:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         status:
+ *                           type: string
+ *                         order:
+ *                           type: integer
+ *               media:
+ *                 type: object
+ *                 properties:
+ *                   items:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       required:
+ *                         - id
+ *                         - type
+ *                         - url
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         type:
+ *                           type: string
+ *                           enum: [image, video]
+ *                         url:
+ *                           type: string
+ *                         cover:
+ *                           type: boolean
+ *                         tag:
+ *                           type: string
+ *                           enum: [feature, description, others]
+ *                         title:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         size:
+ *                           type: integer
+ *                         duration:
+ *                           type: integer
+ *                         thumbnailUrl:
+ *                           type: string
+ *                         order:
+ *                           type: integer
+ *               other_information:
+ *                 type: object
  *     responses:
  *       200:
  *         description: Project updated successfully
@@ -332,6 +509,7 @@ export const deleteProject = async (req: Request, res: Response) => {
  *                 - name
  *                 - status
  *                 - start_date
+ *                 - category_id
  *               properties:
  *                 name:
  *                   type: string
@@ -339,13 +517,101 @@ export const deleteProject = async (req: Request, res: Response) => {
  *                   type: string
  *                 status:
  *                   type: string
- *                   enum: [planned, active, completed]
+ *                   enum: [planned, active, completed, cancelled, on_hold]
  *                 start_date:
  *                   type: string
  *                   format: date-time
  *                 end_date:
  *                   type: string
  *                   format: date-time
+ *                 category_id:
+ *                   type: integer
+ *                 location:
+ *                   type: string
+ *                 impacted_people:
+ *                   type: integer
+ *                 goals:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         required:
+ *                           - id
+ *                           - title
+ *                           - description
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           completed:
+ *                             type: boolean
+ *                           order:
+ *                             type: integer
+ *                 outcomes:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         required:
+ *                           - id
+ *                           - title
+ *                           - description
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           title:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           status:
+ *                             type: string
+ *                           order:
+ *                             type: integer
+ *                 media:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         required:
+ *                           - id
+ *                           - type
+ *                           - url
+ *                         properties:
+ *                           id:
+ *                             type: string
+ *                           type:
+ *                             type: string
+ *                             enum: [image, video]
+ *                           url:
+ *                             type: string
+ *                           cover:
+ *                             type: boolean
+ *                           tag:
+ *                             type: string
+ *                             enum: [feature, description, others]
+ *                           title:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                           size:
+ *                             type: integer
+ *                           duration:
+ *                             type: integer
+ *                           thumbnailUrl:
+ *                             type: string
+ *                           order:
+ *                             type: integer
+ *                 other_information:
+ *                   type: object
  *                 members:
  *                   type: array
  *                   items:
@@ -359,7 +625,7 @@ export const deleteProject = async (req: Request, res: Response) => {
  *                         type: string
  *                       role:
  *                         type: string
- *                         enum: [lead, member, supervisor]
+ *                         enum: [lead, member, supervisor, contributor]
  *                       start_date:
  *                         type: string
  *                         format: date-time
@@ -381,6 +647,7 @@ export const importProjects = async (req: Request, res: Response) => {
     const projectsData = req.body.map((project: any) => ({
       ...project,
       created_by: Number(req.user!.id),
+      category_id: Number(project.category_id),
       start_date: new Date(project.start_date),
       end_date: project.end_date ? new Date(project.end_date) : undefined,
       members: project.members
@@ -454,13 +721,17 @@ export const importProjects = async (req: Request, res: Response) => {
  *         name: status
  *         schema:
  *           type: string
- *           enum: [planned, active, completed]
+ *           enum: [planned, active, completed, cancelled, on_hold]
  *       - in: query
  *         name: created_by
  *         schema:
  *           type: string
  *       - in: query
  *         name: member_id
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: category_id
  *         schema:
  *           type: string
  *     responses:
@@ -484,6 +755,7 @@ export const listProjects = async (req: Request, res: Response) => {
         ? Number(req.query.created_by)
         : undefined,
       member_id: req.query.member_id ? Number(req.query.member_id) : undefined,
+      category_id: req.query.category_id ? Number(req.query.category_id) : undefined,
     };
 
     const { projects, total } = await projectService.listProjects(params);
@@ -542,7 +814,7 @@ export const listProjects = async (req: Request, res: Response) => {
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [lead, member, supervisor]
+ *                 enum: [lead, member, supervisor, contributor]
  *               start_date:
  *                 type: string
  *                 format: date-time
