@@ -8,7 +8,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 import { users } from "./users";
-import { departments } from "./departments";
 import {
   jobPostingTypeEnum,
   applicationStageStatusEnum,
