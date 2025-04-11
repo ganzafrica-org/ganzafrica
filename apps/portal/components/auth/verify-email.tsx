@@ -1,21 +1,22 @@
 'use client';
 
 import * as React from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 import { Button } from '@workspace/ui/components/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@workspace/ui/components/card';
 import { Loader } from 'lucide-react';
 
-import { useAuth } from '@/components/auth/auth-provider';
+import apiClient from '@/lib/api-client';
 
 export function VerifyEmail() {
-    const { verifyEmail, isLoading } = useAuth();
     const searchParams = useSearchParams();
     const token = searchParams.get('token') || '';
-    const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>('loading');
-    const [errorMessage, setErrorMessage] = React.useState('');
+    const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+    const [errorMessage, setErrorMessage] = useState('');
 
     React.useEffect(() => {
         if (!token) {
@@ -26,28 +27,33 @@ export function VerifyEmail() {
 
         const verify = async () => {
             try {
-                const success = await verifyEmail(token);
+                const response = await apiClient.post('/auth/verify-email', { token });
 
-                if (success) {
+                if (response.data.success) {
                     setStatus('success');
+                    toast.success('Email verified successfully!');
                 } else {
                     setStatus('error');
                     setErrorMessage('Failed to verify email. Please try again.');
+                    toast.error('Email verification failed');
                 }
-            } catch (error) {
+            } catch (error: any) {
                 setStatus('error');
-                setErrorMessage(
-                    error instanceof Error
-                        ? error.message
-                        : 'Failed to verify email. Please try again.'
-                );
+                const errorMsg = error.response?.data?.message || 'Failed to verify email. Please try again.';
+                setErrorMessage(errorMsg);
+                toast.error(errorMsg);
+            } finally {
+                // If there's no token, we've already set the error state
+                if (token) {
+                    setStatus('error');
+                }
             }
         };
 
         verify();
-    }, [token, verifyEmail]);
+    }, [token]);
 
-    if (status === 'loading' || isLoading) {
+    if (status === 'loading') {
         return (
             <Card className="w-full max-w-md mx-auto">
                 <CardHeader>
