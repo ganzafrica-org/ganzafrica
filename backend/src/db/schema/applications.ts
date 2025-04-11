@@ -20,7 +20,6 @@ export const job_postings = pgTable("job_postings", {
   id: integer("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  department_id: integer("department_id").references(() => departments.id),
   type: jobTypeEnum("type").notNull(),
   posting_type: jobPostingTypeEnum("posting_type").notNull(),
   visibility: jsonb("visibility").notNull(),

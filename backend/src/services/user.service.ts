@@ -29,8 +29,6 @@ export const createUser = async (userData: CreateUserInput): Promise<User> => {
 
   // Hash password
   const password_hash = await hashPassword(userData.password);
-  // Hash password
-  const password_hash = await hashPassword(userData.password);
 
   // Insert user into database
   const [newUser] = await db
