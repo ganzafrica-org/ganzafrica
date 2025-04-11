@@ -10,6 +10,7 @@ import partenerRoutes from "./partner.routes";
 import testimonialRoutes from "./testimonial.routes";
 import faqRoutes from "./faqs";
 import newsRourtes from "./news.routes";
+import opportunity from "./opportunity";
 
 const router: Router = Router();
 
@@ -24,5 +25,6 @@ router.use("/partners", partenerRoutes);
 router.use("/testimonials", testimonialRoutes);
 router.use("/faqs", faqRoutes);
 router.use("/news", newsRourtes);
+router.use("/opportunities", opportunity);
 
 export default router;
