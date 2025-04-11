@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { roleService } from "../services/roles.service";
+import { userService } from "../services";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -392,11 +393,18 @@ export const assignRoleToUser = async (req: Request, res: Response) => {
 
     const userRole = await roleService.assignRoleToUser(userId, roleId);
 
-    logger.info(`Successfully assigned role ${roleId} to user ${userId}`);
+    // Get updated user to confirm role_id has changed
+    const updatedUser = await userService.getUserById(userId);
+    
+    logger.info(`Successfully assigned role ${roleId} to user ${userId}. User role_id is now ${updatedUser.role_id}`);
 
     res.status(201).json({
       message: "Role assigned to user successfully",
       userRole,
+      user: {
+        id: updatedUser.id,
+        role_id: updatedUser.role_id
+      }
     });
   } catch (error) {
     logger.error(
@@ -464,13 +472,20 @@ export const replaceUserRole = async (req: Request, res: Response) => {
 
     const userRole = await roleService.replaceUserRole(userId, roleId);
 
+    // Get updated user to confirm role_id has changed
+    const updatedUser = await userService.getUserById(userId);
+
     logger.info(
-      `Successfully replaced roles for user ${userId} with role ${roleId}`,
+      `Successfully replaced roles for user ${userId} with role ${roleId}. User role_id is now ${updatedUser.role_id}`,
     );
 
     res.status(201).json({
       message: "User roles replaced successfully",
       userRole,
+      user: {
+        id: updatedUser.id,
+        role_id: updatedUser.role_id
+      }
     });
   } catch (error) {
     logger.error(
@@ -536,10 +551,17 @@ export const removeRoleFromUser = async (req: Request, res: Response) => {
 
     await roleService.removeRoleFromUser(userId, roleId);
 
-    logger.info(`Successfully removed role ${roleId} from user ${userId}`);
+    // Get updated user to confirm role_id has been updated if applicable
+    const updatedUser = await userService.getUserById(userId);
+
+    logger.info(`Successfully removed role ${roleId} from user ${userId}. User role_id is now ${updatedUser.role_id}`);
 
     res.status(200).json({
       message: "Role removed from user successfully",
+      user: {
+        id: updatedUser.id,
+        role_id: updatedUser.role_id
+      }
     });
   } catch (error) {
     logger.error(
@@ -558,6 +580,7 @@ export const removeRoleFromUser = async (req: Request, res: Response) => {
     });
   }
 };
+
 // Create object to export all controller functions together
 export const roleController = {
   createRole,
@@ -567,6 +590,7 @@ export const roleController = {
   deleteRole,
   getUserRoles,
   assignRoleToUser,
+  replaceUserRole,
   removeRoleFromUser,
 };
 
