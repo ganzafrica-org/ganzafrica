@@ -24,7 +24,7 @@ const fadeIn = {
   }
 };
 
-const FoodSystemPage = ({ locale, dict }) => {
+const FoodSystemPage = ({ locale, dict }: { locale: string; dict: Record<string, any> }) => {
   return (
       <main className="bg-white">
         {/* Hero Section */}

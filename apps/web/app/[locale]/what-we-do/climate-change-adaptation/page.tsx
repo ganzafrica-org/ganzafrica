@@ -24,7 +24,7 @@ const fadeIn = {
   }
 };
 
-const ClimateAdaptationPage = ({ locale, dict }) => {
+const ClimateAdaptationPage = ({ locale, dict }: { locale: string; dict: Record<string, any> }) => {
   return (
       <main className="bg-white">
         {/* Hero Section */}
