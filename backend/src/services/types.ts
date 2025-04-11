@@ -2,7 +2,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
-  base_role: string;
+  role_id: number;
   password_hash: string;
   avatar_url?: string | null;
   two_factor_enabled: boolean;
@@ -25,7 +25,7 @@ export interface CreateUserInput {
   email: string;
   password: string;
   name: string;
-  base_role?: string;
+  role_id: number;
   avatar_url?: string;
   email_verified?: boolean;
   sendVerificationEmail?: boolean;
@@ -33,7 +33,7 @@ export interface CreateUserInput {
 
 export interface UpdateUserInput {
   name?: string;
-  base_role?: string;
+  role_id?: number;
   avatar_url?: string;
   email_verified?: boolean;
   is_active?: boolean;
@@ -52,6 +52,15 @@ export interface UserProfile {
   address?: string | null;
   social_links?: any | null;
   preferences?: any | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+// New interface for role information
+export interface Role {
+  id: number;
+  name: string;
+  description?: string | null;
   created_at: Date;
   updated_at: Date;
 }
