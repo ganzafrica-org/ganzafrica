@@ -66,6 +66,10 @@ export async function hashPassword(password: string): Promise<string> {
  * @param {string} password - Plain text password to verify
  * @param {string} hash - Stored hash to verify against
  * @returns {Promise<boolean>} - True if password matches hash
+ * Verify a password against its hash
+ * @param {string} password - Plain text password to verify
+ * @param {string} hash - Stored hash to verify against
+ * @returns {Promise<boolean>} - True if password matches hash
  */
 export async function verifyPassword(
   password: string,
@@ -80,6 +84,11 @@ export async function verifyPassword(
 }
 
 /**
+ * Create a JWT token
+ * @param {TokenPayload} payload - Data to include in the token
+ * @param {string} expiresIn - Token expiration time
+ * @param {boolean} isRefresh - Whether this is a refresh token
+ * @returns {Promise<string>} - Signed JWT token
  * Create a JWT token
  * @param {TokenPayload} payload - Data to include in the token
  * @param {string} expiresIn - Token expiration time
@@ -118,6 +127,10 @@ export async function createToken(
  * @param {string} token - Token to verify
  * @param {boolean} isRefresh - Whether this is a refresh token
  * @returns {Promise<TokenPayload>} - Decoded token payload
+ * Verify a JWT token
+ * @param {string} token - Token to verify
+ * @param {boolean} isRefresh - Whether this is a refresh token
+ * @returns {Promise<TokenPayload>} - Decoded token payload
  */
 export async function verifyToken(
   token: string,
@@ -139,6 +152,11 @@ export async function verifyToken(
 }
 
 /**
+ * Create a new session for a user
+ * @param {number} userId - User ID
+ * @param {string} ipAddress - User's IP address
+ * @param {string} userAgent - User's browser/device information
+ * @returns {Promise<SessionData>} - Session details with tokens
  * Create a new session for a user
  * @param {number} userId - User ID
  * @param {string} ipAddress - User's IP address
@@ -238,6 +256,9 @@ export async function createSession(
  * @param {string} tokenOrSessionId - Token or session ID to invalidate
  * @param {boolean} isToken - Whether the provided value is a token or session ID
  * @returns {Promise<boolean>} - Result of invalidation operation
+ * @param {string} tokenOrSessionId - Token or session ID to invalidate
+ * @param {boolean} isToken - Whether the provided value is a token or session ID
+ * @returns {Promise<boolean>} - Result of invalidation operation
  */
 export async function invalidateSession(
   tokenOrSessionId: string,
@@ -323,6 +344,9 @@ export async function invalidateSession(
  * Update session activity timestamp
  * @param {string} sessionId - Session ID to update
  * @returns {Promise<boolean>} - Result of update operation
+ * Update session activity timestamp
+ * @param {string} sessionId - Session ID to update
+ * @returns {Promise<boolean>} - Result of update operation
  */
 export async function updateSessionActivity(
   sessionId: string,
@@ -405,6 +429,11 @@ export async function sendVerification(
  * @param {string} email - User's email address
  * @param {string} ipAddress - User's IP address
  * @returns {Promise<boolean>} - Result of operation
+ * Send password reset email
+ * @param {number} userId - User ID
+ * @param {string} email - User's email address
+ * @param {string} ipAddress - User's IP address
+ * @returns {Promise<boolean>} - Result of operation
  */
 export async function sendPasswordReset(
   userId: number,
@@ -451,6 +480,10 @@ export async function sendPasswordReset(
 }
 
 /**
+ * Verify email verification token
+ * @param {string} token - Token to verify
+ * @param {number} userId - User ID
+ * @returns {Promise<boolean>} - Result of verification
  * Verify email verification token
  * @param {string} token - Token to verify
  * @param {number} userId - User ID
@@ -516,6 +549,10 @@ export async function verifyEmailToken(
  * @param {string} token - Token to verify
  * @param {number} userId - User ID
  * @returns {Promise<any>} - Valid token info if successful
+ * Verify password reset token
+ * @param {string} token - Token to verify
+ * @param {number} userId - User ID
+ * @returns {Promise<any>} - Valid token info if successful
  */
 export async function verifyPasswordResetToken(
   token: string,
@@ -560,6 +597,11 @@ export async function verifyPasswordResetToken(
 }
 
 /**
+ * Reset user password
+ * @param {string} token - Password reset token
+ * @param {number} userId - User ID
+ * @param {string} newPassword - New password
+ * @returns {Promise<boolean>} - Result of operation
  * Reset user password
  * @param {string} token - Password reset token
  * @param {number} userId - User ID
@@ -637,6 +679,9 @@ export async function resetPassword(
 }
 
 /**
+ * Parse time string to milliseconds
+ * @param {string} timeStr - Time string format (e.g., "30s", "15m", "24h", "7d")
+ * @returns {number} - Time in milliseconds
  * Parse time string to milliseconds
  * @param {string} timeStr - Time string format (e.g., "30s", "15m", "24h", "7d")
  * @returns {number} - Time in milliseconds

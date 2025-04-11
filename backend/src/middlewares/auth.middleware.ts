@@ -21,6 +21,8 @@ declare global {
 /**
  * TEMPORARY: Authentication middleware that bypasses token validation for testing
  * This will attach a mock user to all requests
+ * TEMPORARY: Authentication middleware that bypasses token validation for testing
+ * This will attach a mock user to all requests
  */
 export const authenticate = async (
   req: Request,
@@ -46,6 +48,7 @@ export const authenticate = async (
 };
 
 /**
+ * TEMPORARY: Authorization middleware that allows all requests
  * TEMPORARY: Authorization middleware that allows all requests
  */
 export const authorize = (allowedRoles: string[]) => {

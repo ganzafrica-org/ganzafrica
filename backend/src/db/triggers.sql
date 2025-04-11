@@ -109,7 +109,6 @@ END;
 $milestone_func$ LANGUAGE plpgsql;
 
 
-
 -- Security triggers
 CREATE OR REPLACE FUNCTION soft_delete_trigger()
     RETURNS TRIGGER AS $soft_delete_func$

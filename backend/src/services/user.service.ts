@@ -23,7 +23,12 @@ export const createUser = async (userData: CreateUserInput): Promise<User> => {
   if (existingUser) {
     throw new AppError(constants.ERROR_MESSAGES.EMAIL_ALREADY_EXISTS, 409);
   }
+  if (existingUser) {
+    throw new AppError(constants.ERROR_MESSAGES.EMAIL_ALREADY_EXISTS, 409);
+  }
 
+  // Hash password
+  const password_hash = await hashPassword(userData.password);
   // Hash password
   const password_hash = await hashPassword(userData.password);
 
