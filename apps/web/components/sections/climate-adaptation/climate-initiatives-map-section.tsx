@@ -2,10 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Container from "@/components/layout/container";
 import { MapPin, X, ChevronRight, Info } from "lucide-react";
-import { DecoratedHeading } from "@/components/layout/headertext";
 
 // Animation variants
 const fadeIn = {
@@ -45,8 +43,8 @@ const statItemVariants = {
 
 const ClimateInitiavesMapSection = () => {
     const [selectedCountry, setSelectedCountry] = useState('rwanda');
-    const [selectedProject, setSelectedProject] = useState(null);
-    const [expandedCard, setExpandedCard] = useState(null);
+    const [selectedProject, setSelectedProject] = useState<number | null>(null);
+    const [expandedCard, setExpandedCard] = useState<number | null>(null);
     const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
 
     const mapRef = useRef(null);
@@ -128,7 +126,7 @@ const ClimateInitiavesMapSection = () => {
         setExpandedCard(null);
     };
 
-    const handleProjectClick = (projectId) => {
+    const handleProjectClick = (projectId: number | null) => {
         if (selectedProject === projectId) {
             setExpandedCard(expandedCard === projectId ? null : projectId);
         } else {
@@ -137,12 +135,12 @@ const ClimateInitiavesMapSection = () => {
         }
     };
 
-    const handleExpandClick = (projectId, e) => {
+    const handleExpandClick = (projectId: number | React.SetStateAction<null>, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.stopPropagation();
         setExpandedCard(expandedCard === projectId ? null : projectId);
     };
 
-    const getMarkerPosition = (position) => {
+    const getMarkerPosition = (position: { x: any; y: any; }) => {
         const x = (position.x / 600) * mapDimensions.width;
         const y = (position.y / 400) * mapDimensions.height;
         return { x, y };
