@@ -87,7 +87,6 @@ src/
 ├── db/                 # Database schema and client
 │   ├── schema/         # Database schema definitions
 │   │   ├── users.ts    # User-related tables
-│   │   ├── auth.ts     # Authentication tables
 │   │   └── ...         # Other schema files
 │   ├── client.ts       # Database client setup
 │   ├── migrate.ts      # Migration runner

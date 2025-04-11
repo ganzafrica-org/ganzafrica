@@ -23,6 +23,7 @@
     "@trpc/server": "10.45.2",
     "@workspace/api": "workspace:*",
     "@workspace/ui": "workspace:*",
+    "axios": "^1.8.4",
     "chart.js": "^4.4.8",
     "date-fns": "^4.1.0",
     "lucide-react": "0.456.0",

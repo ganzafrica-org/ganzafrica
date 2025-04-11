@@ -63,7 +63,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${fontRubik.variable}`}
+      className={`${fontRubik.variable} light`}
       suppressHydrationWarning
     >
       <body className="min-h-screen font-sans antialiased">
