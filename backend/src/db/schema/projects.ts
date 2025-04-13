@@ -32,20 +32,45 @@ export const projects = pgTable(
     category_id: integer("category_id")
       .references(() => project_categories.id)
       .notNull(),
+    goals: jsonb("goals").$type<{
+      items: Array<{
+        id: string;
+        title: string;
+        description: string;
+        completed?: boolean;
+        order?: number;
+      }>;
+    }>(),
+    
+    outcomes: jsonb("outcomes").$type<{
+      items: Array<{
+        id: string;
+        title: string;
+        description: string;
+        status?: string;
+        order?: number;
+      }>;
+    }>(),
 
     location: varchar("location", { length: 255 }),
-    impacted_people: integer("impacted_people").default(0),
     media: jsonb("media").$type<{
       items: Array<{
         id: string;
         type: "image" | "video";
         url: string;
         cover: boolean;
+        tag?: "feature" | "description" | "others";
+        title?: string;
+        description?: string;
         size?: number;
         duration?: number;
         thumbnailUrl?: string;
         order?: number;
       }>;
+    }>(),
+    
+    other_information: jsonb("other_information").$type<{
+      [key: string]: any;
     }>(),
     start_date: timestamp("start_date", { withTimezone: true }).notNull(),
     end_date: timestamp("end_date", { withTimezone: true }),
@@ -112,6 +137,7 @@ export const project_updates = pgTable(
         type: "image" | "video";
         url: string;
         cover: boolean;
+        tag?: "feature" | "description" | "others";
         title?: string;
         description?: string;
       }>;
