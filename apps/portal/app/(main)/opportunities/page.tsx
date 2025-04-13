@@ -15,14 +15,14 @@ import {
   Eye,
   Edit,
   Trash,
-  RefreshCw
+  RefreshCw,
+  Calendar
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 // Create an axios instance with retry configuration
 const axiosInstance = axios.create({
-  // Set a timeout to avoid hanging requests
   timeout: 10000,
 });
 
@@ -102,21 +102,20 @@ const throttledAxios = {
   }
 };
 
-const ProjectsPage = () => {
+const OpportunitiesPage = () => {
   const router = useRouter();
   // State for the active tab
   const [activeTab, setActiveTab] = useState('all');
   
   // States for data and UI
-  const [projects, setProjects] = useState([]);
+  const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState({});
-  const [users, setUsers] = useState({});
   
   // States for pagination and filtering
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [totalProjects, setTotalProjects] = useState(0);
+  const [totalOpportunities, setTotalOpportunities] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
@@ -125,9 +124,10 @@ const ProjectsPage = () => {
   // States for tab counts
   const [tabCounts, setTabCounts] = useState({
     all: 0,
-    'active': 0, // Maps to 'in-progress' in UI
-    'completed': 0,
-    'planned': 0  // Maps to 'pending' in UI
+    draft: 0,
+    published: 0,
+    archived: 0,
+    closed: 0
   });
 
   // Add state to track if tab counts are loaded
@@ -146,34 +146,34 @@ const ProjectsPage = () => {
   };
 
   // Function to handle action click
-  const handleAction = async (action, projectId) => {
+  const handleAction = async (action, opportunityId) => {
     setOpenMenuId(null); // Close the menu
     
     switch(action) {
       case 'view':
-        // Navigate to project details page
-        router.push(`/projects/${projectId}`);
+        // Navigate to opportunity details page
+        router.push(`/opportunities/${opportunityId}`);
         break;
       case 'delete':
-        if (window.confirm('Are you sure you want to delete this project?')) {
+        if (window.confirm('Are you sure you want to delete this opportunity?')) {
           try {
-            await throttledAxios.delete(`http://localhost:3002/api/projects/${projectId}`);
-            // Refresh the projects list after deletion
-            const updatedPage = projects.length === 1 && page > 1 ? page - 1 : page;
+            await throttledAxios.delete(`http://localhost:3002/api/opportunities/${opportunityId}`);
+            // Refresh the opportunities list after deletion
+            const updatedPage = opportunities.length === 1 && page > 1 ? page - 1 : page;
             setPage(updatedPage);
           } catch (error) {
-            console.error('Error deleting project:', error);
-            alert('Failed to delete project. Please try again.');
+            console.error('Error deleting opportunity:', error);
+            alert('Failed to delete opportunity. Please try again.');
           }
         }
         break;
       case 'update':
         // Navigate to update page
-        router.push(`/projects/edit-project/${projectId}`);
+        router.push(`/opportunities/edit-opportunity/${opportunityId}`);
         break;
       case 'status':
         // Open status change modal/form
-        console.log(`Change status for project ${projectId}`);
+        console.log(`Change status for opportunity ${opportunityId}`);
         break;
       default:
         break;
@@ -188,27 +188,6 @@ const ProjectsPage = () => {
   // Calculate sequential row number based on pagination
   const getRowNumber = (index) => {
     return ((page - 1) * limit) + index + 1;
-  };
-
-  // Map API status to UI status
-  const mapStatusToUI = (apiStatus) => {
-    switch(apiStatus) {
-      case 'active': return 'in-progress';
-      case 'planned': return 'pending';
-      case 'completed': return 'completed';
-      default: return apiStatus;
-    }
-  };
-  
-  // Map UI status to API status
-  const mapUIToAPIStatus = (uiStatus) => {
-    switch(uiStatus) {
-      case 'in-progress': return 'active';
-      case 'pending': return 'planned';
-      case 'completed': return 'completed';
-      case 'all': return '';
-      default: return uiStatus;
-    }
   };
 
   // Add click outside listener to close dropdown
@@ -227,60 +206,50 @@ const ProjectsPage = () => {
     };
   }, [menuRef]);
 
-  // Set default categories and users instead of fetching them
+  // Set default categories
   useEffect(() => {
-    // Use default categories instead of fetching them
+    // Use default categories
     setCategories({
-      1: 'Food system',
-      2: 'Climate adaptation',
-      3: 'Data & Evidence'
+      1: 'Internship',
+      2: 'Grant',
+      3: 'Fellowship',
+      4: 'Scholarship',
+      5: 'Training Program'
     });
-    
-    // Use default users instead of fetching them
-    setUsers({
-      1: 'Mukamana Fransine',
-      2: 'John Doe',
-      3: 'Jane Smith',
-      4: 'Mukamana Fransine'
-    });
-    
-    // Note: In a production app, you could extract categories and users from the projects response
-    // instead of making separate API calls
   }, []);
 
-  // We'll calculate tab counts from the main project fetch instead
-  // No separate tab count fetching needed
-  
-  // Fetch tab counts using pagination total from a single request
+  // Fetch tab counts
   const fetchTabCounts = async () => {
     try {
-      // Fetch all projects with limit=0 just to get count
-      const response = await throttledAxios.get('http://localhost:3002/api/projects', { 
+      // Fetch all opportunities with limit=0 just to get count
+      const response = await throttledAxios.get('http://localhost:3002/api/opportunities', { 
         params: { limit: 0 } 
       });
       
       // Get the total count from the response
       const allCount = parseInt(response.data.pagination?.total) || 0;
       
-      // Count projects by status from the example data
-      // This assumes we have a complete list of projects when limit=0
-      let activeCount = 0;
-      let completedCount = 0;
-      let plannedCount = 0;
+      // Count opportunities by status from the example data
+      let draftCount = 0;
+      let publishedCount = 0;
+      let archivedCount = 0;
+      let closedCount = 0;
       
-      if (response.data.projects && Array.isArray(response.data.projects)) {
-        response.data.projects.forEach(project => {
-          if (project.status === 'active') activeCount++;
-          else if (project.status === 'completed') completedCount++;
-          else if (project.status === 'planned') plannedCount++;
+      if (response.data.opportunities && Array.isArray(response.data.opportunities)) {
+        response.data.opportunities.forEach(opportunity => {
+          if (opportunity.status === 'draft') draftCount++;
+          else if (opportunity.status === 'published') publishedCount++;
+          else if (opportunity.status === 'archived') archivedCount++;
+          else if (opportunity.status === 'closed') closedCount++;
         });
       }
       
       setTabCounts({
         all: allCount,
-        active: activeCount,
-        completed: completedCount,
-        planned: plannedCount
+        draft: draftCount,
+        published: publishedCount,
+        archived: archivedCount,
+        closed: closedCount
       });
       
       setTabCountsLoaded(true);
@@ -289,9 +258,10 @@ const ProjectsPage = () => {
       // Use default values in case of error
       setTabCounts({
         all: 0,
-        active: 0,
-        completed: 0,
-        planned: 0
+        draft: 0,
+        published: 0,
+        archived: 0,
+        closed: 0
       });
       setTabCountsLoaded(true);
     }
@@ -326,14 +296,36 @@ const ProjectsPage = () => {
     setPage(1); // Reset to first page when searching
   };
 
-  // Fetch projects from API with dependency on relevant state changes
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setPage(1); // Reset to first page when changing tabs
+  };
+
+  // Get category name from category_id
+  const getCategoryName = (categoryId) => {
+    return categories[categoryId] || 'Other';
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Fetch opportunities from API with dependency on relevant state changes
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchOpportunities = async () => {
       try {
         setLoading(true);
         
         // Add a delay between requests to avoid rate limiting
-        const lastRequestTime = window.lastProjectFetchTime || 0;
+        const lastRequestTime = window.lastOpportunityFetchTime || 0;
         const now = Date.now();
         const timeSinceLastRequest = now - lastRequestTime;
         
@@ -353,83 +345,59 @@ const ProjectsPage = () => {
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
         
-        // Map UI status to API status
-        const apiStatus = mapUIToAPIStatus(activeTab);
-        if (apiStatus) params.status = apiStatus;
+        // Add status filter if not showing all
+        if (activeTab !== 'all') {
+          params.status = activeTab;
+        }
         
-        console.log('Fetching projects with params:', params);
+        console.log('Fetching opportunities with params:', params);
         
         // Store the time of this request
-        window.lastProjectFetchTime = Date.now();
+        window.lastOpportunityFetchTime = Date.now();
         
         // Make API request with throttled axios
-        const response = await throttledAxios.get('http://localhost:3002/api/projects', { params });
+        const response = await throttledAxios.get('http://localhost:3002/api/opportunities', { params });
         
         console.log('API response:', response.data);
         
         if (response.data) {
-          setProjects(response.data.projects || []);
+          setOpportunities(response.data.opportunities || []);
           
           // Extract pagination info
           const pagination = response.data.pagination || {};
-          setTotalProjects(parseInt(pagination.total) || 0);
+          setTotalOpportunities(parseInt(pagination.total) || 0);
           setTotalPages(pagination.pages || 1);
           
           // If we're not already tracking tab counts, also use this response to update counts
-          if (!tabCountsLoaded && response.data.projects) {
+          if (!tabCountsLoaded && response.data.opportunities) {
             fetchTabCounts();
           }
         }
       } catch (error) {
-        console.error('Error fetching projects:', error);
-        setProjects([]);
+        console.error('Error fetching opportunities:', error);
+        setOpportunities([]);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchProjects();
+    fetchOpportunities();
   }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
 
-  // Extract team lead from project members
-  const getTeamLead = (project) => {
-    if (!project.members || project.members.length === 0) {
-      // If no members, use created_by as fallback for lead
-      return users[project.created_by] || 'Mukamana Fransine';
+  // Get status badge
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case 'draft':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• Draft</span>;
+      case 'published':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">• Published</span>;
+      case 'archived':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">• Archived</span>;
+      case 'closed':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">• Closed</span>;
+      default:
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• {status || 'Unknown'}</span>;
     }
-    
-    const lead = project.members.find(member => member.role === 'lead');
-    if (lead) {
-      // Return user name from our users map if available
-      return users[lead.user_id] || 'Mukamana Fransine';
-    } else {
-      // Fallback to created_by
-      return users[project.created_by] || 'Mukamana Fransine';
-    }
-  };
-  
-  // Format date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-  
-  // Get category name from category_id
-  const getCategoryName = (categoryId) => {
-    // Return actual category name from our categories map
-    // If not found, show a default category
-    return categories[categoryId] || 'Food system';
-  };
-
-  // Handle tab change
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setPage(1); // Reset to first page when changing tabs
   };
 
   return (
@@ -437,22 +405,22 @@ const ProjectsPage = () => {
       {/* Header with title and buttons */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="text-gray-500 text-sm">Projects List</p>
+          <h1 className="text-2xl font-bold">Opportunities</h1>
+          <p className="text-gray-500 text-sm">Opportunities List</p>
         </div>
         <div className="flex space-x-3">
           <button className="flex items-center px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50">
             <ArrowUp className="w-4 h-4 mr-2" />
-            Import Projects
+            Import Opportunities
           </button>
-          <Link href="/projects/add-project" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
-            Add Project
+          <Link href="/opportunities/add-opportunities" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
+            Add Opportunity
             <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </div>
       </div>
 
-      {/*  Tabs - */}
+      {/* Tabs */}
       <div className='bg-white'>
         <div className="flex border-b border-gray-200 mb-6 bg-white">
           <button
@@ -467,44 +435,55 @@ const ProjectsPage = () => {
             <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
           </button>
           <button
-            onClick={() => handleTabChange('in-progress')}
+            onClick={() => handleTabChange('draft')}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'in-progress'
+              activeTab === 'draft'
                 ? 'border-b-2 border-green-700 text-green-700'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            In progress
-            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.active}</span>
+            Draft
+            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.draft}</span>
           </button>
           <button
-            onClick={() => handleTabChange('completed')}
+            onClick={() => handleTabChange('published')}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'completed'
+              activeTab === 'published'
                 ? 'border-b-2 border-green-700 text-green-700'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Completed
-            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.completed}</span>
+            Published
+            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.published}</span>
           </button>
           <button
-            onClick={() => handleTabChange('pending')}
+            onClick={() => handleTabChange('archived')}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'pending'
+              activeTab === 'archived'
                 ? 'border-b-2 border-green-700 text-green-700'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Pending
-            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.planned}</span>
+            Archived
+            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.archived}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('closed')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'closed'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Closed
+            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.closed}</span>
           </button>
         </div>
 
-        {/* Project list title */}
-        <h2 className="text-lg font-bold mb-4">List of {activeTab === 'all' ? '' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Projects</h2>
+        {/* Opportunity list title */}
+        <h2 className="text-lg font-bold mb-4">List of {activeTab === 'all' ? '' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Opportunities</h2>
 
-        {/* Search and filter -  */}
+        {/* Search and filter */}
         <div className="flex justify-end mb-4">
           <div className="relative w-64">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -530,106 +509,86 @@ const ProjectsPage = () => {
           </button>
         </div>
 
-        {/* Projects table -  */}
+        {/* Opportunities table */}
         <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
           {loading ? (
-            <div className="text-center py-4">Loading projects...</div>
-          ) : projects.length === 0 ? (
-            <div className="text-center py-4">No projects found</div>
+            <div className="text-center py-4">Loading opportunities...</div>
+          ) : opportunities.length === 0 ? (
+            <div className="text-center py-4">No opportunities found</div>
           ) : (
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project name</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team Lead</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created at</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {projects.map((project, index) => (
-                  <tr key={project.id || index} className="hover:bg-gray-50">
+                {opportunities.map((opportunity, index) => (
+                  <tr key={opportunity.id || index} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getRowNumber(index)}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {project.name}
+                      {opportunity.title}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{getCategoryName(project.category_id)}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {index === 8 ? (
-                        <span className="border border-purple-500 border-dashed py-0.5 px-1 rounded">
-                          {getTeamLead(project)}
-                        </span>
-                      ) : (
-                        getTeamLead(project)
-                      )}
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                      {opportunity.type}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {project.location ? (
-                        // If location is a string with multiple cities separated by commas, only show the first one
-                        project.location.split(',')[0].trim()
-                      ) : 'N/A'}
+                      {getCategoryName(opportunity.category_id)}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(project.created_at)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {opportunity.location || 'N/A'}
+                      {opportunity.location_type && <span className="text-xs ml-1 text-gray-500">({opportunity.location_type})</span>}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-1 text-gray-400" />
+                        {formatDate(opportunity.application_deadline)}
+                      </div>
+                    </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      {mapStatusToUI(project.status) === 'completed' && (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                          • Completed
-                        </span>
-                      )}
-                      {mapStatusToUI(project.status) === 'pending' && (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                          • Pending
-                        </span>
-                      )}
-                      {mapStatusToUI(project.status) === 'in-progress' && (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
-                          • In Progress
-                        </span>
-                      )}
-                      {!['completed', 'pending', 'in-progress'].includes(mapStatusToUI(project.status)) && (
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                          • {project.status || 'Unknown'}
-                        </span>
-                      )}
+                      {getStatusBadge(opportunity.status)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
                       <button 
                         className="text-gray-500 hover:text-gray-700"
-                        onClick={() => toggleMenu(project.id)}
+                        onClick={() => toggleMenu(opportunity.id)}
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
                       
                       {/* Dropdown menu */}
-                      {openMenuId === project.id && (
+                      {openMenuId === opportunity.id && (
                         <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                           <button
-                            onClick={() => handleAction('view', project.id)}
+                            onClick={() => handleAction('view', opportunity.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             View details
                           </button>
                           <button
-                            onClick={() => handleAction('update', project.id)}
+                            onClick={() => handleAction('update', opportunity.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <Edit className="w-4 h-4 mr-2" />
                             Update
                           </button>
                           <button
-                            onClick={() => handleAction('status', project.id)}
+                            onClick={() => handleAction('status', opportunity.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <RefreshCw className="w-4 h-4 mr-2" />
                             Change status
                           </button>
                           <button
-                            onClick={() => handleAction('delete', project.id)}
+                            onClick={() => handleAction('delete', opportunity.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                           >
                             <Trash className="w-4 h-4 mr-2" />
@@ -645,10 +604,10 @@ const ProjectsPage = () => {
           )}
         </div>
 
-        {/* Pagination -  */}
+        {/* Pagination */}
         <div className="flex items-center justify-between py-3">
           <div className="text-sm text-gray-500">
-            Showing {projects.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalProjects)} out of {totalProjects} entries
+            Showing {opportunities.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalOpportunities)} out of {totalOpportunities} entries
           </div>
           <div className="flex items-center space-x-1">
             <button 
@@ -708,4 +667,4 @@ const ProjectsPage = () => {
   );
 };
 
-export default ProjectsPage;
+export default OpportunitiesPage;

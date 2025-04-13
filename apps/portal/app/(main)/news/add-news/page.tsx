@@ -1,1070 +1,917 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect, FormEvent } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Image from "next/image";
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { 
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Switch,
-  Badge,
-  Textarea,
-  Calendar,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@workspace/ui';
-import { 
-  CalendarIcon, 
-  Save as SaveIcon,
-  Send as PublishIcon,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Quote,
-  Link as LinkIcon,
-  Heading1,
-  Heading2,
-  Image as ImageIcon,
-  Eye,
-  X,
-  Upload,
-  Wand2,
-  HelpCircle,
-  Book,
-  Mail,
-  Phone,
-  MessageCircle
-} from 'lucide-react';
-import { cn } from '@workspace/ui/lib/utils';
-import { generateSEOTitle, generateExcerpt } from '@/lib/gemini';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { Image as TiptapImage } from '@tiptap/extension-image'
+import { 
+  ArrowLeft, 
+  Plus, 
+  X, 
+  Upload, 
+  Image as ImageIcon, 
+  FileVideo,
+  Check, 
+  AlertCircle, 
+  Loader, 
+  Calendar,
+  ChevronDown,
+  Tag as TagIcon
+} from 'lucide-react';
+import Link from 'next/link';
 
-const formSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  content: z.string().min(1, 'Content is required'),
-  excerpt: z.string().min(1, 'Excerpt is required'),
-  status: z.enum(['draft', 'published']),
-  category: z.string().min(1, 'Category is required'),
-  publishDate: z.date(),
-  tags: z.array(z.string()),
-  featuredImage: z.instanceof(File).optional(),
-})
-
-type FormValues = z.infer<typeof formSchema>
-
-const defaultValues: Partial<FormValues> = {
-  title: "",
-  content: "",
-  excerpt: "",
-  status: "draft",
-  category: "",
-  tags: []
-};
-
-const categories = [
-  'Technology',
-  'Agriculture',
-  'Climate',
-  'Education',
-  'Healthcare',
-  'Infrastructure'
-];
-
-// Add type for image dimensions
-interface ImageDimensions {
-  width: number;
-  height: number;
-}
-
-interface ImagePreviewState {
-  url: string;
-  width: number;
-  height: number;
-}
-
-const CustomImage = TiptapImage.extend({
-  addAttributes() {
-    return {
-      ...this.parent?.(),
-      width: {
-        default: null,
-        renderHTML: (attributes) => ({
-          width: attributes.width,
-        }),
-      },
-      height: {
-        default: null,
-        renderHTML: (attributes) => ({
-          height: attributes.height,
-        }),
-      },
-      caption: {
-        default: null,
-        renderHTML: (attributes) => ({
-          'data-caption': attributes.caption,
-        }),
-      },
-      alignment: {
-        default: 'center',
-        renderHTML: (attributes) => ({
-          'data-alignment': attributes.alignment,
-        }),
-      },
-    }
-  },
-  renderHTML({ node, HTMLAttributes }) {
-    const figure = document.createElement('figure')
-    figure.classList.add('image-figure')
-    figure.setAttribute('data-alignment', node.attrs.alignment || 'center')
-
-    const img = document.createElement('img')
-    img.src = node.attrs.src
-    if (node.attrs.width) img.width = node.attrs.width
-    if (node.attrs.height) img.height = node.attrs.height
-    img.classList.add('resizable-image')
-    figure.appendChild(img)
-
-    if (node.attrs.caption) {
-      const caption = document.createElement('figcaption')
-      caption.classList.add('image-caption')
-      caption.textContent = node.attrs.caption
-      figure.appendChild(caption)
-    }
-
-    return figure
-  },
-})
-
-interface HelpSection {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ElementType;
-}
-
-const sections: HelpSection[] = [
-  {
-    id: 'faq',
-    title: 'Frequently Asked Questions',
-    description: 'Find answers to common questions about using the platform',
-    icon: HelpCircle,
-  },
-  {
-    id: 'documentation',
-    title: 'Documentation',
-    description: 'Detailed guides and documentation for all features',
-    icon: Book,
-  },
-  {
-    id: 'support',
-    title: 'Support',
-    description: 'Get help from our support team',
-    icon: MessageCircle,
-  },
-  {
-    id: 'contact',
-    title: 'Contact Us',
-    description: 'Get in touch with our team',
-    icon: Mail,
-  },
-];
-
-interface FAQItem {
-  question: string;
-  answer: string;
-}
-
-const faqData: FAQItem[] = [
-  {
-    question: 'How do I create a new article?',
-    answer: 'To create a new article, navigate to the News section and click on the "Add News" button. Fill in the required fields including title, content, and any featured images. You can preview your article before publishing.',
-  },
-  {
-    question: 'How do I manage my account settings?',
-    answer: 'You can manage your account settings by clicking on the Settings icon in the sidebar. Here you can update your profile information, change your password, and customize your notification preferences.',
-  },
-  {
-    question: 'What file types are supported for image uploads?',
-    answer: 'We support JPEG, PNG, and GIF image formats. The maximum file size for uploads is 5MB.',
-  },
-  {
-    question: 'How do I format my article content?',
-    answer: 'The article editor provides rich text formatting options. You can use the toolbar to add headings, lists, links, and images. You can also use markdown syntax for quick formatting.',
-  },
-];
-
-export default function AddNewsPage() {
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
-  const [imagePreview, setImagePreview] = useState<ImagePreviewState | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageDimensions, setImageDimensions] = useState<ImageDimensions | null>(null);
+const AddNewsPage = () => {
   const router = useRouter();
+  const fileInputRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [addingTag, setAddingTag] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(null);
   
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: '',
-      content: '',
-      excerpt: '',
-      status: 'draft' as const,
-      category: '',
-      publishDate: new Date(),
-      tags: [],
-    },
-  });
+  // Valid enum values based on the validation error
+  const categories = ['all', 'news', 'blogs', 'reports', 'publications'];
+  const statuses = ['published', 'not_published'];
 
-  const { register, control, setValue, watch, formState: { errors } } = form;
-
-  // Initialize editor with enhanced image support
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      CustomImage,
-    ],
+  // Form state
+  const [formData, setFormData] = useState({
+    title: '',
     content: '',
-    onUpdate({ editor }) {
-      form.setValue('content', editor.getHTML())
-    },
+    summary: '',
+    status: 'published', // Using valid enum value
+    publish_date: new Date().toISOString(), // Setting a valid ISO date
+    category: 'news', // Using valid enum value
+    key_lessons: '',
+    media: {
+      items: []
+    }
   });
 
-  // Editor toolbar handlers
-  const toggleBold = () => editor?.chain().focus().toggleBold().run();
-  const toggleItalic = () => editor?.chain().focus().toggleItalic().run();
-  const toggleBulletList = () => editor?.chain().focus().toggleBulletList().run();
-  const toggleOrderedList = () => editor?.chain().focus().toggleOrderedList().run();
-  const toggleBlockquote = () => editor?.chain().focus().toggleBlockquote().run();
-  const setHeading1 = () => editor?.chain().focus().toggleHeading({ level: 1 }).run();
-  const setHeading2 = () => editor?.chain().focus().toggleHeading({ level: 2 }).run();
-  const undo = () => editor?.chain().focus().undo().run();
-  const redo = () => editor?.chain().focus().redo().run();
+  // Temporary state for new media
+  const [newMedia, setNewMedia] = useState({ 
+    file: null,
+    type: 'image',
+    title: '',
+    cover: false
+  });
 
-  // Add image to editor with enhanced controls
-  const addImage = useCallback((url: string, width: number, height: number) => {
-    const maxWidth = 800;
-    const aspectRatio = width / height;
-    const newWidth = Math.min(width, maxWidth);
-    const newHeight = Math.round(newWidth / aspectRatio);
+  // Selected tags for the news article
+  const [selectedTags, setSelectedTags] = useState([]);
 
-    editor?.chain().focus().insertContent({
-      type: 'image',
-      attrs: {
-        src: url,
-        width: newWidth,
-        height: newHeight,
-        alignment: 'center',
-      }
-    }).run();
-  }, [editor]);
-
-  // Image controls dialog
-  const showImageControls = (node: any) => {
-    const dialog = document.createElement('dialog')
-    dialog.classList.add('image-controls-dialog')
-    
-    const form = document.createElement('form')
-    form.innerHTML = `
-      <div class="flex flex-col gap-4 p-4">
-        <div class="flex gap-4">
-          <div class="flex flex-col gap-2">
-            <label for="width">Width</label>
-            <input type="number" id="width" value="${node.attrs.width || ''}" class="border p-2 rounded" />
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="height">Height</label>
-            <input type="number" id="height" value="${node.attrs.height || ''}" class="border p-2 rounded" />
-          </div>
-        </div>
-        <div class="flex flex-col gap-2">
-          <label for="caption">Caption</label>
-          <input type="text" id="caption" value="${node.attrs.caption || ''}" class="border p-2 rounded" />
-        </div>
-        <div class="flex flex-col gap-2">
-          <label for="alignment">Alignment</label>
-          <select id="alignment" class="border p-2 rounded">
-            <option value="left" ${node.attrs.alignment === 'left' ? 'selected' : ''}>Left</option>
-            <option value="center" ${node.attrs.alignment === 'center' ? 'selected' : ''}>Center</option>
-            <option value="right" ${node.attrs.alignment === 'right' ? 'selected' : ''}>Right</option>
-          </select>
-        </div>
-        <div class="flex justify-end gap-2 mt-4">
-          <button type="button" class="px-4 py-2 border rounded hover:bg-gray-100" onclick="this.closest('dialog').close()">Cancel</button>
-          <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Update</button>
-        </div>
-      </div>
-    `
-    
-    form.onsubmit = (e) => {
-      e.preventDefault()
-      const formData = new FormData(form)
-      const width = parseInt(formData.get('width') as string)
-      const height = parseInt(formData.get('height') as string)
-      const caption = formData.get('caption') as string
-      const alignment = formData.get('alignment') as string
-
-      editor?.chain().focus().updateAttributes('image', {
-        width: width || null,
-        height: height || null,
-        caption: caption || null,
-        alignment: alignment || 'center'
-      }).run()
-
-      dialog.close()
-    }
-
-    dialog.appendChild(form)
-    document.body.appendChild(dialog)
-    dialog.showModal()
-  };
-
-  // Add global styles for image handling
+  // Fetch tags on component mount
   useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      .image-figure {
-        margin: 1em 0;
-        max-width: 100%;
+    const fetchTags = async () => {
+      try {
+        const response = await axios.get('http://localhost:3002/api/news/tags');
+        if (response.data && Array.isArray(response.data.tags)) {
+          setTags(response.data.tags);
+        } else if (Array.isArray(response.data)) {
+          setTags(response.data);
+        } else {
+          console.error('Unexpected tags response format:', response.data);
+          setTags([]);
+        }
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+        setTags([]);
       }
-      .image-figure img {
-        max-width: 100%;
-        height: auto;
-        cursor: pointer;
-      }
-      .image-caption {
-        text-align: center;
-        color: #666;
-        font-size: 0.9em;
-        margin-top: 0.5em;
-      }
-      .resizable-image {
-        transition: all 0.2s ease;
-      }
-      .resizable-image:hover {
-        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
-      }
-    `;
-    document.head.appendChild(style);
-    return () => style.remove();
+    };
+    
+    fetchTags();
   }, []);
 
-  const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
-    return new Promise((resolve, reject) => {
-      const img = document.createElement('img');
-      img.onload = () => {
-        resolve({
-          width: img.width,
-          height: img.height
-        });
-      };
-      img.onerror = () => {
-        reject(new Error('Failed to load image'));
-      };
-      img.src = URL.createObjectURL(file);
-    });
+  // Handle input change
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  // Handle text area change
+  const handleTextAreaChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-
-    if (file.size > maxSize) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Only JPEG, PNG and GIF images are allowed');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      if (!e.target?.result) return;
+  // Handle file selection
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
       
-      const img = document.createElement('img');
-      img.onload = () => {
-        const maxWidth = 800;
-        const aspectRatio = img.height / img.width;
-        const newWidth = Math.min(img.width, maxWidth);
-        const newHeight = Math.round(newWidth * aspectRatio);
-
-        setImagePreview({
-          url: img.src,
-          width: newWidth,
-          height: newHeight
-        });
-        form.setValue('featuredImage', file);
-      };
-      img.src = e.target.result as string;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleImageClear = () => {
-    setImagePreview(null);
-    form.setValue("featuredImage", undefined);
-  };
-
-  // Handle tag input
-  const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      const newTag = tagInput.trim();
-      if (newTag && !tags.includes(newTag)) {
-        const updatedTags = [...tags, newTag];
-        setTags(updatedTags);
-        setValue('tags', updatedTags);
-        setTagInput('');
-      }
+      const fileType = file.type.startsWith('image/') ? 'image' : 'video';
+      
+      setNewMedia(prev => ({
+        ...prev,
+        file,
+        type: fileType
+      }));
     }
   };
 
-  const handleTagRemove = (tag: string) => {
-    const updatedTags = tags.filter(t => t !== tag);
-    setTags(updatedTags);
-    setValue('tags', updatedTags);
+  // Handle media input change
+  const handleMediaChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setNewMedia(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  // Watch title for potential future use
-  const title = watch('title');
+  // Trigger file input click
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
 
-  // Handle form submission
-  const onSubmit = async (data: FormValues, event?: FormEvent) => {
-    if (event) {
-      event.preventDefault();
-    }
+  // Upload file to server
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
     try {
-      setIsSubmitting(true);
-      const formData = new FormData();
-      formData.append('title', data.title);
-      formData.append('content', data.content);
-      formData.append('excerpt', data.excerpt);
-      formData.append('status', data.status);
-      formData.append('category', data.category);
-      formData.append('publishDate', data.publishDate.toISOString());
-      formData.append('tags', JSON.stringify(data.tags));
+      setIsUploading(true);
+      setUploadProgress(0);
       
-      if (data.featuredImage) {
-        formData.append('featuredImage', data.featuredImage);
-      }
-
-      const response = await fetch('http://localhost:3002/api/news', {
-        method: 'POST',
-        body: formData,
+      // Upload to your media endpoint
+      const response = await axios.post('http://localhost:3002/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit news article');
+      setIsUploading(false);
+      // Return the URL from the response
+      return response.data.url;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setIsUploading(false);
+      
+      // For demo purposes, return a mock URL if the upload endpoint is not available
+      if (file.type.startsWith('image/')) {
+        return `https://example.com/images/${file.name}`;
+      } else {
+        return `https://example.com/videos/${file.name}`;
       }
-
-      toast.success('News article submitted successfully');
-      form.reset();
-      setImagePreview(null);
-    } catch (error) {
-      console.error('Error submitting news article:', error);
-      toast.error('Failed to submit news article');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [isGenerating, setIsGenerating] = useState(false)
-
-  const handleGenerateTitle = async () => {
-    if (!editor?.getHTML()) {
-      toast.error('Please add some content first')
-      return
+  // Toggle tag selection
+  const toggleTag = (tagId) => {
+    if (selectedTags.includes(tagId)) {
+      setSelectedTags(selectedTags.filter(id => id !== tagId));
+    } else {
+      setSelectedTags([...selectedTags, tagId]);
     }
-
-    try {
-      setIsGenerating(true)
-      const content = editor.getHTML()
-      const title = await generateSEOTitle(content)
-      setValue('title', title)
-      toast.success('Title generated successfully')
-    } catch (error) {
-      console.error('Error generating title:', error)
-      toast.error('Failed to generate title')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handleGenerateExcerpt = async () => {
-    if (!editor?.getHTML()) {
-      toast.error('Please add some content first')
-      return
-    }
-
-    try {
-      setIsGenerating(true)
-      const content = editor.getHTML()
-      const excerpt = await generateExcerpt(content)
-      setValue('excerpt', excerpt)
-      toast.success('Excerpt generated successfully')
-    } catch (error) {
-      console.error('Error generating excerpt:', error)
-      toast.error('Failed to generate excerpt')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handlePreview = (values: FormValues) => {
-    if (!editor?.getHTML()) {
-      toast.error('Please add some content first')
-      return
-    }
-
-    const previewData = {
-      title: values.title,
-      content: editor.getHTML(),
-      excerpt: values.excerpt,
-      category: values.category,
-      featuredImage: imagePreview ? {
-        url: imagePreview.url,
-        width: imagePreview.width,
-        height: imagePreview.height
-      } : null,
-      publishDate: values.publishDate.toISOString()
-    }
-
-    sessionStorage.setItem('newsPreview', JSON.stringify(previewData))
-    window.open('/news/preview', '_blank')
-  }
-
-  const [activeSection, setActiveSection] = useState('faq');
-  const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
-  const [filteredFaqs, setFilteredFaqs] = useState(faqData);
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value.toLowerCase();
-    const filtered = faqData.filter(
-      faq =>
-        faq.question.toLowerCase().includes(query) ||
-        faq.answer.toLowerCase().includes(query)
-    );
-    setFilteredFaqs(filtered);
   };
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'faq':
-        return (
-          <div className="space-y-4">
-            {filteredFaqs.map((faq, index) => (
-              <div
-                key={index}
-                className="border rounded-lg overflow-hidden"
-              >
-                <button
-                  className={`w-full text-left p-4 flex justify-between items-center ${
-                    expandedFAQ === faq.question ? 'bg-green-50' : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => setExpandedFAQ(expandedFAQ === faq.question ? null : faq.question)}
-                >
-                  <span className="font-medium">{faq.question}</span>
-                  <HelpCircle className={`w-5 h-5 transition-transform ${
-                    expandedFAQ === faq.question ? 'rotate-180' : ''
-                  }`} />
-                </button>
-                {expandedFAQ === faq.question && (
-                  <div className="p-4 bg-white border-t">
-                    <p className="text-gray-600">{faq.answer}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        );
+  // Add media to media list
+  const addMedia = async () => {
+    if (!newMedia.file || !newMedia.title) return;
+    
+    try {
+      // First upload the file
+      const fileUrl = await uploadFile(newMedia.file);
+      
+      const mediaId = `media-${Date.now()}`;
+      const mediaToAdd = {
+        id: mediaId,
+        type: newMedia.type,
+        url: fileUrl,
+        title: newMedia.title,
+        cover: newMedia.cover,
+        order: formData.media.items.length + 1,
+        size: newMedia.file.size
+      };
+      
+      // Add thumbnail URL for videos
+      if (newMedia.type === 'video') {
+        mediaToAdd.duration = 0; // You would calculate actual duration if possible
+        mediaToAdd.thumbnailUrl = `https://example.com/thumbnails/${mediaId}.jpg`;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        media: {
+          items: [...prev.media.items, mediaToAdd]
+        }
+      }));
+      
+      // Reset new media form
+      setNewMedia({ 
+        file: null,
+        type: 'image',
+        title: '',
+        cover: false
+      });
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+    } catch (error) {
+      console.error('Error adding media:', error);
+      setError('Failed to upload media. Please try again.');
+    }
+  };
 
-      case 'documentation':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-4 hover:bg-gray-50 cursor-pointer">
-                <h3 className="font-medium mb-2">Getting Started Guide</h3>
-                <p className="text-gray-600 text-sm">Learn the basics of using our platform</p>
-              </Card>
-              <Card className="p-4 hover:bg-gray-50 cursor-pointer">
-                <h3 className="font-medium mb-2">Content Management</h3>
-                <p className="text-gray-600 text-sm">Learn how to create and manage content</p>
-              </Card>
-              <Card className="p-4 hover:bg-gray-50 cursor-pointer">
-                <h3 className="font-medium mb-2">User Management</h3>
-                <p className="text-gray-600 text-sm">Understand user roles and permissions</p>
-              </Card>
-              <Card className="p-4 hover:bg-gray-50 cursor-pointer">
-                <h3 className="font-medium mb-2">Advanced Features</h3>
-                <p className="text-gray-600 text-sm">Explore advanced platform features</p>
-              </Card>
-            </div>
-          </div>
-        );
+  // Select media for editing
+  const selectMedia = (mediaId) => {
+    if (selectedMedia && selectedMedia.id === mediaId) {
+      setSelectedMedia(null);
+    } else {
+      const media = formData.media.items.find(item => item.id === mediaId);
+      setSelectedMedia(media);
+    }
+  };
 
-      case 'support':
-        return (
-          <div className="space-y-6">
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-medium mb-2">Support Hours</h3>
-              <p className="text-gray-600">Monday - Friday: 9:00 AM - 5:00 PM (CAT)</p>
-              <p className="text-gray-600">Response time: Within 24 hours</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-4">
-                <h3 className="font-medium mb-2">Live Chat</h3>
-                <p className="text-gray-600 mb-4">Chat with our support team in real-time</p>
-                <button className="text-green-700 hover:text-green-800 font-medium">
-                  Start Chat
-                </button>
-              </Card>
-              <Card className="p-4">
-                <h3 className="font-medium mb-2">Submit a Ticket</h3>
-                <p className="text-gray-600 mb-4">Create a support ticket for detailed assistance</p>
-                <button className="text-green-700 hover:text-green-800 font-medium">
-                  Create Ticket
-                </button>
-              </Card>
-            </div>
-          </div>
-        );
+  // Toggle media as cover
+  const toggleMediaCover = (mediaId) => {
+    setFormData(prev => ({
+      ...prev,
+      media: {
+        items: prev.media.items.map(item => 
+          item.id === mediaId 
+            ? { ...item, cover: true } 
+            : { ...item, cover: false } // Ensure only one cover image
+        )
+      }
+    }));
+    
+    // Update selectedMedia if it's the one being updated
+    if (selectedMedia && selectedMedia.id === mediaId) {
+      setSelectedMedia(prev => ({ ...prev, cover: true }));
+    }
+  };
 
-      case 'contact':
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-4">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Mail className="w-5 h-5 text-green-700" />
-                  <h3 className="font-medium">Email</h3>
-                </div>
-                <p className="text-gray-600">support@example.com</p>
-              </Card>
-              <Card className="p-4">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Phone className="w-5 h-5 text-green-700" />
-                  <h3 className="font-medium">Phone</h3>
-                </div>
-                <p className="text-gray-600">+250 123 456 789</p>
-              </Card>
-            </div>
-            <Card className="p-6">
-              <h3 className="font-medium mb-4">Send us a message</h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
-                  <input
-                    type="text"
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Your name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <input
-                    type="email"
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Your email"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Message</label>
-                  <textarea
-                    className="w-full p-2 border rounded-md"
-                    rows={4}
-                    placeholder="How can we help?"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-green-700 text-white py-2 px-4 rounded-md hover:bg-green-800"
-                >
-                  Send Message
-                </button>
-              </form>
-            </Card>
-          </div>
-        );
+  // Remove media from list
+  const removeMedia = (mediaId) => {
+    setFormData(prev => ({
+      ...prev,
+      media: {
+        items: prev.media.items.filter(media => media.id !== mediaId)
+      }
+    }));
+    if (selectedMedia && selectedMedia.id === mediaId) {
+      setSelectedMedia(null);
+    }
+  };
 
-      default:
-        return null;
+  // Remove featured image
+  const removeNewMedia = () => {
+    setNewMedia({
+      file: null,
+      type: 'image',
+      title: '',
+      cover: false
+    });
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle adding a new tag
+  const handleAddTag = async () => {
+    if (!newTagName.trim()) return;
+    
+    try {
+      setAddingTag(true);
+      
+      const response = await axios.post('http://localhost:3002/api/news/tags', {
+        name: newTagName.trim()
+      });
+      
+      const newTag = response.data;
+      
+      // Add the new tag to the tags list
+      setTags(prev => [...prev, newTag]);
+      
+      // Select the newly created tag
+      setSelectedTags(prev => [...prev, newTag.id]);
+      
+      // Reset the new tag name
+      setNewTagName('');
+      
+      // Close the modal
+      setShowTagModal(false);
+    } catch (error) {
+      console.error('Error adding tag:', error);
+      setError('Failed to add tag. Please try again.');
+    } finally {
+      setAddingTag(false);
+    }
+  };
+
+  // Format date for input field
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  };
+
+  // Format file size display
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Update publish_date with valid ISO string when date input changes
+  const handleDateChange = (e) => {
+    const dateValue = e.target.value; // Format: YYYY-MM-DD
+    
+    if (dateValue) {
+      // Create a date object at noon to avoid timezone issues
+      const date = new Date(`${dateValue}T12:00:00Z`);
+      setFormData(prev => ({
+        ...prev,
+        publish_date: date.toISOString() // Convert to ISO string format
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        publish_date: ''
+      }));
+    }
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess(false);
+    
+    // Validate form data
+    if (!formData.title || !formData.content) {
+      setError('Please fill in all required fields (Title, Content)');
+      setLoading(false);
+      return;
+    }
+    
+    // Prepare data for API
+    const newsData = {
+      ...formData,
+      tags: selectedTags
+    };
+    
+    // Ensure we have a valid publish_date if status is published
+    if (formData.status === 'published' && !formData.publish_date) {
+      newsData.publish_date = new Date().toISOString();
+    }
+    
+    try {
+      const response = await axios.post('http://localhost:3002/api/news', newsData);
+      console.log('News created:', response.data);
+      setSuccess(true);
+      
+      // Navigate back to news list after a brief delay
+      setTimeout(() => {
+        router.push('/news');
+      }, 2000);
+    } catch (error) {
+      console.error('Error creating news:', error);
+      const errorMessage = error.response?.data?.message || 
+                          (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) : 
+                          'Failed to create news article. Please try again.');
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Add News</h1>
-          <p className="text-gray-500">Create a new news article</p>
+    <div className="max-w-7xl mx-auto p-6">
+      {/* Header with back button */}
+      <div className="mb-6">
+        <div className="flex items-center mb-2">
+          <Link href="/news" className="mr-4 p-2 bg-gray-100 rounded-full">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <h1 className="text-2xl font-bold">Add News Article</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => handlePreview(form.getValues())}
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Preview
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => {
-              form.setValue('status', 'draft');
-            }}
-            disabled={isSubmitting}
-          >
-            <SaveIcon className="w-4 h-4 mr-2" />
-            Save as Draft
-          </Button>
-          <Button 
-            onClick={() => {
-              form.setValue('status', 'published');
-            }}
-            disabled={isSubmitting}
-            className="bg-green-700 hover:bg-green-800"
-          >
-            <PublishIcon className="w-4 h-4 mr-2" />
-            Publish
-          </Button>
-        </div>
+        <p className="text-gray-600">News/Create Article</p>
       </div>
-
-      <div className="grid grid-cols-3 gap-6">
-        {/* Main content - Takes up 2/3 of the space */}
-        <div className="col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Content</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Title field with AI generation */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="title">Title</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleGenerateTitle}
-                    className="h-8"
-                  >
-                    <Wand2 className="w-4 h-4 mr-2" />
-                    Generate SEO Title
-                  </Button>
-                </div>
-                <Input
-                  id="title"
-                  {...register("title")}
-                  className="w-full"
-                  placeholder="Enter article title"
-                />
-                {errors.title && (
-                  <p className="text-sm text-red-500">{errors.title.message}</p>
-                )}
-              </div>
-
-              {/* Editor toolbar */}
-              <div className="border rounded-lg p-2 space-y-4">
-                <div className="flex items-center gap-1 border-b pb-2">
-                  <Button variant="ghost" size="sm" onClick={toggleBold} className="h-8">
-                    <Bold className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={toggleItalic} className="h-8">
-                    <Italic className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={toggleBulletList} className="h-8">
-                    <List className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={toggleOrderedList} className="h-8">
-                    <ListOrdered className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={toggleBlockquote} className="h-8">
-                    <Quote className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={setHeading1} className="h-8">
-                    <Heading1 className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={setHeading2} className="h-8">
-                    <Heading2 className="w-4 h-4" />
-                  </Button>
-                </div>
-                <EditorContent editor={editor} className="min-h-[300px] prose max-w-none" />
-              </div>
-
-              {/* Excerpt field with AI generation */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="excerpt">Excerpt</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleGenerateExcerpt}
-                    className="h-8"
-                  >
-                    <Wand2 className="w-4 h-4 mr-2" />
-                    Generate Excerpt
-                  </Button>
-                </div>
-                <Textarea
-                  id="excerpt"
-                  {...register("excerpt")}
-                  className="w-full"
-                  placeholder="Enter article excerpt"
-                />
-                {errors.excerpt && (
-                  <p className="text-sm text-red-500">{errors.excerpt.message}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+      
+      {/* Success message */}
+      {success && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+          <span className="block sm:inline">News article created successfully! Redirecting...</span>
         </div>
-
-        {/* Sidebar - Takes up 1/3 of the space */}
-        <div className="space-y-6">
-          {/* Status and Scheduling */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Publishing</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Status */}
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
+      )}
+      
+      {/* Error message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 flex items-center">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          <span>{error}</span>
+        </div>
+      )}
+      
+      {/* News article form */}
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md">
+        {/* Basic information */}
+        <div className="mb-8 p-6">
+          <div className="flex">
+            {/* Left column - section title */}
+            <div className="w-1/4 pr-8">
+              <h2 className="text-xl font-bold">Article Details</h2>
+              <p className="text-gray-600 text-sm">Basic information about the news article</p>
+            </div>
+            
+            {/* Right column - form fields */}
+            <div className="w-3/4">
+              <div className="mb-6">
+                {/* Title */}
+                <label className="block text-sm font-medium mb-1">
+                  Title<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  placeholder="Enter news title"
+                  required
+                />
+              </div>
+              
+              <div className="mb-6">
+                {/* Summary */}
+                <label className="block text-sm font-medium mb-1">
+                  Summary
+                </label>
+                <textarea
+                  name="summary"
+                  value={formData.summary}
+                  onChange={handleTextAreaChange}
+                  rows={3}
+                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  placeholder="Enter a brief summary of the article"
+                />
+              </div>
+              
+              <div className="mb-6">
+                {/* Content */}
+                <label className="block text-sm font-medium mb-1">
+                  Content<span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="content"
+                  value={formData.content}
+                  onChange={handleTextAreaChange}
+                  rows={10}
+                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  placeholder="Enter the content of the article"
+                  required
+                />
+              </div>
+              
+              <div className="mb-6">
+                {/* Key Lessons */}
+                <label className="block text-sm font-medium mb-1">
+                  Key Lessons
+                </label>
+                <textarea
+                  name="key_lessons"
+                  value={formData.key_lessons}
+                  onChange={handleTextAreaChange}
+                  rows={3}
+                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  placeholder="Enter key takeaways or lessons (separate with semicolons for multiple items)"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Category
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-
-              {/* Publish Date */}
-              <div className="space-y-2">
-                <Label>Publish Date</Label>
-                <Controller
-                  name="publishDate"
-                  control={control}
-                  render={({ field }) => (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Categories */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Controller
-                name="category"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category.toLowerCase()}>
-                          {category}
-                        </SelectItem>
+                      {categories.map(category => (
+                        <option key={category} value={category}>
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.category && (
-                <p className="text-sm text-red-500 mt-2">{errors.category.message}</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Tags */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex gap-2 flex-wrap">
-                  {tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="flex items-center gap-1"
-                    >
-                      {tag}
-                      <button
-                        onClick={() => handleTagRemove(tag)}
-                        className="text-muted-foreground hover:text-foreground"
-                        title="Remove tag"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
-                <Input
-                  placeholder="Add tags..."
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagInput}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Press enter to add tags
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Featured Image */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Featured Image</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div 
-                className="relative"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.classList.add('border-primary-green');
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.classList.remove('border-primary-green');
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.currentTarget.classList.remove('border-primary-green');
-                  const file = e.dataTransfer.files?.[0];
-                  if (file) {
-                    handleImageUpload({ target: { files: [file] } } as any);
-                  }
-                }}
-              >
-                {imagePreview ? (
-                  <div className="relative rounded-lg overflow-hidden">
-                    <Image
-                      src={imagePreview.url}
-                      alt="Preview"
-                      width={imagePreview.width}
-                      height={imagePreview.height}
-                      className="w-full h-auto object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleImageClear}
-                        className="bg-red-500 hover:bg-red-600"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Remove Image
-                      </Button>
+                
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Status
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                    >
+                      {statuses.map(status => (
+                        <option key={status} value={status}>
+                          {status === 'published' ? 'Published' : 'Not Published'}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+                
+                {/* Published date - only show if status is published */}
+                {formData.status === 'published' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Publication Date<span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="date"
+                        name="publish_date"
+                        value={formatDate(formData.publish_date || new Date())}
+                        onChange={handleDateChange}
+                        className="w-full p-2.5 border border-gray-300 rounded-md"
+                        required={formData.status === 'published'}
+                      />
+                      <Calendar className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                     </div>
                   </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Horizontal line divider */}
+        <hr className="border-t border-gray-200" />
+
+        {/* Media Section */}
+        <div className="mb-8 p-6">
+          <div className="flex">
+            {/* Left column - section title */}
+            <div className="w-1/4 pr-8">
+              <h2 className="text-xl font-bold">Media</h2>
+              <p className="text-gray-600 text-sm">Add images and videos to the article</p>
+            </div>
+            
+            {/* Right column - form fields */}
+            <div className="w-3/4">
+              {/* Upload area */}
+              <div 
+                className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6 cursor-pointer"
+                onClick={!newMedia.file ? triggerFileInput : undefined}
+              >
+                {!newMedia.file ? (
+                  <div className="flex flex-col items-center justify-center">
+                    <Upload className="h-12 w-12 text-gray-400 mb-3" />
+                    <p className="text-gray-700 font-medium mb-1">Drag and drop a file here</p>
+                    <p className="text-gray-500 text-sm mb-3">or click to browse</p>
+                    <p className="text-xs text-gray-400">Supports images and videos (Max 10MB)</p>
+                  </div>
                 ) : (
-                  <div 
-                    className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center hover:border-primary-green transition-colors cursor-pointer"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <div className="mx-auto w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-4">
-                      <ImageIcon className="w-6 h-6 text-gray-400" />
+                  <div className="p-4 bg-gray-50 rounded-md">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center">
+                        {newMedia.type === 'image' ? (
+                          <ImageIcon className="w-5 h-5 text-blue-500 mr-2" />
+                        ) : (
+                          <FileVideo className="w-5 h-5 text-purple-500 mr-2" />
+                        )}
+                        <span className="text-sm font-medium">{newMedia.file.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeNewMedia();
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-700">Upload featured image</p>
-                      <p className="text-xs text-gray-500">
-                        Drag and drop your image here, or click to browse
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Supports: JPEG, PNG, GIF (Max 5MB)
-                      </p>
+                    
+                    <div className="text-xs text-gray-500 mb-3">
+                      Type: {newMedia.type.charAt(0).toUpperCase() + newMedia.type.slice(1)} | 
+                      Size: {formatFileSize(newMedia.file.size)}
+                    </div>
+                    
+                    {isUploading && (
+                      <div className="mb-3">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 text-center">
+                          Uploading: {uploadProgress}%
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Media details form */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm mb-1">Title <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          name="title"
+                          value={newMedia.title}
+                          onChange={handleMediaChange}
+                          placeholder="Media title"
+                          className="w-full p-2.5 border border-gray-300 rounded-md"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          name="cover"
+                          id="mediaCover"
+                          checked={newMedia.cover}
+                          onChange={handleMediaChange}
+                          className="mr-2"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <label htmlFor="mediaCover" className="text-sm">
+                          Use as cover image
+                        </label>
+                      </div>
+                      
+                      <div className="md:col-span-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addMedia();
+                          }}
+                          disabled={isUploading || !newMedia.title}
+                          className="bg-green-700 hover:bg-green-800 text-white py-2 px-4 rounded-md text-sm flex items-center"
+                        >
+                          {isUploading ? (
+                            <>
+                              <Loader className="w-4 h-4 mr-2 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="w-4 h-4 mr-1" /> Add Media
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
                 <input
-                  ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/gif"
+                  id="fileUpload"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
                   className="hidden"
-                  onChange={handleImageUpload}
-                  title="Upload featured image"
-                  aria-label="Upload featured image"
-                  id="featured-image-upload"
+                  accept="image/*,video/*"
                 />
               </div>
-              {errors.featuredImage && (
-                <p className="text-sm text-red-500 mt-2">{errors.featuredImage.message}</p>
+              
+              {/* Display media list */}
+              <h3 className="text-lg font-semibold mb-4">Article Media</h3>
+              
+              {formData.media.items.length === 0 ? (
+                <p className="text-gray-500 text-sm italic mb-4">No media added yet.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {formData.media.items.map(media => (
+                    <div 
+                      key={media.id} 
+                      className={`border rounded-md overflow-hidden ${selectedMedia && selectedMedia.id === media.id ? 'ring-2 ring-green-500' : ''}`}
+                    >
+                      {/* Media preview */}
+                      <div 
+                        className="bg-gray-100 h-20 flex items-center justify-center cursor-pointer"
+                        onClick={() => selectMedia(media.id)}
+                      >
+                        {media.type === 'image' ? (
+                          <ImageIcon className="w-10 h-10 text-blue-500" />
+                        ) : (
+                          <FileVideo className="w-10 h-10 text-purple-500" />
+                        )}
+                      </div>
+                      
+                      {/* Media info */}
+                      <div className="p-3">
+                        <div className="flex justify-between items-start mb-1">
+                          <h4 className="font-medium text-sm truncate">{media.title}</h4>
+                          <button
+                            type="button"
+                            onClick={() => removeMedia(media.id)}
+                            className="text-red-500 hover:text-red-700 ml-2 flex-shrink-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-1 text-xs">
+                          <span className="px-2 py-1 bg-gray-100 rounded-full">
+                            {media.type}
+                          </span>
+                          <span className="px-2 py-1 bg-gray-100 rounded-full">
+                            {formatFileSize(media.size)}
+                          </span>
+                          {media.cover && (
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                              Cover
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Actions - show when media is selected */}
+                      {selectedMedia && selectedMedia.id === media.id && (
+                        <div className="p-3 border-t">
+                          {!media.cover && media.type === 'image' && (
+                            <button
+                              type="button"
+                              onClick={() => toggleMediaCover(media.id)}
+                              className="text-xs bg-green-700 hover:bg-green-800 text-white px-2 py-1 rounded-md flex items-center"
+                            >
+                              <Check className="w-3 h-3 mr-1" /> Set as Cover Image
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Horizontal line divider */}
+        <hr className="border-t border-gray-200" />
+
+        {/* Tags Section */}
+        <div className="mb-8 p-6">
+          <div className="flex">
+            {/* Left column - section title */}
+            <div className="w-1/4 pr-8">
+              <h2 className="text-xl font-bold">Tags</h2>
+              <p className="text-gray-600 text-sm">Categorize the news article</p>
+            </div>
+            
+            {/* Right column - form fields */}
+            <div className="w-3/4">
+              <div className="mb-4 flex justify-between items-center">
+                <label className="block text-sm font-medium">
+                  Select tags for this article
+                </label>
+                <button 
+                  type="button"
+                  onClick={() => setShowTagModal(true)}
+                  className="text-sm flex items-center text-green-700 hover:text-green-800"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add New Tag
+                </button>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-md mb-4">
+                <div className="flex flex-wrap gap-2">
+                  {tags.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No tags available. Create your first tag with the button above.</p>
+                  ) : (
+                    tags.map(tag => (
+                      <div 
+                        key={tag.id}
+                        onClick={() => toggleTag(tag.id)}
+                        className={`px-3 py-2 rounded-full cursor-pointer flex items-center ${
+                          selectedTags.includes(tag.id)
+                            ? 'bg-green-100 text-green-800 border border-green-300'
+                            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+                        }`}
+                      >
+                        <TagIcon className="w-3 h-3 mr-1" />
+                        <span className="text-sm">{tag.name}</span>
+                        {selectedTags.includes(tag.id) && (
+                          <Check className="w-3 h-3 ml-1 text-green-600" />
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Form buttons */}
+        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+          <Link
+            href="/news"
+            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            className="px-6 py-2 bg-green-700 rounded-md text-white hover:bg-green-800 flex items-center"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : 'Publish'}
+          </button>
+        </div>
+      </form>
+
+      {/* Add Tag Modal */}
+      {showTagModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-full">
+            <h3 className="text-lg font-bold mb-4">Add New Tag</h3>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Tag Name<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                className="w-full p-2.5 border border-gray-300 rounded-md"
+                placeholder="Enter tag name"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTagModal(false);
+                  setNewTagName('');
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                disabled={addingTag}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddTag}
+                className="px-4 py-2 bg-green-700 rounded-md text-white hover:bg-green-800 flex items-center"
+                disabled={addingTag || !newTagName.trim()}
+              >
+                {addingTag ? (
+                  <>
+                    <Loader className="w-4 h-4 mr-2 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Tag
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default AddNewsPage;
