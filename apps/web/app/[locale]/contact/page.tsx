@@ -1,7 +1,6 @@
 "use client"
 
 import React from "react";
-import Image from "next/image";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +14,8 @@ interface ContactUsPageProps {
   dict: any;
 }
 
-export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
+
+export default async function ContactUsPage({ dict }: ContactUsPageProps) {
   const [formState, setFormState] = React.useState({
     name: "",
     email: "",

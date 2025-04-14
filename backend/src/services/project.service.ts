@@ -15,6 +15,7 @@ export type CreateProjectInput = {
   end_date?: Date;
   created_by: number;
   category_id: number;
+  category_id: number;
   members?: ProjectMemberInput[];
   location?: string;
   
