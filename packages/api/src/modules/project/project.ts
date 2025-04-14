@@ -1,14 +1,14 @@
 // modules/project/project.ts
-import { z } from 'zod';
+import { z } from "zod";
 
-export type ProjectStatus = 'planned' | 'active' | 'completed';
+export type ProjectStatus = "planned" | "active" | "completed";
 
-export type ProjectMemberRole = 'lead' | 'member' | 'supervisor';
+export type ProjectMemberRole = "lead" | "member" | "supervisor";
 
 // In your project.ts interface file
 export interface ProjectMedia {
   url: string;
-  type: 'image' | 'video';
+  type: "image" | "video";
   cover: boolean;
 }
 
@@ -78,7 +78,7 @@ export interface ProjectUpdate {
 export const createProjectSchema = z.object({
   name: z.string().min(3, "Project name must be at least 3 characters"),
   description: z.string().optional(),
-  status: z.enum(['planned', 'active', 'completed']),
+  status: z.enum(["planned", "active", "completed"]),
   category_id: z.number().optional(),
   location: z.string().optional(),
   impacted_people: z.number().optional(),
@@ -89,9 +89,12 @@ export const createProjectSchema = z.object({
 });
 
 export const updateProjectSchema = z.object({
-  name: z.string().min(3, "Project name must be at least 3 characters").optional(),
+  name: z
+    .string()
+    .min(3, "Project name must be at least 3 characters")
+    .optional(),
   description: z.string().optional(),
-  status: z.enum(['planned', 'active', 'completed']).optional(),
+  status: z.enum(["planned", "active", "completed"]).optional(),
   category_id: z.number().optional(),
   location: z.string().optional(),
   impacted_people: z.number().optional(),
@@ -107,4 +110,6 @@ export const createProjectCategorySchema = z.object({
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
-export type CreateProjectCategoryInput = z.infer<typeof createProjectCategorySchema>;
+export type CreateProjectCategoryInput = z.infer<
+  typeof createProjectCategorySchema
+>;

@@ -62,22 +62,24 @@ The API will be available at http://localhost:3001/api/trpc
 ## Key Features
 
 - **Authentication & Authorization**
-    - Secure authentication with PASETO tokens
-    - HTTP-only cookies for secure token storage
-    - Role-based access control
-    - Protection against common security vulnerabilities
-    - Two-factor authentication support
+
+  - Secure authentication with PASETO tokens
+  - HTTP-only cookies for secure token storage
+  - Role-based access control
+  - Protection against common security vulnerabilities
+  - Two-factor authentication support
 
 - **Database Integration**
-    - Type-safe database access with Drizzle ORM
-    - Automatic schema migrations
-    - Database triggers for integrity and auditing
-    - Optimized indexing for performance
+
+  - Type-safe database access with Drizzle ORM
+  - Automatic schema migrations
+  - Database triggers for integrity and auditing
+  - Optimized indexing for performance
 
 - **API Layer**
-    - Type-safe API with tRPC
-    - End-to-end type safety from database to frontend
-    - Automatic client generation for web and portal apps
+  - Type-safe API with tRPC
+  - End-to-end type safety from database to frontend
+  - Automatic client generation for web and portal apps
 
 ## API Structure
 
@@ -135,6 +137,7 @@ The database schema is comprehensive, supporting:
 The API is designed to be deployed to Cloudflare Workers:
 
 1. Build the API:
+
    ```bash
    pnpm build
    ```

@@ -7,8 +7,6 @@ import HeaderBelt from "@/components/layout/headerBelt";
 import WhereWeWorkSection from "@/components/sections/food-system/where-we-work-section";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
 import FoodSystemsMapSection from "@/components/sections/food-system/food-systems-map-section";
-import PartnersSection from "@/components/sections/food-system/partners-section";
-import NewsletterSection from "@/components/sections/newsletter-section";
 import ApproachSection from "@/components/sections/food-system/approach-section";
 
 // Animation variants
@@ -19,78 +17,72 @@ const fadeIn = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: "easeOut"
-    }
-  }
+      ease: "easeOut",
+    },
+  },
 };
 
 const FoodSystemPage = ({ locale, dict }) => {
   return (
-      <main className="bg-white">
-        {/* Hero Section */}
-        <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-          {/* Background Image */}
-          <div className="absolute inset-0 z-0">
-            <Image
-                src="/images/food-system.jpeg"
-                alt="Food System"
-                fill
-                sizes="100vw"
-                className="object-cover"
-                priority
-            />
-          </div>
-
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-black/70 z-10"></div>
-
-          {/* Content */}
-          <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-            <motion.h1
-                className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-            >
-              <span>Rooted in </span>
-              <span className="text-yellow-400 font-bold">Excellence</span>
-              <span>, </span>
-              <span className="text-yellow-400 font-bold">Growing </span>
-              <span>with </span>
-              <span className="text-yellow-400 font-bold">Agriculture</span>
-            </motion.h1>
-            <motion.h2
-                className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.7, delay: 0.4 }}
-            >
-              FOOD SYSTEM
-            </motion.h2>
-          </div>
-        </section>
-
-        {/* Banner Section */}
-        <div className="w-full overflow-hidden">
-          <div className="flex justify-center">
-            <HeaderBelt />
-          </div>
+    <main className="bg-white">
+      {/* Hero Section */}
+      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/food-system.jpeg"
+            alt="Food System"
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
         </div>
 
-        {/* Page Content */}
-        <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeIn}
-        >
-          <WhereWeWorkSection />
-          <ImpactAreasSection />
-          <FoodSystemsMapSection />
-          <ApproachSection />
-          <PartnersSection />
-          <NewsletterSection locale={locale} dict={dict} />
-        </motion.div>
-      </main>
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/70 z-10"></div>
+
+        {/* Content */}
+        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
+          <motion.h1
+            className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+          >
+            <span>Rooted in </span>
+            <span className="text-yellow-400 font-bold">Excellence</span>
+            <span>, </span>
+            <span className="text-yellow-400 font-bold">Growing </span>
+            <span>with </span>
+            <span className="text-yellow-400 font-bold">Agriculture</span>
+          </motion.h1>
+          <motion.h2
+            className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            FOOD SYSTEM
+          </motion.h2>
+        </div>
+      </section>
+
+      {/* Banner Section */}
+      <div className="w-full overflow-hidden">
+        <div className="flex justify-center">
+          <HeaderBelt />
+        </div>
+      </div>
+
+      {/* Page Content */}
+      <motion.div initial="hidden" animate="visible" variants={fadeIn}>
+        <ApproachSection />
+        <WhereWeWorkSection />
+        <ImpactAreasSection />
+        <FoodSystemsMapSection />
+      </motion.div>
+    </main>
   );
 };
 

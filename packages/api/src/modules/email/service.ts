@@ -1,86 +1,87 @@
-import * as nodemailer from 'nodemailer';
-import { createLogger } from '../../config';
+import * as nodemailer from "nodemailer";
+import { createLogger } from "../../config";
 
-const logger = createLogger('email-service');
+const logger = createLogger("email-service");
 
 // debug
-console.log('Email Configuration:');
-console.log('User:', process.env.EMAIL_FROM);
-console.log('Password provided:', !!process.env.EMAIL_PASSWORD);
+console.log("Email Configuration:");
+console.log("User:", process.env.EMAIL_FROM);
+console.log("Password provided:", !!process.env.EMAIL_PASSWORD);
 
 // Create a reusable transporter object using Gmail
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_FROM,
-        pass: process.env.EMAIL_PASSWORD
-    }
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_FROM,
+    pass: process.env.EMAIL_PASSWORD,
+  },
 });
 
 // Verify connection configuration
-transporter.verify()
-    .then(() => {
-        logger.info('SMTP server connection ready');
-    })
-    .catch((error) => {
-        logger.error('SMTP connection verification failed', { error });
-    });
+transporter
+  .verify()
+  .then(() => {
+    logger.info("SMTP server connection ready");
+  })
+  .catch((error) => {
+    logger.error("SMTP connection verification failed", { error });
+  });
 
 /**
  * Send an email
  */
 export async function sendEmail({
-                                    to,
-                                    subject,
-                                    html,
-                                    from = process.env.EMAIL_FROM,
-                                    attachments = []
-                                }: {
-    to: string | string[];
-    subject: string;
-    html: string;
-    from?: string;
-    attachments?: Array<{
-        filename: string;
-        content?: Buffer | string;
-        path?: string;
-        contentType?: string;
-    }>;
+  to,
+  subject,
+  html,
+  from = process.env.EMAIL_FROM,
+  attachments = [],
+}: {
+  to: string | string[];
+  subject: string;
+  html: string;
+  from?: string;
+  attachments?: Array<{
+    filename: string;
+    content?: Buffer | string;
+    path?: string;
+    contentType?: string;
+  }>;
 }): Promise<{ id: string } | null> {
-    try {
-        const toAddresses = Array.isArray(to) ? to : [to];
+  try {
+    const toAddresses = Array.isArray(to) ? to : [to];
 
-        // Send mail with defined transport object
-        const info = await transporter.sendMail({
-            from: `"GanzAfrica" <${from}>`,
-            to: toAddresses.join(', '),
-            subject,
-            html,
-            attachments
-        });
+    // Send mail with defined transport object
+    const info = await transporter.sendMail({
+      from: `"GanzAfrica" <${from}>`,
+      to: toAddresses.join(", "),
+      subject,
+      html,
+      attachments,
+    });
 
-        logger.info('Email sent successfully', {
-            messageId: info.messageId,
-            to: toAddresses
-        });
+    logger.info("Email sent successfully", {
+      messageId: info.messageId,
+      to: toAddresses,
+    });
 
-        return { id: info.messageId };
-    } catch (error) {
-        logger.error('Failed to send email', { error, to });
-        return null;
-    }
+    return { id: info.messageId };
+  } catch (error) {
+    logger.error("Failed to send email", { error, to });
+    return null;
+  }
 }
 
 /**
  * Send verification email
  */
 export async function sendVerificationEmail(
-    email: string,
-    token: string
+  email: string,
+  token: string,
 ): Promise<{ id: string } | null> {
-    const verificationUrl = `${process.env.PORTAL_URL}/verify?token=${token}`;
+  const verificationUrl = `${process.env.PORTAL_URL}/verify?token=${token}`;
 
-    const html = `
+  const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h1 style="color: #333;">Verify Your Email</h1>
       <p>Thank you for signing up for GanzAfrica. Please verify your email address by clicking the button below:</p>
@@ -91,23 +92,23 @@ export async function sendVerificationEmail(
     </div>
   `;
 
-    return sendEmail({
-        to: email,
-        subject: 'Verify Your GanzAfrica Email',
-        html,
-    });
+  return sendEmail({
+    to: email,
+    subject: "Verify Your GanzAfrica Email",
+    html,
+  });
 }
 
 /**
  * Send password reset email
  */
 export async function sendPasswordResetEmail(
-    email: string,
-    token: string
+  email: string,
+  token: string,
 ): Promise<{ id: string } | null> {
-    const resetUrl = `${process.env.PORTAL_URL}/reset-password?token=${token}`;
+  const resetUrl = `${process.env.PORTAL_URL}/reset-password?token=${token}`;
 
-    const html = `
+  const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h1 style="color: #333;">Reset Your Password</h1>
       <p>You requested to reset your password. Click the button below to create a new password:</p>
@@ -118,21 +119,21 @@ export async function sendPasswordResetEmail(
     </div>
   `;
 
-    return sendEmail({
-        to: email,
-        subject: 'Reset Your GanzAfrica Password',
-        html,
-    });
+  return sendEmail({
+    to: email,
+    subject: "Reset Your GanzAfrica Password",
+    html,
+  });
 }
 
 /**
  * Send OTP email
  */
 export async function sendOtpEmail(
-    email: string,
-    otp: string
+  email: string,
+  otp: string,
 ): Promise<{ id: string } | null> {
-    const html = `
+  const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h1 style="color: #333;">Your Verification Code</h1>
       <p>Your verification code is:</p>
@@ -142,31 +143,31 @@ export async function sendOtpEmail(
     </div>
   `;
 
-    return sendEmail({
-        to: email,
-        subject: 'Your GanzAfrica Verification Code',
-        html,
-    });
+  return sendEmail({
+    to: email,
+    subject: "Your GanzAfrica Verification Code",
+    html,
+  });
 }
 
 /**
  * Send email with attachment(s)
  */
 export async function sendEmailWithAttachments(
-    to: string | string[],
-    subject: string,
-    html: string,
-    attachments: Array<{
-        filename: string;
-        content?: Buffer | string;
-        path?: string;
-        contentType?: string;
-    }>
+  to: string | string[],
+  subject: string,
+  html: string,
+  attachments: Array<{
+    filename: string;
+    content?: Buffer | string;
+    path?: string;
+    contentType?: string;
+  }>,
 ): Promise<{ id: string } | null> {
-    return sendEmail({
-        to,
-        subject,
-        html,
-        attachments
-    });
+  return sendEmail({
+    to,
+    subject,
+    html,
+    attachments,
+  });
 }

@@ -1,39 +1,46 @@
 "use client";
 
-import { Users, FolderGit2, Briefcase, FileText, ChevronDown, TrendingUp } from 'lucide-react';
-import Image from 'next/image';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
+import {
+  Users,
+  FolderGit2,
+  Briefcase,
+  FileText,
+  ChevronDown,
+  TrendingUp,
+} from "lucide-react";
+import Image from "next/image";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
   CardFooter,
-  CardContent
-} from '@workspace/ui/components/card';
-import { 
+  CardContent,
+} from "@workspace/ui/components/card";
+import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from '@workspace/ui/components/Chart';
-import { 
-  Bar, 
-  BarChart, 
-  CartesianGrid, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
+} from "@workspace/ui/components/Chart";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
   Legend,
   Line,
   LineChart,
-  ResponsiveContainer
-} from 'recharts';
+  ResponsiveContainer,
+} from "recharts";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@workspace/ui/components/avatar";
-import { useAuth } from '@/components/auth/auth-provider';
+import { useAuth } from "@/components/auth/auth-provider";
 
 // Project Statistics data
 const projectStatsData = [
@@ -55,7 +62,7 @@ const userEngagementData = [
 export default function DashboardPage() {
   // Get auth context to access the current user
   const { user } = useAuth();
-  
+
   // Get the full name of the logged-in user
   const userName = user?.name || "User";
 
@@ -63,55 +70,59 @@ export default function DashboardPage() {
   const recentActivities = [
     {
       user: {
-        name: 'Emmanuel N.',
-        avatar: '/avatars/emmanuel.jpg'
+        name: "Emmanuel N.",
+        avatar: "/avatars/emmanuel.jpg",
       },
-      action: 'submitted a new comprehensive agricultural development project proposal for review',
-      time: '2 hours ago'
+      action:
+        "submitted a new comprehensive agricultural development project proposal for review",
+      time: "2 hours ago",
     },
     {
       user: {
-        name: 'Fatima K.',
-        avatar: '/avatars/fatima.jpg'
+        name: "Fatima K.",
+        avatar: "/avatars/fatima.jpg",
       },
-      action: 'updated key milestone achievements for the Clean Water Access Program in rural communities',
-      time: '2 hours ago'
+      action:
+        "updated key milestone achievements for the Clean Water Access Program in rural communities",
+      time: "2 hours ago",
     },
     {
       user: {
-        name: 'John M.',
-        avatar: '/avatars/john.jpg'
+        name: "John M.",
+        avatar: "/avatars/john.jpg",
       },
-      action: 'requested additional technical staff and budget allocation for the expanding solar initiative',
-      time: '9 hours ago'
+      action:
+        "requested additional technical staff and budget allocation for the expanding solar initiative",
+      time: "9 hours ago",
     },
     {
       user: {
-        name: 'Amina B.',
-        avatar: '/avatars/amina.jpg'
+        name: "Amina B.",
+        avatar: "/avatars/amina.jpg",
       },
-      action: 'requested additional technical staff and budget allocation for the expanding solar initiative',
-      time: '6 hours ago'
-    }
+      action:
+        "requested additional technical staff and budget allocation for the expanding solar initiative",
+      time: "6 hours ago",
+    },
   ];
 
   // Active projects data
   const activeProjects = [
     {
-      name: 'Project Tracking System',
-      description: 'Improving crop yields in drought regions',
-      icon: '/project-icons/tracking.png'
+      name: "Project Tracking System",
+      description: "Improving crop yields in drought regions",
+      icon: "/project-icons/tracking.png",
     },
     {
-      name: 'Clean Water Access Program',
-      description: 'Building wells in rural communities',
-      icon: '/project-icons/water.png'
+      name: "Clean Water Access Program",
+      description: "Building wells in rural communities",
+      icon: "/project-icons/water.png",
     },
     {
-      name: 'Project Tracking System',
-      description: 'Improving crop yields in drought regions',
-      icon: '/project-icons/tracking.png'
-    }
+      name: "Project Tracking System",
+      description: "Improving crop yields in drought regions",
+      icon: "/project-icons/tracking.png",
+    },
   ];
 
   // Chart config for project statistics
@@ -138,8 +149,12 @@ export default function DashboardPage() {
     <div className="p-8 bg-gray-50">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold mb-2">Welcome Back, {userName}! 👋</h1>
-        <p className="text-gray-600">Here's an overview of your dashboard activities and statistics today.</p>
+        <h1 className="text-2xl font-semibold mb-2">
+          Welcome Back, {userName}! 👋
+        </h1>
+        <p className="text-gray-600">
+          Here's an overview of your dashboard activities and statistics today.
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -152,7 +167,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <CardHeader>
-            <CardDescription className="text-gray-600">All Users</CardDescription>
+            <CardDescription className="text-gray-600">
+              All Users
+            </CardDescription>
             <CardTitle className="text-2xl font-semibold mt-2">123</CardTitle>
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-5">
@@ -162,7 +179,7 @@ export default function DashboardPage() {
             </div>
           </CardFooter>
         </Card>
-        
+
         <Card className="relative shadow-sm overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-orange"></div>
           <div className="absolute top-4 right-4">
@@ -171,7 +188,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <CardHeader>
-            <CardDescription className="text-gray-600">Total Projects</CardDescription>
+            <CardDescription className="text-gray-600">
+              Total Projects
+            </CardDescription>
             <CardTitle className="text-2xl font-semibold mt-2">123</CardTitle>
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-5">
@@ -181,7 +200,7 @@ export default function DashboardPage() {
             </div>
           </CardFooter>
         </Card>
-        
+
         <Card className="relative shadow-sm overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue"></div>
           <div className="absolute top-4 right-4">
@@ -190,7 +209,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <CardHeader>
-            <CardDescription className="text-gray-600">Total Opportunities</CardDescription>
+            <CardDescription className="text-gray-600">
+              Total Opportunities
+            </CardDescription>
             <CardTitle className="text-2xl font-semibold mt-2">123</CardTitle>
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-5">
@@ -200,7 +221,7 @@ export default function DashboardPage() {
             </div>
           </CardFooter>
         </Card>
-        
+
         <Card className="relative shadow-sm overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-orange-grid"></div>
           <div className="absolute top-4 right-4">
@@ -209,7 +230,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <CardHeader>
-            <CardDescription className="text-gray-600">All News</CardDescription>
+            <CardDescription className="text-gray-600">
+              All News
+            </CardDescription>
             <CardTitle className="text-2xl font-semibold mt-2">123</CardTitle>
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-5">
@@ -226,15 +249,17 @@ export default function DashboardPage() {
         {/* Project Statistics */}
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="font-semibold">Project Statistics (Last 6 Months)</CardTitle>
+            <CardTitle className="font-semibold">
+              Project Statistics (Last 6 Months)
+            </CardTitle>
             <button className="flex items-center text-gray-600 hover:bg-gray-100 px-3 py-1 rounded">
               2020-2024 <ChevronDown className="w-4 h-4 ml-1" />
             </button>
           </CardHeader>
           <CardContent>
             <ChartContainer config={projectChartConfig}>
-              <BarChart 
-                accessibilityLayer 
+              <BarChart
+                accessibilityLayer
                 data={projectStatsData}
                 margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 height={300}
@@ -246,7 +271,7 @@ export default function DashboardPage() {
                   tickMargin={10}
                   axisLine={false}
                 />
-                <YAxis 
+                <YAxis
                   tickLine={false}
                   axisLine={false}
                   ticks={[0, 2, 4, 6, 8]}
@@ -256,16 +281,16 @@ export default function DashboardPage() {
                   cursor={false}
                   content={<ChartTooltipContent indicator="dashed" />}
                 />
-                <Bar 
-                  dataKey="inProgress" 
-                  fill="var(--color-inProgress)" 
-                  radius={4} 
+                <Bar
+                  dataKey="inProgress"
+                  fill="var(--color-inProgress)"
+                  radius={4}
                   maxBarSize={25}
                 />
-                <Bar 
-                  dataKey="completed" 
-                  fill="var(--color-completed)" 
-                  radius={4} 
+                <Bar
+                  dataKey="completed"
+                  fill="var(--color-completed)"
+                  radius={4}
                   maxBarSize={25}
                 />
               </BarChart>
@@ -288,7 +313,9 @@ export default function DashboardPage() {
         {/* User Engagement */}
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="font-semibold">User Engagement (Last Month)</CardTitle>
+            <CardTitle className="font-semibold">
+              User Engagement (Last Month)
+            </CardTitle>
             <button className="flex items-center text-gray-600 hover:bg-gray-100 px-3 py-1 rounded">
               2024 <ChevronDown className="w-4 h-4 ml-1" />
             </button>
@@ -302,7 +329,7 @@ export default function DashboardPage() {
                   top: 5,
                   left: 20,
                   right: 20,
-                  bottom: 5
+                  bottom: 5,
                 }}
                 height={300}
               >
@@ -353,16 +380,21 @@ export default function DashboardPage() {
           <div className="border-b px-4 py-4 flex justify-between items-center">
             <h2 className="text-lg font-semibold">Recent Activities</h2>
           </div>
-          
+
           {recentActivities.map((activity, index) => (
             <div key={index} className="flex items-start px-4 py-4">
               <Avatar className="mr-3 h-8 w-8 flex-shrink-0">
-                <AvatarImage src="https://github.com/shadcn.png" alt={activity.user.name} />
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt={activity.user.name}
+                />
                 <AvatarFallback>{activity.user.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className={`pb-4 ${index < recentActivities.length - 1 ? "border-b" : ""}`}>
+              <div
+                className={`pb-4 ${index < recentActivities.length - 1 ? "border-b" : ""}`}
+              >
                 <p>
-                  <span className="font-medium">{activity.user.name}</span>{' '}
+                  <span className="font-medium">{activity.user.name}</span>{" "}
                   {activity.action}
                 </p>
                 <span className="text-xs text-gray-500">{activity.time}</span>
@@ -375,16 +407,23 @@ export default function DashboardPage() {
         <div className="col-span-12 lg:col-span-4 bg-white">
           <div className="border-b px-4 py-4 flex justify-between items-center">
             <h2 className="text-lg font-semibold">Active Projects</h2>
-            <a href="#" className="text-emerald-600 hover:underline">View all Projects</a>
+            <a href="#" className="text-emerald-600 hover:underline">
+              View all Projects
+            </a>
           </div>
-          
+
           {activeProjects.map((project, index) => (
             <div key={index} className="flex items-start px-4 py-4">
               <Avatar className="mr-3 h-8 w-8 flex-shrink-0">
-                <AvatarImage src="https://github.com/shadcn.png" alt={project.name} />
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt={project.name}
+                />
                 <AvatarFallback>P</AvatarFallback>
               </Avatar>
-              <div className={`pb-4 ${index < activeProjects.length - 1 ? "border-b" : ""}`}>
+              <div
+                className={`pb-4 ${index < activeProjects.length - 1 ? "border-b" : ""}`}
+              >
                 <h4 className="font-medium">{project.name}</h4>
                 <p className="text-gray-500 text-sm">{project.description}</p>
               </div>

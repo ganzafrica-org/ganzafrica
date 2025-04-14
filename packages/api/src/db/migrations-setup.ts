@@ -1,20 +1,20 @@
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { Pool } from 'pg'
-import { env } from '../config'
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { Pool } from "pg";
+import { env } from "../config";
 
 export async function runMigrations() {
-    const pool = new Pool({
-        connectionString: env.DATABASE_URL,
-    })
+  const pool = new Pool({
+    connectionString: env.DATABASE_URL,
+  });
 
-    const db = drizzle(pool)
+  const db = drizzle(pool);
 
-    console.log('Running migrations...')
+  console.log("Running migrations...");
 
-    await migrate(db, {migrationsFolder: './drizzle'})
+  await migrate(db, { migrationsFolder: "./drizzle" });
 
-    console.log('Migrations complete!')
+  console.log("Migrations complete!");
 
-    await pool.end()
+  await pool.end();
 }

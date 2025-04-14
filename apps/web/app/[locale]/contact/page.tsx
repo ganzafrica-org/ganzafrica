@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import React from "react";
 import Image from "next/image";
@@ -8,7 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Leaf, Send } from "lucide-react";
 import { safeAccess } from "@/lib/utils/safeAccess";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
-
 
 interface ContactUsPageProps {
   locale: string;
@@ -24,7 +23,7 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormState((prev) => ({
@@ -47,12 +46,15 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section with Background Image */}
-      <div className="relative h-[500px]"
+      <div
+        className="relative h-[500px]"
         style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1560493676-04071c5f467b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}>
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1560493676-04071c5f467b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         {/* Overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
@@ -64,7 +66,9 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
               <div className="relative bg-white p-4 -ml-4 rounded-br-3xl">
                 <div className="flex items-center">
                   <Leaf className="h-8 w-8 text-emerald-600" />
-                  <span className="ml-2 text-xl font-bold text-emerald-600">GanzAfrica</span>
+                  <span className="ml-2 text-xl font-bold text-emerald-600">
+                    GanzAfrica
+                  </span>
                 </div>
               </div>
             </div>
@@ -75,7 +79,8 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
         <div className="relative z-10 flex items-center justify-center h-full text-center">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold text-white">
-              Get in <span className="text-yellow-400">Touch</span> With Our<br />
+              Get in <span className="text-yellow-400">Touch</span> With Our
+              <br />
               Team Today
             </h1>
             <div className="text-6xl font-bold text-yellow-400">Contact Us</div>
@@ -83,19 +88,18 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
         </div>
       </div>
       <HeaderBelt />
-      
 
       {/* Contact Form and Newsletter Section */}
       <div className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Contact Form */}
-            
+
             <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-4">
-              <span className="text-primary-green">Connect </span>
-              <span className="text-yellow-500">With Us</span>
-            </h2>
+              <h2 className="text-2xl font-bold mb-4">
+                <span className="text-primary-green">Connect </span>
+                <span className="text-yellow-500">With Us</span>
+              </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
@@ -103,7 +107,11 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
                     name="email"
                     value={formState.email}
                     onChange={handleChange}
-                    placeholder={safeAccess(dict, 'contact.form_email', "Email")}
+                    placeholder={safeAccess(
+                      dict,
+                      "contact.form_email",
+                      "Email",
+                    )}
                     className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
                     required
                   />
@@ -112,7 +120,11 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
                     name="phone"
                     value={formState.phone}
                     onChange={handleChange}
-                    placeholder={safeAccess(dict, 'contact.form_phone', "Phone")}
+                    placeholder={safeAccess(
+                      dict,
+                      "contact.form_phone",
+                      "Phone",
+                    )}
                     className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
                   />
                 </div>
@@ -121,7 +133,7 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
                   name="name"
                   value={formState.name}
                   onChange={handleChange}
-                  placeholder={safeAccess(dict, 'contact.form_name', "Name")}
+                  placeholder={safeAccess(dict, "contact.form_name", "Name")}
                   className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
                   required
                 />
@@ -129,7 +141,11 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
                   name="message"
                   value={formState.message}
                   onChange={handleChange}
-                  placeholder={safeAccess(dict, 'contact.form_message', "Message")}
+                  placeholder={safeAccess(
+                    dict,
+                    "contact.form_message",
+                    "Message",
+                  )}
                   className="w-full h-40 bg-white border-2 border-gray-300 rounded-3xl px-5 py-4 font-medium-small"
                   required
                 />
@@ -138,7 +154,7 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
                     type="submit"
                     className="bg-primary-orange hover:bg-secondary-green text-white px-8 py-2 h-12 rounded-full font-bold-caption flex items-center gap-2"
                   >
-                    {safeAccess(dict, 'contact.submit', "Submit Button")}
+                    {safeAccess(dict, "contact.submit", "Submit Button")}
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -148,11 +164,14 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
             {/* Newsletter Form */}
             <div className="lg:w-1/3 bg-primary-green rounded-lg p-8 text-white">
               <h3 className="font-h4 mb-4">
-                {safeAccess(dict, 'contact.newsletter', "Our Newsletters")}
+                {safeAccess(dict, "contact.newsletter", "Our Newsletters")}
               </h3>
               <p className="mb-6 font-regular-paragraph">
-                {safeAccess(dict, 'contact.newsletter_desc',
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.")}
+                {safeAccess(
+                  dict,
+                  "contact.newsletter_desc",
+                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.",
+                )}
               </p>
               <form onSubmit={handleNewsletterSubmit} className="space-y-4">
                 <Input
@@ -165,7 +184,7 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
                   type="submit"
                   className="w-full bg-primary-orange hover:bg-dark text-white py-2 rounded-full h-12 font-bold-caption"
                 >
-                  {safeAccess(dict, 'contact.submit', "Submit Button")}
+                  {safeAccess(dict, "contact.submit", "Submit Button")}
                 </Button>
               </form>
             </div>
@@ -198,7 +217,9 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
               </div>
               <div>
                 <h3 className="font-bold text-emerald-600 mb-1">Email Us</h3>
-                <p className="text-gray-800 font-medium">shemachristia@ganzafrica.id</p>
+                <p className="text-gray-800 font-medium">
+                  shemachristia@ganzafrica.id
+                </p>
                 <p className="text-sm text-gray-500 mt-1">
                   We'll respond as soon as possible
                 </p>
@@ -237,9 +258,12 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
               title="GanzAfrica Location"
             ></iframe>
           </div>
-          
+
           {/* Using plain HTML/CSS to create a house marker */}
-          <div className="relative mx-auto" style={{ width: "200px", marginTop: "-50px" }}>
+          <div
+            className="relative mx-auto"
+            style={{ width: "200px", marginTop: "-50px" }}
+          >
             <div className="bg-white p-3 rounded-lg shadow-md border-2 border-emerald-600 z-10">
               <div className="flex items-center">
                 <div className="bg-red-500 p-2 rounded-full mr-2">
@@ -247,7 +271,9 @@ export default function ContactUsPage({ locale, dict }: ContactUsPageProps) {
                 </div>
                 <div>
                   <p className="font-bold text-emerald-600">GanzAfrica</p>
-                  <p className="text-xs text-gray-700">27 House, KG 594 St, Kigali</p>
+                  <p className="text-xs text-gray-700">
+                    27 House, KG 594 St, Kigali
+                  </p>
                 </div>
               </div>
             </div>
