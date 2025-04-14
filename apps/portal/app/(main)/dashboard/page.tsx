@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, FolderGit2, Briefcase, FileText, ChevronDown, TrendingUp } from 'lucide-react';
+import { Users, FolderGit2, Briefcase, FileText, ChevronDown, TrendingUp, RefreshCw, Calendar, Info } from 'lucide-react';
 import Image from 'next/image';
 import { 
   Card, 
@@ -34,6 +34,13 @@ import {
   AvatarImage,
 } from "@workspace/ui/components/avatar";
 import { useAuth } from '@/components/auth/auth-provider';
+import { useState, useEffect } from 'react';
+import { 
+  Tooltip as UiTooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 
 // Project Statistics data
 const projectStatsData = [
@@ -53,11 +60,35 @@ const userEngagementData = [
 ];
 
 export default function DashboardPage() {
-  // Get auth context to access the current user
   const { user } = useAuth();
-  
-  // Get the full name of the logged-in user
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState('last6months');
   const userName = user?.name || "User";
+
+  // Simulate data loading
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsLoading(false);
+      } catch (err) {
+        setError('Failed to load dashboard data');
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [dateRange]);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    // Simulate refresh
+    setTimeout(() => setIsLoading(false), 1000);
+  };
 
   // Recent activities data
   const recentActivities = [
@@ -144,24 +175,38 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="relative shadow-sm overflow-hidden dark:bg-gray-800">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-green"></div>
-          <div className="absolute top-4 right-4">
-            <div className="rounded-full p-2 bg-lighter-green-50 dark:bg-green-900">
-              <Users className="w-5 h-5 text-primary-green" />
+        <TooltipProvider>
+          <Card className="relative shadow-sm overflow-hidden dark:bg-gray-800">
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-green"></div>
+            <div className="absolute top-4 right-4">
+              <div className="rounded-full p-2 bg-lighter-green-50 dark:bg-green-900">
+                <Users className="w-5 h-5 text-primary-green" />
+              </div>
             </div>
-          </div>
-          <CardHeader>
-            <CardDescription className="text-gray-600 dark:text-gray-400">All Users</CardDescription>
-            <CardTitle className="text-2xl font-semibold mt-2 dark:text-white">123</CardTitle>
-          </CardHeader>
-          <CardFooter className="flex items-center pt-0 pb-5">
-            <div className="flex items-center">
-              <span className="text-primary-green font-medium">↑ 6.5</span>
-              <span className="text-black dark:text-white ml-1">since last week</span>
-            </div>
-          </CardFooter>
-        </Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CardDescription className="text-gray-600 dark:text-gray-400">All Users</CardDescription>
+                <UiTooltip>
+                  <TooltipTrigger>
+                    <Info className="w-4 h-4 text-gray-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Total number of registered users in the system</p>
+                  </TooltipContent>
+                </UiTooltip>
+              </div>
+              <CardTitle className="text-2xl font-semibold mt-2 dark:text-white">
+                {isLoading ? '...' : '123'}
+              </CardTitle>
+            </CardHeader>
+            <CardFooter className="flex items-center pt-0 pb-5">
+              <div className="flex items-center">
+                <span className="text-primary-green font-medium">↑ 6.5</span>
+                <span className="text-black dark:text-white ml-1">since last week</span>
+              </div>
+            </CardFooter>
+          </Card>
+        </TooltipProvider>
         
         <Card className="relative shadow-sm overflow-hidden dark:bg-gray-800">
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-orange"></div>
@@ -226,10 +271,27 @@ export default function DashboardPage() {
         {/* Project Statistics */}
         <Card className="shadow-sm dark:bg-gray-800">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="font-semibold dark:text-white">Project Statistics (Last 6 Months)</CardTitle>
-            <button className="flex items-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-1 rounded">
-              2020-2024 <ChevronDown className="w-4 h-4 ml-1" />
-            </button>
+            <CardTitle className="font-semibold dark:text-white">Project Statistics</CardTitle>
+            <div className="flex items-center gap-2">
+              <select 
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-700"
+                aria-label="Select date range for project statistics"
+                title="Select date range"
+              >
+                <option value="last6months">Last 6 Months</option>
+                <option value="lastyear">Last Year</option>
+                <option value="alltime">All Time</option>
+              </select>
+              <button 
+                onClick={handleRefresh}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </CardHeader>
           <CardContent>
             <ChartContainer config={projectChartConfig}>
@@ -288,10 +350,27 @@ export default function DashboardPage() {
         {/* User Engagement */}
         <Card className="shadow-sm dark:bg-gray-800">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="font-semibold dark:text-white">User Engagement (Last Month)</CardTitle>
-            <button className="flex items-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-1 rounded">
-              2024 <ChevronDown className="w-4 h-4 ml-1" />
-            </button>
+            <CardTitle className="font-semibold dark:text-white">User Engagement</CardTitle>
+            <div className="flex items-center gap-2">
+              <select 
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="text-sm border rounded px-2 py-1 bg-white dark:bg-gray-700"
+                aria-label="Select date range for user engagement"
+                title="Select date range"
+              >
+                <option value="last6months">Last 6 Months</option>
+                <option value="lastyear">Last Year</option>
+                <option value="alltime">All Time</option>
+              </select>
+              <button 
+                onClick={handleRefresh}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </CardHeader>
           <CardContent>
             <ChartContainer config={engagementChartConfig}>
@@ -346,6 +425,13 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
       </div>
+
+      {/* Error message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-6">
         {/* Recent Activities - 65% width */}

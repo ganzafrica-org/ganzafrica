@@ -9,10 +9,11 @@ import {
   Briefcase,
   Users2,
   FileText,
-  Settings,
+  MessageSquareQuote,
   HelpCircle,
-  LogOut,
-  Image as ImageIcon
+  Tag,
+  Shield,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -97,6 +98,16 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                 <Users2 className="w-5 h-5 flex-shrink-0" />
                 {!isCollapsed && <span className="ml-3 font-medium">Manage Users</span>}
               </Link>
+
+              <Link
+                href="/teams"
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/teams' || pathname.startsWith('/teams/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Users2 className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Teams</span>}
+              </Link>
               
               <Link
                 href="/news"
@@ -108,31 +119,44 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                 {!isCollapsed && <span className="ml-3 font-medium">News & Updates</span>}
               </Link>
 
-
-            </nav>
-          </div>
-
-          {/* Help & Support */}
-          <div>
-            {!isCollapsed && <h2 className="px-4 mb-3 text-sm font-medium text-white/60 uppercase tracking-wider">Help & Support</h2>}
-            <nav className="space-y-1">
               <Link
-                href="/settings"
+                href="/testimonials"
                 className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                  pathname === '/settings' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                  pathname === '/testimonials' || pathname.startsWith('/testimonials/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Settings className="w-5 h-5 flex-shrink-0" />
-                {!isCollapsed && <span className="ml-3 font-medium">Settings</span>}
+                <MessageSquareQuote className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Testimonials</span>}
               </Link>
+
               <Link
-                href="/help"
+                href="/faqs"
                 className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                  pathname === '/help' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                  pathname === '/faqs' || pathname.startsWith('/faqs/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <HelpCircle className="w-5 h-5 flex-shrink-0" />
-                {!isCollapsed && <span className="ml-3 font-medium">Help</span>}
+                {!isCollapsed && <span className="ml-3 font-medium">FAQs</span>}
+              </Link>
+
+              <Link
+                href="/categories"
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/categories' || pathname.startsWith('/categories/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Tag className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Categories</span>}
+              </Link>
+
+              <Link
+                href="/roles"
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                  pathname === '/roles' || pathname.startsWith('/roles/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Shield className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Roles</span>}
               </Link>
             </nav>
           </div>
