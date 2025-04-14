@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -12,7 +13,10 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  Image as ImageIcon
+  ChevronDown,
+  ChevronRight,
+  ClipboardList,
+  UserPlus
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -21,6 +25,20 @@ interface SidebarProps {
 
 const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const pathname = usePathname();
+  const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
+  const [teamsOpen, setTeamsOpen] = useState(false);
+
+  const toggleOpportunities = () => {
+    if (!isCollapsed) {
+      setOpportunitiesOpen(!opportunitiesOpen);
+    }
+  };
+
+  const toggleTeams = () => {
+    if (!isCollapsed) {
+      setTeamsOpen(!teamsOpen);
+    }
+  };
 
   return (
     <div className={`fixed left-0 top-0 h-full bg-[#045F3C] text-white/90 transition-all duration-300 ${
@@ -78,15 +96,129 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                 {!isCollapsed && <span className="ml-3 font-medium">Projects</span>}
               </Link>
               
-              <Link
-                href="/opportunities"
-                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                  pathname === '/opportunities' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <Briefcase className="w-5 h-5 flex-shrink-0" />
-                {!isCollapsed && <span className="ml-3 font-medium">Opportunities</span>}
-              </Link>
+              {/* Teams with dropdown */}
+              <div className="relative">
+                <button
+                  onClick={toggleTeams}
+                  className={`flex items-center w-full ${isCollapsed ? 'justify-center px-3' : 'justify-between px-4'} py-2.5 rounded-lg transition-colors ${
+                    pathname === '/teams' || pathname.startsWith('/teams/') 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <UserPlus className="w-5 h-5 flex-shrink-0" />
+                    {!isCollapsed && <span className="ml-3 font-medium">Teams</span>}
+                  </div>
+                  {!isCollapsed && (
+                    teamsOpen ? 
+                    <ChevronDown className="w-4 h-4" /> : 
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+                
+                {/* Teams dropdown menu */}
+                {!isCollapsed && teamsOpen && (
+                  <div className="pl-11 mt-1 space-y-1">
+                    <Link
+                      href="/teams"
+                      className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                        pathname === '/teams/manage' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <span className="font-medium">Manage Teams</span>
+                    </Link>
+                    <Link
+                      href="/teams/team-types"
+                      className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                        pathname === '/teams/types/add' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <span className="font-medium">Add Team Type</span>
+                    </Link>
+                  </div>
+                )}
+                
+                {/* Compact menu for collapsed sidebar */}
+                {isCollapsed && (
+                  <div className="absolute left-full ml-2 z-10 w-48 mt-1 bg-[#045F3C] rounded-lg shadow-lg transform -translate-x-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150">
+                    <Link
+                      href="/teams"
+                      className="block px-4 py-2 text-white/80 hover:bg-white/5 hover:text-white rounded-t-lg"
+                    >
+                      Manage Teams
+                    </Link>
+                    <Link
+                      href="/teams/add-tea"
+                      className="block px-4 py-2 text-white/80 hover:bg-white/5 hover:text-white rounded-b-lg"
+                    >
+                      Manage Team Type
+                    </Link>
+                  </div>
+                )}
+              </div>
+              
+              {/* Opportunities with dropdown */}
+              <div className="relative">
+                <button
+                  onClick={toggleOpportunities}
+                  className={`flex items-center w-full ${isCollapsed ? 'justify-center px-3' : 'justify-between px-4'} py-2.5 rounded-lg transition-colors ${
+                    pathname === '/opportunities' || pathname === '/applications' || pathname.startsWith('/opportunities/') || pathname.startsWith('/applications/') 
+                    ? 'bg-white/10 text-white' 
+                    : 'text-white/80 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <Briefcase className="w-5 h-5 flex-shrink-0" />
+                    {!isCollapsed && <span className="ml-3 font-medium">Opportunities</span>}
+                  </div>
+                  {!isCollapsed && (
+                    opportunitiesOpen ? 
+                    <ChevronDown className="w-4 h-4" /> : 
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+                
+                {/* Dropdown menu */}
+                {!isCollapsed && opportunitiesOpen && (
+                  <div className="pl-11 mt-1 space-y-1">
+                    <Link
+                      href="/opportunities"
+                      className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                        pathname === '/opportunities' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <span className="font-medium">All Opportunities</span>
+                    </Link>
+                    <Link
+                      href="/applications"
+                      className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                        pathname === '/applications' || pathname.startsWith('/applications/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <span className="font-medium">Applications</span>
+                    </Link>
+                  </div>
+                )}
+                
+                {/* Compact menu for collapsed sidebar */}
+                {isCollapsed && (
+                  <div className="absolute left-full ml-2 z-10 w-48 mt-1 bg-[#045F3C] rounded-lg shadow-lg transform -translate-x-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150">
+                    <Link
+                      href="/opportunities"
+                      className="block px-4 py-2 text-white/80 hover:bg-white/5 hover:text-white rounded-t-lg"
+                    >
+                      All Opportunities
+                    </Link>
+                    <Link
+                      href="/applications"
+                      className="block px-4 py-2 text-white/80 hover:bg-white/5 hover:text-white rounded-b-lg"
+                    >
+                      Applications
+                    </Link>
+                  </div>
+                )}
+              </div>
               
               <Link
                 href="/users"
@@ -107,8 +239,6 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                 <FileText className="w-5 h-5 flex-shrink-0" />
                 {!isCollapsed && <span className="ml-3 font-medium">News & Updates</span>}
               </Link>
-
-
             </nav>
           </div>
 
