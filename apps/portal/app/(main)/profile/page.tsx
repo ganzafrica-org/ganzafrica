@@ -3,8 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@workspace/ui';
 import { Card } from '@workspace/ui';
-import { Separator } from '@workspace/ui';
-import { ProtectedRoute } from '@/lib/protected-route';
 import { Twitter, Linkedin, ChevronDown, ChevronUp, X, Check } from 'lucide-react';
 import { Input } from '@workspace/ui';
 import { toast } from 'sonner';
@@ -483,10 +481,10 @@ export function UserProfile({ user: initialUser = defaultUser }: UserProfileProp
 
 export default function Page() {
   return (
-    <ProtectedRoute>
+    <>
       <div className="container mx-auto px-4 py-8">
         <UserProfile user={defaultUser} />
       </div>
-    </ProtectedRoute>
+    </>
   );
 }
