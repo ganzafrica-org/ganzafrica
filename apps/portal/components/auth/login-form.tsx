@@ -128,17 +128,26 @@ export function LoginForm() {
                     <p className="text-gray-500 text-center mb-6">Welcome back! Please log in to your account.</p>
                     
                     <div className="flex justify-center space-x-4 mb-6">
-                        <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <button 
+                            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                            title="Login with Facebook"
+                        >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="#000">
                                 <path d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396v8.01z" />
                             </svg>
                         </button>
-                        <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <button 
+                            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                            title="Login with Google"
+                        >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="#000">
                                 <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1.5 19.05c-3.584-.167-6.55-3.133-6.717-6.717.166-3.584 3.133-6.55 6.717-6.716 1.5.9 2.717 3.15 2.967 5.417h-1.967v2.5h4.883c-.567 2.9-3.383 5.483-5.883 5.516z" />
                             </svg>
                         </button>
-                        <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <button 
+                            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                            title="Login with LinkedIn"
+                        >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="#000">
                                 <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
                             </svg>

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
 import Link from 'next/link';
 import { Button } from '@workspace/ui/components/button';
+import { Checkbox } from '@workspace/ui/components/checkbox';
 
 interface UserData {
   id: number;
@@ -61,6 +62,7 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
   const [notifications, setNotifications] = useState(mockNotifications);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   
@@ -199,6 +201,26 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Initialize dark mode from localStorage
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    setIsDarkMode(savedDarkMode);
+    if (savedDarkMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  // Handle dark mode toggle
+  const handleDarkModeToggle = (checked: boolean) => {
+    setIsDarkMode(checked);
+    localStorage.setItem('darkMode', String(checked));
+    if (checked) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   return (
     <div className="h-16 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between px-6 sticky top-0 z-50 shadow-sm">
@@ -399,6 +421,22 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed, currentUser: propCurrentUser 
                     <Info className="w-4 h-4 mr-3 text-gray-400 dark:text-gray-500 group-hover:text-white" />
                     Help Center
                   </a>
+                </div>
+                
+                <div className="py-1 border-t border-gray-100 dark:border-gray-700">
+                  <div className="px-4 py-2 flex items-center space-x-2">
+                    <Checkbox 
+                      id="dark-mode" 
+                      checked={isDarkMode}
+                      onCheckedChange={handleDarkModeToggle}
+                    />
+                    <label
+                      htmlFor="dark-mode"
+                      className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer"
+                    >
+                      Dark Mode
+                    </label>
+                  </div>
                 </div>
                 
                 <div className="py-1 border-t border-gray-100 dark:border-gray-700">
