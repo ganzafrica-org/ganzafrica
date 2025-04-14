@@ -3,12 +3,35 @@ import Image from "next/image";
 import { Home, Phone, Mail } from "lucide-react"; // Keep Lucide icons as they are
 import { LinkedInIcon, TwitterIcon } from "@/components/ui/icons"; // Import custom icons from icons.tsx
 
+interface FooterDict {
+  footer?: {
+    policies?: string;
+    faqs?: string;
+    contact?: string;
+    programs?: string;
+    what_we_do?: string;
+    explore?: string;
+    login?: string;
+    opportunities?: string;
+    research?: string;
+  };
+  programs?: {
+    fellowship?: { title?: string };
+    alumni?: { title?: string };
+    policy_support?: { title?: string };
+  };
+  what_we_do?: {
+    food_systems?: string;
+    climate_change_adaptation?: string;
+  };
+}
+
 export default function Footer({
   locale,
   dict,
 }: {
   locale: string;
-  dict: any;
+  dict?: FooterDict;
 }) {
   return (
     <footer className="bg-primary-green text-white py-2">
@@ -79,7 +102,7 @@ export default function Footer({
                   href={`/${locale}/about/policies`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.footer.policies}
+                  {dict?.footer?.policies || "Policies"}
                 </Link>
               </li>
               <li>
@@ -87,7 +110,7 @@ export default function Footer({
                   href={`/${locale}/faqs`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.footer.faqs}
+                  {dict?.footer?.faqs || "FAQs"}
                 </Link>
               </li>
               <li>
@@ -95,7 +118,7 @@ export default function Footer({
                   href={`/${locale}/contact`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.footer.contact}
+                  {dict?.footer?.contact || "Contact"}
                 </Link>
               </li>
             </ul>
@@ -104,7 +127,7 @@ export default function Footer({
           {/* Programs */}
           <div>
             <h3 className="font-semibold text-secondary-yellow mb-4 text-lg">
-              {dict.footer.programs}
+              {dict?.footer?.programs || "Programs"}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -112,7 +135,7 @@ export default function Footer({
                   href={`/${locale}/programs/fellowship`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.programs.fellowship.title}
+                  {dict?.programs?.fellowship?.title || "Fellowship"}
                 </Link>
               </li>
               <li>
@@ -120,7 +143,7 @@ export default function Footer({
                   href={`/${locale}/programs/alumni`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.programs.alumni.title}
+                  {dict?.programs?.alumni?.title || "Alumni"}
                 </Link>
               </li>
               <li>
@@ -128,7 +151,7 @@ export default function Footer({
                   href={`/${locale}/programs/policy-support`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.programs.policy_support.title}
+                  {dict?.programs?.policy_support?.title || "Policy Support"}
                 </Link>
               </li>
             </ul>
@@ -137,7 +160,7 @@ export default function Footer({
           {/* What We Do */}
           <div>
             <h3 className="font-semibold text-secondary-yellow mb-4 text-lg">
-              {dict.footer.what_we_do}
+              {dict?.footer?.what_we_do || "What We Do"}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -145,7 +168,7 @@ export default function Footer({
                   href={`/${locale}/what-we-do/food-systems`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.what_we_do.food_systems}
+                  {dict?.what_we_do?.food_systems || "Food Systems"}
                 </Link>
               </li>
               <li>
@@ -153,7 +176,7 @@ export default function Footer({
                   href={`/${locale}/what-we-do/climate-change-adaptation`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.what_we_do.climate_change_adaptation}
+                  {dict?.what_we_do?.climate_change_adaptation || "Climate Change Adaptation"}
                 </Link>
               </li>
             </ul>
@@ -162,7 +185,7 @@ export default function Footer({
           {/* Explore */}
           <div>
             <h3 className="font-semibold text-secondary-yellow mb-4 text-lg">
-              {dict.footer.explore}
+              {dict?.footer?.explore || "Explore"}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -170,7 +193,7 @@ export default function Footer({
                   href={`/${locale}/member-login`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.footer.login}
+                  {dict?.footer?.login || "Login"}
                 </Link>
               </li>
               <li>
@@ -178,7 +201,7 @@ export default function Footer({
                   href={`/${locale}/opportunities`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.footer.opportunities}
+                  {dict?.footer?.opportunities || "Opportunities"}
                 </Link>
               </li>
               <li>
@@ -186,7 +209,7 @@ export default function Footer({
                   href={`/${locale}/research`}
                   className="hover:text-secondary-yellow transition-colors"
                 >
-                  {dict.footer.research}
+                  {dict?.footer?.research || "Research"}
                 </Link>
               </li>
             </ul>
