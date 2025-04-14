@@ -1,6 +1,6 @@
 import { db, withDbTransaction } from "../db/client";
 import { roles, user_roles, users } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, max } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
 
@@ -34,17 +34,6 @@ export type UserRoleOutput = {
   updated_at: Date;
 };
 
-// Generate numeric ID (simple implementation - in real app you might use an auto-increment from DB)
-let lastRoleId = 1000;
-function generateRoleId(): number {
-  return ++lastRoleId;
-}
-
-let lastUserRoleId = 5000;
-function generateUserRoleId(): number {
-  return ++lastUserRoleId;
-}
-
 // Create a new role
 export async function createRole(
   roleData: CreateRoleInput,
@@ -64,8 +53,10 @@ export async function createRole(
       );
     }
 
-    // Generate role ID
-    const roleId = generateRoleId();
+    // Get the maximum ID to generate next ID
+    const maxIdResult = await db.select({ maxId: max(roles.id) }).from(roles);
+    const maxId = maxIdResult[0]?.maxId || 1000;
+    const roleId = maxId + 1;
 
     // Insert the role with an explicit ID
     await db.insert(roles).values({
@@ -113,6 +104,29 @@ export async function getRoleById(id: number): Promise<RoleOutput> {
     return mapToRoleOutput(result[0]);
   } catch (error) {
     logger.error(`Error getting role by ID: ${id}`, error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Failed to get role", 500);
+  }
+}
+
+// Get role by name
+export async function getRoleByName(name: string): Promise<RoleOutput> {
+  try {
+    const result = await db
+      .select()
+      .from(roles)
+      .where(eq(roles.name, name))
+      .limit(1);
+
+    if (!result.length) {
+      throw new AppError("Role not found", 404);
+    }
+
+    return mapToRoleOutput(result[0]);
+  } catch (error) {
+    logger.error(`Error getting role by name: ${name}`, error);
     if (error instanceof AppError) {
       throw error;
     }
@@ -238,80 +252,97 @@ export async function assignRoleToUser(
   roleId: number,
 ): Promise<UserRoleOutput> {
   try {
-    // First check if user exists outside transaction
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    return await withDbTransaction(async (txDb) => {
+      // First check if user exists
+      const user = await txDb
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
 
-    if (!user.length) {
-      throw new AppError("User not found", 404);
-    }
+      if (!user.length) {
+        throw new AppError("User not found", 404);
+      }
 
-    // Check if role exists outside transaction
-    const role = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.id, roleId))
-      .limit(1);
+      // Check if role exists
+      const role = await txDb
+        .select()
+        .from(roles)
+        .where(eq(roles.id, roleId))
+        .limit(1);
 
-    if (!role.length) {
-      throw new AppError("Role not found", 404);
-    }
+      if (!role.length) {
+        throw new AppError("Role not found", 404);
+      }
 
-    // Check if user already has this role
-    const existingUserRole = await db
-      .select()
-      .from(user_roles)
-      .where(
-        and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
-      )
-      .limit(1);
+      // Check if user already has this role
+      const existingUserRole = await txDb
+        .select()
+        .from(user_roles)
+        .where(
+          and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
+        )
+        .limit(1);
 
-    if (existingUserRole.length > 0) {
-      throw new AppError("User already has this role", 409);
-    }
+      if (existingUserRole.length > 0) {
+        throw new AppError("User already has this role", 409);
+      }
 
-    // Generate user role ID
-    const userRoleId = generateUserRoleId();
-    const now = new Date();
+      // Get maximum ID to generate next ID safely
+      const maxIdResult = await txDb.select({ maxId: max(user_roles.id) }).from(user_roles);
+      const maxUserRoleId = maxIdResult[0]?.maxId || 5000;
+      const userRoleId = maxUserRoleId + 1;
+      
+      const now = new Date();
 
-    // Perform the actual insertion
-    try {
-      // FIX: Use userRoleId instead of user_roles.id
-      await db.insert(user_roles).values({
-        id: userRoleId,
-        user_id: userId,
-        role_id: roleId,
-        created_at: now,
-        updated_at: now,
-      });
-    } catch (insertError) {
-      logger.error(`Error inserting user role: ${insertError}`);
-      throw new AppError("Database error while assigning role", 500);
-    }
+      // Perform the actual insertion of user_role
+      try {
+        await txDb.insert(user_roles).values({
+          id: userRoleId,
+          user_id: userId,
+          role_id: roleId,
+          created_at: now,
+          updated_at: now,
+        });
+      } catch (insertError) {
+        logger.error(`Error inserting user role: ${insertError}`);
+        throw new AppError("Database error while assigning role", 500);
+      }
 
-    // Get the created user role assignment with role name
-    const createdUserRole = await db
-      .select({
-        id: user_roles.id,
-        user_id: user_roles.user_id,
-        role_id: user_roles.role_id,
-        role_name: roles.name,
-        created_at: user_roles.created_at,
-        updated_at: user_roles.updated_at,
-      })
-      .from(user_roles)
-      .innerJoin(roles, eq(user_roles.role_id, roles.id))
-      .where(eq(user_roles.id, userRoleId))
-      .limit(1);
+      // Update the user's role_id in the users table
+      try {
+        await txDb.update(users)
+          .set({
+            role_id: roleId,
+            updated_at: now,
+          })
+          .where(eq(users.id, userId));
+      } catch (updateError) {
+        logger.error(`Error updating user role_id: ${updateError}`);
+        throw new AppError("Database error while updating user's role_id", 500);
+      }
 
-    if (!createdUserRole.length) {
-      throw new AppError("Failed to retrieve assigned role", 500);
-    }
+      // Get the created user role assignment with role name
+      const createdUserRole = await txDb
+        .select({
+          id: user_roles.id,
+          user_id: user_roles.user_id,
+          role_id: user_roles.role_id,
+          role_name: roles.name,
+          created_at: user_roles.created_at,
+          updated_at: user_roles.updated_at,
+        })
+        .from(user_roles)
+        .innerJoin(roles, eq(user_roles.role_id, roles.id))
+        .where(eq(user_roles.id, userRoleId))
+        .limit(1);
 
-    return createdUserRole[0];
+      if (!createdUserRole.length) {
+        throw new AppError("Failed to retrieve assigned role", 500);
+      }
+
+      return createdUserRole[0];
+    });
   } catch (error) {
     logger.error(`Error assigning role ${roleId} to user ${userId}`, error);
     if (error instanceof AppError) {
@@ -321,7 +352,7 @@ export async function assignRoleToUser(
   }
 }
 
-// Add this function to your roles.service.ts file
+// Replace all user roles with a single role
 export async function replaceUserRole(
   userId: number,
   newRoleId: number,
@@ -353,8 +384,11 @@ export async function replaceUserRole(
       // Remove all existing roles for this user
       await txDb.delete(user_roles).where(eq(user_roles.user_id, userId));
 
-      // Generate user role ID
-      const userRoleId = generateUserRoleId();
+      // Get maximum ID to generate next ID safely
+      const maxIdResult = await txDb.select({ maxId: max(user_roles.id) }).from(user_roles);
+      const maxUserRoleId = maxIdResult[0]?.maxId || 5000;
+      const userRoleId = maxUserRoleId + 1;
+
       const now = new Date();
 
       // Assign new role to user
@@ -365,6 +399,14 @@ export async function replaceUserRole(
         created_at: now,
         updated_at: now,
       });
+
+      // Update the user's role_id in the users table
+      await txDb.update(users)
+        .set({
+          role_id: newRoleId,
+          updated_at: now,
+        })
+        .where(eq(users.id, userId));
 
       // Get the created user role assignment with role name
       const createdUserRole = await txDb
@@ -405,27 +447,62 @@ export async function removeRoleFromUser(
   roleId: number,
 ): Promise<boolean> {
   try {
-    // Check if user has this role
-    const existingUserRole = await db
-      .select()
-      .from(user_roles)
-      .where(
-        and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
-      )
-      .limit(1);
+    return await withDbTransaction(async (txDb) => {
+      // Check if user has this role
+      const existingUserRole = await txDb
+        .select()
+        .from(user_roles)
+        .where(
+          and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
+        )
+        .limit(1);
 
-    if (!existingUserRole.length) {
-      throw new AppError("User does not have this role", 404);
-    }
+      if (!existingUserRole.length) {
+        throw new AppError("User does not have this role", 404);
+      }
 
-    // Remove role from user
-    await db
-      .delete(user_roles)
-      .where(
-        and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
-      );
+      // Remove role from user in user_roles table
+      await txDb
+        .delete(user_roles)
+        .where(
+          and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
+        );
 
-    return true;
+      // Get remaining roles for this user, if any
+      const remainingRoles = await txDb
+        .select()
+        .from(user_roles)
+        .where(eq(user_roles.user_id, userId))
+        .orderBy(user_roles.created_at, 'desc');
+
+      // Update the users table to reflect the most recent role assignment
+      // If no roles remain, you might need a default role or handle that accordingly
+      if (remainingRoles.length > 0) {
+        await txDb.update(users)
+          .set({
+            role_id: remainingRoles[0].role_id,
+            updated_at: new Date(),
+          })
+          .where(eq(users.id, userId));
+      } else {
+        // If the user has no roles left, you might want to assign a default role
+        // or handle this case according to your application's requirements
+        logger.warn(`User ${userId} has no remaining roles after removal.`);
+        
+        // Option 1: Set to a default role (e.g., "user" role with ID 1)
+        // await txDb.update(users)
+        //   .set({
+        //     role_id: 1, // ID of default "user" role
+        //     updated_at: new Date(),
+        //   })
+        //   .where(eq(users.id, userId));
+        
+        // Option 2: Log a warning but don't change user's current role_id
+        // This is the current implementation
+      }
+
+      return true;
+    });
   } catch (error) {
     logger.error(`Error removing role ${roleId} from user ${userId}`, error);
     if (error instanceof AppError) {
@@ -488,6 +565,7 @@ function mapToRoleOutput(role: any): RoleOutput {
 export const roleService = {
   createRole,
   getRoleById,
+  getRoleByName,
   updateRole,
   deleteRole,
   listRoles,
