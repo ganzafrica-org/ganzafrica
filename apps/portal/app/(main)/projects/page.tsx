@@ -138,7 +138,7 @@ const ProjectsPage = () => {
             placeholder="Search"
           />
         </div>
-        <button className="ml-2 p-2.5 bg-green-700 text-white rounded">
+        <button className="ml-2 p-2.5 bg-green-700 text-white rounded" title="Filter projects">
           <Filter className="w-5 h-5" />
         </button>
       </div>
@@ -193,7 +193,10 @@ const ProjectsPage = () => {
                   )}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <button className="text-gray-500 hover:text-gray-700">
+                  <button 
+                    className="text-gray-500 hover:text-gray-700"
+                    title="More options"
+                  >
                     <MoreHorizontal className="w-5 h-5" />
                   </button>
                 </td>
@@ -209,10 +212,10 @@ const ProjectsPage = () => {
           Showing 10 out of 45 entries
         </div>
         <div className="flex items-center space-x-1">
-          <button className="p-2 text-gray-500 rounded hover:bg-gray-100">
+          <button className="p-2 text-gray-500 rounded hover:bg-gray-100" title="First page">
             <ChevronsLeft className="w-4 h-4" />
           </button>
-          <button className="p-2 text-gray-500 rounded hover:bg-gray-100">
+          <button className="p-2 text-gray-500 rounded hover:bg-gray-100" title="Previous page">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button className="p-2 w-8 h-8 rounded-md bg-green-700 text-white flex items-center justify-center">
@@ -224,10 +227,10 @@ const ProjectsPage = () => {
           <button className="p-2 w-8 h-8 rounded-md hover:bg-gray-100 text-gray-700 flex items-center justify-center">
             3
           </button>
-          <button className="p-2 text-gray-500 rounded hover:bg-gray-100">
+          <button className="p-2 text-gray-500 rounded hover:bg-gray-100" title="Next page">
             <ChevronRight className="w-4 h-4" />
           </button>
-          <button className="p-2 text-gray-500 rounded hover:bg-gray-100">
+          <button className="p-2 text-gray-500 rounded hover:bg-gray-100" title="Last page">
             <ChevronsRight className="w-4 h-4" />
           </button>
         </div>

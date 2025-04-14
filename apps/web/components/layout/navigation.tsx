@@ -89,11 +89,6 @@ const whatWeDoItems: MenuItem[] = [
         href: "/what-we-do/food-systems",
         description: "Developing sustainable food systems for communities across Africa.",
     },
-    {
-        title: "Climate Change Adaptation",
-        href: "/what-we-do/climate-change-adaptation",
-        description: "Innovative approaches to help communities adapt to climate challenges.",
-    },
 ]
 
 const programsItems: MenuItem[] = [
