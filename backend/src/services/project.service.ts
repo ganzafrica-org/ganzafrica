@@ -14,11 +14,50 @@ export type CreateProjectInput = {
   start_date: Date;
   end_date?: Date;
   created_by: number;
-  category_id: number; // Added category_id field
+  category_id: number;
   members?: ProjectMemberInput[];
   location?: string;
-  impacted_people?: number;
-  media?: any; // Added to accommodate the media field in requests
+  
+  // New fields
+  goals?: {
+    items: Array<{
+      id: string;
+      title: string;
+      description: string;
+      completed?: boolean;
+      order?: number;
+    }>;
+  };
+  
+  outcomes?: {
+    items: Array<{
+      id: string;
+      title: string;
+      description: string;
+      status?: string;
+      order?: number;
+    }>;
+  };
+  
+  media?: {
+    items: Array<{
+      id: string;
+      type: "image" | "video";
+      url: string;
+      cover: boolean;
+      tag?: "feature" | "description" | "others";
+      title?: string;
+      description?: string;
+      size?: number;
+      duration?: number;
+      thumbnailUrl?: string;
+      order?: number;
+    }>;
+  };
+  
+  other_information?: {
+    [key: string]: any;
+  };
 };
 
 export type UpdateProjectInput = {
@@ -27,10 +66,50 @@ export type UpdateProjectInput = {
   status?: string;
   start_date?: Date;
   end_date?: Date;
-  category_id?: number; // Added category_id field
+  category_id?: number;
   location?: string;
   impacted_people?: number;
-  media?: any;
+  
+  // New fields
+  goals?: {
+    items: Array<{
+      id: string;
+      title: string;
+      description: string;
+      completed?: boolean;
+      order?: number;
+    }>;
+  };
+  
+  outcomes?: {
+    items: Array<{
+      id: string;
+      title: string;
+      description: string;
+      status?: string;
+      order?: number;
+    }>;
+  };
+  
+  media?: {
+    items: Array<{
+      id: string;
+      type: "image" | "video";
+      url: string;
+      cover: boolean;
+      tag?: "feature" | "description" | "others";
+      title?: string;
+      description?: string;
+      size?: number;
+      duration?: number;
+      thumbnailUrl?: string;
+      order?: number;
+    }>;
+  };
+  
+  other_information?: {
+    [key: string]: any;
+  };
 };
 
 export type ProjectOutput = {
@@ -46,7 +125,48 @@ export type ProjectOutput = {
   updated_at: Date;
   location?: string | null;
   impacted_people?: number | null;
-  media?: any;
+  
+  // New fields
+  goals?: {
+    items: Array<{
+      id: string;
+      title: string;
+      description: string;
+      completed?: boolean;
+      order?: number;
+    }>;
+  };
+  
+  outcomes?: {
+    items: Array<{
+      id: string;
+      title: string;
+      description: string;
+      status?: string;
+      order?: number;
+    }>;
+  };
+  
+  media?: {
+    items: Array<{
+      id: string;
+      type: "image" | "video";
+      url: string;
+      cover: boolean;
+      tag?: "feature" | "description" | "others";
+      title?: string;
+      description?: string;
+      size?: number;
+      duration?: number;
+      thumbnailUrl?: string;
+      order?: number;
+    }>;
+  };
+  
+  other_information?: {
+    [key: string]: any;
+  };
+  
   members?: ProjectMemberOutput[];
 };
 
@@ -104,8 +224,13 @@ export async function createProject(
         created_by: projectData.created_by,
         category_id: projectData.category_id,
         location: projectData.location || null,
-        impacted_people: projectData.impacted_people || null,
+        
+        // New fields
+        goals: projectData.goals || null,
+        outcomes: projectData.outcomes || null,
         media: projectData.media || null,
+        other_information: projectData.other_information || null,
+        
         created_at: new Date(),
         updated_at: new Date(),
       });
@@ -601,8 +726,13 @@ export async function importProjects(
             created_by: projectData.created_by,
             category_id: projectData.category_id,
             location: projectData.location || null,
-            impacted_people: projectData.impacted_people || null,
+            
+            // New fields
+            goals: projectData.goals || null,
+            outcomes: projectData.outcomes || null,
             media: projectData.media || null,
+            other_information: projectData.other_information || null,
+            
             created_at: new Date(),
             updated_at: new Date(),
           });
@@ -668,7 +798,13 @@ function mapToProjectOutput(project: any): ProjectOutput {
     category_id: project.category_id,
     location: project.location,
     impacted_people: project.impacted_people,
+    
+    // New fields
+    goals: project.goals,
+    outcomes: project.outcomes,
     media: project.media,
+    other_information: project.other_information,
+    
     created_at: project.created_at,
     updated_at: project.updated_at,
   };
@@ -696,3 +832,16 @@ function validateRole(role: string): string {
   }
   return role;
 }
+
+export const projectService = {
+  createProject,
+  getProjectById,
+  updateProject,
+  deleteProject,
+  addProjectMember,
+  removeProjectMember,
+  listProjects,
+  importProjects,
+};
+
+export default projectService;
