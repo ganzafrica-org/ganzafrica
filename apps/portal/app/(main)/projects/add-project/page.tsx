@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play } from 'lucide-react';
 import Link from 'next/link';
 
 const AddProjectPage = () => {
@@ -14,10 +14,11 @@ const AddProjectPage = () => {
   const [success, setSuccess] = useState(false);
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [roles, setRoles] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
 
 
   // Form state
@@ -53,6 +54,23 @@ const AddProjectPage = () => {
     cover: false
   });
 
+  // Clean up blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      // Revoke any video preview URL
+      if (videoPreviewUrl && videoPreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(videoPreviewUrl);
+      }
+      
+      // Revoke all media blob URLs
+      formData.media.items.forEach(media => {
+        if (media.url && media.url.startsWith('blob:')) {
+          URL.revokeObjectURL(media.url);
+        }
+      });
+    };
+  }, [formData.media.items, videoPreviewUrl]);
+
   // Fetch categories and users on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -69,19 +87,19 @@ const AddProjectPage = () => {
           setCategories([]);
         }
         
- // Fetch roles
-try {
-  const rolesResponse = await axios.get('http://localhost:3002/api/roles');
-  // Extract roles data based on response structure
-  if (rolesResponse.data && Array.isArray(rolesResponse.data.roles)) {
-    setRoles(rolesResponse.data.roles);
-  } else if (Array.isArray(rolesResponse.data)) {
-    setRoles(rolesResponse.data);
-  }
-} catch (error) {
-  console.error('Error fetching roles:', error);
-  setRoles([]);
-}
+        // Fetch roles
+        try {
+          const rolesResponse = await axios.get('http://localhost:3002/api/roles');
+          // Extract roles data based on response structure
+          if (rolesResponse.data && Array.isArray(rolesResponse.data.roles)) {
+            setRoles(rolesResponse.data.roles);
+          } else if (Array.isArray(rolesResponse.data)) {
+            setRoles(rolesResponse.data);
+          }
+        } catch (error) {
+          console.error('Error fetching roles:', error);
+          setRoles([]);
+        }
         
         // Fetch users
         try {
@@ -170,10 +188,22 @@ try {
       const file = e.target.files[0];
       const fileType = file.type.startsWith('image/') ? 'image' : 'video';
       
+      // If previous file was a video, revoke its URL
+      if (newMedia.file && newMedia.type === 'video' && newMedia.previewUrl) {
+        URL.revokeObjectURL(newMedia.previewUrl);
+      }
+      
+      // Create a preview for videos
+      let previewUrl = null;
+      if (fileType === 'video') {
+        previewUrl = URL.createObjectURL(file);
+      }
+      
       setNewMedia(prev => ({
         ...prev,
         file,
-        type: fileType
+        type: fileType,
+        previewUrl: previewUrl
       }));
     }
   };
@@ -183,40 +213,85 @@ try {
     fileInputRef.current?.click();
   };
 
-  // Upload file to server
+  // Upload file to server (modified to use local URLs)
   const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
     try {
       setIsUploading(true);
       setUploadProgress(0);
       
-      // Upload to your media endpoint
-      const response = await axios.post('http://localhost:3002/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(percentCompleted);
-        }
-      });
-
-      setIsUploading(false);
-      // Return the URL from the response
-      return response.data.url;
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(interval);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 100);
+      
+      // Create a local URL for the file
+      const localUrl = URL.createObjectURL(file);
+      
+      // Clear the interval and finish
+      setTimeout(() => {
+        clearInterval(interval);
+        setUploadProgress(100);
+        setIsUploading(false);
+      }, 1500);
+      
+      return localUrl; // This URL will work in the browser session
     } catch (error) {
       console.error('Error uploading file:', error);
       setIsUploading(false);
-      
-      // For demo purposes, return a mock URL if the upload endpoint is not available
-      if (newMedia.type === 'image') {
-        return `https://example.com/images/${file.name}`;
-      } else {
-        return `https://example.com/videos/${file.name}`;
-      }
+      return null;
     }
+  };
+
+  // Generate a video thumbnail (as a placeholder)
+  const generateVideoThumbnail = async (videoFile) => {
+    return new Promise((resolve) => {
+      const videoElement = document.createElement('video');
+      videoElement.preload = 'metadata';
+      videoElement.playsInline = true;
+      videoElement.muted = true;
+      
+      // Create a URL for the video file
+      const videoURL = URL.createObjectURL(videoFile);
+      videoElement.src = videoURL;
+      
+      // Once the video metadata is loaded, capture the thumbnail
+      videoElement.onloadedmetadata = () => {
+        // Set current time to the first frame
+        videoElement.currentTime = 1; // 1 second in to avoid black frames
+      };
+      
+      // When the current time updates (after seeking)
+      videoElement.onseeked = () => {
+        // Create a canvas and draw the video frame
+        const canvas = document.createElement('canvas');
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        
+        // Convert the canvas to a data URL (thumbnail)
+        const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
+        
+        // Clean up
+        URL.revokeObjectURL(videoURL);
+        
+        // Return the thumbnail
+        resolve(thumbnailUrl);
+      };
+      
+      // Handle errors
+      videoElement.onerror = () => {
+        URL.revokeObjectURL(videoURL);
+        console.error('Error generating video thumbnail');
+        resolve(null);
+      };
+    });
   };
 
   // Add goal to goals list
@@ -272,10 +347,28 @@ try {
     if (!newMedia.file || !newMedia.title) return;
     
     try {
-      // First upload the file
+      // Get local URL for the file
       const fileUrl = await uploadFile(newMedia.file);
       
+      if (!fileUrl) {
+        setError('Failed to create file URL. Please try again.');
+        return;
+      }
+      
       const mediaId = `media-${Date.now()}`;
+      
+      // For videos, try to generate a thumbnail
+      let thumbnailUrl = null;
+      if (newMedia.type === 'video') {
+        try {
+          thumbnailUrl = await generateVideoThumbnail(newMedia.file);
+        } catch (error) {
+          console.error('Error generating thumbnail:', error);
+          // If thumbnail generation fails, use the video itself as thumbnail
+          thumbnailUrl = fileUrl;
+        }
+      }
+      
       const mediaToAdd = {
         id: mediaId,
         type: newMedia.type,
@@ -285,14 +378,13 @@ try {
         tag: newMedia.tag,
         cover: newMedia.cover,
         order: formData.media.items.length + 1,
-        size: newMedia.file.size
+        size: newMedia.file.size,
+        // For videos, add duration and thumbnail
+        ...(newMedia.type === 'video' && {
+          duration: 0, // We could calculate actual duration with more complex code
+          thumbnailUrl: thumbnailUrl
+        })
       };
-      
-      // Add thumbnail URL for videos
-      if (newMedia.type === 'video') {
-        mediaToAdd.duration = 0; // You would calculate actual duration if possible
-        mediaToAdd.thumbnailUrl = `https://example.com/thumbnails/${mediaId}.jpg`;
-      }
       
       setFormData(prev => ({
         ...prev,
@@ -301,13 +393,19 @@ try {
         }
       }));
       
+      // Clear any preview URL from new media
+      if (newMedia.previewUrl) {
+        URL.revokeObjectURL(newMedia.previewUrl);
+      }
+      
       // Reset new media form
       setNewMedia({ 
         file: null,
         type: 'image',
         title: '',
         tag: 'feature',
-        cover: false
+        cover: false,
+        previewUrl: null
       });
       
       // Reset file input
@@ -319,6 +417,16 @@ try {
       console.error('Error adding media:', error);
       setError('Failed to upload media. Please try again.');
     }
+  };
+
+  // Open video in a larger modal/preview
+  const openVideoPreview = (url) => {
+    setVideoPreviewUrl(url);
+  };
+
+  // Close video preview
+  const closeVideoPreview = () => {
+    setVideoPreviewUrl('');
   };
 
   // Select media for editing
@@ -417,12 +525,24 @@ try {
 
   // Remove media from list
   const removeMedia = (mediaId) => {
+    // Revoke the object URL to prevent memory leaks
+    const mediaToRemove = formData.media.items.find(media => media.id === mediaId);
+    if (mediaToRemove) {
+      if (mediaToRemove.url && mediaToRemove.url.startsWith('blob:')) {
+        URL.revokeObjectURL(mediaToRemove.url);
+      }
+      if (mediaToRemove.thumbnailUrl && mediaToRemove.thumbnailUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(mediaToRemove.thumbnailUrl);
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       media: {
         items: prev.media.items.filter(media => media.id !== mediaId)
       }
     }));
+    
     if (selectedMedia && selectedMedia.id === mediaId) {
       setSelectedMedia(null);
     }
@@ -434,6 +554,81 @@ try {
       ...prev,
       members: prev.members.filter(member => member.user_id !== userId)
     }));
+  };
+
+  // Media preview component
+  const MediaPreview = ({ media }) => {
+    if (media.type === 'image') {
+      return (
+        <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
+          <img 
+            src={media.url} 
+            alt={media.title}
+            className="object-cover w-full h-full" 
+          />
+        </div>
+      );
+    } else if (media.type === 'video') {
+      return (
+        <div 
+          className="h-20 bg-gray-100 flex items-center justify-center relative cursor-pointer"
+          onClick={() => openVideoPreview(media.url)}
+        >
+          {/* Video thumbnail or first frame */}
+          {media.thumbnailUrl ? (
+            <img 
+              src={media.thumbnailUrl} 
+              alt={media.title}
+              className="object-cover w-full h-full" 
+            />
+          ) : (
+            <div className="bg-gray-200 w-full h-full flex items-center justify-center">
+              <FileVideo className="w-8 h-8 text-gray-500" />
+            </div>
+          )}
+          
+          {/* Play button overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 hover:bg-opacity-40 transition-opacity">
+            <div className="w-10 h-10 rounded-full bg-white bg-opacity-80 flex items-center justify-center">
+              <Play className="w-6 h-6 text-gray-800 ml-1" />
+            </div>
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div className="h-20 bg-gray-100 flex items-center justify-center">
+          <FileVideo className="w-10 h-10 text-purple-500" />
+        </div>
+      );
+    }
+  };
+
+  // Video preview modal
+  const VideoPreviewModal = () => {
+    if (!videoPreviewUrl) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+        <div className="relative w-full max-w-4xl mx-auto p-4">
+          <button
+            onClick={closeVideoPreview}
+            className="absolute top-2 right-2 z-10 p-2 bg-black bg-opacity-50 rounded-full text-white hover:bg-opacity-70"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          <div className="bg-black rounded-lg overflow-hidden">
+            <video 
+              src={videoPreviewUrl} 
+              controls 
+              autoPlay 
+              className="w-full h-auto max-h-[80vh]"
+            />
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Handle form submission
@@ -450,16 +645,76 @@ try {
       return;
     }
     
-    // Prepare data for API
-    const projectData = {
-      ...formData,
-      category_id: parseInt(formData.category_id)
-    };
-    
     try {
+      // Convert blob URLs to base64 for storing in the database
+      const mediaWithBase64 = await Promise.all(
+        formData.media.items.map(async (media) => {
+          const result = { ...media };
+          
+          // Convert main URL if it's a blob
+          if (media.url && media.url.startsWith('blob:')) {
+            try {
+              const response = await fetch(media.url);
+              const blob = await response.blob();
+              const reader = new FileReader();
+              
+              const base64Url = await new Promise((resolve, reject) => {
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+              
+              result.url = base64Url;
+            } catch (error) {
+              console.error('Error converting blob URL to base64:', error);
+            }
+          }
+          
+          // Convert thumbnail URL if it exists and is a blob
+          if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
+            try {
+              const response = await fetch(media.thumbnailUrl);
+              const blob = await response.blob();
+              const reader = new FileReader();
+              
+              const base64Thumbnail = await new Promise((resolve, reject) => {
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+              
+              result.thumbnailUrl = base64Thumbnail;
+            } catch (error) {
+              console.error('Error converting thumbnail URL to base64:', error);
+            }
+          }
+          
+          return result;
+        })
+      );
+      
+      // Prepare data for API with converted media URLs
+      const projectData = {
+        ...formData,
+        category_id: parseInt(formData.category_id),
+        media: {
+          items: mediaWithBase64
+        }
+      };
+      
       const response = await axios.post('http://localhost:3002/api/projects', projectData);
       console.log('Project created:', response.data);
       setSuccess(true);
+      
+      // Revoke all object URLs to prevent memory leaks
+      formData.media.items.forEach(media => {
+        if (media.url && media.url.startsWith('blob:')) {
+          URL.revokeObjectURL(media.url);
+        }
+        if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(media.thumbnailUrl);
+        }
+      });
       
       // Navigate back to projects list after a brief delay
       setTimeout(() => {
@@ -481,14 +736,18 @@ try {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+  
   // Get role name by ID
-const getRoleNameById = (roleId: string | number): string => {
-  const role = roles.find((r: { id: number; name: string }) => r.id.toString() === roleId.toString());
-  return role ? role.name : roleId.toString();
-};
+  const getRoleNameById = (roleId) => {
+    const role = roles.find((r) => r.id?.toString() === roleId?.toString());
+    return role ? role.name : roleId?.toString();
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
+      {/* Video preview modal */}
+      {videoPreviewUrl && <VideoPreviewModal />}
+      
       {/* Header with back button */}
       <div className="mb-6">
         <div className="flex items-center mb-2">
@@ -615,7 +874,7 @@ const getRoleNameById = (roleId: string | number): string => {
                       value={formData.status}
                       onChange={handleChange}
                       className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
-                    >
+                      >
                       <option value="planned">Planned</option>
                       <option value="active">Active</option>
                       <option value="completed">Completed</option>
@@ -887,7 +1146,7 @@ const getRoleNameById = (roleId: string | number): string => {
                       return (
                         <div key={member.user_id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-green-50">
                           <div className="col-span-6">{fullName}</div>
-                          <div className="col-span-5 text-gray-600">{member.role.charAt(0).toUpperCase() + member.role.slice(1)}</div>
+                          <div className="col-span-5 text-gray-600">{getRoleNameById(member.role)}</div>
                           <div className="col-span-1 flex justify-end">
                             <button
                               type="button"
@@ -931,18 +1190,18 @@ const getRoleNameById = (roleId: string | number): string => {
                   </label>
                   <div className="relative">
                   <select
-  name="role"
-  value={newMember.role}
-  onChange={handleMemberChange}
-  className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
->
-  <option value="">Select a role</option>
-  {Array.isArray(roles) && roles.map(role => (
-    <option key={role.id} value={role.id}>
-      {role.name}
-    </option>
-  ))}
-</select>
+                    name="role"
+                    value={newMember.role}
+                    onChange={handleMemberChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                  >
+                    <option value="">Select a role</option>
+                    {Array.isArray(roles) && roles.map(role => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
@@ -959,7 +1218,6 @@ const getRoleNameById = (roleId: string | number): string => {
             </div>
           </div>
         </div>
-
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
 
@@ -1011,6 +1269,29 @@ const getRoleNameById = (roleId: string | number): string => {
                     Size: {formatFileSize(newMedia.file.size)}
                   </div>
                   
+                  {/* Video preview for videos */}
+                  {newMedia.type === 'video' && newMedia.previewUrl && (
+                    <div className="mb-4 border rounded overflow-hidden">
+                      <video 
+                        src={newMedia.previewUrl} 
+                        controls 
+                        className="w-full h-auto max-h-40" 
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Image preview for images */}
+                  {newMedia.type === 'image' && newMedia.file && (
+                    <div className="mb-4 border rounded overflow-hidden">
+                      <img 
+                        src={URL.createObjectURL(newMedia.file)} 
+                        alt="Preview" 
+                        className="w-full h-auto max-h-40 object-contain" 
+                        onLoad={(e) => URL.revokeObjectURL(e.target.src)} // Clean up object URL after loading
+                      />
+                    </div>
+                  )}
+                  
                   {isUploading && (
                     <div className="mb-4">
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -1061,9 +1342,11 @@ const getRoleNameById = (roleId: string | number): string => {
                         checked={newMedia.cover}
                         onChange={handleMediaChange}
                         className="mr-2"
+                        disabled={newMedia.type === 'video'} // Only images can be cover
                       />
-                      <label htmlFor="mediaCover" className="text-sm">
+                      <label htmlFor="mediaCover" className={`text-sm ${newMedia.type === 'video' ? 'text-gray-400' : ''}`}>
                         Use as cover image
+                        {newMedia.type === 'video' && " (only available for images)"}
                       </label>
                     </div>
                     
@@ -1104,14 +1387,10 @@ const getRoleNameById = (roleId: string | number): string => {
                     >
                       {/* Media preview */}
                       <div 
-                        className="bg-gray-100 h-20 flex items-center justify-center cursor-pointer"
-                        onClick={() => selectMedia(media.id)}
+                        className="cursor-pointer"
+                        onClick={() => media.type === 'video' ? openVideoPreview(media.url) : selectMedia(media.id)}
                       >
-                        {media.type === 'image' ? (
-                          <Image className="w-10 h-10 text-blue-500" />
-                        ) : (
-                          <FileVideo className="w-10 h-10 text-purple-500" />
-                        )}
+                        <MediaPreview media={media} />
                       </div>
                       
                       {/* Media info */}
@@ -1154,7 +1433,7 @@ const getRoleNameById = (roleId: string | number): string => {
                       </div>
                       
                       {/* Tag selection - show when media is selected */}
-                      {selectedMedia && selectedMedia.id === media.id && (
+                      {selectedMedia && selectedMedia.id === media.id && media.type !== 'video' && (
                         <div className="p-3 border-t">
                           <div className="mb-2">
                             <label className="text-xs font-semibold mb-1 block">Change Display Tag:</label>
@@ -1207,6 +1486,7 @@ const getRoleNameById = (roleId: string | number): string => {
           <button
             type="button"
             className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            onClick={() => router.push('/projects')}
           >
             Cancel
           </button>

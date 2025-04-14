@@ -131,39 +131,38 @@ const AddNewsPage = () => {
     fileInputRef.current?.click();
   };
 
-  // Upload file to server
+  // Upload file to local storage (simulate upload)
   const uploadFile = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
     try {
       setIsUploading(true);
       setUploadProgress(0);
       
-      // Upload to your media endpoint
-      const response = await axios.post('http://localhost:3002/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setUploadProgress(percentCompleted);
-        }
-      });
-
-      setIsUploading(false);
-      // Return the URL from the response
-      return response.data.url;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      setIsUploading(false);
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(interval);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 100);
       
-      // For demo purposes, return a mock URL if the upload endpoint is not available
-      if (file.type.startsWith('image/')) {
-        return `https://example.com/images/${file.name}`;
-      } else {
-        return `https://example.com/videos/${file.name}`;
-      }
+      // Create a local URL for the file instead of uploading to server
+      const localUrl = URL.createObjectURL(file);
+      
+      // Clear the interval and finish
+      setTimeout(() => {
+        clearInterval(interval);
+        setUploadProgress(100);
+        setIsUploading(false);
+      }, 1500);
+      
+      return localUrl; // This URL will work in the browser session
+    } catch (error) {
+      console.error('Error creating local file URL:', error);
+      setIsUploading(false);
+      return null;
     }
   };
 
@@ -176,15 +175,79 @@ const AddNewsPage = () => {
     }
   };
 
+  // Generate a video thumbnail (as a placeholder)
+  const generateVideoThumbnail = async (videoFile) => {
+    return new Promise((resolve) => {
+      const videoElement = document.createElement('video');
+      videoElement.preload = 'metadata';
+      videoElement.playsInline = true;
+      videoElement.muted = true;
+      
+      // Create a URL for the video file
+      const videoURL = URL.createObjectURL(videoFile);
+      videoElement.src = videoURL;
+      
+      // Once the video metadata is loaded, capture the thumbnail
+      videoElement.onloadedmetadata = () => {
+        // Set current time to the first frame
+        videoElement.currentTime = 1; // 1 second in to avoid black frames
+      };
+      
+      // When the current time updates (after seeking)
+      videoElement.onseeked = () => {
+        // Create a canvas and draw the video frame
+        const canvas = document.createElement('canvas');
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        
+        // Convert the canvas to a data URL (thumbnail)
+        const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
+        
+        // Clean up
+        URL.revokeObjectURL(videoURL);
+        
+        // Return the thumbnail
+        resolve(thumbnailUrl);
+      };
+      
+      // Handle errors
+      videoElement.onerror = () => {
+        URL.revokeObjectURL(videoURL);
+        console.error('Error generating video thumbnail');
+        resolve(null);
+      };
+    });
+  };
+
   // Add media to media list
   const addMedia = async () => {
     if (!newMedia.file || !newMedia.title) return;
     
     try {
-      // First upload the file
+      // Get local URL for the file
       const fileUrl = await uploadFile(newMedia.file);
       
+      if (!fileUrl) {
+        setError('Failed to create file URL. Please try again.');
+        return;
+      }
+      
       const mediaId = `media-${Date.now()}`;
+      
+      // For videos, try to generate a thumbnail
+      let thumbnailUrl = null;
+      if (newMedia.type === 'video') {
+        try {
+          thumbnailUrl = await generateVideoThumbnail(newMedia.file);
+        } catch (error) {
+          console.error('Error generating thumbnail:', error);
+          // If thumbnail generation fails, use a placeholder
+          thumbnailUrl = null;
+        }
+      }
+      
       const mediaToAdd = {
         id: mediaId,
         type: newMedia.type,
@@ -192,14 +255,13 @@ const AddNewsPage = () => {
         title: newMedia.title,
         cover: newMedia.cover,
         order: formData.media.items.length + 1,
-        size: newMedia.file.size
+        size: newMedia.file.size,
+        // For videos, add duration and thumbnail
+        ...(newMedia.type === 'video' && {
+          duration: 0, // We could calculate actual duration with more complex code
+          thumbnailUrl: thumbnailUrl
+        })
       };
-      
-      // Add thumbnail URL for videos
-      if (newMedia.type === 'video') {
-        mediaToAdd.duration = 0; // You would calculate actual duration if possible
-        mediaToAdd.thumbnailUrl = `https://example.com/thumbnails/${mediaId}.jpg`;
-      }
       
       setFormData(prev => ({
         ...prev,
@@ -258,12 +320,24 @@ const AddNewsPage = () => {
 
   // Remove media from list
   const removeMedia = (mediaId) => {
+    // Revoke the object URL to prevent memory leaks
+    const mediaToRemove = formData.media.items.find(media => media.id === mediaId);
+    if (mediaToRemove) {
+      if (mediaToRemove.url && mediaToRemove.url.startsWith('blob:')) {
+        URL.revokeObjectURL(mediaToRemove.url);
+      }
+      if (mediaToRemove.thumbnailUrl && mediaToRemove.thumbnailUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(mediaToRemove.thumbnailUrl);
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       media: {
         items: prev.media.items.filter(media => media.id !== mediaId)
       }
     }));
+    
     if (selectedMedia && selectedMedia.id === mediaId) {
       setSelectedMedia(null);
     }
@@ -370,32 +444,97 @@ const AddNewsPage = () => {
       return;
     }
     
-    // Prepare data for API
-    const newsData = {
-      ...formData,
-      tags: selectedTags
-    };
-    
-    // Ensure we have a valid publish_date if status is published
-    if (formData.status === 'published' && !formData.publish_date) {
-      newsData.publish_date = new Date().toISOString();
-    }
-    
     try {
-      const response = await axios.post('http://localhost:3002/api/news', newsData);
-      console.log('News created:', response.data);
-      setSuccess(true);
+      // Convert blob URLs to base64 for storing in the database
+      const mediaWithBase64 = await Promise.all(
+        formData.media.items.map(async (media) => {
+          const result = { ...media };
+          
+          // Convert main URL if it's a blob
+          if (media.url && media.url.startsWith('blob:')) {
+            try {
+              const response = await fetch(media.url);
+              const blob = await response.blob();
+              const reader = new FileReader();
+              
+              const base64Url = await new Promise((resolve, reject) => {
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+              
+              result.url = base64Url;
+            } catch (error) {
+              console.error('Error converting blob URL to base64:', error);
+            }
+          }
+          
+          // Convert thumbnail URL if it exists and is a blob
+          if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
+            try {
+              const response = await fetch(media.thumbnailUrl);
+              const blob = await response.blob();
+              const reader = new FileReader();
+              
+              const base64Thumbnail = await new Promise((resolve, reject) => {
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+              
+              result.thumbnailUrl = base64Thumbnail;
+            } catch (error) {
+              console.error('Error converting thumbnail URL to base64:', error);
+            }
+          }
+          
+          return result;
+        })
+      );
       
-      // Navigate back to news list after a brief delay
-      setTimeout(() => {
-        router.push('/news');
-      }, 2000);
+      // Prepare data for API with converted media URLs
+      const newsData = {
+        ...formData,
+        tags: selectedTags,
+        media: {
+          items: mediaWithBase64
+        }
+      };
+      
+      // Ensure we have a valid publish_date if status is published
+      if (formData.status === 'published' && !formData.publish_date) {
+        newsData.publish_date = new Date().toISOString();
+      }
+      
+      try {
+        const response = await axios.post('http://localhost:3002/api/news', newsData);
+        console.log('News created:', response.data);
+        setSuccess(true);
+        
+        // Revoke all object URLs to prevent memory leaks
+        formData.media.items.forEach(media => {
+          if (media.url && media.url.startsWith('blob:')) {
+            URL.revokeObjectURL(media.url);
+          }
+          if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(media.thumbnailUrl);
+          }
+        });
+        
+        // Navigate back to news list after a brief delay
+        setTimeout(() => {
+          router.push('/news');
+        }, 2000);
+      } catch (error) {
+        console.error('Error creating news:', error);
+        const errorMessage = error.response?.data?.message || 
+                            (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) : 
+                            'Failed to create news article. Please try again.');
+        setError(errorMessage);
+      }
     } catch (error) {
-      console.error('Error creating news:', error);
-      const errorMessage = error.response?.data?.message || 
-                          (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) : 
-                          'Failed to create news article. Please try again.');
-      setError(errorMessage);
+      console.error('Error processing media:', error);
+      setError('Failed to process media files. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -717,13 +856,29 @@ const AddNewsPage = () => {
                     >
                       {/* Media preview */}
                       <div 
-                        className="bg-gray-100 h-20 flex items-center justify-center cursor-pointer"
+                        className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer"
                         onClick={() => selectMedia(media.id)}
                       >
                         {media.type === 'image' ? (
-                          <ImageIcon className="w-10 h-10 text-blue-500" />
+                          <img 
+                            src={media.url} 
+                            alt={media.title}
+                            className="object-cover w-full h-full" 
+                          />
                         ) : (
-                          <FileVideo className="w-10 h-10 text-purple-500" />
+                          <div className="relative w-full h-full">
+                            {media.thumbnailUrl ? (
+                              <img 
+                                src={media.thumbnailUrl} 
+                                alt={media.title}
+                                className="object-cover w-full h-full" 
+                              />
+                            ) : (
+                              <div className="flex items-center justify-center h-full">
+                                <FileVideo className="w-10 h-10 text-purple-500" />
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                       
@@ -912,6 +1067,5 @@ const AddNewsPage = () => {
       )}
     </div>
   );
-};
-
+}
 export default AddNewsPage;
