@@ -1,9 +1,11 @@
 'use client';
 
 import * as React from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Link from 'next/link';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -14,14 +16,13 @@ import {
     FormLabel,
     FormMessage,
 } from '@workspace/ui/components/form';
-import { Input } from '@workspace/ui/components/input';
 import { Card } from '@workspace/ui/components/card';
 
-import { useAuth } from '@/components/auth/auth-provider';
+import apiClient from '@/lib/api-client';
 
 export function ForgotPasswordForm() {
-    const { requestPasswordReset, isLoading } = useAuth();
-    const [isSubmitted, setIsSubmitted] = React.useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Forgot password form
     const form = useForm({
@@ -32,10 +33,20 @@ export function ForgotPasswordForm() {
 
     // Handle forgot password submission
     const handleForgotPassword = async (data: { email: string }) => {
-        const success = await requestPasswordReset(data.email);
+        setIsLoading(true);
+        try {
+            const response = await apiClient.post('/auth/forgot-password', data);
 
-        if (success) {
-            setIsSubmitted(true);
+            if (response.data.success) {
+                setIsSubmitted(true);
+                toast.success('Password reset instructions sent to your email');
+            } else {
+                toast.error('Failed to send password reset instructions');
+            }
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to send password reset instructions');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -54,17 +65,17 @@ export function ForgotPasswordForm() {
                         We've sent password reset instructions to your email address.
                     </p>
                 </div>
-                
+
                 <div className="mb-6">
                     <p className="text-center text-gray-600">
                         Please check your inbox and follow the link to reset your password.
                         If you don't see the email, check your spam folder.
                     </p>
                 </div>
-                
+
                 <div className="flex justify-center">
-                    <Link 
-                        href="/login" 
+                    <Link
+                        href="/login"
                         className="py-2 px-4 rounded-md text-primary-green border border-primary-green hover:bg-green-50 transition-colors"
                     >
                         Return to login
@@ -77,20 +88,20 @@ export function ForgotPasswordForm() {
     return (
         <Card className="w-full max-w-md mx-auto p-6 shadow-lg rounded-lg">
             <div className="flex flex-col items-center mb-6">
-               <Image
-                                       src="/logo.png"
-                                       alt="Logo"
-                                       width={100}
-                                       height={40}
-                                       className="object-contain"
-                                       priority
-                                   />
+                <Image
+                    src="/logo.png"
+                    alt="Logo"
+                    width={100}
+                    height={40}
+                    className="object-contain"
+                    priority
+                />
                 <h2 className="text-2xl font-semibold text-center">Forgot Password</h2>
                 <p className="text-gray-500 text-center mt-2">
                     Enter your email and we'll send you a link to reset your password
                 </p>
             </div>
-                
+
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleForgotPassword)} className="space-y-5">
                     <div className="mb-4">
@@ -105,19 +116,30 @@ export function ForgotPasswordForm() {
                                 type="email"
                                 placeholder="email@example.com"
                                 className="pl-10 py-2 block w-full border border-gray-200 rounded"
-                                {...form.register('email')}
+                                {...form.register('email', {
+                                    required: 'Email is required',
+                                    pattern: {
+                                        value: /\S+@\S+\.\S+/,
+                                        message: 'Invalid email address'
+                                    }
+                                })}
                             />
                         </div>
+                        {form.formState.errors.email && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {form.formState.errors.email.message}
+                            </p>
+                        )}
                     </div>
-                        
-                    <Button 
-                        type="submit" 
-                        className="w-full py-2 rounded-md text-white bg-primary-green" 
+
+                    <Button
+                        type="submit"
+                        className="w-full py-2 rounded-md text-white bg-primary-green"
                         disabled={isLoading}
                     >
                         {isLoading ? 'Submitting...' : 'Send Reset Link'}
                     </Button>
-                        
+
                     <div className="text-center mt-4">
                         <p className="text-sm text-primary-green">
                             Remember your password?{' '}
