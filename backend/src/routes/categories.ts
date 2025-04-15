@@ -30,4 +30,17 @@ router.get(
   categoryController.getCategoryById,
 );
 
+router.put(
+  "/:id",
+  validate(categoryValidation.updateCategorySchema),
+  categoryController.updateCategory,
+);
+
+// Add the missing DELETE endpoint
+router.delete(
+  "/:id",
+  validate(categoryValidation.getCategorySchema), // Reusing the getCategorySchema for validation
+  categoryController.deleteCategory,
+);
+
 export default router;
