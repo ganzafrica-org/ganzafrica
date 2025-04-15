@@ -3,7 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+<<<<<<< HEAD
 import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play, Link as LinkIcon } from 'lucide-react';
+=======
+import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play } from 'lucide-react';
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
 import Link from 'next/link';
 
 const AddProjectPage = () => {
@@ -19,7 +23,10 @@ const AddProjectPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
+<<<<<<< HEAD
   const [mediaSourceType, setMediaSourceType] = useState('file'); // 'file' or 'url'
+=======
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
 
 
   // Form state
@@ -52,8 +59,12 @@ const AddProjectPage = () => {
     type: 'image',
     title: '',
     tag: 'feature',
+<<<<<<< HEAD
     cover: false,
     url: ''
+=======
+    cover: false
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
   });
 
   // Clean up blob URLs when component unmounts
@@ -205,6 +216,7 @@ const AddProjectPage = () => {
         ...prev,
         file,
         type: fileType,
+<<<<<<< HEAD
         previewUrl: previewUrl,
         url: '' // Clear URL when file is selected
       }));
@@ -288,6 +300,13 @@ const AddProjectPage = () => {
     }
   };
 
+=======
+        previewUrl: previewUrl
+      }));
+    }
+  };
+
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
   // Trigger file input click
   const triggerFileInput = () => {
     fileInputRef.current?.click();
@@ -424,6 +443,7 @@ const AddProjectPage = () => {
 
   // Add media to media list
   const addMedia = async () => {
+<<<<<<< HEAD
     // Validate based on media source type
     if (mediaSourceType === 'file' && !newMedia.file) {
       setError('Please select a file');
@@ -483,10 +503,36 @@ const AddProjectPage = () => {
         if (newMedia.type === 'video') {
           thumbnailUrl = null;
         }
+=======
+    if (!newMedia.file || !newMedia.title) return;
+    
+    try {
+      // Get local URL for the file
+      const fileUrl = await uploadFile(newMedia.file);
+      
+      if (!fileUrl) {
+        setError('Failed to create file URL. Please try again.');
+        return;
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
       }
       
       const mediaId = `media-${Date.now()}`;
       
+<<<<<<< HEAD
+=======
+      // For videos, try to generate a thumbnail
+      let thumbnailUrl = null;
+      if (newMedia.type === 'video') {
+        try {
+          thumbnailUrl = await generateVideoThumbnail(newMedia.file);
+        } catch (error) {
+          console.error('Error generating thumbnail:', error);
+          // If thumbnail generation fails, use the video itself as thumbnail
+          thumbnailUrl = fileUrl;
+        }
+      }
+      
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
       const mediaToAdd = {
         id: mediaId,
         type: newMedia.type,
@@ -496,8 +542,12 @@ const AddProjectPage = () => {
         tag: newMedia.tag,
         cover: newMedia.cover,
         order: formData.media.items.length + 1,
+<<<<<<< HEAD
         size: mediaSize,
         isExternalUrl: mediaSourceType === 'url',
+=======
+        size: newMedia.file.size,
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
         // For videos, add duration and thumbnail
         ...(newMedia.type === 'video' && {
           duration: 0, // We could calculate actual duration with more complex code
@@ -524,8 +574,12 @@ const AddProjectPage = () => {
         title: '',
         tag: 'feature',
         cover: false,
+<<<<<<< HEAD
         previewUrl: null,
         url: ''
+=======
+        previewUrl: null
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
       });
       
       // Reset file input
@@ -535,7 +589,11 @@ const AddProjectPage = () => {
       
     } catch (error) {
       console.error('Error adding media:', error);
+<<<<<<< HEAD
       setError('Failed to add media. Please try again.');
+=======
+      setError('Failed to upload media. Please try again.');
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
     }
   };
 
@@ -685,10 +743,13 @@ const AddProjectPage = () => {
             src={media.url} 
             alt={media.title}
             className="object-cover w-full h-full" 
+<<<<<<< HEAD
             onError={(e) => {
               // Replace with placeholder on error
               e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
             }}
+=======
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
           />
         </div>
       );
@@ -732,9 +793,12 @@ const AddProjectPage = () => {
   const VideoPreviewModal = () => {
     if (!videoPreviewUrl) return null;
     
+<<<<<<< HEAD
     // Check if URL is external (not blob)
     const isExternalUrl = !videoPreviewUrl.startsWith('blob:');
     
+=======
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
         <div className="relative w-full max-w-4xl mx-auto p-4">
@@ -746,6 +810,7 @@ const AddProjectPage = () => {
           </button>
           
           <div className="bg-black rounded-lg overflow-hidden">
+<<<<<<< HEAD
             {isExternalUrl ? (
               // For external URLs, create an iframe for YouTube/Vimeo or show the video directly
               videoPreviewUrl.includes('youtube.com') || videoPreviewUrl.includes('youtu.be') ? (
@@ -773,6 +838,14 @@ const AddProjectPage = () => {
                 className="w-full h-auto max-h-[80vh]"
               />
             )}
+=======
+            <video 
+              src={videoPreviewUrl} 
+              controls 
+              autoPlay 
+              className="w-full h-auto max-h-[80vh]"
+            />
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
           </div>
         </div>
       </div>
@@ -799,8 +872,13 @@ const AddProjectPage = () => {
         formData.media.items.map(async (media) => {
           const result = { ...media };
           
+<<<<<<< HEAD
           // Only convert local blob URLs, not external URLs
           if (media.url && media.url.startsWith('blob:') && !media.isExternalUrl) {
+=======
+          // Convert main URL if it's a blob
+          if (media.url && media.url.startsWith('blob:')) {
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
             try {
               const response = await fetch(media.url);
               const blob = await response.blob();
@@ -1067,6 +1145,10 @@ const AddProjectPage = () => {
             </div>
           </div>
         </div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
 
@@ -1306,6 +1388,7 @@ const AddProjectPage = () => {
                         </div>
                       );
                     })}
+<<<<<<< HEAD
                   </div>
                 </div>
               )}
@@ -1352,6 +1435,55 @@ const AddProjectPage = () => {
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
+=======
+                  </div>
+                </div>
+              )}
+              
+              {/* Add member form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="block text-sm mb-1">Team Member</label>
+                  <div className="relative">
+                    <select
+                      name="user_id"
+                      value={newMember.user_id}
+                      onChange={handleMemberChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                    >
+                      <option value="">Select a team member</option>
+                      {Array.isArray(users) && users.map(user => (
+                        <option key={user.id} value={user.id}>
+                          {user.first_name} {user.last_name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Role<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                  <select
+                    name="role"
+                    value={newMember.role}
+                    onChange={handleMemberChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                  >
+                    <option value="">Select a role</option>
+                    {Array.isArray(roles) && roles.map(role => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
               </div>
               
               <button
@@ -1364,21 +1496,32 @@ const AddProjectPage = () => {
             </div>
           </div>
         </div>
+<<<<<<< HEAD
 
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
 
+=======
+        {/* Horizontal line divider */}
+        <hr className="border-t border-gray-200" />
+
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
         {/* Files & Media Section */}
         <div className="mb-8 p-6">
           <div className="flex">
             {/* Left column - section title */}
             <div className="w-1/4 pr-8">
               <h2 className="text-xl font-bold">Files & Media</h2>
+<<<<<<< HEAD
               <p className="text-gray-600 text-sm">Please attach any relevant files or URLs</p>
+=======
+              <p className="text-gray-600 text-sm">Please attach any relevant files</p>
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
             </div>
             
             {/* Right column - form fields */}
             <div className="w-3/4">
+<<<<<<< HEAD
               {/* Media source toggle */}
               <div className="flex mb-4 border border-gray-200 rounded-md overflow-hidden">
                 <button
@@ -1485,6 +1628,30 @@ const AddProjectPage = () => {
               
               {/* File/URL preview */}
               {(mediaSourceType === 'file' && newMedia.file) || (mediaSourceType === 'url' && newMedia.url) ? (
+=======
+              {/* Upload area */}
+              <div className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6">
+                <label htmlFor="fileUpload" className="cursor-pointer">
+                  <div className="flex flex-col items-center justify-center">
+                    <Upload className="h-12 w-12 text-gray-400 mb-3" />
+                    <p className="text-gray-700 font-medium mb-1">Drag and drop files here</p>
+                    <p className="text-gray-500 text-sm mb-3">or click to browse</p>
+                    <p className="text-xs text-gray-400">Supports images (JPG, PNG, GIF) and videos (MP4, WebM)</p>
+                  </div>
+                </label>
+                <input
+                  type="file"
+                  id="fileUpload"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept="image/*,video/*"
+                />
+              </div>
+              
+              {/* File preview */}
+              {newMedia.file && (
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
                 <div className="p-4 bg-gray-50 rounded-md mb-6">
                   <div className="flex items-center mb-3">
                     {newMedia.type === 'image' ? (
@@ -1492,6 +1659,7 @@ const AddProjectPage = () => {
                     ) : (
                       <FileVideo className="w-6 h-6 mr-2 text-purple-500" />
                     )}
+<<<<<<< HEAD
                     <span className="text-sm font-medium">
                       {mediaSourceType === 'file' 
                         ? newMedia.file.name 
@@ -1510,6 +1678,18 @@ const AddProjectPage = () => {
                   
                   {/* Video preview for local videos */}
                   {mediaSourceType === 'file' && newMedia.type === 'video' && newMedia.previewUrl && (
+=======
+                    <span className="text-sm font-medium">{newMedia.file.name}</span>
+                  </div>
+                  
+                  <div className="text-xs text-gray-500 mb-4">
+                    Type: {newMedia.type.charAt(0).toUpperCase() + newMedia.type.slice(1)} | 
+                    Size: {formatFileSize(newMedia.file.size)}
+                  </div>
+                  
+                  {/* Video preview for videos */}
+                  {newMedia.type === 'video' && newMedia.previewUrl && (
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
                     <div className="mb-4 border rounded overflow-hidden">
                       <video 
                         src={newMedia.previewUrl} 
@@ -1519,8 +1699,13 @@ const AddProjectPage = () => {
                     </div>
                   )}
                   
+<<<<<<< HEAD
                   {/* Image preview for local images */}
                   {mediaSourceType === 'file' && newMedia.type === 'image' && newMedia.file && (
+=======
+                  {/* Image preview for images */}
+                  {newMedia.type === 'image' && newMedia.file && (
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
                     <div className="mb-4 border rounded overflow-hidden">
                       <img 
                         src={URL.createObjectURL(newMedia.file)} 
@@ -1531,6 +1716,7 @@ const AddProjectPage = () => {
                     </div>
                   )}
                   
+<<<<<<< HEAD
                   {/* URL preview placeholders */}
                   {mediaSourceType === 'url' && newMedia.url && (
                     <div className="mb-4 border rounded overflow-hidden bg-gray-100 p-2 flex items-center justify-center">
@@ -1548,6 +1734,8 @@ const AddProjectPage = () => {
                     </div>
                   )}
                   
+=======
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
                   {isUploading && (
                     <div className="mb-4">
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -1620,15 +1808,23 @@ const AddProjectPage = () => {
                           </>
                         ) : (
                           <>
+<<<<<<< HEAD
                             <Plus className="w-4 h-4 mr-1" /> 
                             {mediaSourceType === 'url' ? 'Add External Media' : 'Add Media'}
+=======
+                            <Plus className="w-4 h-4 mr-1" /> Add Media
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
                           </>
                         )}
                       </button>
                     </div>
                   </div>
                 </div>
+<<<<<<< HEAD
               ) : null}
+=======
+              )}
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
               
               {/* Display media list */}
               <h3 className="text-lg font-semibold mb-4">Project Media</h3>
@@ -1671,6 +1867,7 @@ const AddProjectPage = () => {
                           <span className="px-2 py-1 bg-gray-100 rounded-full">
                             {media.type}
                           </span>
+<<<<<<< HEAD
                           {media.isExternalUrl ? (
                             <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">
                               External URL
@@ -1680,6 +1877,11 @@ const AddProjectPage = () => {
                               {formatFileSize(media.size)}
                             </span>
                           )}
+=======
+                          <span className="px-2 py-1 bg-gray-100 rounded-full">
+                            {formatFileSize(media.size)}
+                          </span>
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
                           <span className={`px-2 py-1 rounded-full ${
                             media.tag === 'feature' ? 'bg-blue-100 text-blue-800' :
                             media.tag === 'description' ? 'bg-purple-100 text-purple-800' :
@@ -1738,7 +1940,11 @@ const AddProjectPage = () => {
                       )}
                     </div>
                   ))}
+<<<<<<< HEAD
                   </div>
+=======
+                </div>
+>>>>>>> ab853b64ce93a0d725ea6d40f69261f40d282cf5
               )}
             </div>
           </div>
