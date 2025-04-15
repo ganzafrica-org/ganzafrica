@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { 
   Search, 
   Filter, 
@@ -11,6 +13,11 @@ import {
   ChevronRight, 
   ChevronsLeft, 
   ChevronsRight,
+  ArrowRight,
+  Eye,
+  Edit,
+  Trash,
+  RefreshCw
   ArrowRight,
   Eye,
   Edit,
@@ -101,10 +108,95 @@ const throttledAxios = {
     return axiosInstance.delete(url, config);
   }
 };
+import { useRouter } from 'next/navigation';
+
+// Create an axios instance with retry configuration
+const axiosInstance = axios.create({
+  // Set a timeout to avoid hanging requests
+  timeout: 10000,
+});
+
+// Add a retry interceptor
+axiosInstance.interceptors.response.use(undefined, async (err) => {
+  const { config, response } = err;
+  
+  // Only retry on 429 status code (too many requests) or network errors
+  if ((response && response.status === 429) || !response) {
+    // Set max retry count
+    const maxRetries = 3;
+    config.retryCount = config.retryCount || 0;
+    
+    if (config.retryCount < maxRetries) {
+      // Increase retry count
+      config.retryCount += 1;
+      
+      // Exponential backoff: wait longer for each retry
+      const delay = Math.pow(2, config.retryCount) * 1000;
+      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
+      
+      // Wait for the delay
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      // Retry the request
+      return axiosInstance(config);
+    }
+  }
+  
+  // If we've reached max retries or it's not a 429 error, reject the promise
+  return Promise.reject(err);
+});
+
+// Add a request interceptor to add a delay between requests
+axiosInstance.interceptors.request.use(async (config) => {
+  // Track time between requests to avoid overwhelming the API
+  const now = Date.now();
+  const lastRequestTime = window.lastAxiosRequestTime || 0;
+  const minRequestInterval = 300; // minimum ms between requests
+  
+  if (now - lastRequestTime < minRequestInterval) {
+    // Wait until the minimum interval has passed
+    const delayMs = minRequestInterval - (now - lastRequestTime);
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+  
+  // Update the last request time
+  window.lastAxiosRequestTime = Date.now();
+  
+  return config;
+});
+
+// Add a request throttling mechanism
+const pendingRequests = {};
+
+const throttledAxios = {
+  get: (url, config = {}) => {
+    const key = `${url}${JSON.stringify(config.params || {})}`;
+    
+    // If there's already a pending request with the same parameters, return that promise
+    if (pendingRequests[key]) {
+      return pendingRequests[key];
+    }
+    
+    // Otherwise, make a new request
+    const request = axiosInstance.get(url, config)
+      .finally(() => {
+        // Remove from pending requests when done
+        delete pendingRequests[key];
+      });
+    
+    pendingRequests[key] = request;
+    return request;
+  },
+  delete: (url, config = {}) => {
+    return axiosInstance.delete(url, config);
+  }
+};
 
 const ProjectsPage = () => {
   const router = useRouter();
+  const router = useRouter();
   // State for the active tab
+  const [activeTab, setActiveTab] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
   
   // States for data and UI
@@ -178,6 +270,27 @@ const ProjectsPage = () => {
         console.log(`Change status for project ${projectId}`);
         break;
       default:
+        break;
+    }
+  };
+
+  // Handle pagination
+  const goToPage = (newPage) => {
+    setPage(newPage);
+  };
+
+  // Calculate sequential row number based on pagination
+  const getRowNumber = (index) => {
+    return ((page - 1) * limit) + index + 1;
+  };
+
+  // Map API status to UI status
+  const mapStatusToUI = (apiStatus) => {
+    switch(apiStatus) {
+      case 'active': return 'in-progress';
+      case 'planned': return 'pending';
+      case 'completed': return 'completed';
+      default: return apiStatus;
         break;
     }
   };
@@ -571,10 +684,83 @@ const ProjectsPage = () => {
             <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.planned}</span>
           </button>
         </div>
+        <div className="flex border-b border-gray-200 mb-6 bg-white">
+          <button
+            onClick={() => handleTabChange('all')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'all'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            All
+            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('in-progress')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'in-progress'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            In progress
+            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.active}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('completed')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'completed'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Completed
+            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.completed}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('pending')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'pending'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Pending
+            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.planned}</span>
+          </button>
+        </div>
 
         {/* Project list title */}
         <h2 className="text-lg font-bold mb-4">List of {activeTab === 'all' ? '' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Projects</h2>
+        {/* Project list title */}
+        <h2 className="text-lg font-bold mb-4">List of {activeTab === 'all' ? '' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Projects</h2>
 
+        {/* Search and filter -  */}
+        <div className="flex justify-end mb-4">
+          <div className="relative w-64">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Search className="w-4 h-4 text-gray-500" />
+            </div>
+            <form onSubmit={handleSearchSubmit}>
+              <input 
+                type="text" 
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
+                placeholder="Search"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+            </form>
+          </div>
+          <button 
+            className="ml-2 p-2.5 bg-green-700 text-white rounded"
+            onClick={() => {
+              // Open a filter modal or expand filter options
+            }}
+          >
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
         {/* Search and filter -  */}
         <div className="flex justify-end mb-4">
           <div className="relative w-64">
@@ -718,6 +904,64 @@ const ProjectsPage = () => {
           )}
         </div>
 
+        {/* Pagination -  */}
+        <div className="flex items-center justify-between py-3">
+          <div className="text-sm text-gray-500">
+            Showing {projects.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalProjects)} out of {totalProjects} entries
+          </div>
+          <div className="flex items-center space-x-1">
+            <button 
+              className="p-2 text-gray-500 rounded hover:bg-gray-100"
+              onClick={() => goToPage(1)}
+              disabled={page === 1}
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button 
+              className="p-2 text-gray-500 rounded hover:bg-gray-100"
+              onClick={() => goToPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            
+            {/* Display page numbers */}
+            {[...Array(Math.min(totalPages, 3))].map((_, index) => {
+              const pageNumber = page <= 2 ? index + 1 : page - 1 + index;
+              if (pageNumber <= totalPages) {
+                return (
+                  <button 
+                    key={pageNumber}
+                    onClick={() => goToPage(pageNumber)}
+                    className={`p-2 w-8 h-8 rounded-md ${
+                      pageNumber === page
+                        ? 'bg-green-700 text-white'
+                        : 'hover:bg-gray-100 text-gray-700'
+                    } flex items-center justify-center`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              }
+              return null;
+            })}
+            
+            <button 
+              className="p-2 text-gray-500 rounded hover:bg-gray-100"
+              onClick={() => goToPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button 
+              className="p-2 text-gray-500 rounded hover:bg-gray-100"
+              onClick={() => goToPage(totalPages)}
+              disabled={page === totalPages}
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
         {/* Pagination -  */}
         <div className="flex items-center justify-between py-3">
           <div className="text-sm text-gray-500">
