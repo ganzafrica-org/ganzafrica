@@ -6,7 +6,7 @@ import {
     applications,
     application_reviews
 } from '../db/schema/opportunities';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 import { AppError } from '../middlewares';
 import { Logger } from '../config';
 import { v4 as uuidv4 } from 'uuid';
@@ -616,6 +616,69 @@ export async function updateApplicationStatus(id: number, status: string): Promi
     }
 }
 
+/**
+ * List all applications across all opportunities with optional filtering
+ */
+export async function listAllApplications(status?: string, page: number = 1, limit: number = 10): Promise<any> {
+    try {
+        const offset = (page - 1) * limit;
+        
+        // Build query - using the full select() method instead of variable assignment
+        // This avoids TypeScript losing type information through assignments
+        
+        // First, build the basic query
+        const baseQuery = db.select().from(applications);
+        
+        // Apply filters if needed
+        const filteredQuery = status 
+            ? baseQuery.where(eq(applications.status, status as any))
+            : baseQuery;
+        
+        // Apply pagination and execute
+        const applicationResults = await filteredQuery.limit(limit).offset(offset);
+        
+        // Get total count for pagination
+        const countResult = status 
+            ? await db.select({ count: sql`count(*)` }).from(applications).where(eq(applications.status, status as any))
+            : await db.select({ count: sql`count(*)` }).from(applications);
+        
+        const totalCount = Number(countResult[0]?.count || 0);
+        
+        // Get all opportunity IDs from the results
+        const opportunityIds = [...new Set(applicationResults.map(app => app.opportunity_id))];
+        
+        // Fetch opportunity details for these IDs
+        const opportunityDetails = opportunityIds.length > 0
+            ? await db.select().from(opportunities).where(inArray(opportunities.id, opportunityIds))
+            : [];
+        
+        // Create map of opportunity details
+        const opportunityMap: Record<number, any> = {};
+        opportunityDetails.forEach(opportunity => {
+            opportunityMap[opportunity.id] = opportunity;
+        });
+        
+        // Enhance applications with opportunity title
+        const enhancedApplications = applicationResults.map(app => ({
+            ...app,
+            opportunity_title: opportunityMap[app.opportunity_id]?.title || 'Unknown Opportunity'
+        }));
+        
+        return {
+            items: enhancedApplications,
+            pagination: {
+                total: totalCount,
+                page,
+                limit,
+                pages: Math.ceil(totalCount / limit)
+            }
+        };
+    } catch (error) {
+        logger.error('Error listing all applications', error);
+        throw new AppError('Failed to list applications', 500);
+    }
+}
+
 // Submit application review
 export async function submitApplicationReview(reviewData: ReviewInput): Promise<any> {
     try {
@@ -693,7 +756,8 @@ export const opportunityService = {
     getApplicationById,
     listApplications,
     updateApplicationStatus,
-    submitApplicationReview
+    submitApplicationReview,
+    listAllApplications
 };
 
 // Default export for the service object

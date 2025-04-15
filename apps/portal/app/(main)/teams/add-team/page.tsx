@@ -18,7 +18,8 @@ import {
   User,
   Briefcase,
   Tag,
-  Image
+  Image,
+  LinkIcon
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -31,6 +32,7 @@ const AddTeamPage = () => {
   const [teamTypes, setTeamTypes] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [usePhotoUrl, setUsePhotoUrl] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -66,7 +68,10 @@ const AddTeamPage = () => {
         const response = await axios.get('http://localhost:3002/api/team-types');
         
         // Check the structure of the response and extract team types array
-        if (response.data && Array.isArray(response.data.types)) {
+        if (response.data && response.data.teamTypes && Array.isArray(response.data.teamTypes)) {
+          // This handles the structure you're seeing in console: {teamTypes: Array(5)}
+          setTeamTypes(response.data.teamTypes);
+        } else if (response.data && Array.isArray(response.data.types)) {
           setTeamTypes(response.data.types);
         } else if (Array.isArray(response.data)) {
           setTeamTypes(response.data);
@@ -119,6 +124,41 @@ const AddTeamPage = () => {
         ...prev,
         photo_url: localUrl
       }));
+      setUsePhotoUrl(false);
+    }
+  };
+
+  // Handle photo URL input
+  const handlePhotoUrlChange = (e) => {
+    const url = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      photo_url: url
+    }));
+  };
+
+  // Toggle between file upload and URL input
+  const togglePhotoUrlMode = () => {
+    if (usePhotoUrl) {
+      // Switching to file upload mode
+      setUsePhotoUrl(false);
+      if (!photoFile) {
+        setFormData(prev => ({
+          ...prev,
+          photo_url: ''
+        }));
+      }
+    } else {
+      // Switching to URL mode
+      setUsePhotoUrl(true);
+      if (formData.photo_url && formData.photo_url.startsWith('blob:')) {
+        URL.revokeObjectURL(formData.photo_url);
+        setFormData(prev => ({
+          ...prev,
+          photo_url: ''
+        }));
+        setPhotoFile(null);
+      }
     }
   };
 
@@ -207,10 +247,10 @@ const AddTeamPage = () => {
     }
     
     try {
-      // Process the photo file if it exists
+      // Process the photo file if it exists and we're in file upload mode
       let finalPhotoUrl = formData.photo_url;
       
-      if (photoFile) {
+      if (photoFile && !usePhotoUrl) {
         // Upload the photo file and get a URL back
         finalPhotoUrl = await uploadFile(photoFile);
         
@@ -533,31 +573,110 @@ const AddTeamPage = () => {
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">
-                  Photo
-                </label>
-                
-                {/* Upload area - similar to AddProjectPage */}
-                <div className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6">
-                  <label onClick={triggerFileInput} className="cursor-pointer">
-                    <div className="flex flex-col items-center justify-center">
-                      <Upload className="h-12 w-12 text-gray-400 mb-3" />
-                      <p className="text-gray-700 font-medium mb-1">Drag and drop an image here</p>
-                      <p className="text-gray-500 text-sm mb-3">or click to browse</p>
-                      <p className="text-xs text-gray-400">Supports JPG, PNG, GIF (max 5MB)</p>
-                    </div>
+                <div className="flex justify-between items-center mb-4">
+                  <label className="block text-sm font-medium">
+                    Photo
                   </label>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept="image/*"
-                  />
+                  
+                  {/* Toggle between URL and file upload */}
+                  <div className="flex items-center mb-2">
+                    <button
+                      type="button"
+                      onClick={togglePhotoUrlMode}
+                      className={`text-sm py-1 px-3 rounded-md ${
+                        usePhotoUrl 
+                          ? 'bg-green-700 text-white' 
+                          : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Use URL
+                    </button>
+                    <span className="mx-2 text-gray-400">|</span>
+                    <button
+                      type="button"
+                      onClick={togglePhotoUrlMode}
+                      className={`text-sm py-1 px-3 rounded-md ${
+                        !usePhotoUrl 
+                          ? 'bg-green-700 text-white' 
+                          : 'bg-gray-200 text-gray-700'
+                      }`}
+                    >
+                      Upload File
+                    </button>
+                  </div>
                 </div>
                 
-                {/* Photo preview */}
-                {formData.photo_url && (
+                {usePhotoUrl ? (
+                  // URL input option
+                  <div className="mb-6">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <LinkIcon className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="url"
+                        value={formData.photo_url}
+                        onChange={handlePhotoUrlChange}
+                        className="w-full pl-10 p-2.5 border border-gray-300 rounded-md"
+                        placeholder="Enter image URL (https://...)"
+                      />
+                    </div>
+                    
+                    {/* URL preview */}
+                    {formData.photo_url && !formData.photo_url.startsWith('blob:') && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-md">
+                        <div className="flex items-center mb-3">
+                          <Image className="w-6 h-6 mr-2 text-blue-500" />
+                          <span className="text-sm font-medium">Image from URL</span>
+                        </div>
+                        <div className="mb-4 border rounded overflow-hidden">
+                          <img 
+                            src={formData.photo_url} 
+                            alt="Profile preview" 
+                            className="w-full h-auto max-h-60 object-contain"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/api/placeholder/400/400";
+                              e.target.alt = "Failed to load image";
+                            }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({...prev, photo_url: ''}))}
+                          className="text-sm text-red-500 hover:text-red-700 flex items-center"
+                        >
+                          <X className="w-4 h-4 mr-1" /> Clear URL
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // File upload option
+                  <>
+                    {/* Upload area */}
+                    <div className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6">
+                      <label onClick={triggerFileInput} className="cursor-pointer">
+                        <div className="flex flex-col items-center justify-center">
+                          <Upload className="h-12 w-12 text-gray-400 mb-3" />
+                          <p className="text-gray-700 font-medium mb-1">Drag and drop an image here</p>
+                          <p className="text-gray-500 text-sm mb-3">or click to browse</p>
+                          <p className="text-xs text-gray-400">Supports JPG, PNG, GIF (max 5MB)</p>
+                        </div>
+                      </label>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/*"
+                      />
+                    </div>
+                  </>
+                )}
+                
+                {/* Photo preview (for file upload) */}
+                {!usePhotoUrl && formData.photo_url && formData.photo_url.startsWith('blob:') && (
                   <div className="p-4 bg-gray-50 rounded-md mb-6">
                     <div className="flex items-center mb-3">
                       <Image className="w-6 h-6 mr-2 text-blue-500" />
