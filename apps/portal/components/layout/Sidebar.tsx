@@ -239,33 +239,17 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                 <FileText className="w-5 h-5 flex-shrink-0" />
                 {!isCollapsed && <span className="ml-3 font-medium">News & Updates</span>}
               </Link>
-            </nav>
-          </div>
-
-          {/* Help & Support */}
-          <div>
-            {!isCollapsed && <h2 className="px-4 mb-3 text-sm font-medium text-white/60 uppercase tracking-wider">Help & Support</h2>}
-            <nav className="space-y-1">
               <Link
-                href="/settings"
+                href="/partners"
                 className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                  pathname === '/settings' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                  pathname === '/partners' || pathname.startsWith('/projects/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Settings className="w-5 h-5 flex-shrink-0" />
-                {!isCollapsed && <span className="ml-3 font-medium">Settings</span>}
-              </Link>
-              <Link
-                href="/help"
-                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                  pathname === '/help' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <HelpCircle className="w-5 h-5 flex-shrink-0" />
-                {!isCollapsed && <span className="ml-3 font-medium">Help</span>}
+                <FolderGit2 className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Partners</span>}
               </Link>
             </nav>
-          </div>
+          </div>         
         </div>
 
         {/* Logout Button */}

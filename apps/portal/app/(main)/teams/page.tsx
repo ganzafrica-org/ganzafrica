@@ -90,12 +90,9 @@ const TeamsPage = () => {
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
   
-  // States for tab counts
+  // State to store team type counts
   const [tabCounts, setTabCounts] = useState({
-    all: 0,
-    'leadership': 0,
-    'technical': 0,
-    'support': 0
+    all: 0
   });
 
   // Add state to track if tab counts are loaded
@@ -222,35 +219,28 @@ const TeamsPage = () => {
       // Get the total count from the response
       const allCount = parseInt(response.data.pagination?.total) || 0;
       
-      // Count teams by type from the data
-      let leadershipCount = 0;
-      let technicalCount = 0;
-      let supportCount = 0;
+      // Prepare counts object
+      const countsByType = {
+        all: allCount
+      };
       
       if (response.data.teams && Array.isArray(response.data.teams)) {
+        // Group teams by team_type.name
         response.data.teams.forEach(team => {
-          if (team.team_type_id === 1) leadershipCount++;
-          else if (team.team_type_id === 2) technicalCount++;
-          else if (team.team_type_id === 3) supportCount++;
+          if (team.team_type && team.team_type.name) {
+            const typeName = team.team_type.name.toLowerCase();
+            countsByType[typeName] = (countsByType[typeName] || 0) + 1;
+          }
         });
       }
       
-      setTabCounts({
-        all: allCount,
-        leadership: leadershipCount,
-        technical: technicalCount,
-        support: supportCount
-      });
-      
+      setTabCounts(countsByType);
       setTabCountsLoaded(true);
     } catch (error) {
       console.error('Error fetching tab counts:', error);
       // Use default values in case of error
       setTabCounts({
-        all: 0,
-        leadership: 0,
-        technical: 0,
-        support: 0
+        all: 0
       });
       setTabCountsLoaded(true);
     }
@@ -337,15 +327,72 @@ const TeamsPage = () => {
     });
   };
   
-  // Get team type name from team_type_id
-  const getTeamTypeName = (teamTypeId) => {
-    return teamTypes[teamTypeId] || 'Unknown';
+  // Get team type name from team object
+  const getTeamTypeName = (team) => {
+    return team.team_type?.name || 'Unknown';
+  };
+
+  // Get background and text color based on team type
+  const getTeamTypeStyle = (team) => {
+    if (!team.team_type) return 'bg-gray-100 text-gray-800';
+    
+    const typeName = team.team_type.name?.toLowerCase() || '';
+    
+    if (typeName.includes('leadership')) {
+      return 'bg-blue-100 text-blue-800';
+    } else if (typeName.includes('technical')) {
+      return 'bg-green-100 text-green-800';
+    } else if (typeName.includes('support')) {
+      return 'bg-purple-100 text-purple-800';
+    }
+    
+    return 'bg-gray-100 text-gray-800';
   };
 
   // Handle tab change
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setPage(1); // Reset to first page when changing tabs
+  };
+
+  // Generate tabs based on team types found in the data
+  const renderTabs = () => {
+    const tabs = [
+      { id: 'all', label: 'All' }
+    ];
+    
+    // Add tabs for each team type found in tabCounts
+    Object.keys(tabCounts).forEach(key => {
+      if (key !== 'all') {
+        tabs.push({
+          id: key.toLowerCase(),
+          label: key.charAt(0).toUpperCase() + key.slice(1)
+        });
+      }
+    });
+    
+    return tabs.map(tab => (
+      <button
+        key={tab.id}
+        onClick={() => handleTabChange(tab.id)}
+        className={`py-3 px-4 text-sm font-medium relative ${
+          activeTab === tab.id
+            ? 'border-b-2 border-green-700 text-green-700'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        {tab.label}
+        <span className={`ml-2 ${
+          tab.id === 'all' ? 'bg-gray-200 text-gray-800' :
+          tab.id.includes('leadership') ? 'bg-blue-100 text-blue-800' :
+          tab.id.includes('technical') ? 'bg-green-100 text-green-800' :
+          tab.id.includes('support') ? 'bg-purple-100 text-purple-800' :
+          'bg-gray-200 text-gray-800'
+        } px-2 py-0.5 rounded text-xs font-medium`}>
+          {tabCounts[tab.id] || 0}
+        </span>
+      </button>
+    ));
   };
 
   return (
@@ -371,50 +418,7 @@ const TeamsPage = () => {
       {/* Tabs */}
       <div className='bg-white'>
         <div className="flex border-b border-gray-200 mb-6 bg-white">
-          <button
-            onClick={() => handleTabChange('all')}
-            className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'all'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            All
-            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('leadership')}
-            className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'leadership'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Leadership
-            <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.leadership}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('technical')}
-            className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'technical'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Technical
-            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.technical}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('support')}
-            className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'support'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Support
-            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.support}</span>
-          </button>
+          {renderTabs()}
         </div>
 
         {/* Team list title */}
@@ -517,12 +521,8 @@ const TeamsPage = () => {
                       <div className="text-sm text-gray-500">{team.position}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        team.team_type_id === 1 ? 'bg-blue-100 text-blue-800' : 
-                        team.team_type_id === 2 ? 'bg-green-100 text-green-800' : 
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {getTeamTypeName(team.team_type_id)}
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getTeamTypeStyle(team)}`}>
+                        {getTeamTypeName(team)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
