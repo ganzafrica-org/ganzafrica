@@ -13,48 +13,47 @@ import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-u
 
 // Generate metadata for SEO
 export async function generateMetadata({
-                                           params,
-                                       }: {
-    params: { locale: string };
+  params,
+}: {
+  params: { locale: string };
 }): Promise<Metadata> {
-    // First await the params object
-    const resolvedParams = await params;
-    const locale = resolvedParams.locale;
-    const dict = await getDictionary(locale);
+  // First await the params object
+  const resolvedParams = await params;
+  const locale = resolvedParams.locale;
+  const dict = await getDictionary(locale);
 
-    return baseGenerateMetadata({
-        title: dict.site.name,
-        description: dict.site.description,
-        locale,
-        imagePath: "/images/og/home.jpg",
-    });
+  return baseGenerateMetadata({
+    title: dict.site.name,
+    description: dict.site.description,
+    locale,
+    imagePath: "/images/og/home.jpg",
+  });
 }
 
 export default async function HomePage({
-                                           params,
-                                       }: {
-    params: { locale: string };
+  params,
+}: {
+  params: { locale: string };
 }) {
-    const resolvedParams = await params;
-    const locale = resolvedParams.locale;
-    const dict = await getDictionary(locale);
+  const resolvedParams = await params;
+  const locale = resolvedParams.locale;
+  const dict = await getDictionary(locale);
 
-    return (
-        <main>
-
-            <FellowsSection locale={locale} dict={dict} />
-            <WhyGanzAfricaSection locale={locale} dict={dict} />
-            <GanzAfricaUniqueSection locale={locale} dict={dict} />
-            <FlagshipProgramsSection locale={locale} dict={dict} />
-            <ProjectsSection locale={locale} dict={dict} />
-            <PartnersSection locale={locale} dict={dict} />
-            <TestimonialsSection locale={locale} dict={dict} />
-            <LatestNewsSection locale={locale} dict={dict} />
-            <NewsletterSection locale={locale} dict={dict} />
-        </main>
-    );
+  return (
+    <main>
+      <FellowsSection locale={locale} dict={dict} />
+      <WhyGanzAfricaSection locale={locale} dict={dict} />
+      <GanzAfricaUniqueSection locale={locale} dict={dict} />
+      <FlagshipProgramsSection locale={locale} dict={dict} />
+      <ProjectsSection locale={locale} dict={dict} />
+      <PartnersSection locale={locale} dict={dict} />
+      <TestimonialsSection locale={locale} dict={dict} />
+      <LatestNewsSection locale={locale} dict={dict} />
+      <NewsletterSection locale={locale} dict={dict} />
+    </main>
+  );
 }
 
 export async function generateStaticParams() {
-    return [{ locale: "en" }, { locale: "fr" }];
+  return [{ locale: "en" }, { locale: "fr" }];
 }

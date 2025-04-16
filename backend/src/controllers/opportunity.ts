@@ -604,6 +604,63 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /opportunities/applications:
+ *   get:
+ *     summary: List all applications across all opportunities
+ *     tags: [Applications]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by application status
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number for pagination
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: List of all applications
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+export const listAllApplications = async (req: Request, res: Response) => {
+    try {
+        const status = req.query.status as string;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        
+        const applications = await opportunityService.listAllApplications(status, page, limit);
+        
+        res.status(200).json({ applications });
+    } catch (error) {
+        logger.error('List all applications error', error);
+        if (error instanceof AppError) {
+            return res.status(error.statusCode).json({
+                error: 'Application Listing Error',
+                message: error.message
+            });
+        }
+        res.status(500).json({
+            error: 'Application Listing Error',
+            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+        });
+    }
+};
+
+/**
+ * @swagger
  * /opportunities/applications/{id}/review:
  *   post:
  *     summary: Submit a review for an application
@@ -671,6 +728,7 @@ export const submitApplicationReview = async (req: Request, res: Response) => {
     }
 };
 
+
 // Create object to export all controller functions together
 export const opportunityController = {
     createOpportunity,
@@ -684,7 +742,9 @@ export const opportunityController = {
     listApplications,
     getApplicationById,
     updateApplicationStatus,
-    submitApplicationReview
+    submitApplicationReview,
+    listAllApplications,
+
 };
 
 // Default export for the controller object

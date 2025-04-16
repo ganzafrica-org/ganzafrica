@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play } from 'lucide-react';
+import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 
 const AddProjectPage = () => {
@@ -19,6 +19,7 @@ const AddProjectPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
+  const [mediaSourceType, setMediaSourceType] = useState('file'); // 'file' or 'url'
 
 
   // Form state
@@ -51,7 +52,8 @@ const AddProjectPage = () => {
     type: 'image',
     title: '',
     tag: 'feature',
-    cover: false
+    cover: false,
+    url: ''
   });
 
   // Clean up blob URLs when component unmounts
@@ -203,8 +205,86 @@ const AddProjectPage = () => {
         ...prev,
         file,
         type: fileType,
-        previewUrl: previewUrl
+        previewUrl: previewUrl,
+        url: '' // Clear URL when file is selected
       }));
+      
+      // Switch to file mode
+      setMediaSourceType('file');
+    }
+  };
+
+  // Handle media source type change
+  const handleMediaSourceChange = (type) => {
+    setMediaSourceType(type);
+    
+    // Reset media state based on new source type
+    if (type === 'url') {
+      if (newMedia.file && newMedia.previewUrl) {
+        URL.revokeObjectURL(newMedia.previewUrl);
+      }
+      
+      setNewMedia(prev => ({
+        ...prev,
+        file: null,
+        previewUrl: null,
+        url: '',
+      }));
+    } else {
+      setNewMedia(prev => ({
+        ...prev,
+        url: '',
+      }));
+    }
+  };
+
+  // Validate URL and determine type
+  const validateUrl = async (url) => {
+    // Basic URL validation
+    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+    if (!urlPattern.test(url)) {
+      return { valid: false, type: null, message: 'Invalid URL format' };
+    }
+    
+    // Check if URL ends with common image extensions
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
+    
+    const lowerUrl = url.toLowerCase();
+    
+    // Determine type based on extension
+    let type = null;
+    if (imageExtensions.some(ext => lowerUrl.endsWith(ext))) {
+      type = 'image';
+    } else if (videoExtensions.some(ext => lowerUrl.endsWith(ext))) {
+      type = 'video';
+    } else {
+      // For URLs without clear extensions, try to guess based on common patterns
+      if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be') || lowerUrl.includes('vimeo.com')) {
+        type = 'video';
+      } else {
+        // Default to image if we can't determine
+        type = 'image';
+      }
+    }
+    
+    return { valid: true, type, message: 'URL valid' };
+  };
+
+  // Handle URL input
+  const handleUrlChange = async (e) => {
+    const url = e.target.value;
+    setNewMedia(prev => ({ ...prev, url }));
+    
+    if (url) {
+      const validation = await validateUrl(url);
+      if (validation.valid) {
+        setNewMedia(prev => ({ 
+          ...prev, 
+          url,
+          type: validation.type || 'image'
+        }));
+      }
     }
   };
 
@@ -344,30 +424,68 @@ const AddProjectPage = () => {
 
   // Add media to media list
   const addMedia = async () => {
-    if (!newMedia.file || !newMedia.title) return;
+    // Validate based on media source type
+    if (mediaSourceType === 'file' && !newMedia.file) {
+      setError('Please select a file');
+      return;
+    }
+    
+    if (mediaSourceType === 'url' && !newMedia.url) {
+      setError('Please enter a URL');
+      return;
+    }
+    
+    if (!newMedia.title) {
+      setError('Please enter a title for the media');
+      return;
+    }
     
     try {
-      // Get local URL for the file
-      const fileUrl = await uploadFile(newMedia.file);
+      setError('');
+      let fileUrl = '';
+      let thumbnailUrl = null;
+      let mediaSize = 0;
       
-      if (!fileUrl) {
-        setError('Failed to create file URL. Please try again.');
-        return;
+      if (mediaSourceType === 'file') {
+        // Get local URL for the file
+        fileUrl = await uploadFile(newMedia.file);
+        mediaSize = newMedia.file.size;
+        
+        if (!fileUrl) {
+          setError('Failed to create file URL. Please try again.');
+          return;
+        }
+        
+        // For videos, try to generate a thumbnail
+        if (newMedia.type === 'video') {
+          try {
+            thumbnailUrl = await generateVideoThumbnail(newMedia.file);
+          } catch (error) {
+            console.error('Error generating thumbnail:', error);
+            // If thumbnail generation fails, use the video itself as thumbnail
+            thumbnailUrl = fileUrl;
+          }
+        }
+      } else {
+        // For URL-based media, use the URL directly
+        // Validate URL
+        const urlValidation = await validateUrl(newMedia.url);
+        if (!urlValidation.valid) {
+          setError('Invalid URL. Please check and try again.');
+          return;
+        }
+        
+        fileUrl = newMedia.url;
+        mediaSize = 0; // We don't know the size for URL-based media
+        
+        // For URL-based videos, we can't generate a thumbnail here
+        // Could use a placeholder or service like OpenGraph for this
+        if (newMedia.type === 'video') {
+          thumbnailUrl = null;
+        }
       }
       
       const mediaId = `media-${Date.now()}`;
-      
-      // For videos, try to generate a thumbnail
-      let thumbnailUrl = null;
-      if (newMedia.type === 'video') {
-        try {
-          thumbnailUrl = await generateVideoThumbnail(newMedia.file);
-        } catch (error) {
-          console.error('Error generating thumbnail:', error);
-          // If thumbnail generation fails, use the video itself as thumbnail
-          thumbnailUrl = fileUrl;
-        }
-      }
       
       const mediaToAdd = {
         id: mediaId,
@@ -378,7 +496,8 @@ const AddProjectPage = () => {
         tag: newMedia.tag,
         cover: newMedia.cover,
         order: formData.media.items.length + 1,
-        size: newMedia.file.size,
+        size: mediaSize,
+        isExternalUrl: mediaSourceType === 'url',
         // For videos, add duration and thumbnail
         ...(newMedia.type === 'video' && {
           duration: 0, // We could calculate actual duration with more complex code
@@ -405,7 +524,8 @@ const AddProjectPage = () => {
         title: '',
         tag: 'feature',
         cover: false,
-        previewUrl: null
+        previewUrl: null,
+        url: ''
       });
       
       // Reset file input
@@ -415,7 +535,7 @@ const AddProjectPage = () => {
       
     } catch (error) {
       console.error('Error adding media:', error);
-      setError('Failed to upload media. Please try again.');
+      setError('Failed to add media. Please try again.');
     }
   };
 
@@ -565,6 +685,10 @@ const AddProjectPage = () => {
             src={media.url} 
             alt={media.title}
             className="object-cover w-full h-full" 
+            onError={(e) => {
+              // Replace with placeholder on error
+              e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+            }}
           />
         </div>
       );
@@ -608,6 +732,9 @@ const AddProjectPage = () => {
   const VideoPreviewModal = () => {
     if (!videoPreviewUrl) return null;
     
+    // Check if URL is external (not blob)
+    const isExternalUrl = !videoPreviewUrl.startsWith('blob:');
+    
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
         <div className="relative w-full max-w-4xl mx-auto p-4">
@@ -619,12 +746,33 @@ const AddProjectPage = () => {
           </button>
           
           <div className="bg-black rounded-lg overflow-hidden">
-            <video 
-              src={videoPreviewUrl} 
-              controls 
-              autoPlay 
-              className="w-full h-auto max-h-[80vh]"
-            />
+            {isExternalUrl ? (
+              // For external URLs, create an iframe for YouTube/Vimeo or show the video directly
+              videoPreviewUrl.includes('youtube.com') || videoPreviewUrl.includes('youtu.be') ? (
+                <iframe 
+                  src={videoPreviewUrl.replace('watch?v=', 'embed/')} 
+                  className="w-full h-[80vh]"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <video 
+                  src={videoPreviewUrl} 
+                  controls 
+                  autoPlay 
+                  className="w-full h-auto max-h-[80vh]"
+                />
+              )
+            ) : (
+              // For blob URLs, show the video directly
+              <video 
+                src={videoPreviewUrl} 
+                controls 
+                autoPlay 
+                className="w-full h-auto max-h-[80vh]"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -651,8 +799,8 @@ const AddProjectPage = () => {
         formData.media.items.map(async (media) => {
           const result = { ...media };
           
-          // Convert main URL if it's a blob
-          if (media.url && media.url.startsWith('blob:')) {
+          // Only convert local blob URLs, not external URLs
+          if (media.url && media.url.startsWith('blob:') && !media.isExternalUrl) {
             try {
               const response = await fetch(media.url);
               const blob = await response.blob();
@@ -919,7 +1067,6 @@ const AddProjectPage = () => {
             </div>
           </div>
         </div>
-
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
 
@@ -1205,7 +1352,6 @@ const AddProjectPage = () => {
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-
               </div>
               
               <button
@@ -1218,6 +1364,7 @@ const AddProjectPage = () => {
             </div>
           </div>
         </div>
+
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
 
@@ -1227,33 +1374,117 @@ const AddProjectPage = () => {
             {/* Left column - section title */}
             <div className="w-1/4 pr-8">
               <h2 className="text-xl font-bold">Files & Media</h2>
-              <p className="text-gray-600 text-sm">Please attach any relevant files</p>
+              <p className="text-gray-600 text-sm">Please attach any relevant files or URLs</p>
             </div>
             
             {/* Right column - form fields */}
             <div className="w-3/4">
-              {/* Upload area */}
-              <div className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6">
-                <label htmlFor="fileUpload" className="cursor-pointer">
-                  <div className="flex flex-col items-center justify-center">
-                    <Upload className="h-12 w-12 text-gray-400 mb-3" />
-                    <p className="text-gray-700 font-medium mb-1">Drag and drop files here</p>
-                    <p className="text-gray-500 text-sm mb-3">or click to browse</p>
-                    <p className="text-xs text-gray-400">Supports images (JPG, PNG, GIF) and videos (MP4, WebM)</p>
-                  </div>
-                </label>
-                <input
-                  type="file"
-                  id="fileUpload"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept="image/*,video/*"
-                />
+              {/* Media source toggle */}
+              <div className="flex mb-4 border border-gray-200 rounded-md overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => handleMediaSourceChange('file')}
+                  className={`flex-1 py-2 px-4 text-center text-sm ${
+                    mediaSourceType === 'file' ? 'bg-green-100 text-green-700 font-medium' : 'bg-gray-50 text-gray-500'
+                  }`}
+                >
+                  <Upload className="w-4 h-4 inline-block mr-1" />
+                  Upload File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMediaSourceChange('url')}
+                  className={`flex-1 py-2 px-4 text-center text-sm ${
+                    mediaSourceType === 'url' ? 'bg-green-100 text-green-700 font-medium' : 'bg-gray-50 text-gray-500'
+                  }`}
+                >
+                  <LinkIcon className="w-4 h-4 inline-block mr-1" />
+                  External URL
+                </button>
               </div>
               
-              {/* File preview */}
-              {newMedia.file && (
+              {/* File upload area */}
+              {mediaSourceType === 'file' && (
+                <div className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6">
+                  <label htmlFor="fileUpload" className="cursor-pointer">
+                    <div className="flex flex-col items-center justify-center">
+                      <Upload className="h-12 w-12 text-gray-400 mb-3" />
+                      <p className="text-gray-700 font-medium mb-1">Drag and drop files here</p>
+                      <p className="text-gray-500 text-sm mb-3">or click to browse</p>
+                      <p className="text-xs text-gray-400">Supports images (JPG, PNG, GIF) and videos (MP4, WebM)</p>
+                    </div>
+                  </label>
+                  <input
+                    type="file"
+                    id="fileUpload"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/*,video/*"
+                  />
+                </div>
+              )}
+              
+              {/* URL input area */}
+              {mediaSourceType === 'url' && (
+                <div className="border border-gray-300 p-6 rounded-md mb-6">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-2">
+                      External Media URL<span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex">
+                      <div className="relative flex-grow">
+                        <input
+                          type="url"
+                          name="url"
+                          value={newMedia.url}
+                          onChange={handleUrlChange}
+                          placeholder="https://example.com/image.jpg"
+                          className="w-full p-2.5 border border-gray-300 rounded-md pl-10"
+                        />
+                        <LinkIcon className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Enter URLs for images (JPG, PNG, GIF) or videos (MP4, YouTube, Vimeo links)
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-4 text-sm">
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="mediaTypeImage"
+                        name="type"
+                        value="image"
+                        checked={newMedia.type === 'image'}
+                        onChange={() => setNewMedia(prev => ({ ...prev, type: 'image' }))}
+                        className="mr-2"
+                      />
+                      <label htmlFor="mediaTypeImage" className="flex items-center">
+                        <Image className="w-4 h-4 mr-1" /> Image
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        id="mediaTypeVideo"
+                        name="type"
+                        value="video"
+                        checked={newMedia.type === 'video'}
+                        onChange={() => setNewMedia(prev => ({ ...prev, type: 'video' }))}
+                        className="mr-2"
+                      />
+                      <label htmlFor="mediaTypeVideo" className="flex items-center">
+                        <FileVideo className="w-4 h-4 mr-1" /> Video
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* File/URL preview */}
+              {(mediaSourceType === 'file' && newMedia.file) || (mediaSourceType === 'url' && newMedia.url) ? (
                 <div className="p-4 bg-gray-50 rounded-md mb-6">
                   <div className="flex items-center mb-3">
                     {newMedia.type === 'image' ? (
@@ -1261,16 +1492,24 @@ const AddProjectPage = () => {
                     ) : (
                       <FileVideo className="w-6 h-6 mr-2 text-purple-500" />
                     )}
-                    <span className="text-sm font-medium">{newMedia.file.name}</span>
+                    <span className="text-sm font-medium">
+                      {mediaSourceType === 'file' 
+                        ? newMedia.file.name 
+                        : newMedia.url.length > 50 
+                          ? newMedia.url.substring(0, 47) + '...' 
+                          : newMedia.url
+                      }
+                    </span>
                   </div>
                   
                   <div className="text-xs text-gray-500 mb-4">
-                    Type: {newMedia.type.charAt(0).toUpperCase() + newMedia.type.slice(1)} | 
-                    Size: {formatFileSize(newMedia.file.size)}
+                    Type: {newMedia.type.charAt(0).toUpperCase() + newMedia.type.slice(1)}
+                    {mediaSourceType === 'file' && ` | Size: ${formatFileSize(newMedia.file.size)}`}
+                    {mediaSourceType === 'url' && ` | External URL`}
                   </div>
                   
-                  {/* Video preview for videos */}
-                  {newMedia.type === 'video' && newMedia.previewUrl && (
+                  {/* Video preview for local videos */}
+                  {mediaSourceType === 'file' && newMedia.type === 'video' && newMedia.previewUrl && (
                     <div className="mb-4 border rounded overflow-hidden">
                       <video 
                         src={newMedia.previewUrl} 
@@ -1280,8 +1519,8 @@ const AddProjectPage = () => {
                     </div>
                   )}
                   
-                  {/* Image preview for images */}
-                  {newMedia.type === 'image' && newMedia.file && (
+                  {/* Image preview for local images */}
+                  {mediaSourceType === 'file' && newMedia.type === 'image' && newMedia.file && (
                     <div className="mb-4 border rounded overflow-hidden">
                       <img 
                         src={URL.createObjectURL(newMedia.file)} 
@@ -1289,6 +1528,23 @@ const AddProjectPage = () => {
                         className="w-full h-auto max-h-40 object-contain" 
                         onLoad={(e) => URL.revokeObjectURL(e.target.src)} // Clean up object URL after loading
                       />
+                    </div>
+                  )}
+                  
+                  {/* URL preview placeholders */}
+                  {mediaSourceType === 'url' && newMedia.url && (
+                    <div className="mb-4 border rounded overflow-hidden bg-gray-100 p-2 flex items-center justify-center">
+                      {newMedia.type === 'image' ? (
+                        <div className="text-center p-4">
+                          <Image className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-500 mt-2">Image will be loaded from URL</p>
+                        </div>
+                      ) : (
+                        <div className="text-center p-4">
+                          <FileVideo className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-500 mt-2">Video will be loaded from URL</p>
+                        </div>
+                      )}
                     </div>
                   )}
                   
@@ -1364,14 +1620,15 @@ const AddProjectPage = () => {
                           </>
                         ) : (
                           <>
-                            <Plus className="w-4 h-4 mr-1" /> Add Media
+                            <Plus className="w-4 h-4 mr-1" /> 
+                            {mediaSourceType === 'url' ? 'Add External Media' : 'Add Media'}
                           </>
                         )}
                       </button>
                     </div>
                   </div>
                 </div>
-              )}
+              ) : null}
               
               {/* Display media list */}
               <h3 className="text-lg font-semibold mb-4">Project Media</h3>
@@ -1414,9 +1671,15 @@ const AddProjectPage = () => {
                           <span className="px-2 py-1 bg-gray-100 rounded-full">
                             {media.type}
                           </span>
-                          <span className="px-2 py-1 bg-gray-100 rounded-full">
-                            {formatFileSize(media.size)}
-                          </span>
+                          {media.isExternalUrl ? (
+                            <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">
+                              External URL
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 bg-gray-100 rounded-full">
+                              {formatFileSize(media.size)}
+                            </span>
+                          )}
                           <span className={`px-2 py-1 rounded-full ${
                             media.tag === 'feature' ? 'bg-blue-100 text-blue-800' :
                             media.tag === 'description' ? 'bg-purple-100 text-purple-800' :
@@ -1475,7 +1738,7 @@ const AddProjectPage = () => {
                       )}
                     </div>
                   ))}
-                </div>
+                  </div>
               )}
             </div>
           </div>
