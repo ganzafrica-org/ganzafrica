@@ -86,6 +86,15 @@ const employmentDetailsSchema = z.object({
   }).optional()
 });
 
+// Define params schema that transforms the ID into a number
+const idParamsSchema = z.object({
+  id: z.string()
+    .refine(value => !isNaN(parseInt(value)), {
+      message: 'ID must be a number'
+    })
+    .transform(val => parseInt(val)) // This transforms the string to a number
+});
+
 // Schema for creating a fellowship opportunity
 export const createFellowshipSchema = z.object({
   body: baseOpportunitySchema.merge(z.object({
@@ -104,22 +113,12 @@ export const createEmploymentSchema = z.object({
 
 // Schema for getting an opportunity by ID
 export const getOpportunitySchema = z.object({
-  params: z.object({
-    id: z.string()
-      .refine(value => !isNaN(parseInt(value)), {
-        message: 'ID must be a number'
-      })
-  })
+  params: idParamsSchema
 });
 
 // Schema for updating a fellowship opportunity
 export const updateFellowshipSchema = z.object({
-  params: z.object({
-    id: z.string()
-      .refine(value => !isNaN(parseInt(value)), {
-        message: 'ID must be a number'
-      })
-  }),
+  params: idParamsSchema,
   body: baseOpportunitySchema.partial().merge(z.object({
     type: z.literal('fellowship').optional(),
     fellowship_details: fellowshipDetailsSchema.partial().optional()
@@ -128,12 +127,7 @@ export const updateFellowshipSchema = z.object({
 
 // Schema for updating an employment opportunity
 export const updateEmploymentSchema = z.object({
-  params: z.object({
-    id: z.string()
-      .refine(value => !isNaN(parseInt(value)), {
-        message: 'ID must be a number'
-      })
-  }),
+  params: idParamsSchema,
   body: baseOpportunitySchema.partial().merge(z.object({
     type: z.literal('employment').optional(),
     employment_details: employmentDetailsSchema.partial().optional()
@@ -142,6 +136,7 @@ export const updateEmploymentSchema = z.object({
 
 // Schema for application submission
 export const applicationSubmissionSchema = z.object({
+  params: idParamsSchema,
   body: z.object({
     // Standard required fields
     full_name: z.string()
@@ -174,12 +169,7 @@ export const applicationSubmissionSchema = z.object({
 
 // Schema for updating application status
 export const updateApplicationStatusSchema = z.object({
-  params: z.object({
-    id: z.string()
-      .refine(value => !isNaN(parseInt(value)), {
-        message: 'ID must be a number'
-      })
-  }),
+  params: idParamsSchema,
   body: z.object({
     status: z.enum([
       'submitted',
@@ -196,8 +186,8 @@ export const updateApplicationStatusSchema = z.object({
 
 // Schema for submitting application review
 export const applicationReviewSchema = z.object({
+  params: idParamsSchema,
   body: z.object({
-    application_id: z.number().positive(),
     score: z.number().min(1).max(10).optional(),
     comments: z.string().optional(),
     recommendation: z.string().optional()
