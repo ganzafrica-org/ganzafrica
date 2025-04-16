@@ -1269,7 +1269,7 @@ const AddProjectPage = () => {
             <div className="w-3/4">
               <div className="mb-4 flex justify-between items-center">
                 <label className="block text-sm font-medium">
-                  Team Members<span className="text-red-500">*</span>
+                  Team Members<span className="text-red">*</span>
                 </label>
                 <a 
                   href="/users/add"
@@ -1319,9 +1319,9 @@ const AddProjectPage = () => {
                       name="user_id"
                       value={newMember.user_id}
                       onChange={handleMemberChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                      className="w-full p-2.5 border border-gray0 rounded-md appearance-none text-black"
                     >
-                      <option value="">Select a team member</option>
+                      <option value="" className='text-black'>Select a team member</option>
                       {Array.isArray(users) && users.map(user => (
                         <option key={user.id} value={user.id}>
                           {user.first_name} {user.last_name}
