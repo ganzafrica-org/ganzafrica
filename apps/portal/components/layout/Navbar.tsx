@@ -65,11 +65,13 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
 
     if (nameParts.length === 1) {
       // If single name, take first two letters or first letter twice
-      return (nameParts[0]?.substring(0, 2) ?? '').toUpperCase();
+      return (nameParts[0]?.substring(0, 2) ?? "").toUpperCase();
     }
 
     // Take first letter of first name and first letter of last name
-    return ((nameParts[0]?.[0] || '') + (nameParts[nameParts.length - 1]?.[0] || '')).toUpperCase();
+    return (
+      (nameParts[0]?.[0] || "") + (nameParts[nameParts.length - 1]?.[0] || "")
+    ).toUpperCase();
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -95,7 +97,10 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
   // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
@@ -103,9 +108,9 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
