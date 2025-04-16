@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from 'react';
-import Sidebar from '../../components/layout/Sidebar';
-import Navbar from '../../components/layout/Navbar';
+import { useState } from "react";
+import Sidebar from "../../components/layout/Sidebar";
+import Navbar from "../../components/layout/Navbar";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+export default function MainLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-    const toggleSidebar = () => {
-      setIsSidebarCollapsed(!isSidebarCollapsed);
-    };
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
 
     return (
         <div className="min-h-screen bg-[#F5F7FA] dark:bg-gray-900">

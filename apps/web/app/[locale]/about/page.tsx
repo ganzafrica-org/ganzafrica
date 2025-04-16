@@ -6,6 +6,10 @@ import CategoriesBanner from "@/components/layout/headerBanner";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 import { FC } from "react";
 
+import { 
+  Users, Bike, Award, BookOpen, LandPlot, Calendar, 
+  BarChart, Heart, Leaf, Handshake, Globe, Database
+} from "lucide-react";
 // Types for props
 interface MissionCardProps {
   bgColor: string;
@@ -54,22 +58,23 @@ const MissionCard: FC<MissionCardProps> = ({
   label,
   content,
   hasCurvedCorner = false,
+  // icon = <Bike /> // Default icon
 }) => (
-  <div className="relative">
-    <div className={`${bgColor} rounded-3xl p-8 overflow-hidden`}>
-      <div className="flex items-center mb-6">
+  <div className="relative w-full">
+    <div className={`${bgColor} rounded-3xl p-4 sm:p-6 md:p-8 overflow-hidden h-full`}>
+      <div className="flex items-center mb-4 md:mb-">
         <div
-          className={`${labelColor} text-white rounded-full px-4 py-2 flex items-center justify-center text-sm font-medium`}
+          className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-sm font-medium`}
         >
           <span className="mr-2">●</span> {label}
         </div>
       </div>
 
-      <p className={`text-xl font-bold ${textColor}`}>{content}</p>
+      <p className={`text-base sm:text-lg md:text-xl font-bold ${textColor}`}>{content}</p>
 
       {hasCurvedCorner && (
         <div
-          className="absolute top-0 right-0 w-24 h-24 bg-white"
+          className="absolute top-0 right-0 w-16 md:w-24 h-16 md:h-24 bg-white"
           style={{
             borderBottomLeftRadius: "100%",
           }}
@@ -78,7 +83,7 @@ const MissionCard: FC<MissionCardProps> = ({
 
       {/* Circular icon */}
       <div
-        className={`absolute -top-4 -right-4 ${iconColor} rounded-full w-20 h-20 flex items-center justify-center shadow-lg`}
+        className={`absolute -top-4 -right-4 ${iconColor} rounded-full w-14 h-14 md:w-20 md:h-20 flex items-center justify-center shadow-lg`}
       >
         <BikeIcon />
       </div>
@@ -97,11 +102,11 @@ const ValueCard: FC<ValueCardProps> = ({
   description,
 }) => (
   <div
-    className={`md:w-1/3 ${bgColor} rounded-3xl p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer`}
+    className={`w-full md:w-1/3 ${bgColor} rounded-3xl p-4 sm:p-6 md:p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer`}
   >
-    <div className="flex justify-center mb-6">
+    <div className="flex justify-center mb-4 md:mb-6">
       <div
-        className={`${iconBgColor} rounded-full w-24 h-24 flex items-center justify-center shadow-md transition-transform duration-300 hover:scale-110`}
+        className={`${iconBgColor} rounded-full sm:w-20 sm:h-20 md:w-24 md:h-24 w-24 h-24 flex items-center justify-center shadow-md transition-transform duration-300 hover:scale-110`}
       >
         <BikeIcon
           className="w-14 h-14 transition-transform duration-300 hover:scale-125"
@@ -111,13 +116,13 @@ const ValueCard: FC<ValueCardProps> = ({
     </div>
 
     <h3
-      className={`text-2xl font-bold text-center ${titleColor} mb-4 transition-colors duration-300 hover:text-primary-orange`}
+      className={`text-xl sm:text-2xl font-bold text-center ${titleColor} mb-2 md:mb-4 transition-colors duration-300 hover:text-primary-orange`}
     >
       {title}
     </h3>
 
     <p
-      className={`${textColor} text-center transition-all duration-300 hover:font-medium`}
+      className={`${textColor} text-center text-sm sm:text-base transition-all duration-300 hover:font-medium`}
     >
       {description}
     </p>
@@ -362,7 +367,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
               }
             />
           </div>
-
+          
           <div className="max-w-4xl mx-auto text-left">
             <p className="text-gray-700 mb-6">
               {dict?.about?.transformative_partner?.paragraph_1 ||

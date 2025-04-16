@@ -1,11 +1,11 @@
 "use client";
 
-import React from 'react';
-import Container from '@/components/layout/container';
-import Image from 'next/image';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import { getNewsBySlug } from '@/app/lib/news-data';
+import React from "react";
+import Container from "@/components/layout/container";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { getNewsBySlug } from "@/app/lib/news-data";
 
 interface CategoryBadge {
   label: string;
@@ -13,9 +13,7 @@ interface CategoryBadge {
 }
 
 const CategoryBadge = ({ label, color }: CategoryBadge) => (
-  <div 
-    className={`px-6 py-2 rounded-full text-sm font-medium ${color}`}
-  >
+  <div className={`px-6 py-2 rounded-full text-sm font-medium ${color}`}>
     {label}
   </div>
 );
@@ -34,10 +32,14 @@ export default function NewsDetailsPage({ params }: PageProps) {
       <main className="bg-white min-h-screen py-20">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Article Not Found</h1>
-            <p className="text-gray-600 mb-8">The article you're looking for doesn't exist or has been moved.</p>
-            <Link 
-              href="/newsroom" 
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Article Not Found
+            </h1>
+            <p className="text-gray-600 mb-8">
+              The article you're looking for doesn't exist or has been moved.
+            </p>
+            <Link
+              href="/newsroom"
               className="inline-flex items-center text-primary-green hover:text-primary-green/80"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
@@ -50,12 +52,13 @@ export default function NewsDetailsPage({ params }: PageProps) {
   }
 
   const categories = [
-    { 
-      label: newsData.category === 'Blogs' ? 'Blog' : newsData.category, 
-      color: newsData.category === 'Blogs' || newsData.category === 'News' 
-        ? 'bg-[#FFB800] text-black' 
-        : 'bg-primary-green text-white'
-    }
+    {
+      label: newsData.category === "Blogs" ? "Blog" : newsData.category,
+      color:
+        newsData.category === "Blogs" || newsData.category === "News"
+          ? "bg-[#FFB800] text-black"
+          : "bg-primary-green text-white",
+    },
   ];
 
   return (
@@ -75,8 +78,8 @@ export default function NewsDetailsPage({ params }: PageProps) {
       <Container>
         <div className="max-w-4xl mx-auto py-12">
           {/* Back Button */}
-          <Link 
-            href="/newsroom" 
+          <Link
+            href="/newsroom"
             className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-8 group"
           >
             <ArrowLeft className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" />
@@ -86,7 +89,7 @@ export default function NewsDetailsPage({ params }: PageProps) {
           {/* Categories */}
           <div className="flex gap-4 mb-8">
             {categories.map((category: CategoryBadge, index: number) => (
-              <CategoryBadge 
+              <CategoryBadge
                 key={index}
                 label={category.label}
                 color={category.color}
@@ -100,20 +103,23 @@ export default function NewsDetailsPage({ params }: PageProps) {
           </h1>
 
           {/* Date */}
-          <div className="text-gray-600 mb-12">
-            {newsData.date}
-          </div>
+          <div className="text-gray-600 mb-12">{newsData.date}</div>
 
           {/* Content */}
           <div className="prose prose-lg max-w-none">
-            {newsData.content.split('\n\n').map((paragraph: string, index: number) => (
-              <p key={index} className="text-gray-600 mb-6 text-lg leading-relaxed">
-                {paragraph}
-              </p>
-            ))}
+            {newsData.content
+              .split("\n\n")
+              .map((paragraph: string, index: number) => (
+                <p
+                  key={index}
+                  className="text-gray-600 mb-6 text-lg leading-relaxed"
+                >
+                  {paragraph}
+                </p>
+              ))}
           </div>
         </div>
       </Container>
     </main>
   );
-} 
+}

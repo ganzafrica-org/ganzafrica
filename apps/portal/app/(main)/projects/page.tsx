@@ -134,6 +134,8 @@ const ProjectsPage = () => {
   const [tabCountsLoaded, setTabCountsLoaded] = useState(false);
   // Add state to track if categories are loaded
   const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+  // Add state to track if categories are loaded
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -230,7 +232,78 @@ const ProjectsPage = () => {
   }, [menuRef]);
 
   // Update the categories state with fetched data
+  // Update the categories state with fetched data
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        console.log('Fetching categories from API...');
+        const response = await throttledAxios.get('http://localhost:3002/api/categories');
+        console.log('Categories API response:', response.data);
+        
+        // Handle different response formats
+        if (response.data) {
+          let categoriesData = response.data;
+          
+          // If response is an object with categories property, use that
+          if (!Array.isArray(response.data) && response.data.categories && Array.isArray(response.data.categories)) {
+            categoriesData = response.data.categories;
+          }
+          
+          // If response is an empty object, provide default categories as fallback
+          if (Object.keys(response.data).length === 0) {
+            console.log('Empty categories response, using default categories');
+            categoriesData = [
+              { id: 1, name: "Food System" },
+              { id: 2, name: "Climate Adaptation" },
+              { id: 3, name: "Data & Evidence" }
+            ];
+          }
+          
+          // Transform the categories array into an object with id as key and name as value
+          const categoriesObj = {};
+          
+          if (Array.isArray(categoriesData)) {
+            categoriesData.forEach(category => {
+              if (category && category.id && category.name) {
+                // Store with both string and number keys to be safe
+                categoriesObj[category.id] = category.name;
+                categoriesObj[category.id.toString()] = category.name;
+              }
+            });
+            console.log('Processed categories:', categoriesObj);
+            setCategories(categoriesObj);
+          } else {
+            console.error('Unable to process categories data:', categoriesData);
+            // Use default categories
+            setCategories({
+              1: "Food System",
+              2: "Climate Adaptation", 
+              3: "Data & Evidence"
+            });
+          }
+        } else {
+          console.error('Invalid or missing categories response');
+          // Use default categories
+          setCategories({
+            1: "Food System",
+            2: "Climate Adaptation", 
+            3: "Data & Evidence"
+          });
+        }
+        setCategoriesLoaded(true);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        // Use default categories in case of error
+        setCategories({
+          1: "Food System",
+          2: "Climate Adaptation", 
+          3: "Data & Evidence"
+        });
+        setCategoriesLoaded(true);
+      }
+    };
+
+    fetchCategories();
     const fetchCategories = async () => {
       try {
         console.log('Fetching categories from API...');
@@ -303,6 +376,7 @@ const ProjectsPage = () => {
     fetchCategories();
     
     // Set users (in a real app, you would fetch users from API as well)
+    // Set users (in a real app, you would fetch users from API as well)
     setUsers({
       1: 'Mukamana Fransine',
       2: 'John Doe',
@@ -310,6 +384,7 @@ const ProjectsPage = () => {
       4: 'Mukamana Fransine'
     });
   }, []);
+
 
   // Fetch tab counts using pagination total from a single request
   const fetchTabCounts = async () => {
@@ -426,8 +501,19 @@ const ProjectsPage = () => {
         const response = await throttledAxios.get('http://localhost:3002/api/projects', { params });
         
         console.log('API response projects:', response.data.projects);
+        console.log('API response projects:', response.data.projects);
         
         if (response.data) {
+          // Log a sample project to see its structure
+          if (response.data.projects && response.data.projects.length > 0) {
+            console.log('Sample project structure:', response.data.projects[0]);
+            
+            // Look for category_id in the projects
+            response.data.projects.forEach(project => {
+              console.log(`Project ${project.id} has category_id: ${project.category_id}`);
+            });
+          }
+          
           // Log a sample project to see its structure
           if (response.data.projects && response.data.projects.length > 0) {
             console.log('Sample project structure:', response.data.projects[0]);
@@ -491,6 +577,10 @@ const ProjectsPage = () => {
   
   // Get category name from category_id
   const getCategoryName = (categoryId) => {
+    if (!categoryId) return '';
+    
+    // Try both the raw ID and the string version
+    return categories[categoryId] || categories[categoryId.toString()] || '';
     if (!categoryId) return '';
     
     // Try both the raw ID and the string version
@@ -627,6 +717,9 @@ const ProjectsPage = () => {
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getRowNumber(index)}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {project.name}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {getCategoryName(project.category_id)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {getCategoryName(project.category_id)}

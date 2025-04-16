@@ -133,7 +133,7 @@ interface CategoryButtonProps {
 
 const CategoryButton: React.FC<CategoryButtonProps> = ({ name, icon, count, isActive, onClick }) => {
   return (
-    <button 
+    <button
       onClick={onClick}
       className={`flex items-center justify-between px-4 py-3 rounded-lg w-full transition-all duration-300 ${
         isActive 
@@ -479,10 +479,10 @@ const ProjectsPage = () => {
   
   // Stats for map section
   const stats = [
-    { label: 'Fellows', count: 20 },
-    { label: 'Projects', count: '20+' },
-    { label: 'Communities', count: 15 },
-    { label: 'Countries', count: 2 },
+    { label: "Fellows", count: 20 },
+    { label: "Projects", count: "20+" },
+    { label: "Communities", count: 15 },
+    { label: "Countries", count: 2 },
   ];
 
   // Get unique countries from projects for the dropdown
@@ -519,16 +519,16 @@ const ProjectsPage = () => {
       if (mapRef.current) {
         setMapDimensions({
           width: mapRef.current.offsetWidth,
-          height: mapRef.current.offsetHeight
+          height: mapRef.current.offsetHeight,
         });
       }
     };
 
     updateMapDimensions();
-    window.addEventListener('resize', updateMapDimensions);
-    
+    window.addEventListener("resize", updateMapDimensions);
+
     return () => {
-      window.removeEventListener('resize', updateMapDimensions);
+      window.removeEventListener("resize", updateMapDimensions);
     };
   }, []);
   
@@ -703,7 +703,7 @@ const ProjectsPage = () => {
         y: -50,
         opacity: 0,
         duration: 1,
-        ease: "power3.out"
+        ease: "power3.out",
       });
     }
     
@@ -888,10 +888,10 @@ const ProjectsPage = () => {
             priority
           />
         </div>
-        
+
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/70 z-10"></div>
-        
+
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
           <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
@@ -1053,10 +1053,11 @@ const ProjectsPage = () => {
             </div>
             
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto text-center">
-              GanzAfrica operates in two countries, equipping young professionals with the skills and 
-              opportunities to drive meaningful change in Africa's agri-food systems.
+              GanzAfrica operates in two countries, equipping young
+              professionals with the skills and opportunities to drive
+              meaningful change in Africa's agri-food systems.
             </p>
-            
+
             {/* Country selector and highlights button */}
             <div className="flex justify-center items-center gap-4 mb-6">
               <div className="relative inline-block w-56">
@@ -1072,8 +1073,16 @@ const ProjectsPage = () => {
                   ))}
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-green-700">
-                  <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <svg
+                    className="h-4 w-4 fill-current"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               </div>
@@ -1082,21 +1091,26 @@ const ProjectsPage = () => {
                 Highlights of our work
               </button>
             </div>
-            
+
             {/* Stats grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-xl mx-auto mb-8">
               {stats.map((stat, index) => (
                 <div key={index} className="text-center">
-                  <p className="text-3xl font-bold text-green-700">{stat.count}</p>
+                  <p className="text-3xl font-bold text-green-700">
+                    {stat.count}
+                  </p>
                   <p className="text-sm text-gray-600">{stat.label}</p>
                 </div>
               ))}
             </div>
           </div>
-          
+
           {/* Map section with project locations */}
           <div className="py-2 bg-white">
-            <div className="h-96 w-full rounded-lg overflow-hidden border-2 border-gray-300 relative" ref={mapRef}>
+            <div
+              className="h-96 w-full rounded-lg overflow-hidden border-2 border-gray-300 relative"
+              ref={mapRef}
+            >
               {/* Google Maps iframe with marker */}
               <iframe
                 ref={mapIframeRef}
@@ -1119,19 +1133,19 @@ const ProjectsPage = () => {
                 referrerPolicy="no-referrer-when-downgrade"
                 title="GanzAfrica Location"
               ></iframe>
-              
+
               {/* Project markers with in-map cards */}
               {filteredLocations.map((location) => {
                 const position = getMarkerPosition(location.mapPosition);
                 const isSelected = selectedProject === location.id;
                 const isExpanded = expandedCard === location.id;
-                
+
                 return (
-                  <div 
+                  <div
                     key={location.id}
                     className="absolute z-10"
-                    style={{ 
-                      left: `${position.x}px`, 
+                    style={{
+                      left: `${position.x}px`,
                       top: `${position.y}px`,
                     }}
                   >
@@ -1141,59 +1155,61 @@ const ProjectsPage = () => {
                       onClick={() => handleProjectClick(location.id)}
                     >
                       {/* Marker with profile image */}
-                      <div 
-                        className={`rounded-full overflow-hidden transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-200 ${isSelected ? 'scale-110' : ''}`}
-                        style={{ 
-                          width: '50px', 
-                          height: '50px', 
-                          border: `3px solid ${isSelected ? '#F59E0B' : '#047857'}`,
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
+                      <div
+                        className={`rounded-full overflow-hidden transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-200 ${isSelected ? "scale-110" : ""}`}
+                        style={{
+                          width: "50px",
+                          height: "50px",
+                          border: `3px solid ${isSelected ? "#F59E0B" : "#047857"}`,
+                          boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
                         }}
                       >
-                        <img 
-                          src={location.image} 
+                        <img
+                          src={location.image}
                           alt={location.title}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      
+
                       {/* Location label */}
                       {isSelected && (
-                        <div 
+                        <div
                           className="absolute whitespace-nowrap text-center mt-1 text-xs font-medium bg-white px-2 py-1 rounded-md shadow-sm -translate-x-1/2"
-                          style={{ top: '100%', left: '50%' }}
+                          style={{ top: "100%", left: "50%" }}
                         >
                           {location.location}
                         </div>
                       )}
                     </div>
-                    
+
                     {/* Project card */}
                     {isSelected && (
-                      <div 
-                        className={`absolute bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 z-20 ${isExpanded ? 'w-64' : 'w-52'}`}
-                        style={{ 
-                          top: '-105px', 
-                          left: '-110px',
-                          transform: isExpanded ? 'scale(1.1)' : 'scale(1)'
+                      <div
+                        className={`absolute bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 z-20 ${isExpanded ? "w-64" : "w-52"}`}
+                        style={{
+                          top: "-105px",
+                          left: "-110px",
+                          transform: isExpanded ? "scale(1.1)" : "scale(1)",
                         }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {/* Card content */}
                         <div className="relative">
                           {/* Project image */}
-                          <div className={`relative ${isExpanded ? 'h-32' : 'h-24'}`}>
-                            <img 
-                              src={location.image} 
+                          <div
+                            className={`relative ${isExpanded ? "h-32" : "h-24"}`}
+                          >
+                            <img
+                              src={location.image}
                               alt={location.title}
                               className="w-full h-full object-cover"
                             />
                             <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-0.5 text-xs font-semibold rounded">
                               {location.location}
                             </div>
-                            
+
                             {/* Expand/collapse button */}
-                            <button 
+                            <button
                               className="absolute bottom-2 right-2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100"
                               onClick={(e) => handleExpandClick(location.id, e)}
                             >
@@ -1204,13 +1220,13 @@ const ProjectsPage = () => {
                               )}
                             </button>
                           </div>
-                          
+
                           {/* Project info */}
                           <div className="p-3">
                             <h3 className="font-bold text-green-700 text-sm mb-1 line-clamp-1">
                               {location.title}
                             </h3>
-                            
+
                             {isExpanded ? (
                               <>
                                 <p className="text-xs text-gray-600 mb-2">
@@ -1257,7 +1273,8 @@ const ProjectsPage = () => {
 
             {/* Instructions */}
             <div className="mt-4 text-center text-sm text-gray-600">
-              Click on a project marker to view details. The map will zoom to the selected location.
+              Click on a project marker to view details. The map will zoom to
+              the selected location.
             </div>
           </div>
         </div>
