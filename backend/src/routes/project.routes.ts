@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { projectController } from "../controllers";
+import { projectController } from "../controllers/project";
 import { validate, authenticate, authorize } from "../middlewares";
 import { projectValidation } from "../validations";
 import { constants } from "../config";

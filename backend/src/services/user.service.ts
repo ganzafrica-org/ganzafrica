@@ -1,464 +1,337 @@
-import { db, newId, withDbTransaction } from "../db/client";
-import { users, user_profiles, user_roles, roles } from "../db/schema";
-import { eq, and, inArray, like, desc, asc, sql } from "drizzle-orm";
-import { hashPassword, sendVerification } from "./auth.service";
-import { sendWelcomeEmail } from "./email.service";
+import { db } from "../db/client";
+import { users, user_profiles, roles } from "../db/schema";
+import { eq } from "drizzle-orm";
 import { AppError } from "../middlewares";
-import { Logger } from "../config";
-import { toDbId, toApiId } from "../utils/bigint";
+import { constants } from "../config";
+import { hashPassword } from "./auth.service";
+import { User, CreateUserInput, UpdateUserInput } from "../services/types";
+import {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from "../services/email.service";
+import { createToken } from "./auth.service";
 
-const logger = new Logger("UserService");
+/**
+ * Create a new user
+ */
+export const createUser = async (userData: CreateUserInput): Promise<User> => {
+  // Check if email already exists
+  const existingUser = await db.query.users.findFirst({
+    where: eq(users.email, userData.email),
+  });
 
-// User types for service input/output
-export type CreateUserInput = {
-  email: string;
-  password: string;
-  name: string;
-  base_role: string;
-  avatar_url?: string;
-  email_verified?: boolean;
-  sendVerificationEmail?: boolean;
-};
-
-export type UpdateUserInput = {
-  name?: string;
-  avatar_url?: string;
-  base_role?: string;
-  email_verified?: boolean;
-  is_active?: boolean;
-};
-
-export type UserOutput = {
-  id: string;
-  email: string;
-  name: string;
-  base_role: string;
-  avatar_url?: string;
-  email_verified: boolean;
-  is_active: boolean;
-  password_hash: string;
-  created_at: Date;
-  updated_at: Date;
-};
-
-type UserSearchParams = {
-  page: number;
-  limit: number;
-  search?: string;
-  sort_by?: string;
-  sort_order?: "asc" | "desc";
-  role?: string;
-  is_active?: boolean;
-};
-
-// Create a new user
-export async function createUser(
-  userData: CreateUserInput,
-): Promise<UserOutput> {
-  try {
-    return await withDbTransaction(async (txDb) => {
-      // Check if user with this email already exists
-      const existingUser = await txDb
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.email, userData.email))
-        .limit(1);
-
-      if (existingUser.length > 0) {
-        throw new AppError("User with this email already exists", 409);
-      }
-
-      // Hash the password
-      const passwordHash = await hashPassword(userData.password);
-
-      // Generate user ID
-      const userId = newId();
-
-      // Insert the user
-      await txDb.insert(users).values({
-        id: Number(userId), // Convert to Number
-        email: userData.email,
-        name: userData.name,
-        base_role: userData.base_role,
-        password_hash: passwordHash,
-        avatar_url: userData.avatar_url,
-        email_verified: userData.email_verified || false,
-        is_active: true,
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      // Create user profile
-      await txDb.insert(user_profiles).values({
-        id: Number(newId()), // Convert to Number
-        user_id: Number(userId), // Convert to Number
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
-
-      // Send verification email if requested
-      if (userData.sendVerificationEmail && !userData.email_verified) {
-        await sendVerification(userId, userData.email);
-      }
-
-      // Send welcome email if email is already verified
-      if (userData.email_verified) {
-        await sendWelcomeEmail(userData.email, userData.name);
-      }
-
-      // Get the created user to return
-      const createdUser = await txDb
-        .select()
-        .from(users)
-        .where(eq(users.id, Number(userId))) // Convert to Number
-        .limit(1);
-
-      if (!createdUser.length) {
-        throw new AppError("Failed to create user", 500);
-      }
-
-      return mapToUserOutput(createdUser[0]);
-    });
-  } catch (error) {
-    logger.error("Error creating user", error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to create user", 500);
+  if (existingUser) {
+    throw new AppError(constants.ERROR_MESSAGES.EMAIL_ALREADY_EXISTS, 409);
   }
-}
-
-// Get user by ID
-export async function getUserById(id: string | bigint): Promise<UserOutput> {
-  try {
-    const userId = toDbId(id); // Use our utility function
-
-    if (!userId) {
-      throw new AppError("Invalid user ID", 400);
-    }
-
-    const result = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (!result.length) {
-      throw new AppError("User not found", 404);
-    }
-
-    return mapToUserOutput(result[0]);
-  } catch (error) {
-    logger.error(`Error getting user by ID: ${id}`, error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to get user", 500);
+  if (existingUser) {
+    throw new AppError(constants.ERROR_MESSAGES.EMAIL_ALREADY_EXISTS, 409);
   }
-}
 
-// Get user by email
-export async function getUserByEmail(email: string): Promise<UserOutput> {
-  try {
-    const result = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+  // Hash password
+  const password_hash = await hashPassword(userData.password);
 
-    if (!result.length) {
-      throw new AppError("User not found", 404);
-    }
+  // Insert user into database
+  const [newUser] = await db
+    .insert(users)
+    .values({
+      email: userData.email,
+      name: userData.name,
+      password_hash,
+      role_id: userData.role_id,
+      email_verified: userData.email_verified || false,
+      avatar_url: userData.avatar_url,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    .returning();
 
-    return mapToUserOutput(result[0]);
-  } catch (error) {
-    logger.error(`Error getting user by email: ${email}`, error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to get user", 500);
+  if (!newUser) {
+    throw new AppError(constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR, 500);
   }
-}
 
-// Update user
-export async function updateUser(
-  id: string | bigint,
-  userData: UpdateUserInput,
-): Promise<UserOutput> {
-  try {
-    const userId = toDbId(id); // Use our utility function
+  // Send verification email if requested and not already verified
+  if (userData.sendVerificationEmail && !userData.email_verified) {
+    try {
+      // Create a verification token (24 hour expiry)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
 
-    if (!userId) {
-      throw new AppError("Invalid user ID", 400);
-    }
-
-    // Check if user exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (!existingUser.length) {
-      throw new AppError("User not found", 404);
-    }
-
-    // Update user
-    await db
-      .update(users)
-      .set({
-        ...userData,
-        updated_at: new Date(),
-      })
-      .where(eq(users.id, userId));
-
-    // Get updated user
-    const updatedUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    return mapToUserOutput(updatedUser[0]);
-  } catch (error) {
-    logger.error(`Error updating user: ${id}`, error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to update user", 500);
-  }
-}
-
-// Delete user (soft delete by marking as inactive)
-export async function deleteUser(id: string | bigint): Promise<boolean> {
-  try {
-    const userId = toDbId(id); // Use our utility function
-
-    if (!userId) {
-      throw new AppError("Invalid user ID", 400);
-    }
-
-    // Check if user exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    if (!existingUser.length) {
-      throw new AppError("User not found", 404);
-    }
-
-    // Soft delete by marking as inactive
-    await db
-      .update(users)
-      .set({
-        is_active: false,
-        updated_at: new Date(),
-      })
-      .where(eq(users.id, userId));
-
-    return true;
-  } catch (error) {
-    logger.error(`Error deleting user: ${id}`, error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to delete user", 500);
-  }
-}
-
-// List users with pagination and filtering
-export async function listUsers(
-  params: UserSearchParams,
-): Promise<{ users: UserOutput[]; total: number }> {
-  try {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      sort_by = "created_at",
-      sort_order = "desc",
-      role,
-      is_active,
-    } = params;
-    const offset = (page - 1) * limit;
-
-    // Build query conditions
-    const whereConditions = [];
-
-    if (search) {
-      whereConditions.push(
-        sql`(${users.name} ILIKE ${`%${search}%`} OR ${users.email} ILIKE ${`%${search}%`})`,
+      const token = await createToken(
+        {
+          id: newUser.id.toString(),
+          type: "verify_email", // assuming this is the token type for email verification
+        },
+        "24h", // token expiry time
       );
+
+      // Send the verification email
+      await sendVerificationEmail(newUser.email, {
+        token,
+        expiresAt,
+      });
+
+      // Optionally also send a welcome email
+      await sendWelcomeEmail(newUser.email, newUser.name);
+    } catch (error) {
+      console.error("Failed to send verification email:", error);
+      // Don't fail the user creation if email sending fails
     }
-
-    if (role) {
-      whereConditions.push(eq(users.base_role, role));
-    }
-
-    if (is_active !== undefined) {
-      whereConditions.push(eq(users.is_active, is_active));
-    }
-
-    // Combine conditions
-    const whereClause =
-      whereConditions.length > 0 ? and(...whereConditions) : undefined;
-
-    // Get total count for pagination
-    const totalResult = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(users)
-      .where(whereClause);
-
-    const total = totalResult[0]?.count || 0;
-
-    // Sort order
-    const sortDirection = sort_order === "asc" ? asc : desc;
-    let orderBy;
-
-    // Determine sort column
-    switch (sort_by) {
-      case "name":
-        orderBy = sortDirection(users.name);
-        break;
-      case "email":
-        orderBy = sortDirection(users.email);
-        break;
-      case "base_role":
-        orderBy = sortDirection(users.base_role);
-        break;
-      case "created_at":
-      default:
-        orderBy = sortDirection(users.created_at);
-    }
-
-    // Get paginated results
-    const result = await db
-      .select()
-      .from(users)
-      .where(whereClause)
-      .orderBy(orderBy)
-      .limit(limit)
-      .offset(offset);
-
-    const userList = result.map(mapToUserOutput);
-
-    return {
-      users: userList,
-      total,
-    };
-  } catch (error) {
-    logger.error("Error listing users", error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to list users", 500);
   }
-}
 
-// Bulk import users
-export async function importUsers(
+  return newUser;
+};
+
+/**
+ * Get user by ID
+ */
+export const getUserById = async (id: number | string): Promise<User> => {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, Number(id)),
+  });
+
+  if (!user) {
+    throw new AppError(constants.ERROR_MESSAGES.NOT_FOUND, 404);
+  }
+
+  return user;
+};
+
+/**
+ * Get user by email
+ */
+export const getUserByEmail = async (email: string): Promise<User> => {
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+
+  if (!user) {
+    throw new AppError(constants.ERROR_MESSAGES.NOT_FOUND, 404);
+  }
+
+  return user;
+};
+
+/**
+ * Update user
+ */
+export const updateUser = async (
+  id: number | string,
+  userData: UpdateUserInput,
+): Promise<User> => {
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      ...userData,
+      // No need to cast role_id as it's now a direct integer
+      updated_at: new Date(),
+    })
+    .where(eq(users.id, Number(id)))
+    .returning();
+
+  if (!updatedUser) {
+    throw new AppError(constants.ERROR_MESSAGES.NOT_FOUND, 404);
+  }
+
+  return updatedUser;
+};
+
+/**
+ * Create user profile
+ */
+export const createUserProfile = async (profileData: any): Promise<any> => {
+  const [profile] = await db
+    .insert(user_profiles)
+    .values({
+      user_id: profileData.user_id,
+      bio: profileData.bio,
+      social_links: profileData.social_links,
+      preferences: profileData.preferences,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
+    .returning();
+
+  if (!profile) {
+    throw new AppError("Failed to create user profile", 500);
+  }
+
+  return profile;
+};
+
+/**
+ * Get user profile
+ */
+export const getUserProfile = async (userId: number | string): Promise<any> => {
+  const profile = await db.query.user_profiles.findFirst({
+    where: eq(user_profiles.user_id, Number(userId)),
+  });
+
+  if (!profile) {
+    throw new AppError("User profile not found", 404);
+  }
+
+  return profile;
+};
+
+/**
+ * Delete user (soft delete)
+ */
+export const deleteUser = async (id: number | string): Promise<void> => {
+  // Implement as soft delete using is_active field
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      is_active: false,
+      updated_at: new Date(),
+    })
+    .where(eq(users.id, Number(id)))
+    .returning();
+
+  if (!updatedUser) {
+    throw new AppError(constants.ERROR_MESSAGES.USER_NOT_FOUND, 404);
+  }
+};
+
+/**
+ * List users with filtering and pagination
+ */
+export const listUsers = async (params: any) => {
+  const {
+    page = 1,
+    limit = 10,
+    search,
+    sort_by = "created_at",
+    sort_order = "desc",
+    role_id,
+    is_active,
+  } = params;
+
+  // Build where conditions
+  const whereConditions = [];
+
+  if (search) {
+    whereConditions.push(
+      `(u.name ILIKE '%${search}%' OR u.email ILIKE '%${search}%')`,
+    );
+  }
+
+  if (role_id) {
+    whereConditions.push(`u.role_id = ${role_id}`);
+  }
+
+  if (typeof is_active === "boolean") {
+    whereConditions.push(`u.is_active = ${is_active}`);
+  }
+
+  // Build where clause
+  const whereClause = whereConditions.length
+    ? `WHERE ${whereConditions.join(" AND ")}`
+    : "";
+
+  // Count total matching users
+  const countQuery = `SELECT COUNT(*) as total FROM users u ${whereClause}`;
+  console.log("Count query:", countQuery);
+
+  const countResults = await db.execute(countQuery);
+  console.log("Count results:", countResults);
+  const total = parseInt(String(countResults.rows?.[0]?.total || "0"), 10);
+
+  // Get paginated users
+  const offset = (page - 1) * limit;
+
+  const usersQuery = `
+    SELECT u.*, r.name as role_name
+    FROM users u
+    LEFT JOIN roles r ON u.role_id = r.id
+    ${whereClause}
+    ORDER BY u.${sort_by} ${sort_order === "asc" ? "ASC" : "DESC"}
+    LIMIT ${limit} OFFSET ${offset}
+  `;
+  console.log("Users query:", usersQuery);
+
+  const usersResults = await db.execute(usersQuery);
+  console.log("Users results structure:", Object.keys(usersResults));
+
+  // Return the users and total
+  return {
+    users: usersResults.rows || [],
+    total,
+  };
+};
+
+/**
+ * Get user projects (placeholder implementation)
+ */
+export const getUserProjects = async (
+  userId: number | string,
+): Promise<any[]> => {
+  // Placeholder - implement based on your schema
+  // This would typically query a user_projects or projects table
+  // where project.user_id = userId or from a join table
+
+  // For now returning empty array
+  return [];
+};
+
+/**
+ * Import multiple users (for bulk operations)
+ */
+export const importUsers = async (
   usersData: CreateUserInput[],
 ): Promise<{
   successful: number;
   failed: number;
-  errors: { email: string; reason: string }[];
-}> {
-  try {
-    const result = {
-      successful: 0,
-      failed: 0,
-      errors: [] as { email: string; reason: string }[],
-    };
-
-    await withDbTransaction(async (txDb) => {
-      // Process each user
-      for (const userData of usersData) {
-        try {
-          // Check if user already exists
-          const existingUser = await txDb
-            .select({ id: users.id })
-            .from(users)
-            .where(eq(users.email, userData.email))
-            .limit(1);
-
-          if (existingUser.length > 0) {
-            result.failed++;
-            result.errors.push({
-              email: userData.email,
-              reason: "User with this email already exists",
-            });
-            continue;
-          }
-
-          // Hash the password
-          const passwordHash = await hashPassword(userData.password);
-
-          // Generate user ID
-          const userId = newId();
-
-          // Insert the user
-          await txDb.insert(users).values({
-            id: Number(userId), // Convert to Number
-            email: userData.email,
-            name: userData.name,
-            base_role: userData.base_role,
-            password_hash: passwordHash,
-            avatar_url: userData.avatar_url,
-            email_verified: userData.email_verified || false,
-            is_active: true,
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
-
-          // Create user profile
-          await txDb.insert(user_profiles).values({
-            id: Number(newId()), // Convert to Number
-            user_id: Number(userId), // Convert to Number
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
-
-          // Send verification email if requested
-          if (userData.sendVerificationEmail && !userData.email_verified) {
-            await sendVerification(userId, userData.email);
-          }
-
-          result.successful++;
-        } catch (error) {
-          logger.error(`Error importing user: ${userData.email}`, error);
-          result.failed++;
-          result.errors.push({
-            email: userData.email,
-            reason: error instanceof AppError ? error.message : "Unknown error",
-          });
-        }
-      }
-    });
-
-    return result;
-  } catch (error) {
-    logger.error("Error importing users", error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to import users", 500);
-  }
-}
-
-// Helper function to map database user to UserOutput type
-function mapToUserOutput(user: any): UserOutput {
-  return {
-    id: toApiId(user.id), // Convert number to string
-    email: user.email,
-    name: user.name,
-    base_role: user.base_role,
-    avatar_url: user.avatar_url,
-    email_verified: user.email_verified,
-    is_active: user.is_active,
-    password_hash: user.password_hash,
-    created_at: user.created_at,
-    updated_at: user.updated_at,
+  errors: any[];
+}> => {
+  const results = {
+    successful: 0,
+    failed: 0,
+    errors: [] as any[],
   };
-}
+
+  // Process each user
+  for (const userData of usersData) {
+    try {
+      await createUser(userData);
+      results.successful++;
+    } catch (error) {
+      results.failed++;
+      results.errors.push({
+        email: userData.email,
+        error: error instanceof AppError ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  return results;
+};
+
+/**
+ * Get role by ID
+ */
+export const getRoleById = async (id: number): Promise<any> => {
+  const role = await db.query.roles.findFirst({
+    where: eq(roles.id, id),
+  });
+
+  if (!role) {
+    throw new AppError("Role not found", 404);
+  }
+
+  return role;
+};
+
+/**
+ * Get role by name
+ */
+export const getRoleByName = async (name: string): Promise<any> => {
+  const role = await db.query.roles.findFirst({
+    where: eq(roles.name, name),
+  });
+
+  if (!role) {
+    throw new AppError("Role not found", 404);
+  }
+
+  return role;
+};

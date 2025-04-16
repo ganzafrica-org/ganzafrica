@@ -1,6 +1,6 @@
 import {
-  bigint,
   pgTable,
+  serial,
   text,
   boolean,
   jsonb,
@@ -8,13 +8,16 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
-import { baseRoleEnum, twoFactorMethodEnum } from "./enums";
+import { twoFactorMethodEnum } from "./enums";
+import { roles } from "./roles";
 
 export const users = pgTable("users", {
-  id: bigint("id", { mode: "number" }).primaryKey(),
+  id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
-  base_role: baseRoleEnum("base_role").notNull().default("public"),
+  role_id: integer("role_id")
+    .notNull()
+    .references(() => roles.id),
   password_hash: text("password_hash").notNull(),
   avatar_url: text("avatar_url"),
   two_factor_enabled: boolean("two_factor_enabled").notNull().default(false),
@@ -33,8 +36,8 @@ export const users = pgTable("users", {
 });
 
 export const user_profiles = pgTable("user_profiles", {
-  id: bigint("id", { mode: "number" }).primaryKey(),
-  user_id: bigint("user_id", { mode: "number" })
+  id: serial("id").primaryKey(),
+  user_id: integer("user_id")
     .notNull()
     .references(() => users.id),
   bio: text("bio"),

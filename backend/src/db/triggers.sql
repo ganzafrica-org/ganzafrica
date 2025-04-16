@@ -2,7 +2,7 @@
 CREATE SEQUENCE IF NOT EXISTS audit_logs_id_seq;
 
 CREATE OR REPLACE FUNCTION audit_log_trigger()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $audit_func$
 BEGIN
     INSERT INTO audit_logs (
         id,
@@ -15,7 +15,7 @@ BEGIN
         created_at
     ) VALUES (
                  nextval('audit_logs_id_seq'),
-                 current_setting('app.current_user_id', TRUE)::bigint,
+                 current_setting('app.current_user_id', TRUE)::integer,
                  TG_OP,
                  TG_TABLE_NAME,
                  NEW.id,
@@ -28,7 +28,7 @@ BEGIN
              );
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$audit_func$ LANGUAGE plpgsql;
 
 -- Users audit trigger
 DROP TRIGGER IF EXISTS audit_users_trigger ON users;
@@ -50,69 +50,13 @@ CREATE TRIGGER audit_permissions_trigger
     FOR EACH ROW
 EXECUTE FUNCTION audit_log_trigger();
 
--- Application stage history trigger
-CREATE OR REPLACE FUNCTION application_stage_history_trigger()
-    RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO application_stage_history (
-        application_id,
-        stage_id,
-        status,
-        updated_by,
-        created_at
-    ) VALUES (
-                 NEW.id,
-                 NEW.current_stage_id,
-                 'pending',
-                 current_setting('app.current_user_id', TRUE)::bigint,
-                 NOW()
-             );
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS application_stage_history_trigger ON applications;
-CREATE TRIGGER application_stage_history_trigger
-    AFTER UPDATE OF current_stage_id ON applications
-    FOR EACH ROW
-EXECUTE FUNCTION application_stage_history_trigger();
 
--- Status update triggers
-CREATE OR REPLACE FUNCTION application_notification_trigger()
-    RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO notifications (
-        user_id,
-        type,
-        title,
-        content,
-        read,
-        created_at
-    ) VALUES (
-                 NEW.applicant_id,
-                 'application_update',
-                 'Application Status Updated',
-                 jsonb_build_object(
-                         'application_id', NEW.id,
-                         'job_posting_id', NEW.job_posting_id,
-                         'stage_id', NEW.current_stage_id
-                 ),
-                 FALSE,
-                 NOW()
-             );
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS application_notification_trigger ON applications;
-CREATE TRIGGER application_notification_trigger
-    AFTER UPDATE OF current_stage_id ON applications
-    FOR EACH ROW
-EXECUTE FUNCTION application_notification_trigger();
 
 -- Project update notification trigger
 CREATE OR REPLACE FUNCTION project_update_notification_trigger()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $proj_update_func$
 DECLARE
     member RECORD;
 BEGIN
@@ -143,7 +87,7 @@ BEGIN
         END LOOP;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$proj_update_func$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS project_update_notification_trigger ON project_updates;
 CREATE TRIGGER project_update_notification_trigger
@@ -153,7 +97,7 @@ EXECUTE FUNCTION project_update_notification_trigger();
 
 -- Milestone completion trigger
 CREATE OR REPLACE FUNCTION milestone_completion_trigger()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $milestone_func$
 BEGIN
     IF NEW.status = 'completed' AND OLD.status != 'completed' THEN
         -- Update fellow progress tracking here
@@ -162,21 +106,16 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$milestone_func$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS milestone_completion_trigger ON fellow_milestone_progress;
-CREATE TRIGGER milestone_completion_trigger
-    AFTER UPDATE OF status ON fellow_milestone_progress
-    FOR EACH ROW
-EXECUTE FUNCTION milestone_completion_trigger();
 
 -- Security triggers
 CREATE OR REPLACE FUNCTION soft_delete_trigger()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $soft_delete_func$
 BEGIN
     RETURN NULL; -- Prevents the delete
 END;
-$$ LANGUAGE plpgsql;
+$soft_delete_func$ LANGUAGE plpgsql;
 
 -- Add soft delete triggers for important tables
 DROP TRIGGER IF EXISTS prevent_user_delete_trigger ON users;
@@ -185,11 +124,6 @@ CREATE TRIGGER prevent_user_delete_trigger
     FOR EACH ROW
 EXECUTE FUNCTION soft_delete_trigger();
 
-DROP TRIGGER IF EXISTS prevent_fellow_delete_trigger ON fellows;
-CREATE TRIGGER prevent_fellow_delete_trigger
-    BEFORE DELETE ON fellows
-    FOR EACH ROW
-EXECUTE FUNCTION soft_delete_trigger();
 
 DROP TRIGGER IF EXISTS prevent_project_delete_trigger ON projects;
 CREATE TRIGGER prevent_project_delete_trigger
@@ -197,31 +131,14 @@ CREATE TRIGGER prevent_project_delete_trigger
     FOR EACH ROW
 EXECUTE FUNCTION soft_delete_trigger();
 
--- Reporting hierarchy validation
-CREATE OR REPLACE FUNCTION validate_reporting_hierarchy()
-    RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.user_id = NEW.reports_to_id THEN
-        RAISE EXCEPTION 'User cannot report to themselves';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS validate_reporting_hierarchy_trigger ON reporting_lines;
-CREATE TRIGGER validate_reporting_hierarchy_trigger
-    BEFORE INSERT OR UPDATE ON reporting_lines
-    FOR EACH ROW
-EXECUTE FUNCTION validate_reporting_hierarchy();
-
 -- User role compatibility validation
 CREATE OR REPLACE FUNCTION validate_user_role_compatibility()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $validate_role_func$
 BEGIN
     -- Add role compatibility logic here
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$validate_role_func$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS validate_user_role_compatibility_trigger ON user_roles;
 CREATE TRIGGER validate_user_role_compatibility_trigger
@@ -231,14 +148,14 @@ EXECUTE FUNCTION validate_user_role_compatibility();
 
 -- Cleanup triggers
 CREATE OR REPLACE FUNCTION cleanup_expired_sessions()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $cleanup_sessions_func$
 BEGIN
     DELETE FROM sessions
     WHERE expires_at < NOW()
       AND is_valid = TRUE;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$cleanup_sessions_func$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS cleanup_expired_sessions_trigger ON sessions;
 CREATE TRIGGER cleanup_expired_sessions_trigger
@@ -247,14 +164,14 @@ EXECUTE FUNCTION cleanup_expired_sessions();
 
 -- Add cleanup triggers for verification_tokens
 CREATE OR REPLACE FUNCTION cleanup_expired_verification_tokens()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $cleanup_verify_func$
 BEGIN
     DELETE FROM verification_tokens
     WHERE expires_at < NOW()
       AND used = FALSE;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$cleanup_verify_func$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS cleanup_expired_verification_tokens_trigger ON verification_tokens;
 CREATE TRIGGER cleanup_expired_verification_tokens_trigger
@@ -263,14 +180,14 @@ EXECUTE FUNCTION cleanup_expired_verification_tokens();
 
 -- Add cleanup triggers for two_factor_temp_tokens
 CREATE OR REPLACE FUNCTION cleanup_expired_two_factor_tokens()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $cleanup_2fa_func$
 BEGIN
     DELETE FROM two_factor_temp_tokens
     WHERE expires_at < NOW()
       AND used = FALSE;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$cleanup_2fa_func$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS cleanup_expired_two_factor_tokens_trigger ON two_factor_temp_tokens;
 CREATE TRIGGER cleanup_expired_two_factor_tokens_trigger
@@ -279,14 +196,14 @@ EXECUTE FUNCTION cleanup_expired_two_factor_tokens();
 
 -- Add cleanup triggers for password_reset_tokens
 CREATE OR REPLACE FUNCTION cleanup_expired_password_reset_tokens()
-    RETURNS TRIGGER AS $$
+    RETURNS TRIGGER AS $cleanup_pwd_func$
 BEGIN
     DELETE FROM password_reset_tokens
     WHERE expires_at < NOW()
       AND used = FALSE;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$cleanup_pwd_func$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS cleanup_expired_password_reset_tokens_trigger ON password_reset_tokens;
 CREATE TRIGGER cleanup_expired_password_reset_tokens_trigger

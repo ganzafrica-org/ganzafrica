@@ -1,10 +1,46 @@
 import { z } from "zod";
 
 // Base project status validation
-const projectStatusEnum = z.enum(["planned", "active", "completed"]);
+const projectStatusEnum = z.enum(["planned", "active", "completed", "cancelled", "on_hold"]);
 
 // Project member role validation
-const projectMemberRoleEnum = z.enum(["lead", "member", "supervisor"]);
+const projectMemberRoleEnum = z.enum(["lead", "member", "supervisor", "contributor"]);
+
+// Media tag validation
+const mediaTagEnum = z.enum(["feature", "description", "others"]);
+
+// Project media item validation
+const mediaItemSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+  type: z.enum(["image", "video"]),
+  url: z.string().min(1, "URL is required"),
+  cover: z.boolean().default(false),
+  tag: mediaTagEnum.optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  size: z.number().optional(),
+  duration: z.number().optional(),
+  thumbnailUrl: z.string().optional(),
+  order: z.number().optional(),
+});
+
+// Project goal item validation
+const goalItemSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  completed: z.boolean().optional(),
+  order: z.number().optional(),
+});
+
+// Project outcome item validation
+const outcomeItemSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  status: z.string().optional(),
+  order: z.number().optional(),
+});
 
 // Project member validation
 const projectMemberSchema = z.object({
@@ -28,7 +64,25 @@ export const createProjectSchema = z.object({
       .string()
       .transform((val) => new Date(val))
       .optional(),
-    created_by: z.string().min(1, "Creator ID is required"),
+    category_id: z.number().int().positive("Category ID is required"),
+    location: z.string().optional(),
+    impacted_people: z.number().int().optional(),
+    
+    // New fields
+    goals: z.object({
+      items: z.array(goalItemSchema)
+    }).optional(),
+    
+    outcomes: z.object({
+      items: z.array(outcomeItemSchema)
+    }).optional(),
+    
+    media: z.object({
+      items: z.array(mediaItemSchema)
+    }).optional(),
+    
+    other_information: z.record(z.any()).optional(),
+    
     members: z.array(projectMemberSchema).optional(),
   }),
 });
@@ -51,6 +105,24 @@ export const updateProjectSchema = z.object({
       .transform((val) => new Date(val))
       .optional()
       .nullable(),
+    category_id: z.number().int().positive().optional(),
+    location: z.string().optional(),
+    impacted_people: z.number().int().optional(),
+    
+    // New fields
+    goals: z.object({
+      items: z.array(goalItemSchema)
+    }).optional(),
+    
+    outcomes: z.object({
+      items: z.array(outcomeItemSchema)
+    }).optional(),
+    
+    media: z.object({
+      items: z.array(mediaItemSchema)
+    }).optional(),
+    
+    other_information: z.record(z.any()).optional(),
   }),
 });
 
@@ -85,6 +157,7 @@ export const listProjectsSchema = z.object({
     status: z.string().optional(),
     created_by: z.string().optional(),
     member_id: z.string().optional(),
+    category_id: z.string().optional(),
   }),
 });
 
@@ -117,7 +190,26 @@ export const importProjectsSchema = z.object({
           .string()
           .transform((val) => new Date(val))
           .optional(),
+        category_id: z.number().int().positive("Category ID is required"),
         created_by: z.string().min(1, "Creator ID is required"),
+        location: z.string().optional(),
+        impacted_people: z.number().int().optional(),
+        
+        // New fields
+        goals: z.object({
+          items: z.array(goalItemSchema)
+        }).optional(),
+        
+        outcomes: z.object({
+          items: z.array(outcomeItemSchema)
+        }).optional(),
+        
+        media: z.object({
+          items: z.array(mediaItemSchema)
+        }).optional(),
+        
+        other_information: z.record(z.any()).optional(),
+        
         members: z.array(projectMemberSchema).optional(),
       }),
     )
