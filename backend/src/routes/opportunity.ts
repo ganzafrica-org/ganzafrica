@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { opportunityController } from '../controllers/opportunity';
 import { validate, authenticate, authorize } from '../middlewares';
 import { opportunityValidation } from '../validations/opportunity';
+import { z } from 'zod';
 
 const router: Router = Router();
 
@@ -20,9 +21,27 @@ const router: Router = Router();
  */
 
 // All routes except application submission require authentication
-router.use(['/applications/:id', '/opportunities/:id/applications'], authenticate);
+router.use(['/applications/:id', '/:id/applications'], authenticate);
 
-// Opportunity routes
+const listAllApplicationsSchema = z.object({
+  query: z.object({
+    status: z.string().optional(),
+    page: z.string().optional(),
+    limit: z.string().optional()
+  })
+});
+
+// =====================================================
+// IMPORTANT: Order matters in Express routing!
+// More specific routes must come before generic ones
+// =====================================================
+
+// 1. First, define routes with fixed paths (no params)
+router.get(
+    '/',
+    opportunityController.listOpportunities
+);
+
 router.post(
     '/',
     authenticate,
@@ -37,11 +56,35 @@ router.post(
     opportunityController.createOpportunity
 );
 
+// 2. Define all /applications routes (before /:id routes)
 router.get(
-    '/',
-    opportunityController.listOpportunities
+    '/applications',
+    authenticate,
+    opportunityController.listAllApplications
 );
 
+router.get(
+    '/applications/:id',
+    authenticate,
+    validate(opportunityValidation.getOpportunitySchema),
+    opportunityController.getApplicationById
+);
+
+router.put(
+    '/applications/:id/status',
+    authenticate,
+    validate(opportunityValidation.updateApplicationStatusSchema),
+    opportunityController.updateApplicationStatus
+);
+
+router.post(
+    '/applications/:id/review',
+    authenticate,
+    validate(opportunityValidation.applicationReviewSchema),
+    opportunityController.submitApplicationReview
+);
+
+// 3. Then define all /:id routes
 router.get(
     '/:id',
     validate(opportunityValidation.getOpportunitySchema),
@@ -62,6 +105,14 @@ router.put(
     opportunityController.updateOpportunity
 );
 
+router.delete(
+    '/:id',
+    authenticate,
+    validate(opportunityValidation.getOpportunitySchema),
+    opportunityController.deleteOpportunity
+);
+
+// 4. Finally define nested routes with /:id/something
 router.post(
     '/:id/publish',
     authenticate,
@@ -76,14 +127,6 @@ router.post(
     opportunityController.closeOpportunity
 );
 
-router.delete(
-    '/:id',
-    authenticate,
-    validate(opportunityValidation.getOpportunitySchema),
-    opportunityController.deleteOpportunity
-);
-
-// Application routes
 router.post(
     '/:id/apply',
     validate(opportunityValidation.applicationSubmissionSchema),
@@ -95,26 +138,6 @@ router.get(
     authenticate,
     validate(opportunityValidation.getOpportunitySchema),
     opportunityController.listApplications
-);
-
-router.get(
-    '/applications/:id',
-    authenticate,
-    opportunityController.getApplicationById
-);
-
-router.put(
-    '/applications/:id/status',
-    authenticate,
-    validate(opportunityValidation.updateApplicationStatusSchema),
-    opportunityController.updateApplicationStatus
-);
-
-router.post(
-    '/applications/:id/review',
-    authenticate,
-    validate(opportunityValidation.applicationReviewSchema),
-    opportunityController.submitApplicationReview
 );
 
 export default router;

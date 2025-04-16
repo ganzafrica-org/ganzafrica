@@ -3,55 +3,79 @@
 import React, { useState, useEffect } from 'react';
 import Container from '@/components/layout/container';
 import { DecoratedHeading } from "@/components/layout/headertext";
-import Image from 'next/image';
-import { ArrowUpRight, X, Linkedin, Mail, Leaf, Twitter, ChevronDown } from 'lucide-react';
+import { ArrowUpRight, X, Linkedin, Mail, Leaf } from 'lucide-react';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
-import { motion } from 'framer-motion';
+import axios from 'axios';
 
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  bio: string;
-  category: 'Advisory Board' | 'Our Team' | 'Mentors' | 'Fellows' | 'Alumni';
-  imageUrl: string;
-  socialLinks?: {
-    linkedin?: string;
-    twitter?: string;
-  };
-}
+// Create an axios instance with retry configuration
+const axiosInstance = axios.create({
+  timeout: 10000,
+});
 
-const teamMembers: TeamMember[] = [
-  {
-    id: '1',
-    name: 'Dr. Jane Smith',
-    role: 'Chairperson',
-    bio: 'Dr. Jane Smith has over 20 years of experience in agricultural development and sustainable farming practices. She has led numerous initiatives across Africa focusing on climate-resilient agriculture.',
-    category: 'Advisory Board',
-    imageUrl: '/images/team/jane-smith.jpg',
-    socialLinks: {
-      linkedin: 'https://linkedin.com/in/janesmith',
-      twitter: 'https://twitter.com/janesmith'
+// Add a retry interceptor
+axiosInstance.interceptors.response.use(undefined, async (err) => {
+  const { config, response } = err;
+  
+  // Only retry on 429 status code (too many requests) or network errors
+  if ((response && response.status === 429) || !response) {
+    const maxRetries = 3;
+    config.retryCount = config.retryCount || 0;
+    
+    if (config.retryCount < maxRetries) {
+      config.retryCount += 1;
+      const delay = Math.pow(2, config.retryCount) * 1000;
+      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return axiosInstance(config);
     }
-  },
-  {
-    id: '2',
-    name: 'John Doe',
-    role: 'Program Director',
-    bio: 'John Doe brings extensive experience in program management and strategic planning. He has successfully led multiple international development projects.',
-    category: 'Our Team',
-    imageUrl: '/images/team/john-doe.jpg'
-  },
-  // Add more team members here
-];
+  }
+  
+  return Promise.reject(err);
+});
 
-const categories = [
-  'Advisory Board',
-  'Our Team',
-  'Mentors',
-  'Fellows',
-  'Alumni'
-] as const;
+// Add request throttling
+const pendingRequests = {};
+
+const throttledAxios = {
+  get: (url, config = {}) => {
+    const key = `${url}${JSON.stringify(config.params || {})}`;
+    
+    if (pendingRequests[key]) {
+      return pendingRequests[key];
+    }
+    
+    const request = axiosInstance.get(url, config)
+      .finally(() => {
+        delete pendingRequests[key];
+      });
+    
+    pendingRequests[key] = request;
+    return request;
+  }
+};
+
+type TeamMember = {
+  id: number;
+  name: string;
+  position: string;
+  photo_url: string;
+  team_type: {
+    id: number;
+    name: string;
+  };
+  about?: string;
+  linkedin?: string;
+  twitter?: string;
+  email?: string;
+  created_at: string;
+};
+
+type TeamType = {
+  id: number;
+  name: string;
+};
+
+type FilterCategory = string;
 
 const TeamMemberModal = ({ 
   member, 
@@ -84,13 +108,10 @@ const TeamMemberModal = ({
           {/* Profile Image */}
           <div className="w-[160px] h-[160px] rounded-xl overflow-hidden flex-shrink-0 shadow-lg relative group">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <Image
-              src={member.imageUrl}
+            <img 
+              src={member.photo_url} 
               alt={member.name}
-              width={160}
-              height={160}
-              className="object-cover w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
-              priority
+              className="h-full w-full object-cover"
             />
           </div>
 
@@ -100,7 +121,7 @@ const TeamMemberModal = ({
               {member.name}
             </h2>
             <p className="text-[17px] text-[#6B7280] tracking-wide">
-              {member.role}
+              {member.position}
             </p>
           </div>
         </div>
@@ -115,7 +136,7 @@ const TeamMemberModal = ({
             </h3>
             <div className="max-h-[180px] overflow-y-auto custom-scrollbar pr-2">
               <p className="text-[15px] text-[#4B5563] leading-[1.7] tracking-wide">
-                {member.bio}
+                {member.about || `${member.name} is a team member at GanzAfrica, working as ${member.position} in the ${member.team_type?.name || 'team'}.`}
               </p>
             </div>
           </div>
@@ -127,9 +148,9 @@ const TeamMemberModal = ({
               <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
             </h3>
             <div className="flex items-center gap-4">
-              {member.socialLinks?.linkedin && (
+              {member.linkedin && (
                 <a 
-                  href={member.socialLinks.linkedin}
+                  href={member.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group"
@@ -139,9 +160,9 @@ const TeamMemberModal = ({
                   </div>
                 </a>
               )}
-              {member.socialLinks?.twitter && (
+              {member.twitter && (
                 <a 
-                  href={member.socialLinks.twitter}
+                  href={member.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group"
@@ -150,6 +171,16 @@ const TeamMemberModal = ({
                     <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
+                  </div>
+                </a>
+              )}
+              {member.email && (
+                <a 
+                  href={`mailto:${member.email}`}
+                  className="group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary-green flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-primary-green/25 group-hover:-translate-y-0.5">
+                    <Mail className="w-5 h-5 text-white" />
                   </div>
                 </a>
               )}
@@ -166,6 +197,7 @@ const TeamMemberModal = ({
 
 const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenModal: () => void }) => {
   const [imageLoading, setImageLoading] = useState(true);
+  
   return (
       <div className="group h-full">
         <div className="relative rounded-xl overflow-hidden transition-all duration-300 ease-out h-full shadow-sm hover:shadow-md">
@@ -178,16 +210,15 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
 
             {/* Image Container */}
             <div className="relative aspect-[3/4] w-full">
-              <Image
-                  src={member.imageUrl}
+              <img
+                  src={member.photo_url}
                   alt={member.name}
-                  fill
-                  className={`object-cover object-center transition-transform duration-700 ease-out ${
+                  className={`h-full w-full object-cover object-center transition-transform duration-700 ease-out ${
                       imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110 group-hover:rotate-1'
                   }`}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority={member.id === '1'}
-                  onLoadingComplete={() => setImageLoading(false)}
+                  onLoad={() => setImageLoading(false)}
+                  onError={() => setImageLoading(false)}
               />
               {/* Optional overlay that appears on hover */}
               <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-500"></div>
@@ -213,7 +244,7 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
                   {member.name}
                 </h3>
                 <p className="text-gray-600 text-sm mt-0.5">
-                  {member.role}
+                  {member.position}
                 </p>
               </div>
             </div>
@@ -283,40 +314,89 @@ if (typeof document !== 'undefined') {
 }
 
 const TeamPage: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<string>('Our Team');
-  const [expandedMember, setExpandedMember] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterCategory>('all'); // Default to 'all'
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamTypes, setTeamTypes] = useState<TeamType[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Simulate loading state
+  // Fetch team types for filters - UPDATED to match the approach from AddTeamPage
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
+    const fetchTeamTypes = async () => {
+      try {
+        const response = await throttledAxios.get('http://localhost:3002/api/team-types');
+        console.log('Team types response:', response.data);
+        
+        // Check the structure of the response and extract team types array
+        if (response.data && response.data.teamTypes && Array.isArray(response.data.teamTypes)) {
+          // This handles the structure {teamTypes: Array(n)}
+          setTeamTypes(response.data.teamTypes);
+        } 
+        else if (response.data && Array.isArray(response.data.types)) {
+          setTeamTypes(response.data.types);
+        } 
+        else if (Array.isArray(response.data)) {
+          setTeamTypes(response.data);
+        } 
+        else if (response.data && Array.isArray(response.data.team_types)) {
+          setTeamTypes(response.data.team_types);
+        }
+        else {
+          console.error('Unexpected team types response format:', response.data);
+          // Set default team types if response format is not as expected
+        }
+      } catch (error) {
+        console.error('Error fetching team types:', error);
+        setErrorMessage('Failed to load team types. Please try again later.');
+      }
+    };
+
+    fetchTeamTypes();
   }, []);
 
-  const filteredMembers = teamMembers.filter(member => 
-    activeCategory === 'All' ? true : member.category === activeCategory
-  );
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
+  // Fetch team members
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        setIsLoading(true);
+        const response = await throttledAxios.get('http://localhost:3002/api/teams');
+        
+        if (response.data && response.data.teams) {
+          setTeamMembers(response.data.teams);
+        } else {
+          setTeamMembers([]);
+        }
+        setErrorMessage(null);
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+        setErrorMessage('Failed to load team members. Please try again later.');
+        setTeamMembers([]);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  };
+    };
 
-  const memberVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5
-      }
-    }
+    fetchTeams();
+  }, []);
+
+  // Filter team members based on selected category
+  const filteredMembers = teamMembers.filter(member => {
+    if (activeFilter === 'all') return true;
+    
+    const teamTypeName = member.team_type?.name?.toLowerCase();
+    return teamTypeName === activeFilter.toLowerCase();
+  });
+
+  // Convert team types to filter buttons
+  const getFilterButtonLabel = (typeName: string): string => {
+    // Format the team type name for display
+    if (typeName === 'all') return 'All Members';
+    
+    // Capitalize the first letter of each word
+    return typeName.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
   };
 
   return (
@@ -363,6 +443,13 @@ const TeamPage: React.FC = () => {
 
       <div className="py-24">
         <Container>
+          {/* Display error message if any */}
+          {errorMessage && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6" role="alert">
+              <span className="block sm:inline">{errorMessage}</span>
+            </div>
+          )}
+          
           {/* Main Content with Sidebar Layout */}
           <div className="flex flex-col lg:flex-row gap-12">
             {/* Filters Sidebar */}
@@ -370,18 +457,20 @@ const TeamPage: React.FC = () => {
               <div className="lg:sticky lg:top-24">
                 <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                  {/* Reordered filter buttons according to requirements */}
+                  {/* All Members filter always appears first */}
                   <FilterButton
                     label="All Members"
-                    active={activeCategory === 'All'}
-                    onClick={() => setActiveCategory('All')}
+                    active={activeFilter === 'all'}
+                    onClick={() => setActiveFilter('all')}
                   />
-                  {categories.map((category) => (
+                  
+                  {/* Dynamic filters based on team types from API */}
+                  {Array.isArray(teamTypes) && teamTypes.map((type) => (
                     <FilterButton
-                      key={category}
-                      label={category}
-                      active={activeCategory === category}
-                      onClick={() => setActiveCategory(category)}
+                      key={type.id}
+                      label={getFilterButtonLabel(type.name)}
+                      active={activeFilter === type.name.toLowerCase()}
+                      onClick={() => setActiveFilter(type.name.toLowerCase())}
                     />
                   ))}
                 </div>
@@ -390,88 +479,24 @@ const TeamPage: React.FC = () => {
 
             {/* Team Members Grid */}
             <div className="flex-1">
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8"
-              >
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
                 {isLoading ? (
                   // Loading skeletons
                   Array.from({ length: 6 }).map((_, index) => (
-                    <motion.div
-                      key={index}
-                      variants={memberVariants}
-                      className="animate-pulse"
-                    >
+                    <div key={index} className="animate-pulse">
                       <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
-                    </motion.div>
+                    </div>
                   ))
                 ) : (
                   filteredMembers.map((member) => (
-                    <motion.div
-                      key={member.id}
-                      variants={memberVariants}
-                      className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
-                    >
-                      <div className="aspect-[4/3] relative overflow-hidden">
-                        <Image
-                          src={member.imageUrl}
-                          alt={member.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="p-6">
-                        <h3 className="text-xl font-semibold text-gray-900">{member.name}</h3>
-                        <p className="text-green-700 font-medium mb-3">{member.role}</p>
-                        <p className={`text-gray-600 text-sm transition-all duration-300 ${
-                          expandedMember === member.id ? '' : 'line-clamp-3'
-                        }`}>
-                          {member.bio}
-                        </p>
-                        <button
-                          onClick={() => setExpandedMember(
-                            expandedMember === member.id ? null : member.id
-                          )}
-                          className="mt-2 text-green-700 text-sm flex items-center hover:text-green-800"
-                        >
-                          {expandedMember === member.id ? 'Read less' : 'Read more'}
-                          <ChevronDown
-                            className={`ml-1 w-4 h-4 transition-transform ${
-                              expandedMember === member.id ? 'rotate-180' : ''
-                            }`}
-                          />
-                        </button>
-                        {member.socialLinks && (
-                          <div className="mt-4 flex gap-3">
-                            {member.socialLinks.linkedin && (
-                              <a
-                                href={member.socialLinks.linkedin}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-gray-500 hover:text-blue-600 transition-colors"
-                              >
-                                <Linkedin className="w-5 h-5" />
-                              </a>
-                            )}
-                            {member.socialLinks.twitter && (
-                              <a
-                                href={member.socialLinks.twitter}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-gray-500 hover:text-blue-400 transition-colors"
-                              >
-                                <Twitter className="w-5 h-5" />
-                              </a>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
+                    <TeamMemberCard 
+                      key={member.id} 
+                      member={member}
+                      onOpenModal={() => setSelectedMember(member)}
+                    />
                   ))
                 )}
-              </motion.div>
+              </div>
               
               {/* Empty State */}
               {!isLoading && filteredMembers.length === 0 && (

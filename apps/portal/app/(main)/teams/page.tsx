@@ -1,421 +1,639 @@
 "use client";
 
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { 
+  Search, 
+  Filter, 
+  ArrowUp, 
+  MoreHorizontal, 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight,
+  ArrowRight,
+  Eye,
+  Edit,
+  Trash,
+  Plus,
+  Briefcase,
+  UserPlus
+} from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@workspace/ui/components/button';
-import { Card, CardContent, CardHeader } from '@workspace/ui/components/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@workspace/ui/components/dropdown-menu';
-import { Grid2X2, List, MoreVertical, Plus, Pencil, Trash2, UserPlus, Eye, Edit2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { Badge } from '@workspace/ui/components/badge';
-import Image from 'next/image';
-import { Avatar, AvatarImage, AvatarFallback } from '@workspace/ui/components/avatar';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog";
 
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  department: string;
-  email: string;
-  bio: string;
-  linkedin?: string;
-  twitter?: string;
-  category: 'Advisory Board' | 'Our Team' | 'Mentors' | 'Fellows' | 'Alumni';
-  imageUrl?: string;
-}
+// Create an axios instance with retry configuration
+const axiosInstance = axios.create({
+  timeout: 10000,
+});
 
-const mockTeamMembers: TeamMember[] = [
-  {
-    id: '1',
-    name: 'Dr. Jane Smith',
-    role: 'Chairperson',
-    department: 'Advisory Board',
-    email: 'jane.smith@example.com',
-    bio: 'Dr. Jane Smith has over 20 years of experience in agricultural development and sustainable farming practices. She has led numerous initiatives across Africa focusing on climate-resilient agriculture.',
-    linkedin: 'https://linkedin.com/in/janesmith',
-    twitter: 'https://twitter.com/janesmith',
-    category: 'Advisory Board',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=256'
-  },
-  {
-    id: '2',
-    name: 'John Doe',
-    role: 'Program Director',
-    department: 'Our Team',
-    email: 'john.doe@example.com',
-    bio: 'John Doe brings extensive experience in program management and strategic planning. He has successfully led multiple international development projects focusing on sustainable agriculture and rural development.',
-    category: 'Our Team',
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=256'
-  },
-  {
-    id: '3',
-    name: 'Sarah Johnson',
-    role: 'Senior Mentor',
-    department: 'Mentors',
-    email: 'sarah.johnson@example.com',
-    bio: 'Sarah Johnson is a passionate mentor with expertise in agricultural technology and innovation. She has helped numerous startups and projects implement sustainable farming solutions.',
-    category: 'Mentors',
-    imageUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=256'
-  },
-  {
-    id: '4',
-    name: 'Michael Chen',
-    role: 'Research Fellow',
-    department: 'Fellows',
-    email: 'michael.chen@example.com',
-    bio: 'Michael Chen specializes in climate-smart agriculture and data analysis. His research focuses on developing predictive models for crop yields under changing climate conditions.',
-    category: 'Fellows',
-    imageUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=256'
-  },
-  {
-    id: '5',
-    name: 'Grace Mutua',
-    role: 'Alumni',
-    department: 'Alumni',
-    email: 'grace.mutua@example.com',
-    bio: 'Grace Mutua is an alumna who has gone on to establish a successful agricultural consulting firm. She continues to collaborate with the organization on various community development projects.',
-    category: 'Alumni',
-    imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=256'
-  }
-];
-
-export default function TeamsPage() {
-  const router = useRouter();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [teamMembers, setTeamMembers] = useState(mockTeamMembers);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string>('All Members');
-
-  const categories = [
-    'All Members',
-    'Advisory Board',
-    'Our Team',
-    'Mentors',
-    'Fellows',
-    'Alumni'
-  ];
-
-  const filteredMembers = activeCategory === 'All Members'
-    ? teamMembers
-    : teamMembers.filter(member => member.category === activeCategory);
-
-  const handleView = (member: TeamMember) => {
-    router.push(`/teams/${member.id}`);
-    toast.info('Viewing team member details');
-  };
-
-  const handleEdit = (member: TeamMember) => {
-    router.push(`/teams/edit/${member.id}`);
-    toast.info('Opening team member for editing');
-  };
-
-  const handleDeleteClick = (member: TeamMember) => {
-    setSelectedMember(member);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!selectedMember) return;
+// Add a retry interceptor
+axiosInstance.interceptors.response.use(undefined, async (err) => {
+  const { config, response } = err;
+  
+  // Only retry on 429 status code (too many requests) or network errors
+  if ((response && response.status === 429) || !response) {
+    const maxRetries = 3;
+    config.retryCount = config.retryCount || 0;
     
-    setTeamMembers(prev => prev.filter(m => m.id !== selectedMember.id));
-    setDeleteDialogOpen(false);
-    setSelectedMember(null);
-    toast.success('Team member deleted successfully');
-  };
+    if (config.retryCount < maxRetries) {
+      config.retryCount += 1;
+      const delay = Math.pow(2, config.retryCount) * 1000;
+      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return axiosInstance(config);
+    }
+  }
+  
+  return Promise.reject(err);
+});
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Advisory Board':
-        return 'bg-purple-100 text-purple-800';
-      case 'Our Team':
-        return 'bg-blue-100 text-blue-800';
-      case 'Mentors':
-        return 'bg-green-100 text-green-800';
-      case 'Fellows':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Alumni':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+// Add request throttling
+const pendingRequests = {};
+
+const throttledAxios = {
+  get: (url, config = {}) => {
+    const key = `${url}${JSON.stringify(config.params || {})}`;
+    
+    if (pendingRequests[key]) {
+      return pendingRequests[key];
+    }
+    
+    const request = axiosInstance.get(url, config)
+      .finally(() => {
+        delete pendingRequests[key];
+      });
+    
+    pendingRequests[key] = request;
+    return request;
+  },
+  delete: (url, config = {}) => {
+    return axiosInstance.delete(url, config);
+  }
+};
+
+const TeamsPage = () => {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('all');
+  
+  // States for data and UI
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [teamTypes, setTeamTypes] = useState({});
+  
+  // States for pagination and filtering
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalTeams, setTotalTeams] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+  
+  // State to store team type counts
+  const [tabCounts, setTabCounts] = useState({
+    all: 0
+  });
+
+  // Add state to track if tab counts are loaded
+  const [tabCountsLoaded, setTabCountsLoaded] = useState(false);
+
+  // State for dropdown menu
+  const [openMenuId, setOpenMenuId] = useState(null);
+  
+  // Function to toggle dropdown menu
+  const toggleMenu = (id) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+    } else {
+      setOpenMenuId(id);
     }
   };
 
-  const renderGridView = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {filteredMembers.map((member) => (
-        <Card key={member.id} className="p-6 flex flex-col relative">
-          <div className="flex items-center gap-4 mb-4">
-            <Avatar className="h-16 w-16 ring-2 ring-offset-2 ring-primary-green">
-              <AvatarImage 
-                src={member.imageUrl} 
-                alt={member.name}
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-primary-green text-white">
-                {member.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-semibold">{member.name}</h3>
-              <p className="text-sm text-gray-600">{member.role}</p>
-              <p className="text-sm text-gray-500">{member.email}</p>
-            </div>
-          </div>
-          <div className="flex gap-2 mb-3">
-            <Badge className={getCategoryColor(member.category)}>
-              {member.category}
-            </Badge>
-          </div>
-          <p className="text-sm text-gray-600 mb-4 line-clamp-3">{member.bio}</p>
-          <div className="flex gap-2 mb-4">
-            {member.linkedin && (
-              <a 
-                href={member.linkedin} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-gray-500 hover:text-blue-600"
-                title="LinkedIn Profile"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
-                </svg>
-              </a>
-            )}
-            {member.twitter && (
-              <a 
-                href={member.twitter} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-gray-500 hover:text-blue-400"
-                title="Twitter Profile"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
-                </svg>
-              </a>
-            )}
-          </div>
-          <div className="flex items-center justify-end mt-auto border-t pt-4">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                title="View member"
-                onClick={() => handleView(member)}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-primary-green hover:bg-green-50"
-                title="Edit member"
-                onClick={() => handleEdit(member)}
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="text-red-600 hover:bg-red-50"
-                title="Delete member"
-                onClick={() => handleDeleteClick(member)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
+  // Function to handle action click
+  const handleAction = async (action, teamId) => {
+    setOpenMenuId(null); // Close the menu
+    
+    switch(action) {
+      case 'view':
+        router.push(`/teams/${teamId}`);
+        break;
+      case 'delete':
+        if (window.confirm('Are you sure you want to delete this team member?')) {
+          try {
+            await throttledAxios.delete(`http://localhost:3002/api/teams/${teamId}`);
+            const updatedPage = teams.length === 1 && page > 1 ? page - 1 : page;
+            setPage(updatedPage);
+          } catch (error) {
+            console.error('Error deleting team:', error);
+            alert('Failed to delete team member. Please try again.');
+          }
+        }
+        break;
+      case 'update':
+        router.push(`/teams/edit-team/${teamId}`);
+        break;
+      default:
+        break;
+    }
+  };
 
-  const renderListView = () => (
-    <div className="space-y-4">
-      {filteredMembers.map((member) => (
-        <Card key={member.id} className="p-6">
-          <div className="flex items-start gap-6">
-            <Avatar className="h-16 w-16 ring-2 ring-offset-2 ring-primary-green">
-              <AvatarImage 
-                src={member.imageUrl} 
-                alt={member.name}
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-primary-green text-white">
-                {member.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-grow">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <h3 className="font-semibold">{member.name}</h3>
-                  <p className="text-sm text-gray-600">{member.role}</p>
-                  <p className="text-sm text-gray-500">{member.email}</p>
-                </div>
-                <div className="flex gap-2">
-                  <Badge className={getCategoryColor(member.category)}>
-                    {member.category}
-                  </Badge>
-                </div>
-              </div>
-              <p className="text-sm text-gray-600 mb-4 line-clamp-3">{member.bio}</p>
-              <div className="flex gap-2 mb-4">
-                {member.linkedin && (
-                  <a 
-                    href={member.linkedin} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-blue-600"
-                    title="LinkedIn Profile"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
-                    </svg>
-                  </a>
-                )}
-                {member.twitter && (
-                  <a 
-                    href={member.twitter} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-gray-500 hover:text-blue-400"
-                    title="Twitter Profile"
-                  >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
-                    </svg>
-                  </a>
-                )}
-              </div>
-              <div className="flex items-center justify-end mt-4 border-t pt-4">
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    title="View member"
-                    onClick={() => handleView(member)}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-primary-green hover:bg-green-50"
-                    title="Edit member"
-                    onClick={() => handleEdit(member)}
-                  >
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-red-600 hover:bg-red-50"
-                    title="Delete member"
-                    onClick={() => handleDeleteClick(member)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
+  // Handle pagination
+  const goToPage = (newPage) => {
+    setPage(newPage);
+  };
+
+  // Calculate sequential row number based on pagination
+  const getRowNumber = (index) => {
+    return ((page - 1) * limit) + index + 1;
+  };
+
+  // Add click outside listener to close dropdown
+  const menuRef = useRef(null);
+  
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
+
+  // Set default team types
+  useEffect(() => {
+    setTeamTypes({
+      1: 'Leadership',
+      2: 'Technical',
+      3: 'Support'
+    });
+  }, []);
+
+  // Handle search input change with debounce
+  const searchTimeoutRef = useRef(null);
+  
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      setPage(1); // Reset to first page when searching
+    }, 500); // 500ms debounce
+  };
+  
+  // Handle search submission
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    setPage(1);
+  };
+
+  // Get team type ID from tab name
+  const getTeamTypeIdFromTab = (tab) => {
+    const tabToTypeMap = {
+      'leadership': 1,
+      'technical': 2,
+      'support': 3
+    };
+    return tabToTypeMap[tab] || null;
+  };
+  
+  // Fetch tab counts
+  const fetchTabCounts = async () => {
+    try {
+      // Fetch all teams with limit=0 just to get count
+      const response = await throttledAxios.get('http://localhost:3002/api/teams', { 
+        params: { limit: 0 } 
+      });
+      
+      // Get the total count from the response
+      const allCount = parseInt(response.data.pagination?.total) || 0;
+      
+      // Prepare counts object
+      const countsByType = {
+        all: allCount
+      };
+      
+      if (response.data.teams && Array.isArray(response.data.teams)) {
+        // Group teams by team_type.name
+        response.data.teams.forEach(team => {
+          if (team.team_type && team.team_type.name) {
+            const typeName = team.team_type.name.toLowerCase();
+            countsByType[typeName] = (countsByType[typeName] || 0) + 1;
+          }
+        });
+      }
+      
+      setTabCounts(countsByType);
+      setTabCountsLoaded(true);
+    } catch (error) {
+      console.error('Error fetching tab counts:', error);
+      // Use default values in case of error
+      setTabCounts({
+        all: 0
+      });
+      setTabCountsLoaded(true);
+    }
+  };
+
+  // Fetch teams from API with dependency on relevant state changes
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        setLoading(true);
+        
+        // Add a delay between requests to avoid rate limiting
+        const lastRequestTime = window.lastTeamFetchTime || 0;
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastRequestTime;
+        
+        if (timeSinceLastRequest < 500) {
+          await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
+        }
+        
+        // Build query params
+        const params = {
+          page,
+          limit,
+          sort_by: sortBy,
+          sort_order: sortOrder
+        };
+        
+        // Add optional filters if they exist
+        if (searchTerm) params.search = searchTerm;
+        
+        // Map UI tab to API type filter
+        if (activeTab !== 'all') {
+          params.team_type_id = getTeamTypeIdFromTab(activeTab);
+        }
+        
+        console.log('Fetching teams with params:', params);
+        
+        // Store the time of this request
+        window.lastTeamFetchTime = Date.now();
+        
+        // Make API request with throttled axios
+        const response = await throttledAxios.get('http://localhost:3002/api/teams', { params });
+        
+        console.log('API response:', response.data);
+        
+        if (response.data) {
+          setTeams(response.data.teams || []);
+          
+          // Extract pagination info
+          const pagination = response.data.pagination || {};
+          setTotalTeams(parseInt(pagination.total) || 0);
+          setTotalPages(pagination.pages || 1);
+          
+          // If we're not already tracking tab counts, also use this response to update counts
+          if (!tabCountsLoaded && response.data.teams) {
+            fetchTabCounts();
+          }
+        }
+        
+        // If we're not already tracking tab counts, use this response to update counts
+        if (!tabCountsLoaded) {
+          fetchTabCounts();
+        }
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+        setTeams([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTeams();
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+  
+  // Get team type name from team object
+  const getTeamTypeName = (team) => {
+    return team.team_type?.name || 'Unknown';
+  };
+
+  // Get background and text color based on team type
+  const getTeamTypeStyle = (team) => {
+    if (!team.team_type) return 'bg-gray-100 text-gray-800';
+    
+    const typeName = team.team_type.name?.toLowerCase() || '';
+    
+    if (typeName.includes('leadership')) {
+      return 'bg-blue-100 text-blue-800';
+    } else if (typeName.includes('technical')) {
+      return 'bg-green-100 text-green-800';
+    } else if (typeName.includes('support')) {
+      return 'bg-purple-100 text-purple-800';
+    }
+    
+    return 'bg-gray-100 text-gray-800';
+  };
+
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setPage(1); // Reset to first page when changing tabs
+  };
+
+  // Generate tabs based on team types found in the data
+  const renderTabs = () => {
+    const tabs = [
+      { id: 'all', label: 'All' }
+    ];
+    
+    // Add tabs for each team type found in tabCounts
+    Object.keys(tabCounts).forEach(key => {
+      if (key !== 'all') {
+        tabs.push({
+          id: key.toLowerCase(),
+          label: key.charAt(0).toUpperCase() + key.slice(1)
+        });
+      }
+    });
+    
+    return tabs.map(tab => (
+      <button
+        key={tab.id}
+        onClick={() => handleTabChange(tab.id)}
+        className={`py-3 px-4 text-sm font-medium relative ${
+          activeTab === tab.id
+            ? 'border-b-2 border-green-700 text-green-700'
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+      >
+        {tab.label}
+        <span className={`ml-2 ${
+          tab.id === 'all' ? 'bg-gray-200 text-gray-800' :
+          tab.id.includes('leadership') ? 'bg-blue-100 text-blue-800' :
+          tab.id.includes('technical') ? 'bg-green-100 text-green-800' :
+          tab.id.includes('support') ? 'bg-purple-100 text-purple-800' :
+          'bg-gray-200 text-gray-800'
+        } px-2 py-0.5 rounded text-xs font-medium`}>
+          {tabCounts[tab.id] || 0}
+        </span>
+      </button>
+    ));
+  };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-full">
+      {/* Header with title and buttons */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">Team Members</h1>
-          <p className="text-gray-600">Manage your organization's team members</p>
+          <p className="text-gray-500 text-sm">Team Management</p>
         </div>
-        <div className="flex gap-4">
-          <div className="flex border rounded-lg">
-            <Button
-              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-              className="rounded-r-none"
-              onClick={() => setViewMode('grid')}
-              title="Grid view"
-            >
-              <Grid2X2 className="h-4 w-4 mr-2" />
-              Grid
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-              className="rounded-l-none"
-              onClick={() => setViewMode('list')}
-              title="List view"
-            >
-              <List className="h-4 w-4 mr-2" />
-              List
-            </Button>
-          </div>
-          <Link href="/teams/add-member">
-            <Button className="bg-primary-green hover:bg-green-700">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Member
-            </Button>
+        <div className="flex space-x-3">
+          <button className="flex items-center px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <ArrowUp className="w-4 h-4 mr-2" />
+            Import Team
+          </button>
+          <Link href="/teams/add-team" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Add Team Member
           </Link>
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {categories.map((category) => (
-          <Button
-            key={category}
-            variant={activeCategory === category ? 'secondary' : 'outline'}
-            onClick={() => setActiveCategory(category)}
-            className="whitespace-nowrap"
+      {/* Tabs */}
+      <div className='bg-white'>
+        <div className="flex border-b border-gray-200 mb-6 bg-white">
+          {renderTabs()}
+        </div>
+
+        {/* Team list title */}
+        <h2 className="text-lg font-bold mb-4">
+          {activeTab === 'all' ? 'All Team Members' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Team`}
+        </h2>
+
+        {/* Search and filter */}
+        <div className="flex justify-end mb-4">
+          <div className="relative w-64">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Search className="w-4 h-4 text-gray-500" />
+            </div>
+            <form onSubmit={handleSearchSubmit}>
+              <input 
+                type="text" 
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
+                placeholder="Search team members"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+            </form>
+          </div>
+          <button 
+            className="ml-2 p-2.5 bg-green-700 text-white rounded"
+            onClick={() => {
+              // Open a filter modal or expand filter options
+            }}
           >
-            {category}
-          </Button>
-        ))}
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Teams list view */}
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-700"></div>
+            <p className="mt-2 text-gray-600">Loading team members...</p>
+          </div>
+        ) : teams.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-lg border border-gray-200">
+            <Briefcase className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-semibold text-gray-900">No team members found</h3>
+            <p className="mt-1 text-sm text-gray-500">Get started by adding a new team member.</p>
+            <div className="mt-6">
+              <Link href="/teams/add-team" 
+                className="inline-flex items-center px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-md hover:bg-green-800">
+                <Plus className="mr-2 h-5 w-5" aria-hidden="true" />
+                Add Team Member
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    No.
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Profile
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Position
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Team Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Added Date
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {teams.map((team, index) => (
+                  <tr key={team.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {getRowNumber(index)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-10 w-10 rounded-full overflow-hidden">
+                        <img 
+                          src={team.photo_url || "/api/placeholder/100/100"} 
+                          alt={team.name}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{team.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{team.position}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getTeamTypeStyle(team)}`}>
+                        {getTeamTypeName(team)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(team.created_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="relative">
+                        <button 
+                          className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                          onClick={() => toggleMenu(team.id)}
+                        >
+                          <MoreHorizontal className="h-5 w-5" />
+                        </button>
+                        
+                        {openMenuId === team.id && (
+                          <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <button
+                              onClick={() => handleAction('view', team.id)}
+                              className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View details
+                            </button>
+                            <button
+                              onClick={() => handleAction('update', team.id)}
+                              className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleAction('delete', team.id)}
+                              className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            >
+                              <Trash className="w-4 h-4 mr-2" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {teams.length > 0 && (
+          <div className="flex items-center justify-between py-3">
+            <div className="text-sm text-gray-500">
+              Showing {teams.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalTeams)} out of {totalTeams} team members
+            </div>
+            <div className="flex items-center space-x-1">
+              <button 
+                className="p-2 text-gray-500 rounded hover:bg-gray-100"
+                onClick={() => goToPage(1)}
+                disabled={page === 1}
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+              <button 
+                className="p-2 text-gray-500 rounded hover:bg-gray-100"
+                onClick={() => goToPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              
+              {/* Display page numbers */}
+              {[...Array(Math.min(totalPages, 3))].map((_, index) => {
+                const pageNumber = page <= 2 ? index + 1 : page - 1 + index;
+                if (pageNumber <= totalPages) {
+                  return (
+                    <button 
+                      key={pageNumber}
+                      onClick={() => goToPage(pageNumber)}
+                      className={`p-2 w-8 h-8 rounded-md ${
+                        pageNumber === page
+                          ? 'bg-green-700 text-white'
+                          : 'hover:bg-gray-100 text-gray-700'
+                      } flex items-center justify-center`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                }
+                return null;
+              })}
+              
+              <button 
+                className="p-2 text-gray-500 rounded hover:bg-gray-100"
+                onClick={() => goToPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button 
+                className="p-2 text-gray-500 rounded hover:bg-gray-100"
+                onClick={() => goToPage(totalPages)}
+                disabled={page === totalPages}
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {viewMode === 'grid' ? renderGridView() : renderListView()}
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Team Member</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this team member? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
-} 
+};
+
+export default TeamsPage;
