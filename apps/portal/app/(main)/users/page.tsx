@@ -452,6 +452,7 @@ const UserManagement = () => {
                                 </Avatar>
                                 <div>
                                   <p className="font-medium">{user.name}</p>
+                                  <p className="text-xs text-muted-foreground">ID: {user.id}</p>
                                 </div>
                               </div>
                             </TableCell>
