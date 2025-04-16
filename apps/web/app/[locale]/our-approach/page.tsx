@@ -22,7 +22,7 @@ const fadeIn = {
   },
 };
 
-const FoodSystemPage = ({ locale, dict }) => {
+const FoodSystemPage = ({}) => {
   return (
     <main className="bg-white">
       {/* Hero Section */}
@@ -50,12 +50,12 @@ const FoodSystemPage = ({ locale, dict }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <span>Rooted in </span>
-            <span className="text-yellow-400 font-bold">Excellence</span>
-            <span>, </span>
-            <span className="text-yellow-400 font-bold">Growing </span>
-            <span>with </span>
-            <span className="text-yellow-400 font-bold">Agriculture</span>
+            <span>The </span>
+            <span className="text-yellow-400 font-bold">Journey</span>
+            <span> from </span>
+            <span className="text-yellow-400 font-bold">Farm </span>
+            <span>to </span>
+            <span className="text-yellow-400 font-bold">Fork</span>
           </motion.h1>
           <motion.h2
             className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
@@ -74,7 +74,7 @@ const FoodSystemPage = ({ locale, dict }) => {
           <HeaderBelt />
         </div>
       </div>
-
+      
       {/* Page Content */}
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
         <ApproachSection />

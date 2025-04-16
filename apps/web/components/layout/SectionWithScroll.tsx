@@ -51,7 +51,7 @@ export default function SectionWithScrollAnimation({
       className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden"
     >
       <motion.div
-        className={`p-10 ${bgColor}  h-[510px] w-full rounded-sm ${contentOrder}`}
+        className={`p-10 ${bgColor}  min-h-full lg:h-[510px] w-full rounded-sm ${contentOrder}`}
         initial={{ opacity: 0, x: contentInitialX }}
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
@@ -68,7 +68,7 @@ export default function SectionWithScrollAnimation({
             {number}
           </motion.div>
           <motion.h2
-            className={`${textColor} font-h4 mb-2`}
+            className={`${textColor} sm: font-h5  md:font-h4 mb-2`}
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.25, delay: 0.2 }}
@@ -90,7 +90,7 @@ export default function SectionWithScrollAnimation({
         transition={{ duration: 0.35, ease: "easeOut" }}
         viewport={{ once: false, margin: "-10% 0px -10% 0px" }}
       >
-        <div className="w-full h-full relative">
+        <div className="w-full h-full relative hidden md:block">
           <Image
             src={imageUrl}
             alt={imageAlt}

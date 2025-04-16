@@ -37,18 +37,14 @@ interface ListItemProps {
 interface DictionaryType {
   navigation?: {
     about?: string;
-    what_we_do?: string;
+    our_approach?:string;
     programs?: string;
     projects?: string;
+    opportunities?: string;
   };
   about?: {
     who_we_are?: string;
     our_story?: string;
-    [key: string]: string | undefined;
-  };
-  what_we_do?: {
-    food_systems?: string;
-    climate_change_adaptation?: string;
     [key: string]: string | undefined;
   };
   cta?: {
@@ -85,18 +81,11 @@ const aboutItems: MenuItem[] = [
   },
 ];
 
-const whatWeDoItems: MenuItem[] = [
+const ourApproachItems: MenuItem[] = [
   {
     title: "Food Systems",
-    href: "/what-we-do/food-systems",
-    description:
-      "Developing sustainable food systems for communities across Africa.",
-  },
-  {
-    title: "Climate Change Adaptation",
-    href: "/what-we-do/climate-change-adaptation",
-    description:
-      "Innovative approaches to help communities adapt to climate challenges.",
+    href: "/our-approach",
+    description: "Developing sustainable food systems for communities across Africa.",
   },
 ];
 
@@ -120,6 +109,14 @@ const projectItems: MenuItem[] = [
     title: "Projects",
     href: "/projects",
     description: "Discover our projects and their impact.",
+  },
+];
+
+const opportunitiesItems: MenuItem[] = [
+  {
+    title: "Opportunities",
+    href: "/opportunities",
+    description: "Explore current openings and ways to grow with us.",
   },
 ];
 
@@ -198,11 +195,11 @@ export default function Navigation({
     if (isHomePage) {
       return cn(
         "fixed top-0 z-50 min-w-full transition-all duration-500",
-        isScrolled ? "bg-white/90 shadow-sm backdrop-blur-sm" : "",
+        isScrolled ? "bg-white shadow-sm backdrop-blur-sm" : "",
       );
     } else {
       // For non-home pages, always use the same style (as if scrolled)
-      return "fixed top-0 z-50 min-w-full bg-white/90 shadow-sm backdrop-blur-sm";
+      return "fixed top-0 z-50 min-w-full bg-white shadow-sm backdrop-blur-sm";
     }
   };
 
@@ -268,22 +265,22 @@ export default function Navigation({
             )}
           </div>
 
-          {/* What We Do */}
+          {/* Our Approach */}
           <div className="flex flex-col">
             <button
               className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-what-we-do")}
+              onClick={() => toggleDropdown("mobile-our-approach")}
             >
-              {dict?.navigation?.what_we_do || "What We Do"}
+              {dict?.navigation?.our_approach || "Our Approach"}
               <span
-                className={`transform transition-transform ${activeDropdown === "mobile-what-we-do" ? "rotate-180" : ""}`}
+                className={`transform transition-transform ${activeDropdown === "mobile-our-approach" ? "rotate-180" : ""}`}
               >
                 ▼
               </span>
             </button>
-            {activeDropdown === "mobile-what-we-do" && (
+            {activeDropdown === "mobile-our-approach" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {whatWeDoItems.map((item) => (
+                {ourApproachItems.map((item) => (
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
@@ -291,9 +288,7 @@ export default function Navigation({
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
-                    {dict?.what_we_do?.[
-                      item.title.toLowerCase().replace(/ /g, "_")
-                    ] || item.title}
+                    {item.title}
                   </Link>
                 ))}
               </div>
@@ -346,6 +341,36 @@ export default function Navigation({
             {activeDropdown === "mobile-projects" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {projectItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={`/${locale}${item.href}`}
+                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {item.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Opportunities */}
+          <div className="flex flex-col">
+            <button
+              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              onClick={() => toggleDropdown("mobile-opportunities")}
+            >
+              {dict?.navigation?.opportunities || "Opportunities"}
+              <span
+                className={`transform transition-transform ${activeDropdown === "mobile-projects" ? "rotate-180" : ""}`}
+              >
+                ▼
+              </span>
+            </button>
+            {activeDropdown === "mobile-opportunities" && (
+              <div className="ml-4 mt-2 flex flex-col space-y-2">
+                {opportunitiesItems.map((item) => (
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
@@ -461,11 +486,11 @@ export default function Navigation({
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-
-                {/* What We Do Dropdown */}
+                
+                {/* Our Approach Dropdown */} 
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className={getNavItemColor()}>
-                    {dict?.navigation?.what_we_do || "What We Do"}
+                    {dict?.navigation?.our_approach || "Our Approach"}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
@@ -473,10 +498,10 @@ export default function Navigation({
                         <NavigationMenuLink asChild>
                           <a
                             className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/what-we-do`}
+                            href={`/${locale}/our-approach`}
                           >
                             <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Initiatives
+                              Our Approach to Food Systems
                             </div>
                             <p className="text-sm leading-tight text-muted-foreground">
                               Explore our programs focused on sustainable
@@ -486,15 +511,11 @@ export default function Navigation({
                           </a>
                         </NavigationMenuLink>
                       </li>
-                      {whatWeDoItems.map((item) => (
+                      {ourApproachItems.map((item) => (
                         <ListItem
                           key={item.href}
                           href={`/${locale}${item.href}`}
-                          title={
-                            dict?.what_we_do?.[
-                              item.title.toLowerCase().replace(/ /g, "_")
-                            ] || item.title
-                          }
+                          title={item.title}
                         >
                           {item.description}
                         </ListItem>
@@ -563,6 +584,42 @@ export default function Navigation({
                         </NavigationMenuLink>
                       </li>
                       {projectItems.map((item) => (
+                        <ListItem
+                          key={item.href}
+                          href={`/${locale}${item.href}`}
+                          title={item.title}
+                        >
+                          {item.description}
+                        </ListItem>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+                
+                {/* Opportunities Dropdown */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger className={getNavItemColor()}>
+                    {dict?.navigation?.opportunities || "Opportunities"}
+                  </NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
+                      <li className="row-span-3">
+                        <NavigationMenuLink asChild>
+                          <a
+                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                            href={`/${locale}/opportunities`}
+                          >
+                            <div className="mb-2 mt-4 text-lg font-medium">
+                            Opportunities
+                            </div>
+                            <p className="text-sm leading-tight text-muted-foreground">
+                            Be part of something bigger. 
+                            Discover how you can contribute your skills, ideas, or support to our work across Africa.
+                            </p>
+                          </a>
+                        </NavigationMenuLink>
+                      </li>
+                      {opportunitiesItems.map((item) => (
                         <ListItem
                           key={item.href}
                           href={`/${locale}${item.href}`}

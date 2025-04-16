@@ -691,7 +691,7 @@ const ProjectsPage = (): JSX.Element => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 500);
     };
-
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);

@@ -10,6 +10,7 @@ interface DictionaryType {
   navigation?: {
     about?: string;
     what_we_do?: string;
+    our_approach?: string;
     programs?: string;
     community_hub?: string;
   };
