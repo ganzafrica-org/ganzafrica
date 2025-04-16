@@ -5,7 +5,13 @@
  * @param fallback Default value to return if the property doesn't exist
  * @returns The property value or fallback
  */
-export function safeAccess(obj: any, path: string, fallback: any = '') {
-    return path.split('.').reduce((acc, part) => 
-      acc && acc[part] !== undefined ? acc[part] : undefined, obj) || fallback;
-  }
+export function safeAccess(obj: any, path: string, fallback: any = "") {
+  return (
+    path
+      .split(".")
+      .reduce(
+        (acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined),
+        obj,
+      ) || fallback
+  );
+}
