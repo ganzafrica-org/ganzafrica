@@ -4,15 +4,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar';
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { cn } from '@/lib/utils';
+import apiClient from '@/lib/api-client';
 
+// Interface for the testimonial data from the API
 interface Testimonial {
     id: number;
-    name: string;
-    role: string;
-    comment: string;
+    author_name: string;
+    position: string;
     image: string;
+    description: string;
+    company: string;
+    occupation: string;
+    date: string;
+    rating: number;
+    created_at: string;
+    updated_at: string;
 }
 
+// Interface for the API response
+interface TestimonialsResponse {
+    testimonials: Testimonial[];
+}
+
+// Props for the component
 interface TestimonialsSectionProps {
     locale: string;
     dict: any;
@@ -20,49 +34,50 @@ interface TestimonialsSectionProps {
 
 export default function TestimonialsSection({ locale, dict }: TestimonialsSectionProps) {
     const [activeIndex, setActiveIndex] = useState(0);
+    const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Sample testimonials - in a real app, these would come from your dictionary
-    const testimonials: Testimonial[] = [
-        {
-            id: 1,
-            name: "Madge Jennings",
-            role: dict?.testimonials?.roles?.fellow || "Fellow",
-            comment: dict?.testimonials?.comments?.comment1 || "My experience with GanzAfrica has been transformative. The training and mentorship helped me develop crucial skills in agriculture and land management that I now apply daily in my work.",
-            image: "/images/1.jpg"
-        },
-        {
-            id: 2,
-            name: "James Mwangi",
-            role: dict?.testimonials?.roles?.partner || "Partner",
-            comment: dict?.testimonials?.comments?.comment2 || "Working with GanzAfrica has significantly improved our organizational capacity. Their fellows bring fresh perspectives and data-driven approaches to our agricultural initiatives.",
-            image: "/images/2.png"
-        },
-        {
-            id: 3,
-            name: "Amina Hassan",
-            role: dict?.testimonials?.roles?.mentor || "Mentor",
-            comment: dict?.testimonials?.comments?.comment3 || "As a mentor with GanzAfrica, I've witnessed the incredible growth of young professionals. Their dedication to sustainable food systems is inspiring and gives me hope for Africa's future.",
-            image: "/images/1.jpg"
-        },
-        {
-            id: 4,
-            name: "Robert Kagame",
-            role: dict?.testimonials?.roles?.fellow || "Fellow",
-            comment: dict?.testimonials?.comments?.comment4 || "The GanzAfrica fellowship provided me with both theoretical knowledge and practical experience. I now lead climate adaptation projects that directly impact my community.",
-            image: "/images/2.png"
-        },
-        {
-            id: 5,
-            name: "Sarah Okonkwo",
-            role: dict?.testimonials?.roles?.partner || "Partner Organization",
-            comment: dict?.testimonials?.comments?.comment5 || "GanzAfrica fellows bring innovative thinking and technical expertise to our projects. Their understanding of local contexts combined with global best practices delivers real results.",
-            image: "/images/1.jpg"
-        },
-    ];
-
-    // Start automatic rotation
+    // Fetch testimonials from the API
     useEffect(() => {
+        const fetchTestimonials = async () => {
+            try {
+                setLoading(true);
+                const response = await apiClient.get<TestimonialsResponse>('/testimonials');
+                setTestimonials(response.data.testimonials);
+                setError(null);
+            } catch (err) {
+                console.error('Error fetching testimonials:', err);
+                setError('Failed to load testimonials');
+                // Set fallback testimonials in case of error
+                setTestimonials([
+                    {
+                        id: 1,
+                        author_name: "Madge Jennings",
+                        position: dict?.testimonials?.roles?.fellow || "Fellow",
+                        description: dict?.testimonials?.comments?.comment1 || "My experience with GanzAfrica has been transformative. The training and mentorship helped me develop crucial skills in agriculture and land management that I now apply daily in my work.",
+                        image: "/images/1.jpg",
+                        company: "GA",
+                        occupation: "fellow",
+                        date: new Date().toISOString(),
+                        rating: 5,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                    }
+                ]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTestimonials();
+    }, [dict?.testimonials?.roles?.fellow, dict?.testimonials?.comments?.comment1]);
+
+    // Start automatic rotation when testimonials are loaded
+    useEffect(() => {
+        if (testimonials.length === 0) return;
+
         const startInterval = () => {
             intervalRef.current = setInterval(() => {
                 setActiveIndex(prev => (prev + 1) % testimonials.length);
@@ -93,6 +108,30 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
         }, 5000);
     };
 
+    // Show loading state
+    if (loading && testimonials.length === 0) {
+        return (
+            <section className="py-16 md:py-24 bg-secondary-green/5 relative overflow-hidden">
+                <div className="container mx-auto px-4 text-center">
+                    <div className="text-center mb-16">
+                        <DecoratedHeading
+                            firstText={dict?.testimonials?.heading_first || "Our"}
+                            secondText={dict?.testimonials?.heading_second || "Testimonials"}
+                            firstTextColor="text-primary-green"
+                            secondTextColor="text-primary-orange"
+                            borderColor="border-primary-green"
+                            cornerColor="bg-primary-orange"
+                            className="mx-auto"
+                        />
+                    </div>
+                    <div className="flex justify-center items-center h-64">
+                        <div className="animate-pulse text-primary-green">Loading testimonials...</div>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
     return (
         <section className="py-16 md:py-24 bg-secondary-green/5 relative overflow-hidden">
             <div className="container mx-auto px-4">
@@ -108,11 +147,16 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                     />
                 </div>
 
-                <div className="max-w-5xl mx-auto"> {/* Increased from max-w-4xl to max-w-5xl */}
+                {/* Error message */}
+                {error && (
+                    <div className="text-center text-red-500 mb-8">{error}</div>
+                )}
+
+                <div className="max-w-5xl mx-auto">
                     <div className="relative">
                         {/* Avatars on left side - increased sizing */}
                         <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2">
-                            <div className="relative w-40 h-96"> {/* Increased width and height */}
+                            <div className="relative w-40 h-96">
                                 {testimonials.map((testimonial, index) => {
                                     // Calculate position for floating effect
                                     const isActive = index === activeIndex;
@@ -142,8 +186,8 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                                 "border-2 border-white shadow-md",
                                                 isActive ? "w-20 h-20" : "w-16 h-16" // Increased sizes
                                             )}>
-                                                <AvatarImage src={testimonial.image} alt={testimonial.name} />
-                                                <AvatarFallback className="text-lg">{testimonial.name.charAt(0)}</AvatarFallback>
+                                                <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
+                                                <AvatarFallback className="text-lg">{testimonial.author_name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                         </div>
                                     );
@@ -164,18 +208,18 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                                 index < activeIndex ? "opacity-0 -translate-y-full rotate-x-70" : "opacity-0 translate-y-full rotate-x-negative-70"
                                         )}
                                     >
-                                        <Avatar className="w-40 h-40 mx-auto border-4 border-white shadow-lg"> {/* Increased from w-32 h-32 */}
-                                            <AvatarImage src={testimonial.image} alt={testimonial.name} />
-                                            <AvatarFallback className="text-4xl">{testimonial.name.charAt(0)}</AvatarFallback>
+                                        <Avatar className="w-40 h-40 mx-auto border-4 border-white shadow-lg">
+                                            <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
+                                            <AvatarFallback className="text-4xl">{testimonial.author_name.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <h3 className="mt-4 text-2xl font-bold text-primary-green">{testimonial.name}</h3>
-                                        <p className="text-md text-gray-600">{testimonial.role}</p>
+                                        <h3 className="mt-4 text-2xl font-bold text-primary-green">{testimonial.author_name}</h3>
+                                        <p className="text-md text-gray-600">{testimonial.position} {testimonial.company && `at ${testimonial.company}`}</p>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Quote Text - improved with better wrapping and height */}
-                            <div className="relative min-h-[180px] md:min-h-[150px] w-full perspective-container"> {/* Adjusted height */}
+                            <div className="relative min-h-[180px] md:min-h-[150px] w-full perspective-container">
                                 {testimonials.map((testimonial, index) => (
                                     <div
                                         key={`quote-${testimonial.id}`}
@@ -190,7 +234,7 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                                 <path d="M10 8C4.477 8 0 12.477 0 18v14h12V18h-8c0-3.866 3.134-7 7-7h1V8h-2zm20 0c-5.523 0-10 4.477-10 10v14h12V18h-8c0-3.866 3.134-7 7-7h1V8h-2z"></path>
                                             </svg>
                                             <p className="text-gray-700 italic text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
-                                                {testimonial.comment}
+                                                {testimonial.description}
                                             </p>
                                         </div>
                                     </div>
@@ -200,7 +244,7 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
 
                         {/* Avatars on right side - increased sizing */}
                         <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2">
-                            <div className="relative w-40 h-96"> {/* Increased width and height */}
+                            <div className="relative w-40 h-96">
                                 {testimonials.map((testimonial, index) => {
                                     // Different animation timing for right side
                                     const isActive = index === activeIndex;
@@ -230,8 +274,8 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                                 "border-2 border-white shadow-md",
                                                 isActive ? "w-20 h-20" : "w-16 h-16" // Increased sizes
                                             )}>
-                                                <AvatarImage src={testimonial.image} alt={testimonial.name} />
-                                                <AvatarFallback className="text-lg">{testimonial.name.charAt(0)}</AvatarFallback>
+                                                <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
+                                                <AvatarFallback className="text-lg">{testimonial.author_name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                         </div>
                                     );
@@ -255,8 +299,8 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                 aria-label={`Go to testimonial ${index + 1}`}
                             >
                                 <Avatar className="w-10 h-10">
-                                    <AvatarImage src={testimonial.image} alt={testimonial.name} />
-                                    <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
+                                    <AvatarFallback>{testimonial.author_name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                             </button>
                         ))}
