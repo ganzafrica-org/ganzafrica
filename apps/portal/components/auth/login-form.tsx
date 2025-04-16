@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import axios from 'axios';
 
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -21,10 +20,8 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@workspace/ui/components/input-otp';
 import { Card } from '@workspace/ui/components/card';
 
+import apiClient from '@/lib/api-client';
 import {AtSign, LockKeyhole} from "lucide-react";
-
-// Update the API client endpoint for the login
-const API_ENDPOINT = 'http://localhost:3002/api/auth/login';
 
 export function LoginForm() {
     const router = useRouter();
@@ -52,8 +49,7 @@ export function LoginForm() {
     const handleLogin = async (data: { email: string; password: string }) => {
         setIsLoading(true);
         try {
-            // Use Axios directly with the endpoint
-            const response = await axios.post(API_ENDPOINT, data);
+            const response = await apiClient.post('/auth/login', data);
 
             // Check if two-factor authentication is required
             if (response.data.data?.requiresTwoFactor) {
@@ -77,7 +73,7 @@ export function LoginForm() {
     const handleVerify = async (data: { totpCode: string }) => {
         setIsLoading(true);
         try {
-            const response = await axios.post('http://localhost:3002/api/verify-two-factor', {
+            const response = await apiClient.post('/verify-two-factor', {
                 token: tempToken,
                 code: data.totpCode
             });
