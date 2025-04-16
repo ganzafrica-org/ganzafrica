@@ -108,24 +108,94 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
         }, 5000);
     };
 
-    // Show loading state
+    // Divide testimonials into left and right side groups
+    const getLeftSideTestimonials = () => {
+        if (testimonials.length === 0) return [];
+        // Use even indices for left side
+        return testimonials.filter((_, index) => index % 2 === 0);
+    };
+
+    const getRightSideTestimonials = () => {
+        if (testimonials.length === 0) return [];
+        // Use odd indices for right side
+        return testimonials.filter((_, index) => index % 2 !== 0);
+    };
+
+    // Show skeleton loading state that resembles the actual content
     if (loading && testimonials.length === 0) {
         return (
             <section className="py-16 md:py-24 bg-secondary-green/5 relative overflow-hidden">
-                <div className="container mx-auto px-4 text-center">
+                <div className="container mx-auto px-4">
                     <div className="text-center mb-16">
-                        <DecoratedHeading
-                            firstText={dict?.testimonials?.heading_first || "Our"}
-                            secondText={dict?.testimonials?.heading_second || "Testimonials"}
-                            firstTextColor="text-primary-green"
-                            secondTextColor="text-primary-orange"
-                            borderColor="border-primary-green"
-                            cornerColor="bg-primary-orange"
-                            className="mx-auto"
-                        />
+                        {/* Skeleton for heading */}
+                        <div className="flex justify-center">
+                            <div className="h-12 w-72 bg-gray-200 animate-pulse rounded-md"></div>
+                        </div>
                     </div>
-                    <div className="flex justify-center items-center h-64">
-                        <div className="animate-pulse text-primary-green">Loading testimonials...</div>
+
+                    <div className="max-w-5xl mx-auto">
+                        <div className="relative">
+                            {/* Skeleton for left avatars */}
+                            <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2">
+                                <div className="relative w-40 h-96">
+                                    {[1, 2, 3, 4].map((_, index) => (
+                                        <div
+                                            key={`skeleton-left-${index}`}
+                                            className="absolute animate-pulse"
+                                            style={{
+                                                top: `${index * 18}%`,
+                                                left: '50%',
+                                            }}
+                                        >
+                                            <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-white shadow-md"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Skeleton for center content */}
+                            <div className="flex flex-col items-center justify-center text-center px-4 md:px-20">
+                                {/* Skeleton for avatar */}
+                                <div className="relative h-56 w-full max-w-xs mb-8">
+                                    <div className="w-40 h-40 rounded-full bg-gray-200 animate-pulse mx-auto"></div>
+                                    <div className="h-6 w-48 bg-gray-200 animate-pulse mx-auto mt-4 rounded"></div>
+                                    <div className="h-4 w-32 bg-gray-200 animate-pulse mx-auto mt-2 rounded"></div>
+                                </div>
+
+                                {/* Skeleton for quote text */}
+                                <div className="relative min-h-[180px] md:min-h-[150px] w-full">
+                                    <div className="w-10 h-10 bg-gray-100 mb-4 mx-auto rounded"></div>
+                                    <div className="h-4 w-full max-w-lg bg-gray-200 animate-pulse mx-auto rounded mb-2"></div>
+                                    <div className="h-4 w-full max-w-md bg-gray-200 animate-pulse mx-auto rounded mb-2"></div>
+                                    <div className="h-4 w-full max-w-sm bg-gray-200 animate-pulse mx-auto rounded"></div>
+                                </div>
+                            </div>
+
+                            {/* Skeleton for right avatars */}
+                            <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2">
+                                <div className="relative w-40 h-96">
+                                    {[1, 2, 3, 4].map((_, index) => (
+                                        <div
+                                            key={`skeleton-right-${index}`}
+                                            className="absolute animate-pulse"
+                                            style={{
+                                                top: `${index * 18}%`,
+                                                right: '50%',
+                                            }}
+                                        >
+                                            <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-white shadow-md"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Mobile skeleton indicators */}
+                        <div className="md:hidden flex justify-center mt-8 gap-3">
+                            {[1, 2, 3, 4].map((_, index) => (
+                                <div key={`skeleton-nav-${index}`} className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </section>
@@ -139,10 +209,6 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                     <DecoratedHeading
                         firstText={dict?.testimonials?.heading_first || "Our"}
                         secondText={dict?.testimonials?.heading_second || "Testimonials"}
-                        firstTextColor="text-primary-green"
-                        secondTextColor="text-primary-orange"
-                        borderColor="border-primary-green"
-                        cornerColor="bg-primary-orange"
                         className="mx-auto"
                     />
                 </div>
@@ -154,13 +220,14 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
 
                 <div className="max-w-5xl mx-auto">
                     <div className="relative">
-                        {/* Avatars on left side - increased sizing */}
+                        {/* Avatars on left side - using left side testimonials only */}
                         <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2">
                             <div className="relative w-40 h-96">
-                                {testimonials.map((testimonial, index) => {
+                                {getLeftSideTestimonials().map((testimonial, index) => {
                                     // Calculate position for floating effect
-                                    const isActive = index === activeIndex;
-                                    const angle = (360 / testimonials.length) * index;
+                                    const testimonialIndex = testimonials.findIndex(t => t.id === testimonial.id);
+                                    const isActive = testimonialIndex === activeIndex;
+                                    const angle = (360 / getLeftSideTestimonials().length) * index;
                                     const radius = 20; // pixels from center
 
                                     return (
@@ -174,13 +241,13 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                             )}
                                             style={{
                                                 animation: `floating ${8 + index}s linear infinite`,
-                                                top: `${index * 18}%`,
+                                                top: `${index * (100 / Math.max(getLeftSideTestimonials().length, 1))}%`,
                                                 left: `${Math.sin(angle * Math.PI / 180) * radius + 50}%`,
                                                 borderRadius: "50%", // Ensure ring follows avatar shape
                                                 transformOrigin: "center center",
                                                 transition: "all 0.3s ease-in-out"
                                             }}
-                                            onClick={() => handleAvatarClick(index)}
+                                            onClick={() => handleAvatarClick(testimonialIndex)}
                                         >
                                             <Avatar className={cn(
                                                 "border-2 border-white shadow-md",
@@ -242,13 +309,14 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                             </div>
                         </div>
 
-                        {/* Avatars on right side - increased sizing */}
+                        {/* Avatars on right side - using right side testimonials only */}
                         <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2">
                             <div className="relative w-40 h-96">
-                                {testimonials.map((testimonial, index) => {
+                                {getRightSideTestimonials().map((testimonial, index) => {
                                     // Different animation timing for right side
-                                    const isActive = index === activeIndex;
-                                    const angle = (360 / testimonials.length) * index;
+                                    const testimonialIndex = testimonials.findIndex(t => t.id === testimonial.id);
+                                    const isActive = testimonialIndex === activeIndex;
+                                    const angle = (360 / getRightSideTestimonials().length) * index;
                                     const radius = 20; // pixels from center
 
                                     return (
@@ -262,13 +330,13 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                             )}
                                             style={{
                                                 animation: `floating ${7 + index}s linear infinite`,
-                                                top: `${index * 18}%`,
+                                                top: `${index * (100 / Math.max(getRightSideTestimonials().length, 1))}%`,
                                                 right: `${Math.sin(angle * Math.PI / 180) * radius + 50}%`,
                                                 borderRadius: "50%", // Ensure ring follows avatar shape
                                                 transformOrigin: "center center",
                                                 transition: "all 0.3s ease-in-out"
                                             }}
-                                            onClick={() => handleAvatarClick(index)}
+                                            onClick={() => handleAvatarClick(testimonialIndex)}
                                         >
                                             <Avatar className={cn(
                                                 "border-2 border-white shadow-md",
