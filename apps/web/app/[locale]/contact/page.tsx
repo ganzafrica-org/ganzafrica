@@ -223,35 +223,42 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
       </div>
 
       {/* Map Section */}
-      <div className="py-2 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="h-96 w-full rounded-lg overflow-hidden border-2 border-gray-300 relative">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5080550483483!2d30.053!3d-1.944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMcKwNTYnNDQuNCJTIDMwwrAwMycxMC44IkU!5e0!3m2!1sen!2sus!4v1616434174542!5m2!1sen!2sus&iwloc=B&output=embed"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="GanzAfrica Location"
-            ></iframe>
-          </div>
-          
-          {/* Using plain HTML/CSS to create a house marker */}
-          <div className="relative mx-auto" style={{ width: "200px", marginTop: "-50px" }}>
-            <div className="bg-white p-3 rounded-lg shadow-md border-2 border-emerald-600 z-10">
-              <div className="flex items-center">
-                <div className="bg-red-500 p-2 rounded-full mr-2">
-                  <MapPin className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-bold text-emerald-600">GanzAfrica</p>
-                  <p className="text-xs text-gray-700">27 House, KG 594 St, Kigali</p>
+  <div className="py-2 bg-white">
+  <div className="container mx-auto px-4">
+    <div className="h-96 w-full rounded-lg overflow-hidden border-2 border-gray-300 relative">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5080550483483!2d30.053!3d-1.944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMcKwNTYnNDQuNCJTIDMwwrAwMycxMC44IkU!5e0!3m2!1sen!2sus!4v1616434174542!5m2!1sen!2sus&iwloc=B&output=embed"
+        width="100%"
+        height="100%"
+        style={{ border: 0 }}
+        allowFullScreen
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        title="GanzAfrica Location"
+      ></iframe>
+
+      </div>
+          {/* Box Positioned on Top of Red Pin */}
+          <div
+              className="absolute z-10"
+              style={{
+                top: '70%',
+                left: '50%',
+                transform: 'translate(-50%, -100%)',
+              }}
+            >
+              <div className="bg-white p-3 rounded-lg shadow-md border-2 border-emerald-600">
+                <div className="flex items-center">
+                  <div className="bg-red-500 p-2 rounded-full mr-2">
+                  <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-emerald-600">GanzAfrica</p>
+                    <p className="text-xs text-gray-700">27 House, KG 594 St, Kigali</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="w-4 h-4 bg-emerald-600 rotate-45 mx-auto -mt-2"></div>
+              <div className="w-4 h-4 bg-emerald-600 rotate-45 mx-auto -mt-2"></div>
           </div>
         </div>
       </div>
