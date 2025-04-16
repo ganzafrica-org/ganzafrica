@@ -2,360 +2,597 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  ChevronLeft,
-  Upload,
-  X,
-  Check,
-  Plus,
-  AlertCircle,
-  Loader
-} from 'lucide-react';
-import Link from 'next/link';
+import { AlertCircle, Loader, Calendar, X, UserPlus, Plus, Trash2 } from 'lucide-react';
+import MultipleSelector, { Option } from '@workspace/ui/components/multiple-selector';
 
-// Type definitions
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-}
+// Define opportunity types and their respective schemas
+const opportunityTypes = [
+  { value: 'fellowship', label: 'Fellowship Program' },
+  { value: 'employment', label: 'Employment Position' }
+];
 
-interface Location {
-  id: string;
-  name: string;
-}
+// Define status options
+const statusOptions = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'published', label: 'Published' },
+  { value: 'closed', label: 'Closed' },
+  { value: 'cancelled', label: 'Cancelled' }
+];
 
-interface Category {
-  id: number;
-  name: string;
-  description?: string;
-}
+// Define location types
+const locationTypes = [
+  { value: 'remote', label: 'Remote' },
+  { value: 'onsite', label: 'On-site' },
+  { value: 'hybrid', label: 'Hybrid' }
+];
 
-interface FormData {
-  name: string;
-  category_id: string;
-  description: string;
-  teamLead: string;
-  start_date: string;
-  end_date: string;
-  location: string;
-  status: 'planned' | 'active' | 'completed';
-  budget: string;
-  impacted_people: string;
-  cover_image: string;
-}
+// Define education levels for eligibility
+const educationLevels = [
+  { value: 'high_school', label: 'High School' },
+  { value: 'associates', label: 'Associates Degree' },
+  { value: 'bachelors', label: 'Bachelors Degree' },
+  { value: 'masters', label: 'Masters Degree' },
+  { value: 'phd', label: 'PhD' }
+];
 
-interface CategoryDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (category: Category) => void;
-}
+// Define fellowship types
+const fellowshipTypes = [
+  { value: 'research', label: 'Research' },
+  { value: 'professional', label: 'Professional Development' },
+  { value: 'academic', label: 'Academic' },
+  { value: 'community', label: 'Community Service' }
+];
 
-// Category Dialog Component with fixed API URL
-const CategoryDialog: React.FC<CategoryDialogProps> = ({ isOpen, onClose, onSave }) => {
-  const [newCategory, setNewCategory] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
+// Define employment types
+const employmentTypes = [
+  { value: 'full-time', label: 'Full Time' },
+  { value: 'part-time', label: 'Part Time' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'internship', label: 'Internship' }
+];
 
-  if (!isOpen) return null;
+// Define position levels
+const positionLevels = [
+  { value: 'entry', label: 'Entry Level' },
+  { value: 'mid', label: 'Mid Level' },
+  { value: 'senior', label: 'Senior Level' },
+  { value: 'executive', label: 'Executive Level' }
+];
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (!newCategory.trim()) {
-      setError('Category name is required');
-      return;
-    }
+// Field types for custom questions
+const fieldTypes = [
+  { value: 'text', label: 'Short Text' },
+  { value: 'textarea', label: 'Long Text' },
+  { value: 'select', label: 'Dropdown Select' },
+  { value: 'multiselect', label: 'Multi-Select' },
+  { value: 'checkbox', label: 'Checkbox' },
+  { value: 'radio', label: 'Radio Buttons' },
+  { value: 'file', label: 'File Upload' }
+];
 
-    setIsSubmitting(true);
-    setError('');
+// Sample project categories
+const categoryOptions = [
+  { value: 1, label: 'Technology' },
+  { value: 2, label: 'Business' },
+  { value: 3, label: 'Research' },
+  { value: 4, label: 'Education' },
+  { value: 5, label: 'Healthcare' }
+];
 
-    try {
-      // Use explicit URL with port 3002 instead of relative URL
-      const response = await fetch('http://localhost:3002/api/categories', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ 
-          name: newCategory.trim(),
-          description: description.trim() || undefined
-        })
-      });
-
-      // Check if the response is OK before trying to parse JSON
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `Error: ${response.status} ${response.statusText}`);
-        } else {
-          throw new Error(`Error: ${response.status} ${response.statusText}`);
-        }
+const CreateOpportunityForm = () => {
+  const router = useRouter();
+  
+  // State for form data
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    type: 'fellowship', // Default type
+    status: 'draft',
+    location_type: 'remote',
+    location: '',
+    application_deadline: '',
+    category_id: null,
+    eligibility_criteria: {
+      countries: [],
+      min_education_level: '',
+      experience_years: 0,
+      skills_required: [],
+      other_requirements: []
+    },
+    custom_questions: [],
+    fellowship_details: {
+      program_name: '',
+      cohort: '',
+      fellowship_type: '',
+      learning_outcomes: [],
+      program_structure: {
+        phases: [
+          {
+            name: '',
+            description: '',
+            duration_weeks: 0
+          }
+        ],
+        activities: []
       }
-      
-      const result = await response.json();
+    },
+    employment_details: {
+      position_level: '',
+      employment_type: '',
+      department: '',
+      responsibilities: [],
+      qualifications: {
+        required: [],
+        preferred: []
+      }
+    }
+  });
 
-      // Create a dummy category if the API doesn't return the expected format
-      const newCategoryObj = result.data?.category || {
-        id: Math.floor(Math.random() * 1000) + 1,
-        name: newCategory.trim(),
-        description: description.trim() || undefined
-      };
+  // UI states
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  // Country options for selector (simplified list)
+  const countryOptions = [
+    { label: 'United States', value: 'USA' },
+    { label: 'Canada', value: 'Canada' },
+    { label: 'United Kingdom', value: 'UK' },
+    { label: 'Australia', value: 'Australia' },
+    { label: 'Germany', value: 'Germany' },
+    { label: 'France', value: 'France' },
+    { label: 'Japan', value: 'Japan' },
+    { label: 'China', value: 'China' },
+    { label: 'Brazil', value: 'Brazil' },
+    { label: 'India', value: 'India' }
+  ];
 
-      onSave(newCategoryObj);
-      setNewCategory('');
-      setDescription('');
-    } catch (err) {
-      console.error('Error creating category:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create category');
-    } finally {
-      setIsSubmitting(false);
+  // State for selectors
+  const [selectedCountries, setSelectedCountries] = useState<Option[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<Option[]>([]);
+  const [selectedOtherRequirements, setSelectedOtherRequirements] = useState<Option[]>([]);
+  const [selectedLearningOutcomes, setSelectedLearningOutcomes] = useState<Option[]>([]);
+  const [selectedActivities, setSelectedActivities] = useState<Option[]>([]);
+  const [selectedResponsibilities, setSelectedResponsibilities] = useState<Option[]>([]);
+  const [selectedRequiredQualifications, setSelectedRequiredQualifications] = useState<Option[]>([]);
+  const [selectedPreferredQualifications, setSelectedPreferredQualifications] = useState<Option[]>([]);
+  
+  // Custom question option state (for dropdown type questions)
+  const [questionOptions, setQuestionOptions] = useState<{ [key: number]: string }>({});
+  const [newQuestionOption, setNewQuestionOption] = useState<{ [key: number]: string }>({});
+
+  // Handler for basic input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    // Handle nested properties
+    if (name.includes('.')) {
+      const [parentKey, childKey] = name.split('.');
+      setFormData({
+        ...formData,
+        [parentKey]: {
+          ...formData[parentKey as keyof typeof formData],
+          [childKey]: value
+        }
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full">
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-bold">Add New Category</h2>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-4">
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md flex items-start">
-              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-          
-          <div className="mb-4">
-            <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700 mb-1">
-              Category Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="categoryName"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              placeholder="Enter category name"
-              required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label htmlFor="categoryDescription" className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              id="categoryDescription"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              placeholder="Enter category description (optional)"
-              rows={3}
-            />
-          </div>
-          
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-700 rounded-md text-white hover:bg-green-800 flex items-center"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : 'Save Category'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-const AddProjectPage: React.FC = () => {
-  const router = useRouter();
-  
-  // States for form data
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    category_id: '',
-    description: '',
-    teamLead: '',
-    start_date: '',
-    end_date: '',
-    location: '',
-    status: 'planned',
-    budget: '',
-    impacted_people: '',
-    cover_image: ''
-  });
-
-  // States for dynamic data
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [locations] = useState<Location[]>([
-    { id: '1', name: 'Kigali' },
-    { id: '2', name: 'Musanze' },
-    { id: '3', name: 'Rubavu' },
-    { id: '4', name: 'Nyagatare' },
-    { id: '5', name: 'Huye' }
-  ]);
-  const [teamMembers] = useState<TeamMember[]>([
-    { id: '1', name: 'Mukamana Fransine', role: 'Project Manager' },
-    { id: '2', name: 'John Doe', role: 'Data Analyst' },
-    { id: '3', name: 'Jane Smith', role: 'Climate Researcher' },
-    { id: '4', name: 'Robert Johnson', role: 'Field Coordinator' },
-    { id: '5', name: 'Emily Williams', role: 'Research Assistant' }
-  ]);
-  const [selectedTeamMembers, setSelectedTeamMembers] = useState<TeamMember[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  
-  // State for category dialog
-  const [showCategoryDialog, setShowCategoryDialog] = useState<boolean>(false);
-
-  // Fetch categories on component mount
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        // Use the correct port 3002 to match your API server
-        const response = await fetch('http://localhost:3002/api/categories');
-        const result = await response.json();
-        
-        if (result.success && result.data) {
-          setCategories(result.data);
+  // Handler for eligibility criteria changes
+  const handleEligibilityChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    // Special handling for numeric experience_years
+    if (name === 'experience_years') {
+      setFormData({
+        ...formData,
+        eligibility_criteria: {
+          ...formData.eligibility_criteria,
+          [name]: Number(value) || 0
         }
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-      }
-    };
+      });
+    } else {
+      setFormData({
+        ...formData,
+        eligibility_criteria: {
+          ...formData.eligibility_criteria,
+          [name]: value
+        }
+      });
+    }
+  };
 
-    fetchCategories();
-  }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  // Handler for fellowship details changes
+  const handleFellowshipChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      fellowship_details: {
+        ...formData.fellowship_details,
+        [name]: value
+      }
     });
   };
 
-  const handleTeamMemberSelect = (memberId: string) => {
-    const member = teamMembers.find(m => m.id === memberId);
-    if (member && !selectedTeamMembers.some(m => m.id === memberId)) {
-      setSelectedTeamMembers([...selectedTeamMembers, member]);
-    }
-  };
-
-  const handleRemoveTeamMember = (memberId: string) => {
-    setSelectedTeamMembers(selectedTeamMembers.filter(m => m.id !== memberId));
-  };
-
-  const handleAddCategory = (newCategory: Category) => {
-    // Add the new category to the list
-    setCategories([...categories, newCategory]);
-    
-    // Select the new category in the form
+  // Handler for employment details changes
+  const handleEmploymentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      category_id: newCategory.id.toString()
+      employment_details: {
+        ...formData.employment_details,
+        [name]: value
+      }
     });
-    
-    // Close the dialog
-    setShowCategoryDialog(false);
   };
 
+  // Handler for program structure phase changes
+  const handlePhaseChange = (index: number, field: string, value: string | number) => {
+    const updatedPhases = [...formData.fellowship_details.program_structure.phases];
+    updatedPhases[index] = {
+      ...updatedPhases[index],
+      [field]: field === 'duration_weeks' ? Number(value) : value
+    };
+    
+    setFormData({
+      ...formData,
+      fellowship_details: {
+        ...formData.fellowship_details,
+        program_structure: {
+          ...formData.fellowship_details.program_structure,
+          phases: updatedPhases
+        }
+      }
+    });
+  };
+
+  // Add a new phase to program structure
+  const addPhase = () => {
+    const newPhase = {
+      name: '',
+      description: '',
+      duration_weeks: 0
+    };
+    
+    setFormData({
+      ...formData,
+      fellowship_details: {
+        ...formData.fellowship_details,
+        program_structure: {
+          ...formData.fellowship_details.program_structure,
+          phases: [...formData.fellowship_details.program_structure.phases, newPhase]
+        }
+      }
+    });
+  };
+
+  // Remove a phase from program structure
+  const removePhase = (index: number) => {
+    const updatedPhases = formData.fellowship_details.program_structure.phases.filter((_, i) => i !== index);
+    
+    setFormData({
+      ...formData,
+      fellowship_details: {
+        ...formData.fellowship_details,
+        program_structure: {
+          ...formData.fellowship_details.program_structure,
+          phases: updatedPhases
+        }
+      }
+    });
+  };
+
+  // Add a new custom question
+  const addCustomQuestion = () => {
+    const newQuestion = {
+      question: '',
+      field_type: 'text',
+      is_required: false,
+      order: formData.custom_questions.length + 1,
+      options: []
+    };
+    
+    setFormData({
+      ...formData,
+      custom_questions: [...formData.custom_questions, newQuestion]
+    });
+  };
+
+  // Update a custom question
+  const handleQuestionChange = (index: number, field: string, value: any) => {
+    const updatedQuestions = [...formData.custom_questions];
+    updatedQuestions[index] = {
+      ...updatedQuestions[index],
+      [field]: value
+    };
+    
+    setFormData({
+      ...formData,
+      custom_questions: updatedQuestions
+    });
+  };
+
+  // Remove a custom question
+  const removeCustomQuestion = (index: number) => {
+    const updatedQuestions = formData.custom_questions.filter((_, i) => i !== index);
+    // Update order for remaining questions
+    const reorderedQuestions = updatedQuestions.map((q, i) => ({
+      ...q,
+      order: i + 1
+    }));
+    
+    setFormData({
+      ...formData,
+      custom_questions: reorderedQuestions
+    });
+  };
+
+  // Add an option to a question
+  const addQuestionOption = (questionIndex: number) => {
+    if (!newQuestionOption[questionIndex]?.trim()) return;
+    
+    const updatedQuestions = [...formData.custom_questions];
+    const currentOptions = updatedQuestions[questionIndex].options || [];
+    
+    updatedQuestions[questionIndex] = {
+      ...updatedQuestions[questionIndex],
+      options: [...currentOptions, newQuestionOption[questionIndex]]
+    };
+    
+    setFormData({
+      ...formData,
+      custom_questions: updatedQuestions
+    });
+    
+    // Clear the input for this question
+    setNewQuestionOption({
+      ...newQuestionOption,
+      [questionIndex]: ''
+    });
+  };
+
+  // Remove an option from a question
+  const removeQuestionOption = (questionIndex: number, optionIndex: number) => {
+    const updatedQuestions = [...formData.custom_questions];
+    const currentOptions = [...updatedQuestions[questionIndex].options || []];
+    currentOptions.splice(optionIndex, 1);
+    
+    updatedQuestions[questionIndex] = {
+      ...updatedQuestions[questionIndex],
+      options: currentOptions
+    };
+    
+    setFormData({
+      ...formData,
+      custom_questions: updatedQuestions
+    });
+  };
+
+  // Countries selector change
+  const handleCountriesChange = (options: Option[]) => {
+    setSelectedCountries(options);
+    setFormData({
+      ...formData,
+      eligibility_criteria: {
+        ...formData.eligibility_criteria,
+        countries: options.map(option => option.value)
+      }
+    });
+  };
+
+  // Skills selector change
+  const handleSkillsChange = (options: Option[]) => {
+    setSelectedSkills(options);
+    setFormData({
+      ...formData,
+      eligibility_criteria: {
+        ...formData.eligibility_criteria,
+        skills_required: options.map(option => option.value)
+      }
+    });
+  };
+
+  // Other requirements selector change
+  const handleOtherRequirementsChange = (options: Option[]) => {
+    setSelectedOtherRequirements(options);
+    setFormData({
+      ...formData,
+      eligibility_criteria: {
+        ...formData.eligibility_criteria,
+        other_requirements: options.map(option => option.value)
+      }
+    });
+  };
+
+  // Learning outcomes selector change
+  const handleLearningOutcomesChange = (options: Option[]) => {
+    setSelectedLearningOutcomes(options);
+    setFormData({
+      ...formData,
+      fellowship_details: {
+        ...formData.fellowship_details,
+        learning_outcomes: options.map(option => option.value)
+      }
+    });
+  };
+
+  // Activities selector change
+  const handleActivitiesChange = (options: Option[]) => {
+    setSelectedActivities(options);
+    setFormData({
+      ...formData,
+      fellowship_details: {
+        ...formData.fellowship_details,
+        program_structure: {
+          ...formData.fellowship_details.program_structure,
+          activities: options.map(option => option.value)
+        }
+      }
+    });
+  };
+
+  // Responsibilities selector change
+  const handleResponsibilitiesChange = (options: Option[]) => {
+    setSelectedResponsibilities(options);
+    setFormData({
+      ...formData,
+      employment_details: {
+        ...formData.employment_details,
+        responsibilities: options.map(option => option.value)
+      }
+    });
+  };
+
+  // Required qualifications selector change
+  const handleRequiredQualificationsChange = (options: Option[]) => {
+    setSelectedRequiredQualifications(options);
+    setFormData({
+      ...formData,
+      employment_details: {
+        ...formData.employment_details,
+        qualifications: {
+          ...formData.employment_details.qualifications,
+          required: options.map(option => option.value)
+        }
+      }
+    });
+  };
+
+  // Preferred qualifications selector change
+  const handlePreferredQualificationsChange = (options: Option[]) => {
+    setSelectedPreferredQualifications(options);
+    setFormData({
+      ...formData,
+      employment_details: {
+        ...formData.employment_details,
+        qualifications: {
+          ...formData.employment_details.qualifications,
+          preferred: options.map(option => option.value)
+        }
+      }
+    });
+  };
+
+  // Form submission handler
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     
     try {
-      // Create project payload
-      const projectData = {
-        name: formData.name,
+      // Prepare data for API in the expected format
+      let opportunityData: any = {
+        title: formData.title,
         description: formData.description,
+        type: formData.type,
         status: formData.status,
-        category_id: formData.category_id ? Number(formData.category_id) : undefined,
+        location_type: formData.location_type,
         location: formData.location,
-        impacted_people: formData.impacted_people ? Number(formData.impacted_people) : undefined,
-        cover_image: formData.cover_image || undefined,
-        start_date: formData.start_date,
-        end_date: formData.end_date || undefined,
-        budget: formData.budget ? Number(formData.budget) : undefined,
-        team_members: selectedTeamMembers.map(member => Number(member.id))
-      };
-      
-      // Submit to API with correct port
-      const response = await fetch('http://localhost:3002/api/projects', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+        application_deadline: formData.application_deadline,
+        category_id: formData.category_id,
+        
+        // Ensure eligibility criteria is properly structured
+        eligibility_criteria: {
+          countries: formData.eligibility_criteria.countries || [],
+          min_education_level: formData.eligibility_criteria.min_education_level || '',
+          experience_years: Number(formData.eligibility_criteria.experience_years) || 0,
+          skills_required: formData.eligibility_criteria.skills_required || [],
+          other_requirements: formData.eligibility_criteria.other_requirements || []
         },
-        body: JSON.stringify(projectData)
-      });
-      
-      // Check if the response is OK before trying to parse JSON
-      if (!response.ok) {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || `Error: ${response.status} ${response.statusText}`);
-        } else {
-          throw new Error(`Error: ${response.status} ${response.statusText}`);
-        }
+        
+        // Ensure custom questions are properly formatted
+        custom_questions: formData.custom_questions.map(q => ({
+          question: q.question,
+          field_type: q.field_type,
+          is_required: Boolean(q.is_required),
+          max_length: q.max_length ? Number(q.max_length) : undefined,
+          order: Number(q.order),
+          options: q.options || []
+        }))
+      };
+
+      // Add type-specific details
+      if (formData.type === 'fellowship') {
+        opportunityData.fellowship_details = {
+          program_name: formData.fellowship_details.program_name,
+          cohort: formData.fellowship_details.cohort,
+          fellowship_type: formData.fellowship_details.fellowship_type,
+          learning_outcomes: formData.fellowship_details.learning_outcomes || [],
+          program_structure: {
+            phases: formData.fellowship_details.program_structure.phases.map(phase => ({
+              name: phase.name,
+              description: phase.description,
+              duration_weeks: Number(phase.duration_weeks) || 0
+            })),
+            activities: formData.fellowship_details.program_structure.activities || []
+          }
+        };
+      } else if (formData.type === 'employment') {
+        opportunityData.employment_details = {
+          position_level: formData.employment_details.position_level,
+          employment_type: formData.employment_details.employment_type,
+          department: formData.employment_details.department,
+          responsibilities: formData.employment_details.responsibilities || [],
+          qualifications: {
+            required: formData.employment_details.qualifications?.required || [],
+            preferred: formData.employment_details.qualifications?.preferred || []
+          }
+        };
       }
       
-      const result = await response.json();
+      console.log('Submitting opportunity data:', opportunityData);
       
-      // Redirect to projects page on success
-      router.push('/projects');
+      // Make the actual API call
+      const jsonData = JSON.stringify(opportunityData);
+      console.log('Raw JSON being sent:', jsonData);
+      
+      const response = await fetch('http://localhost:3002/api/opportunities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonData,
+        credentials: 'include' // Include this if you're using cookie authentication
+      });
+      
+      const responseText = await response.text();
+      console.log('Response from server:', responseText);
+      
+      if (!response.ok) {
+        let errorMessage = 'Failed to create opportunity';
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorData.error || errorMessage;
+          console.error('Detailed error:', errorData);
+        } catch (e) {
+          console.error('Error parsing error response:', e);
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const result = responseText ? JSON.parse(responseText) : {};
+      
+      // Success - redirect or show success message
+      alert('Opportunity created successfully!');
+      router.push('/opportunities');
     } catch (err) {
-      console.error('Error creating project:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create project. Please try again.');
+      console.error('Error creating opportunity:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create opportunity. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Category Dialog */}
-      <CategoryDialog 
-        isOpen={showCategoryDialog}
-        onClose={() => setShowCategoryDialog(false)}
-        onSave={handleAddCategory}
-      />
-      
-      {/* Header with back button */}
+    <div className="max-w-7xl mx-auto p-6">
+      {/* Header */}
       <div className="mb-6">
-        <Link href="/projects" className="flex items-center text-gray-600 hover:text-gray-800">
-          <ChevronLeft className="w-5 h-5 mr-1" />
-          Back to Projects
-        </Link>
-      </div>
-
-      {/* Page title */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Add New Project</h1>
-        <p className="text-gray-500">Fill in the details to create a new project</p>
+        <h1 className="text-2xl font-bold">Opportunities</h1>
+        <p className="text-gray-600">Opportunities/Create Opportunity</p>
       </div>
 
       {/* Error message */}
@@ -367,323 +604,770 @@ const AddProjectPage: React.FC = () => {
       )}
 
       {/* Form */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Project Name */}
-            <div className="col-span-2">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Project Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter project name"
-              />
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg p-6">
+        {/* Basic Details Section */}
+        <div className="mb-8">
+          <div className="flex">
+            {/* Left column - section title */}
+            <div className="w-1/4 pr-8">
+              <h2 className="text-xl font-bold">Basic Details</h2>
+              <p className="text-gray-600 text-sm">General information about the opportunity</p>
             </div>
+            
+            {/* Right column - form fields */}
+            <div className="w-3/4">
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                {/* Opportunity Type */}
+                <div>
+                  <label htmlFor="type" className="block text-sm font-medium mb-1">
+                    Opportunity Type<span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="type"
+                    name="type"
+                    required
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md"
+                  >
+                    {opportunityTypes.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
 
-            {/* Category */}
-            <div>
-              <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-1">
-                Category <span className="text-red-500">*</span>
-              </label>
-              
-              <div className="flex">
-                <select
-                  id="category_id"
-                  name="category_id"
+                {/* Status */}
+                <div>
+                  <label htmlFor="status" className="block text-sm font-medium mb-1">
+                    Status<span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    required
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md"
+                  >
+                    {statusOptions.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Title */}
+                <div className="col-span-2">
+                  <label htmlFor="title" className="block text-sm font-medium mb-1">
+                    Title<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    required
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md"
+                    placeholder="Enter the opportunity title"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label htmlFor="category_id" className="block text-sm font-medium mb-1">
+                    Category
+                  </label>
+                  <select
+                    id="category_id"
+                    name="category_id"
+                    value={formData.category_id || ''}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        category_id: e.target.value ? Number(e.target.value) : null
+                      });
+                    }}
+                    className="w-full p-2.5 border border-gray-300 rounded-md"
+                  >
+                    <option value="">Select a category</option>
+                    {categoryOptions.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Application Deadline */}
+                <div>
+                  <label htmlFor="application_deadline" className="block text-sm font-medium mb-1">
+                    Application Deadline<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="date"
+                      id="application_deadline"
+                      name="application_deadline"
+                      required
+                      value={formData.application_deadline}
+                      onChange={handleInputChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                </div>
+
+                {/* Location Type */}
+                <div>
+                  <label htmlFor="location_type" className="block text-sm font-medium mb-1">
+                    Location Type<span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="location_type"
+                    name="location_type"
+                    required
+                    value={formData.location_type}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md"
+                  >
+                    {locationTypes.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label htmlFor="location" className="block text-sm font-medium mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md"
+                    placeholder="Enter location (city, country, etc.)"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-6">
+                <label htmlFor="description" className="block text-sm font-medium mb-1">
+                  Description<span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
                   required
-                  value={formData.category_id}
+                  value={formData.description}
                   onChange={handleInputChange}
-                  className="w-full p-2.5 border border-gray-300 rounded-l-md focus:ring-green-500 focus:border-green-500"
-                >
-                  <option value="">Select category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                  rows={4}
+                  className="w-full p-2.5 border border-gray-300 rounded-md"
+                  placeholder="Detailed description of the opportunity..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <hr className="my-8 border-t border-gray-200" />
+
+        {/* Eligibility Criteria Section */}
+        <div className="mb-8">
+          <div className="flex">
+            {/* Left column - section title */}
+            <div className="w-1/4 pr-8">
+              <h2 className="text-xl font-bold">Eligibility Criteria</h2>
+              <p className="text-gray-600 text-sm">Requirements for applicants</p>
+            </div>
+            
+            {/* Right column - form fields */}
+            <div className="w-3/4">
+              {/* Countries */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-1">
+                  Eligible Countries
+                </label>
+                <MultipleSelector
+                  value={selectedCountries}
+                  onChange={handleCountriesChange}
+                  defaultOptions={countryOptions}
+                  placeholder="Select eligible countries..."
+                  emptyIndicator={
+                    <p className="text-center text-lg leading-10 text-gray-600">
+                      No countries found.
+                    </p>
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                {/* Minimum Education Level */}
+                <div>
+                  <label htmlFor="min_education_level" className="block text-sm font-medium mb-1">
+                    Minimum Education Level
+                  </label>
+                  <select
+                    id="min_education_level"
+                    name="min_education_level"
+                    value={formData.eligibility_criteria.min_education_level}
+                    onChange={handleEligibilityChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md"
+                  >
+                    <option value="">Select education level</option>
+                    {educationLevels.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Experience Years */}
+                <div>
+                  <label htmlFor="experience_years" className="block text-sm font-medium mb-1">
+                    Minimum Years of Experience
+                  </label>
+                  <input
+                    type="number"
+                    id="experience_years"
+                    name="experience_years"
+                    min="0"
+                    value={formData.eligibility_criteria.experience_years}
+                    onChange={handleEligibilityChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              {/* Skills Required */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-1">
+                  Required Skills
+                </label>
+                <MultipleSelector
+                  value={selectedSkills}
+                  onChange={handleSkillsChange}
+                  creatable
+                  placeholder="Add required skills..."
+                  emptyIndicator={
+                    <p className="text-center text-lg leading-10 text-gray-600">
+                      No skills added.
+                    </p>
+                  }
+                />
+              </div>
+
+              {/* Other Requirements */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-1">
+                  Other Requirements
+                </label>
+                <MultipleSelector
+                  value={selectedOtherRequirements}
+                  onChange={handleOtherRequirementsChange}
+                  creatable
+                  placeholder="Add other requirements..."
+                  emptyIndicator={
+                    <p className="text-center text-lg leading-10 text-gray-600">
+                      No other requirements added.
+                    </p>
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <hr className="my-8 border-t border-gray-200" />
+
+        {/* Custom Questions Section */}
+        <div className="mb-8">
+          <div className="flex">
+            {/* Left column - section title */}
+            <div className="w-1/4 pr-8">
+              <h2 className="text-xl font-bold">Custom Questions</h2>
+              <p className="text-gray-600 text-sm">Additional questions for applicants</p>
+            </div>
+            
+            {/* Right column - form fields */}
+            <div className="w-3/4">
+              {formData.custom_questions.map((question, index) => (
+                <div key={index} className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-md font-medium">Question {index + 1}</h3>
+                    <button
+                      type="button"
+                      onClick={() => removeCustomQuestion(index)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="mb-3">
+                    <label htmlFor={`question-${index}`} className="block text-sm font-medium mb-1">
+                      Question Text<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id={`question-${index}`}
+                      value={question.question}
+                      onChange={(e) => handleQuestionChange(index, 'question', e.target.value)}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                      placeholder="Enter your question"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label htmlFor={`field-type-${index}`} className="block text-sm font-medium mb-1">
+                        Field Type<span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id={`field-type-${index}`}
+                        value={question.field_type}
+                        onChange={(e) => handleQuestionChange(index, 'field_type', e.target.value)}
+                        className="w-full p-2.5 border border-gray-300 rounded-md"
+                        required
+                      >
+                        {fieldTypes.map(option => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                                            <div className="flex items-center">
+                      <label className="flex items-center text-sm font-medium cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={question.is_required}
+                          onChange={(e) => handleQuestionChange(index, 'is_required', e.target.checked)}
+                          className="mr-2 h-4 w-4"
+                        />
+                        Required Question
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Options for select, multiselect, checkbox, radio types */}
+                  {['select', 'multiselect', 'checkbox', 'radio'].includes(question.field_type) && (
+                    <div className="mt-4 border-t border-gray-200 pt-4">
+                      <label className="block text-sm font-medium mb-2">
+                        Options<span className="text-red-500">*</span>
+                      </label>
+                      
+                      {/* Display existing options */}
+                      {(question.options || []).length > 0 && (
+                        <div className="mb-3 space-y-2">
+                          {(question.options || []).map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center">
+                              <span className="flex-1 text-sm bg-gray-100 p-2 rounded-md">{option}</span>
+                              <button
+                                type="button"
+                                onClick={() => removeQuestionOption(index, optionIndex)}
+                                className="ml-2 text-red-500 hover:text-red-700"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Add new option */}
+                      <div className="flex">
+                        <input
+                          type="text"
+                          placeholder="Add an option"
+                          value={newQuestionOption[index] || ''}
+                          onChange={(e) => setNewQuestionOption({...newQuestionOption, [index]: e.target.value})}
+                          className="flex-1 p-2 border border-gray-300 rounded-l-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => addQuestionOption(index)}
+                          className="bg-green-700 text-white px-3 py-2 rounded-r-md hover:bg-green-800"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Max length for text/textarea */}
+                  {['text', 'textarea'].includes(question.field_type) && (
+                    <div className="mt-4">
+                      <label htmlFor={`max-length-${index}`} className="block text-sm font-medium mb-1">
+                        Maximum Length (characters)
+                      </label>
+                      <input
+                        type="number"
+                        id={`max-length-${index}`}
+                        value={question.max_length || ''}
+                        onChange={(e) => handleQuestionChange(index, 'max_length', e.target.value ? Number(e.target.value) : undefined)}
+                        min="0"
+                        className="w-full p-2.5 border border-gray-300 rounded-md"
+                        placeholder="No limit"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Add Question Button */}
+              <div className="mt-4">
                 <button
                   type="button"
-                  onClick={() => setShowCategoryDialog(true)}
-                  className="px-4 bg-gray-200 rounded-r-md hover:bg-gray-300"
-                  title="Add new category"
+                  onClick={addCustomQuestion}
+                  className="flex items-center text-green-700 font-medium hover:text-green-800"
                 >
-                  <Plus className="w-5 h-5 text-gray-700" />
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Custom Question
                 </button>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Status */}
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="planned">Planned</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-              </select>
-            </div>
+        {/* Divider */}
+        <hr className="my-8 border-t border-gray-200" />
 
-            {/* Description */}
-            <div className="col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                required
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter project description"
-              ></textarea>
-            </div>
-
-            {/* Team Lead */}
-            <div>
-              <label htmlFor="teamLead" className="block text-sm font-medium text-gray-700 mb-1">
-                Team Lead <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="teamLead"
-                name="teamLead"
-                required
-                value={formData.teamLead}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">Select team lead</option>
-                {teamMembers.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name} ({member.role})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Location */}
-            <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                Location <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="location"
-                name="location"
-                required
-                value={formData.location}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">Select location</option>
-                {locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {location.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Start Date */}
-            <div>
-              <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                id="start_date"
-                name="start_date"
-                required
-                value={formData.start_date}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-
-            {/* End Date */}
-            <div>
-              <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">
-                End Date
-              </label>
-              <input
-                type="date"
-                id="end_date"
-                name="end_date"
-                value={formData.end_date}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-
-            {/* Budget */}
-            <div>
-              <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-1">
-                Budget (USD) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                id="budget"
-                name="budget"
-                required
-                value={formData.budget}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter project budget"
-              />
-            </div>
-
-            {/* Impacted People */}
-            <div>
-              <label htmlFor="impacted_people" className="block text-sm font-medium text-gray-700 mb-1">
-                Number of People Impacted
-              </label>
-              <input
-                type="number"
-                id="impacted_people"
-                name="impacted_people"
-                value={formData.impacted_people}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter number of people impacted"
-              />
-            </div>
-
-            {/* Cover Image URL */}
-            <div className="col-span-2">
-              <label htmlFor="cover_image" className="block text-sm font-medium text-gray-700 mb-1">
-                Cover Image URL
-              </label>
-              <input
-                type="url"
-                id="cover_image"
-                name="cover_image"
-                value={formData.cover_image}
-                onChange={handleInputChange}
-                className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter image URL"
-              />
-            </div>
-
-            {/* Project Document Upload */}
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Project Documents
-              </label>
-              <div className="flex items-center justify-center w-full">
-                <label
-                  htmlFor="dropzone-file"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
-                >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-8 h-8 mb-2 text-gray-500" />
-                    <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      PDF, DOCX, XLSX (MAX. 10MB)
-                    </p>
-                  </div>
-                  <input id="dropzone-file" type="file" className="hidden" />
-                </label>
+        {/* Type-specific details */}
+        {formData.type === 'fellowship' ? (
+          <div className="mb-8">
+            <div className="flex">
+              {/* Left column - section title */}
+              <div className="w-1/4 pr-8">
+                <h2 className="text-xl font-bold">Fellowship Details</h2>
+                <p className="text-gray-600 text-sm">Specific details for this fellowship</p>
               </div>
-            </div>
+              
+              {/* Right column - form fields */}
+              <div className="w-3/4">
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  {/* Program Name */}
+                  <div>
+                    <label htmlFor="program_name" className="block text-sm font-medium mb-1">
+                      Program Name<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="program_name"
+                      name="program_name"
+                      required={formData.type === 'fellowship'}
+                      value={formData.fellowship_details.program_name}
+                      onChange={handleFellowshipChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                      placeholder="Enter the program name"
+                    />
+                  </div>
 
-            {/* Team Members */}
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Team Members
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Selected Team Members */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">Selected Team Members</h3>
-                  <div className="border border-gray-300 rounded-md p-3 min-h-32">
-                    {selectedTeamMembers.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No team members selected</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {selectedTeamMembers.map((member) => (
-                          <li key={member.id} className="flex justify-between items-center text-sm">
-                            <span>
-                              <span className="font-medium">{member.name}</span> - {member.role}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTeamMember(member.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                  {/* Cohort */}
+                  <div>
+                    <label htmlFor="cohort" className="block text-sm font-medium mb-1">
+                      Cohort
+                    </label>
+                    <input
+                      type="text"
+                      id="cohort"
+                      name="cohort"
+                      value={formData.fellowship_details.cohort}
+                      onChange={handleFellowshipChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                      placeholder="e.g., Spring 2025"
+                    />
+                  </div>
+
+                  {/* Fellowship Type */}
+                  <div>
+                    <label htmlFor="fellowship_type" className="block text-sm font-medium mb-1">
+                      Fellowship Type
+                    </label>
+                    <select
+                      id="fellowship_type"
+                      name="fellowship_type"
+                      value={formData.fellowship_details.fellowship_type}
+                      onChange={handleFellowshipChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select fellowship type</option>
+                      {fellowshipTypes.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
-                {/* Available Team Members */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-600 mb-2">Available Team Members</h3>
-                  <div className="border border-gray-300 rounded-md p-3 min-h-32">
-                    {teamMembers
-                      .filter(member => !selectedTeamMembers.some(m => m.id === member.id))
-                      .map((member) => (
-                        <li key={member.id} className="flex justify-between items-center text-sm mb-2 list-none">
-                          <span>
-                            <span className="font-medium">{member.name}</span> - {member.role}
-                          </span>
+                {/* Learning Outcomes */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">
+                    Learning Outcomes
+                  </label>
+                  <MultipleSelector
+                    value={selectedLearningOutcomes}
+                    onChange={handleLearningOutcomesChange}
+                    creatable
+                    placeholder="Add learning outcomes..."
+                    emptyIndicator={
+                      <p className="text-center text-lg leading-10 text-gray-600">
+                        No learning outcomes added.
+                      </p>
+                    }
+                  />
+                </div>
+
+                {/* Program Structure */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">
+                    Program Structure - Phases
+                  </label>
+                  
+                  {formData.fellowship_details.program_structure.phases.map((phase, index) => (
+                    <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md bg-gray-50">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="text-sm font-medium">Phase {index + 1}</h4>
+                        {index > 0 && (
                           <button
                             type="button"
-                            onClick={() => handleTeamMemberSelect(member.id)}
-                            className="text-green-500 hover:text-green-700"
+                            onClick={() => removePhase(index)}
+                            className="text-red-500 hover:text-red-700"
                           >
-                            <Check className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        </li>
-                      ))}
-                  </div>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-2">
+                        <div>
+                          <label htmlFor={`phase-name-${index}`} className="block text-xs font-medium mb-1">
+                            Phase Name
+                          </label>
+                          <input
+                            type="text"
+                            id={`phase-name-${index}`}
+                            value={phase.name}
+                            onChange={(e) => handlePhaseChange(index, 'name', e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                            placeholder="e.g., Orientation"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label htmlFor={`phase-duration-${index}`} className="block text-xs font-medium mb-1">
+                            Duration (weeks)
+                          </label>
+                          <input
+                            type="number"
+                            id={`phase-duration-${index}`}
+                            value={phase.duration_weeks}
+                            onChange={(e) => handlePhaseChange(index, 'duration_weeks', e.target.value)}
+                            min="0"
+                            className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor={`phase-desc-${index}`} className="block text-xs font-medium mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          id={`phase-desc-${index}`}
+                          value={phase.description}
+                          onChange={(e) => handlePhaseChange(index, 'description', e.target.value)}
+                          rows={2}
+                          className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="Describe this phase..."
+                        ></textarea>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <button
+                    type="button"
+                    onClick={addPhase}
+                    className="mt-2 flex items-center text-green-700 text-sm font-medium hover:text-green-800"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Phase
+                  </button>
+                </div>
+
+                {/* Activities */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">
+                    Program Activities
+                  </label>
+                  <MultipleSelector
+                    value={selectedActivities}
+                    onChange={handleActivitiesChange}
+                    creatable
+                    placeholder="Add program activities..."
+                    emptyIndicator={
+                      <p className="text-center text-lg leading-10 text-gray-600">
+                        No activities added.
+                      </p>
+                    }
+                  />
                 </div>
               </div>
             </div>
           </div>
+        ) : (
+          <div className="mb-8">
+            <div className="flex">
+              {/* Left column - section title */}
+              <div className="w-1/4 pr-8">
+                <h2 className="text-xl font-bold">Employment Details</h2>
+                <p className="text-gray-600 text-sm">Specific details for this position</p>
+              </div>
+              
+              {/* Right column - form fields */}
+              <div className="w-3/4">
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  {/* Position Level */}
+                  <div>
+                    <label htmlFor="position_level" className="block text-sm font-medium mb-1">
+                      Position Level
+                    </label>
+                    <select
+                      id="position_level"
+                      name="position_level"
+                      value={formData.employment_details.position_level}
+                      onChange={handleEmploymentChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select position level</option>
+                      {positionLevels.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
 
-          {/* Form buttons */}
-          <div className="mt-8 flex justify-end space-x-3">
-            <Link href="/projects" className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-700 rounded-md text-white hover:bg-green-800 flex items-center"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
-                </>
-              ) : 'Create Project'}
-            </button>
+                  {/* Employment Type */}
+                  <div>
+                    <label htmlFor="employment_type" className="block text-sm font-medium mb-1">
+                      Employment Type<span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="employment_type"
+                      name="employment_type"
+                      required={formData.type === 'employment'}
+                      value={formData.employment_details.employment_type}
+                      onChange={handleEmploymentChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                    >
+                      <option value="">Select employment type</option>
+                      {employmentTypes.map(option => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Department */}
+                  <div>
+                    <label htmlFor="department" className="block text-sm font-medium mb-1">
+                      Department
+                    </label>
+                    <input
+                      type="text"
+                      id="department"
+                      name="department"
+                      value={formData.employment_details.department}
+                      onChange={handleEmploymentChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                      placeholder="e.g., Engineering, Marketing, etc."
+                    />
+                  </div>
+                </div>
+
+                {/* Responsibilities */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">
+                    Responsibilities
+                  </label>
+                  <MultipleSelector
+                    value={selectedResponsibilities}
+                    onChange={handleResponsibilitiesChange}
+                    creatable
+                    placeholder="Add responsibilities..."
+                    emptyIndicator={
+                      <p className="text-center text-lg leading-10 text-gray-600">
+                        No responsibilities added.
+                      </p>
+                    }
+                  />
+                </div>
+
+                {/* Required Qualifications */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">
+                    Required Qualifications
+                  </label>
+                  <MultipleSelector
+                    value={selectedRequiredQualifications}
+                    onChange={handleRequiredQualificationsChange}
+                    creatable
+                    placeholder="Add required qualifications..."
+                    emptyIndicator={
+                      <p className="text-center text-lg leading-10 text-gray-600">
+                        No required qualifications added.
+                      </p>
+                    }
+                  />
+                </div>
+
+                {/* Preferred Qualifications */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-1">
+                    Preferred Qualifications
+                  </label>
+                  <MultipleSelector
+                    value={selectedPreferredQualifications}
+                    onChange={handlePreferredQualificationsChange}
+                    creatable
+                    placeholder="Add preferred qualifications..."
+                    emptyIndicator={
+                      <p className="text-center text-lg leading-10 text-gray-600">
+                        No preferred qualifications added.
+                      </p>
+                    }
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </form>
-      </div>
+        )}
+
+        {/* Form buttons */}
+        <div className="flex justify-end space-x-3 mt-8">
+          <button
+            type="button"
+            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            onClick={() => router.push('/opportunities')}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-2 bg-green-700 rounded-md text-white hover:bg-green-800 flex items-center"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : 'Create Opportunity'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
 
-export default AddProjectPage;
+export default CreateOpportunityForm;
