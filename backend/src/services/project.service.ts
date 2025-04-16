@@ -198,48 +198,56 @@ type ProjectSearchParams = {
   category_id?: number;
 };
 
-// Generate numeric ID (simple implementation - in real app you might use an auto-increment from DB)
-let lastId = 1000;
-function generateId(): number {
-  return ++lastId;
-}
-
 // Create a new project
 export async function createProject(
   projectData: CreateProjectInput,
 ): Promise<ProjectOutput> {
   try {
     return await withDbTransaction(async (txDb) => {
-      // Generate project ID
-      const projectId = generateId();
+      // Check if a project with the same name already exists
+      const existingProject = await txDb
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.name, projectData.name))
+        .limit(1);
 
-      // Insert the project
-      await txDb.insert(projects).values({
-        id: projectId,
-        name: projectData.name,
-        description: projectData.description || null,
-        status: projectData.status,
-        start_date: projectData.start_date,
-        end_date: projectData.end_date || null,
-        created_by: projectData.created_by,
-        category_id: projectData.category_id,
-        location: projectData.location || null,
-        
-        // New fields
-        goals: projectData.goals || null,
-        outcomes: projectData.outcomes || null,
-        media: projectData.media || null,
-        other_information: projectData.other_information || null,
-        
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
+      if (existingProject.length > 0) {
+        throw new AppError(`Project with name "${projectData.name}" already exists`, 409);
+      }
+
+      // Insert the project and get the auto-generated ID
+      const insertResult = await txDb.insert(projects)
+        .values({
+          name: projectData.name,
+          description: projectData.description || null,
+          status: projectData.status,
+          start_date: projectData.start_date,
+          end_date: projectData.end_date || null,
+          created_by: projectData.created_by,
+          category_id: projectData.category_id,
+          location: projectData.location || null,
+          
+          // New fields
+          goals: projectData.goals || null,
+          outcomes: projectData.outcomes || null,
+          media: projectData.media || null,
+          other_information: projectData.other_information || null,
+          
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning({ id: projects.id });
+
+      if (!insertResult.length) {
+        throw new AppError("Failed to create project", 500);
+      }
+
+      const projectId = insertResult[0].id;
 
       // Add project members if provided
       if (projectData.members && projectData.members.length > 0) {
         for (const member of projectData.members) {
           await txDb.insert(project_members).values({
-            id: generateId(),
             project_id: projectId,
             user_id: member.user_id,
             role: member.role,
@@ -256,7 +264,6 @@ export async function createProject(
 
       if (!creatorAlreadyAdded) {
         await txDb.insert(project_members).values({
-          id: generateId(),
           project_id: projectId,
           user_id: projectData.created_by,
           role: "lead",
@@ -342,6 +349,22 @@ export async function updateProject(
 
     if (!existingProject.length) {
       throw new AppError("Project not found", 404);
+    }
+
+    // Check if name is being updated and if it conflicts with an existing project
+    if (projectData.name && projectData.name !== existingProject[0].name) {
+      const nameExists = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(
+          eq(projects.name, projectData.name),
+          sql`${projects.id} != ${id}`
+        ))
+        .limit(1);
+
+      if (nameExists.length > 0) {
+        throw new AppError(`Project with name "${projectData.name}" already exists`, 409);
+      }
     }
 
     // Update project
@@ -461,31 +484,21 @@ export async function addProjectMember(
     // Ensure role is one of the allowed values
     const role = validateRole(memberData.role);
 
-    await db.insert(project_members).values({
-      project_id: projectId,
-      user_id: memberData.user_id,
-      role: role as "lead" | "member" | "supervisor" | "contributor",
-      start_date: memberData.start_date,
-      end_date: memberData.end_date || null,
-    });
+    const insertResult = await db.insert(project_members)
+      .values({
+        project_id: projectId,
+        user_id: memberData.user_id,
+        role: role as "lead" | "member" | "supervisor" | "contributor",
+        start_date: memberData.start_date,
+        end_date: memberData.end_date || null,
+      })
+      .returning();
 
-    // Get the added member
-    const addedMember = await db
-      .select()
-      .from(project_members)
-      .where(
-        and(
-          eq(project_members.project_id, projectId),
-          eq(project_members.user_id, memberData.user_id),
-        ),
-      )
-      .limit(1);
-
-    if (!addedMember.length) {
+    if (!insertResult.length) {
       throw new AppError("Failed to add project member", 500);
     }
 
-    return mapToProjectMemberOutput(addedMember[0]);
+    return mapToProjectMemberOutput(insertResult[0]);
   } catch (error) {
     logger.error(`Error adding member to project: ${projectId}`, error);
     if (error instanceof AppError) {
@@ -712,36 +725,50 @@ export async function importProjects(
       // Process each project
       for (const projectData of projectsData) {
         try {
-          // Generate project ID
-          const projectId = generateId();
+          // Check for duplicate project name
+          const nameExists = await txDb
+            .select({ id: projects.id })
+            .from(projects)
+            .where(eq(projects.name, projectData.name))
+            .limit(1);
 
-          // Insert the project
-          await txDb.insert(projects).values({
-            id: projectId,
-            name: projectData.name,
-            description: projectData.description || null,
-            status: projectData.status,
-            start_date: projectData.start_date,
-            end_date: projectData.end_date || null,
-            created_by: projectData.created_by,
-            category_id: projectData.category_id,
-            location: projectData.location || null,
-            
-            // New fields
-            goals: projectData.goals || null,
-            outcomes: projectData.outcomes || null,
-            media: projectData.media || null,
-            other_information: projectData.other_information || null,
-            
-            created_at: new Date(),
-            updated_at: new Date(),
-          });
+          if (nameExists.length > 0) {
+            throw new AppError(`Project with name "${projectData.name}" already exists`, 409);
+          }
+
+          // Insert the project and get the auto-generated ID
+          const insertResult = await txDb.insert(projects)
+            .values({
+              name: projectData.name,
+              description: projectData.description || null,
+              status: projectData.status,
+              start_date: projectData.start_date,
+              end_date: projectData.end_date || null,
+              created_by: projectData.created_by,
+              category_id: projectData.category_id,
+              location: projectData.location || null,
+              
+              // New fields
+              goals: projectData.goals || null,
+              outcomes: projectData.outcomes || null,
+              media: projectData.media || null,
+              other_information: projectData.other_information || null,
+              
+              created_at: new Date(),
+              updated_at: new Date(),
+            })
+            .returning({ id: projects.id });
+
+          if (!insertResult.length) {
+            throw new AppError("Failed to create project", 500);
+          }
+
+          const projectId = insertResult[0].id;
 
           // Add project members if provided
           if (projectData.members && projectData.members.length > 0) {
             for (const member of projectData.members) {
               await txDb.insert(project_members).values({
-                id: generateId(),
                 project_id: projectId,
                 user_id: member.user_id,
                 role: member.role,
@@ -758,7 +785,6 @@ export async function importProjects(
 
           if (!creatorAlreadyAdded) {
             await txDb.insert(project_members).values({
-              id: generateId(),
               project_id: projectId,
               user_id: projectData.created_by,
               role: "lead",
