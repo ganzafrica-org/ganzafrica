@@ -1,901 +1,371 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import Container from '@/components/layout/container';
-import Link from 'next/link';
-import { ArrowRight, Play, Volume2, Maximize } from 'lucide-react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-import { DecoratedHeading } from "@/components/layout/headertext";
-import { default as HeaderBanner } from "@/components/layout/headerBanner";
-import { FC } from 'react';
-import { BikeIcon, LandGovernanceIcon, SustainableAgricultureIcon, ClimateAdaptationIcon } from "@/components/ui/icons";
-import { default as HeaderBelt } from "@/components/layout/headerBelt";
+import { Button } from "@ui/button";
+import { AlumniCard } from "@/components/layout/AlumniCard";
+import { Badge } from "@ui/badge";
+import { 
+  PlayCircle, 
+  ArrowRight, 
+  CheckCircle2, 
+  Users, 
+  Briefcase, 
+  Calendar,
+  Sprout,
+  TreePine,
+  Cloud,
+} from "lucide-react";
+import { useEffect, useRef } from "react";
+import Link from "next/link";
 
 
-// Register ScrollTrigger plugin
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
-interface JourneyStep {
-  id: string;
-  title: string;
-  duration: string;
-  description: string;
-}
-
-interface Activity {
-  title: string;
-  description: string;
-  color: string;
-}
-
-interface Project {
-  id: number;
-  title: string;
-  image: string;
-  status: string;
-  category: string;
-}
-
-interface ValueCardProps {
-  bgColor: string;
-  iconBgColor: string;
-  iconColor?: string;
-  title: string;
-  titleColor: string;
-  textColor?: string;
-  description: string;
-  Icon?: React.FC<{className?: string, color?: string}>;
-  animationDirection?: string;
-}
-
-const activities: Activity[] = [
-  {
-    title: "Land Governance",
-    description: "We support the development of equitable and effective land governance frameworks using research-based strategies and promoting sustainable benefits",
-    color: "bg-primary-green"
-  },
-  {
-    title: "Sustainable Agriculture",
-    description: "Our work promotes agricultural productivity goals with innovative partnerships and leadership to achieve sustainable development",
-    color: "bg-primary-green"
-  },
-  {
-    title: "Climate Adaptation",
-    description: "Our expertise supports the creation of climate resilience strategies that help communities adapt to changing environmental conditions",
-    color: "bg-primary-green"
-  }
-];
-
-const projects = [
-  {
-    id: 1,
-    title: "Agriculture Management Information System",
-    image: "/images/news/team-members-1.jpg",
-    status: "In Progress",
-    category: "Technology"
-  },
-  {
-    id: 2,
-    title: "Sustainable Farming Practices Research",
-    image: "/images/news/team-members-2.jpg",
-    status: "Completed",
-    category: "Research"
-  },
-  {
-    id: 3,
-    title: "Climate-Smart Agriculture Initiative",
-    image: "/images/news/maize.avif",
-    status: "Active",
-    category: "Climate"
-  },
-  {
-    id: 4,
-    title: "Land Rights Documentation System",
-    image: "/images/news/team-members-1.jpg",
-    status: "In Review",
-    category: "Governance"
-  },
-  {
-    id: 5,
-    title: "Agricultural Data Analytics Platform",
-    image: "/images/news/team-members-2.jpg",
-    status: "Planning",
-    category: "Technology"
-  },
-  {
-    id: 6,
-    title: "Community Farm Development Project",
-    image: "/images/news/maize.avif",
-    status: "Active",
-    category: "Community"
-  },
-  {
-    id: 7,
-    title: "Soil Health Monitoring Program",
-    image: "/images/news/team-members-1.jpg",
-    status: "Active",
-    category: "Research"
-  },
-  {
-    id: 8,
-    title: "Water Resource Management System",
-    image: "/images/news/team-members-2.jpg",
-    status: "In Progress",
-    category: "Technology"
-  },
-  {
-    id: 9,
-    title: "Indigenous Farming Knowledge Database",
-    image: "/images/news/maize.avif",
-    status: "Planning",
-    category: "Research"
-  },
-  {
-    id: 10,
-    title: "Agricultural Market Access Platform",
-    image: "/images/news/team-members-1.jpg",
-    status: "Active",
-    category: "Technology"
-  },
-  {
-    id: 11,
-    title: "Sustainable Livestock Management",
-    image: "/images/news/team-members-2.jpg",
-    status: "In Review",
-    category: "Research"
-  },
-  {
-    id: 12,
-    title: "Climate Resilience Training Program",
-    image: "/images/news/maize.avif",
-    status: "Active",
-    category: "Climate"
-  }
-];
-
-const SectionTitle = ({ title1, title2 }: { title1: string; title2: string }) => {
-  const titleRef = useRef<HTMLDivElement>(null);
+export default function Home() {
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!titleRef.current) return;
+    const scrollElement = scrollRef.current;
+    if (!scrollElement) return;
+
+    const scrollContent = scrollElement.children[0];
+    if (!scrollContent) return;
     
-    gsap.from(titleRef.current, {
-      y: 20,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power3.out"
-    });
+    const scrollWidth = scrollContent.scrollWidth;
+    let scrollPos = 0;
+
+    const animate = () => {
+      scrollPos = (scrollPos + 1) % scrollWidth;
+      scrollElement.scrollLeft = scrollPos;
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      // Cleanup if needed
+    };
   }, []);
 
   return (
-    <div ref={titleRef} className="relative inline-flex items-center border-2 border-primary-orange rounded-lg p-0.5">
-      <div className="px-6 py-2">
-        <h2 className="text-xl font-bold">
-          <span className="text-primary-green">{title1}</span>
-          <span className="text-primary-orange">{title2}</span>
-        </h2>
-      </div>
-      {/* Corner squares */}
-      <div className="absolute -top-1 -left-1 w-2 h-2 bg-primary-orange" />
-      <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary-orange" />
-      <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-primary-orange" />
-      <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-primary-orange" />
-    </div>
-  );
-};
-
-// Reusable Value Card component - Added animationDirection prop
-const ValueCard: FC<ValueCardProps> = ({
-  bgColor,
-  iconBgColor,
-  iconColor = "white",
-  title,
-  titleColor,
-  textColor = "text-gray-800",
-  description,
-  Icon = BikeIcon,
-  animationDirection
-}) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!cardRef.current || !animationDirection) return;
-    
-    gsap.from(cardRef.current, {
-      x: animationDirection === 'left' ? -50 : animationDirection === 'right' ? 50 : 0,
-      opacity: 0,
-      duration: 0.8,
-      scrollTrigger: {
-        trigger: cardRef.current,
-        start: "top 80%",
-        end: "bottom 20%",
-        toggleActions: "play none none reverse"
-      }
-    });
-  }, [animationDirection]);
-
-  return (
-    <div
-      ref={cardRef}
-      className={`w-full md:w-1/3 ${bgColor} rounded-3xl p-6 sm:p-8 relative mb-6 md:mb-0 pt-16 sm:pt-20`}
-    >
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-        <div
-          className={`${iconBgColor} rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center shadow-md`}
-        >
-          <Icon
-            className="w-6 h-6 sm:w-8 sm:h-8"
-            color={iconColor}
-          />
-        </div>
-      </div>
-
-      <h3
-        className={`text-xl sm:text-2xl font-bold text-center ${titleColor} mb-3 sm:mb-4`}
-      >
-        {title}
-      </h3>
-
-      <p
-        className={`${textColor} text-center text-sm sm:text-base`}
-      >
-        {description}
-      </p>
-    </div>
-  );
-};
-
-// Video Card component
-interface VideoCardProps {
-  videoSrc: string;
-  title: string;
-  description: string;
-  isWide?: boolean;
-}
-
-const VideoCard: FC<VideoCardProps> = ({ videoSrc, title, description, isWide = false }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true); // Default to muted
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handlePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play().catch(e => console.error("Error playing video:", e));
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleVideoEnd = () => {
-    setIsPlaying(false);
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-    }
-  };
-  
-  // Play on hover
-  const handleMouseEnter = () => {
-    if (videoRef.current && !isPlaying) {
-      videoRef.current.play().catch(e => console.error("Error on hover play:", e));
-      setIsPlaying(true);
-    }
-  };
-  
-  const handleMouseLeave = () => {
-    if (videoRef.current && isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  // Toggle mute function
-  const toggleMute = (e: React.MouseEvent<HTMLDivElement>): void => {
-    e.stopPropagation(); // Prevent triggering play/pause
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(videoRef.current.muted);
-    }
-  };
-
-  // Toggle fullscreen function
-  const toggleFullscreen = (e: React.MouseEvent<HTMLDivElement>): void => {
-    e.stopPropagation(); // Prevent triggering play/pause
-    if (videoRef.current) {
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch((err: Error) => console.error(err));
-      } else {
-        videoRef.current.requestFullscreen().catch((err: Error) => console.error(err));
-      }
-    }
-  };
-
-  // Stop on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (videoRef.current && isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      }
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isPlaying]);
-
-  return (
-    <div 
-      ref={containerRef}
-      className={`relative rounded-2xl overflow-hidden ${isWide ? 'md:col-span-2' : ''}`}
-      style={{ boxShadow: 'none' }} // Explicitly remove any shadow
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <div className="aspect-video w-full relative">
-        <video 
-          ref={videoRef}
-          src={videoSrc}
-          className="w-full h-full object-cover"
-          onEnded={handleVideoEnd}
-          onClick={handlePlay}
-          playsInline
-          muted={isMuted} // Use state to control muted attribute
-          preload="metadata" // Ensure metadata is loaded
+    <main className="min-h-screen bg-white font-rubik">
+      {/* Background Pattern */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <img
+          src="/images/leaf.jpg"
+          alt="Background Pattern"
+          className="w-full h-full object-cover opacity-[0.08]"
         />
-        
-        {/* Green overlay that disappears when playing */}
-        <div className={`absolute inset-0 bg-primary-green/30 transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}></div>
-        
-        {/* Content that disappears when playing */}
-        <div 
-          className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}
-          onClick={handlePlay}
-        >
-          {/* Play button */}
-          <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center cursor-pointer shadow-lg mb-4">
-            <Play className="w-8 h-8 text-black ml-1" />
-          </div>
-          
-          {/* Title and description inside the video */}
-          <div className="text-center px-6 max-w-md">
-            <h3 className={`${isWide ? 'text-xl' : 'text-lg'} font-bold text-white drop-shadow-md`}>{title}</h3>
-            <p className={`${isWide ? 'text-base' : 'text-sm'} text-white mt-2 drop-shadow-md`}>{description}</p>
-          </div>
-        </div>
-        
-        {/* Video control icons in bottom right - visible all the time */}
-        <div className="absolute bottom-3 right-3 flex space-x-2">
-          {/* Mute/Unmute button */}
-          <div 
-            className="w-8 h-8 rounded-full bg-white/70 flex items-center justify-center cursor-pointer hover:bg-white/90 transition-colors"
-            onClick={toggleMute}
-          >
-            {isMuted ? (
-              <div className="relative">
-                <Volume2 className="w-4 h-4 text-black" />
-                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-black transform -rotate-45"></div>
-              </div>
-            ) : (
-              <Volume2 className="w-4 h-4 text-black" />
-            )}
-          </div>
-          
-          {/* Fullscreen button */}
-          <div 
-            className="w-8 h-8 rounded-full bg-white/70 flex items-center justify-center cursor-pointer hover:bg-white/90 transition-colors"
-            onClick={toggleFullscreen}
-          >
-            <Maximize className="w-4 h-4 text-black" />
-          </div>
-        </div>
       </div>
-    </div>
-  );
-};
 
-const AlumniProgramPage = (): JSX.Element => {
-  const bannerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const journeyRef = useRef<HTMLDivElement>(null);
-  const activitiesRef = useRef<HTMLDivElement>(null);
-  const projectsRef = useRef<HTMLDivElement>(null);
-  const [currentSlide, setCurrentSlide] = useState<number>(0);
-  const totalSlides = Math.ceil(projects.length / 3);
-  const [isPageLoaded, setIsPageLoaded] = useState<boolean>(false);
-
-  const nextSlide = (): void => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
-  };
-
-  const prevSlide = (): void => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-  };
-
-  useEffect(() => {
-    // Set page as loaded
-    setIsPageLoaded(true);
-    
-    // Only run animations after page is fully loaded
-    if (!isPageLoaded) return;
-
-    // Banner animation
-    if (bannerRef.current) {
-      gsap.from(bannerRef.current, {
-        y: -50,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out"
-      });
-    }
-
-    // Image and content animations
-    if (imageRef.current) {
-      gsap.from(imageRef.current, {
-        x: -50,
-        opacity: 0,
-        duration: 1,
-        delay: 0.3,
-        ease: "power3.out"
-      });
-    }
-
-    if (contentRef.current) {
-      gsap.from(contentRef.current, {
-        x: 50,
-        opacity: 0,
-        duration: 1,
-        delay: 0.3,
-        ease: "power3.out"
-      });
-    }
-
-    // Features list stagger animation
-    if (featuresRef.current) {
-      gsap.from(".feature-item", {
-        y: 20,
-        opacity: 0,
-        duration: 0.5,
-        stagger: 0.1,
-        scrollTrigger: {
-          trigger: featuresRef.current,
-          start: "top 80%",
-          end: "bottom 20%",
-          toggleActions: "play none none reverse"
-        }
-      });
-    }
-
-    // Journey steps animation
-    if (journeyRef.current) {
-      gsap.from(".journey-step", {
-        x: -30,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.3,
-        scrollTrigger: {
-          trigger: journeyRef.current,
-          start: "top 80%",
-          end: "bottom 20%",
-          toggleActions: "play none none reverse"
-        }
-      });
-    }
-    
-    // Projects section animation for arrows
-    if (projectsRef.current) {
-      // Add animation for arrow buttons
-      gsap.fromTo(".arrow-button", 
-        { y: 0 },
-        { 
-          y: 5, 
-          duration: 1.2, 
-          repeat: -1, 
-          yoyo: true,
-          ease: "power1.inOut"
-        }
-      );
-    }
-  }, [isPageLoaded]);
-
-  // Add a class to hide content until page is loaded
-  const pageClass = isPageLoaded ? "opacity-100 transition-opacity duration-500" : "opacity-0";
-
-  return (
-    <main className={`bg-white ${pageClass}`}>
-      {/* Hero Section */}
-      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/team.png"
-            alt="Agricultural fields"
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
-          />
+      {/* Hero Section - Full width */}
+      <section className="relative h-[500px] z-10">
+        <div className="absolute inset-0 bg-[#045f3c]/80">
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+            className="w-full h-full object-cover mix-blend-overlay"
+          >
+            <source src="/videos/hero-video.mp4" type="video/mp4" />
+          </video>
         </div>
-        
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
-        
-        {/* Content */}
-        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-            <span className="font-normal">Strengthening</span> <span className="font-bold text-yellow-400">Our Legacy, </span><br />
-            <span className="font-normal">Together</span>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 flex flex-col items-center justify-center text-center h-full pt-20">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-8">
+            A lifetime of <span className="text-[#F8B712]">Connections</span>, Opportunities and <span className="text-[#F8B712]">Impact</span>
           </h1>
-          <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
-            ALUMNI
+          <h2 className="text-5xl md:text-7xl font-extrabold text-[#F8B712] tracking-wider">
+            ALUMNI NETWORK
           </h2>
         </div>
       </section>
-    <HeaderBelt />
-      {/* Program Overview Section */}
-      <Container>
-        <div className="py-10">
-          <div className="flex flex-col lg:flex-row gap-12 items-start max-w-7xl mx-auto">
-            {/* Left Column - Image */}
-            <div ref={imageRef} className="lg:w-[42%] lg:mt-[60px]">
-              <div className="relative aspect-[4/3] w-full">
-                <Image
-                  src="/images/news/team-members-1.jpg"
-                  alt="Alumni Network"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 42vw"
-                  className="rounded-2xl object-cover"
-                  priority
+
+      {/* Categories Bar - Full width */}
+      <div className="bg-[#F8B712] py-3 relative z-10">
+        <div ref={scrollRef} className="max-w-7xl mx-auto px-4 overflow-hidden">
+          <div className="flex gap-6 whitespace-nowrap animate-scroll">
+            {Array(2).fill(["Food Systems", "Data & Evidence", "Co-creation", "Food systems", "Data & Evidence"]).flat().map((item, index) => (
+              <span key={index} className="text-lg font-medium">• {item}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Content with standard page margins */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Mission Section */}
+        <section className="py-8 relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="relative">
+              <div className="rounded-full overflow-hidden aspect-square border-8 border-[#F8B712] shadow-xl bg-white">
+                <img
+                  src="/images/launch event.jpg"
+                  alt="Mission"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div className="absolute -bottom-8 -left-4 w-52 h-52 rounded-full overflow-hidden border-8 border-[#F8B712] shadow-lg bg-white">
+                <img
+                  src="/images/Happy fellows.jpg"
+                  alt="Mission Detail"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
-
-            {/* Right Column - Content */}
-            <div ref={contentRef} className="lg:w-[58%]">
-              {/* Section Title */}
-              <div className="flex justify-center mb-10">
-                <DecoratedHeading firstText="Program" secondText="Overview" />
+            <div>
+              <div className="inline-block border-2 border-[#045f3c] rounded-lg px-5 py-2 mb-6">
+                <h2 className="text-2xl font-bold">
+                  <span className="text-[#045f3c]">Mission </span>
+                  <span className="text-[#F8B712]">Statement</span>
+                </h2>
               </div>
-              
-              {/* Description */}
-              <div className="space-y-4">
-                <p className="text-gray-800 text-base leading-relaxed">
-                  The GanzAfrica Alumni Network connects former fellows who continue to drive positive change across Africa's
-                  land, agriculture, and environmental sectors. Our growing community of over 40 professionals now works in
-                  government agencies, international organizations, research institutions, and social enterprises.
-                </p>
-                <p className="text-gray-800 text-base leading-relaxed">
-                  This powerful network facilitates knowledge sharing, collaboration, and continuous professional development
-                  —amplifying the impact of individual members through collective action and support.
-                </p>
-              </div>
-
-              {/* Features List */}
-              <div ref={featuresRef} className="space-y-3 mt-6">
-                <div className="feature-item flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-primary-orange flex items-center justify-center">
-                    <Image src="/images/leafwhite.png" alt="Leaf icon" width={16} height={16} className="w-4 h-4" />
+              <p className="text-base text-gray-700 mb-6">
+                Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa.
+              </p>
+              <p className="italic text-lg text-[#045f3c] font-medium mb-6 border-l-4 border-[#F8B712] pl-4">
+                "To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact."
+              </p>
+              <div className="flex gap-8">
+                {["Knowledge Sharing", "Mentorship", "Collaboration and Networking"].map((principle, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full bg-[#F8B712]" />
+                    <span className="text-base text-[#045f3c] font-medium">{principle}</span>
                   </div>
-                  <p className="text-gray-800 text-base">Intensive skill-building modules</p>
-                </div>
-                <div className="feature-item flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-primary-orange flex items-center justify-center">
-                    <Image src="/images/leafwhite.png" alt="Leaf icon" width={16} height={16} className="w-4 h-4" />
-                  </div>
-                  <p className="text-gray-800 text-base">Hands-on apprenticeships with industry leaders</p>
-                </div>
-                <div className="feature-item flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-primary-orange flex items-center justify-center">
-                    <Image src="/images/leafwhite.png" alt="Leaf icon" width={16} height={16} className="w-4 h-4" />
-                  </div>
-                  <p className="text-gray-800 text-base">Community-based project implementation</p>
-                </div>
-                <div className="feature-item flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-primary-orange flex items-center justify-center">
-                    <Image src="/images/leafwhite.png" alt="Leaf icon" width={16} height={16} className="w-4 h-4" />
-                  </div>
-                  <p className="text-gray-800 text-base">Cross-disciplinary collaboration opportunities</p>
-                </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
-      </Container>
+        </section>
 
-      {/* Alumni Videos Section - Using the same style as Fellowship Journey */}
-      <div ref={journeyRef} className="py-16">
-        <Container>
-          <div className="flex justify-center mb-10">
-            <DecoratedHeading firstText="Alumni" secondText="Videos" />
-          </div>
-
-          {/* Video Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {/* Large video on the left */}
-            <VideoCard 
-              videoSrc="/videos/farmer1.mp4"
-              title="Impact Stories"
-              description="Alumni share their experiences and the impact of their work in communities across Africa."
-              isWide={true}
-            />
-            
-            {/* Two smaller videos stacked on the right */}
-            <div className="md:col-span-1 flex flex-col gap-6">
-              <VideoCard 
-                videoSrc="/videos/farmer2.mp4"
-                title="Networking Events"
-                description="Alumni gather to share knowledge and build partnerships at our annual symposium."
-              />
-              
-              <VideoCard 
-                videoSrc="/videos/farmer1.mp4"
-                title="Mentorship Program"
-                description="Experienced alumni provide guidance to new fellows in our mentorship initiative."
-              />
-            </div>
-          </div>
-        </Container>
-      </div>
-
-      {/* Alumni Activities Section - With animation from left and right (using Fellow Activities style) */}
-      <section className="py-8 sm:py-12 md:py-16 bg-white" ref={activitiesRef}>
-        <div className="flex justify-center mb-8 sm:mb-12 md:mb-16">
-          <div className="relative inline-block">
-            <div className="flex justify-center mb-6 sm:mb-10">
-              <DecoratedHeading
-                firstText="Alumni"
-                secondText="Activities"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
-            <ValueCard
-              bgColor="bg-yellow-50"
-              iconBgColor="bg-primary-orange"
-              title="Land Governance"
-              titleColor="text-primary-orange"
-              Icon={LandGovernanceIcon}
-              description="We support the development of equitable and effective land administration systems that strengthen tenure security while promoting sustainable land use"
-              animationDirection="left"
-            />
-
-            <ValueCard
-              bgColor="bg-green-800"
-              iconBgColor="bg-white"
-              iconColor="#006837"
-              title="Sustainable Agriculture"
-              titleColor="text-white"
-              textColor="text-white"
-              Icon={SustainableAgricultureIcon}
-              description="Our work promotes agricultural policies that balance productivity goals with environmental stewardship and social inclusion"
-            />
-
-            <ValueCard
-              bgColor="bg-yellow-50"
-              iconBgColor="bg-primary-orange"
-              title="Climate Adaptation"
-              titleColor="text-primary-orange"
-              Icon={ClimateAdaptationIcon}
-              description="Our expertise supports the creation of climate resilience strategies that help communities adapt to changing environmental conditions"
-              animationDirection="right"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Alumni Projects Section - Using Fellowship Projects style */}
-      <div ref={projectsRef}>
-        <Container>
-          <div className="py-16">
-            <div className="flex justify-center mb-10">
-              <DecoratedHeading firstText="Alumni" secondText="Projects" />
-            </div>
-            <div className="flex justify-end">
-              <Link 
-                href="/projects"
-                className="inline-flex items-center text-primary-green hover:text-primary-green/80 font-medium gap-2"
-              >
-                <span className="text-sm italic">See More Projects</span>
-                <div className="w-8 h-8 rounded-full bg-primary-orange flex items-center justify-center">
-                  <ArrowRight className="w-5 h-5 text-white" />
+        {/* Stats Section */}
+        <section className="py-8 bg-[#F5F5F5]/90 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <AlumniCard className="bg-gradient-to-br from-[#045f3c] to-[#034028] text-white p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-br-none shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#056d45] rounded-full -translate-y-12 translate-x-12 opacity-50"></div>
+                <div className="absolute bottom-0 left-0 w-16 h-16 bg-[#056d45] rounded-full translate-y-8 -translate-x-8 opacity-30"></div>
+                <div className="flex flex-col items-center relative z-10">
+                  <div className="bg-white/10 p-4 rounded-full mb-4">
+                    <Users className="w-12 h-12" />
+                  </div>
+                  <h3 className="text-xl mb-4 font-medium">Transitioned Fellows</h3>
+                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">27</p>
                 </div>
-              </Link>
+              </AlumniCard>
+
+              <AlumniCard className="bg-[#FFF8E1] p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-tl-none rounded-br-none shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#F8B712] rounded-full -translate-y-16 translate-x-16 opacity-10"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F8B712] rounded-full translate-y-12 -translate-x-12 opacity-10"></div>
+                <div className="flex flex-col items-center relative z-10">
+                  <div className="bg-[#045f3c]/10 p-4 rounded-full mb-4">
+                    <Briefcase className="w-12 h-12 text-[#045f3c]" />
+                  </div>
+                  <h3 className="text-xl mb-4 font-medium text-[#045f3c]">Alumni Projects</h3>
+                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-[#F8B712] to-[#d49a0f]">12+</p>
+                </div>
+              </AlumniCard>
+
+              <AlumniCard className="bg-gradient-to-bl from-[#045f3c] to-[#034028] text-white p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-tl-none shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-[#056d45] rounded-full -translate-y-10 translate-x-10 opacity-50"></div>
+                <div className="absolute bottom-0 left-0 w-28 h-28 bg-[#056d45] rounded-full translate-y-14 -translate-x-14 opacity-30"></div>
+                <div className="flex flex-col items-center relative z-10">
+                  <div className="bg-white/10 p-4 rounded-full mb-4">
+                    <Calendar className="w-12 h-12" />
+                  </div>
+                  <h3 className="text-xl mb-4 font-medium">Events</h3>
+                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">5+</p>
+                </div>
+              </AlumniCard>
             </div>
+          </div>
+        </section>
 
-            {/* Projects Grid with Sliding */}
-            <div className="relative w-full">
-              <div className="overflow-hidden">
-                <div 
-                  className="slider-container flex flex-nowrap transition-transform duration-700 ease-out"
-                  style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-                >
-                  {Array.from({ length: Math.ceil(projects.length / 3) }).map((_, index) => (
-                    <div key={`slide-${index}`} className="flex gap-8 min-w-full flex-shrink-0">
-                      {projects.slice(index * 3, (index + 1) * 3).map((project) => (
-                        <div 
-                          key={`project-${project.id}`}
-                          className="project-card flex-1 group relative bg-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden cursor-pointer"
-                        >
-                          <div className="relative w-full overflow-hidden">
-                            {/* Top right cut-out */}
-                            <div className="absolute -top-px -right-px w-[140px] h-[70px] bg-white">
-                              <div className="absolute bottom-0 left-0 w-full h-full bg-white">
-                                <div className="absolute bottom-0 left-0 w-full h-full bg-[#F5F5F5] rounded-bl-[48px]" />
-                              </div>
-                            </div>
-                            
-                            {/* Main content container */}
-                            <div className="relative">
-                              {/* Arrow button with CSS hover effect and animation */}
-                              <Link href={`/projects/${project.id}`}>
-                                <div className="absolute top-4 right-4 z-10">
-                                  <div className="arrow-button w-12 h-12 rounded-full bg-primary-orange group-hover:bg-[#00A651] flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer">
-                                    <ArrowRight className="w-6 h-6 text-white transform -rotate-45 group-hover:-rotate-90 transition-transform duration-300" />
-                                  </div>
-                                </div>
-                              </Link>
-
-                              {/* Image section with CSS hover effect */}
-                              <div className="card-image relative aspect-[16/9] w-full overflow-hidden">
-                                <Image
-                                  src={project.image || '/images/default-image.jpg'}
-                                  alt={project.title}
-                                  fill
-                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                  className="object-cover transform group-hover:scale-105 transition-transform duration-500"
-                                />
-                                
-                                {/* Title section - completely plain white with no shadows or borders */}
-                                <div className="absolute -bottom-6 -left-3 bg-white py-2 px-4 w-64 z-10 rounded-tr-3xl rounded-br-3xl rounded-tl-3xl">
-                                  <div className="font-medium text-sm">
-                                    {project.title}
-                                  </div>
-                                  </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+        {/* Purpose Section */}
+        <section className="py-8 relative">
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="relative">
+              <div className="absolute -top-6 right-6 bg-[#F8B712] text-black p-5 rounded-lg shadow-lg transform -rotate-2 z-20">
+                <div className="relative">
+                  <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-[#F8B712] rotate-45"></div>
+                  <p className="text-xl font-bold relative z-10">Always a GanzAfrica, Always a Changemaker!</p>
+                </div>
+              </div>
+              <img
+                src="/images/form.jpg"
+                alt="Purpose"
+                className="rounded-lg shadow-xl relative z-10"
+              />
+            </div>
+            <div>
+              <div className="inline-block border-2 border-[#045f3c] rounded-lg px-6 py-3 mb-8">
+                <h2 className="text-3xl font-bold">
+                  <span className="text-[#045f3c]">Purpose of the </span>
+                  <span className="text-[#F8B712]">Alumni Network</span>
+                </h2>
+              </div>
+              <div className="space-y-8">
+                {[
+                  {
+                    title: "Networking and Professional Development",
+                    description: "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
+                    color: "#045f3c"
+                  },
+                  {
+                    title: "Knowledge Sharing",
+                    description: "Serve as a platform for sharing diverse experiences, skills and expertise among analysts in their different sectors and workstreams.",
+                    color: "#009758"
+                  },
+                  {
+                    title: "Investing Back into the Fellowship Program",
+                    description: "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
+                    color: "#7EED42"
+                  },
+                  {
+                    title: "Co-creating and Co-implementing Solutions",
+                    description: "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
+                    color: "#F8B712"
+                  },
+                  {
+                    title: "Championing Data and Evidence Use",
+                    description: "Shaping and ingraining a collective vision and agenda to drive a culture of data and evidence use in policy and decision-making to accelerate inclusive agri-food systems transformation.",
+                    color: "#D8D413"
+                  }
+                ].map((item, index, arr) => (
+                  <div key={index} className="relative">
+                    <div className="flex gap-3">
+                      <CheckCircle2 className="w-6 h-6 flex-shrink-0" style={{ color: item.color }} />
+                      <div>
+                        <h3 className="text-lg font-bold text-[#045f3c] mb-1">{item.title}</h3>
+                        <p className="text-gray-600 text-base">{item.description}</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Navigation Controls */}
-              <div className="mt-8 flex justify-center">
-                <div className="flex items-center gap-4">
-                  <button 
-                    onClick={prevSlide}
-                    className={`nav-arrow w-10 h-10 rounded-full border border-primary-green flex items-center justify-center ${
-                      currentSlide === 0 ? 'opacity-50' : 'hover:bg-primary-green hover:text-white'
-                    } text-primary-green transition-all duration-300`}
-                    aria-label="Previous slide"
-                  >
-                    ←
-                  </button>
-
-                  {/* Progress bar */}
-                  <div className="progress-bar w-32 h-1 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary-green rounded-full transition-all duration-500"
-                      style={{ width: `${((currentSlide + 1) / totalSlides) * 100}%` }}
-                    />
+                    {index < arr.length - 1 && (
+                      <div className="absolute left-3 top-8 bottom-0 border-l-2 border-dotted border-black opacity-20 h-12"></div>
+                    )}
                   </div>
-
-                  <button 
-                    onClick={nextSlide}
-                    className={`nav-arrow w-10 h-10 rounded-full border border-primary-green flex items-center justify-center ${
-                      currentSlide === totalSlides - 1 ? 'opacity-50' : 'hover:bg-primary-green hover:text-white'
-                    } text-primary-green transition-all duration-300`}
-                    aria-label="Next slide"
-                  >
-                    →
-                  </button>
-                </div>
+                ))}
               </div>
             </div>
           </div>
-        </Container>
+        </section>
+
+        {/* Projects Section */}
+        <section className="py-8 relative z-10">
+          <div className="text-center mb-12">
+            <div className="inline-block border-2 border-[#045f3c] rounded-lg px-6 py-3">
+              <h2 className="text-3xl font-bold">
+                <span className="text-[#045f3c]">Alumni </span>
+                <span className="text-[#F8B712]">Projects</span>
+              </h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                tag: "Land Governance",
+                description: "We support the development of equitable and effective land administration systems that strengthen tenure security while promoting sustainable land use",
+                icon: <TreePine className="w-6 h-6" />
+              },
+              {
+                tag: "Sustainable Agriculture",
+                description: "Our work promotes agricultural policies that balance productivity goals with environmental stewardship and social inclusion",
+                icon: <Sprout className="w-6 h-6" />
+              },
+              {
+                tag: "Climate Adaptation",
+                description: "Our expertise supports the creation of climate resilience strategies that help communities adapt to changing environmental conditions",
+                icon: <Cloud className="w-6 h-6" />
+              }
+            ].map((project, index) => (
+              <AlumniCard key={index} className="bg-[#045f3c] text-white p-8 rounded-xl transform hover:scale-105 transition-transform group">
+                <div className="flex items-center gap-2 mb-4">
+                  {project.icon}
+                  <Badge className="bg-[#F8B712] text-black text-base px-3 py-1 group-hover:bg-[#F8B712]">{project.tag}</Badge>
+                </div>
+                <p className="text-base leading-relaxed group-hover:text-white/90">{project.description}</p>
+                {index < 2 && (
+                  <div className="absolute left-1/2 -bottom-8 transform -translate-x-1/2 border-l-2 border-dotted border-[#045f3c] opacity-20 h-8"></div>
+                )}
+              </AlumniCard>
+            ))}
+          </div>
+          <div className="flex justify-end mt-8">
+            <Button className="bg-[#045f3c] text-white hover:bg-[#F8B712] hover:text-black transition-colors duration-300 flex items-center gap-2 group">
+              See More Projects
+              <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
+        </section>
+
+        {/* Events Section */}
+        <section className="py-8 bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <div className="inline-block border-2 border-[#045f3c] rounded-lg px-6 py-3">
+                <h2 className="text-3xl font-bold">
+                  <span className="text-[#045f3c]">Alumni </span>
+                  <span className="text-[#F8B712]">Events</span>
+                </h2>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  id: "official-launch",
+                  date: "April 4, 2025",
+                  type: "Events",
+                  title: "Official Launch of GA Alumni Network",
+                  image: "/images/launch event.jpg"
+                },
+                {
+                  id: "lead-intentionally",
+                  date: "July 12, 2025",
+                  type: "Workshop",
+                  title: "Lead Intentionally: Creating Impact in All Spaces",
+                  image: "/images/Sustainable Agriculture Fellows(1).jpg"
+                },
+                {
+                  id: "power-of-networks",
+                  date: "May 12, 2025",
+                  type: "Webinar",
+                  title: "The Power of Networks: Turning Connections",
+                  image: "/images/Sustainable Land Use Fellows.jpg"
+                }
+              ].map((event, index) => (
+                <Link 
+                  key={index} 
+                  href={`/programs/one-event/${event.id}`} 
+                  className="block transform hover:scale-105 transition-transform duration-300"
+                >
+                  <AlumniCard className="overflow-hidden border-2 border-[#045f3c] group cursor-pointer h-full">
+                    <div className="relative h-48">
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute bottom-3 left-3 flex items-center gap-3">
+                        <Badge className="bg-white text-black text-base px-3 py-1 group-hover:bg-[#F8B712] transition-colors duration-300">{event.date}</Badge>
+                        <Badge className="bg-[#045f3c] text-white text-base px-3 py-1 group-hover:bg-[#F8B712] group-hover:text-black transition-colors duration-300">{event.type}</Badge>
+                      </div>
+                      <Button 
+                        size="icon" 
+                        className="absolute bottom-3 right-3 rounded-full bg-[#F8B712] hover:bg-[#045f3c] hover:text-white w-10 h-10 transition-colors duration-300"
+                      >
+                        <ArrowRight className="w-5 h-5" />
+                      </Button>
+                    </div>
+                    <div className="p-5 group-hover:bg-[#045f3c] transition-colors duration-300">
+                      <h3 className="font-bold text-lg mb-2 group-hover:text-white transition-colors duration-300 line-clamp-2">{event.title}</h3>
+                      <p className="text-gray-600 text-sm group-hover:text-white/80 transition-colors duration-300">
+                        Young professionals are at the forefront of accelerating CAADP implementation...
+                      </p>
+                    </div>
+                  </AlumniCard>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
-
-      {/* Alumni Testimonials Section */}
-      <section className="py-16 bg-gray-50">
-        <Container>
-          <div className="flex justify-center mb-12">
-            <DecoratedHeading firstText="Alumni" secondText="Testimonials" />
-          </div>
-          
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Testimonial 1 */}
-            <div className="bg-white rounded-2xl p-6 shadow-md relative">
-              <div className="absolute -top-6 left-8">
-                <div className="w-12 h-12 rounded-full bg-primary-orange flex items-center justify-center">
-                  <Image 
-                    src="/images/leafwhite.png" 
-                    alt="Icon" 
-                    width={24} 
-                    height={24} 
-                    className="w-6 h-6"
-                  />
-                </div>
-              </div>
-              <div className="pt-4">
-                <p className="text-gray-700 italic mb-6">
-                  "The GanzAfrica Alumni Network has been invaluable in my professional journey. The connections I've made and knowledge gained continue to shape my work in sustainable agriculture across Tanzania."
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
-                    <Image 
-                      src="/images/news/team-members-1.jpg" 
-                      alt="Alumni portrait" 
-                      width={48} 
-                      height={48} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-primary-green">Sarah Nkosi</h4>
-                    <p className="text-sm text-gray-600">Class of 2022, Agricultural Researcher</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Testimonial 2 */}
-            <div className="bg-white rounded-2xl p-6 shadow-md relative">
-              <div className="absolute -top-6 left-8">
-                <div className="w-12 h-12 rounded-full bg-primary-orange flex items-center justify-center">
-                  <Image 
-                    src="/images/leafwhite.png" 
-                    alt="Icon" 
-                    width={24} 
-                    height={24} 
-                    className="w-6 h-6"
-                  />
-                </div>
-              </div>
-              <div className="pt-4">
-                <p className="text-gray-700 italic mb-6">
-                  "Being part of this network has opened doors I never thought possible. The mentorship and ongoing support have been critical to implementing climate-smart agricultural practices in my community."
-                </p>
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
-                    <Image 
-                      src="/images/news/team-members-2.jpg" 
-                      alt="Alumni portrait" 
-                      width={48} 
-                      height={48} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-primary-green">Emmanuel Osei</h4>
-                    <p className="text-sm text-gray-600">Class of 2021, Community Leader</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-
     </main>
   );
-};
-
-export default AlumniProgramPage;                                
+}
