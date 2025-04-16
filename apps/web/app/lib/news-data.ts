@@ -11,15 +11,16 @@ export interface NewsItem {
 export const generateSlug = (title: string): string => {
   return title
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 };
 
 export const newsItems: NewsItem[] = [
   {
-    id: '1',
+    id: "1",
     title: "Rwanda's Agricultural Revolution: Digital Land Management",
-    description: "A groundbreaking digital platform is revolutionizing land management in Rwanda, empowering farmers and improving agricultural productivity through innovative technology.",
+    description:
+      "A groundbreaking digital platform is revolutionizing land management in Rwanda, empowering farmers and improving agricultural productivity through innovative technology.",
     date: "Mar 15, 2024",
     category: "News",
     image: "/images/news/team-members-1.jpg",
@@ -113,12 +114,13 @@ Recommendations for Farmers:
 
 Conclusion:
 
-Rwanda's digital land management platform represents more than just technological advancement; it's a comprehensive solution that empowers farmers, streamlines agricultural processes, and paves the way for sustainable agricultural development. As the system continues to evolve and improve, it stands as a model for agricultural modernization across Africa.`
+Rwanda's digital land management platform represents more than just technological advancement; it's a comprehensive solution that empowers farmers, streamlines agricultural processes, and paves the way for sustainable agricultural development. As the system continues to evolve and improve, it stands as a model for agricultural modernization across Africa.`,
   },
   {
-    id: '2',
+    id: "2",
     title: "Sustainable Farming Practices Transform East African Agriculture",
-    description: "Innovative sustainable farming methods are revolutionizing agriculture across East Africa, improving yields while protecting the environment.",
+    description:
+      "Innovative sustainable farming methods are revolutionizing agriculture across East Africa, improving yields while protecting the environment.",
     date: "Mar 10, 2024",
     category: "Blogs",
     image: "/images/news/maize.avif",
@@ -137,12 +139,13 @@ Success stories from various communities highlight the positive impact of these 
 
 The adoption of these practices has also led to improved soil fertility, reduced erosion, and increased biodiversity in farming areas. This holistic approach to agriculture is proving that productivity and environmental conservation can go hand in hand.
 
-Looking ahead, the success of these sustainable farming initiatives provides a blueprint for agricultural development across Africa. As more farmers adopt these practices, we're seeing a positive shift toward more resilient and sustainable food systems.`
+Looking ahead, the success of these sustainable farming initiatives provides a blueprint for agricultural development across Africa. As more farmers adopt these practices, we're seeing a positive shift toward more resilient and sustainable food systems.`,
   },
   {
-    id: '3',
+    id: "3",
     title: "Impact Assessment: Youth in Agriculture Programs 2023",
-    description: "Comprehensive analysis reveals significant success in youth engagement programs across African agriculture sector.",
+    description:
+      "Comprehensive analysis reveals significant success in youth engagement programs across African agriculture sector.",
     date: "Mar 5, 2024",
     category: "Reports",
     image: "/images/news/team-members-2.jpg",
@@ -173,12 +176,13 @@ The assessment highlights several key recommendations for strengthening youth en
 • Stronger mentorship and support networks
 • Integration of modern technology in traditional farming practices
 
-The success of these programs demonstrates the vital role of youth in transforming African agriculture. Continued investment in youth-focused agricultural initiatives is essential for the sector's future growth and sustainability.`
+The success of these programs demonstrates the vital role of youth in transforming African agriculture. Continued investment in youth-focused agricultural initiatives is essential for the sector's future growth and sustainability.`,
   },
   {
-    id: '4',
+    id: "4",
     title: "Climate-Smart Agriculture: Research Findings 2024",
-    description: "New research reveals breakthrough strategies in climate-resilient farming methods for African agriculture.",
+    description:
+      "New research reveals breakthrough strategies in climate-resilient farming methods for African agriculture.",
     date: "Feb 28, 2024",
     category: "Publications",
     image: "/images/news/team-members-1.jpg",
@@ -210,10 +214,10 @@ The research findings have led to the development of practical guidelines for fa
 • Soil management protocols for different agricultural zones
 • Water conservation strategies for various crop types
 
-This research represents a significant step forward in developing climate-resilient agricultural practices for African farmers. The findings provide a foundation for future agricultural policies and farming practices across the continent.`
-  }
+This research represents a significant step forward in developing climate-resilient agricultural practices for African farmers. The findings provide a foundation for future agricultural policies and farming practices across the continent.`,
+  },
 ];
 
 export const getNewsBySlug = (slug: string): NewsItem | undefined => {
-  return newsItems.find(item => generateSlug(item.title) === slug);
-}; 
+  return newsItems.find((item) => generateSlug(item.title) === slug);
+};
