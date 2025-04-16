@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import * as React from 'react';
 import { useState } from 'react';
@@ -8,7 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
-import { Button } from '@workspace/ui/components/button';
+import { Button } from "@workspace/ui/components/button";
 import {
     Form,
     FormControl,
@@ -24,14 +24,14 @@ export function SignupForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 
-    // Signup form
-    const form = useForm({
-        defaultValues: {
-            name: '',
-            email: '',
-            password: '',
-        },
-    });
+  // Signup form
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
 
     // Handle signup submission
     const handleSignup = async (data: { name: string; email: string; password: string }) => {
@@ -56,27 +56,32 @@ export function SignupForm() {
         }
     };
 
-    return (
-        <div className="flex overflow-hidden rounded-lg shadow-xl mx-auto max-w-4xl">
-            {/* Left panel - green with "Create Account" */}
-            <div className="w-1/2 bg-primary-green text-white p-8 flex flex-col items-center justify-center">
-                <div className="mb-6">
-                    <Image
-                        src="/images/logoLight.png"
-                        alt="Logo"
-                        width={100}
-                        height={30}
-                        className="object-contain"
-                        priority
-                    />
-                </div>
-                <h1 className="text-3xl font-bold mb-4 text-center">Create Account</h1>
-                <p className="text-sm text-center mb-8">Join our community and start your journey with us</p>
+  return (
+    <div className="flex overflow-hidden rounded-lg shadow-xl mx-auto max-w-4xl">
+      {/* Left panel - green with "Create Account" */}
+      <div className="w-1/2 bg-primary-green text-white p-8 flex flex-col items-center justify-center">
+        <div className="mb-6">
+          <Image
+            src="/images/logoLight.png"
+            alt="Logo"
+            width={100}
+            height={30}
+            className="object-contain"
+            priority
+          />
+        </div>
+        <h1 className="text-3xl font-bold mb-4 text-center">Create Account</h1>
+        <p className="text-sm text-center mb-8">
+          Join our community and start your journey with us
+        </p>
 
-                <Link href="/login" className="border border-white rounded-full px-8 py-2 hover:bg-white hover:text-green-800 transition-colors">
-                    LOG IN
-                </Link>
-            </div>
+        <Link
+          href="/login"
+          className="border border-white rounded-full px-8 py-2 hover:bg-white hover:text-green-800 transition-colors"
+        >
+          LOG IN
+        </Link>
+      </div>
 
             {/* Right panel - white with signup form */}
             <div className="w-2/3 bg-white p-8">

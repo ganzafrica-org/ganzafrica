@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import * as React from 'react';
 import { useState } from 'react';
@@ -6,9 +6,16 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
-import { Button } from '@workspace/ui/components/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@workspace/ui/components/card';
-import { Loader } from 'lucide-react';
+import { Button } from "@workspace/ui/components/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@workspace/ui/components/card";
+import { Loader } from "lucide-react";
 
 import apiClient from '@/lib/api-client';
 
@@ -18,12 +25,12 @@ export function VerifyEmail() {
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [errorMessage, setErrorMessage] = useState('');
 
-    React.useEffect(() => {
-        if (!token) {
-            setStatus('error');
-            setErrorMessage('Invalid verification link. Please request a new one.');
-            return;
-        }
+  React.useEffect(() => {
+    if (!token) {
+      setStatus("error");
+      setErrorMessage("Invalid verification link. Please request a new one.");
+      return;
+    }
 
         const verify = async () => {
             try {
@@ -69,45 +76,45 @@ export function VerifyEmail() {
         );
     }
 
-    if (status === 'error') {
-        return (
-            <Card className="w-full max-w-md mx-auto">
-                <CardHeader>
-                    <CardTitle>Verification Failed</CardTitle>
-                    <CardDescription>
-                        We were unable to verify your email address.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-center text-muted-foreground">{errorMessage}</p>
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                    <Button asChild>
-                        <Link href="/login">Return to login</Link>
-                    </Button>
-                </CardFooter>
-            </Card>
-        );
-    }
-
+  if (status === "error") {
     return (
-        <Card className="w-full max-w-md mx-auto">
-            <CardHeader>
-                <CardTitle>Email Verified!</CardTitle>
-                <CardDescription>
-                    Your email address has been successfully verified.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p className="text-center text-muted-foreground">
-                    You can now log in to your account and start using all features.
-                </p>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-                <Button asChild>
-                    <Link href="/login">Log in to your account</Link>
-                </Button>
-            </CardFooter>
-        </Card>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle>Verification Failed</CardTitle>
+          <CardDescription>
+            We were unable to verify your email address.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground">{errorMessage}</p>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button asChild>
+            <Link href="/login">Return to login</Link>
+          </Button>
+        </CardFooter>
+      </Card>
     );
+  }
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Email Verified!</CardTitle>
+        <CardDescription>
+          Your email address has been successfully verified.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-center text-muted-foreground">
+          You can now log in to your account and start using all features.
+        </p>
+      </CardContent>
+      <CardFooter className="flex justify-center">
+        <Button asChild>
+          <Link href="/login">Log in to your account</Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
 }

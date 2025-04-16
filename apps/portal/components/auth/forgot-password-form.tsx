@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import * as React from 'react';
 import { useState } from 'react';
@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
-import { Button } from '@workspace/ui/components/button';
+import { Button } from "@workspace/ui/components/button";
 import {
     Form,
     FormControl,
@@ -24,12 +24,12 @@ export function ForgotPasswordForm() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Forgot password form
-    const form = useForm({
-        defaultValues: {
-            email: '',
-        },
-    });
+  // Forgot password form
+  const form = useForm({
+    defaultValues: {
+      email: "",
+    },
+  });
 
     // Handle forgot password submission
     const handleForgotPassword = async (data: { email: string }) => {

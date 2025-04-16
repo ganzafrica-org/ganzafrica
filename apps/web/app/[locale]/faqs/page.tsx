@@ -3,12 +3,18 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { getDictionary } from "@/lib/get-dictionary";
-import { Leaf, Plus, Minus } from 'lucide-react';
+import { Leaf, Plus, Minus } from "lucide-react";
 
-  // FAQ Accordion Component
-  const FAQAccordionItem = ({ title, content }: { title: string; content?: string }) => {
-    const [isOpen, setIsOpen] = useState(false);
-  
+// FAQ Accordion Component
+const FAQAccordionItem = ({
+  title,
+  content,
+}: {
+  title: string;
+  content?: string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="border-b border-gray-200 py-4">
       <button
@@ -35,12 +41,15 @@ export default function Page() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section with Header */}
-      <div className="relative h-[500px]"
+      <div
+        className="relative h-[500px]"
         style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1560493676-04071c5f467b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}>
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1560493676-04071c5f467b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         {/* Overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
 
@@ -52,10 +61,11 @@ export default function Page() {
               <div className="relative bg-white p-4 -ml-4 rounded-br-3xl">
                 <div className="flex items-center">
                   <Leaf className="h-8 w-8 text-emerald-600" />
-                  <span className="ml-2 text-xl font-bold text-emerald-600">GanzAfrica</span>
+                  <span className="ml-2 text-xl font-bold text-emerald-600">
+                    GanzAfrica
+                  </span>
                 </div>
               </div>
-
             </div>
           </div>
         </header>
@@ -64,7 +74,8 @@ export default function Page() {
         <div className="relative z-10 flex items-center justify-center h-full text-center">
           <div className="space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold text-white">
-              Clear <span className="text-yellow-400">Answers</span> to Help You<br />
+              Clear <span className="text-yellow-400">Answers</span> to Help You
+              <br />
               Get Started
             </h1>
             <div className="text-6xl font-bold text-yellow-400">FAQs</div>
@@ -99,16 +110,18 @@ export default function Page() {
         <div className="grid md:grid-cols-12 gap-8">
           {/* Left Column */}
           <div className="md:col-span-4">
-            <h2 className="text-2xl font-bold text-emerald-600 mb-4">General FAQs</h2>
+            <h2 className="text-2xl font-bold text-emerald-600 mb-4">
+              General FAQs
+            </h2>
             <p className="text-gray-600 mb-8">
-              Everything you need to know about GanzAfrica and how it works. 
+              Everything you need to know about GanzAfrica and how it works.
               Can't find an answer? Chat with our team.
             </p>
           </div>
 
           {/* Right Column */}
           <div className="md:col-span-8">
-            <FAQAccordionItem 
+            <FAQAccordionItem
               title="What does the GanzAfrica fellowship include?"
               content="Our fellowship program includes rigorous training in data analysis, systems thinking, and evidence-based decision making. Fellows gain practical experience through placement in partner public institutions while receiving mentorship and professional development opportunities."
             />
@@ -134,14 +147,17 @@ export default function Page() {
         {/* Program FAQs Section */}
         <div className="grid md:grid-cols-12 gap-8 mt-16">
           <div className="md:col-span-4">
-            <h2 className="text-2xl font-bold text-emerald-600 mb-4">Program FAQs</h2>
+            <h2 className="text-2xl font-bold text-emerald-600 mb-4">
+              Program FAQs
+            </h2>
             <p className="text-gray-600 mb-8">
-              Everything you need to know about our fellowship process and placements.
+              Everything you need to know about our fellowship process and
+              placements.
             </p>
           </div>
 
           <div className="md:col-span-8">
-            <FAQAccordionItem 
+            <FAQAccordionItem
               title="Is it a one-time placement?"
               content="The core fellowship program typically runs for a fixed term, allowing fellows to gain substantive experience in their host institutions. However, many fellows continue relationships with their institutions beyond the formal program period or join our alumni network."
             />
@@ -157,7 +173,7 @@ export default function Page() {
               title="How does the placement process work?"
               content="Our placement process matches fellows' skills and interests with partner institutions' needs through a collaborative selection process."
             />
-            <FAQAccordionItem 
+            <FAQAccordionItem
               title="What support is provided during the fellowship?"
               content="Fellows receive comprehensive support including professional development, mentorship, networking opportunities, and regular check-ins with program coordinators."
             />
