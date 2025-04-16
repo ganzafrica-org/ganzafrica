@@ -49,7 +49,10 @@ export const BikeIcon = ({ className = "w-12 h-12", color = "white" }) => (
 );
 
 // Land Governance Icon (Palm Tree)
-export const LandGovernanceIcon = ({ className = "w-12 h-12", color = "white" }) => (
+export const LandGovernanceIcon = ({
+  className = "w-12 h-12",
+  color = "white",
+}) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -60,15 +63,18 @@ export const LandGovernanceIcon = ({ className = "w-12 h-12", color = "white" })
     strokeLinejoin="round"
     className={className}
   >
-    <path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4"/>
-    <path d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3"/>
-    <path d="M5.89 9.71c-2.15 2.15-2.3 5.47-.35 7.43l4.24-4.25.7-.7.71-.71 2.12-2.12c-1.95-1.96-5.27-1.8-7.42.35"/>
-    <path d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14"/>
+    <path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4" />
+    <path d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3" />
+    <path d="M5.89 9.71c-2.15 2.15-2.3 5.47-.35 7.43l4.24-4.25.7-.7.71-.71 2.12-2.12c-1.95-1.96-5.27-1.8-7.42.35" />
+    <path d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14" />
   </svg>
 );
 
 // Sustainable Agriculture Icon (Vegan)
-export const SustainableAgricultureIcon = ({ className = "w-12 h-12", color = "white" }) => (
+export const SustainableAgricultureIcon = ({
+  className = "w-12 h-12",
+  color = "white",
+}) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -79,36 +85,42 @@ export const SustainableAgricultureIcon = ({ className = "w-12 h-12", color = "w
     strokeLinejoin="round"
     className={className}
   >
-    <path d="M16 8q6 0 6-6-6 0-6 6"/>
-    <path d="M17.41 3.59a10 10 0 1 0 3 3"/>
-    <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14"/>
+    <path d="M16 8q6 0 6-6-6 0-6 6" />
+    <path d="M17.41 3.59a10 10 0 1 0 3 3" />
+    <path d="M2 2a26.6 26.6 0 0 1 10 20c.9-6.82 1.5-9.5 4-14" />
   </svg>
 );
 
 // Climate Adaptation Icon (Wind and Water with Arrows)
-export const ClimateAdaptationIcon = ({ className = "w-12 h-12", color = "white" }) => (
+export const ClimateAdaptationIcon = ({
+  className = "w-12 h-12",
+  color = "white",
+}) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
     fill={color}
     className={className}
   >
-    <path d="M20 14h2v2h-2c-1.38 0-2.74-.35-4-1c-2.5 1.3-5.5 1.3-8 0c-1.26.65-2.63 1-4 1H2v-2h2c1.39 0 2.78-.47 4-1.33c2.44 1.71 5.56 1.71 8 0c1.22.86 2.61 1.33 4 1.33m0 6h2v2h-2c-1.38 0-2.74-.35-4-1c-2.5 1.3-5.5 1.3-8 0c-1.26.65-2.63 1-4 1H2v-2h2c1.39 0 2.78-.47 4-1.33c2.44 1.71 5.56 1.71 8 0c1.22.86 2.61 1.33 4 1.33M7 2L3 6h3v5h2V6h3m6-4l-4 4h3v5h2V6h3"/>
+    <path d="M20 14h2v2h-2c-1.38 0-2.74-.35-4-1c-2.5 1.3-5.5 1.3-8 0c-1.26.65-2.63 1-4 1H2v-2h2c1.39 0 2.78-.47 4-1.33c2.44 1.71 5.56 1.71 8 0c1.22.86 2.61 1.33 4 1.33m0 6h2v2h-2c-1.38 0-2.74-.35-4-1c-2.5 1.3-5.5 1.3-8 0c-1.26.65-2.63 1-4 1H2v-2h2c1.39 0 2.78-.47 4-1.33c2.44 1.71 5.56 1.71 8 0c1.22.86 2.61 1.33 4 1.33M7 2L3 6h3v5h2V6h3m6-4l-4 4h3v5h2V6h3" />
   </svg>
 );
 
-export const TechnologyIcon = ({ className = "w-12 h-12", color = "currentColor" }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
+export const TechnologyIcon = ({
+  className = "w-12 h-12",
+  color = "currentColor",
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
     className={className}
   >
-    <g 
-      fill="none" 
-      stroke={color} 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      strokeWidth="1.5" 
+    <g
+      fill="none"
+      stroke={color}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
     >
       <path d="m5 16l5-3m4-2l5-3m-7-3v5m0 4v5M5 8l5 3m4 2l5 3m1.5-7v5.5m-7 6l5.5-3m-14.5 0l6 3m-7-5.5V9m1-2.5l6-3m9 3l-6-3" />
       <circle cx="12" cy="3.5" r="1.5" />

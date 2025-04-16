@@ -5,20 +5,21 @@ A modern web platform built to support GanzAfrica's mission in land management, 
 ## Key Features
 
 - 🌍 Public Website (`/apps/web`)
-    - Fellowship program information
-    - Impact showcase
-    - Project highlights
-    - Application process
+
+  - Fellowship program information
+  - Impact showcase
+  - Project highlights
+  - Application process
 
 - 🔐 Admin Portal (`/apps/portal`)
-    - Fellow management
-    - Application tracking
-    - CRM system for:
-        - Alumni
-        - Applicants
-        - Employees
-        - Fellows
-    - Administrative dashboard
+  - Fellow management
+  - Application tracking
+  - CRM system for:
+    - Alumni
+    - Applicants
+    - Employees
+    - Fellows
+  - Administrative dashboard
 
 ## Tech Stack
 
@@ -29,10 +30,10 @@ A modern web platform built to support GanzAfrica's mission in land management, 
 - **Styling:** Tailwind CSS + shadcn/ui
 - **State Management:** Zustand & React Query
 - **Deployment:**
-    - Frontend: Cloudflare Pages
-    - Backend: Cloudflare Workers
-    - Storage: Cloudflare R2
-    - Database: DigitalOcean
+  - Frontend: Cloudflare Pages
+  - Backend: Cloudflare Workers
+  - Storage: Cloudflare R2
+  - Database: DigitalOcean
 
 ## Prerequisites
 
@@ -64,17 +65,20 @@ ganzafrica/
 ## Getting Started
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/ganzafrica-org/ganzafrica.git
 cd ganzafrica
 ```
 
 2. Install dependencies:
+
 ```bash
 pnpm install
 ```
 
 3. Set up your database:
+
 ```bash
 # Create a PostgreSQL database
 createdb ganzafrica
@@ -94,21 +98,25 @@ pnpm db:migrate
 4. Start development server:
 
 For the main website:
+
 ```bash
 pnpm --filter web dev
 ```
 
 For the admin portal:
+
 ```bash
 pnpm --filter portal dev
 ```
 
 For the backend API (if testing independently):
+
 ```bash
 pnpm --filter api dev
 ```
 
 Access the applications at:
+
 - Website: http://localhost:3000
 - Portal: http://localhost:3001
 - API: http://localhost:3001/api/trpc

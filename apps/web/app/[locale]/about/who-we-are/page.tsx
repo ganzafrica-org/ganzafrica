@@ -6,7 +6,6 @@ import LanguageSwitcher from "@/components/layout/language-switcher";
 import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 
-
 import { FC } from "react";
 
 // Types for props
@@ -154,7 +153,9 @@ const PromiseCard: FC<PromiseCardProps> = ({
           {items.map((item, index) => (
             <li key={index} className="flex items-start">
               <span className="text-black font-bold mr-2 sm:mr-3 mt-1">•</span>
-              <span className="text-gray-800 font-medium text-sm sm:text-lg">{item}</span>
+              <span className="text-gray-800 font-medium text-sm sm:text-lg">
+                {item}
+              </span>
             </li>
           ))}
         </ul>
@@ -179,8 +180,12 @@ const PromiseCard: FC<PromiseCardProps> = ({
           <ul className="space-y-3 sm:space-y-4">
             {content.map((item, index) => (
               <li key={index} className="flex items-start">
-                <span className="text-white font-bold mr-2 sm:mr-3 mt-1">•</span>
-                <span className="text-white font-medium text-sm sm:text-base">{item}</span>
+                <span className="text-white font-bold mr-2 sm:mr-3 mt-1">
+                  •
+                </span>
+                <span className="text-white font-medium text-sm sm:text-base">
+                  {item}
+                </span>
               </li>
             ))}
           </ul>
@@ -305,104 +310,105 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         <LanguageSwitcher />
       </div>
       {/* Hero Section */}
-           <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-             {/* Background Image */}
-             <div className="absolute inset-0 z-0">
-               <Image
-                 src="/images/team.png"
-                 alt="Agricultural fields"
-                 fill
-                 className="object-cover"
-                 priority
-               />
-             </div>
-             
-             {/* Dark overlay */}
-             <div className="absolute inset-0 bg-black opacity-70 z-10"></div>
-             
-             {/* Content */}
-             <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-             <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-       <span className="font-bold text-yellow-400">Empowering</span> <span className="font-normal">Africa's Future</span><br />
-       <span className="font-normal">Through</span> <span className="font-bold text-yellow-400">Transformative</span>
-     </h1>
-               <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
-                WHO WE ARE
-               </h2>
-             </div>
-           </section>
+      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/team.png"
+            alt="Agricultural fields"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black opacity-70 z-10"></div>
+
+        {/* Content */}
+        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
+          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
+            <span className="font-bold text-yellow-400">Empowering</span>{" "}
+            <span className="font-normal">Africa's Future</span>
+            <br />
+            <span className="font-normal">Through</span>{" "}
+            <span className="font-bold text-yellow-400">Transformative</span>
+          </h1>
+          <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+            WHO WE ARE
+          </h2>
+        </div>
+      </section>
 
       <HeaderBelt />
-
-
+      
       {/* Our Approach Section with circular images */}
-      <section className="py-8 sm:py-10 md:py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center mb-10 sm:mb-12">
-            <DecoratedHeading
-              firstText={
-                dict?.about?.transformative_partner?.heading_first ||
-                "A Transformative"
-              }
-              secondText={
-                dict?.about?.transformative_partner?.heading_second || "Partner"
-              }
+      <section className="py-8 md:py-12 ">
+  <div className="container mx-auto px-4">
+    <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+      {/* Left side - Images (hidden on mobile, visible on lg screens) */}
+      <div className="hidden lg:block lg:w-1/2">
+        <div className="relative mx-auto" style={{ width: 'fit-content' }}>
+          <div className="rounded-full overflow-hidden w-[300px] h-[300px] md:w-[400px] md:h-[400px] border-4 border-transparent">
+            <Image
+              src="/images/team.png"
+              alt="Hands holding grain"
+              width={400}
+              height={400}
+              className="w-full h-full object-cover"
             />
           </div>
 
-          <div className="flex flex-col md:flex-row gap-2 max-w-7xl mx-auto">
-            {/* Left side - Images */}
-            <div className="md:w-1/2 flex items-center justify-center">
-              <div className="relative">
-                <div className="rounded-full overflow-hidden w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] border-4 border-transparent">
-                  <Image
-                    src="/images/team.png" 
-                    alt="Hands holding grain"
-                    width={400}
-                    height={400}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                <div className="absolute -bottom-10 -left-10 rounded-full overflow-hidden w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] border-4 border-green-700">
-                  <Image
-                    src="/images/1.jpg"
-                    alt="Smiling person"
-                    width={150}
-                    height={150}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Right side - Text content */}
-            <div className="md:w-1/2">
-              <div className="max-w-xl space-y-4">
-                <p className="text-gray-700 text-sm sm:text-base">
-                  {dict?.about?.transformative_partner?.paragraph_1 ||
-                  "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
-                </p>
-                
-                <p className="text-gray-700 text-sm sm:text-base">
-                  {dict?.about?.transformative_partner?.paragraph_2 ||
-                  "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
-                </p>
-                
-                <p className="text-gray-700 text-sm sm:text-base">
-                  {dict?.about?.transformative_partner?.paragraph_3 ||
-                  "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
-                </p>
-                
-                <p className="text-gray-700 text-sm sm:text-base">
-                  {dict?.about?.transformative_partner?.paragraph_4 ||
-                  "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
-                </p>
-              </div>
-            </div>
+          <div className="absolute -bottom-10 -left-10 rounded-full overflow-hidden w-[120px] h-[120px] md:w-[150px] md:h-[150px] border-4 border-green-700">
+            <Image
+              src="/images/1.jpg"
+              alt="Smiling person"
+              width={150}
+              height={150}
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
-      </section>
+      </div>
+      
+      {/* Right side - Text content (full width on mobile, half on lg screens) */}
+      <div className="w-full lg:w-1/2">
+        <div className="flex justify-left mb-4">
+          <DecoratedHeading
+            firstText={
+              dict?.about?.transformative_partner?.heading_first ||
+              "A Transformative"
+            }
+            secondText={
+              dict?.about?.transformative_partner?.heading_second || "Partner"
+            }
+          />
+        </div>
+        <div className="max-w-full lg:max-w-xl space-y-4 text-justify">
+          <p className="text-gray-700 text-sm sm:text-base">
+            {dict?.about?.transformative_partner?.paragraph_1 ||
+              "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
+          </p>
+
+          <p className="text-gray-700 text-sm sm:text-base">
+            {dict?.about?.transformative_partner?.paragraph_2 ||
+              "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
+          </p>
+
+          <p className="text-gray-700 text-sm sm:text-base">
+            {dict?.about?.transformative_partner?.paragraph_3 ||
+              "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
+          </p>
+
+          <p className="text-gray-700 text-sm sm:text-base">
+            {dict?.about?.transformative_partner?.paragraph_4 ||
+              "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* OUR ASPIRATIONS SECTION */}
       <section className="py-8 sm:py-12 md:py-16 bg-white">
@@ -423,7 +429,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
             {/* Left side - Team Image */}
             <div className="w-full md:w-1/2 mb-6 md:mb-0">
-              <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[500px]"> 
+              <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[500px]">
                 <Image
                   src="/images/team.png"
                   alt="GanzAfrica team members"
@@ -516,13 +522,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           </div>
         </div>
       </section>
-
-      {/* Building Sustainable Solutions Section  */}
-      <BuildingSolutionsSection 
-        dict={dict?.about} 
-        categories={categories} 
-        tags={tags} 
-      />
+      
 
       {/* Our Approach Grid Section */}
       <section className="py-8 sm:py-12 md:py-16 bg-white">
@@ -537,7 +537,10 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-2">
             {/* Left Column - Identify */}
             <div>
-              <div style={{ backgroundColor: "#FFFDEB" }} className="p-4 sm:p-6 h-auto sm:h-60 md:h-80">
+              <div
+                style={{ backgroundColor: "#FFFDEB" }}
+                className="p-4 sm:p-6 h-auto sm:h-60 md:h-80"
+              >
                 <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-primary-orange rounded-full flex items-center justify-center mb-3 sm:mb-4">
                   <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
                 </div>
@@ -576,7 +579,10 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
               </div>
 
               {/* Establish section */}
-              <div style={{ backgroundColor: "#F9F9FB" }} className="p-4 sm:p-6 h-auto sm:h-60 md:h-80">
+              <div
+                style={{ backgroundColor: "#F9F9FB" }}
+                className="p-4 sm:p-6 h-auto sm:h-60 md:h-80"
+              >
                 <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-green-800 rounded-full flex items-center justify-center mb-3 sm:mb-4">
                   <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
                 </div>
@@ -593,7 +599,10 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             {/* Right Column - Deploy + Image */}
             <div>
               {/* Deploy section */}
-              <div style={{ backgroundColor: "#FFFDEB" }} className="p-4 sm:p-6 h-auto sm:h-60 md:h-80">
+              <div
+                style={{ backgroundColor: "#FFFDEB" }}
+                className="p-4 sm:p-6 h-auto sm:h-60 md:h-80"
+              >
                 <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-primary-orange rounded-full flex items-center justify-center mb-3 sm:mb-4">
                   <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
                 </div>
@@ -669,6 +678,13 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           </div>
         </div>
       </section>
+
+      {/* Building Sustainable Solutions Section  */}
+      <BuildingSolutionsSection
+        dict={dict?.about}
+        categories={categories}
+        tags={tags}
+      />
     </main>
   );
 }

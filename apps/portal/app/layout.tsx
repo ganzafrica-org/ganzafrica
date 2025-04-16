@@ -4,7 +4,7 @@ import { Toaster } from "@workspace/ui/components/sonner";
 import { Rubik } from "next/font/google";
 import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
-import { AuthProvider } from '@/components/auth/auth-provider';
+import { AuthProvider } from "@/components/auth/auth-provider";
 
 const rubik = Rubik({
   subsets: ["latin"],
