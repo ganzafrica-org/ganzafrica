@@ -1,201 +1,633 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { PlusCircle, Search, Filter, MoreVertical } from "lucide-react";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import Image from "next/image";
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { 
+  Search, 
+  Filter, 
+  Plus, 
+  MoreHorizontal, 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight,
+  ArrowRight,
+  Eye,
+  Edit,
+  Trash,
+  Clock,
+  Tag,
+  User
+} from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-// Mock data for news items
-const mockNews = [
-  {
-    id: 1,
-    title: "New Agricultural Development Initiative Launched",
-    author: "John Doe",
-    category: "Agriculture",
-    publishDate: "2024-03-15",
-    status: "published",
-    featureImage: "/1.jpg"
-  },
-  {
-    id: 2,
-    title: "Climate Change Impact Study Results Released",
-    author: "Jane Smith",
-    category: "Climate",
-    publishDate: "2024-03-14",
-    status: "published",
-    featureImage: "/1.jpg"
-  },
-  {
-    id: 3,
-    title: "Technology Innovation in Rural Communities",
-    author: "Mike Johnson",
-    category: "Technology",
-    publishDate: "2024-03-13",
-    status: "draft",
-    featureImage: "/1.jpg"
+// Create an axios instance with retry configuration
+const axiosInstance = axios.create({
+  timeout: 10000,
+});
+
+// Add a retry interceptor
+axiosInstance.interceptors.response.use(undefined, async (err) => {
+  const { config, response } = err;
+  
+  if ((response && response.status === 429) || !response) {
+    const maxRetries = 3;
+    config.retryCount = config.retryCount || 0;
+    
+    if (config.retryCount < maxRetries) {
+      config.retryCount += 1;
+      
+      const delay = Math.pow(2, config.retryCount) * 1000;
+      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      return axiosInstance(config);
+    }
   }
-];
+  
+  return Promise.reject(err);
+});
 
-export default function NewsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
+// Add a request interceptor to add a delay between requests
+axiosInstance.interceptors.request.use(async (config) => {
+  const now = Date.now();
+  const lastRequestTime = window.lastAxiosRequestTime || 0;
+  const minRequestInterval = 300; // minimum ms between requests
+  
+  if (now - lastRequestTime < minRequestInterval) {
+    const delayMs = minRequestInterval - (now - lastRequestTime);
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+  
+  window.lastAxiosRequestTime = Date.now();
+  
+  return config;
+});
 
-  const handleImageError = (newsId: number) => {
-    setFailedImages(prev => ({
-      ...prev,
-      [newsId]: true
-    }));
+// Add a request throttling mechanism
+const pendingRequests = {};
+
+const throttledAxios = {
+  get: (url, config = {}) => {
+    const key = `${url}${JSON.stringify(config.params || {})}`;
+    
+    if (pendingRequests[key]) {
+      return pendingRequests[key];
+    }
+    
+    const request = axiosInstance.get(url, config)
+      .finally(() => {
+        delete pendingRequests[key];
+      });
+    
+    pendingRequests[key] = request;
+    return request;
+  },
+  delete: (url, config = {}) => {
+    return axiosInstance.delete(url, config);
+  }
+};
+
+const NewsListPage = () => {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('all');
+  
+  // States for data and UI
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tags, setTags] = useState([]);
+  const [authors, setAuthors] = useState({});
+  
+  // States for pagination and filtering
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalNews, setTotalNews] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('published_at');
+  const [sortOrder, setSortOrder] = useState('desc');
+  
+  // States for tab counts
+  const [tabCounts, setTabCounts] = useState({
+    all: 0,
+    'published': 0,
+    'draft': 0,
+    'archived': 0
+  });
+
+  const [tabCountsLoaded, setTabCountsLoaded] = useState(false);
+
+  // State for dropdown menu
+  const [openMenuId, setOpenMenuId] = useState(null);
+  
+  // Function to toggle dropdown menu
+  const toggleMenu = (id) => {
+    if (openMenuId === id) {
+      setOpenMenuId(null);
+    } else {
+      setOpenMenuId(id);
+    }
+  };
+
+  // Function to handle action click
+  const handleAction = async (action, newsId) => {
+    setOpenMenuId(null); // Close the menu
+    
+    switch(action) {
+      case 'view':
+        router.push(`/news/${newsId}`);
+        break;
+      case 'edit':
+        router.push(`/news/edit/${newsId}`);
+        break;
+      case 'delete':
+        if (window.confirm('Are you sure you want to delete this news article?')) {
+          try {
+            await throttledAxios.delete(`http://localhost:3002/api/news/${newsId}`);
+            // Refresh the news list after deletion
+            const updatedPage = news.length === 1 && page > 1 ? page - 1 : page;
+            setPage(updatedPage);
+          } catch (error) {
+            console.error('Error deleting news:', error);
+            alert('Failed to delete news. Please try again.');
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Handle pagination
+  const goToPage = (newPage) => {
+    setPage(newPage);
+  };
+
+  // Calculate sequential row number based on pagination
+  const getRowNumber = (index) => {
+    return ((page - 1) * limit) + index + 1;
+  };
+
+  // Add click outside listener to close dropdown
+  const menuRef = useRef(null);
+  
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
+
+  // Fetch tags
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await throttledAxios.get('http://localhost:3002/api/news/tags');
+        if (response.data && Array.isArray(response.data.tags)) {
+          setTags(response.data.tags);
+        } else if (Array.isArray(response.data)) {
+          setTags(response.data);
+        } else {
+          console.error('Unexpected tags response format:', response.data);
+          setTags([]);
+        }
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+        setTags([]);
+      }
+    };
+    
+    fetchTags();
+  }, []);
+
+  // Set default authors (similar to your project management approach)
+  useEffect(() => {
+    setAuthors({
+      1: 'Mukamana Fransine',
+      2: 'John Doe',
+      3: 'Jane Smith'
+    });
+  }, []);
+
+  // Fetch tab counts
+  const fetchTabCounts = async () => {
+    try {
+      const response = await throttledAxios.get('http://localhost:3002/api/news', { 
+        params: { limit: 0 } 
+      });
+      
+      const allCount = parseInt(response.data.pagination?.total) || 0;
+      
+      let publishedCount = 0;
+      let draftCount = 0;
+      let archivedCount = 0;
+      
+      if (response.data.news && Array.isArray(response.data.news)) {
+        response.data.news.forEach(article => {
+          if (article.status === 'published') publishedCount++;
+          else if (article.status === 'draft') draftCount++;
+          else if (article.status === 'archived') archivedCount++;
+        });
+      }
+      
+      setTabCounts({
+        all: allCount,
+        published: publishedCount,
+        draft: draftCount,
+        archived: archivedCount
+      });
+      
+      setTabCountsLoaded(true);
+    } catch (error) {
+      console.error('Error fetching tab counts:', error);
+      setTabCounts({
+        all: 0,
+        published: 0,
+        draft: 0,
+        archived: 0
+      });
+      setTabCountsLoaded(true);
+    }
+  };
+
+  // Add debouncing for search
+  const searchTimeoutRef = useRef(null);
+  
+  // Handle search input change with debounce
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      setPage(1); // Reset to first page when searching
+    }, 500); // 500ms debounce
+  };
+  
+  // Handle search submission
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    setPage(1); // Reset to first page when searching
+  };
+
+  // Fetch news articles
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        
+        const lastRequestTime = window.lastNewsFetchTime || 0;
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastRequestTime;
+        
+        if (timeSinceLastRequest < 500) {
+          await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
+        }
+        
+        const params = {
+          page,
+          limit,
+          sort_by: sortBy,
+          sort_order: sortOrder
+        };
+        
+        if (searchTerm) params.search = searchTerm;
+        
+        if (activeTab !== 'all') {
+          params.status = activeTab;
+        }
+        
+        console.log('Fetching news with params:', params);
+        
+        window.lastNewsFetchTime = Date.now();
+        
+        const response = await throttledAxios.get('http://localhost:3002/api/news', { params });
+        
+        console.log('API response:', response.data);
+        
+        if (response.data) {
+          setNews(response.data.news || []);
+          
+          const pagination = response.data.pagination || {};
+          setTotalNews(parseInt(pagination.total) || 0);
+          setTotalPages(pagination.pages || 1);
+          
+          if (!tabCountsLoaded && response.data.news) {
+            fetchTabCounts();
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        setNews([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchNews();
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Get author name
+  const getAuthorName = (authorId) => {
+    return authors[authorId] || 'Unknown Author';
+  };
+
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setPage(1); // Reset to first page when changing tabs
+  };
+
+  // Get status badge
+  const getStatusBadge = (status) => {
+    switch(status) {
+      case 'published':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">• Published</span>;
+      case 'draft':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">• Draft</span>;
+      case 'archived':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• Archived</span>;
+      default:
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• {status}</span>;
+    }
+  };
+
+  // Truncate text
+  const truncateText = (text, maxLength = 100) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   };
 
   return (
-    <div className="p-6">
-      {/* Header */}
+    <div className="p-6 max-w-full">
+      {/* Header with title and buttons */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">News & Updates</h1>
-          <p className="text-gray-500">Manage and publish news articles</p>
+          <h1 className="text-2xl font-bold">News</h1>
+          <p className="text-gray-500 text-sm">News Articles</p>
         </div>
-        <Link href="/news/add-news">
-          <Button className="bg-green-700 hover:bg-green-800">
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Create News
-          </Button>
-        </Link>
+        <div>
+          <Link href="/news/add-news" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
+            Add News Article
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
+        </div>
       </div>
 
-      {/* Search and filters */}
-      <div className="flex gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            type="text"
-            placeholder="Search news..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+      {/* Tabs */}
+      <div className='bg-white'>
+        <div className="flex border-b border-gray-200 mb-6 bg-white">
+          <button
+            onClick={() => handleTabChange('all')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'all'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            All
+            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('published')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'published'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Published
+            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.published}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('draft')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'draft'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Draft
+            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.draft}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('archived')}
+            className={`py-3 px-4 text-sm font-medium relative ${
+              activeTab === 'archived'
+                ? 'border-b-2 border-green-700 text-green-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Archived
+            <span className="ml-2 bg-gray-100 text-gray-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.archived}</span>
+          </button>
         </div>
-        <Button variant="outline" className="gap-2">
-          <Filter className="w-4 h-4" />
-          Filters
-        </Button>
-      </div>
 
-      {/* News table */}
-      <div className="bg-white rounded-lg border">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Feature Image
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Title
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Author
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th scope="col" className="relative px-6 py-3">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {mockNews.map((news) => (
-              <tr key={news.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="w-12 h-12 relative rounded-lg overflow-hidden bg-gray-100">
-                    {failedImages[news.id] ? (
-                      <div className="w-full h-full bg-green-700 text-white flex items-center justify-center text-sm font-medium">
-                        {news.category.slice(0, 2).toUpperCase()}
+        {/* News list title */}
+        <h2 className="text-lg font-bold mb-4">
+          List of {activeTab === 'all' ? '' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} News Articles
+        </h2>
+
+        {/* Search and filter */}
+        <div className="flex justify-end mb-4">
+          <div className="relative w-64">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Search className="w-4 h-4 text-gray-500" />
+            </div>
+            <form onSubmit={handleSearchSubmit}>
+              <input 
+                type="text" 
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
+                placeholder="Search"
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+            </form>
+          </div>
+          <button 
+            className="ml-2 p-2.5 bg-green-700 text-white rounded"
+            onClick={() => {
+              // Open a filter modal or expand filter options
+            }}
+          >
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* News table */}
+        <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
+          {loading ? (
+            <div className="text-center py-4">Loading news articles...</div>
+          ) : news.length === 0 ? (
+            <div className="text-center py-4">No news articles found</div>
+          ) : (
+            <table className="w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published Date</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {news.map((article, index) => (
+                  <tr key={article.id || index} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getRowNumber(index)}</td>
+                    <td className="px-4 py-4 text-sm text-gray-900">
+                      <div className="font-medium">{article.title}</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{getAuthorName(article.author_id)}</td>
+                    <td className="px-4 py-4 text-sm text-gray-900">
+                      <div className="flex flex-wrap gap-1">
+                        {article.tags && article.tags.map(tag => (
+                          <span key={tag.id} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+                            {tag.name}
+                          </span>
+                        ))}
+                        {(!article.tags || article.tags.length === 0) && (
+                          <span className="text-gray-400 text-xs">No tags</span>
+                        )}
                       </div>
-                    ) : (
-                      <Image
-                        src={news.featureImage}
-                        alt={news.title}
-                        fill
-                        className="object-cover"
-                        sizes="48px"
-                        onError={() => handleImageError(news.id)}
-                      />
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900">{news.title}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-500">{news.author}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-500">{news.category}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-500">{news.publishDate}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    news.status === "published" 
-                      ? "bg-green-100 text-green-800" 
-                      : "bg-gray-100 text-gray-800"
-                  }`}>
-                    {news.status.charAt(0).toUpperCase() + news.status.slice(1)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => window.location.href = `/news/${news.id}`}
-                        className="cursor-pointer"
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {article.published_at ? formatDate(article.published_at) : 'Not published'}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      {getStatusBadge(article.status)}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
+                      <button 
+                        className="text-gray-500 hover:text-gray-700"
+                        onClick={() => toggleMenu(article.id)}
                       >
-                        View
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => window.location.href = `/news/${news.id}/edit`}
-                        className="cursor-pointer"
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          // Handle delete
-                          console.log('Delete:', news.id);
-                        }}
-                        className="cursor-pointer text-red-600 focus:text-red-600"
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                        <MoreHorizontal className="w-5 h-5" />
+                      </button>
+                      
+                      {/* Dropdown menu */}
+                      {openMenuId === article.id && (
+                        <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <button
+                            onClick={() => handleAction('view', article.id)}
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View details
+                          </button>
+                          <button
+                            onClick={() => handleAction('edit', article.id)}
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleAction('delete', article.id)}
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            <Trash className="w-4 h-4 mr-2" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between py-3">
+          <div className="text-sm text-gray-500">
+            Showing {news.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalNews)} out of {totalNews} entries
+          </div>
+          <div className="flex items-center space-x-1">
+            <button 
+              className="p-2 text-gray-500 rounded hover:bg-gray-100"
+              onClick={() => goToPage(1)}
+              disabled={page === 1}
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+            <button 
+              className="p-2 text-gray-500 rounded hover:bg-gray-100"
+              onClick={() => goToPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            
+            {/* Display page numbers */}
+            {[...Array(Math.min(totalPages, 3))].map((_, index) => {
+              const pageNumber = page <= 2 ? index + 1 : page - 1 + index;
+              if (pageNumber <= totalPages) {
+                return (
+                  <button 
+                    key={pageNumber}
+                    onClick={() => goToPage(pageNumber)}
+                    className={`p-2 w-8 h-8 rounded-md ${
+                      pageNumber === page
+                        ? 'bg-green-700 text-white'
+                        : 'hover:bg-gray-100 text-gray-700'
+                    } flex items-center justify-center`}
+                  >
+                    {pageNumber}
+                  </button>
+                );
+              }
+              return null;
+            })}
+            
+            <button 
+              className="p-2 text-gray-500 rounded hover:bg-gray-100"
+              onClick={() => goToPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <button 
+              className="p-2 text-gray-500 rounded hover:bg-gray-100"
+              onClick={() => goToPage(totalPages)}
+              disabled={page === totalPages}
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default NewsListPage;

@@ -465,7 +465,7 @@ export const deleteProject = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
 
-    // Check if user has permission to delete this project
+    // Check if user has permizssion to delete this project
     // (You could add a check here to see if the user is a project owner or admin)
 
     await projectService.deleteProject(id);
