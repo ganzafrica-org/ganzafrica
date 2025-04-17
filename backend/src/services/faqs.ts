@@ -26,6 +26,7 @@ export type FaqOutput = {
   answer: string;
   is_active: boolean;
   view_count: number;
+  created_by?: number;
   created_at: Date;
   updated_at: Date;
 };
@@ -180,19 +181,14 @@ export async function deleteFaq(id: number): Promise<boolean> {
     throw new AppError("Failed to delete FAQ", 500);
   }
 }
-
-// List all FAQs
 export async function listFaqs(
-  activeOnly: boolean = false,
+    activeOnly: boolean = false,
 ): Promise<FaqOutput[]> {
   try {
-    let query = db.select().from(faqs);
-
-    if (activeOnly) {
-      query = query.where(eq(faqs.is_active, true));
-    }
-
-    const result = await query;
+    // Instead of conditionally modifying the query, create different queries
+    const result = activeOnly
+        ? await db.select().from(faqs).where(eq(faqs.is_active, true))
+        : await db.select().from(faqs);
 
     return result.map(mapToFaqOutput);
   } catch (error) {
