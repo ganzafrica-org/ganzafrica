@@ -25,9 +25,11 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser(env.SESSION_SECRET)); // For parsing cookies
 
-// Set Content Security Policy (CSP) - allow connections to any subdomain of onrender.com on any port
 app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' https://*.onrender.com:*");
+    res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'self'; connect-src 'self' https://*.onrender.com:* https://*.onrender.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
+    );
     next();
 });
 
