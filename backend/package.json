@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Ganzafrica backend API",
   "main": "dist/server.js",
+  "_moduleAliases": {
+    "@": "dist"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
