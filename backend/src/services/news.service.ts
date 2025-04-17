@@ -1,8 +1,8 @@
-import { db } from "../db/client";
-import { news, news_tags, news_to_tags } from "../db/schema/news";
-import { eq, inArray, and, desc, asc, sql, or, ilike } from "drizzle-orm";
-import { AppError } from "../middlewares";
-import { Logger } from "../config";
+import {db} from "@/db/client";
+import {news, news_tags, news_to_tags} from "@/db/schema";
+import {and, asc, desc, eq, ilike, inArray, or, sql} from "drizzle-orm";
+import {AppError} from "@/middlewares";
+import {Logger} from "../config";
 
 const logger = new Logger("NewsService");
 
@@ -352,23 +352,32 @@ export async function listNews(
 
     // Count total results
     const countResults = await db
-      .select({ count: sql`count(*)::int` })
-      .from(news)
-      .where(whereClause);
+        .select({ count: sql`count(*)::int` })
+        .from(news)
+        .where(whereClause);
 
-    const total = countResults[0]?.count || 0;
+    const total = Number(countResults[0]?.count || 0);
 
     // Sort direction
     const sortFn = sortDir === "asc" ? asc : desc;
 
     // Get paginated results
+    // Get paginated results with safer ordering
+    const validSortColumns = ['id', 'title', 'created_at', 'updated_at', 'publish_date', 'status', 'category'] as const;
+    type ValidSortColumn = typeof validSortColumns[number];
+
+// Ensure sortBy is a valid column
+    const safeSort = validSortColumns.includes(sortBy as any)
+        ? sortBy as ValidSortColumn
+        : 'created_at';
+
     const newsResults = await db
-      .select()
-      .from(news)
-      .where(whereClause)
-      .orderBy(sortFn(news[sortBy as keyof typeof news]))
-      .limit(limit)
-      .offset(offset);
+        .select()
+        .from(news)
+        .where(whereClause)
+        .orderBy(sortFn(news[safeSort]))
+        .limit(limit)
+        .offset(offset);
 
     // For each news item, get its tags
     const newsWithTags = await Promise.all(
@@ -462,14 +471,12 @@ export async function createTag(
 // List all tags
 export async function listTags(): Promise<Array<{ id: number; name: string }>> {
   try {
-    const result = await db
-      .select({
-        id: news_tags.id,
-        name: news_tags.name,
-      })
-      .from(news_tags);
-
-    return result;
+    return await db
+        .select({
+          id: news_tags.id,
+          name: news_tags.name,
+        })
+        .from(news_tags);
   } catch (error) {
     logger.error("Error listing tags", error);
     throw new AppError("Failed to list tags", 500);
