@@ -12,7 +12,7 @@ import { users } from "./users";
 import { verificationTypeEnum } from "./enums";
 
 export const password_reset_tokens = pgTable("password_reset_tokens", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   user_id: integer("user_id")
     .notNull()
     .references(() => users.id),
@@ -24,7 +24,7 @@ export const password_reset_tokens = pgTable("password_reset_tokens", {
 });
 
 export const verification_tokens = pgTable("verification_tokens", {
-  id: integer("id").primaryKey(),
+  id: serial("id").primaryKey(),
   user_id: integer("user_id")
     .notNull()
     .references(() => users.id),
