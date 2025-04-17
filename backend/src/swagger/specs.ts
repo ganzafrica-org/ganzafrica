@@ -41,7 +41,7 @@ if (!swaggerSpec) {
     },
     servers: [
       {
-        url: `http://localhost:${env.API_PORT}/api`,
+        url: `${env.API_BASE_URL}:${env.API_PORT}/api`,
         description: "Development server",
       },
     ],
