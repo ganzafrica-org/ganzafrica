@@ -599,197 +599,242 @@ export default function HomeHero({
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-40 bg-white pt-20 lg:hidden overflow-y-auto">
-        <div className="absolute right-4 top-6">
+      <div className="fixed inset-0 z-40 bg-white lg:hidden flex flex-col">
+        {/* Fixed Header Section */}
+        <div className="fixed top-0 left-0 right-0 h-20 bg-white z-50 flex items-center justify-end px-4 shadow-md">
           <Button
             variant="ghost"
             size="icon"
-            className="text-black hover:bg-gray-100"
+            className="text-black hover:bg-[#e9e8e8] p-2 rounded-md"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Close menu"
           >
             <X className="h-6 w-6" />
           </Button>
         </div>
-        <nav className="container mx-auto px-4 py-6 flex flex-col space-y-4">
-          {/* Mobile About with submenu */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-about")}
-            >
-              {dict.navigation?.about || "About"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-about" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {aboutItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Our approach */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-our-approach")}
-            >
-              {dict.navigation?.our_approach || "Our approach"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-our-approach" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-our-approach" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {ourApproachItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Scrollable Content Section */}
+        <div className="flex-1 overflow-y-auto mt-20">
+          <nav className="container mx-auto px-4 py-6 flex flex-col space-y-4">
+            {/* About Section */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-about")}
+              >
+                {dict.navigation?.about || "About"}
+                <ChevronDown
+                  className={`h-5 w-5 transform transition-transform ${
+                    activeDropdown === "mobile-about" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {activeDropdown === "mobile-about" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {aboutItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={`/${locale}${item.href}`}
+                      className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          {/* Programs */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-programs")}
-            >
-              {dict.navigation?.programs || "Programs"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-programs" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {programsItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+            {/* Our Approach Section */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-our-approach")}
+              >
+                {dict.navigation?.our_approach || "Our Approach"}
+                <ChevronDown
+                  className={`h-5 w-5 transform transition-transform ${
+                    activeDropdown === "mobile-our-approach" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {activeDropdown === "mobile-our-approach" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {ourApproachItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={`/${locale}${item.href}`}
+                      className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          {/* Projects */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-community")}
-            >
-              {dict.navigation?.projects || "Community Hub"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-community" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-community" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {projectItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+            {/* Programs Section */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-programs")}
+              >
+                {dict.navigation?.programs || "Programs"}
+                <ChevronDown
+                  className={`h-5 w-5 transform transition-transform ${
+                    activeDropdown === "mobile-programs" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {activeDropdown === "mobile-programs" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {programsItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={`/${locale}${item.href}`}
+                      className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          {/* Opportunities */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-opportunities")}
-            >
-              {dict.navigation?.opportunities || "Opportunities"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-opportunities" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-opportunities" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {opportunitiesItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+            {/* Projects Section */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-projects")}
+              >
+                {dict.navigation?.projects || "Projects"}
+                <ChevronDown
+                  className={`h-5 w-5 transform transition-transform ${
+                    activeDropdown === "mobile-projects" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {activeDropdown === "mobile-projects" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {projectItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={`/${locale}${item.href}`}
+                      className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
-          {/* News & Updates */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-news")}
-            >
-              News & Updates
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-news" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {newsItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </nav>
+            {/* Opportunities Section */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-opportunities")}
+              >
+                {dict.navigation?.opportunities || "Opportunities"}
+                <ChevronDown
+                  className={`h-5 w-5 transform transition-transform ${
+                    activeDropdown === "mobile-opportunities" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {activeDropdown === "mobile-opportunities" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {opportunitiesItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={`/${locale}${item.href}`}
+                      className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* News & Updates Section */}
+            <div className="flex flex-col">
+              <button
+                className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-news")}
+              >
+                News & Updates
+                <ChevronDown
+                  className={`h-5 w-5 transform transition-transform ${
+                    activeDropdown === "mobile-news" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {activeDropdown === "mobile-news" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {newsItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={`/${locale}${item.href}`}
+                      className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Sign In Button at the bottom */}
+            <div className="mt-8 border-t pt-6 pb-8">
+              <Link href={`/${locale}/login`} className="w-full">
+                <Button
+                  size="lg"
+                  className="w-full bg-primary-green hover:bg-primary-green/90 text-white"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {dict.cta?.sign_in || "Sign In"}
+                </Button>
+              </Link>
+            </div>
+          </nav>
+        </div>
       </div>
     );
   };
+
+  // Add useEffect to handle body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <section ref={sectionRef} className="relative h-screen overflow-hidden">
       {/* Header */}
       <header
         ref={navRef}
-        className={getHeaderBgClass()}
+        className={cn(
+          getHeaderBgClass(),
+          isMobileMenuOpen && "fixed top-0 left-0 right-0 z-50"
+        )}
         data-overlay-passed={animationStarted ? "true" : "false"}
       >
         <div className="container min-w-full py-0">
@@ -823,7 +868,7 @@ export default function HomeHero({
                 <div className="mr-2">
                   <LanguageSwitcher />
                 </div>
-                <Link href={`/${locale}/login`}>
+                <Link href={`/${locale}/login`} className="hidden lg:block">
                   <Button
                     size="sm"
                     className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
@@ -957,7 +1002,7 @@ export default function HomeHero({
             {dict?.home?.hero?.subtitle ||
               "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
           </p>
-
+          
           <Link href={`/${locale}/about`} prefetch={true}>
             <Button
               size="lg"

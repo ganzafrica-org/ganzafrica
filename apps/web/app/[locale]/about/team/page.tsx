@@ -161,13 +161,13 @@ const TeamMemberCard = ({
 }) => {
   const [imageLoading, setImageLoading] = useState(true);
   return (
-    <div className="group h-full">
-      <div className="relative rounded-xl overflow-hidden transition-all duration-300 ease-out h-full shadow-sm hover:shadow-md">
+    <div className="group h-full transform transition-transform duration-300 hover:-translate-y-1">
+      <div className="relative rounded-xl overflow-hidden transition-all duration-300 ease-out h-full shadow-sm hover:shadow-lg">
         {/* Main Card */}
         <div className="relative bg-gray-100 overflow-hidden h-full">
-          {/* Loading Skeleton */}
+          {/* Enhanced Loading Skeleton */}
           {imageLoading && (
-            <div className="absolute inset-0 bg-gray-200 animate-pulse z-[1]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer z-[1]" />
           )}
 
           {/* Image Container */}
@@ -231,13 +231,16 @@ const FilterButton = ({
 }) => (
   <button
     onClick={onClick}
-    className={`px-5 py-2 rounded-full border text-sm font-medium transition-all duration-300 ${
+    className={`px-5 py-2.5 rounded-full border text-sm font-medium transition-all duration-300 relative overflow-hidden ${
       active
         ? "border-primary-green bg-[#E8F5E9] text-primary-green"
         : "border-primary-green text-primary-green hover:bg-[#E8F5E9]"
     }`}
   >
     {label}
+    {active && (
+      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-green transform scale-x-100 transition-transform duration-300" />
+    )}
   </button>
 );
 
@@ -443,18 +446,18 @@ const TeamPage: React.FC = () => {
       {/* Yellow Belt Section */}
       <HeaderBelt />
 
-      <div className="py-24">
+      <div className="py-16 md:py-24">
         <Container>
           {/* Main Content with Sidebar Layout */}
-          <div className="flex flex-col lg:flex-row gap-12">
-            {/* Filters Sidebar */}
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+            {/* Enhanced Filters Sidebar */}
             <div className="lg:w-[280px] flex-shrink-0">
               <div className="lg:sticky lg:top-24">
-                <h2 className="font-medium text-gray-600 mb-6">
+                <h2 className="font-medium text-gray-600 mb-6 text-lg">
                   Filter by Team
                 </h2>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                  {/* Reordered filter buttons according to requirements */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3">
+                  {/* Filter buttons remain the same */}
                   <FilterButton
                     label="All Members"
                     active={activeFilter === "all"}
@@ -489,14 +492,22 @@ const TeamPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Team Members Grid */}
+            {/* Team Members Grid with enhanced loading state */}
             <div className="flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
                 {isLoading
-                  ? // Loading skeletons
-                    Array.from({ length: 6 }).map((_, index) => (
-                      <div key={index} className="animate-pulse">
-                        <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
+                  ? Array.from({ length: 6 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="animate-pulse rounded-xl overflow-hidden"
+                      >
+                        <div className="relative aspect-[3/4] w-full">
+                          <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer" />
+                        </div>
+                        <div className="mt-4">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+                          <div className="h-3 bg-gray-200 rounded w-1/2" />
+                        </div>
                       </div>
                     ))
                   : filteredMembers.map((member) => (
@@ -508,9 +519,12 @@ const TeamPage: React.FC = () => {
                     ))}
               </div>
 
-              {/* Empty State */}
+              {/* Enhanced Empty State */}
               {!isLoading && filteredMembers.length === 0 && (
-                <div className="text-center py-12">
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                    <X className="w-8 h-8 text-gray-400" />
+                  </div>
                   <p className="text-gray-500 text-lg">
                     No team members found in this category.
                   </p>
@@ -521,7 +535,7 @@ const TeamPage: React.FC = () => {
         </Container>
       </div>
 
-      {/* Modal */}
+      {/* Enhanced Modal */}
       {selectedMember && (
         <TeamMemberModal
           member={selectedMember}
@@ -538,6 +552,24 @@ const TeamPage: React.FC = () => {
           100% {
             transform: translateX(-50%);
           }
+        }
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite linear;
+          background: linear-gradient(
+            to right,
+            #f6f7f8 8%,
+            #edeef1 18%,
+            #f6f7f8 33%
+          );
+          background-size: 2000px 100%;
         }
         .animate-marquee {
           animation: marquee 15s linear infinite;
