@@ -1,8 +1,8 @@
-import {db} from "@/db/client";
-import {news, news_tags, news_to_tags} from "@/db/schema";
-import {and, asc, desc, eq, ilike, inArray, or, sql} from "drizzle-orm";
-import {AppError} from "@/middlewares";
-import {Logger} from "../config";
+import { db } from "../db/client";
+import { news, news_tags, news_to_tags } from "../db/schema/news";
+import { eq, inArray, and, desc, asc, sql, or, ilike } from "drizzle-orm";
+import { AppError } from "../middlewares";
+import { Logger } from "../config";
 
 const logger = new Logger("NewsService");
 
@@ -362,7 +362,6 @@ export async function listNews(
     const sortFn = sortDir === "asc" ? asc : desc;
 
     // Get paginated results
-    // Get paginated results with safer ordering
     const validSortColumns = ['id', 'title', 'created_at', 'updated_at', 'publish_date', 'status', 'category'] as const;
     type ValidSortColumn = typeof validSortColumns[number];
 
@@ -471,12 +470,14 @@ export async function createTag(
 // List all tags
 export async function listTags(): Promise<Array<{ id: number; name: string }>> {
   try {
-    return await db
-        .select({
-          id: news_tags.id,
-          name: news_tags.name,
-        })
-        .from(news_tags);
+    const result = await db
+      .select({
+        id: news_tags.id,
+        name: news_tags.name,
+      })
+      .from(news_tags);
+
+    return result;
   } catch (error) {
     logger.error("Error listing tags", error);
     throw new AppError("Failed to list tags", 500);
