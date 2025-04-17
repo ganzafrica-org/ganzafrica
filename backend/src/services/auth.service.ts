@@ -1,12 +1,20 @@
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import * as crypto from "crypto";
-import {db, withDbTransaction} from "@/db/client";
-import {password_reset_tokens, sessions, users, verification_tokens,} from "@/db/schema";
-import {and, eq} from "drizzle-orm";
-import {constants, env, Logger} from "../config";
-import {sendPasswordResetEmail, } from "@/services/email.service";
-import {AppError} from "@/middlewares";
+import { db, withDbTransaction } from "@/db/client";
+import {
+  users,
+  sessions,
+  verification_tokens,
+  password_reset_tokens,
+} from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { env, Logger, constants } from "../config";
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} from "../services/email.service";
+import { AppError } from "@/middlewares";
 
 const logger = new Logger("AuthService");
 
@@ -96,16 +104,18 @@ export async function createToken(
     const expiresInMs = parseTimeToMs(expiresIn);
     const secret = isRefresh ? JWT_REFRESH_SECRET : JWT_SECRET;
 
-    return jwt.sign(
-        {
-          ...payload,
-          jti: crypto.randomUUID(),
-        },
-        secret,
-        {
-          expiresIn: Math.floor(expiresInMs / 1000), // JWT uses seconds for expiration
-        },
+    const token = jwt.sign(
+      {
+        ...payload,
+        jti: crypto.randomUUID(),
+      },
+      secret,
+      {
+        expiresIn: Math.floor(expiresInMs / 1000), // JWT uses seconds for expiration
+      },
     );
+
+    return token;
   } catch (error) {
     logger.error("Token creation error", error);
     throw new AppError("Failed to create authentication token", 500);
@@ -128,7 +138,8 @@ export async function verifyToken(
 ): Promise<TokenPayload> {
   try {
     const secret = isRefresh ? JWT_REFRESH_SECRET : JWT_SECRET;
-    return jwt.verify(token, secret) as TokenPayload;
+    const decoded = jwt.verify(token, secret) as TokenPayload;
+    return decoded;
   } catch (error) {
     logger.error("Token verification error", error);
 
@@ -191,7 +202,7 @@ export async function createSession(
       .from(sessions)
       .where(and(eq(sessions.user_id, userId), eq(sessions.is_valid, true)));
 
-    // If too many sessions, invalidate the oldest ones
+    // If too many sessions, invalidate oldest ones
     if (activeSessions.length >= maxSessions) {
       // Sort by last activity
       const sortedSessions = [...activeSessions].sort(
@@ -210,7 +221,7 @@ export async function createSession(
     }
 
     // Create new session record
-    // Generate a session ID that's safe for PostgresSQL integer
+    // Generate a session ID that's safe for PostgreSQL integer
     // Use a smaller, safe integer range (1 to 1,000,000)
     const sessionId = (Math.floor(Math.random() * 1000000) + 1).toString();
 
@@ -361,6 +372,57 @@ export async function updateSessionActivity(
     return false;
   }
 }
+
+/**
+ * Send email verification link
+ * @param {number} userId - User ID
+ * @param {string} email - User's email address
+ * @returns {Promise<boolean>} - Result of operation
+ */
+export async function sendVerification(
+  userId: number,
+  email: string,
+): Promise<boolean> {
+  try {
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = await bcrypt.hash(token, SALT_ROUNDS);
+    const expiresAt = new Date(Date.now() + parseTimeToMs("24h"));
+
+    // Invalidate any existing verification tokens
+    await db
+      .update(verification_tokens)
+      .set({ used: true })
+      .where(
+        and(
+          eq(verification_tokens.user_id, userId),
+          eq(verification_tokens.type, "email"),
+          eq(verification_tokens.used, false),
+        ),
+      );
+
+    // Create new verification token
+    await db.insert(verification_tokens).values({
+      user_id: userId,
+      type: "email",
+      token_hash: tokenHash,
+      expires_at: expiresAt,
+      used: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+
+    await sendVerificationEmail(email, {
+      token,
+      expiresAt,
+    });
+
+    return true;
+  } catch (error) {
+    logger.error("Verification token creation error", error);
+    throw new AppError("Failed to send verification email", 500);
+  }
+}
+
 /**
  * Send password reset email
  * @param {number} userId - User ID
@@ -481,6 +543,59 @@ export async function verifyEmailToken(
     return true;
   });
 }
+
+/**
+ * Verify password reset token
+ * @param {string} token - Token to verify
+ * @param {number} userId - User ID
+ * @returns {Promise<any>} - Valid token info if successful
+ * Verify password reset token
+ * @param {string} token - Token to verify
+ * @param {number} userId - User ID
+ * @returns {Promise<any>} - Valid token info if successful
+ */
+export async function verifyPasswordResetToken(
+  token: string,
+  userId: number,
+): Promise<any> {
+  const tokens = await db
+    .select()
+    .from(password_reset_tokens)
+    .where(
+      and(
+        eq(password_reset_tokens.user_id, userId),
+        eq(password_reset_tokens.used, false),
+      ),
+    );
+
+  if (!tokens.length) {
+    throw new AppError("Invalid password reset token", 400);
+  }
+
+  let validToken = null;
+  for (const dbToken of tokens) {
+    try {
+      if (await bcrypt.compare(token, dbToken.token_hash)) {
+        validToken = dbToken;
+        break;
+      }
+    } catch (error) {
+      logger.warn("Error verifying reset token hash", error);
+      // Continue to next token
+    }
+  }
+
+  if (!validToken) {
+    throw new AppError("Invalid password reset token", 400);
+  }
+
+  if (validToken.expires_at < new Date()) {
+    throw new AppError("Password reset token has expired", 400);
+  }
+
+  return validToken;
+}
+
 /**
  * Reset user password
  * @param {string} token - Password reset token
