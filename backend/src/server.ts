@@ -10,7 +10,9 @@ const API_BASE_URL = env.API_BASE_URL
 const server = app.listen(PORT, () => {
   logger.info(`Server running in ${env.NODE_ENV} mode on port ${PORT}`);
   logger.info(
-    `API Documentation available at ${API_BASE_URL}:${PORT}/api/docs`,
+      `API Documentation available at ${env.NODE_ENV === "production"
+          ? "https://backend-cbx8.onrender.com/api/docs"
+          : `${API_BASE_URL}:${PORT}/api/docs`}`
   );
 });
 
