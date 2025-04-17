@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 
 export default function Home() {
@@ -56,8 +57,8 @@ export default function Home() {
       </div>
 
       {/* Hero Section - Full width */}
-      <section className="relative h-[500px] z-10">
-        <div className="absolute inset-0 bg-[#045f3c]/80">
+      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
+        <div className="absolute inset-0 bg-black/70">
           <video 
             autoPlay 
             muted 
@@ -68,18 +69,28 @@ export default function Home() {
             <source src="/videos/hero-video.mp4" type="video/mp4" />
           </video>
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 flex flex-col items-center justify-center text-center h-full pt-20">
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-8">
-            A lifetime of <span className="text-[#F8B712]">Connections</span>, Opportunities and <span className="text-[#F8B712]">Impact</span>
-          </h1>
-          <h2 className="text-5xl md:text-7xl font-extrabold text-[#F8B712] tracking-wider">
+        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
+          <motion.h1
+            className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+          >
+            A lifetime of <span className="text-yellow-400 font-bold">Connections</span>, Opportunities and <span className="text-yellow-400 font-bold">Impact</span>
+          </motion.h1>
+          <motion.h2
+            className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
             ALUMNI NETWORK
-          </h2>
+          </motion.h2>
         </div>
       </section>
 
       {/* Categories Bar - Full width */}
-      <div className="bg-[#F8B712] py-3 relative z-10">
+      <div className="bg-[#F8B712] py-3 relative z-7">
         <div ref={scrollRef} className="max-w-7xl mx-auto px-4 overflow-hidden">
           <div className="flex gap-6 whitespace-nowrap animate-scroll">
             {Array(2).fill(["Food Systems", "Data & Evidence", "Co-creation", "Food systems", "Data & Evidence"]).flat().map((item, index) => (
@@ -111,23 +122,21 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <div className="inline-block border-2 border-[#045f3c] rounded-lg px-5 py-2 mb-6">
-                <h2 className="text-2xl font-bold">
-                  <span className="text-[#045f3c]">Mission </span>
-                  <span className="text-[#F8B712]">Statement</span>
-                </h2>
-              </div>
+              <h2 className="text-3xl font-bold mb-6">
+                <span className="text-black">Mission </span>
+                <span className="text-[#045f3c]">Statement</span>
+              </h2>
               <p className="text-base text-gray-700 mb-6">
                 Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa.
               </p>
-              <p className="italic text-lg text-[#045f3c] font-medium mb-6 border-l-4 border-[#F8B712] pl-4">
+              <p className="italic text-lg text-black font-medium mb-6 border-l-4 border-[#045f3c] pl-4">
                 "To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact."
               </p>
               <div className="flex gap-8">
                 {["Knowledge Sharing", "Mentorship", "Collaboration and Networking"].map((principle, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-[#F8B712]" />
-                    <span className="text-base text-[#045f3c] font-medium">{principle}</span>
+                    <div className="w-4 h-4 rounded-full bg-yellow-400" />
+                    <span className="text-base text-black font-medium">{principle}</span>
                   </div>
                 ))}
               </div>
@@ -185,7 +194,7 @@ export default function Home() {
               <div className="absolute -top-6 right-6 bg-[#F8B712] text-black p-5 rounded-lg shadow-lg transform -rotate-2 z-20">
                 <div className="relative">
                   <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-[#F8B712] rotate-45"></div>
-                  <p className="text-xl font-bold relative z-10">Always a GanzAfrica, Always a Changemaker!</p>
+                  <p className="text-xl font-bold relative z-10">"Once a GanzAfrica, Always a Changemaker!"</p>
                 </div>
               </div>
               <img
@@ -195,12 +204,10 @@ export default function Home() {
               />
             </div>
             <div>
-              <div className="inline-block border-2 border-[#045f3c] rounded-lg px-6 py-3 mb-8">
-                <h2 className="text-3xl font-bold">
-                  <span className="text-[#045f3c]">Purpose of the </span>
-                  <span className="text-[#F8B712]">Alumni Network</span>
-                </h2>
-              </div>
+              <h2 className="text-3xl font-bold mb-8">
+                <span className="text-black">Purpose of the </span>
+                <span className="text-[#045f3c]">Alumni Network</span>
+              </h2>
               <div className="space-y-8">
                 {[
                   {
@@ -250,12 +257,10 @@ export default function Home() {
         {/* Projects Section */}
         <section className="py-8 relative z-10">
           <div className="text-center mb-12">
-            <div className="inline-block border-2 border-[#045f3c] rounded-lg px-6 py-3">
-              <h2 className="text-3xl font-bold">
-                <span className="text-[#045f3c]">Alumni </span>
-                <span className="text-[#F8B712]">Projects</span>
-              </h2>
-            </div>
+            <h2 className="text-3xl font-bold">
+              <span className="text-black">Alumni </span>
+              <span className="text-[#045f3c]">Projects</span>
+            </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -278,7 +283,7 @@ export default function Home() {
               <AlumniCard key={index} className="bg-[#045f3c] text-white p-8 rounded-xl transform hover:scale-105 transition-transform group">
                 <div className="flex items-center gap-2 mb-4">
                   {project.icon}
-                  <Badge className="bg-[#F8B712] text-black text-base px-3 py-1 group-hover:bg-[#F8B712]">{project.tag}</Badge>
+                  <Badge className="bg-yellow-400 text-black text-base px-3 py-1 group-hover:bg-[#045f3c] group-hover:text-white transition-colors">{project.tag}</Badge>
                 </div>
                 <p className="text-base leading-relaxed group-hover:text-white/90">{project.description}</p>
                 {index < 2 && (
@@ -299,12 +304,10 @@ export default function Home() {
         <section className="py-8 bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8">
-              <div className="inline-block border-2 border-[#045f3c] rounded-lg px-6 py-3">
-                <h2 className="text-3xl font-bold">
-                  <span className="text-[#045f3c]">Alumni </span>
-                  <span className="text-[#F8B712]">Events</span>
-                </h2>
-              </div>
+              <h2 className="text-3xl font-bold">
+                <span className="text-black">Alumni </span>
+                <span className="text-[#045f3c]">Events</span>
+              </h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
