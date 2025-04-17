@@ -20,8 +20,10 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: `${env.API_BASE_URL}:${env.API_PORT}/api`,
-      description: "Development server",
+      url: env.NODE_ENV === "production"
+          ? `https://backend-cbx8.onrender.com/api`
+          : `${env.API_BASE_URL}:${env.API_PORT}/api`,
+      description: env.NODE_ENV === "production" ? "Production server" : "Development server",
     },
   ],
   components: {
