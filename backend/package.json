@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Ganzafrica backend API",
   "main": "dist/server.js",
+  "_moduleAliases": {
+    "@": "dist"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
@@ -14,9 +17,6 @@
     "swagger:generate": "tsx src/swagger/generate.ts",
     "lint": "eslint --ext .ts src",
     "test": "jest"
-  },
-  "_moduleAliases": {
-    "@": "dist"
   },
   "dependencies": {
     "argon2": "^0.41.1",
