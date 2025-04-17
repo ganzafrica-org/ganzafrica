@@ -5,6 +5,14 @@ import { DecoratedHeading } from "@/components/layout/headertext";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
+import { 
+  Goal, 
+  Telescope, 
+  BarChart3, 
+  ShieldCheck, 
+  Leaf, 
+  LucideIcon 
+} from 'lucide-react';
 
 import { FC } from "react";
 
@@ -17,6 +25,7 @@ interface MissionCardProps {
   label: string;
   content: string;
   hasCurvedCorner?: boolean;
+  icon?: LucideIcon;
 }
 
 interface ValueCardProps {
@@ -27,6 +36,7 @@ interface ValueCardProps {
   titleColor: string;
   textColor?: string;
   description: string;
+  icon: LucideIcon;
 }
 
 interface FloatingTagProps {
@@ -47,7 +57,7 @@ interface PageProps {
   params: { locale: string };
 }
 
-// Reusable Mission Card component
+
 const MissionCard: FC<MissionCardProps> = ({
   bgColor,
   labelColor,
@@ -56,37 +66,38 @@ const MissionCard: FC<MissionCardProps> = ({
   label,
   content,
   hasCurvedCorner = false,
-}) => (
-  <div className="relative">
-    <div className={`${bgColor} rounded-3xl p-6 sm:p-8 overflow-hidden`}>
-      <div className="flex items-center mb-4 sm:mb-6">
-        <div
-          className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium`}
+  icon
+}) => {
+  const IconComponent = icon || (() => null);
+
+  return (
+    <div className="relative group">
+      <div className={`${bgColor} rounded-3xl p-6 sm:p-8 overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1`}>
+        <div className="flex items-center mb-4 sm:mb-6">
+          <div 
+            className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium`}
+          >
+            <span className="mr-2">●</span> {label}
+          </div>
+        </div>
+        <p className={`text-base md:text-xl font-bold ${textColor}`}>{content}</p>
+        {hasCurvedCorner && (
+          <div 
+            className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white"
+            style={{
+              borderBottomLeftRadius: "100%",
+            }}
+          />
+        )}
+        <div 
+          className={`absolute -top-4 -right-4 ${iconColor} rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg`}
         >
-          <span className="mr-2">●</span> {label}
+          <IconComponent className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
         </div>
       </div>
-
-      <p className={`text-lg sm:text-xl font-bold ${textColor}`}>{content}</p>
-
-      {hasCurvedCorner && (
-        <div
-          className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white"
-          style={{
-            borderBottomLeftRadius: "100%",
-          }}
-        ></div>
-      )}
-
-      {/* Circular icon */}
-      <div
-        className={`absolute -top-4 -right-4 ${iconColor} rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg`}
-      >
-        <BikeIcon className="w-8 h-8 sm:w-10 sm:h-10" />
-      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Reusable Value Card component
 const ValueCard: FC<ValueCardProps> = ({
@@ -97,16 +108,17 @@ const ValueCard: FC<ValueCardProps> = ({
   titleColor,
   textColor = "text-gray-800",
   description,
+  icon: IconComponent
 }) => (
   <div
     className={`w-full md:w-1/3 ${bgColor} rounded-3xl p-6 sm:p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer mb-6 md:mb-0`}
   >
     <div className="flex justify-center mb-4 sm:mb-6">
       <div
-        className={`${iconBgColor} rounded-full w-16 h-16 sm:w-24 sm:h-24 flex items-center justify-center shadow-md transition-transform duration-300 hover:scale-110`}
+        className={`${iconBgColor} rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-md transition-transform duration-300 hover:scale-110`}
       >
-        <BikeIcon
-          className="w-10 h-10 sm:w-14 sm:h-14 transition-transform duration-300 hover:scale-125"
+        <IconComponent
+          className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 hover:scale-125"
           color={iconColor}
         />
       </div>
@@ -138,77 +150,46 @@ const PromiseCard: FC<PromiseCardProps> = ({
   const textColor = type === "partners" ? "text-gray-800" : "text-white";
   const label = `Promise to ${type}`;
 
-  if (type === "partners" && items) {
-    return (
-      <div className={`${bgColor} rounded-3xl p-4 sm:p-6`}>
-        <div className="flex items-center mb-3 sm:mb-4">
-          <div
-            className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs font-bold`}
-          >
-            {label}
-          </div>
+  return (
+    <div className={`${bgColor} rounded-3xl p-4 sm:p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
+      <div className="flex items-center mb-3 sm:mb-4">
+        <div
+          className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs font-bold`}
+        >
+          {label}
         </div>
+      </div>
 
-        <ul className="space-y-4 sm:space-y-6">
-          {items.map((item, index) => (
+      {Array.isArray(content) ? (
+        <ul className="space-y-3 sm:space-y-4">
+          {content.map((item, index) => (
             <li key={index} className="flex items-start">
-              <span className="text-black font-bold mr-2 sm:mr-3 mt-1">•</span>
-              <span className="text-gray-800 font-medium text-sm sm:text-lg">
+              <span className={`${textColor} font-bold mr-2 sm:mr-3 mt-1`}>•</span>
+              <span className={`${textColor} font-medium text-sm sm:text-base`}>
                 {item}
               </span>
             </li>
           ))}
         </ul>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative">
-      <div
-        className={`${bgColor} ${textColor} rounded-3xl p-4 sm:p-6 overflow-hidden`}
-      >
-        <div className="flex items-center mb-3 sm:mb-4">
-          <div
-            className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs font-bold`}
-          >
-            {label}
-          </div>
-        </div>
-
-        {Array.isArray(content) ? (
-          <ul className="space-y-3 sm:space-y-4">
-            {content.map((item, index) => (
-              <li key={index} className="flex items-start">
-                <span className="text-white font-bold mr-2 sm:mr-3 mt-1">
-                  •
-                </span>
-                <span className="text-white font-medium text-sm sm:text-base">
-                  {item}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-lg sm:text-xl font-bold">{content}</p>
-        )}
-
-        {hasCurvedCorner && (
-          <div
-            className="absolute top-0 right-0 w-10 h-10 sm:w-16 sm:h-16 bg-white"
-            style={{
-              borderBottomLeftRadius: "100%",
-            }}
-          ></div>
-        )}
-      </div>
+      ) : (
+        <ul className="space-y-4 sm:space-y-6">
+          {items?.map((item, index) => (
+            <li key={index} className="flex items-start">
+              <span className={`${textColor} font-bold mr-2 sm:mr-3 mt-1`}>•</span>
+              <span className={`${textColor} font-medium text-sm sm:text-base`}>
+                {item}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
 
 export default async function AboutPage({ params: { locale } }: PageProps) {
   const dict = await getDictionary(locale);
-
+  
   // Tag data with translations
   const tags = [
     // Yellow
@@ -309,6 +290,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
       <div className="flex justify-end p-4">
         <LanguageSwitcher />
       </div>
+
       {/* Hero Section */}
       <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
         {/* Background Image */}
@@ -342,77 +324,77 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
 
       <HeaderBelt />
       
-      {/* Our Approach Section with circular images */}
-      <section className="py-8 md:py-12 ">
-  <div className="container mx-auto px-4">
-    <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
-      {/* Left side - Images (hidden on mobile, visible on lg screens) */}
-      <div className="hidden lg:block lg:w-1/2">
-        <div className="relative mx-auto" style={{ width: 'fit-content' }}>
-          <div className="rounded-full overflow-hidden w-[300px] h-[300px] md:w-[400px] md:h-[400px] border-4 border-transparent">
-            <Image
-              src="/images/team.png"
-              alt="Hands holding grain"
-              width={400}
-              height={400}
-              className="w-full h-full object-cover"
-            />
+      {/* A Transformative Partner Section */}
+      <section className="py-8 md:py-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+            {/* Left side - Images (hidden on mobile, visible on lg screens) */}
+            <div className="hidden lg:block lg:w-1/2">
+              <div className="relative mx-auto" style={{ width: 'fit-content' }}>
+                <div className="rounded-full overflow-hidden w-[300px] h-[300px] md:w-[400px] md:h-[400px] border-4 border-transparent">
+                  <Image
+                    src="/images/team.png"
+                    alt="Hands holding grain"
+                    width={400}
+                    height={400}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="absolute -bottom-10 -left-10 rounded-full overflow-hidden w-[120px] h-[120px] md:w-[150px] md:h-[150px] border-4 border-green-700">
+                  <Image
+                    src="/images/1.jpg"
+                    alt="Smiling person"
+                    width={150}
+                    height={150}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Right side - Text content */}
+            <div className="w-full lg:w-1/2">
+              <div className="flex justify-left mb-4">
+                <DecoratedHeading
+                  firstText={
+                    dict?.about?.transformative_partner?.heading_first ||
+                    "A Transformative"
+                  }
+                  secondText={
+                    dict?.about?.transformative_partner?.heading_second || "Partner"
+                  }
+                />
+              </div>
+              <div className="max-w-full lg:max-w-xl space-y-4 text-justify">
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {dict?.about?.transformative_partner?.paragraph_1 ||
+                    "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
+                </p>
+
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {dict?.about?.transformative_partner?.paragraph_2 ||
+                    "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
+                </p>
+
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {dict?.about?.transformative_partner?.paragraph_3 ||
+                    "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
+                </p>
+
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {dict?.about?.transformative_partner?.paragraph_4 ||
+                    "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
+                </p>
+              </div>
+            </div>
           </div>
-
-          <div className="absolute -bottom-10 -left-10 rounded-full overflow-hidden w-[120px] h-[120px] md:w-[150px] md:h-[150px] border-4 border-green-700">
-            <Image
-              src="/images/1.jpg"
-              alt="Smiling person"
-              width={150}
-              height={150}
-              className="w-full h-full object-cover"
-            />
-          </div>
         </div>
-      </div>
-      
-      {/* Right side - Text content (full width on mobile, half on lg screens) */}
-      <div className="w-full lg:w-1/2">
-        <div className="flex justify-left mb-4">
-          <DecoratedHeading
-            firstText={
-              dict?.about?.transformative_partner?.heading_first ||
-              "A Transformative"
-            }
-            secondText={
-              dict?.about?.transformative_partner?.heading_second || "Partner"
-            }
-          />
-        </div>
-        <div className="max-w-full lg:max-w-xl space-y-4 text-justify">
-          <p className="text-gray-700 text-sm sm:text-base">
-            {dict?.about?.transformative_partner?.paragraph_1 ||
-              "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
-          </p>
-
-          <p className="text-gray-700 text-sm sm:text-base">
-            {dict?.about?.transformative_partner?.paragraph_2 ||
-              "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
-          </p>
-
-          <p className="text-gray-700 text-sm sm:text-base">
-            {dict?.about?.transformative_partner?.paragraph_3 ||
-              "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
-          </p>
-
-          <p className="text-gray-700 text-sm sm:text-base">
-            {dict?.about?.transformative_partner?.paragraph_4 ||
-              "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
       {/* OUR ASPIRATIONS SECTION */}
       <section className="py-8 sm:py-12 md:py-16 bg-white">
-        <div className="flex justify-center mb-6 sm:mb-8 md:mb-12">
+        <div className="flex justify-center mb-8 md:mb-12">
           <div className="relative inline-block">
             <div className="flex justify-center">
               <DecoratedHeading
@@ -425,7 +407,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
           </div>
         </div>
 
-        <div className="w-full px-4">
+        <div className="w-full px-6 sm:px-8 md:px-4">
           <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
             {/* Left side - Team Image */}
             <div className="w-full md:w-1/2 mb-6 md:mb-0">
@@ -442,87 +424,111 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
 
             {/* Right side - Mission Cards */}
             <div className="w-full md:w-1/2 flex flex-col space-y-6 sm:space-y-8">
-              <MissionCard
-                bgColor="bg-yellow-50"
-                labelColor="bg-primary-orange"
-                iconColor="bg-primary-orange"
-                label={dict?.about?.aspirations?.mission_label || "Our Mission"}
-                content={
-                  dict?.about?.aspirations?.mission_1 ||
-                  "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"
-                }
-              />
+              <div className="bg-yellow-50 rounded-3xl p-6 sm:p-8 relative">
+                <div className="flex items-center mb-4">
+                  <div className="bg-primary-orange text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
+                    <span className="mr-2">●</span> Our Vision
+                  </div>
+                </div>
+                <p className="text-base md:text-xl font-bold text-gray-900">
+                  {dict?.about?.aspirations?.mission_1 ||
+                    "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"}
+                </p>
+                <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
+                <div className="absolute -top-4 -right-4 bg-primary-orange rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+                  <Goal className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                </div>
+              </div>
 
-              <MissionCard
-                bgColor="bg-green-800"
-                labelColor="bg-green-500"
-                iconColor="bg-green-600"
-                textColor="text-white"
-                label={dict?.about?.aspirations?.mission_label || "Our Mission"}
-                content={
-                  dict?.about?.aspirations?.mission_2 ||
-                  "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."
-                }
-                hasCurvedCorner={true}
-              />
+              <div className="bg-green-800 rounded-3xl p-6 sm:p-8 relative">
+                <div className="flex items-center mb-4">
+                  <div className="bg-green-500 text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
+                    <span className="mr-2">●</span> {dict?.about?.aspirations?.mission_label || "Our Mission"}
+                  </div>
+                </div>
+                <p className="text-base md:text-xl font-bold text-white">
+                  {dict?.about?.aspirations?.mission_2 ||
+                    "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."}
+                </p>
+                <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
+                <div className="absolute -top-4 -right-4 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+                  <Telescope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* OUR VALUES SECTION */}
-      <section className="py-8 sm:py-12 md:py-16 bg-white">
-        <div className="flex justify-center mb-8 sm:mb-12 md:mb-16">
-          <div className="relative inline-block">
-            <div className="flex justify-center mb-6 sm:mb-10">
+      <section className="py-16 md:py-24 bg-[#F5F5F5] bg-opacity-75">
+        <div className="container mx-auto px-4">
+          {/* Title and Subtitle */}
+          <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
+            <div className="mb-6">
               <DecoratedHeading
                 firstText={dict?.about?.values?.heading_first || "Our"}
                 secondText={dict?.about?.values?.heading_second || "Values"}
               />
             </div>
+            <p className="text-gray-600 text-base sm:text-lg mx-auto">
+              At GanzAfrica, our values shape everything we do. They guide our decisions, 
+              influence our actions, and define our relationships with partners and communities.
+            </p>
           </div>
-        </div>
 
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
-            <ValueCard
-              bgColor="bg-yellow-50"
-              iconBgColor="bg-primary-orange"
-              title={dict?.about?.values?.evidence_title || "Evidence based"}
-              titleColor="text-primary-orange"
-              description={
-                dict?.about?.values?.evidence_description ||
-                "In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes."
-              }
-            />
+          {/* Values Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
+            {/* Evidence Based Card */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-primary-green rounded-full flex items-center justify-center mb-6">
+                  <BarChart3 className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  {dict?.about?.values?.evidence_title || "Evidence based"}
+                </h3>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  {dict?.about?.values?.evidence_description ||
+                    "In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes."}
+                </p>
+              </div>
+            </div>
 
-            <ValueCard
-              bgColor="bg-green-800"
-              iconBgColor="bg-white"
-              iconColor="#006837"
-              title={dict?.about?.values?.integrity_title || "Integrity"}
-              titleColor="text-white"
-              textColor="text-white"
-              description={
-                dict?.about?.values?.integrity_description ||
-                "We work with authenticity and transparency. We are collaborative but not subject to influence or partiality."
-              }
-            />
+            {/* Integrity Card */}
+            <div className="bg-primary-green rounded-2xl p-6 sm:p-8">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6">
+                  <ShieldCheck className="w-8 h-8 text-primary-green" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-4">
+                  {dict?.about?.values?.integrity_title || "Integrity"}
+                </h3>
+                <p className="text-white/90 text-sm sm:text-base">
+                  {dict?.about?.values?.integrity_description ||
+                    "We work with authenticity and transparency. We are collaborative but not subject to influence or partiality."}
+                </p>
+              </div>
+            </div>
 
-            <ValueCard
-              bgColor="bg-yellow-50"
-              iconBgColor="bg-primary-orange"
-              title={dict?.about?.values?.stewardship_title || "Stewardship"}
-              titleColor="text-primary-orange"
-              description={
-                dict?.about?.values?.stewardship_description ||
-                "We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future."
-              }
-            />
+            {/* Stewardship Card */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 sm:col-span-2 lg:col-span-1">
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-primary-green rounded-full flex items-center justify-center mb-6">
+                  <Leaf className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  {dict?.about?.values?.stewardship_title || "Stewardship"}
+                </h3>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  {dict?.about?.values?.stewardship_description ||
+                    "We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future."}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
-      
 
       {/* Our Approach Grid Section */}
       <section className="py-8 sm:py-12 md:py-16 bg-white">
@@ -534,62 +540,59 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {/* Left Column - Identify */}
-            <div>
+            <div className="flex flex-col gap-4">
               <div
                 style={{ backgroundColor: "#FFFDEB" }}
-                className="p-4 sm:p-6 h-auto sm:h-60 md:h-80"
+                className="p-6 rounded-2xl flex-1 min-h-[320px] flex flex-col items-center text-center"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-primary-orange rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                  <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
+                <div className="w-20 h-20 bg-primary-orange rounded-full flex items-center justify-center mb-4">
+                  <span className="text-3xl font-bold text-white">1</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-primary-orange mb-2 sm:mb-3">
+                <h2 className="text-2xl font-bold text-primary-orange mb-3">
                   {dict?.about?.approach?.identify_title || "Identify"}
                 </h2>
-                <p className="text-gray-800 text-sm sm:text-base">
+                <p className="text-gray-800 text-base">
                   {dict?.about?.approach?.identify_text ||
                     "Identify leaders who are committed and passionate about the sustainable stewardship of land, agriculture, and the environment, and who can be trained and capacitated to provide expertise to public, and private sectors and communities."}
                 </p>
               </div>
 
-              {/* Bottom-left image */}
-              <div className="h-48 sm:h-60 md:h-80">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                 <Image
                   src="/images/team-members-2.jpg"
                   alt="GanzAfrica Office"
                   width={400}
-                  height={320}
+                  height={300}
                   className="w-full h-full object-cover"
                 />
               </div>
             </div>
 
             {/* Middle Column - Main Image + Establish */}
-            <div>
-              {/* Main center image */}
-              <div className="h-48 sm:h-60 md:h-80">
+            <div className="flex flex-col gap-4">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                 <Image
                   src="/images/team-members-1.jpg"
                   alt="GanzAfrica Team"
                   width={400}
-                  height={320}
+                  height={300}
                   className="w-full h-full object-cover"
                 />
               </div>
 
-              {/* Establish section */}
               <div
                 style={{ backgroundColor: "#F9F9FB" }}
-                className="p-4 sm:p-6 h-auto sm:h-60 md:h-80"
+                className="p-6 rounded-2xl flex-1 min-h-[320px] flex flex-col items-center text-center"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-green-800 rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                  <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
+                <div className="w-20 h-20 bg-green-800 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-3xl font-bold text-white">2</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-green-800 mb-2 sm:mb-3">
+                <h2 className="text-2xl font-bold text-green-800 mb-3">
                   {dict?.about?.approach?.establish_title || "Establish"}
                 </h2>
-                <p className="text-gray-800 text-sm sm:text-base">
+                <p className="text-gray-800 text-base">
                   {dict?.about?.approach?.establish_text ||
                     "Establish in-person digital training and incubation centres, enabling hands-on capacity enhancement programmes, professional development and networking designed to respond to specific challenges."}
                 </p>
@@ -597,32 +600,30 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             </div>
 
             {/* Right Column - Deploy + Image */}
-            <div>
-              {/* Deploy section */}
+            <div className="flex flex-col gap-4">
               <div
                 style={{ backgroundColor: "#FFFDEB" }}
-                className="p-4 sm:p-6 h-auto sm:h-60 md:h-80"
+                className="p-6 rounded-2xl flex-1 min-h-[320px] flex flex-col items-center text-center"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-primary-orange rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                  <PersonIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-white" />
+                <div className="w-20 h-20 bg-primary-orange rounded-full flex items-center justify-center mb-4">
+                  <span className="text-3xl font-bold text-white">3</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-primary-orange mb-2 sm:mb-3">
+                <h2 className="text-2xl font-bold text-primary-orange mb-3">
                   {dict?.about?.approach?.deploy_title || "Deploy"}
                 </h2>
-                <p className="text-gray-800 text-sm sm:text-base">
+                <p className="text-gray-800 text-base">
                   {dict?.about?.approach?.deploy_text ||
                     "Deploy trained young professionals to support the design and implementation of co-created, community-focused solutions for livelihood improvement."}
                 </p>
               </div>
 
-              {/* Bottom-right image */}
-              <div className="h-48 sm:h-60 md:h-80">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                 <Image
                   src="/images/team-group-photo.jpg"
                   alt="GanzAfrica Team Members"
                   width={400}
-                  height={320}
-                  className="w-full h-full object-cover object-center"
+                  height={300}
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
@@ -638,7 +639,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
             secondText={dict?.about?.promise?.heading_second || "Promise"}
           />
         </div>
-        <div className="flex flex-col md:flex-row gap-4 sm:gap-6 p-4 max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row gap-4 sm:gap-6 px-6 sm:px-8 md:px-4 max-w-6xl mx-auto">
           {/* Left side - Image */}
           <div className="w-full md:w-1/2 mb-4 md:mb-0">
             <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[600px]">
@@ -679,7 +680,7 @@ export default async function AboutPage({ params: { locale } }: PageProps) {
         </div>
       </section>
 
-      {/* Building Sustainable Solutions Section  */}
+      {/* Building Sustainable Solutions Section */}
       <BuildingSolutionsSection
         dict={dict?.about}
         categories={categories}

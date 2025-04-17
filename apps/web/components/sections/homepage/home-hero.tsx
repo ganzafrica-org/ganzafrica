@@ -365,7 +365,7 @@ export default function HomeHero({
     const textColor = getNavItemColor();
 
     return (
-      <div className="hidden md:flex justify-center items-center space-x-1 flex-1 mx-4">
+      <div className="hidden lg:flex justify-center items-center space-x-1 flex-1 mx-4">
         <NavigationMenu>
           <NavigationMenuList>
             {/* About */}
@@ -599,7 +599,7 @@ export default function HomeHero({
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-40 bg-white pt-20 md:hidden overflow-y-auto">
+      <div className="fixed inset-0 z-40 bg-white pt-20 lg:hidden overflow-y-auto">
         <div className="absolute right-4 top-6">
           <Button
             variant="ghost"
@@ -629,7 +629,7 @@ export default function HomeHero({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -644,20 +644,20 @@ export default function HomeHero({
           <div className="flex flex-col">
             <button
               className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-what-we-do")}
+              onClick={() => toggleDropdown("mobile-our-approach")}
             >
               {dict.navigation?.our_approach || "Our approach"}
               <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-what-we-do" ? "rotate-180" : ""}`}
+                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-our-approach" ? "rotate-180" : ""}`}
               />
             </button>
-            {activeDropdown === "mobile-what-we-do" && (
+            {activeDropdown === "mobile-our-approach" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {ourApproachItems.map((item) => (
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -685,7 +685,7 @@ export default function HomeHero({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -713,7 +713,35 @@ export default function HomeHero({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    prefetch={true}
+                  >
+                    {item.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Opportunities */}
+          <div className="flex flex-col">
+            <button
+              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              onClick={() => toggleDropdown("mobile-opportunities")}
+            >
+              {dict.navigation?.opportunities || "Opportunities"}
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-opportunities" ? "rotate-180" : ""}`}
+              />
+            </button>
+            {activeDropdown === "mobile-opportunities" && (
+              <div className="ml-4 mt-2 flex flex-col space-y-2">
+                {opportunitiesItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={`/${locale}${item.href}`}
+                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -741,7 +769,7 @@ export default function HomeHero({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#e9e8e8] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -803,12 +831,12 @@ export default function HomeHero({
                     {dict.cta?.sign_in || "Sign In"}
                   </Button>
                 </Link>
-                <div className="md:hidden">
+                <div className="lg:hidden">
                   <Button
                     variant="ghost"
                     size="icon"
                     className={cn(
-                      "hover:bg-white/20",
+                      "hover:bg-[#e9e8e8]",
                       !animationStarted ||
                         navRef.current?.getAttribute("data-overlay-passed") !==
                           "true"
@@ -829,7 +857,7 @@ export default function HomeHero({
             </div>
           </div>
         </div>
-
+        
         {/* Mobile menu */}
         {isMobileMenuOpen && renderMobileMenu()}
       </header>

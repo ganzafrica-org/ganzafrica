@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 
 import {
   NavigationMenu,
@@ -180,7 +180,7 @@ export default function Navigation({
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -202,7 +202,7 @@ export default function Navigation({
       return "fixed top-0 z-50 min-w-full bg-white shadow-sm backdrop-blur-sm";
     }
   };
-
+  
   // Get text color for navigation items
   const getNavItemColor = () => {
     if (isHomePage) {
@@ -220,7 +220,7 @@ export default function Navigation({
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-40 bg-white pt-20 md:hidden overflow-y-auto">
+      <div className="fixed inset-0 z-40 bg-white pt-20 lg:hidden overflow-y-auto transition-all duration-300 ease-in-out">
         <div className="absolute right-4 top-6">
           <Button
             variant="ghost"
@@ -236,17 +236,22 @@ export default function Navigation({
           {/* Mobile About with submenu */}
           <div className="flex flex-col">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between w-full"
               onClick={() => toggleDropdown("mobile-about")}
+              aria-expanded={activeDropdown === "mobile-about"}
             >
-              {dict?.navigation?.about || "About"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              {dict.navigation?.about || "About"}
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform duration-200 ${
+                  activeDropdown === "mobile-about" ? "rotate-180" : ""
+                }`}
+              />
             </button>
-            {activeDropdown === "mobile-about" && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                activeDropdown === "mobile-about" ? "max-h-96" : "max-h-0"
+              }`}
+            >
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {aboutItems.map((item) => (
                   <Link
@@ -254,31 +259,33 @@ export default function Navigation({
                     href={`/${locale}${item.href}`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
                   >
-                    {dict?.about?.[
-                      item.title.toLowerCase().replace(/ /g, "_")
-                    ] || item.title}
+                    {item.title}
                   </Link>
                 ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Our Approach */}
           <div className="flex flex-col">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between w-full"
               onClick={() => toggleDropdown("mobile-our-approach")}
+              aria-expanded={activeDropdown === "mobile-our-approach"}
             >
-              {dict?.navigation?.our_approach || "Our Approach"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-our-approach" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              {dict.navigation?.our_approach || "Our Approach"}
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform duration-200 ${
+                  activeDropdown === "mobile-our-approach" ? "rotate-180" : ""
+                }`}
+              />
             </button>
-            {activeDropdown === "mobile-our-approach" && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                activeDropdown === "mobile-our-approach" ? "max-h-96" : "max-h-0"
+              }`}
+            >
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {ourApproachItems.map((item) => (
                   <Link
@@ -286,29 +293,33 @@ export default function Navigation({
                     href={`/${locale}${item.href}`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
                   >
                     {item.title}
                   </Link>
                 ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Programs */}
           <div className="flex flex-col">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between w-full"
               onClick={() => toggleDropdown("mobile-programs")}
+              aria-expanded={activeDropdown === "mobile-programs"}
             >
-              {dict?.navigation?.programs || "Programs"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              {dict.navigation?.programs || "Programs"}
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform duration-200 ${
+                  activeDropdown === "mobile-programs" ? "rotate-180" : ""
+                }`}
+              />
             </button>
-            {activeDropdown === "mobile-programs" && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                activeDropdown === "mobile-programs" ? "max-h-96" : "max-h-0"
+              }`}
+            >
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {programsItems.map((item) => (
                   <Link
@@ -316,29 +327,33 @@ export default function Navigation({
                     href={`/${locale}${item.href}`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
                   >
                     {item.title}
                   </Link>
                 ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Projects */}
           <div className="flex flex-col">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between w-full"
               onClick={() => toggleDropdown("mobile-projects")}
+              aria-expanded={activeDropdown === "mobile-projects"}
             >
-              {dict?.navigation?.projects || "Projects"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-projects" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              {dict.navigation?.projects || "Projects"}
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform duration-200 ${
+                  activeDropdown === "mobile-projects" ? "rotate-180" : ""
+                }`}
+              />
             </button>
-            {activeDropdown === "mobile-projects" && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                activeDropdown === "mobile-projects" ? "max-h-96" : "max-h-0"
+              }`}
+            >
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {projectItems.map((item) => (
                   <Link
@@ -346,29 +361,33 @@ export default function Navigation({
                     href={`/${locale}${item.href}`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
                   >
                     {item.title}
                   </Link>
                 ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Opportunities */}
           <div className="flex flex-col">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between w-full"
               onClick={() => toggleDropdown("mobile-opportunities")}
+              aria-expanded={activeDropdown === "mobile-opportunities"}
             >
-              {dict?.navigation?.opportunities || "Opportunities"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-projects" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              {dict.navigation?.opportunities || "Opportunities"}
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform duration-200 ${
+                  activeDropdown === "mobile-opportunities" ? "rotate-180" : ""
+                }`}
+              />
             </button>
-            {activeDropdown === "mobile-opportunities" && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                activeDropdown === "mobile-opportunities" ? "max-h-96" : "max-h-0"
+              }`}
+            >
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {opportunitiesItems.map((item) => (
                   <Link
@@ -376,29 +395,33 @@ export default function Navigation({
                     href={`/${locale}${item.href}`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
                   >
                     {item.title}
                   </Link>
                 ))}
               </div>
-            )}
+            </div>
           </div>
 
           {/* News & Updates */}
           <div className="flex flex-col">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between w-full"
               onClick={() => toggleDropdown("mobile-news")}
+              aria-expanded={activeDropdown === "mobile-news"}
             >
               News & Updates
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform duration-200 ${
+                  activeDropdown === "mobile-news" ? "rotate-180" : ""
+                }`}
+              />
             </button>
-            {activeDropdown === "mobile-news" && (
+            <div
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                activeDropdown === "mobile-news" ? "max-h-96" : "max-h-0"
+              }`}
+            >
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {newsItems.map((item) => (
                   <Link
@@ -406,13 +429,12 @@ export default function Navigation({
                     href={`/${locale}${item.href}`}
                     className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
                   >
                     {item.title}
                   </Link>
                 ))}
               </div>
-            )}
+            </div>
           </div>
         </nav>
       </div>
@@ -595,7 +617,7 @@ export default function Navigation({
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-                
+
                 {/* Opportunities Dropdown */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className={getNavItemColor()}>
@@ -685,7 +707,7 @@ export default function Navigation({
                   {dict?.cta?.sign_in || "Sign In"}
                 </Button>
               </Link>
-              <div className="md:hidden">
+              <div className="lg:hidden">
                 <Button
                   variant="ghost"
                   size="icon"

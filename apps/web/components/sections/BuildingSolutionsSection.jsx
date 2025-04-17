@@ -116,18 +116,43 @@ const BuildingSolutionsSection = ({ dict, categories, tags }) => {
       const wordBodies = wordElements.map((elemRef) => {
         const width = elemRef.offsetWidth;
         const height = elemRef.offsetHeight;
+        
+        // Calculate initial position based on screen size
+        const getInitialPosition = () => {
+          const isMobile = window.innerWidth < 640;
+          const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
+          
+          if (isMobile) {
+            return {
+              x: canvasSize.width / 2 + (Math.random() * 10 - 5), // Smaller spread on mobile
+              y: canvasSize.height / 2 + (Math.random() * 10 - 5)
+            };
+          } else if (isTablet) {
+            return {
+              x: canvasSize.width / 2 + (Math.random() * 15 - 7.5), // Medium spread on tablet
+              y: canvasSize.height / 2 + (Math.random() * 15 - 7.5)
+            };
+          } else {
+            return {
+              x: canvasSize.width / 2 + (Math.random() * 20 - 10), // Original spread on desktop
+              y: canvasSize.height / 2 + (Math.random() * 20 - 10)
+            };
+          }
+        };
+
+        const initialPos = getInitialPosition();
+        
         return {
           body: Bodies.rectangle(
-            // Start all tags in the center with slight random offset
-            canvasSize.width / 2 + (Math.random() * 20 - 10),
-            canvasSize.height / 2 + (Math.random() * 20 - 10),
+            initialPos.x,
+            initialPos.y,
             width, 
             height, 
             {
-              restitution: 0.3,    // Reduced from 0.5 for less bounce
-              friction: 0.08,      // Increased from 0.05 for more drag
-              frictionAir: 0.005,  // Increased from 0.002 for more air resistance
-              density: 0.001,      // Kept light bodies
+              restitution: 0.3,
+              friction: window.innerWidth < 640 ? 0.1 : 0.08, // More friction on mobile
+              frictionAir: window.innerWidth < 640 ? 0.007 : 0.005, // More air resistance on mobile
+              density: 0.001,
               render: {
                 fillStyle: "transparent"
               }
@@ -143,17 +168,32 @@ const BuildingSolutionsSection = ({ dict, categories, tags }) => {
         };
       });
       
-      // Add mouse control
+      // Add mouse control with responsive stiffness
       const mouse = Mouse.create(render.canvas);
       const mouseConstraint = MouseConstraint.create(engine, {
         mouse,
         constraint: {
-          stiffness: 0.15, // Reduced from 0.2 for gentler mouse interaction
+          stiffness: window.innerWidth < 640 ? 0.1 : 0.15, // Gentler on mobile
           render: {
             visible: false
           }
         }
       });
+      
+      // Handle window resize for physics properties
+      const handleResize = () => {
+        const isMobile = window.innerWidth < 640;
+        
+        // Update physics properties
+        wordBodies.forEach(({ body }) => {
+          Matter.Body.set(body, {
+            friction: isMobile ? 0.1 : 0.08,
+            frictionAir: isMobile ? 0.007 : 0.005
+          });
+        });
+      };
+
+      window.addEventListener('resize', handleResize);
       
       // Remove default mouse wheel events
       mouse.element.removeEventListener("mousewheel", mouse.mousewheel);
@@ -208,12 +248,14 @@ const BuildingSolutionsSection = ({ dict, categories, tags }) => {
       
       // Store the animation frame ID for cleanup
       sceneRef.current.animationFrameId = animationFrame;
+      
     } catch (error) {
       console.error("Error initializing Matter.js:", error);
     }
     
     // Cleanup function
     return () => {
+      window.removeEventListener('resize', handleResize);
       if (window.Matter && render && engine && runner) {
         // Stop the renderer
         window.Matter.Render.stop(render);
@@ -249,15 +291,15 @@ const BuildingSolutionsSection = ({ dict, categories, tags }) => {
         onLoad={handleMatterLoad}
       />
       
-      <section className="py-8 bg-white relative overflow-hidden" ref={containerRef}>
+      <section className="bg-white relative overflow-hidden" ref={containerRef}>
         {/* Main heading */}
-        <div className="container mx-auto px-4 mb-2">
-          <h2 className="text-4xl font-bold text-center">
+        <div className="container mx-auto px-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center">
             <span className="text-green-800">
               {dict?.building_solutions?.heading_1 || "Building Sustainable "}
             </span>
             <span className="text-primary-orange">
-              {dict?.building_solutions?.heading_2 || "Solutions With"}
+              {dict?.building_solutions?.heading_2 || " Solutions With"}
             </span>
             <br />
             <span className="text-primary-orange">
