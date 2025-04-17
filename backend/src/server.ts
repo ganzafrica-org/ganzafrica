@@ -1,14 +1,18 @@
+import 'module-alias/register';
 import app from "./app";
 import { env, Logger } from "./config";
 
 const logger = new Logger("Server");
 const PORT = env.API_PORT || 3002;
+const API_BASE_URL = env.API_BASE_URL
 
 // Start the server
 const server = app.listen(PORT, () => {
   logger.info(`Server running in ${env.NODE_ENV} mode on port ${PORT}`);
   logger.info(
-    `API Documentation available at http://localhost:${PORT}/api/docs`,
+      `API Documentation available at ${env.NODE_ENV === "production"
+          ? "https://backend-cbx8.onrender.com/api/docs"
+          : `${API_BASE_URL}:${PORT}/api/docs`}`
   );
 });
 

@@ -383,8 +383,8 @@ export const getCurrentUser = async (
     const user = await userService.getUserById(Number(req.user.id));
 
     // Update session activity timestamp if we have session ID
-    if (req.sessionId) {
-      await authService.updateSessionActivity(req.sessionId);
+    if ((req as any).sessionId) {
+      await authService.updateSessionActivity((req as any).sessionId);
     }
 
     res.status(200).json({

@@ -352,23 +352,31 @@ export async function listNews(
 
     // Count total results
     const countResults = await db
-      .select({ count: sql`count(*)::int` })
-      .from(news)
-      .where(whereClause);
+        .select({ count: sql`count(*)::int` })
+        .from(news)
+        .where(whereClause);
 
-    const total = countResults[0]?.count || 0;
+    const total = Number(countResults[0]?.count || 0);
 
     // Sort direction
     const sortFn = sortDir === "asc" ? asc : desc;
 
     // Get paginated results
+    const validSortColumns = ['id', 'title', 'created_at', 'updated_at', 'publish_date', 'status', 'category'] as const;
+    type ValidSortColumn = typeof validSortColumns[number];
+
+// Ensure sortBy is a valid column
+    const safeSort = validSortColumns.includes(sortBy as any)
+        ? sortBy as ValidSortColumn
+        : 'created_at';
+
     const newsResults = await db
-      .select()
-      .from(news)
-      .where(whereClause)
-      .orderBy(sortFn(news[sortBy as keyof typeof news]))
-      .limit(limit)
-      .offset(offset);
+        .select()
+        .from(news)
+        .where(whereClause)
+        .orderBy(sortFn(news[safeSort]))
+        .limit(limit)
+        .offset(offset);
 
     // For each news item, get its tags
     const newsWithTags = await Promise.all(

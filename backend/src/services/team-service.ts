@@ -282,29 +282,25 @@ export async function deleteTeam(id: number): Promise<boolean> {
 // List all teams
 export async function listTeams(teamTypeId?: number): Promise<TeamOutput[]> {
   try {
-    let query = db.select().from(teams);
-
-    // If team type ID is provided, filter by it
-    if (teamTypeId) {
-      query = query.where(eq(teams.team_type_id, teamTypeId));
-    }
-
-    const teamsResult = await query;
+    // Create different query paths instead of reassigning
+    const teamsResult = teamTypeId
+        ? await db.select().from(teams).where(eq(teams.team_type_id, teamTypeId))
+        : await db.select().from(teams);
 
     // Get all team types
     const teamTypesResult = await db.select().from(team_types);
 
     // Create a map of team types by ID for quick lookup
     const teamTypesMap = teamTypesResult.reduce(
-      (map, type) => {
-        map[type.id] = type;
-        return map;
-      },
-      {} as { [key: number]: any },
+        (map, type) => {
+          map[type.id] = type;
+          return map;
+        },
+        {} as { [key: number]: any },
     );
 
     return teamsResult.map((team) =>
-      mapToTeamOutput(team, teamTypesMap[team.team_type_id]),
+        mapToTeamOutput(team, teamTypesMap[team.team_type_id]),
     );
   } catch (error) {
     logger.error("Error listing teams", error);

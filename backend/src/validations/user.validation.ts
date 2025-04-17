@@ -27,7 +27,7 @@ export const createUserSchema = z.object({
       email_verified: z.boolean().optional(),
       sendVerificationEmail: z.boolean().optional(),
     })
-    .refine((data) => data.role_id !== undefined || data.role !== undefined, {
+    .refine((data) => data.role_id !== undefined, {
       message: "Either 'role_id' or 'role' must be provided",
       path: ["role_id"],
     }),
