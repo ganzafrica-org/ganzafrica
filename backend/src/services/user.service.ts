@@ -1,14 +1,14 @@
-import { db } from "../db/client";
-import { users, user_profiles, roles } from "../db/schema";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { AppError } from "../middlewares";
+import { AppError } from "@/middlewares";
 import { constants } from "../config";
 import { hashPassword } from "./auth.service";
-import { User, CreateUserInput, UpdateUserInput } from "../services/types";
+import { User, CreateUserInput, UpdateUserInput } from "@/services/types";
 import {
   sendVerificationEmail,
   sendWelcomeEmail,
-} from "../services/email.service";
+} from "@/services/email.service";
 import { createToken } from "./auth.service";
 
 /**
@@ -134,45 +134,6 @@ export const updateUser = async (
 
   return updatedUser;
 };
-
-/**
- * Create user profile
- */
-export const createUserProfile = async (profileData: any): Promise<any> => {
-  const [profile] = await db
-    .insert(user_profiles)
-    .values({
-      user_id: profileData.user_id,
-      bio: profileData.bio,
-      social_links: profileData.social_links,
-      preferences: profileData.preferences,
-      created_at: new Date(),
-      updated_at: new Date(),
-    })
-    .returning();
-
-  if (!profile) {
-    throw new AppError("Failed to create user profile", 500);
-  }
-
-  return profile;
-};
-
-/**
- * Get user profile
- */
-export const getUserProfile = async (userId: number | string): Promise<any> => {
-  const profile = await db.query.user_profiles.findFirst({
-    where: eq(user_profiles.user_id, Number(userId)),
-  });
-
-  if (!profile) {
-    throw new AppError("User profile not found", 404);
-  }
-
-  return profile;
-};
-
 /**
  * Delete user (soft delete)
  */
@@ -258,21 +219,6 @@ export const listUsers = async (params: any) => {
     total,
   };
 };
-
-/**
- * Get user projects (placeholder implementation)
- */
-export const getUserProjects = async (
-  userId: number | string,
-): Promise<any[]> => {
-  // Placeholder - implement based on your schema
-  // This would typically query a user_projects or projects table
-  // where project.user_id = userId or from a join table
-
-  // For now returning empty array
-  return [];
-};
-
 /**
  * Import multiple users (for bulk operations)
  */
@@ -304,34 +250,4 @@ export const importUsers = async (
   }
 
   return results;
-};
-
-/**
- * Get role by ID
- */
-export const getRoleById = async (id: number): Promise<any> => {
-  const role = await db.query.roles.findFirst({
-    where: eq(roles.id, id),
-  });
-
-  if (!role) {
-    throw new AppError("Role not found", 404);
-  }
-
-  return role;
-};
-
-/**
- * Get role by name
- */
-export const getRoleByName = async (name: string): Promise<any> => {
-  const role = await db.query.roles.findFirst({
-    where: eq(roles.name, name),
-  });
-
-  if (!role) {
-    throw new AppError("Role not found", 404);
-  }
-
-  return role;
 };

@@ -196,7 +196,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
     // Need to check if the current user is updating their own profile
     // or if they're an admin (who can update any profile)
-    const currentUser = await userService.getUserById(req.user?.id);
+    const currentUser = await userService.getUserById(req.user!.id);
     const adminRole = await roleService.getRoleByName("admin");
 
     // Only allow users to update themselves unless they're an admin
