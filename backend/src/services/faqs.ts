@@ -181,8 +181,6 @@ export async function deleteFaq(id: number): Promise<boolean> {
     throw new AppError("Failed to delete FAQ", 500);
   }
 }
-
-// List all FAQs
 export async function listFaqs(
     activeOnly: boolean = false,
 ): Promise<FaqOutput[]> {
