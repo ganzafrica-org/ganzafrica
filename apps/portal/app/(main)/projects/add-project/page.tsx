@@ -6,6 +6,23 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
 
+// Import shadcn/ui components
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@workspace/ui/components/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@workspace/ui/components/popover";
+import { Badge } from "@workspace/ui/components/badge";
+import { ScrollArea } from "@workspace/ui/components/scroll-area";
+import { Check as CheckIcon } from "lucide-react";
+
 const AddProjectPage = () => {
   const router = useRouter();
   const fileInputRef = useRef(null);
@@ -14,13 +31,15 @@ const AddProjectPage = () => {
   const [success, setSuccess] = useState(false);
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [filteredTeamMembers, setFilteredTeamMembers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
-  const [mediaSourceType, setMediaSourceType] = useState('file'); // 'file' or 'url'
-
+  const [mediaSourceType, setMediaSourceType] = useState('file');
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -73,7 +92,7 @@ const AddProjectPage = () => {
     };
   }, [formData.media.items, videoPreviewUrl]);
 
-  // Fetch categories and users on component mount
+  // Fetch categories, users, teams and roles on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -103,31 +122,47 @@ const AddProjectPage = () => {
           setRoles([]);
         }
         
-        // Fetch users
+        // Fetch teams
         try {
-          const usersResponse = await axios.get('http://localhost:3002/api/users');
-          // Check the structure of the response and extract users array
-          if (usersResponse.data && Array.isArray(usersResponse.data.users)) {
-            setUsers(usersResponse.data.users);
-          } else if (Array.isArray(usersResponse.data)) {
-            setUsers(usersResponse.data);
+          const teamsResponse = await axios.get('http://localhost:3002/api/teams');
+          console.log('Teams response:', teamsResponse.data); // Debug log
+          
+          // Check the structure of the response and extract teams array
+          let allTeamMembers = [];
+          if (teamsResponse.data && Array.isArray(teamsResponse.data.teams)) {
+            allTeamMembers = teamsResponse.data.teams;
+            setTeams(teamsResponse.data.teams);
+          } else if (Array.isArray(teamsResponse.data)) {
+            allTeamMembers = teamsResponse.data;
+            setTeams(teamsResponse.data);
           } else {
-            console.error('Unexpected users response format:', usersResponse.data);
-            // Set some mock users if response format is not as expected
-            setUsers([
-              { id: 1, first_name: 'Mukamana', last_name: 'Fransine' },
-              { id: 2, first_name: 'John', last_name: 'Doe' },
-              { id: 3, first_name: 'Jane', last_name: 'Smith' }
-            ]);
+            console.error('Unexpected teams response format:', teamsResponse.data);
+            setTeams([]);
+          }
+          
+          // Filter team members with team_type of "team" or "fellow" (case-insensitive)
+          const filtered = allTeamMembers.filter(member => {
+            if (!member.team_type) return false;
+            
+            const teamType = member.team_type.toLowerCase();
+            return teamType === "team" || teamType === "fellow";
+          });
+          
+          console.log('Filtered team members:', filtered); // Debug log
+          
+          if (filtered.length === 0) {
+            // If no filtered results, include all team members as fallback
+            console.log('No filtered team members found, using all members as fallback');
+            setFilteredTeamMembers(allTeamMembers);
+            setUsers(allTeamMembers);
+          } else {
+            setFilteredTeamMembers(filtered);
+            setUsers(filtered);
           }
         } catch (error) {
-          console.error('Error fetching users:', error);
-          // Set some mock users if API doesn't have users endpoint
-          setUsers([
-            { id: 1, first_name: 'Mukamana', last_name: 'Fransine' },
-            { id: 2, first_name: 'John', last_name: 'Doe' },
-            { id: 3, first_name: 'Jane', last_name: 'Smith' }
-          ]);
+          console.error('Error fetching teams:', error);
+          setTeams([]);
+          setFilteredTeamMembers([]);
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -182,6 +217,28 @@ const AddProjectPage = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  // Handle selecting a team member
+  const handleTeamMemberSelect = (userId) => {
+    // Check if user is already a member
+    const alreadyMember = formData.members.some(
+      member => member.user_id === userId
+    );
+    
+    if (!alreadyMember && newMember.role) {
+      const memberToAdd = {
+        user_id: userId,
+        role: newMember.role
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        members: [...prev.members, memberToAdd]
+      }));
+    }
+    
+    setPopoverOpen(false);
   };
 
   // Handle file selection
@@ -239,52 +296,78 @@ const AddProjectPage = () => {
   };
 
   // Validate URL and determine type
-  const validateUrl = async (url) => {
-    // Basic URL validation
-    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
-    if (!urlPattern.test(url)) {
-      return { valid: false, type: null, message: 'Invalid URL format' };
-    }
-    
-    // Check if URL ends with common image extensions
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
-    
-    const lowerUrl = url.toLowerCase();
-    
-    // Determine type based on extension
-    let type = null;
-    if (imageExtensions.some(ext => lowerUrl.endsWith(ext))) {
-      type = 'image';
-    } else if (videoExtensions.some(ext => lowerUrl.endsWith(ext))) {
-      type = 'video';
-    } else {
-      // For URLs without clear extensions, try to guess based on common patterns
-      if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be') || lowerUrl.includes('vimeo.com')) {
+  const validateUrl = (url) => {
+    try {
+      // Simple check if string is not empty
+      if (!url || url.trim() === '') {
+        return { valid: false, type: null, message: 'URL cannot be empty' };
+      }
+      
+      // More permissive URL validation to allow a wider range of URLs
+      // This pattern only checks for basic URL structure and allows more TLDs
+      const urlPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(\/[a-zA-Z0-9-_.~:/?#[\]@!$&'()*+,;=]*)?$/;
+      if (!urlPattern.test(url)) {
+        // Fall back to a very basic check - just make sure it has some domain structure
+        const veryBasicPattern = /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/;
+        if (!veryBasicPattern.test(url)) {
+          return { valid: false, type: null, message: 'Invalid URL format' };
+        }
+      }
+      
+      // Check if URL ends with common image extensions
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff'];
+      const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.flv'];
+      
+      const lowerUrl = url.toLowerCase();
+      
+      // Determine type based on extension
+      let type = null;
+      if (imageExtensions.some(ext => lowerUrl.endsWith(ext))) {
+        type = 'image';
+      } else if (videoExtensions.some(ext => lowerUrl.endsWith(ext))) {
         type = 'video';
       } else {
-        // Default to image if we can't determine
-        type = 'image';
+        // For URLs without clear extensions, try to guess based on common patterns
+        if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be') || 
+            lowerUrl.includes('vimeo.com') || lowerUrl.includes('dailymotion.com')) {
+          type = 'video';
+        } else {
+          // Default to image if we can't determine
+          type = 'image';
+        }
       }
+      
+      return { valid: true, type, message: 'URL valid' };
+    } catch (error) {
+      console.error('Error validating URL:', error);
+      // Return valid true with default type to prevent crashes
+      return { valid: true, type: 'image', message: 'URL format uncertain, treating as image' };
     }
-    
-    return { valid: true, type, message: 'URL valid' };
   };
 
   // Handle URL input
-  const handleUrlChange = async (e) => {
-    const url = e.target.value;
-    setNewMedia(prev => ({ ...prev, url }));
-    
-    if (url) {
-      const validation = await validateUrl(url);
-      if (validation.valid) {
-        setNewMedia(prev => ({ 
-          ...prev, 
-          url,
-          type: validation.type || 'image'
-        }));
+  const handleUrlChange = (e) => {
+    try {
+      const url = e.target.value;
+      
+      // Always update the URL in the state
+      setNewMedia(prev => ({ ...prev, url }));
+      
+      // Only validate if there's actually a URL entered
+      if (url && url.trim() !== '') {
+        const validation = validateUrl(url);
+        if (validation.valid) {
+          setNewMedia(prev => ({ 
+            ...prev, 
+            url,
+            type: validation.type || 'image'
+          }));
+        }
       }
+    } catch (error) {
+      console.error('Error handling URL change:', error);
+      // Don't throw error, just update the URL in state
+      setNewMedia(prev => ({ ...prev, url: e.target.value }));
     }
   };
 
@@ -424,23 +507,23 @@ const AddProjectPage = () => {
 
   // Add media to media list
   const addMedia = async () => {
-    // Validate based on media source type
-    if (mediaSourceType === 'file' && !newMedia.file) {
-      setError('Please select a file');
-      return;
-    }
-    
-    if (mediaSourceType === 'url' && !newMedia.url) {
-      setError('Please enter a URL');
-      return;
-    }
-    
-    if (!newMedia.title) {
-      setError('Please enter a title for the media');
-      return;
-    }
-    
     try {
+      // Validate based on media source type
+      if (mediaSourceType === 'file' && !newMedia.file) {
+        setError('Please select a file');
+        return;
+      }
+      
+      if (mediaSourceType === 'url' && !newMedia.url) {
+        setError('Please enter a URL');
+        return;
+      }
+      
+      if (!newMedia.title) {
+        setError('Please enter a title for the media');
+        return;
+      }
+      
       setError('');
       let fileUrl = '';
       let thumbnailUrl = null;
@@ -469,7 +552,7 @@ const AddProjectPage = () => {
       } else {
         // For URL-based media, use the URL directly
         // Validate URL
-        const urlValidation = await validateUrl(newMedia.url);
+        const urlValidation = validateUrl(newMedia.url);
         if (!urlValidation.valid) {
           setError('Invalid URL. Please check and try again.');
           return;
@@ -532,7 +615,6 @@ const AddProjectPage = () => {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-      
     } catch (error) {
       console.error('Error adding media:', error);
       setError('Failed to add media. Please try again.');
@@ -779,6 +861,30 @@ const AddProjectPage = () => {
     );
   };
 
+  // Get team member name
+  const getTeamMemberName = (userId) => {
+    const user = filteredTeamMembers.find(member => member.id === userId);
+    if (user) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    return `Team Member ${userId}`;
+  };
+
+  // Get role name by ID
+  const getRoleNameById = (roleId) => {
+    const role = roles.find((r) => r.id?.toString() === roleId?.toString());
+    return role ? role.name : roleId?.toString();
+  };
+
+  // Format file size display
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -874,21 +980,6 @@ const AddProjectPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Format file size display
-  const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-  
-  // Get role name by ID
-  const getRoleNameById = (roleId) => {
-    const role = roles.find((r) => r.id?.toString() === roleId?.toString());
-    return role ? role.name : roleId?.toString();
   };
 
   return (
@@ -1252,7 +1343,6 @@ const AddProjectPage = () => {
             </div>
           </div>
         </div>
-
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
 
@@ -1269,14 +1359,14 @@ const AddProjectPage = () => {
             <div className="w-3/4">
               <div className="mb-4 flex justify-between items-center">
                 <label className="block text-sm font-medium">
-                  Team Members<span className="text-red">*</span>
+                  Team Members<span className="text-red-500">*</span>
                 </label>
                 <a 
-                  href="/users/add"
+                  href="/teams/add-team"
                   className="text-sm flex items-center text-green-700 hover:text-green-800"
                 >
                   <UserPlus className="w-4 h-4 mr-1" />
-                  Add New User
+                  Add New Team M
                 </a>
               </div>
               
@@ -1286,50 +1376,69 @@ const AddProjectPage = () => {
               ) : (
                 <div className="bg-gray-50 rounded-md mb-4">
                   <div className="divide-y divide-gray-200">
-                    {formData.members.map(member => {
-                      const user = Array.isArray(users) ? users.find(u => u.id === member.user_id) : null;
-                      const fullName = user ? `${user.first_name} ${user.last_name}` : `User ID: ${member.user_id}`;
-                      
-                      return (
-                        <div key={member.user_id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-green-50">
-                          <div className="col-span-6">{fullName}</div>
-                          <div className="col-span-5 text-gray-600">{getRoleNameById(member.role)}</div>
-                          <div className="col-span-1 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => removeMember(member.user_id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
+                    {formData.members.map(member => (
+                      <div key={member.user_id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-green-50">
+                        <div className="col-span-6">{getTeamMemberName(member.user_id)}</div>
+                        <div className="col-span-5 text-gray-600">{getRoleNameById(member.role)}</div>
+                        <div className="col-span-1 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => removeMember(member.user_id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
               
-              {/* Add member form */}
+              {/* Add member form with MultiSelect */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                 <div>
                   <label className="block text-sm mb-1">Team Member</label>
-                  <div className="relative">
-                    <select
-                      name="user_id"
-                      value={newMember.user_id}
-                      onChange={handleMemberChange}
-                      className="w-full p-2.5 border border-gray0 rounded-md appearance-none text-black"
-                    >
-                      <option value="" className='text-black'>Select a team member</option>
-                      {Array.isArray(users) && users.map(user => (
-                        <option key={user.id} value={user.id}>
-                          {user.first_name} {user.last_name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
-                  </div>
+                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full p-2.5 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white"
+                      >
+                        <span className="text-sm">
+                          {newMember.user_id 
+                            ? getTeamMemberName(newMember.user_id)
+                            : "Select a team member"}
+                        </span>
+                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search team members..." />
+                        <CommandEmpty>No team members found.</CommandEmpty>
+                        <CommandGroup heading="All Members">
+  {filteredTeamMembers.map(member => (
+    <CommandItem
+      key={teams.id}
+      value={teams.name} 
+      onSelect={() => {
+        setNewMember(prev => ({ ...prev, user_id: member.id }));
+        setPopoverOpen(false);
+      }}
+    >
+      <div className="flex items-center justify-between w-full">
+        <div>
+          {teams.name}
+        </div>
+      </div>
+    </CommandItem>
+  ))}
+</CommandGroup>
+
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -1353,14 +1462,6 @@ const AddProjectPage = () => {
                   </div>
                 </div>
               </div>
-              
-              <button
-                type="button"
-                onClick={addMember}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-800 py-1 px-3 rounded-md text-sm flex items-center"
-              >
-                <Plus className="w-4 h-4 mr-1" /> Add Team Member
-              </button>
             </div>
           </div>
         </div>
@@ -1466,7 +1567,7 @@ const AddProjectPage = () => {
                       </label>
                     </div>
                     <div className="flex items-center">
-                      <input
+                    <input
                         type="radio"
                         id="mediaTypeVideo"
                         name="type"
@@ -1738,7 +1839,7 @@ const AddProjectPage = () => {
                       )}
                     </div>
                   ))}
-                  </div>
+                </div>
               )}
             </div>
           </div>

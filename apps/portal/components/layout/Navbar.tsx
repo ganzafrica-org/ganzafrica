@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
 import Link from 'next/link';
 import { Button } from '@workspace/ui/components/button';
+import { Checkbox } from '@workspace/ui/components/checkbox';
 
 interface Notification {
   id: number;
@@ -48,6 +49,7 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState(mockNotifications);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
