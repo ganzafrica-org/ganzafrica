@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api-client';
 
@@ -10,7 +10,9 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    base_role: string;
+    role_id: number;
+    avatar_url: string | null;
+    email_verified: boolean;
 }
 
 // Auth context type
@@ -19,6 +21,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
 // Create context
@@ -26,30 +29,68 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     isAuthenticated: false,
     isLoading: true,
-    logout: async () => {}
+    logout: async () => {},
+    refreshUser: async () => {}
 });
+
+// Protected routes that require authentication
+const protectedRoutes = ['/profile', '/dashboard', '/settings', '/users'];
 
 // Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
+    const pathname = usePathname();
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [authChecked, setAuthChecked] = useState(false);
 
-    // Fetch user on mount
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const response = await apiClient.get('/auth/me');
-                setUser(response.data.data.user);
-            } catch (error) {
+    // Function to fetch user data
+    const fetchUser = async () => {
+        try {
+            const response = await apiClient.get('/auth/me');
+            console.log('Auth response:', response.data);
+
+            if (response.data.user) {
+                setUser(response.data.user);
+                return true;
+            } else {
                 setUser(null);
-            } finally {
-                setIsLoading(false);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            setUser(null);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Public function to refresh user data
+    const refreshUser = async () => {
+        setIsLoading(true);
+        await fetchUser();
+    };
+
+    // Check auth on mount and handle redirects
+    useEffect(() => {
+        const checkAuth = async () => {
+            const hasUser = await fetchUser();
+            setAuthChecked(true);
+
+            // Check if we need to redirect
+            const isProtectedRoute = protectedRoutes.some(route =>
+                pathname?.startsWith(route)
+            );
+
+            if (!hasUser && isProtectedRoute) {
+                toast.error('Please log in to access this page');
+                router.push('/login');
             }
         };
 
-    fetchUser();
-  }, []);
+        checkAuth();
+    }, [pathname]);
 
     // Logout functionality
     const logout = async () => {
@@ -78,8 +119,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const value = {
         user,
         isAuthenticated: !!user,
-        isLoading,
-        logout
+        isLoading: isLoading || !authChecked,
+        logout,
+        refreshUser
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

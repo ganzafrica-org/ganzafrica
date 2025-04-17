@@ -3,7 +3,6 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Container from "@/components/layout/container";
-import { DecoratedHeading } from "@/components/layout/headertext";
 
 // Animation variants
 const containerVariants = {
