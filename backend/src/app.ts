@@ -36,7 +36,7 @@ app.use((req, res, next) => {
 // CORS configuration
 app.use(
     cors({
-        origin: env.CORS_ORIGINS,
+        origin: true,
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
