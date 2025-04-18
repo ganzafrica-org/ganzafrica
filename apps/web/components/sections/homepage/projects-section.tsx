@@ -37,7 +37,7 @@ interface Project {
 }
 
 interface ProjectsResponse {
-    data: Project[];
+    projects: Project[];
     pagination: {
         total: string;
         page: number;
@@ -70,7 +70,7 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                         sort_order: 'desc',
                     }
                 });
-                setProjects(response.data.data);
+                setProjects(response.data.projects);
                 setError(null);
             } catch (err) {
                 console.error('Error fetching projects:', err);

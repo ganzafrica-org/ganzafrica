@@ -25,7 +25,7 @@ interface NewsItem {
 }
 
 interface NewsResponse {
-  data: NewsItem[];
+  news: NewsItem[];
   pagination: {
     total: number;
     limit: number;
@@ -56,7 +56,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
             sortDir: 'desc'
           }
         });
-        setNewsItems(response.data.data);
+        setNewsItems(response.data.news);
         setError(null);
       } catch (err) {
         console.error('Error fetching news:', err);
