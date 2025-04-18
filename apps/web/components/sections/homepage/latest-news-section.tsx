@@ -1,265 +1,234 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { DecoratedHeading } from "@/components/layout/headertext";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { DecoratedHeading } from '@/components/layout/headertext';
+import { CalendarDays, ArrowRight } from 'lucide-react';
+import apiClient from '@/lib/api-client';
 
+// Interface for the news data from the API
 interface NewsItem {
-  id: string;
+  id: number;
   title: string;
-  category: string;
-  date: string;
-  image: string;
-  slug: string;
-  tag?: string;
+  content: string;
+  summary: string;
+  image_url: string;
+  status: string;
+  author_id: number;
+  author_name: string;
+  category_id: number;
+  category_name: string;
+  tags: string[];
+  published_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
-interface LatestNewsSectionProps {
+interface NewsResponse {
+  news: NewsItem[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+}
+
+interface NewsSectionProps {
   locale: string;
   dict: any;
 }
 
-export default function LatestNewsSection({
-  locale,
-  dict,
-}: LatestNewsSectionProps) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+export default function NewsSection({ locale, dict }: NewsSectionProps) {
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Sample news data
-  const newsItems: NewsItem[] = [
-    {
-      id: "news-1",
-      title:
-        dict?.news?.items?.news1?.title || "Youth Advancing CAADP Post-Malabo",
-      category: dict?.about?.categories?.agriculture || "Agriculture",
-      date: "Dec 12, 2022",
-      image: "/images/2-fellows.jpg",
-      slug: `/${locale}/news/youth-advancing-caadp-post-malabo`,
-      tag: dict?.news?.tags?.fellowship || "Fellowship",
-    },
-    {
-      id: "news-2",
-      title:
-        dict?.news?.items?.news2?.title ||
-        "Our fellows reflecting on their work in retreat",
-      category: dict?.about?.categories?.food_system || "Food System",
-      date: "Jan 15, 2023",
-      image: "/images/2-fellows.jpg",
-      slug: `/${locale}/news/fellows-reflecting-work-retreat`,
-      tag: dict?.news?.tags?.fellowship || "Fellowship",
-    },
-    {
-      id: "news-3",
-      title:
-        dict?.news?.items?.news3?.title || "Youth Advancing CAADP Post-Malabo",
-      category: dict?.about?.categories?.agriculture || "Agriculture",
-      date: "Mar 22, 2023",
-      image: "/images/2-fellows.jpg",
-      slug: `/${locale}/news/advancing-agricultural-policies`,
-      tag: dict?.news?.tags?.policy || "Policy",
-    },
-  ];
-
-  // Split title into words for multi-line cutout effect
-  const splitTitle = (title: string) => {
-    const words = title.split(" ");
-    const lines = [];
-    let currentLine = "";
-
-    words.forEach((word) => {
-      if ((currentLine + " " + word).length > 20) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = currentLine ? `${currentLine} ${word}` : word;
+  // Fetch news from API
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get<NewsResponse>('/news', {
+          params: {
+            status: 'published',
+            limit: 3, // Show only 3 latest news
+            sortBy: 'published_at',
+            sortDir: 'desc'
+          }
+        });
+        setNewsItems(response.data.news);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching news:', err);
+        setError('Failed to load news');
+        // Set fallback news in case of error
+        setNewsItems([
+          {
+            id: 1,
+            title: 'Sustainable Agriculture Workshop',
+            content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+            summary: 'Join us for a hands-on workshop on sustainable farming techniques.',
+            image_url: '/images/news-1.jpg',
+            status: 'published',
+            author_id: 1,
+            author_name: 'John Doe',
+            category_id: 1,
+            category_name: 'Events',
+            tags: ['farming', 'workshop', 'sustainability'],
+            published_at: '2025-04-15T09:00:00.000Z',
+            created_at: '2025-04-10T09:00:00.000Z',
+            updated_at: '2025-04-10T09:00:00.000Z'
+          },
+          {
+            id: 2,
+            title: 'New Partnership Announcement',
+            content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+            summary: 'We are excited to announce our new partnership with Sustainable Futures.',
+            image_url: '/images/news-2.jpg',
+            status: 'published',
+            author_id: 2,
+            author_name: 'Jane Smith',
+            category_id: 2,
+            category_name: 'Announcements',
+            tags: ['partnership', 'sustainability'],
+            published_at: '2025-04-12T14:30:00.000Z',
+            created_at: '2025-04-11T10:15:00.000Z',
+            updated_at: '2025-04-11T10:15:00.000Z'
+          }
+        ]);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    fetchNews();
+  }, []);
+
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
-
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-
-    return lines;
   };
 
-  return (
-    <section className="py-16 md:py-24 bg-gray-50 relative overflow-hidden">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-12 relative">
-          {/* See all link positioned absolutely to the right */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:block">
-            <Link
-              href={`/${locale}/news`}
-              className="flex items-center text-primary-green hover:text-secondary-green transition-colors group"
-            >
-              <span className="mr-2 font-medium">
-                {dict?.news?.see_all || "See New Updates"}
-              </span>
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
-          </div>
+  // Helper function to truncate text
+  const truncateText = (text: string, maxLength = 120) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
 
-          {/* Decorated heading centered */}
-          <div className="w-full text-center">
+  // Show loading skeleton
+  if (loading && newsItems.length === 0) {
+    return (
+        <section className="py-16 md:py-24 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-16">
+              <div className="h-12 w-72 bg-gray-200 animate-pulse rounded-md mx-auto"></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[1, 2, 3].map((item) => (
+                  <div key={item} className="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div className="h-48 bg-gray-200 animate-pulse"></div>
+                    <div className="p-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-4 h-4 bg-gray-200 animate-pulse rounded-full"></div>
+                        <div className="w-24 h-4 bg-gray-200 animate-pulse rounded"></div>
+                      </div>
+                      <div className="h-6 w-3/4 bg-gray-200 animate-pulse rounded mb-3"></div>
+                      <div className="h-4 w-full bg-gray-200 animate-pulse rounded mb-2"></div>
+                      <div className="h-4 w-2/3 bg-gray-200 animate-pulse rounded mb-2"></div>
+                      <div className="h-4 w-3/4 bg-gray-200 animate-pulse rounded mb-4"></div>
+                      <div className="h-10 w-36 bg-gray-200 animate-pulse rounded-full"></div>
+                    </div>
+                  </div>
+              ))}
+            </div>
+          </div>
+        </section>
+    );
+  }
+
+  return (
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
             <DecoratedHeading
-              firstText={dict?.news?.heading_first || "Latest"}
-              secondText={dict?.news?.heading_second || "News & Updates"}
-              firstTextColor="text-primary-green"
-              secondTextColor="text-primary-orange"
-              borderColor="border-primary-green"
-              cornerColor="bg-primary-orange"
-              className="mx-auto"
+                firstText={dict?.news?.heading_first ?? "Latest"}
+                secondText={dict?.news?.heading_second ?? "News"}
+                className="mx-auto"
             />
           </div>
 
-          {/* Mobile-only link (appears below heading on small screens) */}
-          <div className="mt-6 md:hidden w-full flex justify-center">
-            <Link
-              href={`/${locale}/news`}
-              className="flex items-center text-primary-green hover:text-secondary-green transition-colors group"
-            >
-              <span className="mr-2 font-medium">
-                {dict?.news?.see_all || "See New Updates"}
-              </span>
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
-          </div>
-        </div>
+          {/* Error message */}
+          {error && (
+              <div className="text-center text-red-500 mb-8">{error}</div>
+          )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          {newsItems.map((item) => (
-            <Link
-              key={item.id}
-              href={item.slug}
-              className={cn(
-                "relative block transition-all duration-500",
-                hoveredId === item.id ? "md:scale-110 z-10" : "scale-100 z-0",
-              )}
-              onMouseEnter={() => setHoveredId(item.id)}
-              onMouseLeave={() => setHoveredId(null)}
-            >
-              <div className="relative">
-                <div className="relative rounded-2xl overflow-hidden aspect-[4/3] w-full">
-                  {/* Background image */}
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className={cn(
-                      "object-cover transition-transform duration-500",
-                      hoveredId === item.id ? "scale-110" : "scale-100",
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {newsItems.map((newsItem) => (
+                <div key={newsItem.id} className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                  <div className="relative h-48">
+                    <Image
+                        src={newsItem.image_url || '/images/default-news.jpg'}
+                        alt={newsItem.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                    />
+                    {/* Category badge */}
+                    {newsItem.category_name && (
+                        <span className="absolute top-3 left-3 bg-primary-green text-white text-xs font-medium px-2.5 py-1 rounded">
+                    {newsItem.category_name}
+                  </span>
                     )}
-                  />
-                  <div
-                    className={cn(
-                      "absolute inset-0 bg-black transition-opacity duration-300",
-                      hoveredId === item.id ? "opacity-60" : "opacity-40",
-                    )}
-                  ></div>
-
-                  {/* Badges on top left (visible when hovered) */}
-                  {hoveredId === item.id && (
-                    <div className="absolute flex flex-col top-4 left-4  gap-2 z-20">
-                      <div className="bg-white backdrop-blur-sm rounded-full px-3 py-1 text-secondary-green text-xs">
-                        {item.date}
-                      </div>
-
-                      {item.tag && (
-                        <div className="bg-transparent backdrop-blur-sm rounded-full px-3 py-1 text-white text-xs border border-white">
-                          <span className="inline-block w-2 h-2 bg-secondary-yellow rounded-full mr-2"></span>
-                          {item.tag}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Top right cutout title (visible when hovered) */}
-                  {hoveredId === item.id && (
-                    <div className="absolute right-0 top-0 z-20">
-                      <div className="flex flex-col items-end">
-                        {/* Split title into lines for individual cutouts */}
-                        {splitTitle(item.title).map((line, index) => (
-                          <h3
-                            key={index}
-                            className={cn(
-                              "bg-white text-right py-2 px-4 text-lg font-bold text-gray-900",
-                              index === 0 ? "rounded-l-3xl" : "",
-                              index === splitTitle(item.title).length - 1
-                                ? "rounded-bl-3xl"
-                                : "",
-                              index !== 0 &&
-                                index !== splitTitle(item.title).length - 1
-                                ? ""
-                                : "",
-                              index !== splitTitle(item.title).length - 1
-                                ? "mb-0"
-                                : "",
-                            )}
-                            style={
-                              index === 0
-                                ? { borderBottomLeftRadius: "0" }
-                                : index === splitTitle(item.title).length - 1
-                                  ? { borderTopLeftRadius: "0" }
-                                  : {
-                                      borderRadius: "0",
-                                      borderTopLeftRadius: "0",
-                                      borderBottomLeftRadius: "0",
-                                    }
-                            }
-                          >
-                            {line}
-                          </h3>
-                        ))}
-                      </div>
-
-                      {/* Arrow button below the cutout title */}
-                      <div className="flex justify-end mt-3">
-                        <motion.div
-                          className="w-8 h-8 bg-secondary-yellow rounded-full flex items-center justify-center"
-                          animate={{ rotate: 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <ArrowUpRight className="w-5 h-5 rotate-45 text-primary-green" />
-                        </motion.div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* The arrow button at top right (visible when not hovered) */}
-                  {hoveredId !== item.id && (
-                    <motion.div
-                      className="absolute top-4 right-4 z-20 w-8 h-8 bg-secondary-yellow rounded-full flex items-center justify-center"
-                      animate={{ rotate: -45 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <ArrowUpRight className="w-5 h-5 rotate-45 text-primary-green" />
-                    </motion.div>
-                  )}
-                </div>
-
-                {/* Title and category below image (visible when not hovered) */}
-                {hoveredId !== item.id && (
-                  <div className="py-3">
-                    {/* Category bullet */}
-                    <div className="flex items-center">
-                      <span className="inline-block w-2 h-2 bg-primary-green rounded-full mr-2"></span>
-                      <span className="text-sm font-medium">
-                        {item.category}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-bold mt-1">{item.title}</h3>
                   </div>
-                )}
+                  <div className="p-6">
+                    {/* Date */}
+                    <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
+                      <CalendarDays className="w-4 h-4" />
+                      <span>{formatDate(newsItem.published_at)}</span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-xl font-bold mb-3 text-gray-800 line-clamp-2">
+                      {newsItem.title}
+                    </h3>
+
+                    {/* Summary or truncated content */}
+                    <p className="text-gray-600 mb-4 line-clamp-3">
+                      {newsItem.summary || truncateText(newsItem.content)}
+                    </p>
+
+                    {/* Read more button */}
+                    <a
+                        href={`/news/${newsItem.id}`}
+                        className="inline-flex items-center gap-2 text-primary-orange font-medium rounded-full px-4 py-2 border border-primary-orange hover:bg-primary-orange hover:text-white transition-colors"
+                    >
+                      <span>{dict?.news?.read_more ?? "Read More"}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
+            ))}
+          </div>
+
+          {/* View all news button */}
+          {newsItems.length > 0 && (
+              <div className="text-center mt-12">
+                <a
+                    href="/news"
+                    className="inline-flex items-center gap-2 bg-primary-green text-white font-medium rounded-full px-6 py-3 hover:bg-primary-green/90 transition-colors"
+                >
+                  <span>{dict?.news?.view_all ?? "View All News"}</span>
+                  <ArrowRight className="w-5 h-5" />
+                </a>
               </div>
-            </Link>
-          ))}
+          )}
         </div>
-      </div>
-    </section>
+      </section>
   );
 }
