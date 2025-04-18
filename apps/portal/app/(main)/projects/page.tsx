@@ -20,6 +20,58 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// Define interfaces for our data structures
+interface Project {
+  id: number;
+  name: string;
+  category_id: number;
+  members?: Array<{
+    role: string;
+    user_id: number;
+  }>;
+  created_by: number;
+  location?: string;
+  created_at: string;
+  status: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+}
+
+interface Categories {
+  [key: number | string]: string;
+}
+
+interface Users {
+  [key: number]: string;
+}
+
+interface TabCounts {
+  all: number;
+  active: number;
+  completed: number;
+  planned: number;
+}
+
+interface ProjectParams {
+  page: number;
+  limit: number;
+  sort_by: string;
+  sort_order: string;
+  search?: string;
+  status?: string;
+}
+
+// Extend Window interface to include our custom properties
+declare global {
+  interface Window {
+    lastAxiosRequestTime: number;
+    lastProjectFetchTime: number;
+  }
+}
+
 // Create an axios instance with retry configuration
 const axiosInstance = axios.create({
   // Set a timeout to avoid hanging requests
@@ -76,10 +128,10 @@ axiosInstance.interceptors.request.use(async (config) => {
 });
 
 // Add a request throttling mechanism
-const pendingRequests = {};
+const pendingRequests: { [key: string]: Promise<any> } = {};
 
 const throttledAxios = {
-  get: (url, config = {}) => {
+  get: (url: string, config: { params?: any } = {}) => {
     const key = `${url}${JSON.stringify(config.params || {})}`;
     
     // If there's already a pending request with the same parameters, return that promise
@@ -97,7 +149,7 @@ const throttledAxios = {
     pendingRequests[key] = request;
     return request;
   },
-  delete: (url, config = {}) => {
+  delete: (url: string, config: any = {}) => {
     return axiosInstance.delete(url, config);
   }
 };
@@ -105,25 +157,25 @@ const throttledAxios = {
 const ProjectsPage = () => {
   const router = useRouter();
   // State for the active tab
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState<string>('all');
   
   // States for data and UI
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState({});
-  const [users, setUsers] = useState({});
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [categories, setCategories] = useState<Categories>({});
+  const [users, setUsers] = useState<Users>({});
   
   // States for pagination and filtering
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [totalProjects, setTotalProjects] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [totalProjects, setTotalProjects] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('created_at');
+  const [sortOrder, setSortOrder] = useState<string>('desc');
   
   // States for tab counts
-  const [tabCounts, setTabCounts] = useState({
+  const [tabCounts, setTabCounts] = useState<TabCounts>({
     all: 0,
     'active': 0, // Maps to 'in-progress' in UI
     'completed': 0,
@@ -131,15 +183,15 @@ const ProjectsPage = () => {
   });
 
   // Add state to track if tab counts are loaded
-  const [tabCountsLoaded, setTabCountsLoaded] = useState(false);
+  const [tabCountsLoaded, setTabCountsLoaded] = useState<boolean>(false);
   // Add state to track if categories are loaded
-  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+  const [categoriesLoaded, setCategoriesLoaded] = useState<boolean>(false);
 
   // State for dropdown menu
-  const [openMenuId, setOpenMenuId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   
   // Function to toggle dropdown menu
-  const toggleMenu = (id) => {
+  const toggleMenu = (id: number) => {
     if (openMenuId === id) {
       setOpenMenuId(null);
     } else {
@@ -148,7 +200,7 @@ const ProjectsPage = () => {
   };
 
   // Function to handle action click
-  const handleAction = async (action, projectId) => {
+  const handleAction = async (action: string, projectId: number) => {
     setOpenMenuId(null); // Close the menu
     
     switch(action) {
@@ -183,17 +235,17 @@ const ProjectsPage = () => {
   };
 
   // Handle pagination
-  const goToPage = (newPage) => {
+  const goToPage = (newPage: number) => {
     setPage(newPage);
   };
 
   // Calculate sequential row number based on pagination
-  const getRowNumber = (index) => {
+  const getRowNumber = (index: number) => {
     return ((page - 1) * limit) + index + 1;
   };
 
   // Map API status to UI status
-  const mapStatusToUI = (apiStatus) => {
+  const mapStatusToUI = (apiStatus: string) => {
     switch(apiStatus) {
       case 'active': return 'in-progress';
       case 'planned': return 'pending';
@@ -203,7 +255,7 @@ const ProjectsPage = () => {
   };
   
   // Map UI status to API status
-  const mapUIToAPIStatus = (uiStatus) => {
+  const mapUIToAPIStatus = (uiStatus: string) => {
     switch(uiStatus) {
       case 'in-progress': return 'active';
       case 'pending': return 'planned';
@@ -214,11 +266,11 @@ const ProjectsPage = () => {
   };
 
   // Add click outside listener to close dropdown
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpenMenuId(null);
       }
     }
@@ -257,10 +309,10 @@ const ProjectsPage = () => {
           }
           
           // Transform the categories array into an object with id as key and name as value
-          const categoriesObj = {};
+          const categoriesObj: Categories = {};
           
           if (Array.isArray(categoriesData)) {
-            categoriesData.forEach(category => {
+            categoriesData.forEach((category: Category) => {
               if (category && category.id && category.name) {
                 // Store with both string and number keys to be safe
                 categoriesObj[category.id] = category.name;
@@ -329,7 +381,7 @@ const ProjectsPage = () => {
       let plannedCount = 0;
       
       if (response.data.projects && Array.isArray(response.data.projects)) {
-        response.data.projects.forEach(project => {
+        response.data.projects.forEach((project: Project) => {
           if (project.status === 'active') activeCount++;
           else if (project.status === 'completed') completedCount++;
           else if (project.status === 'planned') plannedCount++;
@@ -358,10 +410,10 @@ const ProjectsPage = () => {
   };
 
   // Add debouncing for search
-  const searchTimeoutRef = useRef(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Handle search input change with debounce
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
     
@@ -377,7 +429,7 @@ const ProjectsPage = () => {
   };
   
   // Handle search submission
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Clear any existing timeout
     if (searchTimeoutRef.current) {
@@ -403,7 +455,7 @@ const ProjectsPage = () => {
         }
         
         // Build query params
-        const params = {
+        const params: ProjectParams = {
           page,
           limit,
           sort_by: sortBy,
@@ -433,7 +485,7 @@ const ProjectsPage = () => {
             console.log('Sample project structure:', response.data.projects[0]);
             
             // Look for category_id in the projects
-            response.data.projects.forEach(project => {
+            response.data.projects.forEach((project: Project) => {
               console.log(`Project ${project.id} has category_id: ${project.category_id}`);
             });
           }
@@ -462,7 +514,7 @@ const ProjectsPage = () => {
   }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
 
   // Extract team lead from project members
-  const getTeamLead = (project) => {
+  const getTeamLead = (project: Project) => {
     if (!project.members || project.members.length === 0) {
       // If no members, use created_by as fallback for lead
       return users[project.created_by] || 'Mukamana Fransine';
@@ -479,7 +531,7 @@ const ProjectsPage = () => {
   };
   
   // Format date for display
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -490,7 +542,7 @@ const ProjectsPage = () => {
   };
   
   // Get category name from category_id
-  const getCategoryName = (categoryId) => {
+  const getCategoryName = (categoryId: number | string) => {
     if (!categoryId) return '';
     
     // Try both the raw ID and the string version
@@ -498,7 +550,7 @@ const ProjectsPage = () => {
   };
 
   // Handle tab change
-  const handleTabChange = (tab) => {
+  const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setPage(1); // Reset to first page when changing tabs
   };
@@ -596,6 +648,7 @@ const ProjectsPage = () => {
             onClick={() => {
               // Open a filter modal or expand filter options
             }}
+            title="Filter projects"
           >
             <Filter className="w-5 h-5" />
           </button>
@@ -641,10 +694,9 @@ const ProjectsPage = () => {
                       )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {project.location ? (
-                        // If location is a string with multiple cities separated by commas, only show the first one
-                        project.location.split(',')[0].trim()
-                      ) : 'N/A'}
+                      {typeof project.location === 'string' && project.location.length > 0
+                        ? project.location.split(',')[0].trim()
+                        : 'N/A'}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(project.created_at)}</td>
                     <td className="px-4 py-4 whitespace-nowrap">
@@ -672,7 +724,12 @@ const ProjectsPage = () => {
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
                       <button 
                         className="text-gray-500 hover:text-gray-700"
-                        onClick={() => toggleMenu(project.id)}
+                        onClick={() => {
+                          if (project && typeof project.id === 'number') {
+                            toggleMenu(project.id);
+                          }
+                        }}
+                        title="More options"
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
@@ -728,6 +785,7 @@ const ProjectsPage = () => {
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(1)}
               disabled={page === 1}
+              title="First page"
             >
               <ChevronsLeft className="w-4 h-4" />
             </button>
@@ -735,6 +793,7 @@ const ProjectsPage = () => {
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(Math.max(1, page - 1))}
               disabled={page === 1}
+              title="Previous page"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -764,6 +823,7 @@ const ProjectsPage = () => {
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
+              title="Next page"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -771,6 +831,7 @@ const ProjectsPage = () => {
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(totalPages)}
               disabled={page === totalPages}
+              title="Last page"
             >
               <ChevronsRight className="w-4 h-4" />
             </button>
