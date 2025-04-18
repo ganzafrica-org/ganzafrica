@@ -287,7 +287,7 @@ export default function OpportunitiesPage() {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/opportunities.jpg"
+            src="/images/form.jpg"
             alt="Opportunities"
             fill
             sizes="100vw"

@@ -112,20 +112,17 @@ const projectItems: MenuItem[] = [
   },
 ];
 
-const opportunitiesItems: MenuItem[] = [
-  {
-    title: "Opportunities",
-    href: "/opportunities",
-    description: "Explore current openings and ways to grow with us.",
-  },
-];
-
 const newsItems: MenuItem[] = [
   {
     title: "News",
     href: "/newsroom",
     description:
       "Stay updated with our latest initiatives, successes, and announcements.",
+  },
+  {
+    title: "Opportunities",
+    href: "/opportunities",
+    description: "Explore current openings and ways to grow with us.",
   },
   {
     title: "Contact Us",
@@ -368,21 +365,6 @@ export default function Navigation({
                 ▼
               </span>
             </button>
-            {activeDropdown === "mobile-opportunities" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {opportunitiesItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* News & Updates */}
@@ -595,42 +577,7 @@ export default function Navigation({
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-                
-                {/* Opportunities Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
-                    {dict?.navigation?.opportunities || "Opportunities"}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/opportunities`}
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                            Opportunities
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                            Be part of something bigger. 
-                            Discover how you can contribute your skills, ideas, or support to our work across Africa.
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
-                      {opportunitiesItems.map((item) => (
-                        <ListItem
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          title={item.title}
-                        >
-                          {item.description}
-                        </ListItem>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+          
 
                 {/* News & Updates Dropdown */}
                 <NavigationMenuItem>
