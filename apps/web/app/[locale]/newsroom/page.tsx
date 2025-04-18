@@ -1,24 +1,103 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Container from "@/components/layout/container";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { newsItems, generateSlug } from "@/app/lib/news-data";
-import type { NewsItem } from "@/app/lib/news-data";
 import HeaderBelt from "@/components/layout/headerBelt";
+import axios from 'axios';
+import { useParams } from "next/navigation";
 
-type NewsCategory = "all" | "news" | "blogs" | "reports" | "publications";
+// Create an axios instance with retry configuration
+const axiosInstance = axios.create({
+  timeout: 10000,
+});
+
+// Add a retry interceptor
+axiosInstance.interceptors.response.use(undefined, async (err) => {
+  const { config, response } = err;
+  
+  if ((response && response.status === 429) || !response) {
+    const maxRetries = 3;
+    config.retryCount = config.retryCount || 0;
+    
+    if (config.retryCount < maxRetries) {
+      config.retryCount += 1;
+      
+      const delay = Math.pow(2, config.retryCount) * 1000;
+      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
+      
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      return axiosInstance(config);
+    }
+  }
+  
+  return Promise.reject(err);
+});
+
+// Add a request interceptor to add a delay between requests
+axiosInstance.interceptors.request.use(async (config) => {
+  const now = Date.now();
+  const lastRequestTime = window.lastAxiosRequestTime || 0;
+  const minRequestInterval = 300; // minimum ms between requests
+  
+  if (now - lastRequestTime < minRequestInterval) {
+    const delayMs = minRequestInterval - (now - lastRequestTime);
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+  
+  window.lastAxiosRequestTime = Date.now();
+  
+  return config;
+});
+
+// Add request throttling mechanism
+const pendingRequests = {};
+
+const throttledAxios = {
+  get: (url, config = {}) => {
+    const key = `${url}${JSON.stringify(config.params || {})}`;
+    
+    if (pendingRequests[key]) {
+      return pendingRequests[key];
+    }
+    
+    const request = axiosInstance.get(url, config)
+      .finally(() => {
+        delete pendingRequests[key];
+      });
+    
+    pendingRequests[key] = request;
+    return request;
+  },
+  delete: (url, config = {}) => {
+    return axiosInstance.delete(url, config);
+  }
+};
+
+// Helper function to generate a slug
+const generateSlug = (title) => {
+  if (!title) return '';
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+};
 
 const NavigationItem = ({
   label,
   isActive,
   onClick,
+  count,
 }: {
   label: string;
   isActive: boolean;
   onClick: () => void;
+  count?: number;
 }) => (
   <button
     onClick={onClick}
@@ -61,6 +140,13 @@ const NavigationItem = ({
       </svg>
     )}
     {label}
+    {count !== undefined && (
+      <span className={`ml-1 px-2 py-0.5 text-xs font-medium rounded-full ${
+        isActive ? "bg-[#FFB800] text-white" : "bg-gray-200 text-gray-600"
+      }`}>
+        {count}
+      </span>
+    )}
     {isActive && (
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#FFB800] rounded-full" />
     )}
@@ -70,32 +156,81 @@ const NavigationItem = ({
   </button>
 );
 
-const NewsCard = ({ item }: { item: NewsItem }) => {
+const NewsCard = ({ item, locale }) => {
   const slug = generateSlug(item.title);
+  
+  // Format date - using publish_date field
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const getFirstTag = (tags) => {
+    if (!tags || !tags.length) return "News";
+    return tags[0].name;
+  };
+
+  // Function to get the cover image from media items
+  const getCoverImage = () => {
+    try {
+      // Check if media and items exist
+      if (!item.media?.items?.length) {
+        return null;
+      }
+      
+      // Find the cover image (the one with cover: true)
+      const coverImage = item.media.items.find(mediaItem => 
+        mediaItem.cover === true && mediaItem.type === 'image'
+      );
+
+      // Return the cover image URL if found
+      if (coverImage && coverImage.url) {
+        return coverImage.url;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error getting cover image:', error);
+      return null;
+    }
+  };
+
+  // Get the cover image URL
+  const imageUrl = getCoverImage();
 
   return (
-    <Link href={`/newsroom/${slug}`} className="block group">
+    <Link href={`/${locale}/newsroom/${slug}`} className="block group">
       <div className="relative bg-white rounded-[24px] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl">
         <div className="relative aspect-[16/10]">
-          {/* Image Container */}
-          <Image
-            src={item.image}
-            alt={item.title}
-            fill
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+          {/* Image Container - Using regular img tag instead of next/image */}
+          <div className="w-full h-full">
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <span className="text-gray-400">No image</span>
+              </div>
+            )}
+          </div>
+          
           {/* Green overlay with 50% opacity */}
           <div className="absolute inset-0 bg-[#005C3D] opacity-50"></div>
 
           {/* Date Badge - White background with green text */}
           <div className="absolute top-4 left-4 px-4 py-1 bg-white text-primary-green rounded-full text-sm font-medium">
-            {item.date}
+            {formatDate(item.publish_date)}
           </div>
 
           {/* Category Label - Transparent background with yellow border and text */}
           <div className="absolute top-[52px] left-4 px-4 py-1 bg-transparent text-secondary-yellow border border-secondary-yellow rounded-full text-sm font-medium">
-            {item.category}
+            {getFirstTag(item.tags)}
           </div>
 
           {/* Arrow Button */}
@@ -114,27 +249,133 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
           <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
             {item.title}
           </h3>
-          <p className="text-gray-600 line-clamp-2">{item.description}</p>
+          <p className="text-gray-600 line-clamp-2">{item.content?.substring(0, 150) || item.description || "Read more about this news article."}</p>
         </div>
       </div>
     </Link>
   );
 };
 
-const NewsroomPage = () => {
-  const [activeFilter, setActiveFilter] = useState<NewsCategory>("all");
+const NewsroomPage = ({ locale, dict }: { locale: string; dict: Record<string, any> }) => {
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [allNews, setAllNews] = useState([]);
+  const [filteredNews, setFilteredNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tags, setTags] = useState([]);
+  const [tagCounts, setTagCounts] = useState({});
+  const [error, setError] = useState(false);
+  
+  // Get API base URL - use environment variable or fallback
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
 
-  const filteredItems = newsItems.filter((item) =>
-    activeFilter === "all"
-      ? true
-      : item.category.toLowerCase().replace(" ", "-") === activeFilter,
-  );
+  // Fetch tags
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await throttledAxios.get(`${API_BASE_URL}/news/tags`);
+        if (response.data && Array.isArray(response.data.tags)) {
+          setTags(response.data.tags);
+        } else if (Array.isArray(response.data)) {
+          setTags(response.data);
+        } else {
+          console.error('Unexpected tags response format:', response.data);
+          setTags([]);
+        }
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+        setError(true);
+        setTags([]);
+      }
+    };
+    
+    fetchTags();
+  }, [API_BASE_URL]);
+
+  // Fetch all news
+  useEffect(() => {
+    const fetchAllNews = async () => {
+      try {
+        setLoading(true);
+        
+        const lastRequestTime = window.lastNewsFetchTime || 0;
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastRequestTime;
+        
+        if (timeSinceLastRequest < 500) {
+          await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
+        }
+        
+        const params = {
+          page: 1,
+          limit: 50, // Get a reasonable number of articles
+          sort_by: 'publish_date',
+          sort_order: 'desc',
+          status: 'published' // Only show published articles
+        };
+        
+        console.log('Fetching all news with params:', params);
+        
+        window.lastNewsFetchTime = Date.now();
+        
+        const response = await throttledAxios.get(`${API_BASE_URL}/news`, { 
+          params,
+          timeout: 10000
+        });
+        
+        console.log('API response:', response.data);
+        
+        if (response.data && response.data.news) {
+          const newsData = response.data.news || [];
+          setAllNews(newsData);
+          
+          // Calculate tag counts from the fetched data
+          const counts = { all: newsData.length };
+          
+          newsData.forEach(article => {
+            if (article.tags && Array.isArray(article.tags)) {
+              article.tags.forEach(tag => {
+                counts[tag.id] = (counts[tag.id] || 0) + 1;
+              });
+            }
+          });
+          
+          setTagCounts(counts);
+          setError(false);
+        } else {
+          setAllNews([]);
+        }
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        setError(true);
+        setAllNews([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAllNews();
+  }, [API_BASE_URL]);
+
+  // Filter news based on activeFilter
+  useEffect(() => {
+    if (activeFilter === "all") {
+      setFilteredNews(allNews);
+    } else {
+      const tagId = activeFilter;
+      const filtered = allNews.filter(article => 
+        article.tags && 
+        Array.isArray(article.tags) && 
+        article.tags.some(tag => tag.id.toString() === tagId)
+      );
+      setFilteredNews(filtered);
+    }
+  }, [activeFilter, allNews]);
 
   return (
     <main className="bg-[#F5F5F5] min-h-screen">
       {/* Hero Section */}
       <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-        {/* Background Image */}
+        {/* Background Image - Using Next.js Image is fine for local images */}
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/team.png"
@@ -174,35 +415,41 @@ const NewsroomPage = () => {
             label="All"
             isActive={activeFilter === "all"}
             onClick={() => setActiveFilter("all")}
+            count={tagCounts.all}
           />
-          <NavigationItem
-            label="News"
-            isActive={activeFilter === "news"}
-            onClick={() => setActiveFilter("news")}
-          />
-          <NavigationItem
-            label="Blogs"
-            isActive={activeFilter === "blogs"}
-            onClick={() => setActiveFilter("blogs")}
-          />
-          <NavigationItem
-            label="Reports"
-            isActive={activeFilter === "reports"}
-            onClick={() => setActiveFilter("reports")}
-          />
-          <NavigationItem
-            label="Publications"
-            isActive={activeFilter === "publications"}
-            onClick={() => setActiveFilter("publications")}
-          />
+          {tags.map(tag => (
+            <NavigationItem
+              key={tag.id}
+              label={tag.name}
+              isActive={activeFilter === tag.id.toString()}
+              onClick={() => setActiveFilter(tag.id.toString())}
+              count={tagCounts[tag.id] || 0}
+            />
+          ))}
         </nav>
 
         {/* News Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
-            <NewsCard key={item.id} item={item} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FFB800]"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-bold text-gray-800">Unable to load news</h3>
+            <p className="text-gray-600 mt-2">We're experiencing technical difficulties. Please try again later.</p>
+          </div>
+        ) : filteredNews.length === 0 ? (
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-bold text-gray-800">No news articles found</h3>
+            <p className="text-gray-600 mt-2">Please check back later for updates or try another category.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredNews.map((item) => (
+              <NewsCard key={item.id} item={item} locale={locale} />
+            ))}
+          </div>
+        )}
       </Container>
     </main>
   );

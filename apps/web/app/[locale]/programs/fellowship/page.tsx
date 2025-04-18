@@ -12,6 +12,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 import { motion } from 'framer-motion';
+import { default as HeaderBelt } from "@/components/layout/headerBelt";
+
 
 interface FellowshipPageProps {
   locale: string;
@@ -195,57 +197,23 @@ export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="flex items-center justify-center gap-4"
             >
-              <Link href="/programs/fellowship/how-to-apply">
+              <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
                 <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-[#045F3C] font-semibold px-6 py-4 text-base">
                   How to Apply
                 </Button>
               </Link>
-              <Button className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white font-semibold px-6 py-4 text-base">
-                Learn More
-              </Button>
+              <Link href={`/${locale}/programs/fellowship/apply`}>
+                <Button className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white font-semibold px-6 py-4 text-base">
+                  Apply now
+                </Button>
+              </Link>
             </motion.div>
           </div>
         </div>
       </section>
-
-      {/* Topics Section */}
-      <div className="bg-[#FDB022] py-4 relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center items-center">
-            <div className="marquee-container overflow-hidden w-full max-w-4xl mx-auto">
-              <div className="marquee-content flex whitespace-nowrap">
-                {[...topics, ...topics].map((topic, index) => (
-                  <motion.span
-                    key={index}
-                    className="text-base font-semibold text-[#045F3C] px-6"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
-                    {topic}
-                  </motion.span>
-                ))}
+      <div className="flex justify-center">
+                <HeaderBelt />
               </div>
-            </div>
-          </div>
-        </div>
-        <style jsx>{`
-          @keyframes marquee {
-            0% {
-              transform: translateX(0);
-            }
-            100% {
-              transform: translateX(-50%);
-            }
-          }
-          .marquee-content {
-            animation: marquee 25s linear infinite;
-          }
-          .marquee-content:hover {
-            animation-play-state: paused;
-          }
-        `}</style>
-      </div>
 
       <motion.section 
         initial={{ opacity: 0, y: 50 }}
@@ -287,9 +255,11 @@ export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
                 Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
               </p>
               
-              <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-8 py-3 text-lg rounded-lg">
-                Meet the Fellows
-              </Button>
+              <Link href={`/${locale}/about/team`}>
+                <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-8 py-3 text-lg rounded-lg">
+                  Meet the Fellows
+                </Button>
+              </Link>
             </motion.div>
           </div>
         </div>
@@ -360,9 +330,11 @@ export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
                 Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.
               </p>
               
-              <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-8 py-3 text-lg rounded-lg">
-                How to Apply
-              </Button>
+              <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
+                <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-8 py-3 text-lg rounded-lg">
+                  How to Apply
+                </Button>
+              </Link>
             </motion.div>
           </div>
         </div>
