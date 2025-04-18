@@ -7,6 +7,16 @@ import { ArrowLeft, Calendar, Tag, X } from "lucide-react";
 import Container from "@/components/layout/container";
 import axios from 'axios';
 
+// Define the MediaItem type
+interface MediaItem {
+  id: string;
+  url: string;
+  type: 'image' | 'video' | 'other';
+  cover?: boolean;
+  order?: number;
+  thumbnailUrl?: string;
+}
+
 // Create an axios instance with retry configuration
 const axiosInstance = axios.create({
   timeout: 10000,
@@ -36,7 +46,11 @@ axiosInstance.interceptors.response.use(undefined, async (err) => {
 });
 
 // Throttled axios instance for API requests
-const throttledAxios = {
+interface ThrottledAxios {
+  get: (url: string, config?: Record<string, any>) => Promise<any>;
+}
+
+const throttledAxios: ThrottledAxios = {
   get: (url, config = {}) => {
     return axiosInstance.get(url, config);
   }
@@ -45,15 +59,15 @@ const throttledAxios = {
 // The NewsDetailsPage component that displays a single news article
 const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Record<string, any>; params: { slug: string } }) => {
   // Unwrap params using React.use() as recommended by Next.js
-  const unwrappedParams = use(params);
+  const unwrappedParams = params;
   const { slug } = unwrappedParams;
   
   // State for media gallery
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   
   // Helper function to process HTML content with sentence-aware word breaks
-  const processContentWithWordBreaks = (htmlContent) => {
+  const processContentWithWordBreaks = (htmlContent: string) => {
     // Check if the content is HTML or plain text
     const isHTML = /<[a-z][\s\S]*>/i.test(htmlContent);
     
@@ -69,9 +83,9 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
           let currentChunk = '';
           
           // Process content sentence by sentence, monitoring word count
-          sentences.forEach(sentence => {
-            const trimmedSentence = sentence.trim();
-            const sentenceWordCount = trimmedSentence.split(/\s+/).length;
+            sentences.forEach((sentence: string) => {
+            const trimmedSentence: string = sentence.trim();
+            const sentenceWordCount: number = trimmedSentence.split(/\s+/).length;
             
             // If adding this sentence would exceed ~100 words and we already have content,
             // add a break before adding this sentence
@@ -84,7 +98,7 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
               currentChunk += (currentChunk ? ' ' : '') + trimmedSentence;
               wordCount += sentenceWordCount;
             }
-          });
+            });
           
           // Add any remaining content
           if (currentChunk) {
@@ -144,7 +158,7 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
   };
   
   // Helper function to process plain text with word breaks
-  const processPlainTextWithWordBreaks = (text) => {
+  const processPlainTextWithWordBreaks = (text: string) => {
     const paragraphs = text.split('\n\n');
     
     return (
@@ -174,20 +188,36 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
     );
   };
   
-  const [article, setArticle] = useState(null);
+  interface Article {
+    title: string;
+    content?: string;
+    description?: string;
+    publish_date: string;
+    tags?: { id: string; name: string }[];
+    media?: Media;
+    highlights?: string[];
+  }
+  
+  const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [relatedArticles, setRelatedArticles] = useState([]);
+  const [relatedArticles, setRelatedArticles] = useState<RelatedArticle[]>([]);
   
   // Get API base URL - use environment variable or fallback
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
 
   // Format date
-  const formatDate = (dateString) => {
+  interface FormatDateOptions {
+    month: 'long';
+    day: 'numeric';
+    year: 'numeric';
+  }
+
+  const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A';
     
     const date = new Date(dateString);
-    const options = { month: 'long', day: 'numeric', year: 'numeric' };
+    const options: FormatDateOptions = { month: 'long', day: 'numeric', year: 'numeric' };
     return date.toLocaleDateString('en-US', options);
   };
 
@@ -205,7 +235,7 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
           const articles = response.data.news;
           
           // Find the article that matches the slug
-          const foundArticle = articles.find(article => 
+          const foundArticle = articles.find((article: { title: any; }) => 
             generateSlug(article.title) === slug
           );
           
@@ -215,11 +245,21 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
             // Get related articles (same tag)
             if (foundArticle.tags && foundArticle.tags.length > 0) {
               const mainTag = foundArticle.tags[0];
-              const related = articles.filter(a => 
+                interface Article {
+                id: string;
+                tags: Tag[];
+                }
+
+                interface Tag {
+                id: string;
+                name: string;
+                }
+
+                const related = articles.filter((a: Article) => 
                 a.id !== foundArticle.id && 
                 a.tags && 
-                a.tags.some(tag => tag.id === mainTag.id)
-              ).slice(0, 3); // Get up to 3 related articles
+                a.tags.some((tag: Tag) => tag.id === mainTag.id)
+                ).slice(0, 3); // Get up to 3 related articles
               
               setRelatedArticles(related);
             }
@@ -245,7 +285,7 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
   }, [slug, API_BASE_URL]);
 
   // Helper function to generate a slug
-  const generateSlug = (title) => {
+  const generateSlug = (title: string) => {
     if (!title) return '';
     return title
       .toLowerCase()
@@ -256,7 +296,15 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
   };
 
   // Function to get the cover image from media items
-  const getCoverImage = (article) => {
+  interface Article {
+    media?: Media;
+  }
+
+  interface Media {
+    items?: MediaItem[];
+  }
+
+  const getCoverImage = (article: Article): string | null => {
     try {
       // Check if media and items exist
       if (!article || !article.media?.items?.length) {
@@ -264,7 +312,7 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
       }
       
       // Find the cover image (the one with cover: true)
-      const coverImage = article.media.items.find(mediaItem => 
+      const coverImage = article.media.items.find((mediaItem: MediaItem) => 
         mediaItem.cover === true && mediaItem.type === 'image'
       );
 
@@ -290,7 +338,15 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
   };
 
   // Function to get all media items except the cover
-  const getMediaItems = (article) => {
+  interface ArticleWithMedia {
+    media?: MediaWithItems;
+  }
+
+  interface MediaWithItems {
+    items?: MediaItem[];
+  }
+
+  const getMediaItems = (article: ArticleWithMedia): MediaItem[] => {
     try {
       // Check if media and items exist
       if (!article || !article.media?.items?.length) {
@@ -306,9 +362,9 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
   };
 
   // Function to handle media item click
-  const handleMediaClick = (mediaItem) => {
-    setSelectedMedia(mediaItem);
-    setIsGalleryOpen(true);
+  const handleMediaClick = (mediaItem: MediaItem) => {
+      setSelectedMedia(mediaItem);
+      setIsGalleryOpen(true);
   };
 
   // Function to close the media gallery
@@ -318,7 +374,14 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
   };
 
   // Related article card component
-  const RelatedArticleCard = ({ item }) => {
+  interface RelatedArticle {
+    id: string;
+    title: string;
+    publish_date: string;
+    tags: { id: string; name: string }[];
+  }
+
+  const RelatedArticleCard = ({ item }: { item: RelatedArticle }) => {
     const itemSlug = generateSlug(item.title);
     const imageUrl = getCoverImage(item);
     
@@ -342,7 +405,7 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
             {/* Tag badge */}
             {item.tags && item.tags.length > 0 && (
               <div className="absolute bottom-2 left-2 px-3 py-1 bg-[#00A651] text-white rounded-full text-xs font-medium">
-                {item.tags[0].name}
+                {item.tags && item.tags[0] ? item.tags[0].name : 'Unknown'}
               </div>
             )}
           </div>
@@ -363,7 +426,7 @@ const NewsDetailsPage = ({ locale, dict, params }: { locale: string; dict: Recor
   };
 
   // Media item thumbnail component
-  const MediaThumbnail = ({ mediaItem, index }) => {
+  const MediaThumbnail = ({ mediaItem, index }: { mediaItem: MediaItem; index: number }) => {
     return (
       <div 
         className="cursor-pointer rounded-lg overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1"

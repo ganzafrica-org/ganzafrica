@@ -1,5 +1,13 @@
 "use client";
 
+// Extend the Window interface to include lastAxiosRequestTime and lastNewsFetchTime
+declare global {
+  interface Window {
+    lastAxiosRequestTime?: number;
+    lastNewsFetchTime?: number;
+  }
+}
+
 import React, { useState, useEffect } from "react";
 import Container from "@/components/layout/container";
 import Image from "next/image";
@@ -54,9 +62,19 @@ axiosInstance.interceptors.request.use(async (config) => {
 });
 
 // Add request throttling mechanism
-const pendingRequests = {};
+const pendingRequests: Record<string, Promise<any>> = {};
 
-const throttledAxios = {
+interface ThrottledAxiosConfig {
+  params?: Record<string, any>;
+  timeout?: number; // Add timeout property
+}
+
+interface ThrottledAxios {
+  get: (url: string, config?: ThrottledAxiosConfig) => Promise<any>;
+  delete: (url: string, config?: ThrottledAxiosConfig) => Promise<any>;
+}
+
+const throttledAxios: ThrottledAxios = {
   get: (url, config = {}) => {
     const key = `${url}${JSON.stringify(config.params || {})}`;
     
@@ -78,7 +96,7 @@ const throttledAxios = {
 };
 
 // Helper function to generate a slug
-const generateSlug = (title) => {
+const generateSlug = (title: string) => {
   if (!title) return '';
   return title
     .toLowerCase()
@@ -156,19 +174,37 @@ const NavigationItem = ({
   </button>
 );
 
-const NewsCard = ({ item, locale }) => {
+interface NewsItem {
+  id: string;
+  title: string;
+  content?: string;
+  description?: string;
+  publish_date?: string;
+  tags?: { id: string; name: string }[];
+  media?: {
+    items?: { cover?: boolean; type?: string; url?: string }[];
+  };
+}
+
+const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
   const slug = generateSlug(item.title);
   
   // Format date - using publish_date field
-  const formatDate = (dateString) => {
+  interface FormatDateOptions {
+    month: 'short' | 'long' | 'numeric' | '2-digit';
+    day: 'numeric' | '2-digit';
+    year: 'numeric' | '2-digit';
+  }
+
+  const formatDate = (dateString: string | undefined): string => {
     if (!dateString) return 'N/A';
     
     const date = new Date(dateString);
-    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+    const options: FormatDateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
     return date.toLocaleDateString('en-US', options);
   };
 
-  const getFirstTag = (tags) => {
+  const getFirstTag = (tags: string | any[] | undefined) => {
     if (!tags || !tags.length) return "News";
     return tags[0].name;
   };
@@ -258,11 +294,11 @@ const NewsCard = ({ item, locale }) => {
 
 const NewsroomPage = ({ locale, dict }: { locale: string; dict: Record<string, any> }) => {
   const [activeFilter, setActiveFilter] = useState("all");
-  const [allNews, setAllNews] = useState([]);
-  const [filteredNews, setFilteredNews] = useState([]);
+  const [allNews, setAllNews] = useState<NewsItem[]>([]);
+  const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tags, setTags] = useState([]);
-  const [tagCounts, setTagCounts] = useState({});
+  const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
+  const [tagCounts, setTagCounts] = useState<Record<string, number>>({});
   const [error, setError] = useState(false);
   
   // Get API base URL - use environment variable or fallback
@@ -329,12 +365,12 @@ const NewsroomPage = ({ locale, dict }: { locale: string; dict: Record<string, a
           setAllNews(newsData);
           
           // Calculate tag counts from the fetched data
-          const counts = { all: newsData.length };
+          const counts: Record<string, number> = { all: newsData.length };
           
-          newsData.forEach(article => {
+          newsData.forEach((article: { tags: any[]; }) => {
             if (article.tags && Array.isArray(article.tags)) {
               article.tags.forEach(tag => {
-                counts[tag.id] = (counts[tag.id] || 0) + 1;
+                counts[tag.id as string] = (counts[tag.id as string] || 0) + 1;
               });
             }
           });

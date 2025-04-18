@@ -34,9 +34,17 @@ axiosInstance.interceptors.response.use(undefined, async (err) => {
 });
 
 // Add request throttling
-const pendingRequests = {};
+const pendingRequests: Record<string, Promise<any>> = {};
 
-const throttledAxios = {
+interface ThrottledAxiosConfig {
+  params?: Record<string, unknown>;
+}
+
+interface ThrottledAxios {
+  get: (url: string, config?: ThrottledAxiosConfig) => Promise<any>;
+}
+
+const throttledAxios: ThrottledAxios = {
   get: (url, config = {}) => {
     const key = `${url}${JSON.stringify(config.params || {})}`;
     
