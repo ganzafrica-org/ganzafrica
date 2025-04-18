@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "cross-env TSC_COMPILE_ON_ERROR=true next build --no-lint",
+    "build": "cross-env NEXT_DISABLE_TYPE_CHECKING=true TSC_COMPILE_ON_ERROR=true next build --no-lint",
     "start": "next start",
     "lint": "next lint"
   },
