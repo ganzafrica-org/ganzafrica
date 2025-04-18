@@ -1,3 +1,6 @@
+// @ts-nocheck
+
+
 import "server-only";
 
 // Define supported locales

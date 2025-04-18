@@ -13,11 +13,12 @@ const fontRubik = Rubik({
 });
 
 // Metadata generation
-export async function generateMetadata({
-  params,
-}: {
-  params: { locale: string };
-}) {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ locale: string }>;
+  }
+) {
+  const params = await props.params;
   // Ensure locale is one of the supported ones, fallback to 'en'
   const locale =
     params.locale && ["en", "fr"].includes(params.locale)
@@ -46,13 +47,18 @@ export async function generateMetadata({
   };
 }
 
-export default async function RootLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { locale: string };
-}) {
+export default async function RootLayout(
+  props: {
+    children: React.ReactNode;
+    params: Promise<{ locale: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   // Ensure locale is one of the supported ones, fallback to 'en'
   const locale =
     params.locale && ["en", "fr"].includes(params.locale)

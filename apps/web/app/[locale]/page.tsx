@@ -13,22 +13,22 @@ import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-u
 
 // Generate metadata for SEO
 export async function generateMetadata({
-  params,
-}: {
-  params: { locale: string };
+                                           params,
+                                       }: {
+    params: { locale: string };
 }): Promise<Metadata> {
-  // First await the params object
-  const resolvedParams = await params;
-  const locale = resolvedParams.locale;
-  const dict = await getDictionary(locale);
+    const locale = params.locale;
+    const dict = await getDictionary(locale);
 
-  return baseGenerateMetadata({
-    title: dict.site.name,
-    description: dict.site.description,
-    locale,
-    imagePath: "/images/og/home.jpg",
-  });
+    return baseGenerateMetadata({
+        params: { locale },
+        title: dict.site.name,
+        description: dict.site.description,
+        locale,
+        imagePath: "/images/og/home.jpg",
+    });
 }
+
 
 export default async function HomePage({
   params,

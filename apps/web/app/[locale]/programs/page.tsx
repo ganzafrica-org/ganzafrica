@@ -1,10 +1,16 @@
 import { getDictionary } from "@/lib/get-dictionary";
 
-export default async function ProgramsPage({
-  params: { locale },
-}: {
-  params: { locale: string };
-}) {
+export default async function ProgramsPage(
+  props: {
+    params: Promise<{ locale: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const dict = await getDictionary(locale);
 
   return (
