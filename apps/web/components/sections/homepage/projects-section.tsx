@@ -6,6 +6,7 @@ import { DecoratedHeading } from '@/components/layout/headertext';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 
+
 // Interface for the project data from the API
 interface ProjectMedia {
     id: string;
@@ -160,17 +161,17 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
         return 'position-none'; // hidden
     };
 
-    // Helper function to get feature image URL for a project
     const getFeatureImageUrl = (project: Project) => {
         if (project.media && project.media.items) {
             const featureImage = project.media.items.find(item => item.tag === 'feature');
-            if (featureImage) {
+            if (featureImage && featureImage.url) {
                 return featureImage.url;
             }
         }
         // Fallback image if no feature image is found
-        return '/images/ganzafrica-fellows.jpg';
+        return '/images/placeholder.png';
     };
+    
 
     // Helper function to truncate description
     const truncateDescription = (description: string, maxLength = 150) => {
@@ -230,14 +231,12 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                   `}
                                 >
                                     <div className="relative w-full h-full">
-                                        <Image
-                                            src={getFeatureImageUrl(project)}
-                                            alt={project.name}
-                                            fill
-                                            sizes="(max-width: 768px) 100vw, 600px"
-                                            priority
-                                            className="object-cover"
-                                        />
+                                    <img
+    src={getFeatureImageUrl(project)}
+    alt={project.name}
+    className="w-full h-full object-cover"
+/>
+
                                         <div className="absolute inset-0 bg-black/40" />
 
                                         {/* Feature tag */}

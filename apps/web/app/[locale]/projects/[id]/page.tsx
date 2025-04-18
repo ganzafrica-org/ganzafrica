@@ -1,597 +1,859 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import axios from 'axios';
-import {
+import Link from 'next/link';
+import { 
   ArrowLeft,
   Calendar,
-  Clock,
   MapPin,
-  Briefcase,
-  Building,
-  GraduationCap,
-  Award,
-  Bookmark,
-  Library,
-  Globe,
-  Mail,
-  Phone,
-  Users,
-  FileText,
-  ExternalLink,
-  Share2,
-  Heart,
-  AlertCircle,
-  Loader2,
+  User,
+  Tag,
+  Clock,
   CheckCircle,
-  DollarSign
+  FileText,
+  ImageIcon,
+  Film,
+  AlertCircle,
+  Download,
+  Users,
+  Target,
+  Award,
+  XCircle
 } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import Image from 'next/image';
 
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  timeout: 10000,
-});
+// Define TypeScript interfaces for our data structures
+interface Media {
+  id: string;
+  type: 'image' | 'video';
+  url: string;
+  caption?: string;
+  title?: string;
+  tag?: string;
+  isExternalUrl?: boolean;
+}
 
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  if ((response && response.status === 429) || !response) {
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      config.retryCount += 1;
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return axiosInstance(config);
-    }
-  }
-  
-  return Promise.reject(err);
-});
+interface Goal {
+  id: string;
+  order: number;
+  title: string;
+  completed: boolean;
+  description: string;
+}
 
-// Map category_id to icon components
-const getCategoryIcon = (categoryId) => {
-  switch (parseInt(categoryId)) {
-    case 1:
-      return <Briefcase className="h-5 w-5" />;
-    case 2:
-      return <Award className="h-5 w-5" />;
-    case 3:
-      return <GraduationCap className="h-5 w-5" />;
-    case 4:
-      return <Bookmark className="h-5 w-5" />;
-    case 5:
-      return <Library className="h-5 w-5" />;
-    default:
-      return <Briefcase className="h-5 w-5" />;
-  }
-};
+interface Outcome {
+  id: string;
+  order: number;
+  title: string;
+  status: string;
+  description: string;
+  metrics?: string[];
+}
 
-// Function to generate a color class based on category
-const getCategoryColorClass = (categoryId) => {
-  switch (parseInt(categoryId)) {
-    case 1: // Internship
-      return "bg-blue-100 text-blue-800";
-    case 2: // Grant
-      return "bg-green-100 text-green-800";
-    case 3: // Fellowship
-      return "bg-purple-100 text-purple-800";
-    case 4: // Scholarship
-      return "bg-yellow-100 text-yellow-800";
-    case 5: // Training Program
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
+interface Member {
+  id: string | number;
+  project_id: number;
+  user_id: number;
+  role: string;
+  image?: string;
+  name?: string;
+  start_date: string | null;
+  end_date: string | null;
+}
 
-// Get category name from category_id
-const getCategoryName = (categoryId, categories) => {
-  return categories[categoryId] || 'Other';
-};
+interface Project {
+  id: number;
+  name: string;
+  description: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  created_by: number;
+  category_id: number;
+  location: string;
+  goals: {
+    items: Goal[];
+  };
+  outcomes: {
+    items: Outcome[];
+  };
+  media: {
+    items: Media[];
+  };
+  other_information: string | null;
+  created_at: string;
+  updated_at: string;
+  members: Member[];
+}
 
-// Format date for display
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
+interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+}
 
-// Calculate days remaining
-const getDaysRemaining = (deadlineString) => {
-  if (!deadlineString) return 'No deadline';
-  
-  const deadline = new Date(deadlineString);
-  const today = new Date();
-  
-  // Set time to midnight for both dates for accurate day calculation
-  deadline.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  
-  const diffTime = deadline - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays < 0) {
-    return 'Expired';
-  } else if (diffDays === 0) {
-    return 'Closes today';
-  } else if (diffDays === 1) {
-    return '1 day left';
-  } else {
-    return `${diffDays} days left`;
-  }
-};
+interface User {
+  id: string;
+  name: string;
+}
 
-// Function to generate logo placeholder based on title
-const getLogoPlaceholder = (title) => {
-  if (!title) return "OI";
-  
-  const words = title.split(' ');
-  if (words.length === 1) {
-    return title.substring(0, 2).toUpperCase();
-  }
-  
-  return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
-};
-
-const Page = ({ params }) => {
-  const router = useRouter();
-  const opportunityId = params?.id;
-  
-  // State for opportunity details
-  const [opportunity, setOpportunity] = useState(null);
+const ProjectDetailsPage = () => {
+  const params = useParams();
+  const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [categories, setCategories] = useState({});
-  const [isFavorite, setIsFavorite] = useState(false);
-  
-  // Set default categories
+  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [activeTab, setActiveTab] = useState('details');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  // Handle external image URLs - Modified to work with Next.js Image component
+  const getValidImageSrc = (url: string, isExternalUrl?: boolean) => {
+    // If it's explicitly marked as external URL, use a Next.js Image configuration approach
+    if (isExternalUrl) {
+      return '/api/placeholder/800/400';
+    }
+    
+    // If it's a local URL or an API placeholder, use it directly
+    if (url && (url.startsWith('/') || url.startsWith('http://localhost') || url.startsWith('https://localhost'))) {
+      return url;
+    }
+    
+    // For any other URL (likely external), use a placeholder
+    return '/api/placeholder/800/400';
+  };
+
+  // Fetch the project data
   useEffect(() => {
-    setCategories({
-      1: 'Internship',
-      2: 'Grant',
-      3: 'Fellowship',
-      4: 'Scholarship',
-      5: 'Training Program'
-    });
-  }, []);
-  
-  // Fetch opportunity details
-  useEffect(() => {
-    const fetchOpportunity = async () => {
-      if (!opportunityId) {
-        setError('Opportunity ID is required');
-        setLoading(false);
-        return;
-      }
-      
+    const fetchProjectData = async () => {
       try {
         setLoading(true);
-        // In a real app, this would fetch from your API endpoint
-        const response = await axiosInstance.get(`/api/opportunities/${opportunityId}`);
         
-        if (response.data && response.data.opportunity) {
-          setOpportunity(response.data.opportunity);
+        // Fetch project data
+        const projectResponse = await axios.get(`http://localhost:3002/api/projects/${params.id}`);
+        console.log("API Response:", projectResponse.data);
+        
+        // Check if the response has a nested project object
+        if (projectResponse.data && projectResponse.data.project) {
+          console.log("Setting project from nested project object");
+          setProject(projectResponse.data.project);
+        } else if (projectResponse.data && projectResponse.data.id) {
+          // Direct project object
+          console.log("Setting project from direct response");
+          setProject(projectResponse.data);
         } else {
-          setError('Failed to load opportunity details');
+          throw new Error("Invalid project data structure");
         }
-      } catch (err) {
-        console.error('Error fetching opportunity:', err);
-        setError('Failed to load opportunity. Please try again later.');
+
+        // Fetch categories
+        try {
+          const categoriesResponse = await axios.get('http://localhost:3002/api/project-categories');
+          if (categoriesResponse.data && categoriesResponse.data.length > 0) {
+            const categoriesData: Category[] = categoriesResponse.data.map((category: { id: number; name: string }) => ({
+              id: category.id.toString(),
+              name: category.name,
+              description: "Description not available", // You can update this if the API provides descriptions
+              icon: "🌾" // You can update this if the API provides icons
+            }));
+            setCategories(categoriesData);
+          }
+        } catch (error) {
+          console.log('Using fallback categories');
+        }
+
+        // Fetch users
+        try {
+          const usersResponse = await axios.get('http://localhost:3002/api/users');
+          if (usersResponse.data && usersResponse.data.length > 0) {
+            const usersData: User[] = usersResponse.data.map((user: { id: number; first_name: string; last_name: string }) => ({
+              id: user.id.toString(),
+              name: `${user.first_name} ${user.last_name}`
+            }));
+            setUsers(usersData);
+          }
+        } catch (error) {
+        }
+
+      } catch (error) {
+        console.error('Error in project data fetching:', error);
+        setError('Failed to load project details. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchOpportunity();
-  }, [opportunityId]);
-  
-  // Toggle favorite status
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    // In a real app, you would call an API to save this preference
+
+    fetchProjectData();
+  }, [params.id]);
+
+  // Format date for display
+  const formatDate = (date: string | null | undefined): string => {
+    if (!date) return 'Present';
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
-  
-  // Share opportunity
-  const shareOpportunity = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: opportunity?.title || 'Opportunity',
-        text: opportunity?.short_description || 'Check out this opportunity',
-        url: window.location.href,
-      }).catch((error) => console.log('Error sharing', error));
-    } else {
-      // Fallback - copy to clipboard
-      navigator.clipboard.writeText(window.location.href)
-        .then(() => alert('Link copied to clipboard!'))
-        .catch((err) => console.error('Could not copy link: ', err));
+
+  // Get category name from category_id
+  const getCategoryName = (categoryId: number | undefined) => {
+    if (!categoryId) return 'Unknown';
+    const category = categories.find(cat => cat.id === categoryId.toString());
+    return category ? category.name : 'Unknown Category';
+  };
+
+  // Get user name from user_id
+  const getUserName = (userId: number | undefined) => {
+    if (!userId) return 'Unknown';
+    const user = users.find(u => u.id === userId.toString());
+    return user ? user.name : 'Unknown User';
+  };
+
+  // Extract team lead from project members
+  const getTeamLead = () => {
+    if (!project?.members) return null;
+    const lead = project.members.find(member => member.role.toLowerCase().includes('lead'));
+    return lead ? { name: lead.name, role: lead.role } : null;
+  };
+
+  // Map status for display
+  const getStatusBadge = (status: string | undefined) => {
+    if (!status) return null;
+    
+    switch(status.toLowerCase()) {
+      case 'completed':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
+            <Award className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">Completed</span>
+          </span>
+        );
+      case 'planned':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap">
+            <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">Planned</span>
+          </span>
+        );
+      case 'active':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
+            <CheckCircle className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">Active</span>
+          </span>
+        );
+      default:
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 truncate max-w-[100px]">• {status}</span>;
     }
   };
-  
-  if (loading) {
+
+  // Get file size in readable format
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' bytes';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  // Render media item
+  const renderMediaItem = (media: Media) => {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <Loader2 className="h-12 w-12 text-green-600 animate-spin" />
-        <span className="ml-3 text-lg text-green-700">Loading opportunity details...</span>
+      <div key={media.id} className="relative aspect-video rounded-lg overflow-hidden">
+        {media.type === 'image' ? (
+          <Image
+            src={getValidImageSrc(media.url, media.isExternalUrl)}
+            alt={media.title || 'Project media'}
+            width={800}
+            height={450}
+            className="object-cover w-full h-full"
+          />
+        ) : (
+          <video
+            src={media.url}
+            controls
+            className="w-full h-full object-cover"
+          />
+        )}
+        {media.caption && (
+          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
+            <p className="truncate">{media.caption}</p>
+          </div>
+        )}
       </div>
     );
-  }
-  
-  if (error) {
+  };
+
+  const getStatusColor = (status: string): string => {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'planned':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getGoalStatusColor = (status: string): string => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'in_progress':
+      case 'in-progress':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'not_started':
+      case 'not-started':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleThumbnailClick = (index: number) => {
+    setActiveImageIndex(index);
+  };
+
+  const handlePrevImage = () => {
+    if (!project?.media?.items) return;
+    const nonFeaturedMedia = project.media.items.filter(item => item.tag !== 'feature');
+    if (nonFeaturedMedia.length === 0) return;
+    setActiveImageIndex(prev => (prev > 0 ? prev - 1 : nonFeaturedMedia.length - 1));
+  };
+
+  const handleNextImage = () => {
+    if (!project?.media?.items) return;
+    const nonFeaturedMedia = project.media.items.filter(item => item.tag !== 'feature');
+    if (nonFeaturedMedia.length === 0) return;
+    setActiveImageIndex(prev => (prev + 1) % nonFeaturedMedia.length);
+  };
+
+  if (loading) {
     return (
-      <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <div className="flex items-center">
-            <AlertCircle className="h-6 w-6 text-red-500 mr-2" />
-            <p className="text-red-700 text-lg">{error}</p>
-          </div>
-          <Link 
-            href="/opportunities" 
-            className="mt-4 inline-flex items-center text-green-600 hover:text-green-800"
-          >
-            <ArrowLeft className="mr-1 h-4 w-4" /> Back to opportunities
-          </Link>
+      <div className="p-6 max-w-full flex items-center justify-center min-h-[80vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-700 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading project details...</p>
         </div>
       </div>
     );
   }
-  
-  return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-5xl mx-auto p-6">
-        {/* Back button */}
-        <Link 
-          href="/opportunities" 
-          className="inline-flex items-center text-green-600 hover:text-green-800 mb-6"
-        >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to opportunities
-        </Link>
-        
-        {/* Opportunity header card */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6 border border-gray-200">
-          <div className="border-b border-gray-200 p-6">
-            <div className="flex justify-between items-start">
-              <div className="flex items-start">
-                <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-white font-bold border border-gray-200 ${
-                  opportunity?.category_id ? getCategoryColorClass(opportunity.category_id).replace('bg-', 'bg-').replace('text-', 'text-')
-                  : 'bg-gray-200 text-gray-700'
-                }`}>
-                  {opportunity?.organization_logo 
-                    ? <img src={opportunity.organization_logo} alt="Logo" className="w-12 h-12 object-contain" />
-                    : getLogoPlaceholder(opportunity?.title)
-                  }
-                </div>
-                <div className="ml-4">
-                  <h1 className="text-2xl font-bold text-gray-900">{opportunity?.title}</h1>
-                  <p className="text-gray-600 mt-1">{opportunity?.organization_name || 'Organization'}</p>
-                  <div className="flex mt-2">
-                    {opportunity?.category_id && (
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full mr-2 ${getCategoryColorClass(opportunity.category_id)} border border-transparent`}>
-                        {getCategoryIcon(opportunity.category_id)}
-                        <span className="ml-1">{getCategoryName(opportunity.category_id, categories)}</span>
-                      </span>
-                    )}
-                    
-                    {opportunity?.location_type && (
-                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-indigo-100 text-indigo-800 mr-2 border border-transparent">
-                        {opportunity.location_type}
-                      </span>
-                    )}
-                    
-                    {opportunity?.status && (
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full border border-transparent ${
-                        opportunity.status === 'published' ? 'bg-green-100 text-green-800' :
-                        opportunity.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                        opportunity.status === 'archived' ? 'bg-purple-100 text-purple-800' :
-                        opportunity.status === 'closed' ? 'bg-orange-100 text-orange-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {opportunity.status.charAt(0).toUpperCase() + opportunity.status.slice(1)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2">
-                <button 
-                  onClick={toggleFavorite}
-                  className={`p-2 rounded-full border ${isFavorite ? 'bg-red-50 text-red-500 border-red-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 border-gray-200'}`}
-                >
-                  <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500' : ''}`} />
-                </button>
-                <button 
-                  onClick={shareOpportunity}
-                  className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 border border-gray-200"
-                >
-                  <Share2 className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-full">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>{error}</span>
           </div>
-          
-          {/* Key details section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-50 border-b border-gray-200">
-            <div className="flex items-center">
-              <div className="rounded-full bg-blue-100 p-2 mr-3 border border-blue-200">
-                <Calendar className="h-5 w-5 text-blue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Application Deadline</p>
-                <p className="font-medium">{formatDate(opportunity?.application_deadline)}</p>
-                <p className={`text-sm mt-1 ${
-                  getDaysRemaining(opportunity?.application_deadline).includes('Expired') ? 'text-red-500 font-medium' :
-                  getDaysRemaining(opportunity?.application_deadline).includes('today') || 
-                  getDaysRemaining(opportunity?.application_deadline).includes('1 day') ? 'text-orange-500 font-medium' :
-                  'text-green-600 font-medium'
-                }`}>
-                  {getDaysRemaining(opportunity?.application_deadline)}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center">
-              <div className="rounded-full bg-green-100 p-2 mr-3 border border-green-200">
-                <MapPin className="h-5 w-5 text-green-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Location</p>
-                <p className="font-medium">{opportunity?.location || 'Not specified'}</p>
-                {opportunity?.location_type && (
-                  <p className="text-sm text-gray-500 mt-1">{opportunity.location_type}</p>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex items-center">
-              <div className="rounded-full bg-purple-100 p-2 mr-3 border border-purple-200">
-                <DollarSign className="h-5 w-5 text-purple-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Compensation</p>
-                {opportunity?.stipend_amount ? (
-                  <p className="font-medium">${opportunity.stipend_amount} per month</p>
-                ) : (
-                  <p className="font-medium">Not specified</p>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Action buttons */}
-          <div className="p-6 border-t border-gray-200 flex justify-end">
-            <Link 
-              href={`/opportunities/${opportunityId}/apply`}
-              className="px-6 py-2.5 bg-green-700 text-white rounded-md hover:bg-green-800 shadow-sm transition-colors duration-200 font-medium"
-            >
-              Apply Now
+          <div className="mt-4">
+            <Link href="/projects" className="text-red-700 font-medium hover:underline flex items-center">
+              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Projects
             </Link>
           </div>
         </div>
-        
-        {/* Main content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left column - Details */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Description */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <h2 className="text-xl font-bold mb-4">About the Opportunity</h2>
-              <div className="prose max-w-none">
-                {opportunity?.description ? (
-                  <div dangerouslySetInnerHTML={{ __html: opportunity.description }} />
-                ) : (
-                  <p>{opportunity?.short_description || 'No description provided.'}</p>
-                )}
+      </div>
+    );
+  }
+
+  // Debug output
+  console.log("Current project state:", project);
+  
+  if (!project) {
+    return (
+      <div className="p-6 max-w-full">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative" role="alert">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>Project not found</span>
+          </div>
+          <div className="mt-4">
+            <Link href="/projects" className="text-yellow-700 font-medium hover:underline flex items-center">
+              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Projects
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Find featured media
+  const featuredMedia = project.media && project.media.items ? 
+    project.media.items.find(item => item.tag === 'feature') : 
+    null;
+
+  // Get gallery media (non-featured)
+  const galleryMedia = project.media && project.media.items ? 
+    project.media.items.filter(item => item.tag !== 'feature') : 
+    [];
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
+      {/* Hero Section */}
+      <div className="relative h-[50vh] sm:h-[70vh] md:h-[80vh] lg:h-[90vh] w-full overflow-hidden">
+        {featuredMedia ? (
+          <div className="relative w-full h-full">
+            <Image
+              src={getValidImageSrc(featuredMedia.url, featuredMedia.isExternalUrl)}
+              alt={project.name}
+              width={1920}
+              height={1080}
+              className="object-cover w-full h-full"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+          </div>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-800 flex items-center justify-center">
+                <ImageIcon className="w-12 h-12 text-gray-600" />
               </div>
-            </div>
-            
-            {/* Requirements */}
-            {opportunity?.requirements && (
-              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-                <h2 className="text-xl font-bold mb-4">Requirements</h2>
-                <div className="prose max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: opportunity.requirements }} />
+
+              {/* Project Info */}
+              <div className="mt-8 space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Information</h2>
+                </div>
+                <div className="space-y-4 w-full overflow-hidden">
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Location</h3>
+                    <p className="text-gray-600 dark:text-gray-400 break-words">{project.location || 'Not specified'}</p>
+                  </div>
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h3>
+                    <p className="text-gray-600 dark:text-gray-400 break-words">
+                      {formatDate(project.start_date)} - {formatDate(project.end_date)}
+                    </p>
+                  </div>
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Status</h3>
+                    <div className="mt-1">{getStatusBadge(project.status)}</div>
+                  </div>
+                  {project.category_id && (
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Category</h3>
+                      <p className="text-gray-600 dark:text-gray-400 break-words">{getCategoryName(project.category_id)}</p>
+                    </div>
+                  )}
+                  {project.created_at && (
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Created</h3>
+                      <p className="text-gray-600 dark:text-gray-400">{formatDate(project.created_at)}</p>
+                    </div>
+                  )}
+                  {project.other_information && (
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Additional Information</h3>
+                      <p className="text-gray-600 dark:text-gray-400 break-words">{project.other_information}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-            
-            {/* Responsibilities */}
-            {opportunity?.responsibilities && (
-              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-                <h2 className="text-xl font-bold mb-4">Responsibilities</h2>
-                <div className="prose max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: opportunity.responsibilities }} />
-                </div>
-              </div>
-            )}
-            
-            {/* Benefits */}
-            {opportunity?.benefits && (
-              <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-                <h2 className="text-xl font-bold mb-4">Benefits</h2>
-                <div className="prose max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: opportunity.benefits }} />
-                </div>
-              </div>
-            )}
-            
-            {/* Apply button for bottom of page */}
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center border border-gray-200">
-              <p className="text-gray-600 mb-4">Ready to apply for this opportunity?</p>
-              <Link 
-                href={`/opportunities/${opportunityId}/apply`}
-                className="px-10 py-3 bg-green-700 text-white rounded-md hover:bg-green-800 shadow-sm transition-colors duration-200 font-medium"
-              >
-                Apply Now
-              </Link>
+              <p className="text-gray-400 text-lg">No featured image available</p>
             </div>
           </div>
-          
-          {/* Right column - Sidebar */}
-          <div className="space-y-6">
-            {/* Key dates */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-4">Key Dates</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium">Posted on</p>
-                    <p className="text-sm text-gray-600">{formatDate(opportunity?.created_at)}</p>
-                  </div>
-                </li>
-                
-                <li className="flex items-start">
-                  <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-medium">Application Deadline</p>
-                    <p className="text-sm text-gray-600">{formatDate(opportunity?.application_deadline)}</p>
-                  </div>
-                </li>
-                
-                {opportunity?.start_date && (
-                  <li className="flex items-start">
-                    <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium">Start Date</p>
-                      <p className="text-sm text-gray-600">{formatDate(opportunity.start_date)}</p>
-                    </div>
-                  </li>
-                )}
-                
-                {opportunity?.end_date && (
-                  <li className="flex items-start">
-                    <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium">End Date</p>
-                      <p className="text-sm text-gray-600">{formatDate(opportunity.end_date)}</p>
-                    </div>
-                  </li>
-                )}
-              </ul>
-            </div>
-            
-            {/* Organization info */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-4">Organization Information</h3>
-              <div className="flex items-center mb-4">
-                <div className={`w-10 h-10 rounded-md flex items-center justify-center text-white font-bold border border-gray-200 ${
-                  opportunity?.category_id ? getCategoryColorClass(opportunity.category_id).replace('bg-', 'bg-').replace('text-', 'text-')
-                  : 'bg-gray-200 text-gray-700'
-                }`}>
-                  {opportunity?.organization_logo 
-                    ? <img src={opportunity.organization_logo} alt="Logo" className="w-8 h-8 object-contain" />
-                    : getLogoPlaceholder(opportunity?.organization_name || opportunity?.title)
-                  }
-                </div>
-                <div className="ml-3">
-                  <p className="font-medium">{opportunity?.organization_name || 'Organization'}</p>
-                </div>
-              </div>
+        )}
+        
+        {/* Hero Content */}
+        <div className="absolute inset-0 flex items-end">
+          <div className="container mx-auto px-4 pb-20">
+            <div className="max-w-4xl">
+              <Link
+                href="/projects"
+                className="inline-flex items-center text-white/80 hover:text-white transition-all duration-300 mb-12 group"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                <span className="relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
+                  Back to Projects
+                </span>
+              </Link>
               
-              <ul className="space-y-3">
-                {opportunity?.organization_website && (
-                  <li className="flex items-start">
-                    <Globe className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <a 
-                      href={opportunity.organization_website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      Website <ExternalLink className="h-3 w-3 inline" />
-                    </a>
-                  </li>
-                )}
-                
-                {opportunity?.contact_email && (
-                  <li className="flex items-start">
-                    <Mail className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <a 
-                      href={`mailto:${opportunity.contact_email}`}
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      {opportunity.contact_email}
-                    </a>
-                  </li>
-                )}
-                
-                {opportunity?.contact_phone && (
-                  <li className="flex items-start">
-                    <Phone className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <a 
-                      href={`tel:${opportunity.contact_phone}`}
-                      className="text-sm text-gray-600"
-                    >
-                      {opportunity.contact_phone}
-                    </a>
-                  </li>
-                )}
-                
-                {opportunity?.location && (
-                  <li className="flex items-start">
-                    <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-gray-600">{opportunity.location}</p>
-                  </li>
-                )}
-              </ul>
-            </div>
-            
-            {/* Application stats */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-4">Application Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Users className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm text-gray-600">Applicants</span>
-                  </div>
-                  <span className="font-medium">{opportunity?.applicant_count || 0}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Eye className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm text-gray-600">Views</span>
-                  </div>
-                  <span className="font-medium">{opportunity?.view_count || 0}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Clock className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                    <span className="text-sm text-gray-600">Time Left</span>
-                  </div>
-                  <span className={`text-sm font-medium ${
-                    getDaysRemaining(opportunity?.application_deadline).includes('Expired') ? 'text-red-600' :
-                    getDaysRemaining(opportunity?.application_deadline).includes('today') || 
-                    getDaysRemaining(opportunity?.application_deadline).includes('1 day') ? 'text-orange-600' :
-                    'text-green-600'
-                  }`}>
-                    {getDaysRemaining(opportunity?.application_deadline)}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight break-words">
+                {project.name}
+              </h1>
+              
+              <div className="flex flex-wrap gap-4 text-white/90 mb-12 overflow-hidden max-w-full">
+                <div className="overflow-x-auto">
+                  <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <span className="truncate">{formatDate(project.start_date)} - {formatDate(project.end_date)}</span>
                   </span>
                 </div>
+                <div className="overflow-x-auto">
+                  <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
+                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <span className="truncate">{project.location || 'Not specified'}</span>
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
+                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <span className="truncate">{getCategoryName(project.category_id)}</span>
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <div className="bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300">
+                    {getStatusBadge(project.status)}
+                  </div>
+                </div>
               </div>
-            </div>
-            
-            {/* Similar opportunities */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-4">Similar Opportunities</h3>
-              <p className="text-sm text-gray-500">More opportunities like this will appear here.</p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 md:px-8 lg:px-20 py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-16 w-full overflow-hidden">
+            {/* Description */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">About the Project</h2>
+              </div>
+              <div className="break-words">
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed w-full">
+                  {project.description || 'No description provided.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Goals */}
+            {project.goals && project.goals.items && project.goals.items.length > 0 && (
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Goals</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {project.goals.items.map((goal) => (
+                    <div
+                      key={goal.id}
+                      className="p-8 bg-gray-50 dark:bg-gray-800 rounded-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        {goal.completed ? (
+                          <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <Target className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                          </div>
+                        )}
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{goal.title}</h3>
+                      </div>
+                      <p className="text-gray-600 dark:text-gray-400 break-words">{goal.description}</p>
+                    </div>
+                  )                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Outcomes */}
+            {project.outcomes && project.outcomes.items && project.outcomes.items.length > 0 && (
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-[#045F3C] flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Outcomes</h2>
+                </div>
+                <div className="grid grid-cols-1 gap-8">
+                  {project.outcomes.items.map((outcome) => (
+                    <div 
+                      key={outcome.id} 
+                      className={`p-8 rounded-2xl transition-all duration-300 hover:shadow-lg ${
+                        outcome.status === 'achieved' 
+                          ? 'bg-gradient-to-br from-[#045F3C]/5 to-[#045F3C]/10 dark:from-[#045F3C]/20 dark:to-[#045F3C]/30 border border-[#045F3C]/20 dark:border-[#045F3C]/40' 
+                          : outcome.status === 'in_progress' || outcome.status === 'in-progress'
+                          ? 'bg-gradient-to-br from-[#FDB022]/5 to-[#FDB022]/10 dark:from-[#FDB022]/20 dark:to-[#FDB022]/30 border border-[#FDB022]/20 dark:border-[#FDB022]/40'
+                          : 'bg-gradient-to-br from-[#045F3C]/5 to-[#045F3C]/10 dark:from-[#045F3C]/20 dark:to-[#045F3C]/30 border border-[#045F3C]/20 dark:border-[#045F3C]/40'
+                      }`}
+                    >
+                      <div className="flex items-start gap-6">
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                          outcome.status === 'achieved' 
+                            ? 'bg-[#045F3C]/10 dark:bg-[#045F3C]/20' 
+                            : outcome.status === 'in_progress' || outcome.status === 'in-progress'
+                            ? 'bg-[#FDB022]/10 dark:bg-[#FDB022]/20'
+                            : 'bg-[#045F3C]/10 dark:bg-[#045F3C]/20'
+                        }`}>
+                          <Award className={`w-8 h-8 ${
+                            outcome.status === 'achieved' 
+                              ? 'text-[#045F3C] dark:text-[#045F3C]/80' 
+                              : outcome.status === 'in_progress' || outcome.status === 'in-progress'
+                              ? 'text-[#FDB022] dark:text-[#FDB022]/80'
+                              : 'text-[#045F3C] dark:text-[#045F3C]/80'
+                          }`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4 mb-4">
+                            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white break-words">{outcome.title}</h3>
+                            <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium ${
+                              outcome.status === 'achieved' 
+                                ? 'bg-[#045F3C]/10 text-[#045F3C] dark:bg-[#045F3C]/20 dark:text-[#045F3C]/80' 
+                                : outcome.status === 'in_progress' || outcome.status === 'in-progress'
+                                ? 'bg-[#FDB022]/10 text-[#FDB022] dark:bg-[#FDB022]/20 dark:text-[#FDB022]/80'
+                                : 'bg-[#045F3C]/10 text-[#045F3C] dark:bg-[#045F3C]/20 dark:text-[#045F3C]/80'
+                            }`}>
+                              {outcome.status === 'achieved' ? 'Achieved' : 
+                               (outcome.status === 'in_progress' || outcome.status === 'in-progress') ? 'In Progress' : 'Planned'}
+                            </span>
+                          </div>
+                          <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed break-words">{outcome.description}</p>
+                          
+                          {/* Metrics */}
+                          {outcome.metrics && outcome.metrics.length > 0 && (
+                            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {outcome.metrics.map((metric, index) => (
+                                <div key={index} className="flex items-start gap-2">
+                                  <span className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mt-0.5 text-gray-600 dark:text-gray-300">•</span>
+                                  <span className="text-gray-600 dark:text-gray-300">{metric}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Media Gallery - Only show if there are non-featured media items */}
+            {galleryMedia.length > 0 && (
+              <div className="space-y-6">
+                <div className="flex justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Highlights</h2>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm max-w-md">
+                    Browse through this curated collection of images and videos that showcase key milestones.
+                  </p>
+                </div>
+
+                <div className="relative">
+                  {/* Featured Media */}
+                  <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 group">
+                    <Image
+                      src={getValidImageSrc(galleryMedia[activeImageIndex]?.url || '/api/placeholder/1200/675', galleryMedia[activeImageIndex]?.isExternalUrl)}
+                      alt={galleryMedia[activeImageIndex]?.title || 'Featured media'}
+                      width={1200}
+                      height={675}
+                      className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
+                    />
+                    {galleryMedia[activeImageIndex]?.type === 'video' && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <button 
+                          className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 hover:scale-110 transform hover:shadow-xl"
+                          aria-label="Play video"
+                          title="Play video"
+                        >
+                          <div className="w-0 h-0 border-t-[15px] border-t-transparent border-l-[25px] border-l-white border-b-[15px] border-b-transparent ml-2"></div>
+                        </button>
+                      </div>
+                    )}
+                    {galleryMedia[activeImageIndex]?.caption && (
+                      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent translate-y-4 transition-transform duration-300 group-hover:translate-y-0">
+                        <p className="text-white text-lg">{galleryMedia[activeImageIndex].caption}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Thumbnails Grid */}
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-4 mt-4">
+                    {galleryMedia.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer group ${
+                          index === activeImageIndex ? 'ring-2 ring-yellow-400' : ''
+                        }`}
+                        onClick={() => setActiveImageIndex(index)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            setActiveImageIndex(index);
+                          }
+                        }}
+                        aria-label={`View ${item.title || `image ${index + 1}`}`}
+                      >
+                        <Image
+                          src={getValidImageSrc(item.url, item.isExternalUrl)}
+                          alt={item.title || `Gallery item ${index + 1}`}
+                          width={200}
+                          height={112}
+                          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
+                        {item.type === 'video' && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                              <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1"></div>
+                            </div>
+                          </div>
+                        )}
+                        {item.caption && (
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                            <p className="text-white text-sm line-clamp-1">{item.caption}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                 </div>
+
+{/* Navigation Arrows */}
+{galleryMedia.length > 1 && (
+  <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 flex justify-between pointer-events-none">
+    <button
+      onClick={handlePrevImage}
+      className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
+      aria-label="Previous image"
+      title="View previous image"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+    </button>
+    <button
+      onClick={handleNextImage}
+      className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
+      aria-label="Next image"
+      title="View next image"
+    >
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </button>
+  </div>
+)}
+
+{/* Current Image Indicator */}
+{galleryMedia.length > 1 && (
+  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+    {galleryMedia.map((_, index) => (
+      <button
+        key={index}
+        onClick={() => setActiveImageIndex(index)}
+        className={`w-2 h-2 rounded-full transition-all duration-300 ${
+          index === activeImageIndex 
+            ? 'w-8 bg-yellow-400' 
+            : 'bg-white/50 hover:bg-white/80'
+        }`}
+        aria-label={`Go to image ${index + 1}`}
+        title={`View image ${index + 1}`}
+      />
+    ))}
+  </div>
+)}
+</div>
+</div>
+)}
+</div>
+
+{/* Right Column */}
+<div className="lg:col-span-1 space-y-8">
+{/* Team Members */}
+<div className="sticky top-0">
+<div className="space-y-8">
+<div className="flex items-center gap-4 flex-wrap">
+<div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+<h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Team</h2>
+</div>
+<div className="space-y-4 w-full overflow-hidden">
+{project.members && project.members.length > 0 ? project.members.map(member => (
+  <div key={member.id} className="flex items-center gap-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+    <div className="w-16 h-16 relative">
+      {member.image ? (
+        <Image
+          src={getValidImageSrc(member.image, true)}
+          alt={member.name || member.role}
+          width={64}
+          height={64}
+          className="rounded-full object-cover w-full h-full ring-2 ring-primary-green/20"
+        />
+      ) : (
+        <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center ring-2 ring-primary-green/20">
+          <span className="text-xl font-semibold text-gray-600 dark:text-gray-300">
+            {(member.name || getUserName(member.user_id) || "Unknown").charAt(0)}
+          </span>
+        </div>
+      )}
     </div>
-  );
+    <div className="flex-1">
+      <h3 className="font-semibold text-gray-900 dark:text-white">{member.name || getUserName(member.user_id) || "Unknown"}</h3>
+      <p className="text-sm text-gray-600 dark:text-gray-300">{member.role}</p>
+      {member.start_date && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {formatDate(member.start_date)} - {formatDate(member.end_date)}
+        </p>
+      )}
+    </div>
+  </div>
+)) : (
+  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl text-center">
+    <p className="text-gray-600 dark:text-gray-400">No team members assigned to this project</p>
+  </div>
+)}
+</div>
+</div>
+
+{/* Project Info */}
+<div className="mt-8 space-y-8">
+<div className="flex items-center gap-4 flex-wrap">
+<div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+<h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Information</h2>
+</div>
+<div className="space-y-4 w-full overflow-hidden">
+<div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Location</h3>
+  <p className="text-gray-600 dark:text-gray-400 break-words">{project.location || 'Not specified'}</p>
+</div>
+<div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h3>
+  <p className="text-gray-600 dark:text-gray-400 break-words">
+    {formatDate(project.start_date)} - {formatDate(project.end_date)}
+  </p>
+</div>
+<div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Status</h3>
+  <div className="mt-1">{getStatusBadge(project.status)}</div>
+</div>
+{project.category_id && (
+  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Category</h3>
+    <p className="text-gray-600 dark:text-gray-400 break-words">{getCategoryName(project.category_id)}</p>
+  </div>
+)}
+{project.created_at && (
+  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Created</h3>
+    <p className="text-gray-600 dark:text-gray-400">{formatDate(project.created_at)}</p>
+  </div>
+)}
+{project.other_information && (
+  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Additional Information</h3>
+    <p className="text-gray-600 dark:text-gray-400 break-words">{project.other_information}</p>
+  </div>
+)}
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+);
 };
 
-export default Page;
+export default ProjectDetailsPage;

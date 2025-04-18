@@ -185,14 +185,6 @@ export default function HomeHero({
       description: "Discover our projects and their impact.",
     },
   ];
-
-  const opportunitiesItems: MenuItem[] = [
-    {
-      title: "Opportunities",
-      href: "/opportunities",
-      description: "Explore current openings and ways to grow with us.",
-    },
-  ];
   
   const newsItems: MenuItem[] = [
     {
@@ -202,8 +194,13 @@ export default function HomeHero({
         "Stay updated with our latest initiatives, successes, and announcements.",
     },
     {
+      title: "Opportunities",
+      href: "/opportunities",
+      description: "Explore current openings and ways to grow with us.",
+    },
+    {
       title: "Contact Us",
-      href: "/contact-us",
+      href: "/contact",
       description:
         "Get in touch with our team for inquiries, partnerships, or support.",
     },
@@ -286,7 +283,7 @@ export default function HomeHero({
 
     tl.to(initialContentRef.current, {
       opacity: 0,
-      duration: 7.5,
+      duration: 2.5,
     })
       .to(whiteOverlayRef.current, {
         y: "0%",
@@ -516,44 +513,6 @@ export default function HomeHero({
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-
-            {/* Opportunities */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.opportunities || "Opportunities"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/opportunities`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                              Opportunities
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                            Be part of something bigger. 
-                            Discover how you can contribute your skills, ideas, or support to our work across Africa.
-                            </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {opportunitiesItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-
             {/* News & Updates */}
             <NavigationMenuItem>
               <NavigationMenuTrigger className={textColor}>
@@ -930,7 +889,7 @@ export default function HomeHero({
               "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
           </p>
 
-          <Link href={`/${locale}/about`} prefetch={true}>
+          <Link href={`/${locale}/about/who-we-are`} prefetch={true}>
             <Button
               size="lg"
               className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-6 py-3"

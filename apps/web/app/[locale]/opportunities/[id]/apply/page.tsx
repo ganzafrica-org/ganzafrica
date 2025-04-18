@@ -1,1037 +1,859 @@
-// "use client";
+'use client';
 
-// import React, { useState, useEffect } from 'react';
-// import { useRouter } from 'next/navigation';
-// import Link from 'next/link';
-// import axios from 'axios';
-// import {
-//   ArrowLeft,
-//   Calendar,
-//   FileUp,
-//   PlusCircle,
-//   MinusCircle,
-//   AlertCircle,
-//   CheckCircle2,
-//   Loader2,
-//   Building,
-//   GraduationCap,
-//   User,
-//   Mail,
-//   Phone,
-//   Flag,
-//   MapPin,
-//   Briefcase,
-//   Clock,
-//   Award,
-//   Bookmark,
-//   Library
-// } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight, FileText, Upload, CheckCircle2, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { Button } from '@workspace/ui/components/button';
+import { Input } from '@workspace/ui/components/input';
+import { Textarea } from '@workspace/ui/components/textarea';
+import { useRouter } from 'next/navigation';
 
-// // Map category_id to icon components
-// const getCategoryIcon = (categoryId) => {
-//   switch (parseInt(categoryId)) {
-//     case 1:
-//       return <Briefcase className="h-5 w-5" />;
-//     case 2:
-//       return <Award className="h-5 w-5" />;
-//     case 3:
-//       return <GraduationCap className="h-5 w-5" />;
-//     case 4:
-//       return <Bookmark className="h-5 w-5" />;
-//     case 5:
-//       return <Library className="h-5 w-5" />;
-//     default:
-//       return <Briefcase className="h-5 w-5" />;
-//   }
-// };
+// Country type and data
+type Country = {
+  code: string;
+  name: string;
+  flag: string;
+  dialCode: string;
+  format: string;
+  regex: RegExp;
+};
 
-// // Function to generate logo placeholder based on title
-// const getLogoPlaceholder = (title) => {
-//   if (!title) return "OI";
-  
-//   const words = title.split(' ');
-//   if (words.length === 1) {
-//     return title.substring(0, 2).toUpperCase();
-//   }
-  
-//   return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
-// };
+const countries: Country[] = [
+  {
+    code: 'RW',
+    name: 'Rwanda',
+    flag: '🇷🇼',
+    dialCode: '+250',
+    format: '+250 7XX XXX XXX',
+    regex: /^\+250\s?7[0-9]{2}\s?[0-9]{3}\s?[0-9]{3}$/
+  },
+  {
+    code: 'KE',
+    name: 'Kenya',
+    flag: '🇰🇪',
+    dialCode: '+254',
+    format: '+254 7XX XXX XXX',
+    regex: /^\+254\s?[71][0-9]{8}$/
+  },
+  {
+    code: 'UG',
+    name: 'Uganda',
+    flag: '🇺🇬',
+    dialCode: '+256',
+    format: '+256 7XX XXX XXX',
+    regex: /^\+256\s?7[0-9]{8}$/
+  },
+  {
+    code: 'TZ',
+    name: 'Tanzania',
+    flag: '🇹🇿',
+    dialCode: '+255',
+    format: '+255 7XX XXX XXX',
+    regex: /^\+255\s?[67][0-9]{8}$/
+  },
+];
 
-// // Calculate days remaining
-// const getDaysRemaining = (deadlineString) => {
-//   if (!deadlineString) return 'No deadline';
-  
-//   const deadline = new Date(deadlineString);
-//   const today = new Date();
-  
-//   // Set time to midnight for both dates for accurate day calculation
-//   deadline.setHours(0, 0, 0, 0);
-//   today.setHours(0, 0, 0, 0);
-  
-//   const diffTime = deadline - today;
-//   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-//   if (diffDays < 0) {
-//     return 'Expired';
-//   } else if (diffDays === 0) {
-//     return 'Closes today';
-//   } else if (diffDays === 1) {
-//     return '1 day left';
-//   } else {
-//     return `${diffDays} days left`;
-//   }
-// };
+type FormData = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  selectedCountry: Country;
+  nationalId: string;
+  email: string;
+  city: string;
+  country: string;
+  educationLevel: string;
+  educationField: string;
+  cv: File | null;
+  supportingDocs: File | null;
+  careerExperience: string;
+  leadershipExample: string;
+  motivation: string;
+  fiveYearVision: string;
+  desiredImpact: string;
+  communityRole: string;
+  nationalStrategy: string;
+  ganzAfricaHelp: string;
+  ganzAfricaContribution: string;
+  consent: boolean;
+};
 
-// const ApplyToOpportunityPage = ({ params }) => {
-//   const router = useRouter();
-//   const opportunityId = params?.id;
-  
-//   // State for opportunity details
-//   const [opportunity, setOpportunity] = useState(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-  
-//   // State for application form
-//   const [formData, setFormData] = useState({
-//     full_name: '',
-//     email: '',
-//     phone: '',
-//     gender: '',
-//     nationality: '',
-//     country: '',
-//     education_level: '',
-//     institution: '',
-//     field_of_study: '',
-//     graduation_year: '',
-//     certifications: [],
-//     resume_url: '',
-//     custom_answers: {}
-//   });
-  
-//   // State for form validation and submission
-//   const [errors, setErrors] = useState({});
-//   const [submitting, setSubmitting] = useState(false);
-//   const [submitSuccess, setSubmitSuccess] = useState(false);
-//   const [submitError, setSubmitError] = useState(null);
-  
-//   // Fetch opportunity details
-//   useEffect(() => {
-//     const fetchOpportunity = async () => {
-//       if (!opportunityId) {
-//         setError('Opportunity ID is required');
-//         setLoading(false);
-//         return;
-//       }
+const initialFormData: FormData = {
+  firstName: '',
+  lastName: '',
+  phone: '',
+  selectedCountry: countries[0] ?? {
+    code: 'RW',
+    name: 'Rwanda',
+    flag: '🇷🇼',
+    dialCode: '+250',
+    format: '### ### ###',
+    regex: /^\d{9}$/
+  },
+  nationalId: '',
+  email: '',
+  city: '',
+  country: '',
+  educationLevel: '',
+  educationField: '',
+  cv: null,
+  supportingDocs: null,
+  careerExperience: '',
+  leadershipExample: '',
+  motivation: '',
+  fiveYearVision: '',
+  desiredImpact: '',
+  communityRole: '',
+  nationalStrategy: '',
+  ganzAfricaHelp: '',
+  ganzAfricaContribution: '',
+  consent: false,
+};
+
+const steps = [
+  { title: 'Personal Information', description: 'Basic contact details' },
+  { title: 'Experience and Knowledge', description: 'Educational background' },
+  { title: 'Work Aspirations', description: 'Career goals' },
+  { title: 'Impact to the Community', description: 'Social contribution' },
+  { title: 'Programme Relevance', description: 'Final steps' },
+];
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 1000 : -1000,
+    opacity: 0
+  }),
+  center: {
+    zIndex: 1,
+    x: 0,
+    opacity: 1
+  },
+  exit: (direction: number) => ({
+    zIndex: 0,
+    x: direction < 0 ? 1000 : -1000,
+    opacity: 0
+  })
+};
+
+// Add type for step numbers
+type StepNumber = 0 | 1 | 2 | 3 | 4;
+
+export default function FellowshipApplyPage() {
+  const router = useRouter();
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [direction, setDirection] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    
+    // If the user is typing and hasn't added the country code, add it
+    if (!value.startsWith('+') && value.length > 0) {
+      value = formData.selectedCountry.dialCode + ' ' + value;
+    }
+
+    // Remove any non-digit characters except + and space
+    value = value.replace(/[^\d+\s]/g, '');
+
+    setFormData(prev => ({
+      ...prev,
+      phone: value
+    }));
+  };
+
+  const handleCountrySelect = (country: Country) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedCountry: country,
+      phone: prev.phone ? country.dialCode + prev.phone.substring(prev.selectedCountry.dialCode.length) : ''
+    }));
+    setIsCountryDropdownOpen(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'cv' | 'supportingDocs') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('File size must be less than 2MB');
+        return;
+      }
+      if (file.type !== 'application/pdf') {
+        toast.error('Only PDF files are allowed');
+        return;
+      }
+      setFormData(prev => ({
+        ...prev,
+        [field]: file
+      }));
+      toast.success('File uploaded successfully');
+    }
+  };
+
+  const validateStep = () => {
+    switch (currentStep) {
+      case 0:
+        if (!formData.firstName || !formData.lastName || !formData.phone || !formData.nationalId || !formData.email || !formData.city || !formData.country) {
+          toast.error('Please fill in all required fields');
+          return false;
+        }
+        if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+          toast.error('Please enter a valid email address');
+          return false;
+        }
+        if (!formData.selectedCountry.regex.test(formData.phone)) {
+          toast.error(`Please enter a valid ${formData.selectedCountry.name} phone number\nFormat: ${formData.selectedCountry.format}`);
+          return false;
+        }
+        break;
+      case 1:
+        if (!formData.educationLevel || !formData.educationField || !formData.cv || !formData.supportingDocs || !formData.careerExperience) {
+          toast.error('Please fill in all required fields');
+          return false;
+        }
+        break;
+      case 2:
+        if (!formData.motivation || !formData.fiveYearVision) {
+          toast.error('Please fill in all required fields');
+          return false;
+        }
+        break;
+      case 3:
+        if (!formData.desiredImpact || !formData.communityRole || !formData.nationalStrategy) {
+          toast.error('Please fill in all required fields');
+          return false;
+        }
+        break;
+      case 4:
+        if (!formData.ganzAfricaHelp || !formData.ganzAfricaContribution || !formData.consent) {
+          toast.error('Please fill in all required fields and accept the terms');
+        return false;
+        }
+        break;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-//       try {
-//         setLoading(true);
-//         const response = await axios.get(`/api/opportunities/${opportunityId}`);
-        
-//         if (response.data && response.data.opportunity) {
-//           setOpportunity(response.data.opportunity);
+      // Show success message
+      toast.success('Application submitted successfully!');
+      
+      // Redirect to fellowship page after a short delay
+      setTimeout(() => {
+        window.location.href = '/en/programs/fellowship';
+      }, 1500);
+    } catch (error) {
+      toast.error('Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const nextStep = () => {
+    if (!validateStep()) return;
+      setDirection(1);
+    setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
+  };
+
+  const prevStep = () => {
+    setDirection(-1);
+    setCurrentStep(prev => Math.max(prev - 1, 0));
+  };
+
+  const renderProgressBar = () => (
+        <div className="mb-8">
+      <div className="flex justify-between mb-4">
+            {steps.map((step, index) => (
+          <div key={step.title} className="flex flex-col items-center relative group">
+            <div 
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                index <= currentStep ? 'bg-[#005c3d] text-[#fef597]' : 'bg-gray-200 text-gray-500'
+              }`}
+            >
+              {index < currentStep ? (
+                <CheckCircle2 className="w-6 h-6" />
+              ) : (
+                index + 1
+                )}
+              </div>
+            <div className="absolute -bottom-16 opacity-0 group-hover:opacity-100 transition-opacity bg-white p-2 rounded-lg shadow-lg text-sm w-48 text-center">
+              <p className="font-semibold">{step.title}</p>
+              <p className="text-gray-600 text-xs">{step.description}</p>
+            </div>
+            <span className="text-xs mt-2 text-center font-medium">{step.title}</span>
+          </div>
+        ))}
+      </div>
+      <div className="relative">
+        <div className="absolute top-1/2 w-full h-1 bg-gray-200 -translate-y-1/2" />
+        <div 
+          className="absolute top-1/2 h-1 bg-[#005c3d] -translate-y-1/2 transition-all duration-500"
+          style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-16">
+      {/* Hero Section */}
+      <section className="relative h-[400px] md:h-[500px]">
+        <div className="absolute inset-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="/videos/hero-video.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+        <div className="relative z-10 h-full flex items-center justify-center">
+          <div className="container mx-auto px-4 text-center">
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-3xl md:text-5xl font-bold text-white mb-4"
+            >
+              Fellowship <span className="text-[#FDB022]">Application</span>
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6"
+            >
+              Take the first step towards becoming a leader in sustainable development. 
+              Our fellowship program offers unique opportunities for growth, learning, and impact.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="flex items-center justify-center gap-6 text-white/90"
+            >
+              <div className="flex items-center">
+                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                <span>6-month program</span>
+              </div>
+              <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
+              <div className="flex items-center">
+                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                <span>Expert mentorship</span>
+              </div>
+              <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
+              <div className="flex items-center">
+                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                <span>Project-based learning</span>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-6 -mt-20 relative z-20">
+        <div className="bg-white rounded-xl shadow-xl p-10">
+          {renderProgressBar()}
           
-//           // Initialize custom answers object based on custom questions
-//           if (response.data.opportunity.custom_questions && 
-//               Array.isArray(response.data.opportunity.custom_questions)) {
-//             const customAnswers = {};
-//             response.data.opportunity.custom_questions.forEach(question => {
-//               if (question.id) {
-//                 // Initialize each answer based on field type
-//                 switch (question.field_type) {
-//                   case 'checkbox':
-//                   case 'multiselect':
-//                     customAnswers[question.id] = [];
-//                     break;
-//                   case 'select':
-//                   case 'radio':
-//                     customAnswers[question.id] = '';
-//                     break;
-//                   case 'text':
-//                   case 'textarea':
-//                     customAnswers[question.id] = '';
-//                     break;
-//                   case 'file':
-//                     customAnswers[question.id] = null;
-//                     break;
-//                   default:
-//                     customAnswers[question.id] = '';
-//                 }
-//               }
-//             });
-            
-//             setFormData(prev => ({
-//               ...prev,
-//               custom_answers: customAnswers
-//             }));
-//           }
-//         } else {
-//           setError('Failed to load opportunity details');
-//         }
-//       } catch (err) {
-//         console.error('Error fetching opportunity:', err);
-//         setError('Failed to load opportunity. Please try again later.');
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-  
-//   // If application submitted successfully, show success message
-//   if (submitSuccess) {
-//     return (
-//       <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-//         <div className="bg-white shadow-md rounded-lg p-8 text-center">
-//           <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
-//             <CheckCircle2 className="h-8 w-8 text-green-600" />
-//           </div>
-//           <h2 className="text-2xl font-bold mb-4">Application Submitted Successfully!</h2>
-//           <p className="text-gray-600 mb-8">
-//             Thank you for submitting your application. We will review it and get back to you soon.
-//           </p>
-//           <div className="flex justify-center space-x-4">
-//             <Link 
-//               href={`/opportunities/${opportunityId}`}
-//               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition"
-//             >
-//               View Opportunity
-//             </Link>
-//             <Link 
-//               href="/opportunities"
-//               className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
-//             >
-//               Browse More Opportunities
-//             </Link>
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   }
-  
-//   return (
-//     <div className="bg-gray-50 min-h-screen">
-//       <div className="max-w-4xl mx-auto p-6">
-//         {loading ? (
-//           <div className="flex items-center justify-center h-64">
-//             <Loader2 className="h-8 w-8 text-green-600 animate-spin" />
-//             <span className="ml-2 text-gray-600">Loading opportunity details...</span>
-//           </div>
-//         ) : error ? (
-//           <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-//             <div className="flex items-center">
-//               <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-//               <p className="text-red-700">{error}</p>
-//             </div>
-//             <Link 
-//               href="/opportunities" 
-//               className="mt-4 inline-flex items-center text-green-600 hover:text-green-800"
-//             >
-//               <ArrowLeft className="mr-1 h-4 w-4" /> Back to opportunities
-//             </Link>
-//           </div>
-//         ) : (
-//           <>
-//             {/* Header */}
-//             <div className="mb-6">
-//               <Link 
-//                 href={`/opportunities/${opportunityId}`} 
-//                 className="inline-flex items-center text-green-600 hover:text-green-800 mb-2"
-//               >
-//                 <ArrowLeft className="mr-1 h-4 w-4" /> Back to opportunity
-//               </Link>
-//               <h1 className="text-2xl font-bold">
-//                 Apply to: {opportunity?.title}
-//               </h1>
-//               <p className="text-gray-600 mt-1">
-//                 Complete the form below to submit your application.
-//               </p>
-//             </div>
-            
-//             {/* Opportunity Info Card */}
-//             <div className="bg-white shadow-md rounded-lg p-5 mb-6">
-//               <div className="flex items-start gap-4">
-//                 <div className={`w-12 h-12 rounded-md flex items-center justify-center text-white font-semibold ${
-//                   opportunity?.category_id === 1 ? 'bg-blue-100 text-blue-800' :
-//                   opportunity?.category_id === 2 ? 'bg-green-100 text-green-800' :
-//                   opportunity?.category_id === 3 ? 'bg-purple-100 text-purple-800' :
-//                   opportunity?.category_id === 4 ? 'bg-yellow-100 text-yellow-800' :
-//                   opportunity?.category_id === 5 ? 'bg-red-100 text-red-800' :
-//                   'bg-gray-100 text-gray-800'
-//                 }`}>
-//                   {opportunity?.organization_logo 
-//                     ? <img src={opportunity.organization_logo} alt="Logo" className="w-10 h-10 object-contain" />
-//                     : getLogoPlaceholder(opportunity?.title)
-//                   }
-//                 </div>
-                
-//                 <div className="flex-grow">
-//                   <h2 className="font-semibold mb-2 flex items-center">
-//                     <Building className="h-4 w-4 mr-2 text-gray-500" />
-//                     Opportunity Details
-//                   </h2>
-//                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-//                     <p className="text-gray-700">
-//                       <span className="font-medium">Type:</span> {opportunity?.type?.charAt(0).toUpperCase() + opportunity?.type?.slice(1) || 'N/A'}
-//                     </p>
-//                     <p className="text-gray-700">
-//                       <span className="font-medium">Category:</span> {
-//                         opportunity?.category_id === 1 ? 'Internship' :
-//                         opportunity?.category_id === 2 ? 'Grant' :
-//                         opportunity?.category_id === 3 ? 'Fellowship' :
-//                         opportunity?.category_id === 4 ? 'Scholarship' :
-//                         opportunity?.category_id === 5 ? 'Training Program' :
-//                         'Other'
-//                       }
-//                     </p>
-//                     <p className="text-gray-700">
-//                       <span className="font-medium">Location:</span> {opportunity?.location_type} {opportunity?.location ? `- ${opportunity.location}` : ''}
-//                     </p>
-//                     <p className="text-gray-700 flex items-center">
-//                       <span className="font-medium mr-1">Deadline:</span> 
-//                       <span className={`ml-1 ${
-//                         getDaysRemaining(opportunity?.application_deadline).includes('Expired') ? 'text-red-600 font-medium' :
-//                         getDaysRemaining(opportunity?.application_deadline).includes('today') || 
-//                         getDaysRemaining(opportunity?.application_deadline).includes('1 day') ? 'text-orange-600 font-medium' :
-//                         'text-green-600'
-//                       }`}>
-//                         {new Date(opportunity?.application_deadline).toLocaleDateString('en-US', {
-//                           year: 'numeric',
-//                           month: 'long',
-//                           day: 'numeric'
-//                         })}
-//                         {' '}({getDaysRemaining(opportunity?.application_deadline)})
-//                       </span>
-//                     </p>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-            
-//             {/* Submit error */}
-//             {submitError && (
-//               <div id="submit-error" className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-//                 <div className="flex">
-//                   <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-//                   <p className="text-red-700">{submitError}</p>
-//                 </div>
-//               </div>
-//             )}
-            
-//             {/* Application form */}
-//             <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
-//               <h2 className="text-xl font-semibold mb-6 pb-2 border-b">Personal Information</h2>
-              
-//               {/* Full Name */}
-//               <div className="mb-4">
-//                 <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
-//                   Full Name <span className="text-red-500">*</span>
-//                 </label>
-//                 <div className="relative">
-//                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                     <User className="h-5 w-5 text-gray-400" />
-//                   </div>
-//                   <input
-//                     type="text"
-//                     id="full_name"
-//                     name="full_name"
-//                     value={formData.full_name}
-//                     onChange={handleInputChange}
-//                     className={`pl-10 w-full p-2 border ${errors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
-//                     placeholder="Enter your full name"
-//                     required
-//                   />
-//                 </div>
-//                 {errors.full_name && <p className="mt-1 text-sm text-red-500">{errors.full_name}</p>}
-//               </div>
-              
-//               {/* Email */}
-//               <div className="mb-4">
-//                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-//                   Email <span className="text-red-500">*</span>
-//                 </label>
-//                 <div className="relative">
-//                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                     <Mail className="h-5 w-5 text-gray-400" />
-//                   </div>
-//                   <input
-//                     type="email"
-//                     id="email"
-//                     name="email"
-//                     value={formData.email}
-//                     onChange={handleInputChange}
-//                     className={`pl-10 w-full p-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
-//                     placeholder="Enter your email address"
-//                     required
-//                   />
-//                 </div>
-//                 {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
-//               </div>
-              
-//               {/* Phone */}
-//               <div className="mb-4">
-//                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-//                   Phone Number
-//                 </label>
-//                 <div className="relative">
-//                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                     <Phone className="h-5 w-5 text-gray-400" />
-//                   </div>
-//                   <input
-//                     type="tel"
-//                     id="phone"
-//                     name="phone"
-//                     value={formData.phone}
-//                     onChange={handleInputChange}
-//                     className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                     placeholder="Enter your phone number"
-//                   />
-//                 </div>
-//               </div>
-              
-//               {/* Gender */}
-//               <div className="mb-4">
-//                 <label className="block text-sm font-medium text-gray-700 mb-1">
-//                   Gender
-//                 </label>
-//                 <select
-//                   name="gender"
-//                   value={formData.gender}
-//                   onChange={handleInputChange}
-//                   className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                 >
-//                   <option value="">Select gender</option>
-//                   <option value="male">Male</option>
-//                   <option value="female">Female</option>
-//                   <option value="non_binary">Non-binary</option>
-//                   <option value="prefer_not_to_say">Prefer not to say</option>
-//                   <option value="other">Other</option>
-//                 </select>
-//               </div>
-              
-//               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-//                 {/* Nationality */}
-//                 <div>
-//                   <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">
-//                     Nationality
-//                   </label>
-//                   <div className="relative">
-//                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                       <Flag className="h-5 w-5 text-gray-400" />
-//                     </div>
-//                     <input
-//                       type="text"
-//                       id="nationality"
-//                       name="nationality"
-//                       value={formData.nationality}
-//                       onChange={handleInputChange}
-//                       className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                       placeholder="Your nationality"
-//                     />
-//                   </div>
-//                 </div>
-                
-//                 {/* Country */}
-//                 <div>
-//                   <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-//                     Country of Residence
-//                   </label>
-//                   <div className="relative">
-//                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                       <MapPin className="h-5 w-5 text-gray-400" />
-//                     </div>
-//                     <input
-//                       type="text"
-//                       id="country"
-//                       name="country"
-//                       value={formData.country}
-//                       onChange={handleInputChange}
-//                       className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                       placeholder="Your country of residence"
-//                     />
-//                   </div>
-//                 </div>
-//               </div>
-              
-//               <h2 className="text-xl font-semibold mb-6 mt-8 pb-2 border-b">Education & Experience</h2>
-              
-//               {/* Education Level */}
-//               <div className="mb-4">
-//                 <label htmlFor="education_level" className="block text-sm font-medium text-gray-700 mb-1">
-//                   Highest Education Level
-//                 </label>
-//                 <div className="relative">
-//                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                     <GraduationCap className="h-5 w-5 text-gray-400" />
-//                   </div>
-//                   <select
-//                     id="education_level"
-//                     name="education_level"
-//                     value={formData.education_level}
-//                     onChange={handleInputChange}
-//                     className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600">
-//                     <option value="">Select education level</option>
-//                     <option value="high_school">High School</option>
-//                     <option value="associate_degree">Associate Degree</option>
-//                     <option value="bachelors_degree">Bachelor's Degree</option>
-//                     <option value="masters_degree">Master's Degree</option>
-//                     <option value="doctorate">Doctorate</option>
-//                     <option value="professional_certification">Professional Certification</option>
-//                     <option value="other">Other</option>
-//                   </select>
-//                 </div>
-//               </div>
-              
-//               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-//                 {/* Institution */}
-//                 <div>
-//                   <label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-1">
-//                     Institution
-//                   </label>
-//                   <input
-//                     type="text"
-//                     id="institution"
-//                     name="institution"
-//                     value={formData.institution}
-//                     onChange={handleInputChange}
-//                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                     placeholder="Name of your institution"
-//                   />
-//                 </div>
-                
-//                 {/* Field of Study */}
-//                 <div>
-//                   <label htmlFor="field_of_study" className="block text-sm font-medium text-gray-700 mb-1">
-//                     Field of Study
-//                   </label>
-//                   <input
-//                     type="text"
-//                     id="field_of_study"
-//                     name="field_of_study"
-//                     value={formData.field_of_study}
-//                     onChange={handleInputChange}
-//                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                     placeholder="Your field of study"
-//                   />
-//                 </div>
-//               </div>
-              
-//               {/* Graduation Year */}
-//               <div className="mb-6">
-//                 <label htmlFor="graduation_year" className="block text-sm font-medium text-gray-700 mb-1">
-//                   Graduation Year
-//                 </label>
-//                 <div className="relative">
-//                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-//                     <Calendar className="h-5 w-5 text-gray-400" />
-//                   </div>
-//                   <input
-//                     type="number"
-//                     id="graduation_year"
-//                     name="graduation_year"
-//                     value={formData.graduation_year}
-//                     onChange={handleInputChange}
-//                     className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                     placeholder="Year of graduation"
-//                     min="1950"
-//                     max="2030"
-//                   />
-//                 </div>
-//               </div>
-              
-//               {/* Certifications */}
-//               <div className="mb-6">
-//                 <div className="flex justify-between items-center mb-1">
-//                   <label className="block text-sm font-medium text-gray-700">
-//                     Certifications / Professional Qualifications
-//                   </label>
-//                   <button
-//                     type="button"
-//                     onClick={handleAddCertification}
-//                     className="inline-flex items-center text-sm text-green-600 hover:text-green-800"
-//                   >
-//                     <PlusCircle className="h-4 w-4 mr-1" /> Add
-//                   </button>
-//                 </div>
-                
-//                 {formData.certifications.length === 0 ? (
-//                   <p className="text-sm text-gray-500 italic mb-2">No certifications added yet</p>
-//                 ) : (
-//                   <div className="space-y-2 mb-2">
-//                     {formData.certifications.map((cert, index) => (
-//                       <div key={index} className="flex items-center">
-//                         <input
-//                           type="text"
-//                           value={cert}
-//                           onChange={(e) => handleCertificationChange(index, e.target.value)}
-//                           className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                           placeholder="Certification name"
-//                         />
-//                         <button
-//                           type="button"
-//                           onClick={() => handleRemoveCertification(index)}
-//                           className="ml-2 text-red-500 hover:text-red-700"
-//                         >
-//                           <MinusCircle className="h-5 w-5" />
-//                         </button>
-//                       </div>
-//                     ))}
-//                   </div>
-//                 )}
-//               </div>
-              
-//               {/* Resume URL */}
-//               <div className="mb-6">
-//                 <label htmlFor="resume_url" className="block text-sm font-medium text-gray-700 mb-1">
-//                   Resume URL (Optional)
-//                 </label>
-//                 <input
-//                   type="url"
-//                   id="resume_url"
-//                   name="resume_url"
-//                   value={formData.resume_url}
-//                   onChange={handleInputChange}
-//                   className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
-//                   placeholder="Link to your online resume/CV (e.g., Google Drive, Dropbox)"
-//                 />
-//                 <p className="text-xs text-gray-500 mt-1">
-//                   You can provide a link to your resume if you have it hosted online
-//                 </p>
-//               </div>
-              
-//               {/* Custom Questions */}
-//               {opportunity && opportunity.custom_questions && opportunity.custom_questions.length > 0 && (
-//                 <>
-//                   <h2 className="text-xl font-semibold mb-6 mt-8 pb-2 border-b">
-//                     Additional Questions
-//                   </h2>
-                  
-//                   {opportunity.custom_questions.map(question => renderCustomQuestion(question))}
-//                 </>
-//               )}
-              
-//               {/* Submit button */}
-//               <div className="mt-8 pt-4 border-t">
-//                 <button
-//                   type="submit"
-//                   disabled={submitting}
-//                   className={`w-full py-3 px-4 rounded-md font-medium text-white ${
-//                     submitting ? 'bg-green-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
-//                   } shadow-sm`}
-//                 >
-//                   {submitting ? (
-//                     <span className="flex items-center justify-center">
-//                       <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-//                       Submitting Application...
-//                     </span>
-//                   ) : (
-//                     'Submit Application'
-//                   )}
-//                 </button>
-//               </div>
-//             </form>
-//           </>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
+          <form onSubmit={handleSubmit} className="relative mt-12">
+          <AnimatePresence initial={false} custom={direction}>
+            <motion.div
+              key={currentStep}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                  x: { type: "spring", stiffness: 300, damping: 30 },
+                opacity: { duration: 0.2 }
+              }}
+                className="relative"
+            >
+              {currentStep === 0 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Personal Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="firstName">
+                          First Name *
+                        </label>
+                        <input
+                        type="text"
+                          id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        required
+                          title="Enter your first name"
+                          placeholder="Enter your first name"
+                      />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="lastName">
+                          Last Name *
+                        </label>
+                        <input
+                        type="text"
+                          id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        required
+                          title="Enter your last name"
+                          placeholder="Enter your last name"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
+                        Email *
+                      </label>
+                      <input
+                      type="email"
+                        id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Enter your email address"
+                        placeholder="Enter your email address"
+                    />
+                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="phone">
+                        Phone Number *
+                      </label>
+                  <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                          className="absolute inset-y-0 left-0 flex items-center pl-3 pr-2 border-r border-gray-300"
+                      >
+                          <span className="text-lg mr-1">{formData.selectedCountry.flag}</span>
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                      </button>
+                        <input
+                        type="tel"
+                          id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handlePhoneChange}
+                          className="w-full pl-24 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                          required
+                          title="Enter your phone number"
+                        placeholder={formData.selectedCountry.format}
+                      />
+                    {isCountryDropdownOpen && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                        {countries.map((country) => (
+                          <button
+                            key={country.code}
+                            type="button"
+                            onClick={() => handleCountrySelect(country)}
+                                className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center space-x-2"
+                          >
+                                <span className="text-lg">{country.flag}</span>
+                                <span>{country.name}</span>
+                                <span className="text-gray-500 text-sm">{country.dialCode}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="nationalId">
+                        National ID *
+                      </label>
+                      <input
+                        type="text"
+                        id="nationalId"
+                        name="nationalId"
+                        value={formData.nationalId}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        required
+                        title="Enter your national ID number"
+                        placeholder="Enter your national ID number"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="city">
+                          City *
+                        </label>
+                        <input
+                          type="text"
+                          id="city"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                          required
+                          title="Enter your city"
+                          placeholder="Enter your city"
+                      />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="country">
+                          Country *
+                        </label>
+                        <input
+                        type="text"
+                          id="country"
+                        name="country"
+                        value={formData.country}
+                        onChange={handleInputChange}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        required
+                          title="Enter your country"
+                          placeholder="Enter your country"
+                      />
+                      </div>
+                  </div>
+                </div>
+              )}
 
-// export default ApplyToOpportunityPage;    
-//     fetchOpportunity();
-//   }, [opportunityId]);
-  
-//   // Handle form input change
-//   const handleInputChange = (e) => {
-//     const { name, value, type, checked } = e.target;
-    
-//     if (name.startsWith('custom_')) {
-//       // Handle custom question fields
-//       const questionId = name.replace('custom_', '');
-      
-//       setFormData(prevData => ({
-//         ...prevData,
-//         custom_answers: {
-//           ...prevData.custom_answers,
-//           [questionId]: value
-//         }
-//       }));
-//     } else if (type === 'checkbox') {
-//       // Handle checkbox inputs
-//       setFormData(prevData => ({
-//         ...prevData,
-//         [name]: checked
-//       }));
-//     } else {
-//       // Handle standard inputs
-//       setFormData(prevData => ({
-//         ...prevData,
-//         [name]: value
-//       }));
-//     }
-    
-//     // Clear error for this field when user starts typing
-//     if (errors[name]) {
-//       setErrors(prev => ({
-//         ...prev,
-//         [name]: null
-//       }));
-//     }
-//   };
-  
-//   // Handle checkbox or multiselect custom questions
-//   const handleMultiSelectChange = (questionId, value, isChecked) => {
-//     setFormData(prevData => {
-//       const currentValues = [...(prevData.custom_answers[questionId] || [])];
-      
-//       if (isChecked) {
-//         // Add value if it doesn't exist
-//         if (!currentValues.includes(value)) {
-//           currentValues.push(value);
-//         }
-//       } else {
-//         // Remove value
-//         const index = currentValues.indexOf(value);
-//         if (index !== -1) {
-//           currentValues.splice(index, 1);
-//         }
-//       }
-      
-//       return {
-//         ...prevData,
-//         custom_answers: {
-//           ...prevData.custom_answers,
-//           [questionId]: currentValues
-//         }
-//       };
-//     });
-//   };
-  
-//   // Handle adding/removing certification fields
-//   const handleAddCertification = () => {
-//     setFormData(prev => ({
-//       ...prev,
-//       certifications: [...prev.certifications, '']
-//     }));
-//   };
-  
-//   const handleRemoveCertification = (index) => {
-//     setFormData(prev => {
-//       const newCertifications = [...prev.certifications];
-//       newCertifications.splice(index, 1);
-//       return {
-//         ...prev,
-//         certifications: newCertifications
-//       };
-//     });
-//   };
-  
-//   const handleCertificationChange = (index, value) => {
-//     setFormData(prev => {
-//       const newCertifications = [...prev.certifications];
-//       newCertifications[index] = value;
-//       return {
-//         ...prev,
-//         certifications: newCertifications
-//       };
-//     });
-//   };
-  
-//   // Validate form
-//   const validateForm = () => {
-//     const newErrors = {};
-    
-//     // Validate required fields
-//     if (!formData.full_name.trim()) {
-//       newErrors.full_name = 'Full name is required';
-//     }
-    
-//     if (!formData.email.trim()) {
-//       newErrors.email = 'Email is required';
-//     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-//       newErrors.email = 'Invalid email format';
-//     }
-    
-//     // Validate custom questions
-//     if (opportunity && opportunity.custom_questions) {
-//       opportunity.custom_questions.forEach(question => {
-//         if (question.is_required) {
-//           const answer = formData.custom_answers[question.id];
-//           const fieldName = `custom_${question.id}`;
-          
-//           if (question.field_type === 'checkbox' || question.field_type === 'multiselect') {
-//             if (!answer || answer.length === 0) {
-//               newErrors[fieldName] = 'This field is required';
-//             }
-//           } else if (question.field_type === 'file') {
-//             if (!answer) {
-//               newErrors[fieldName] = 'Please upload a file';
-//             }
-//           } else {
-//             if (!answer || !answer.toString().trim()) {
-//               newErrors[fieldName] = 'This field is required';
-//             }
-//           }
-//         }
-//       });
-//     }
-    
-//     setErrors(newErrors);
-//     return Object.keys(newErrors).length === 0;
-//   };
-  
-//   // Handle form submission
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-    
-//     // Validate form
-//     if (!validateForm()) {
-//       // Scroll to the first error
-//       const firstErrorField = Object.keys(errors)[0];
-//       const element = document.getElementsByName(firstErrorField)[0];
-//       if (element) {
-//         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-//       }
-//       return;
-//     }
-    
-//     setSubmitting(true);
-//     setSubmitError(null);
-    
-//     try {
-//       // Submit application
-//       const response = await axios.post(`/api/opportunities/${opportunityId}/apply`, formData);
-      
-//       if (response.data) {
-//         setSubmitSuccess(true);
-//         // Scroll to top
-//         window.scrollTo({ top: 0, behavior: 'smooth' });
-//       }
-//     } catch (err) {
-//       console.error('Error submitting application:', err);
-//       setSubmitError(
-//         err.response?.data?.message || 
-//         'Failed to submit application. Please try again later.'
-//       );
-      
-//       // Scroll to error message
-//       const errorElement = document.getElementById('submit-error');
-//       if (errorElement) {
-//         errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-//       }
-//     } finally {
-//       setSubmitting(false);
-//     }
-//   };
-  
-//   // Render custom question based on field type
-//   const renderCustomQuestion = (question) => {
-//     const { id, question: text, field_type, options, is_required, max_length } = question;
-//     const fieldName = `custom_${id}`;
-//     const error = errors[fieldName];
-    
-//     switch (field_type) {
-//       case 'text':
-//         return (
-//           <div className="mb-4" key={id}>
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               {text} {is_required && <span className="text-red-500">*</span>}
-//             </label>
-//             <input
-//               type="text"
-//               name={fieldName}
-//               value={formData.custom_answers[id] || ''}
-//               onChange={handleInputChange}
-//               maxLength={max_length}
-//               className={`w-full p-2 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
-//               required={is_required}
-//             />
-//             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-//           </div>
-//         );
-        
-//       case 'textarea':
-//         return (
-//           <div className="mb-4" key={id}>
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               {text} {is_required && <span className="text-red-500">*</span>}
-//             </label>
-//             <textarea
-//               name={fieldName}
-//               value={formData.custom_answers[id] || ''}
-//               onChange={handleInputChange}
-//               maxLength={max_length}
-//               rows={4}
-//               className={`w-full p-2 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
-//               required={is_required}
-//             ></textarea>
-//             {max_length && (
-//               <p className="mt-1 text-xs text-gray-500">
-//                 {(formData.custom_answers[id] || '').length}/{max_length} characters
-//               </p>
-//             )}
-//             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-//           </div>
-//         );
-        
-//       case 'select':
-//         return (
-//           <div className="mb-4" key={id}>
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               {text} {is_required && <span className="text-red-500">*</span>}
-//             </label>
-//             <select
-//               name={fieldName}
-//               value={formData.custom_answers[id] || ''}
-//               onChange={handleInputChange}
-//               className={`w-full p-2 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
-//               required={is_required}
-//             >
-//               <option value="">Select an option</option>
-//               {options && options.map((option, idx) => (
-//                 <option key={idx} value={option}>{option}</option>
-//               ))}
-//             </select>
-//             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-//           </div>
-//         );
-        
-//       case 'multiselect':
-//         return (
-//           <div className="mb-4" key={id}>
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               {text} {is_required && <span className="text-red-500">*</span>}
-//             </label>
-//             <div className="space-y-2 mt-1">
-//               {options && options.map((option, idx) => (
-//                 <div key={idx} className="flex items-center">
-//                   <input
-//                     type="checkbox"
-//                     id={`${fieldName}_${idx}`}
-//                     checked={(formData.custom_answers[id] || []).includes(option)}
-//                     onChange={(e) => handleMultiSelectChange(id, option, e.target.checked)}
-//                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-//                   />
-//                   <label htmlFor={`${fieldName}_${idx}`} className="ml-2 block text-sm text-gray-700">
-//                     {option}
-//                   </label>
-//                 </div>
-//               ))}
-//             </div>
-//             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-//           </div>
-//         );
-        
-//       case 'checkbox':
-//         return (
-//           <div className="mb-4" key={id}>
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               {text} {is_required && <span className="text-red-500">*</span>}
-//             </label>
-//             <div className="space-y-2 mt-1">
-//               {options && options.map((option, idx) => (
-//                 <div key={idx} className="flex items-center">
-//                   <input
-//                     type="checkbox"
-//                     id={`${fieldName}_${idx}`}
-//                     checked={(formData.custom_answers[id] || []).includes(option)}
-//                     onChange={(e) => handleMultiSelectChange(id, option, e.target.checked)}
-//                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-//                   />
-//                   <label htmlFor={`${fieldName}_${idx}`} className="ml-2 block text-sm text-gray-700">
-//                     {option}
-//                   </label>
-//                 </div>
-//               ))}
-//             </div>
-//             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-//           </div>
-//         );
-        
-//       case 'radio':
-//         return (
-//           <div className="mb-4" key={id}>
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               {text} {is_required && <span className="text-red-500">*</span>}
-//             </label>
-//             <div className="space-y-2 mt-1">
-//               {options && options.map((option, idx) => (
-//                 <div key={idx} className="flex items-center">
-//                   <input
-//                     type="radio"
-//                     id={`${fieldName}_${idx}`}
-//                     name={fieldName}
-//                     value={option}
-//                     checked={formData.custom_answers[id] === option}
-//                     onChange={(e) => {
-//                       if (e.target.checked) {
-//                         setFormData(prev => ({
-//                           ...prev,
-//                           custom_answers: {
-//                             ...prev.custom_answers,
-//                             [id]: option
-//                           }
-//                         }));
-//                       }
-//                     }}
-//                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-//                   />
-//                   <label htmlFor={`${fieldName}_${idx}`} className="ml-2 block text-sm text-gray-700">
-//                     {option}
-//                   </label>
-//                 </div>
-//               ))}
-//             </div>
-//             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-//           </div>
-//         );
-        
-//       case 'file':
-//         return (
-//           <div className="mb-4" key={id}>
-//             <label className="block text-sm font-medium text-gray-700 mb-1">
-//               {text} {is_required && <span className="text-red-500">*</span>}
-//             </label>
-//             <div className="flex items-center justify-center w-full">
-//               <label
-//                 htmlFor={fieldName}
-//                 className={`flex flex-col items-center justify-center w-full h-32 border-2 ${
-//                   error ? 'border-red-500' : 'border-gray-300'
-//                 } border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100`}
-//               >
-//                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-//                   <FileUp className="w-8 h-8 mb-3 text-gray-400" />
-//                   <p className="mb-2 text-sm text-gray-500">
-//                     <span className="font-semibold">Click to upload</span> or drag and drop
-//                   </p>
-//                   <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT, JPG, PNG</p>
-//                 </div>
-//                 <input 
-//                   id={fieldName}
-//                   name={fieldName}
-//                   type="file" 
-//                   className="hidden" 
-//                   onChange={(e) => {
-//                     if (e.target.files && e.target.files[0]) {
-//                       setFormData(prev => ({
-//                         ...prev,
-//                         custom_answers: {
-//                           ...prev.custom_answers,
-//                           [id]: e.target.files[0]
-//                         }
-//                       }));
-//                     }
-//                   }}
-//                 />
-//               </label>
-//             </div>
-//             {formData.custom_answers[id] && (
-//               <p className="mt-1 text-sm text-green-600">
-//                 File selected: {formData.custom_answers[id].name || "Selected file"}
-//               </p>
-//             )}
-//             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-//           </div>
-//         );
-        
-//       default:
-//         return null;
-//     }
-//   };
+              {currentStep === 1 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Education & Experience</h3>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="educationLevel">
+                        Education Level *
+                      </label>
+                    <select
+                        id="educationLevel"
+                      name="educationLevel"
+                      value={formData.educationLevel}
+                      onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                      title="Select your education level"
+                    >
+                        <option value="">Select your education level</option>
+                      <option value="high_school">High School</option>
+                        <option value="diploma">Diploma</option>
+                      <option value="bachelors">Bachelor's Degree</option>
+                      <option value="masters">Master's Degree</option>
+                      <option value="phd">PhD</option>
+                    </select>
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="educationField">
+                        Field of Study *
+                      </label>
+                      <input
+                      type="text"
+                        id="educationField"
+                      name="educationField"
+                      value={formData.educationField}
+                      onChange={handleInputChange}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        required
+                        title="Enter your field of study"
+                        placeholder="Enter your field of study"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="careerExperience">
+                        Career Experience *
+                      </label>
+                      <textarea
+                        id="careerExperience"
+                        name="careerExperience"
+                        value={formData.careerExperience}
+                        onChange={handleInputChange}
+                        rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Describe your career experience and training"
+                        placeholder="Share your professional journey, including relevant work experience and training..."
+                    />
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="cv">
+                        CV (PDF) *
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                      type="file"
+                          id="cv"
+                      name="cv"
+                      onChange={(e) => handleFileChange(e, 'cv')}
+                      accept=".pdf"
+                          className="hidden"
+                      required
+                      title="Upload your CV in PDF format"
+                        />
+                        <label
+                          htmlFor="cv"
+                          className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
+                        >
+                          <Upload className="w-5 h-5 mr-2 text-gray-500" />
+                          <span className="text-sm text-gray-700">Choose CV</span>
+                        </label>
+                        {formData.cv && (
+                          <div className="flex items-center text-sm text-green-600">
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            <span>CV uploaded</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500">Max file size: 2MB</p>
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="supportingDocs">
+                        Supporting Documents (PDF) *
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                      type="file"
+                          id="supportingDocs"
+                          name="supportingDocs"
+                          onChange={(e) => handleFileChange(e, 'supportingDocs')}
+                          accept=".pdf"
+                          className="hidden"
+                          required
+                      title="Upload supporting documents in PDF format"
+                        />
+                        <label
+                          htmlFor="supportingDocs"
+                          className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
+                        >
+                          <FileText className="w-5 h-5 mr-2 text-gray-500" />
+                          <span className="text-sm text-gray-700">Choose Documents</span>
+                        </label>
+                        {formData.supportingDocs && (
+                          <div className="flex items-center text-sm text-green-600">
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            <span>Documents uploaded</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm text-gray-500">Max file size: 2MB</p>
+                    </div>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Vision & Motivation</h3>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="motivation">
+                        Motivation *
+                      </label>
+                      <textarea
+                        id="motivation"
+                      name="motivation"
+                      value={formData.motivation}
+                      onChange={handleInputChange}
+                      rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Explain your motivation for applying"
+                        placeholder="What motivates you to apply for this fellowship program?"
+                    />
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="fiveYearVision">
+                        Five-Year Vision *
+                      </label>
+                      <textarea
+                        id="fiveYearVision"
+                      name="fiveYearVision"
+                      value={formData.fiveYearVision}
+                      onChange={handleInputChange}
+                      rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Describe your five-year vision"
+                        placeholder="Where do you see yourself in five years? What goals do you want to achieve?"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Community Impact</h3>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="desiredImpact">
+                        Desired Impact *
+                      </label>
+                      <textarea
+                        id="desiredImpact"
+                      name="desiredImpact"
+                      value={formData.desiredImpact}
+                      onChange={handleInputChange}
+                      rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Describe the impact you want to make"
+                        placeholder="What impact do you want to make in your community and country?"
+                    />
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="communityRole">
+                        Community Role *
+                      </label>
+                      <textarea
+                        id="communityRole"
+                      name="communityRole"
+                      value={formData.communityRole}
+                      onChange={handleInputChange}
+                      rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Describe your role in the community"
+                        placeholder="How do you currently contribute to your community?"
+                    />
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="nationalStrategy">
+                        National Strategy *
+                      </label>
+                      <textarea
+                        id="nationalStrategy"
+                      name="nationalStrategy"
+                      value={formData.nationalStrategy}
+                      onChange={handleInputChange}
+                      rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Describe the national strategy you want to contribute to"
+                        placeholder="Which national strategy, policy or flagship programme do you want to contribute to and why?"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 4 && (
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Programme Relevance</h3>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="ganzAfricaHelp">
+                        How can GanzAfrica help you? *
+                      </label>
+                      <textarea
+                        id="ganzAfricaHelp"
+                      name="ganzAfricaHelp"
+                      value={formData.ganzAfricaHelp}
+                      onChange={handleInputChange}
+                      rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Explain how GanzAfrica can help you achieve your goals"
+                        placeholder="How do you think GanzAfrica will help you achieve your career goals?"
+                    />
+                  </div>
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="ganzAfricaContribution">
+                        How can you contribute to GanzAfrica? *
+                      </label>
+                      <textarea
+                        id="ganzAfricaContribution"
+                      name="ganzAfricaContribution"
+                      value={formData.ganzAfricaContribution}
+                      onChange={handleInputChange}
+                      rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                      required
+                        title="Describe your potential contributions to GanzAfrica"
+                        placeholder="What unique skills, perspectives, or contributions can you offer to GanzAfrica?"
+                    />
+                  </div>
+                    <div className="flex items-start space-x-2 mt-8">
+                    <input
+                      type="checkbox"
+                        id="consent"
+                      name="consent"
+                      checked={formData.consent}
+                        onChange={handleInputChange}
+                        className="mt-1"
+                      required
+                        title="Consent to data processing"
+                    />
+                      <label htmlFor="consent" className="text-sm text-gray-700">
+                      I consent to the processing of my personal data in accordance with the privacy policy and terms and conditions *
+                    </label>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation Buttons */}
+            <div className="mt-12 flex justify-between items-center pt-8 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={prevStep}
+                className={`flex items-center px-8 py-3 text-sm font-medium rounded-full transition-all duration-300 ${
+                  currentStep === 0
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
+                    : 'bg-[#005c3d] text-[#fef597] hover:bg-[#009758] hover:shadow-lg transform hover:-translate-y-1'
+                }`}
+                disabled={currentStep === 0}
+              >
+                <ChevronLeft className="w-5 h-5 mr-2" />
+                Previous
+              </button>
+
+              {currentStep === steps.length - 1 ? (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`flex items-center px-8 py-3 text-sm font-medium rounded-full bg-[#005c3d] text-[#fef597] hover:bg-[#009758] transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 ${
+                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="animate-spin mr-2">⚬</span>
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Application'
+                  )}
+                </button>
+              ) : (
+                <button
+                type="button"
+                onClick={nextStep}
+                  className="flex items-center px-8 py-3 text-sm font-medium rounded-full bg-[#005c3d] text-[#fef597] hover:bg-[#009758] transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+              >
+                Next
+                  <ChevronRight className="w-5 h-5 ml-2" />
+                </button>
+            )}
+          </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
