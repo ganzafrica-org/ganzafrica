@@ -98,7 +98,6 @@ const NewsListPage = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tags, setTags] = useState([]);
-  const [authors, setAuthors] = useState({});
   
   // States for pagination and filtering
   const [page, setPage] = useState(1);
@@ -106,15 +105,12 @@ const NewsListPage = () => {
   const [totalNews, setTotalNews] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('published_at');
+  const [sortBy, setSortBy] = useState('publish_date'); // Updated to publish_date
   const [sortOrder, setSortOrder] = useState('desc');
   
   // States for tab counts
   const [tabCounts, setTabCounts] = useState({
-    all: 0,
-    'published': 0,
-    'draft': 0,
-    'archived': 0
+    all: 0
   });
 
   const [tabCountsLoaded, setTabCountsLoaded] = useState(false);
@@ -208,52 +204,39 @@ const NewsListPage = () => {
     fetchTags();
   }, []);
 
-  // Set default authors (similar to your project management approach)
-  useEffect(() => {
-    setAuthors({
-      1: 'Mukamana Fransine',
-      2: 'John Doe',
-      3: 'Jane Smith'
-    });
-  }, []);
-
-  // Fetch tab counts
+  // Fetch tab counts based on tags
   const fetchTabCounts = async () => {
     try {
-      const response = await throttledAxios.get('http://localhost:3002/api/news', { 
+      // Get total count of news articles
+      const newsResponse = await throttledAxios.get('http://localhost:3002/api/news', { 
         params: { limit: 0 } 
       });
       
-      const allCount = parseInt(response.data.pagination?.total) || 0;
+      const allCount = parseInt(newsResponse.data.pagination?.total) || 0;
       
-      let publishedCount = 0;
-      let draftCount = 0;
-      let archivedCount = 0;
+      // Initialize the counts object with the 'all' count
+      const counts = { all: allCount };
       
-      if (response.data.news && Array.isArray(response.data.news)) {
-        response.data.news.forEach(article => {
-          if (article.status === 'published') publishedCount++;
-          else if (article.status === 'draft') draftCount++;
-          else if (article.status === 'archived') archivedCount++;
-        });
+      // Get count per tag
+      if (tags && tags.length > 0) {
+        // We already have the tags from the earlier fetch, but now we need to count articles per tag
+        for (const tag of tags) {
+          // For each tag, we could fetch the count from the API or calculate from existing data
+          // This depends on your API capabilities
+          const tagResponse = await throttledAxios.get('http://localhost:3002/api/news', {
+            params: { tag_id: tag.id, limit: 0 }
+          });
+          
+          counts[tag.id] = parseInt(tagResponse.data.pagination?.total) || 0;
+        }
       }
       
-      setTabCounts({
-        all: allCount,
-        published: publishedCount,
-        draft: draftCount,
-        archived: archivedCount
-      });
-      
+      setTabCounts(counts);
       setTabCountsLoaded(true);
     } catch (error) {
       console.error('Error fetching tab counts:', error);
-      setTabCounts({
-        all: 0,
-        published: 0,
-        draft: 0,
-        archived: 0
-      });
+      // Initialize with just the 'all' count as 0
+      setTabCounts({ all: 0 });
       setTabCountsLoaded(true);
     }
   };
@@ -307,8 +290,9 @@ const NewsListPage = () => {
         
         if (searchTerm) params.search = searchTerm;
         
+        // If a tag is selected (not "all"), filter by tag_id
         if (activeTab !== 'all') {
-          params.status = activeTab;
+          params.tag_id = activeTab;
         }
         
         console.log('Fetching news with params:', params);
@@ -339,22 +323,20 @@ const NewsListPage = () => {
     };
     
     fetchNews();
-  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, tags.length]);
 
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     
-    return new Date(dateString).toLocaleDateString('en-US', {
+    // Format date as "Mar 15, 2024"
+    const date = new Date(dateString);
+    const options = { 
       year: 'numeric',
-      month: 'long',
+      month: 'short', 
       day: 'numeric'
-    });
-  };
-
-  // Get author name
-  const getAuthorName = (authorId) => {
-    return authors[authorId] || 'Unknown Author';
+    };
+    return date.toLocaleDateString('en-US', options);
   };
 
   // Handle tab change
@@ -375,6 +357,14 @@ const NewsListPage = () => {
       default:
         return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• {status}</span>;
     }
+  };
+  
+  // Find the active tag name for display
+  const getActiveTabName = () => {
+    if (activeTab === 'all') return '';
+    
+    const activeTagObj = tags.find(tag => tag.id.toString() === activeTab);
+    return activeTagObj ? activeTagObj.name : '';
   };
 
   // Truncate text
@@ -402,7 +392,7 @@ const NewsListPage = () => {
 
       {/* Tabs */}
       <div className='bg-white'>
-        <div className="flex border-b border-gray-200 mb-6 bg-white">
+        <div className="flex border-b border-gray-200 mb-6 bg-white overflow-x-auto">
           <button
             onClick={() => handleTabChange('all')}
             className={`py-3 px-4 text-sm font-medium relative ${
@@ -414,44 +404,29 @@ const NewsListPage = () => {
             All
             <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
           </button>
-          <button
-            onClick={() => handleTabChange('published')}
-            className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'published'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Published
-            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.published}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('draft')}
-            className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'draft'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Draft
-            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.draft}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('archived')}
-            className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'archived'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Archived
-            <span className="ml-2 bg-gray-100 text-gray-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.archived}</span>
-          </button>
+          
+          {/* Dynamic tabs based on tags */}
+          {tags.map(tag => (
+            <button
+              key={tag.id}
+              onClick={() => handleTabChange(tag.id.toString())}
+              className={`py-3 px-4 text-sm font-medium relative ${
+                activeTab === tag.id.toString()
+                  ? 'border-b-2 border-green-700 text-green-700'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tag.name}
+              <span className="ml-2 bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs font-medium">
+                {tabCounts[tag.id] || 0}
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* News list title */}
         <h2 className="text-lg font-bold mb-4">
-          List of {activeTab === 'all' ? '' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} News Articles
+          List of {getActiveTabName()} News Articles
         </h2>
 
         {/* Search and filter */}
@@ -492,7 +467,6 @@ const NewsListPage = () => {
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published Date</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -506,7 +480,6 @@ const NewsListPage = () => {
                     <td className="px-4 py-4 text-sm text-gray-900">
                       <div className="font-medium">{article.title}</div>
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{getAuthorName(article.author_id)}</td>
                     <td className="px-4 py-4 text-sm text-gray-900">
                       <div className="flex flex-wrap gap-1">
                         {article.tags && article.tags.map(tag => (
@@ -520,7 +493,7 @@ const NewsListPage = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {article.published_at ? formatDate(article.published_at) : 'Not published'}
+                      {article.publish_date ? formatDate(article.publish_date) : 'Not published'}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       {getStatusBadge(article.status)}
