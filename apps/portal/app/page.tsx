@@ -1,37 +1,77 @@
-'use client'
+"use client";
 
-import { useRouter } from 'next/navigation'
-import { Button } from "@workspace/ui/components/button"
-import { Logo } from "@/components/ui/logo"
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Progress } from "@workspace/ui/components/progress";
+import { useAuth } from '@/components/auth/auth-provider';
 
-export default function Page() {
-    const router = useRouter()
+export default function EntryPage() {
+    const { isAuthenticated, isLoading } = useAuth();
+    const router = useRouter();
+    const [progress, setProgress] = useState(0);
+    const [loadingStep, setLoadingStep] = useState('Initializing application');
+
+    useEffect(() => {
+        // Detailed loading steps
+        const loadingSteps = [
+            { progress: 20, message: 'Getting things ready' },
+            { progress: 50, message: 'Just making sure everything checks out' },
+            { progress: 70, message: 'Almost there...' },
+            { progress: 100, message: 'You’re in — let’s begin' }
+        ];
+
+        // Progress simulation
+        const timer = setInterval(() => {
+            const currentStep = loadingSteps.find(step =>
+                step.progress > progress && step.progress <= 100
+            );
+
+            if (currentStep) {
+                setProgress(currentStep.progress);
+                setLoadingStep(currentStep.message);
+            }
+
+            // If we've reached the final step and authentication check is complete
+            if (progress === 100 && !isLoading) {
+                clearInterval(timer);
+                if (isAuthenticated) {
+                    router.push('/dashboard');
+                } else {
+                    router.push('/login');
+                }
+            }
+        }, 500);
+
+        return () => clearInterval(timer);
+    }, [isAuthenticated, isLoading, progress, router]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-svh">
-            <div className="flex flex-col items-center justify-center gap-6 mb-8">
-                <Logo className="text-4xl" />
-                <h1 className="text-2xl font-bold">Portal</h1>
-                <p className="text-center text-muted-foreground max-w-md">
-                    Welcome to the GanzAfrica portal. Please log in to access
-                    the dashboard and tools.
+        <div className="flex items-center justify-center min-h-screen bg-white">
+            <div className="text-center w-full max-w-md px-4">
+                <Image
+                    src="/logo.png"
+                    alt="Ganz Africa Logo"
+                    width={200}
+                    height={200}
+                    className="mx-auto mb-6"
+                    priority
+                />
+                <h1 className="text-2xl font-bold text-primary-green">
+                    Empowering Youth Changemakers
+                </h1>
+                <p className="text-primary-orange mt-2">
+                    Transforming Land, Environment, and Agriculture
                 </p>
-            </div>
-            <div className="flex gap-4">
-                <Button
-                    size="lg"
-                    onClick={() => router.push('/login')}
-                >
-                    Login
-                </Button>
-                <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={() => router.push('/signup')}
-                >
-                    Create Account
-                </Button>
+
+                <div className="mt-6 w-full">
+                    <Progress value={progress} className="w-full" />
+                </div>
+
+                <div className="mt-4 text-secondary-green">
+                    {loadingStep}...
+                </div>
             </div>
         </div>
-    )
+    );
 }

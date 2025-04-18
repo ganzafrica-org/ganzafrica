@@ -1,417 +1,136 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
-import { api } from '@/lib/api/trpc';
+import apiClient from '@/lib/api-client';
 
-// Import schemas directly in the provider (not exported to components)
-import {
-    signupSchema,
-    loginSchema,
-    requestPasswordResetSchema,
-    resetPasswordSchema,
-    verifyEmailSchema,
-    setupTotpSchema,
-    verifyTotpSchema
-} from '@workspace/api/src/modules/auth/schema';
-
-// Types for the auth context
+// User interface based on your backend schema
 export interface User {
     id: string;
     name: string;
     email: string;
-    role: string;
-    permissions?: string[];
+    role_id: number;
+    avatar_url: string | null;
+    email_verified: boolean;
 }
 
-export interface AuthContextType {
-    // State
+// Auth context type
+interface AuthContextType {
     user: User | null;
-    isLoading: boolean;
     isAuthenticated: boolean;
-    requiresTwoFactor: boolean;
-    twoFactorMethod?: string;
-    tempToken?: string;
-
-    // Auth methods
-    login: (email: string, password: string) => Promise<boolean>;
-    logout: () => Promise<boolean>;
-    signup: (name: string, email: string, password: string) => Promise<boolean>;
-    verifyTwoFactor: (code: string) => Promise<boolean>;
-    requestPasswordReset: (email: string) => Promise<boolean>;
-    resetPassword: (token: string, password: string, confirmPassword: string) => Promise<boolean>;
-    verifyEmail: (token: string) => Promise<boolean>;
-    setupTwoFactor: () => Promise<{ qrCodeUrl: string; secret: string } | null>;
-    verifyTwoFactorSetup: (code: string) => Promise<boolean>;
-    disableTwoFactor: () => Promise<boolean>;
+    isLoading: boolean;
+    logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
-// Error handler function
-function handleApiError(error: unknown): string {
-    console.error('API Error:', error);
+// Create context
+const AuthContext = createContext<AuthContextType>({
+    user: null,
+    isAuthenticated: false,
+    isLoading: true,
+    logout: async () => {},
+    refreshUser: async () => {}
+});
 
-    let errorMessage = 'An unexpected error occurred';
+// Protected routes that require authentication
+const protectedRoutes = ['/profile', '/dashboard', '/settings', '/users'];
 
-    if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
-        errorMessage = error.message;
-    }
-
-    toast.error(errorMessage);
-    return errorMessage;
-}
-
-// Create auth context
-const AuthContext = createContext<AuthContextType | null>(null);
-
-/**
- * Provider component that wraps the application and makes auth state available
- */
+// Provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
+    const pathname = usePathname();
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
-    const [twoFactorMethod, setTwoFactorMethod] = useState<string | undefined>();
-    const [tempToken, setTempToken] = useState<string | undefined>();
+    const [authChecked, setAuthChecked] = useState(false);
 
-    // Fetch current user data on mount
-    useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                setIsLoading(true);
-                const response = await api.auth.me.query();
+    // Function to fetch user data
+    const fetchUser = async () => {
+        try {
+            const response = await apiClient.get('/auth/me');
+            console.log('Auth response:', response.data);
 
-                if (response?.data?.user) {
-                    setUser(response.data.user);
-                } else {
-                    setUser(null);
-                }
-            } catch (error) {
-                console.error('Failed to fetch user:', error);
+            if (response.data.user) {
+                setUser(response.data.user);
+                return true;
+            } else {
                 setUser(null);
-            } finally {
-                setIsLoading(false);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            setUser(null);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Public function to refresh user data
+    const refreshUser = async () => {
+        setIsLoading(true);
+        await fetchUser();
+    };
+
+    // Check auth on mount and handle redirects
+    useEffect(() => {
+        const checkAuth = async () => {
+            const hasUser = await fetchUser();
+            setAuthChecked(true);
+
+            // Check if we need to redirect
+            const isProtectedRoute = protectedRoutes.some(route =>
+                pathname?.startsWith(route)
+            );
+
+            if (!hasUser && isProtectedRoute) {
+                toast.error('Please log in to access this page');
+                router.push('/login');
             }
         };
 
-        fetchUser();
-    }, []);
+        checkAuth();
+    }, [pathname]);
 
-    // Login function - accepts simple parameters, does schema validation internally
-    const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    // Logout functionality
+    const logout = async () => {
         try {
-            setIsLoading(true);
+            await apiClient.post('/auth/logout');
 
-            // Schema validation
-            const validatedData = loginSchema.parse({ email, password });
+            // Clear tokens from localStorage
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
 
-            // API call
-            const response = await api.auth.login.mutate(validatedData);
+            // Clear user state
+            setUser(null);
 
-            if (response.data?.requiresTwoFactor) {
-                setRequiresTwoFactor(true);
-                setTwoFactorMethod(response.data.twoFactorMethod);
-                setTempToken(response.data.tempToken);
-                return true;
-            } else if (response.data?.user) {
-                setUser(response.data.user);
-                setRequiresTwoFactor(false);
-                setTwoFactorMethod(undefined);
-                setTempToken(undefined);
-                toast.success('Login successful');
-                router.push('/dashboard');
-                return true;
-            }
+            // Show success toast
+            toast.success('Logged out successfully');
 
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
+            // Redirect to login page
+            router.push('/login');
+        } catch (error: any) {
+            // Handle logout error
+            toast.error(error.response?.data?.message || 'Logout failed');
+            console.error('Logout error:', error);
         }
-    }, [router]);
-
-    // Verify two-factor authentication
-    const verifyTwoFactor = useCallback(async (code: string): Promise<boolean> => {
-        try {
-            if (!tempToken) {
-                toast.error('No verification session found');
-                return false;
-            }
-
-            setIsLoading(true);
-
-            // API call
-            const response = await api.auth.verifyTwoFactor.mutate({
-                token: tempToken,
-                code
-            });
-
-            if (response.data?.user) {
-                setUser(response.data.user);
-                setRequiresTwoFactor(false);
-                setTwoFactorMethod(undefined);
-                setTempToken(undefined);
-                toast.success('Login successful');
-                router.push('/dashboard');
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [tempToken, router]);
-
-    // Signup function
-    const signup = useCallback(async (name: string, email: string, password: string): Promise<boolean> => {
-        try {
-            setIsLoading(true);
-
-            // Schema validation
-            const validatedData = signupSchema.parse({ name, email, password });
-
-            // API call
-            const response = await api.auth.signup.mutate(validatedData);
-
-            if (response.success) {
-                toast.success('Account created successfully. Please check your email to verify your account.');
-                router.push('/login');
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [router]);
-
-    // Request password reset
-    const requestPasswordReset = useCallback(async (email: string): Promise<boolean> => {
-        try {
-            setIsLoading(true);
-
-            // Schema validation
-            const validatedData = requestPasswordResetSchema.parse({ email });
-
-            // API call
-            const response = await api.auth.requestPasswordReset.mutate(validatedData);
-
-            if (response.success) {
-                toast.success('If your email is registered, you will receive reset instructions shortly.');
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    // Reset password
-    const resetPassword = useCallback(async (token: string, password: string, confirmPassword: string): Promise<boolean> => {
-        try {
-            setIsLoading(true);
-
-            // Schema validation
-            const validatedData = resetPasswordSchema.parse({ token, password, confirmPassword });
-
-            // API call
-            const response = await api.auth.resetPassword.mutate(validatedData);
-
-            if (response.success) {
-                toast.success('Password has been reset successfully. You can now log in with your new password.');
-                router.push('/login');
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [router]);
-
-    // Verify email
-    const verifyEmail = useCallback(async (token: string): Promise<boolean> => {
-        try {
-            setIsLoading(true);
-
-            // Schema validation
-            const validatedData = verifyEmailSchema.parse({ token });
-
-            // API call
-            const response = await api.auth.verifyEmail.mutate(validatedData);
-
-            if (response.success) {
-                toast.success('Email verified successfully. You can now log in to your account.');
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    // Setup two-factor authentication
-    const setupTwoFactor = useCallback(async (): Promise<{ qrCodeUrl: string; secret: string } | null> => {
-        try {
-            setIsLoading(true);
-
-            // API call
-            const response = await api.auth.setupTwoFactor.mutate();
-
-            if (response.success && response.data) {
-                toast.success('Two-factor authentication setup initiated');
-                return {
-                    qrCodeUrl: response.data.qrCodeUrl,
-                    secret: response.data.secret
-                };
-            }
-
-            return null;
-        } catch (error) {
-            handleApiError(error);
-            return null;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    // Verify and enable two-factor authentication
-    const verifyTwoFactorSetup = useCallback(async (code: string): Promise<boolean> => {
-        try {
-            setIsLoading(true);
-
-            // Schema validation
-            const validatedData = setupTotpSchema.parse({ totpCode: code });
-
-            // API call
-            const response = await api.auth.verifyTwoFactorSetup.mutate(validatedData);
-
-            if (response.success) {
-                toast.success('Two-factor authentication enabled successfully');
-
-                // Refresh user to update 2FA status
-                const userResponse = await api.auth.me.query();
-                if (userResponse.data?.user) {
-                    setUser(userResponse.data.user);
-                }
-
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    // Disable two-factor authentication
-    const disableTwoFactor = useCallback(async (): Promise<boolean> => {
-        try {
-            setIsLoading(true);
-
-            // API call
-            const response = await api.auth.disableTwoFactor.mutate();
-
-            if (response.success) {
-                toast.success('Two-factor authentication disabled successfully');
-
-                // Refresh user to update 2FA status
-                const userResponse = await api.auth.me.query();
-                if (userResponse.data?.user) {
-                    setUser(userResponse.data.user);
-                }
-
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
-
-    // Logout function
-    const logout = useCallback(async (): Promise<boolean> => {
-        try {
-            setIsLoading(true);
-
-            // API call
-            const response = await api.auth.logout.mutate();
-
-            if (response.success) {
-                setUser(null);
-                toast.success('Logged out successfully');
-                router.push('/login');
-                return true;
-            }
-
-            return false;
-        } catch (error) {
-            handleApiError(error);
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    }, [router]);
-
-    // Create context value object
-    const contextValue: AuthContextType = {
-        // State
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        requiresTwoFactor,
-        twoFactorMethod,
-        tempToken,
-
-        // Methods
-        login,
-        logout,
-        signup,
-        verifyTwoFactor,
-        requestPasswordReset,
-        resetPassword,
-        verifyEmail,
-        setupTwoFactor,
-        verifyTwoFactorSetup,
-        disableTwoFactor,
     };
 
-    return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+    const value = {
+        user,
+        isAuthenticated: !!user,
+        isLoading: isLoading || !authChecked,
+        logout,
+        refreshUser
+    };
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/**
- * Hook to access the auth context
- */
-export function useAuth(): AuthContextType {
+// Hook to use auth context
+export function useAuth() {
     const context = useContext(AuthContext);
-    if (context === null) {
+    if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;

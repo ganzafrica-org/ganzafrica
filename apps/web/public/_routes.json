@@ -16,13 +16,7 @@
   ],
   "cache": {
     "version": 1,
-    "include": [
-      "/images/*",
-      "/fonts/*",
-      "/*.css",
-      "/*.js",
-      "/_next/static/*"
-    ],
+    "include": ["/images/*", "/fonts/*", "/*.css", "/*.js", "/_next/static/*"],
     "browserTTL": {
       "minutes": 60,
       "matching": "/*\\.(jpg|jpeg|gif|png|ico|svg|css|js|woff2)$"
