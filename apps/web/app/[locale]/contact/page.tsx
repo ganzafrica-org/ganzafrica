@@ -5,17 +5,9 @@ import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Leaf, Send } from "lucide-react";
-import { safeAccess } from "@/lib/utils/safeAccess";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 
-
-interface ContactUsPageProps {
-  locale: string;
-  dict: any;
-}
-
-
-export default async function ContactUsPage({ dict }: ContactUsPageProps) {
+export default function ContactUsPage() {
   const [formState, setFormState] = React.useState({
     name: "",
     email: "",
@@ -103,7 +95,7 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
                     name="email"
                     value={formState.email}
                     onChange={handleChange}
-                    placeholder={safeAccess(dict, 'contact.form_email', "Email")}
+                    placeholder="Email"
                     className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
                     required
                   />
@@ -112,7 +104,7 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
                     name="phone"
                     value={formState.phone}
                     onChange={handleChange}
-                    placeholder={safeAccess(dict, 'contact.form_phone', "Phone")}
+                    placeholder="Phone"
                     className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
                   />
                 </div>
@@ -121,7 +113,7 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
                   name="name"
                   value={formState.name}
                   onChange={handleChange}
-                  placeholder={safeAccess(dict, 'contact.form_name', "Name")}
+                  placeholder="Name"
                   className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
                   required
                 />
@@ -129,7 +121,7 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
                   name="message"
                   value={formState.message}
                   onChange={handleChange}
-                  placeholder={safeAccess(dict, 'contact.form_message', "Message")}
+                  placeholder="Message"
                   className="w-full h-40 bg-white border-2 border-gray-300 rounded-3xl px-5 py-4 font-medium-small"
                   required
                 />
@@ -138,7 +130,7 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
                     type="submit"
                     className="bg-primary-orange hover:bg-secondary-green text-white px-8 py-2 h-12 rounded-full font-bold-caption flex items-center gap-2"
                   >
-                    {safeAccess(dict, 'contact.submit', "Submit Button")}
+                    Submit
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -148,11 +140,10 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
             {/* Newsletter Form */}
             <div className="lg:w-1/3 bg-primary-green rounded-lg p-8 text-white">
               <h3 className="font-h4 mb-4">
-                {safeAccess(dict, 'contact.newsletter', "Our Newsletters")}
+                Our Newsletters
               </h3>
               <p className="mb-6 font-regular-paragraph">
-                {safeAccess(dict, 'contact.newsletter_desc',
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.")}
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.
               </p>
               <form onSubmit={handleNewsletterSubmit} className="space-y-4">
                 <Input
@@ -165,7 +156,7 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
                   type="submit"
                   className="w-full bg-primary-orange hover:bg-dark text-white py-2 rounded-full h-12 font-bold-caption"
                 >
-                  {safeAccess(dict, 'contact.submit', "Submit Button")}
+                  Submit
                 </Button>
               </form>
             </div>
@@ -223,42 +214,41 @@ export default async function ContactUsPage({ dict }: ContactUsPageProps) {
       </div>
 
       {/* Map Section */}
-  <div className="py-2 bg-white">
-  <div className="container mx-auto px-4">
-    <div className="h-96 w-full rounded-lg overflow-hidden border-2 border-gray-300 relative">
-      <iframe
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5080550483483!2d30.053!3d-1.944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMcKwNTYnNDQuNCJTIDMwwrAwMycxMC44IkU!5e0!3m2!1sen!2sus!4v1616434174542!5m2!1sen!2sus&iwloc=B&output=embed"
-        width="100%"
-        height="100%"
-        style={{ border: 0 }}
-        allowFullScreen
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="GanzAfrica Location"
-      ></iframe>
-
-      </div>
+      <div className="py-2 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="h-96 w-full rounded-lg overflow-hidden border-2 border-gray-300 relative">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5080550483483!2d30.053!3d-1.944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMcKwNTYnNDQuNCJTIDMwwrAwMycxMC44IkU!5e0!3m2!1sen!2sus!4v1616434174542!5m2!1sen!2sus&iwloc=B&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="GanzAfrica Location"
+            ></iframe>
+          </div>
           {/* Box Positioned on Top of Red Pin */}
           <div
-              className="absolute z-10"
-              style={{
-                top: '70%',
-                left: '50%',
-                transform: 'translate(-50%, -100%)',
-              }}
-            >
-              <div className="bg-white p-3 rounded-lg shadow-md border-2 border-emerald-600">
-                <div className="flex items-center">
-                  <div className="bg-red-500 p-2 rounded-full mr-2">
-                  <MapPin className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-emerald-600">GanzAfrica</p>
-                    <p className="text-xs text-gray-700">27 House, KG 594 St, Kigali</p>
-                  </div>
+            className="absolute z-10"
+            style={{
+              top: '70%',
+              left: '50%',
+              transform: 'translate(-50%, -100%)',
+            }}
+          >
+            <div className="bg-white p-3 rounded-lg shadow-md border-2 border-emerald-600">
+              <div className="flex items-center">
+                <div className="bg-red-500 p-2 rounded-full mr-2">
+                <MapPin className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-emerald-600">GanzAfrica</p>
+                  <p className="text-xs text-gray-700">27 House, KG 594 St, Kigali</p>
                 </div>
               </div>
-              <div className="w-4 h-4 bg-emerald-600 rotate-45 mx-auto -mt-2"></div>
+            </div>
+            <div className="w-4 h-4 bg-emerald-600 rotate-45 mx-auto -mt-2"></div>
           </div>
         </div>
       </div>
