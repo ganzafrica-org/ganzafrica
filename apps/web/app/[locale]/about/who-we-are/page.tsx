@@ -44,7 +44,7 @@ interface PromiseCardProps {
 }
 
 interface PageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 // Reusable Mission Card component
@@ -206,7 +206,13 @@ const PromiseCard: FC<PromiseCardProps> = ({
   );
 };
 
-export default async function AboutPage({ params: { locale } }: PageProps) {
+export default async function AboutPage(props: PageProps) {
+  const params = await props.params;
+
+  const {
+    locale
+  } = params;
+
   const dict = await getDictionary(locale);
 
   // Tag data with translations

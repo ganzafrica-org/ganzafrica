@@ -1,160 +1,92 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import axios from 'axios';
-import {
+import Link from 'next/link';
+import { 
   ArrowLeft,
   Calendar,
-  Clock,
   MapPin,
-  Briefcase,
-  Building,
+  User,
+  Tag,
+  Clock,
   GraduationCap,
-  Award,
-  Bookmark,
-  Library,
   Globe,
-  Mail,
-  Phone,
-  Users,
-  FileText,
-  ExternalLink,
-  Share2,
-  Heart,
+  Briefcase,
+  Code,
+  ListChecks,
   AlertCircle,
-  Loader2,
+  FileText,
   CheckCircle,
-  DollarSign
+  Book,
+  Users,
+  Laptop,
+  Award,
+  Target
 } from 'lucide-react';
+import { useParams } from 'next/navigation';
 
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  timeout: 10000,
-});
-
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  if ((response && response.status === 429) || !response) {
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      config.retryCount += 1;
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return axiosInstance(config);
-    }
+const OpportunityDetailsPage = () => {
+  const params = useParams();
+  interface Opportunity {
+    id: string;
+    title: string;
+    type: keyof typeof opportunityTypes;
+    status: string;
+    location?: string;
+    location_type?: string;
+    application_deadline?: string;
+    category_id?: number;
+    description?: string;
+    eligibility_criteria?: {
+      min_education_level?: string;
+      experience_years?: number;
+      countries?: string[];
+      skills_required?: string[];
+      other_requirements?: string[];
+    };
+    fellowship_details?: {
+      program_name?: string;
+      cohort?: string;
+      fellowship_type?: string;
+      duration?: string;
+      start_date?: string;
+      learning_outcomes?: string[];
+      program_structure?: {
+        phases?: { name: string; duration_weeks: number; description: string }[];
+        activities?: string[];
+      };
+    };
+    custom_questions?: {
+      question: string;
+      field_type: string;
+      is_required?: boolean;
+      max_length?: number;
+      options?: string[];
+      order: number;
+    }[];
   }
   
-  return Promise.reject(err);
-});
-
-// Map category_id to icon components
-const getCategoryIcon = (categoryId) => {
-  switch (parseInt(categoryId)) {
-    case 1:
-      return <Briefcase className="h-5 w-5" />;
-    case 2:
-      return <Award className="h-5 w-5" />;
-    case 3:
-      return <GraduationCap className="h-5 w-5" />;
-    case 4:
-      return <Bookmark className="h-5 w-5" />;
-    case 5:
-      return <Library className="h-5 w-5" />;
-    default:
-      return <Briefcase className="h-5 w-5" />;
-  }
-};
-
-// Function to generate a color class based on category
-const getCategoryColorClass = (categoryId) => {
-  switch (parseInt(categoryId)) {
-    case 1: // Internship
-      return "bg-blue-100 text-blue-800";
-    case 2: // Grant
-      return "bg-green-100 text-green-800";
-    case 3: // Fellowship
-      return "bg-purple-100 text-purple-800";
-    case 4: // Scholarship
-      return "bg-yellow-100 text-yellow-800";
-    case 5: // Training Program
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
-
-// Get category name from category_id
-const getCategoryName = (categoryId, categories) => {
-  return categories[categoryId] || 'Other';
-};
-
-// Format date for display
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
-// Calculate days remaining
-const getDaysRemaining = (deadlineString) => {
-  if (!deadlineString) return 'No deadline';
-  
-  const deadline = new Date(deadlineString);
-  const today = new Date();
-  
-  // Set time to midnight for both dates for accurate day calculation
-  deadline.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  
-  const diffTime = deadline - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays < 0) {
-    return 'Expired';
-  } else if (diffDays === 0) {
-    return 'Closes today';
-  } else if (diffDays === 1) {
-    return '1 day left';
-  } else {
-    return `${diffDays} days left`;
-  }
-};
-
-// Function to generate logo placeholder based on title
-const getLogoPlaceholder = (title) => {
-  if (!title) return "OI";
-  
-  const words = title.split(' ');
-  if (words.length === 1) {
-    return title.substring(0, 2).toUpperCase();
-  }
-  
-  return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
-};
-
-const OpportunityDetailsPage = ({ params }) => {
-  const router = useRouter();
-  const opportunityId = params?.id;
-  
-  // State for opportunity details
-  const [opportunity, setOpportunity] = useState(null);
+  const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [categories, setCategories] = useState({});
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Record<string | number, string>>({});
+  const [activeTab, setActiveTab] = useState('details');
   
+  // Types of opportunities for display
+  const opportunityTypes = {
+    fellowship: 'Fellowship',
+    scholarship: 'Scholarship',
+    grant: 'Grant',
+    internship: 'Internship',
+    program: 'Program',
+    workshop: 'Workshop',
+    competition: 'Competition'
+  };
+
   // Set default categories
   useEffect(() => {
+    // Use default categories
     setCategories({
       1: 'Internship',
       2: 'Grant',
@@ -163,429 +95,570 @@ const OpportunityDetailsPage = ({ params }) => {
       5: 'Training Program'
     });
   }, []);
-  
-  // Fetch opportunity details
+
+  // Fetch the opportunity data
   useEffect(() => {
-    const fetchOpportunity = async () => {
-      if (!opportunityId) {
-        setError('Opportunity ID is required');
-        setLoading(false);
-        return;
-      }
-      
+    const fetchOpportunityData = async () => {
       try {
         setLoading(true);
-        // In a real app, this would fetch from your API endpoint
-        const response = await axiosInstance.get(`/api/opportunities/${opportunityId}`);
         
-        if (response.data && response.data.opportunity) {
-          setOpportunity(response.data.opportunity);
-        } else {
-          setError('Failed to load opportunity details');
+        // Try to fetch opportunity details from API
+        try {
+          const response = await axios.get(`http://localhost:3002/api/opportunities/${params.id}`);
+          console.log("API Response:", response.data);
+          
+          // Check if the response has a nested opportunity object
+          if (response.data && response.data.opportunity) {
+            console.log("Setting opportunity from nested opportunity object");
+            setOpportunity(response.data.opportunity);
+          } else if (response.data && response.data.id) {
+            // Direct opportunity object
+            console.log("Setting opportunity from direct response");
+            setOpportunity(response.data);
+          } else {
+            throw new Error("Invalid opportunity data structure");
+          }
+        } catch (apiError) {
+          console.error('Error fetching opportunity from API:', apiError);
+          // If API fails, show error
+          setError('Failed to fetch opportunity details. Please try again later.');
         }
-      } catch (err) {
-        console.error('Error fetching opportunity:', err);
-        setError('Failed to load opportunity. Please try again later.');
+
+      } catch (error) {
+        console.error('Error in overall opportunity data fetching:', error);
+        setError('Failed to fetch opportunity details. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchOpportunity();
-  }, [opportunityId]);
+
+    fetchOpportunityData();
+  }, [params.id]);
   
-  // Toggle favorite status
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    // In a real app, you would call an API to save this preference
+  // Format date for display
+  const formatDate = (dateString: string | number | Date | undefined) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
-  
-  // Share opportunity
-  const shareOpportunity = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: opportunity?.title || 'Opportunity',
-        text: opportunity?.short_description || 'Check out this opportunity',
-        url: window.location.href,
-      }).catch((error) => console.log('Error sharing', error));
-    } else {
-      // Fallback - copy to clipboard
-      navigator.clipboard.writeText(window.location.href)
-        .then(() => alert('Link copied to clipboard!'))
-        .catch((err) => console.error('Could not copy link: ', err));
+
+  // Get category name from category_id
+  const getCategoryName = (categoryId: string | number | undefined) => {
+    if (!categoryId) return 'Unknown';
+    return categories[categoryId] || 'Unknown Category';
+  };
+
+  // Map status for display
+  interface StatusBadgeProps {
+    status: string;
+  }
+
+  const getStatusBadge = (status: string | undefined): JSX.Element | null => {
+    if (!status) return null;
+    
+    switch(status.toLowerCase()) {
+      case 'published':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
+            <CheckCircle className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">Published</span>
+          </span>
+        );
+      case 'draft':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
+            <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">Draft</span>
+          </span>
+        );
+      case 'archived':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
+            <Book className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">Archived</span>
+          </span>
+        );
+      case 'closed':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 whitespace-nowrap">
+            <Award className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">Closed</span>
+          </span>
+        );
+      default:
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 truncate max-w-[100px]">• {status}</span>;
     }
   };
-  
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <Loader2 className="h-12 w-12 text-green-600 animate-spin" />
-        <span className="ml-3 text-lg text-green-700">Loading opportunity details...</span>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <div className="flex items-center">
-            <AlertCircle className="h-6 w-6 text-red-500 mr-2" />
-            <p className="text-red-700 text-lg">{error}</p>
-          </div>
-          <Link 
-            href="/opportunities" 
-            className="mt-4 inline-flex items-center text-green-600 hover:text-green-800"
-          >
-            <ArrowLeft className="mr-1 h-4 w-4" /> Back to opportunities
-          </Link>
+      <div className="p-6 max-w-full flex items-center justify-center min-h-[80vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-700 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading opportunity details...</p>
         </div>
       </div>
     );
   }
-  
-  return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-5xl mx-auto p-6">
-        {/* Back button */}
-        <Link 
-          href="/opportunities" 
-          className="inline-flex items-center text-green-600 hover:text-green-800 mb-6"
-        >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to opportunities
-        </Link>
-        
-        {/* Opportunity header card */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
-          <div className="border-b border-gray-200 p-6">
-            <div className="flex justify-between items-start">
-              <div className="flex items-start">
-                <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-white font-bold ${
-                  opportunity?.category_id ? getCategoryColorClass(opportunity.category_id).replace('bg-', 'bg-').replace('text-', 'text-')
-                  : 'bg-gray-200 text-gray-700'
-                }`}>
-                  {opportunity?.organization_logo 
-                    ? <img src={opportunity.organization_logo} alt="Logo" className="w-12 h-12 object-contain" />
-                    : getLogoPlaceholder(opportunity?.title)
-                  }
-                </div>
-                <div className="ml-4">
-                  <h1 className="text-2xl font-bold text-gray-900">{opportunity?.title}</h1>
-                  <p className="text-gray-600 mt-1">{opportunity?.organization_name || 'Organization'}</p>
-                  <div className="flex mt-2">
-                    {opportunity?.category_id && (
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full mr-2 ${getCategoryColorClass(opportunity.category_id)}`}>
-                        {getCategoryIcon(opportunity.category_id)}
-                        <span className="ml-1">{getCategoryName(opportunity.category_id, categories)}</span>
-                      </span>
-                    )}
-                    
-                    {opportunity?.location_type && (
-                      <span className="px-3 py-1 text-sm font-medium rounded-full bg-indigo-100 text-indigo-800 mr-2">
-                        {opportunity.location_type}
-                      </span>
-                    )}
-                    
-                    {opportunity?.status && (
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                        opportunity.status === 'published' ? 'bg-green-100 text-green-800' :
-                        opportunity.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                        opportunity.status === 'archived' ? 'bg-purple-100 text-purple-800' :
-                        opportunity.status === 'closed' ? 'bg-orange-100 text-orange-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {opportunity.status.charAt(0).toUpperCase() + opportunity.status.slice(1)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2">
-                <button 
-                  onClick={toggleFavorite}
-                  className={`p-2 rounded-full ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                >
-                  <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500' : ''}`} />
-                </button>
-                <button 
-                  onClick={shareOpportunity}
-                  className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
-                >
-                  <Share2 className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-full">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>{error}</span>
           </div>
-          
-          {/* Key details section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-gray-50">
-            <div className="flex items-center">
-              <div className="rounded-full bg-blue-100 p-2 mr-3">
-                <Calendar className="h-5 w-5 text-blue-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Application Deadline</p>
-                <p className="font-medium">{formatDate(opportunity?.application_deadline)}</p>
-                <p className={`text-sm mt-1 ${
-                  getDaysRemaining(opportunity?.application_deadline).includes('Expired') ? 'text-red-500' :
-                  getDaysRemaining(opportunity?.application_deadline).includes('today') || 
-                  getDaysRemaining(opportunity?.application_deadline).includes('1 day') ? 'text-orange-500' :
-                  'text-green-600'
-                }`}>
-                  {getDaysRemaining(opportunity?.application_deadline)}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center">
-              <div className="rounded-full bg-green-100 p-2 mr-3">
-                <MapPin className="h-5 w-5 text-green-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Location</p>
-                <p className="font-medium">{opportunity?.location || 'Not specified'}</p>
-                {opportunity?.location_type && (
-                  <p className="text-sm text-gray-500 mt-1">{opportunity.location_type}</p>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex items-center">
-              <div className="rounded-full bg-purple-100 p-2 mr-3">
-                <DollarSign className="h-5 w-5 text-purple-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Compensation</p>
-                {opportunity?.stipend_amount ? (
-                  <p className="font-medium">${opportunity.stipend_amount} per month</p>
-                ) : (
-                  <p className="font-medium">Not specified</p>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Action buttons */}
-          <div className="p-6 border-t border-gray-200 flex justify-end">
-            <Link 
-              href={`/opportunities/${opportunityId}/apply`}
-              className="px-6 py-2.5 bg-green-700 text-white rounded-md hover:bg-green-800 shadow-sm transition-colors duration-200 font-medium"
-            >
-              Apply Now
+          <div className="mt-4">
+            <Link href="/opportunities" className="text-red-700 font-medium hover:underline flex items-center">
+              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Opportunities
             </Link>
           </div>
         </div>
-        
-        {/* Main content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left column - Details */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Description */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold mb-4">About the Opportunity</h2>
-              <div className="prose max-w-none">
-                {opportunity?.description ? (
-                  <div dangerouslySetInnerHTML={{ __html: opportunity.description }} />
-                ) : (
-                  <p>{opportunity?.short_description || 'No description provided.'}</p>
-                )}
-              </div>
-            </div>
-            
-            {/* Requirements */}
-            {opportunity?.requirements && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-bold mb-4">Requirements</h2>
-                <div className="prose max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: opportunity.requirements }} />
-                </div>
-              </div>
-            )}
-            
-            {/* Responsibilities */}
-            {opportunity?.responsibilities && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-bold mb-4">Responsibilities</h2>
-                <div className="prose max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: opportunity.responsibilities }} />
-                </div>
-              </div>
-            )}
-            
-            {/* Benefits */}
-            {opportunity?.benefits && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-bold mb-4">Benefits</h2>
-                <div className="prose max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: opportunity.benefits }} />
-                </div>
-              </div>
-            )}
-            
-            {/* Apply button for bottom of page */}
-            <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-              <p className="text-gray-600 mb-4">Ready to apply for this opportunity?</p>
-              <Link 
-                href={`/opportunities/${opportunityId}/apply`}
-                className="px-10 py-3 bg-green-700 text-white rounded-md hover:bg-green-800 shadow-sm transition-colors duration-200 font-medium"
-              >
-                Apply Now
-              </Link>
+      </div>
+    );
+  }
+
+  // Debug output
+  console.log("Current opportunity state:", opportunity);
+  
+  if (!opportunity) {
+    return (
+      <div className="p-6 max-w-full">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative" role="alert">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>Opportunity not found</span>
+          </div>
+          <div className="mt-4">
+            <Link href="/opportunities" className="text-yellow-700 font-medium hover:underline flex items-center">
+              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Opportunities
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
+      {/* Hero Section - Reduced height since there's no image */}
+      <div className="relative h-[30vh] sm:h-[40vh] md:h-[40vh] w-full overflow-hidden">
+        <div className="w-full h-full bg-gradient-to-br from-green-900 via-green-800 to-green-900 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-800 flex items-center justify-center">
+              {opportunity.type === 'fellowship' && <GraduationCap className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'scholarship' && <Book className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'grant' && <Award className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'internship' && <Briefcase className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'program' && <Users className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'workshop' && <Target className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'competition' && <Award className="w-10 h-10 text-green-200" />}
+              {(!opportunity.type || !(opportunity.type in opportunityTypes)) && <FileText className="w-10 h-10 text-green-200" />}
             </div>
           </div>
-          
-          {/* Right column - Sidebar */}
-          <div className="space-y-6">
-            {/* Key dates */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Key Dates</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium">Posted on</p>
-                    <p className="text-sm text-gray-600">{formatDate(opportunity?.created_at)}</p>
-                  </div>
-                </li>
-                
-                <li className="flex items-start">
-                  <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium">Application Deadline</p>
-                    <p className="text-sm text-gray-600">{formatDate(opportunity?.application_deadline)}</p>
-                  </div>
-                </li>
-                
-                {opportunity?.start_date && (
-                  <li className="flex items-start">
-                    <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Start Date</p>
-                      <p className="text-sm text-gray-600">{formatDate(opportunity.start_date)}</p>
-                    </div>
-                  </li>
-                )}
-                
-                {opportunity?.end_date && (
-                  <li className="flex items-start">
-                    <Calendar className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">End Date</p>
-                      <p className="text-sm text-gray-600">{formatDate(opportunity.end_date)}</p>
-                    </div>
-                  </li>
-                )}
-              </ul>
-            </div>
-            
-            {/* Organization info */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Organization Information</h3>
-              <div className="flex items-center mb-4">
-                <div className={`w-10 h-10 rounded-md flex items-center justify-center text-white font-bold ${
-                  opportunity?.category_id ? getCategoryColorClass(opportunity.category_id).replace('bg-', 'bg-').replace('text-', 'text-')
-                  : 'bg-gray-200 text-gray-700'
-                }`}>
-                  {opportunity?.organization_logo 
-                    ? <img src={opportunity.organization_logo} alt="Logo" className="w-8 h-8 object-contain" />
-                    : getLogoPlaceholder(opportunity?.organization_name || opportunity?.title)
-                  }
-                </div>
-                <div className="ml-3">
-                  <p className="font-medium">{opportunity?.organization_name || 'Organization'}</p>
-                </div>
-              </div>
+        </div>
+        
+        {/* Hero Content */}
+        <div className="absolute inset-0 flex items-end">
+          <div className="container mx-auto px-4 pb-12">
+            <div className="max-w-4xl">
+              <Link
+                href="/opportunities"
+                className="inline-flex items-center text-white/80 hover:text-white transition-all duration-300 mb-6 group"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                <span className="relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
+                  Back to Opportunities
+                </span>
+              </Link>
               
-              <ul className="space-y-3">
-                {opportunity?.organization_website && (
-                  <li className="flex items-start">
-                    <Globe className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                    <a 
-                      href={opportunity.organization_website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      Website <ExternalLink className="h-3 w-3 inline" />
-                    </a>
-                  </li>
-                )}
-                
-                {opportunity?.contact_email && (
-                  <li className="flex items-start">
-                    <Mail className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                    <a 
-                      href={`mailto:${opportunity.contact_email}`}
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      {opportunity.contact_email}
-                    </a>
-                  </li>
-                )}
-                
-                {opportunity?.contact_phone && (
-                  <li className="flex items-start">
-                    <Phone className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                    <a 
-                      href={`tel:${opportunity.contact_phone}`}
-                      className="text-sm text-gray-600"
-                    >
-                      {opportunity.contact_phone}
-                    </a>
-                  </li>
-                )}
-                
-                {opportunity?.location && (
-                  <li className="flex items-start">
-                    <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                    <p className="text-sm text-gray-600">{opportunity.location}</p>
-                  </li>
-                )}
-              </ul>
-            </div>
-            
-            {/* Application stats */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Application Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Users className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-600">Applicants</span>
-                  </div>
-                  <span className="font-medium">{opportunity?.applicant_count || 0}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Eye className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-600">Views</span>
-                  </div>
-                  <span className="font-medium">{opportunity?.view_count || 0}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <Clock className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-600">Time Left</span>
-                  </div>
-                  <span className={`text-sm font-medium ${
-                    getDaysRemaining(opportunity?.application_deadline).includes('Expired') ? 'text-red-600' :
-                    getDaysRemaining(opportunity?.application_deadline).includes('today') || 
-                    getDaysRemaining(opportunity?.application_deadline).includes('1 day') ? 'text-orange-600' :
-                    'text-green-600'
-                  }`}>
-                    {getDaysRemaining(opportunity?.application_deadline)}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 leading-tight break-words">
+                {opportunity.title}
+              </h1>
+              
+              <div className="flex flex-wrap gap-4 text-white/90 mb-8 overflow-hidden max-w-full">
+                <div className="overflow-x-auto">
+                  <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
+                    <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Deadline: {formatDate(opportunity.application_deadline)}</span>
                   </span>
                 </div>
+                {opportunity.location && (
+                  <div className="overflow-x-auto">
+                    <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
+                      <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">{opportunity.location}</span>
+                    </span>
+                  </div>
+                )}
+                <div className="overflow-x-auto">
+                  <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
+                    <Tag className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">{opportunityTypes[opportunity.type] || opportunity.type}</span>
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300">
+                    {getStatusBadge(opportunity.status)}
+                  </div>
+                </div>
               </div>
             </div>
-            
-            {/* Similar opportunities */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Similar Opportunities</h3>
-              <p className="text-sm text-gray-500">More opportunities like this will appear here.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 md:px-8 lg:px-20 py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-12">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-16 w-full overflow-hidden">
+            {/* Description */}
+            <div className="space-y-8">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">About the Opportunity</h2>
+              </div>
+              <div className="break-words bg-white p-6 rounded-lg border border-gray-200">
+                <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed w-full whitespace-pre-line">
+                  {opportunity.description || 'No description provided.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Eligibility */}
+            {opportunity.eligibility_criteria && (
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Eligibility Criteria</h2>
+                </div>
+                <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-6">
+                  {/* Education level */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center mb-3">
+                      <GraduationCap className="w-5 h-5 text-green-700 mr-2" />
+                      <h3 className="font-medium">Minimum Education Required</h3>
+                    </div>
+                    <p className="ml-7">{opportunity.eligibility_criteria.min_education_level || 'No specific education requirements'}</p>
+                  </div>
+                  
+                  {/* Experience */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center mb-3">
+                      <Briefcase className="w-5 h-5 text-green-700 mr-2" />
+                      <h3 className="font-medium">Experience Required</h3>
+                    </div>
+                    <p className="ml-7">
+                      {opportunity.eligibility_criteria.experience_years ?
+                        `${opportunity.eligibility_criteria.experience_years} year${opportunity.eligibility_criteria.experience_years !== 1 ? 's' : ''} of experience required` :
+                        'No specific experience requirements'}
+                    </p>
+                  </div>
+                  
+                  {/* Eligible countries */}
+                  {opportunity.eligibility_criteria.countries && opportunity.eligibility_criteria.countries.length > 0 && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-3">
+                        <Globe className="w-5 h-5 text-green-700 mr-2" />
+                        <h3 className="font-medium">Eligible Countries</h3>
+                      </div>
+                      <div className="ml-7">
+                        <div className="flex flex-wrap gap-2">
+                          {opportunity.eligibility_criteria.countries.map((country, index) => (
+                            <span key={index} className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
+                              {country}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Skills required */}
+                  {opportunity.eligibility_criteria.skills_required && opportunity.eligibility_criteria.skills_required.length > 0 && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-3">
+                        <Code className="w-5 h-5 text-green-700 mr-2" />
+                        <h3 className="font-medium">Required Skills</h3>
+                      </div>
+                      <div className="ml-7">
+                        <div className="flex flex-wrap gap-2">
+                          {opportunity.eligibility_criteria.skills_required.map((skill, index) => (
+                            <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Other requirements */}
+                  {opportunity.eligibility_criteria.other_requirements && opportunity.eligibility_criteria.other_requirements.length > 0 && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-3">
+                        <ListChecks className="w-5 h-5 text-green-700 mr-2" />
+                        <h3 className="font-medium">Other Requirements</h3>
+                      </div>
+                      <ul className="ml-7 list-disc pl-5 space-y-1">
+                        {opportunity.eligibility_criteria.other_requirements.map((req, index) => (
+                          <li key={index}>{req}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Fellowship Program Structure */}
+            {opportunity.type === 'fellowship' && opportunity.fellowship_details && (
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Program Structure</h2>
+                </div>
+                <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-8">
+                  {/* Learning outcomes */}
+                  {opportunity.fellowship_details.learning_outcomes && opportunity.fellowship_details.learning_outcomes.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Learning Outcomes</h3>
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <ul className="list-disc pl-5 space-y-2">
+                          {opportunity.fellowship_details.learning_outcomes.map((outcome, index) => (
+                            <li key={index} className="text-gray-700">{outcome}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Program phases */}
+                  {opportunity.fellowship_details.program_structure && 
+                   opportunity.fellowship_details.program_structure.phases && 
+                   opportunity.fellowship_details.program_structure.phases.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Program Phases</h3>
+                      <div className="space-y-4">
+                        {opportunity.fellowship_details.program_structure.phases.map((phase, index) => (
+                          <div key={index} className="p-4 bg-gray-50 rounded-lg border-l-4 border-green-700">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-medium">{phase.name}</h4>
+                              <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
+                                {phase.duration_weeks} week{phase.duration_weeks !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            <p className="text-gray-600">{phase.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Program activities */}
+                  {opportunity.fellowship_details.program_structure && 
+                   opportunity.fellowship_details.program_structure.activities && 
+                   opportunity.fellowship_details.program_structure.activities.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Program Activities</h3>
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {opportunity.fellowship_details.program_structure.activities.map((activity, index) => (
+                            <div key={index} className="flex items-center">
+                              <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                              <span>{activity}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Application Form */}
+            {opportunity.custom_questions && opportunity.custom_questions.length > 0 && (
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Application Form</h2>
+                </div>
+                <div className="bg-white p-6 rounded-lg border border-gray-200">
+                  <p className="text-gray-700 mb-6">
+                    Below are the custom questions that applicants will need to answer when applying for this opportunity.
+                  </p>
+                  
+                  <div className="space-y-6">
+                    {opportunity.custom_questions.map((question, index) => (
+                      <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-start">
+                            <span className="bg-green-100 text-green-800 text-xs font-medium rounded px-2 py-1 mr-2">
+                              Q{index + 1}
+                            </span>
+                            <div>
+                              <h3 className="font-medium">{question.question}</h3>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Field type: <span className="font-semibold capitalize">{question.field_type}</span>
+                                {question.is_required && <span className="ml-2 text-red-600">Required</span>}
+                                {question.max_length && <span className="ml-2">Max length: {question.max_length} characters</span>}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-500">Order: {question.order}</span>
+                        </div>
+                        
+                        {/* Show options for multi-select or single-select questions */}
+                        {(question.field_type === 'multiselect' || question.field_type === 'select') && question.options && (
+                          <div className="mt-3 pl-8">
+                            <p className="text-sm font-medium mb-2">Options:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {question.options.map((option, optIndex) => (
+                                <span key={optIndex} className="px-2 py-1 bg-gray-200 text-gray-800 rounded text-sm">
+                                  {option}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* Action Button */}
+            <div className="sticky top-4">
+              <div className="bg-white p-6 rounded-lg border border-gray-200 mb-8">
+              <Link 
+  href={`${opportunity.id}/apply`} 
+  className="w-full block text-center px-4 py-3 bg-green-700 rounded-lg text-sm font-medium text-white hover:bg-green-800 transition-colors"
+>
+  Apply to Opportunity
+</Link>
+              </div>
+
+              {/* Basic Information */}
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Opportunity Information</h2>
+                </div>
+                <div className="space-y-4 w-full overflow-hidden bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <Tag className="w-4 h-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-500">Type</span>
+                    </div>
+                    <p className="font-medium capitalize">{opportunityTypes[opportunity.type] || opportunity.type}</p>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <Tag className="w-4 h-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-500">Category</span>
+                    </div>
+                    <p className="font-medium">{getCategoryName(opportunity.category_id)}</p>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <MapPin className="w-4 h-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-500">Location</span>
+                    </div>
+                    <p className="font-medium">{opportunity.location || 'Not specified'}</p>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <Laptop className="w-4 h-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-500">Location Type</span>
+                    </div>
+                    <p className="font-medium capitalize">{opportunity.location_type || 'Not specified'}</p>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-500">Application Deadline</span>
+                    </div>
+                    <p className="font-medium">{formatDate(opportunity.application_deadline)}</p>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <Clock className="w-4 h-4 text-gray-500 mr-2" />
+                      <span className="text-sm text-gray-500">Status</span>
+                    </div>
+                    <p className="font-medium capitalize">{opportunity.status || 'Draft'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* For fellowship-specific details */}
+              {opportunity.type === 'fellowship' && opportunity.fellowship_details && (
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Fellowship Details</h2>
+                  </div>
+                  <div className="space-y-4 w-full overflow-hidden bg-white rounded-lg border border-gray-200 p-6">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-2">
+                        <GraduationCap className="w-4 h-4 text-gray-500 mr-2" />
+                        <span className="text-sm text-gray-500">Program Name</span>
+                      </div>
+                      <p className="font-medium">{opportunity.fellowship_details.program_name || 'Not specified'}</p>
+                    </div>
+                    
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-2">
+                        <Users className="w-4 h-4 text-gray-500 mr-2" />
+                        <span className="text-sm text-gray-500">Cohort</span>
+                      </div>
+                      <p className="font-medium">{opportunity.fellowship_details.cohort || 'Not specified'}</p>
+                    </div>
+                    
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center mb-2">
+                        <Book className="w-4 h-4 text-gray-500 mr-2" />
+                        <span className="text-sm text-gray-500">Fellowship Type</span>
+                      </div>
+                      <p className="font-medium capitalize">{opportunity.fellowship_details.fellowship_type || 'Not specified'}</p>
+                    </div>
+                    
+                    {opportunity.fellowship_details.duration && (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center mb-2">
+                          <Clock className="w-4 h-4 text-gray-500 mr-2" />
+                          <span className="text-sm text-gray-500">Duration</span>
+                        </div>
+                        <p className="font-medium">{opportunity.fellowship_details.duration || 'Not specified'}</p>
+                      </div>
+                    )}
+
+                    {opportunity.fellowship_details.start_date && (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center mb-2">
+                          <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                          <span className="text-sm text-gray-500">Start Date</span>
+                        </div>
+                        <p className="font-medium">{formatDate(opportunity.fellowship_details.start_date)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
