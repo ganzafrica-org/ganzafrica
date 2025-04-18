@@ -7,7 +7,8 @@
     "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build-no-checks": "NEXT_SKIP_TYPE_CHECK=true NEXT_DISABLE_ESLINT=true next build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
