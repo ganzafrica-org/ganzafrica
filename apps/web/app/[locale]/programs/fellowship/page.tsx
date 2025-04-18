@@ -27,6 +27,10 @@ interface Testimonial {
   quote: string;
   image: string;
 }
+type Opportunity = {
+  id: string;
+  title: string;
+};
 
 const testimonials: Testimonial[] = [
   {
@@ -117,9 +121,12 @@ const topics = [
 ];
 
 export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [currentTestimonial, setCurrentTestimonial] = useState<number>(0);
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const topicsRef = useRef<HTMLDivElement>(null);
+  const [featuredOpportunity, setFeaturedOpportunity] = useState<Opportunity | null>(null);
+
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
@@ -154,7 +161,6 @@ export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
 
     return () => clearInterval(slideInterval);
   }, []);
-
   return (
     <div className="min-h-screen bg-white font-sans">
       <Header locale={locale} dict={dict} />
@@ -181,7 +187,7 @@ export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
               transition={{ duration: 0.8 }}
               className="text-3xl md:text-5xl font-bold text-white mb-4"
             >
-              GanzAfrica <span className="text-[#FDB022]">Fellowship</span>
+              GanzAfrica <span className="text-primary-orange">Fellowship</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -198,12 +204,12 @@ export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
               className="flex items-center justify-center gap-4"
             >
               <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
-                <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-[#045F3C] font-semibold px-6 py-4 text-base">
+                <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
                   How to Apply
                 </Button>
               </Link>
-              <Link href={`/${locale}/programs/fellowship/apply`}>
-                <Button className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white font-semibold px-6 py-4 text-base">
+              <Link href={`/${locale}/opportunities/${featuredOpportunity?.id}/apply`}>
+              <Button className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white font-semibold px-6 py-4 text-base">
                   Apply now
                 </Button>
               </Link>
@@ -256,7 +262,7 @@ export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
               </p>
               
               <Link href={`/${locale}/about/team`}>
-                <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-8 py-3 text-lg rounded-lg">
+                <Button className="bg-primary-orange hover:bg-primary-orange text-black font-medium px-8 py-3 text-lg rounded-lg">
                   Meet the Fellows
                 </Button>
               </Link>
@@ -553,7 +559,7 @@ export default function FellowshipPage({ locale, dict }: FellowshipPageProps) {
               </button>
               <button 
                 onClick={nextTestimonial}
-                className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#045F3C] flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-full"
+                className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-full"
                 aria-label="Next testimonial"
               >
                 <ArrowRight className="w-6 h-6 text-white" />

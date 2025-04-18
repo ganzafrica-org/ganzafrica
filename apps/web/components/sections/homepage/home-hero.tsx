@@ -286,7 +286,7 @@ export default function HomeHero({
 
     tl.to(initialContentRef.current, {
       opacity: 0,
-      duration: 7.5,
+      duration: 5.5,
     })
       .to(whiteOverlayRef.current, {
         y: "0%",
