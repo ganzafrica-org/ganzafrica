@@ -17,12 +17,11 @@ export async function generateMetadata({
                                        }: {
     params: { locale: string };
 }): Promise<Metadata> {
-    // First await the params object
-    const resolvedParams = await params;
-    const locale = resolvedParams.locale;
+    const locale = params.locale;
     const dict = await getDictionary(locale);
 
     return baseGenerateMetadata({
+        params: { locale },
         title: dict.site.name,
         description: dict.site.description,
         locale,
@@ -30,31 +29,31 @@ export async function generateMetadata({
     });
 }
 
+
 export default async function HomePage({
-                                           params,
-                                       }: {
-    params: { locale: string };
+  params,
+}: {
+  params: { locale: string };
 }) {
-    const resolvedParams = await params;
-    const locale = resolvedParams.locale;
-    const dict = await getDictionary(locale);
+  const resolvedParams = await params;
+  const locale = resolvedParams.locale;
+  const dict = await getDictionary(locale);
 
-    return (
-        <main>
-
-            <FellowsSection locale={locale} dict={dict} />
-            <WhyGanzAfricaSection locale={locale} dict={dict} />
-            <GanzAfricaUniqueSection locale={locale} dict={dict} />
-            <FlagshipProgramsSection locale={locale} dict={dict} />
-            <ProjectsSection locale={locale} dict={dict} />
-            <PartnersSection locale={locale} dict={dict} />
-            <TestimonialsSection locale={locale} dict={dict} />
-            <LatestNewsSection locale={locale} dict={dict} />
-            <NewsletterSection locale={locale} dict={dict} />
-        </main>
-    );
+  return (
+    <main>
+      <FellowsSection locale={locale} dict={dict} />
+      <WhyGanzAfricaSection locale={locale} dict={dict} />
+      <GanzAfricaUniqueSection locale={locale} dict={dict} />
+      <FlagshipProgramsSection locale={locale} dict={dict} />
+      <ProjectsSection locale={locale} dict={dict} />
+      <PartnersSection locale={locale} dict={dict} />
+      <TestimonialsSection locale={locale} dict={dict} />
+      <LatestNewsSection locale={locale} dict={dict} />
+      <NewsletterSection locale={locale} dict={dict} />
+    </main>
+  );
 }
 
 export async function generateStaticParams() {
-    return [{ locale: "en" }, { locale: "fr" }];
+  return [{ locale: "en" }, { locale: "fr" }];
 }

@@ -1,7 +1,33 @@
-'use client';
+"use client";
 
-import { VerifyEmail } from '@/components/auth';
-import { Logo } from '@/components/ui/logo';
+import { Suspense } from "react";
+import { VerifyEmail } from "@/components/auth";
+import { Logo } from "@/components/ui/logo";
+import { Skeleton } from "@workspace/ui/components/skeleton";
+import {
+    Card,
+    CardHeader,
+    CardContent,
+    CardFooter
+} from "@workspace/ui/components/card";
+
+function VerifyEmailSkeleton() {
+    return (
+        <Card className="w-full max-w-md mx-auto">
+            <CardHeader className="space-y-2">
+                <Skeleton className="h-7 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </CardContent>
+            <CardFooter>
+                <Skeleton className="h-4 w-2/3 mx-auto" />
+            </CardFooter>
+        </Card>
+    );
+}
 
 export default function VerifyEmailPage() {
     return (
@@ -13,7 +39,9 @@ export default function VerifyEmailPage() {
                 </h1>
             </div>
             <div className="w-full max-w-md">
-                <VerifyEmail />
+                <Suspense fallback={<VerifyEmailSkeleton />}>
+                    <VerifyEmail />
+                </Suspense>
             </div>
         </div>
     );
