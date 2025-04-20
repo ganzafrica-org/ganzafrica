@@ -2,5 +2,12 @@
   "version": "5",
   "dialect": "pg",
   "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1745136292230,
+      "tag": "0000_windy_magik",
+      "breakpoints": true
+    }
   ]
 }
