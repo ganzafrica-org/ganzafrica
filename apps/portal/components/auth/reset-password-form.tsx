@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import * as React from 'react';
 import { useState } from 'react';
@@ -7,17 +7,24 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
-import { Button } from '@workspace/ui/components/button';
+import { Button } from "@workspace/ui/components/button";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from '@workspace/ui/components/form';
-import { Input } from '@workspace/ui/components/input';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@workspace/ui/components/card';
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@workspace/ui/components/form";
+import { Input } from "@workspace/ui/components/input";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@workspace/ui/components/card";
 
 import apiClient from '@/lib/api-client';
 
