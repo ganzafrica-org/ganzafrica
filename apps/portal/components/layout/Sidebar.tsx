@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { Users } from 'lucide-react'; 
 import {
   LayoutGrid,
   FolderGit2,
@@ -327,6 +328,16 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                   <FileText className="w-5 h-5 flex-shrink-0" />
                   {!isCollapsed && <span className="ml-3 font-medium">News & Updates</span>}
                 </Link>
+                <Link
+    href="/partners"
+    className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+        pathname === '/partners' || pathname.startsWith('/partners/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+    }`}
+>
+    <Users className="w-5 h-5 flex-shrink-0" />
+    {!isCollapsed && <span className="ml-3 font-medium">Partners</span>}
+</Link>
+
 
                 <Link
                     href="/testimonials"

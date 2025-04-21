@@ -21,10 +21,12 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@workspace/ui/components/
 import { Card } from '@workspace/ui/components/card';
 
 import apiClient from '@/lib/api-client';
-import {AtSign, LockKeyhole} from "lucide-react";
+import { AtSign, LockKeyhole } from "lucide-react";
+import { useAuth } from '@/components/auth/auth-provider'; // Update path if needed
 
 export function LoginForm() {
     const router = useRouter();
+    const { refreshUser } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
     const [twoFactorMethod, setTwoFactorMethod] = useState<'authenticator' | 'email'>('authenticator');
@@ -49,20 +51,39 @@ export function LoginForm() {
     const handleLogin = async (data: { email: string; password: string }) => {
         setIsLoading(true);
         try {
+            console.log('Attempting login with:', data.email);
             const response = await apiClient.post('/auth/login', data);
+            console.log('Login response:', response.data);
 
             // Check if two-factor authentication is required
-            if (response.data.data?.requiresTwoFactor) {
+            if (response.data?.requiresTwoFactor) {
                 setRequiresTwoFactor(true);
-                setTwoFactorMethod(response.data.data.twoFactorMethod);
-                setTempToken(response.data.data.tempToken);
+                setTwoFactorMethod(response.data.twoFactorMethod);
+                setTempToken(response.data.tempToken);
                 toast.info('Two-factor authentication required');
             } else {
-                // Direct login successful
-                toast.success('Login successful');
-                router.push('/dashboard');
+                // Store tokens from successful login
+                if (response.data.token) {
+                    localStorage.setItem('accessToken', response.data.token);
+                    
+                    // If a refresh token is included, store it too
+                    if (response.data.refreshToken) {
+                        localStorage.setItem('refreshToken', response.data.refreshToken);
+                    }
+                    
+                    // Refresh the user state based on the new token
+                    await refreshUser();
+                    
+                    // Login successful
+                    toast.success('Login successful');
+                    router.push('/dashboard');
+                } else {
+                    toast.error('Login failed: No authentication token received');
+                    console.error('Missing token in response:', response.data);
+                }
             }
         } catch (error: any) {
+            console.error('Login error:', error);
             toast.error(error.response?.data?.message || 'Login failed');
         } finally {
             setIsLoading(false);
@@ -73,14 +94,31 @@ export function LoginForm() {
     const handleVerify = async (data: { totpCode: string }) => {
         setIsLoading(true);
         try {
-            const response = await apiClient.post('/verify-two-factor', {
+            const response = await apiClient.post('/auth/verify-two-factor', {
                 token: tempToken,
                 code: data.totpCode
             });
 
-            toast.success('Authentication successful');
-            router.push('/dashboard');
+            // Store tokens from successful verification
+            if (response.data.token) {
+                localStorage.setItem('accessToken', response.data.token);
+                
+                // If a refresh token is included, store it too
+                if (response.data.refreshToken) {
+                    localStorage.setItem('refreshToken', response.data.refreshToken);
+                }
+                
+                // Refresh the user state based on the new token
+                await refreshUser();
+                
+                toast.success('Authentication successful');
+                router.push('/dashboard');
+            } else {
+                toast.error('Verification failed: No authentication token received');
+                console.error('Missing token in 2FA response:', response.data);
+            }
         } catch (error: any) {
+            console.error('2FA verification error:', error);
             toast.error(error.response?.data?.message || 'Verification failed');
         } finally {
             setIsLoading(false);

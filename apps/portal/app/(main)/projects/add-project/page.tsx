@@ -32,7 +32,13 @@ const AddProjectPage = () => {
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState<any[]>([]);
-  const [filteredTeamMembers, setFilteredTeamMembers] = useState([]);
+  interface TeamMember {
+    id: number;
+    name: string;
+    team_type?: string;
+  }
+  
+  const [filteredTeamMembers, setFilteredTeamMembers] = useState<TeamMember[]>([]);
   const [roles, setRoles] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -886,101 +892,93 @@ const AddProjectPage = () => {
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess(false);
+  interface ProjectData {
+    name: string;
+    description: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    category_id: number; // Changed to number
+    location: string;
+    goals: {
+      items: Array<{
+        id: string;
+        title: string;
+        description: string;
+        completed: boolean;
+        order: number;
+      }>;
+    };
+    outcomes: {
+      items: Array<{
+        id: string;
+        title: string;
+        description: string;
+        status: string;
+        order: number;
+      }>;
+    };
+    media: {
+      items: Array<{
+        id: string;
+        type: string;
+        url: string;
+        title: string;
+        description: string;
+        tag: string;
+        cover: boolean;
+        order: number;
+        size: number;
+        isExternalUrl: boolean;
+        duration?: number;
+        thumbnailUrl?: string | null;
+      }>;
+    };
+    members: Array<{
+      user_id: number;
+      role: string;
+    }>;
+  }
+ // Change this part in your AddProjectPage component
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setSuccess(false);
+  
+  try {
+    // Create a new object with the correct data types for submission
+    const submissionData: ProjectData = {
+      ...formData,
+      // Convert category_id from string to number
+      category_id: formData.category_id ? parseInt(formData.category_id as string, 10) : null,
+      // Ensure members have numeric user_ids
+      members: formData.members.map(member => ({
+        ...member,
+        user_id: typeof member.user_id === 'string' ? parseInt(member.user_id, 10) : member.user_id
+      }))
+    };
     
-    // Validate form data
-    if (!formData.name || !formData.category_id || !formData.start_date) {
-      setError('Please fill in all required fields (Project Name, Category, Start Date)');
-      setLoading(false);
-      return;
-    }
+    // Submit without checking for auth token
+    const response = await axios.post(
+      'http://localhost:3002/api/projects',
+      submissionData
+    );
     
-    try {
-      // Convert blob URLs to base64 for storing in the database
-      const mediaWithBase64 = await Promise.all(
-        formData.media.items.map(async (media) => {
-          const result = { ...media };
-          
-          // Only convert local blob URLs, not external URLs
-          if (media.url && media.url.startsWith('blob:') && !media.isExternalUrl) {
-            try {
-              const response = await fetch(media.url);
-              const blob = await response.blob();
-              const reader = new FileReader();
-              
-              const base64Url = await new Promise((resolve, reject) => {
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-              
-              result.url = base64Url;
-            } catch (error) {
-              console.error('Error converting blob URL to base64:', error);
-            }
-          }
-          
-          // Convert thumbnail URL if it exists and is a blob
-          if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
-            try {
-              const response = await fetch(media.thumbnailUrl);
-              const blob = await response.blob();
-              const reader = new FileReader();
-              
-              const base64Thumbnail = await new Promise((resolve, reject) => {
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-              
-              result.thumbnailUrl = base64Thumbnail;
-            } catch (error) {
-              console.error('Error converting thumbnail URL to base64:', error);
-            }
-          }
-          
-          return result;
-        })
-      );
-      
-      // Prepare data for API with converted media URLs
-      const projectData = {
-        ...formData,
-        category_id: parseInt(formData.category_id),
-        media: {
-          items: mediaWithBase64
-        }
-      };
-      
-      const response = await axios.post('http://localhost:3002/api/projects', projectData);
-      console.log('Project created:', response.data);
-      setSuccess(true);
-      
-      // Revoke all object URLs to prevent memory leaks
-      formData.media.items.forEach(media => {
-        if (media.url && media.url.startsWith('blob:')) {
-          URL.revokeObjectURL(media.url);
-        }
-        if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
-          URL.revokeObjectURL(media.thumbnailUrl);
-        }
-      });
-      
-      // Navigate back to projects list after a brief delay
-      setTimeout(() => {
-        router.push('/projects');
-      }, 2000);
-    } catch (error) {
-      console.error('Error creating project:', error);
-      setError(error.response?.data?.message || 'Failed to create project. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    console.log('Project created successfully:', response.data);
+    setSuccess(true);
+    
+    // Redirect to project detail or projects list
+    setTimeout(() => {
+      router.push('/projects');
+    }, 2000);
+  } catch (error: any) {
+    console.error('Error creating project:', error);
+    setError(error.response?.data?.message || 'Failed to create project. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -1081,7 +1079,6 @@ const AddProjectPage = () => {
                       className="w-full p-2.5 border border-gray-300 rounded-md"
                       required
                     />
-                    <Calendar className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
                 
@@ -1098,7 +1095,6 @@ const AddProjectPage = () => {
                       onChange={handleChange}
                       className="w-full p-2.5 border border-gray-300 rounded-md"
                     />
-                    <Calendar className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
                 
@@ -1113,7 +1109,7 @@ const AddProjectPage = () => {
                       value={formData.status}
                       onChange={handleChange}
                       className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
-                      >
+                    >
                       <option value="planned">Planned</option>
                       <option value="active">Active</option>
                       <option value="completed">Completed</option>
@@ -1366,7 +1362,7 @@ const AddProjectPage = () => {
                   className="text-sm flex items-center text-green-700 hover:text-green-800"
                 >
                   <UserPlus className="w-4 h-4 mr-1" />
-                  Add New Team M
+                  Add New Team Member
                 </a>
               </div>
               
@@ -1418,24 +1414,23 @@ const AddProjectPage = () => {
                         <CommandInput placeholder="Search team members..." />
                         <CommandEmpty>No team members found.</CommandEmpty>
                         <CommandGroup heading="All Members">
-  {filteredTeamMembers.map(member => (
-    <CommandItem
-      key={teams.id}
-      value={teams.name} 
-      onSelect={() => {
-        setNewMember(prev => ({ ...prev, user_id: member.id }));
-        setPopoverOpen(false);
-      }}
-    >
-      <div className="flex items-center justify-between w-full">
-        <div>
-          {teams.name}
-        </div>
-      </div>
-    </CommandItem>
-  ))}
-</CommandGroup>
-
+                          {filteredTeamMembers.map(member => (
+                            <CommandItem
+                              key={member.id}
+                              value={`${member.name}`} 
+                              onSelect={() => {
+                                setNewMember(prev => ({ ...prev, user_id: member.id }));
+                                setPopoverOpen(false);
+                              }}
+                            >
+                              <div className="flex items-center justify-between w-full">
+                                <div>
+                                  {member.name}
+                                </div>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
                       </Command>
                     </PopoverContent>
                   </Popover>
@@ -1445,19 +1440,19 @@ const AddProjectPage = () => {
                     Role<span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                  <select
-                    name="role"
-                    value={newMember.role}
-                    onChange={handleMemberChange}
-                    className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
-                  >
-                    <option value="">Select a role</option>
-                    {Array.isArray(roles) && roles.map(role => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
+                    <select
+                      name="role"
+                      value={newMember.role}
+                      onChange={handleMemberChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                    >
+                      <option value="">Select a role</option>
+                      {Array.isArray(roles) && roles.map(role => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
@@ -1465,7 +1460,6 @@ const AddProjectPage = () => {
             </div>
           </div>
         </div>
-
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
 
@@ -1567,7 +1561,7 @@ const AddProjectPage = () => {
                       </label>
                     </div>
                     <div className="flex items-center">
-                    <input
+                      <input
                         type="radio"
                         id="mediaTypeVideo"
                         name="type"
@@ -1637,7 +1631,7 @@ const AddProjectPage = () => {
                     <div className="mb-4 border rounded overflow-hidden bg-gray-100 p-2 flex items-center justify-center">
                       {newMedia.type === 'image' ? (
                         <div className="text-center p-4">
-                          <Image className="w-8 h-8 mx-auto text-gray-400" />
+                         <Image className="w-8 h-8 mx-auto text-gray-400" />
                           <p className="text-sm text-gray-500 mt-2">Image will be loaded from URL</p>
                         </div>
                       ) : (
