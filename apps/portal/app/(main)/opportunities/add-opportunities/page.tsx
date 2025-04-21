@@ -72,11 +72,10 @@ const fieldTypes = [
 
 // Sample project categories
 const categoryOptions = [
-  { value: 1, label: 'Technology' },
-  { value: 2, label: 'Business' },
-  { value: 3, label: 'Research' },
-  { value: 4, label: 'Education' },
-  { value: 5, label: 'Healthcare' }
+  { value: 1, label: 'Land' },
+  { value: 2, label: 'Agriculture' },
+  { value: 3, label: 'Environment' },
+ 
 ];
 
 const CreateOpportunityForm = () => {
@@ -134,16 +133,16 @@ const CreateOpportunityForm = () => {
   
   // Country options for selector (simplified list)
   const countryOptions = [
-    { label: 'United States', value: 'USA' },
-    { label: 'Canada', value: 'Canada' },
-    { label: 'United Kingdom', value: 'UK' },
-    { label: 'Australia', value: 'Australia' },
-    { label: 'Germany', value: 'Germany' },
-    { label: 'France', value: 'France' },
-    { label: 'Japan', value: 'Japan' },
-    { label: 'China', value: 'China' },
-    { label: 'Brazil', value: 'Brazil' },
-    { label: 'India', value: 'India' }
+    { label: 'Rwanda', value: 'RW' },
+    { label: 'Uganda', value: 'UG' },
+    { label: 'Kenya', value: 'KE' },
+    { label: 'Burkina Faso', value: 'BF' },
+    { label: 'Ghana', value: 'GH' },
+    { label: 'Nigeria', value: 'NG' },
+    { label: 'South Africa', value: 'ZA' },
+    { label: 'Ethiopia', value: 'ET' },
+    { label: 'Tanzania', value: 'TZ' },
+    { label: 'Senegal', value: 'SN' }    
   ];
 
   // State for selectors
