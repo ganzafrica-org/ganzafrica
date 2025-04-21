@@ -3,8 +3,9 @@ import { authService, userService, emailService } from "../services";
 import { AppError } from "@/middlewares";
 import { constants, Logger } from "../config";
 import { db } from "@/db/client";
-import { roles } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { roles, users } from "@/db/schema";
+
 
 const logger = new Logger("AuthController");
 
@@ -67,41 +68,56 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    // Skip role check entirely and modify the createUser function to not require a role
     try {
-      // Modify user creation to skip role_id
+      // First, get a default role for new users
+      let defaultRoleId: number;
+      
+      try {
+        // First try to find a role with name "public"
+        const publicRole = await db.select().from(roles).where(eq(roles.name, "public")).limit(1);
+        
+        if (publicRole && publicRole.length > 0) {
+          defaultRoleId = publicRole[0].id;
+          logger.info(`Using public role with ID: ${defaultRoleId}`);
+        } else {
+          // If no "public" role, get the first available role
+          const anyRole = await db.select().from(roles).limit(1);
+          
+          if (!anyRole || anyRole.length === 0) {
+            throw new AppError("No roles found in the database. Database setup may be incomplete.", 500);
+          }
+          
+          defaultRoleId = anyRole[0].id;
+          logger.info(`Public role not found. Using alternate role with ID: ${defaultRoleId}`);
+        }
+      } catch (roleError) {
+        logger.error("Error accessing roles table:", roleError);
+        throw new AppError("Failed to assign a role to the new user. Database setup may be incomplete.", 500);
+      }
+      
+      // Insert the user WITH the default role_id
       const user = await db.transaction(async (tx) => {
-        // Insert the user without a role_id
-        const result = await tx.execute(`
-          INSERT INTO users (
-            email, 
-            password_hash, 
-            name, 
-            is_active, 
-            email_verified, 
-            phone_verified, 
-            account_locked, 
-            failed_login_attempts,
-            created_at, 
-            updated_at
-          ) 
-          VALUES (
-            '${email}', 
-            '${await authService.hashPassword(password)}', 
-            '${name}', 
-            true, 
-            false, 
-            false, 
-            false, 
-            0,
-            NOW(), 
-            NOW()
-          )
-          RETURNING *;
-        `);
+        // Hash the password first
+        const passwordHash = await authService.hashPassword(password);
+        
+        // Use Drizzle ORM's insert method instead of raw SQL
+        // This ensures proper escaping of all values including the password hash
+        const result = await tx.insert(users).values({
+          email: email,
+          password_hash: passwordHash,
+          name: name,
+          role_id: defaultRoleId,
+          is_active: true,
+          email_verified: false,
+          phone_verified: false,
+          account_locked: false,
+          failed_login_attempts: 0,
+          created_at: new Date(),
+          updated_at: new Date()
+        }).returning();
         
         // Return the created user
-        return result.rows[0];
+        return result[0];
       });
 
       // Send welcome email after successful user creation
@@ -352,23 +368,7 @@ export const refreshToken = async (
   }
 };
 
-/**
- * @swagger
- * /auth/me:
- *   get:
- *     summary: Get current user info
- *     tags: [Authentication]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: User info retrieved successfully
- *       401:
- *         description: Unauthorized
- *       500:
- *         description: Server error
- */
+
 export const getCurrentUser = async (
   req: Request,
   res: Response,

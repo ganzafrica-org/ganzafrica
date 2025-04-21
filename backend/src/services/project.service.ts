@@ -13,7 +13,6 @@ export type CreateProjectInput = {
   status: string;
   start_date: Date;
   end_date?: Date;
-  created_by: number;
   category_id: number;
   members?: ProjectMemberInput[];
   location?: string;
@@ -119,7 +118,6 @@ export type ProjectOutput = {
   status: string;
   start_date: Date;
   end_date: Date | null;
-  created_by: number;
   category_id: number;
   created_at: Date;
   updated_at: Date;
@@ -193,7 +191,6 @@ type ProjectSearchParams = {
   sort_by?: string;
   sort_order?: "asc" | "desc";
   status?: string;
-  created_by?: number;
   member_id?: number;
   category_id?: number;
 };
@@ -223,7 +220,6 @@ export async function createProject(
           status: projectData.status,
           start_date: projectData.start_date,
           end_date: projectData.end_date || null,
-          created_by: projectData.created_by,
           category_id: projectData.category_id,
           location: projectData.location || null,
           
@@ -255,20 +251,6 @@ export async function createProject(
             end_date: member.end_date || null,
           });
         }
-      }
-
-      // Always add creator as a member with 'lead' role if not already added
-      const creatorAlreadyAdded = projectData.members?.some(
-        (member) => member.user_id === projectData.created_by,
-      );
-
-      if (!creatorAlreadyAdded) {
-        await txDb.insert(project_members).values({
-          project_id: projectId,
-          user_id: projectData.created_by,
-          role: "lead",
-          start_date: new Date(),
-        });
       }
 
       // Get the created project
@@ -562,7 +544,6 @@ export async function listProjects(
       sort_by = "created_at",
       sort_order = "desc",
       status,
-      created_by,
       member_id,
       category_id,
     } = params;
@@ -597,9 +578,6 @@ export async function listProjects(
       }
     }
 
-    if (created_by) {
-      whereConditions.push(eq(projects.created_by, created_by));
-    }
 
     if (category_id) {
       whereConditions.push(eq(projects.category_id, category_id));
@@ -744,7 +722,6 @@ export async function importProjects(
               status: projectData.status,
               start_date: projectData.start_date,
               end_date: projectData.end_date || null,
-              created_by: projectData.created_by,
               category_id: projectData.category_id,
               location: projectData.location || null,
               
@@ -778,20 +755,6 @@ export async function importProjects(
             }
           }
 
-          // Always add creator as a member with 'lead' role if not already added
-          const creatorAlreadyAdded = projectData.members?.some(
-            (member) => member.user_id === projectData.created_by,
-          );
-
-          if (!creatorAlreadyAdded) {
-            await txDb.insert(project_members).values({
-              project_id: projectId,
-              user_id: projectData.created_by,
-              role: "lead",
-              start_date: new Date(),
-            });
-          }
-
           result.successful++;
         } catch (error) {
           logger.error(`Error importing project: ${projectData.name}`, error);
@@ -820,7 +783,6 @@ function mapToProjectOutput(project: any): ProjectOutput {
     status: project.status,
     start_date: project.start_date,
     end_date: project.end_date,
-    created_by: project.created_by,
     category_id: project.category_id,
     location: project.location,
     impacted_people: project.impacted_people,
@@ -859,6 +821,7 @@ function validateRole(role: string): string {
   return role;
 }
 
+// Export all service functions in an object
 export const projectService = {
   createProject,
   getProjectById,
