@@ -38,20 +38,31 @@ export function SignupForm() {
     const handleSignup = async (data: { name: string; email: string; password: string; confirm_password: string }) => {
         setIsLoading(true);
         try {
+            // Send only the fields the backend expects
             const response = await apiClient.post('/auth/register', {
-                ...data,
-                base_role: 'public', // Default role
-                sendVerificationEmail: true
+                name: data.name,
+                email: data.email,
+                password: data.password,
+                confirm_password: data.confirm_password
             });
 
-            if (response.data.success) {
-                toast.success('Account created successfully. Please check your email to verify your account.');
-                router.push('/login');
+            // Check if the response contains user data which indicates success
+            if (response.data && response.data.user) {
+                toast.success('Account created successfully! Please log in.');
+                // Redirect to login page after a brief delay
+                setTimeout(() => {
+                    router.push('/login');
+                }, 1500);
             } else {
                 toast.error('Signup failed. Please try again.');
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Signup failed. Please try again.');
+            console.error('Registration error:', error);
+            // More detailed error message handling
+            const errorMessage = 
+                error.response?.data?.message || 
+                (error.response?.data?.error ? `Error: ${error.response.data.error}` : 'Signup failed. Please try again.');
+            toast.error(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -224,9 +235,9 @@ export function SignupForm() {
                             </Button>
 
                             <div className="text-center mt-4">
-                                <p className="text-sm text-primary-green">
+                                <p className="text-sm text-gray-600">
                                     Already have an account?{' '}
-                                    <Link href="/login" className="text-blue-600 hover:underline">
+                                    <Link href="/login" className="text-primary-green hover:underline">
                                         Log in
                                     </Link>
                                 </p>
