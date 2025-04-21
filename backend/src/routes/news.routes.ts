@@ -12,9 +12,6 @@ const router: Router = Router();
  *   description: News and content management endpoints
  */
 
-// All routes require authentication
-router.use(authenticate);
-
 // Tag routes - placing these first to avoid path conflicts
 router.get("/tags", newsController.listTags);
 
