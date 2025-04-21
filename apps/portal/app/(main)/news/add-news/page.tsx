@@ -703,7 +703,6 @@ const AddNewsPage = () => {
                         className="w-full p-2.5 border border-gray-300 rounded-md"
                         required={formData.status === 'published'}
                       />
-                      <Calendar className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                     </div>
                   </div>
                 )}

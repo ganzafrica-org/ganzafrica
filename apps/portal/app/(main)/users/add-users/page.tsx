@@ -29,7 +29,8 @@ interface User {
   dateOfBirth: string;
   phone: string;
   status: 'active' | 'inactive';
-  avatar?: string;
+  avatar_url?: string;
+  password?: string;
   emergencyContact: {
     name: string;
     email: string;
@@ -49,7 +50,8 @@ interface FormData {
   dateOfBirth: string;
   phone: string;
   status: 'active' | 'inactive';
-  avatar?: string;
+  avatar_url?: string;
+  password?: string;
   emergencyContact: {
     name: string;
     email: string;
@@ -65,6 +67,55 @@ interface UserDialogProps {
   editUser?: User;
 }
 
+// Function to map frontend role names to backend role IDs
+const getRoleId = (roleName: string): number => {
+  switch (roleName) {
+    case 'Admin':
+      return 1001; // Replace with your actual admin role ID
+    case 'Employee':
+      return 1002; // Replace with your actual employee role ID
+    case 'Alumni':
+      return 1003; // Replace with your actual alumni role ID
+    case 'Fellow':
+      return 1004; // Replace with your actual fellow role ID
+    default:
+      return 1004; // Default to Fellow
+  }
+};
+
+// Function to store extra user data in user_profiles
+const saveUserProfile = async (userId: string, profileData: any) => {
+  try {
+    const response = await fetch(`http://localhost:3002/api/user-profiles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        bio: '',
+        phone: profileData.phone,
+        address: '',
+        social_links: {},
+        preferences: {
+          gender: profileData.gender,
+          nationality: profileData.nationality,
+          dateOfBirth: profileData.dateOfBirth,
+          title: profileData.title,
+          emergencyContact: profileData.emergencyContact
+        }
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Failed to save user profile');
+    }
+  } catch (err) {
+    console.error('Error saving user profile:', err);
+  }
+};
+
 // User Dialog Component
 const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, onSave, editUser }) => {
   const [formData, setFormData] = useState<FormData>({
@@ -78,7 +129,8 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, onSave, editUs
     dateOfBirth: '',
     phone: '',
     status: 'active',
-    avatar: '',
+    avatar_url: '',
+    password: '',
     emergencyContact: {
       name: '',
       email: '',
@@ -102,7 +154,8 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, onSave, editUs
         dateOfBirth: editUser.dateOfBirth,
         phone: editUser.phone,
         status: editUser.status,
-        avatar: editUser.avatar,
+        avatar_url: editUser.avatar_url,
+        password: editUser.password || '',
         emergencyContact: editUser.emergencyContact
       });
     }
@@ -117,22 +170,63 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, onSave, editUs
       setError('First name, last name and email are required');
       return;
     }
-
+  
+    // Validate password if it's a new user
+    if (!editUser && (!formData.password || formData.password.length < 8)) {
+      setError('Password is required and must be at least 8 characters long');
+      return;
+    }
+  
     setIsSubmitting(true);
     setError('');
-
+  
     try {
-      const response = await fetch('http://localhost:3002/api/users', {
+      // Transform front-end data format to match back-end expectations
+      // Completely omit avatar_url since it's causing validation issues
+      const backendFormData = {
+        email: formData.email,
+        password: formData.password || "DefaultPassword123!",
+        name: `${formData.firstName} ${formData.lastName}`,
+        role_id: getRoleId(formData.role),
+        email_verified: false,
+        sendVerificationEmail: true
+        // Completely removed avatar_url field
+      };
+  
+      console.log("Sending data to backend:", JSON.stringify(backendFormData));
+  
+      const url = editUser 
+        ? `http://localhost:3002/api/users/${editUser.id}` 
+        : 'http://localhost:3002/api/users';
+  
+      const response = await fetch(url, {
         method: editUser ? 'PUT' : 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(backendFormData)
       });
-
+  
       if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error: ${response.status} ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      
+      // If this is a new user creation, we can save additional profile data
+      if (!editUser && responseData.user && responseData.user.id) {
+        // Save additional user profile data
+        await saveUserProfile(responseData.user.id, {
+          phone: formData.phone,
+          gender: formData.gender,
+          nationality: formData.nationality,
+          dateOfBirth: formData.dateOfBirth,
+          title: formData.title,
+          emergencyContact: formData.emergencyContact,
+          avatar_url: formData.avatar_url // Move avatar_url to profile if needed
+        });
       }
       
       onSave(formData);
@@ -147,7 +241,8 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, onSave, editUs
         dateOfBirth: '',
         phone: '',
         status: 'active',
-        avatar: '',
+        avatar_url: '',
+        password: '',
         emergencyContact: {
           name: '',
           email: '',
@@ -248,6 +343,22 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, onSave, editUs
                 </div>
 
                 <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password {!editUser && <span className="text-red-500">*</span>}
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password || ''}
+                    onChange={handleInputChange}
+                    className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                    required={!editUser}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Password must be at least 8 characters long</p>
+                </div>
+
+                <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                     Telephone <span className="text-red-500">*</span>
                   </label>
@@ -342,6 +453,22 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, onSave, editUs
                     onChange={handleInputChange}
                     className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="avatar_url" className="block text-sm font-medium text-gray-700 mb-1">
+                    Avatar URL
+                  </label>
+                  <input
+                    type="url"
+                    id="avatar_url"
+                    name="avatar_url"
+                    value={formData.avatar_url || ''}
+                    onChange={handleInputChange}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="w-full p-2.5 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Please enter a valid URL (http:// or https://) or leave empty</p>
                 </div>
               </div>
             </div>
@@ -443,42 +570,107 @@ const UserDialog: React.FC<UserDialogProps> = ({ isOpen, onClose, onSave, editUs
 };
 
 const App: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      firstName: 'Tinashe',
-      lastName: 'Chigwende',
-      email: 'example@ganzafrica.org',
-      title: 'Junior Analyst',
-      role: 'Fellow',
-      status: 'active',
-      gender: 'male',
-      nationality: 'Zimbabwean',
-      dateOfBirth: '1995-01-15',
-      phone: '+1234567890',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-      emergencyContact: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '+0987654321',
-        relation: 'Brother'
-      }
-    }
-  ]);
-  
+  const [users, setUsers] = useState<User[]>([]);
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [displayCount, setDisplayCount] = useState(0);
+
+  // Fetch users from the API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      setError('');
+      try {
+        const response = await fetch(`http://localhost:3002/api/users?page=${currentPage}&limit=10${searchQuery ? `&search=${searchQuery}` : ''}`);
+        
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Transform API users to match our UI format
+        const transformedUsers = data.users.map((apiUser: any) => ({
+          id: apiUser.id.toString(),
+          firstName: apiUser.name.split(' ')[0] || '',
+          lastName: apiUser.name.split(' ').slice(1).join(' ') || '',
+          email: apiUser.email,
+          title: apiUser.title || 'N/A',
+          role: apiUser.role_name || 'Fellow',
+          status: apiUser.is_active ? 'active' : 'inactive',
+          gender: apiUser.gender || '',
+          nationality: apiUser.nationality || '',
+          dateOfBirth: apiUser.date_of_birth || '',
+          phone: apiUser.phone || '',
+          avatar_url: apiUser.avatar_url || '',
+          emergencyContact: {
+            name: apiUser.emergency_contact?.name || '',
+            email: apiUser.emergency_contact?.email || '',
+            phone: apiUser.emergency_contact?.phone || '',
+            relation: apiUser.emergency_contact?.relation || ''
+          }
+        }));
+        
+        setUsers(transformedUsers);
+        setTotalUsers(data.pagination?.total || 0);
+        setDisplayCount(transformedUsers.length);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch users');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUsers();
+  }, [currentPage, searchQuery]);
 
   const handleAddUser = (userData: Omit<User, 'id'>) => {
-    const newUser: User = {
-      ...userData,
-      id: (users.length + 1).toString()
+    // Refresh the user list instead of adding locally
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`http://localhost:3002/api/users?page=${currentPage}&limit=10`);
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
+        
+        // Transform API users to match our UI format
+        const transformedUsers = data.users.map((apiUser: any) => ({
+          id: apiUser.id.toString(),
+          firstName: apiUser.name.split(' ')[0] || '',
+          lastName: apiUser.name.split(' ').slice(1).join(' ') || '',
+          email: apiUser.email,
+          title: apiUser.title || 'N/A',
+          role: apiUser.role_name || 'Fellow',
+          status: apiUser.is_active ? 'active' : 'inactive',
+          gender: apiUser.gender || '',
+          nationality: apiUser.nationality || '',
+          dateOfBirth: apiUser.date_of_birth || '',
+          phone: apiUser.phone || '',
+          avatar_url: apiUser.avatar_url || '',
+          emergencyContact: {
+            name: apiUser.emergency_contact?.name || '',
+            email: apiUser.emergency_contact?.email || '',
+            phone: apiUser.emergency_contact?.phone || '',
+            relation: apiUser.emergency_contact?.relation || ''
+          }
+        }));
+        
+        setUsers(transformedUsers);
+        setTotalUsers(data.pagination?.total || 0);
+      } catch (err) {
+        console.error('Error refreshing users:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setUsers([...users, newUser]);
+    
+    fetchUsers();
     setShowUserDialog(false);
   };
 
@@ -552,82 +744,152 @@ const App: React.FC = () => {
             </div>
           </div>
 
+          {/* Error display */}
+          {error && (
+            <div className="p-4 bg-red-50 text-red-700 border-b border-red-100">
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                <span>{error}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="p-8 text-center">
+              <Loader className="w-8 h-8 animate-spin mx-auto text-green-700" />
+              <p className="mt-2 text-gray-600">Loading users...</p>
+            </div>
+          )}
+
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {user.avatar ? (
-                          <img className="h-8 w-8 rounded-full" src={user.avatar} alt="" />
-                        ) : (
-                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-500">
-                              {user.firstName.charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{`${user.firstName} ${user.lastName}`}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.title}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button className="text-gray-400 hover:text-gray-600">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
-                    </td>
+          {!isLoading && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.length === 0 && !isLoading ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                        No users found
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {user.avatar_url ? (
+                              <img className="h-8 w-8 rounded-full" src={user.avatar_url} alt="" />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <span className="text-sm font-medium text-gray-500">
+                                  {user.firstName.charAt(0)}
+                                </span>
+                              </div>
+                            )}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{`${user.firstName} ${user.lastName}`}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.title}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <button 
+                            className="text-gray-400 hover:text-gray-600"
+                            onClick={() => {
+                              setEditingUser(user);
+                              setShowUserDialog(true);
+                            }}
+                          >
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           {/* Pagination */}
-          <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
-            <div className="text-sm text-gray-500">
-              Showing 10 out of 45 entries
-            </div>
-            <div className="flex items-center space-x-2">
-              <button className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50">
-                <ChevronsLeft className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50">
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <div className="flex items-center space-x-1">
-                <button className="px-3 py-1 text-white bg-green-700 rounded">1</button>
-                <button className="px-3 py-1 text-gray-700 hover:bg-gray-100 rounded">2</button>
-                <button className="px-3 py-1 text-gray-700 hover:bg-gray-100 rounded">3</button>
+          {!isLoading && users.length > 0 && (
+            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="text-sm text-gray-500">
+                Showing {displayCount} out of {totalUsers} entries
               </div>
-              <button className="p-2 text-gray-400 hover:text-gray-600">
-                <ChevronRight className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600">
-                <ChevronsRight className="w-5 h-5" />
-              </button>
+              <div className="flex items-center space-x-2">
+                <button 
+                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(1)}
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </button>
+                <button 
+                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="flex items-center space-x-1">
+                  {[...Array(Math.min(3, Math.ceil(totalUsers / 10)))].map((_, i) => {
+                    const pageNumber = currentPage <= 2 ? i + 1 : currentPage - 1 + i;
+                    const isCurrentPage = pageNumber === currentPage;
+                    
+                    if (pageNumber <= Math.ceil(totalUsers / 10)) {
+                      return (
+                        <button 
+                          key={pageNumber}
+                          className={`px-3 py-1 rounded ${
+                            isCurrentPage 
+                              ? 'text-white bg-green-700' 
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                          onClick={() => setCurrentPage(pageNumber)}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+                <button 
+                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                  disabled={currentPage === Math.ceil(totalUsers / 10) || totalUsers === 0}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button 
+                  className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                  disabled={currentPage === Math.ceil(totalUsers / 10) || totalUsers === 0}
+                  onClick={() => setCurrentPage(Math.ceil(totalUsers / 10))}
+                >
+                  <ChevronsRight className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
     </div>
