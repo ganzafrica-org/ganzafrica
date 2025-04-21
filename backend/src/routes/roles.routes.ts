@@ -12,8 +12,7 @@ const router: Router = Router();
  *   description: Role management endpoints
  */
 
-// All routes require authentication
-router.use(authenticate);
+
 
 // Role routes
 router.post(

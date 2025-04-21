@@ -5,6 +5,8 @@ import { constants, Logger } from "../config";
 import { db } from "../db/client";
 import { project_categories } from "../db/schema";
 import { eq } from "drizzle-orm";
+import { authService } from "../services";
+
 
 const logger = new Logger("ProjectController");
 
@@ -162,10 +164,12 @@ const logger = new Logger("ProjectController");
  */
 export const createProject = async (req: Request, res: Response) => {
   try {
+    // Log the user information to debug
+    logger.debug('Current user in project controller:', req.user);
+    
     // Check if category exists before creating project
     const categoryId = Number(req.body.category_id);
 
-    // Add this check
     const categoryExists = await db
       .select({ id: project_categories.id })
       .from(project_categories)
@@ -182,7 +186,7 @@ export const createProject = async (req: Request, res: Response) => {
     // Parse dates from strings to Date objects and ensure IDs are numbers
     const projectData = {
       ...req.body,
-      created_by: Number(req.user!.id),
+
       start_date: new Date(req.body.start_date),
       end_date: req.body.end_date ? new Date(req.body.end_date) : undefined,
       // Also parse dates for members
@@ -646,7 +650,6 @@ export const importProjects = async (req: Request, res: Response) => {
   try {
     const projectsData = req.body.map((project: any) => ({
       ...project,
-      created_by: Number(req.user!.id),
       category_id: Number(project.category_id),
       start_date: new Date(project.start_date),
       end_date: project.end_date ? new Date(project.end_date) : undefined,
@@ -723,7 +726,6 @@ export const importProjects = async (req: Request, res: Response) => {
  *           type: string
  *           enum: [planned, active, completed, cancelled, on_hold]
  *       - in: query
- *         name: created_by
  *         schema:
  *           type: string
  *       - in: query
@@ -751,9 +753,6 @@ export const listProjects = async (req: Request, res: Response) => {
       sort_by: req.query.sort_by as string,
       sort_order: req.query.sort_order as "asc" | "desc",
       status: req.query.status as string,
-      created_by: req.query.created_by
-        ? Number(req.query.created_by)
-        : undefined,
       member_id: req.query.member_id ? Number(req.query.member_id) : undefined,
       category_id: req.query.category_id ? Number(req.query.category_id) : undefined,
     };

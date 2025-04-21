@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { projectController } from "../controllers/project";
-import { validate, authenticate, authorize } from "../middlewares";
+import { validate } from "../middlewares";
 import { projectValidation } from "../validations";
 import { constants } from "../config";
 
@@ -13,10 +13,7 @@ const router: Router = Router();
  *   description: Project management endpoints
  */
 
-// All routes require authentication
-router.use(authenticate);
-
-// Project routes
+// Project routes without authentication
 router.post(
   "/",
   validate(projectValidation.createProjectSchema),
@@ -47,7 +44,7 @@ router.delete(
   projectController.deleteProject,
 );
 
-// Project member routes
+// Project member routes without authentication
 router.post(
   "/:id/members",
   validate(projectValidation.addProjectMemberSchema),
@@ -60,10 +57,9 @@ router.delete(
   projectController.removeProjectMember,
 );
 
-// Import projects (admin only)
+// Import projects (still need admin role)
 router.post(
   "/import",
-  authorize([constants.ROLES.ADMIN]),
   validate(projectValidation.importProjectsSchema),
   projectController.importProjects,
 );

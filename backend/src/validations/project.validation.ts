@@ -155,7 +155,6 @@ export const listProjectsSchema = z.object({
     sort_by: z.string().optional(),
     sort_order: z.enum(["asc", "desc"]).optional(),
     status: z.string().optional(),
-    created_by: z.string().optional(),
     member_id: z.string().optional(),
     category_id: z.string().optional(),
   }),
@@ -191,7 +190,6 @@ export const importProjectsSchema = z.object({
           .transform((val) => new Date(val))
           .optional(),
         category_id: z.number().int().positive("Category ID is required"),
-        created_by: z.string().min(1, "Creator ID is required"),
         location: z.string().optional(),
         impacted_people: z.number().int().optional(),
         
