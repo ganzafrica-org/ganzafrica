@@ -78,81 +78,111 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
                 : null);
 
         if (!token) {
+            logger.debug('No token found in request');
             return res.status(401).json({
                 error: 'Unauthorized',
                 message: 'Authentication token is required',
             });
         }
 
-        // Verify JWT token
-        const decoded = await verifyToken(token);
-        if (!decoded || !decoded.id) {
-            return res.status(401).json({
-                error: 'Unauthorized',
-                message: constants.ERROR_MESSAGES.INVALID_TOKEN,
-            });
-        }
+        logger.debug('Token found, verifying...');
 
-        // Get user from database with role
-        const user = await db.query.users.findFirst({
-            where: eq(users.id, Number(decoded.id)),
-            with: {
-                role: true, // Assuming you have relation defined
+        try {
+            // Verify JWT token
+            const decoded = await verifyToken(token);
+            if (!decoded || !decoded.id) {
+                logger.debug('Token verification failed or missing ID');
+                return res.status(401).json({
+                    error: 'Unauthorized',
+                    message: constants.ERROR_MESSAGES.INVALID_TOKEN,
+                });
             }
-        }) as UserWithRole | null;
 
-        if (!user) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'User not found',
-            });
-        }
+            logger.debug(`Token verified, user ID: ${decoded.id}`);
 
-        // Check if account is active
-        if (!user.is_active) {
+            // Use direct SQL query for more reliable data fetching
+            // This is a safer approach than relying on potential relation issues
+            const userId = Number(decoded.id);
+            
+            // Get user basic information with a simple query
+            const userResult = await db.select().from(users).where(eq(users.id, userId));
+            
+            if (!userResult || userResult.length === 0) {
+                logger.debug(`User with ID ${userId} not found`);
+                return res.status(404).json({
+                    error: 'Not Found',
+                    message: 'User not found',
+                });
+            }
+
+            const user = userResult[0];
+            logger.debug(`User found: ${user.name}`);
+
+            // Check if account is active
+            if (!user.is_active) {
+                logger.debug(`User account is inactive: ${user.id}`);
+                return res.status(401).json({
+                    error: 'Unauthorized',
+                    message: 'Account is inactive',
+                });
+            }
+
+            // Get the primary role information
+            let roleName;
+            if (user.role_id) {
+                const roleResult = await db.select().from(roles).where(eq(roles.id, user.role_id));
+                roleName = roleResult.length > 0 ? roleResult[0].name : undefined;
+                logger.debug(`Primary role: ${roleName || 'none'}`);
+            }
+
+            // Get additional roles
+            const userRolesResult = await db
+                .select({
+                    role_name: roles.name
+                })
+                .from(user_roles)
+                .innerJoin(roles, eq(user_roles.role_id, roles.id))
+                .where(eq(user_roles.user_id, user.id));
+
+            const userRoleNames = userRolesResult.map((r: UserRole) => r.role_name);
+            
+            // Make sure to include the primary role if user has one defined
+            if (roleName && !userRoleNames.includes(roleName)) {
+                userRoleNames.push(roleName);
+            }
+
+            logger.debug(`All user roles: ${userRoleNames.join(', ') || 'none'}`);
+
+            // Attach user to request
+            req.user = {
+                id: user.id.toString(),
+                name: user.name,
+                email: user.email,
+                role_id: user.role_id,
+                role_name: roleName,
+                roles: userRoleNames,
+                avatar_url: user.avatar_url ?? undefined,
+                email_verified: user.email_verified
+            };
+
+            // Store the JWT ID if it exists for session management
+            if (decoded.jti) {
+                req.sessionId = decoded.jti;
+            }
+
+            // Log the req.user object to confirm it's set properly
+            logger.debug('User attached to request:', req.user);
+
+            next();
+        } catch (verifyError) {
+            logger.error('Token verification error:', verifyError);
             return res.status(401).json({
                 error: 'Unauthorized',
-                message: 'Account is inactive',
+                message: 'Invalid token',
             });
         }
-
-        // Get additional roles if using many-to-many relationship
-        const userRolesData = await db
-            .select({
-                role_name: roles.name
-            })
-            .from(user_roles)
-            .innerJoin(roles, eq(user_roles.role_id, roles.id))
-            .where(eq(user_roles.user_id, user.id));
-
-        const userRoleNames = userRolesData.map((r: UserRole) => r.role_name);
-        
-        // Make sure to include the primary role if user has one defined
-        const primaryRoleName = user.role?.name;
-        if (primaryRoleName && !userRoleNames.includes(primaryRoleName)) {
-            userRoleNames.push(primaryRoleName);
-        }
-
-        // Attach user to request
-        req.user = {
-            id: user.id.toString(),
-            name: user.name,
-            email: user.email,
-            role_id: user.role_id,
-            role_name: primaryRoleName,
-            roles: userRoleNames,
-            avatar_url: user.avatar_url,
-            email_verified: user.email_verified
-        };
-
-        // Store the JWT ID if it exists for session management
-        if (decoded.jti) {
-            req.sessionId = decoded.jti;
-        }
-
-        next();
     } catch (error) {
-        logger.error('Authentication error:', error);
+        logger.error('Authentication middleware error:', error);
         return res.status(401).json({
             error: 'Unauthorized',
             message: 'Authentication failed',

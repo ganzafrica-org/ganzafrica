@@ -58,23 +58,12 @@ const logger = new Logger("NewsController");
  */
 export const createNews = async (req: Request, res: Response) => {
   try {
-    // Use a default user ID if in development or test mode
-    // In production, this should come from authentication
-    const userId = req.user?.id ? Number(req.user.id) : 1; // Default to user ID 1 for testing
-
-    if (!userId) {
-      return res.status(401).json({
-        error: "Unauthorized",
-        message: "User not authenticated",
-      });
-    }
-
     // Check if we're in a testing environment to provide appropriate debugging info
     const isTestMode =
       process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development";
 
     if (isTestMode) {
-      logger.info(`Creating news with user ID: ${userId}`);
+      logger.info(`Creating news item`);
     }
 
     const newsData = {
@@ -88,7 +77,6 @@ export const createNews = async (req: Request, res: Response) => {
       key_lessons: req.body.key_lessons,
       media: req.body.media,
       tags: req.body.tags,
-      created_by: userId,
     };
 
     const news = await newsService.createNews(newsData);

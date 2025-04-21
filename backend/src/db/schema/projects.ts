@@ -75,15 +75,12 @@ export const projects = pgTable(
     start_date: timestamp("start_date", { withTimezone: true }).notNull(),
     end_date: timestamp("end_date", { withTimezone: true }),
 
-    created_by: integer("created_by")
-      .notNull()
-      .references(() => users.id),
+
     ...timestampFields,
   },
   (table) => {
     return {
       categoryIdx: index("projects_category_id_idx").on(table.category_id),
-      createdByIdx: index("projects_created_by_idx").on(table.created_by),
       statusIdx: index("projects_status_idx").on(table.status),
     };
   },

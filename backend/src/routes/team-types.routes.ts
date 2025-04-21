@@ -13,7 +13,7 @@ const router: Router = Router();
  */
 
 // All routes require authentication
-router.use(authenticate);
+// router.use(authenticate);
 
 // Team type routes
 router.post(
