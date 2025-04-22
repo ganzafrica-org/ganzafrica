@@ -11,30 +11,32 @@ import LatestNewsSection from "@/components/sections/homepage/latest-news-sectio
 import NewsletterSection from "@/components/sections/newsletter-section";
 import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-unique-section";
 
-// Generate metadata for SEO
-export async function generateMetadata({
-                                           params,
-                                       }: {
-    params: { locale: string };
-}): Promise<Metadata> {
-    const locale = params.locale;
-    const dict = await getDictionary(locale);
-
-    return baseGenerateMetadata({
-        params: { locale },
-        title: dict.site.name,
-        description: dict.site.description,
-        locale,
-        imagePath: "/images/og/home.jpg",
-    });
+// Interface for page props with Promise-based params
+interface PageProps {
+  params: Promise<{ locale: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-
-export default async function HomePage({
+// Generate metadata for SEO
+export async function generateMetadata({
   params,
 }: {
-  params: { locale: string };
-}) {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const resolvedParams = await params;
+  const locale = resolvedParams.locale;
+  const dict = await getDictionary(locale);
+
+  return baseGenerateMetadata({
+    params: { locale },
+    title: dict.site.name,
+    description: dict.site.description,
+    locale,
+    imagePath: "/images/og/home.jpg",
+  });
+}
+
+export default async function HomePage({ params }: PageProps) {
   const resolvedParams = await params;
   const locale = resolvedParams.locale;
   const dict = await getDictionary(locale);
