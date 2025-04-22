@@ -5,67 +5,13 @@ import Container from '@/components/layout/container';
 import { DecoratedHeading } from "@/components/layout/headertext";
 import { ArrowUpRight, X, Linkedin, Mail, Leaf } from 'lucide-react';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
-import axios from 'axios';
-
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  timeout: 10000,
-});
-
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  // Only retry on 429 status code (too many requests) or network errors
-  if ((response && response.status === 429) || !response) {
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      config.retryCount += 1;
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return axiosInstance(config);
-    }
-  }
-  
-  return Promise.reject(err);
-});
-
-// Add request throttling
-const pendingRequests: Record<string, Promise<any>> = {};
-
-interface ThrottledAxiosConfig {
-  params?: Record<string, unknown>;
-}
-
-interface ThrottledAxios {
-  get: (url: string, config?: ThrottledAxiosConfig) => Promise<any>;
-}
-
-const throttledAxios: ThrottledAxios = {
-  get: (url, config = {}) => {
-    const key = `${url}${JSON.stringify(config.params || {})}`;
-    
-    if (pendingRequests[key]) {
-      return pendingRequests[key];
-    }
-    
-    const request = axiosInstance.get(url, config)
-      .finally(() => {
-        delete pendingRequests[key];
-      });
-    
-    pendingRequests[key] = request;
-    return request;
-  }
-};
+import apiClient from '@/lib/api-client';
 
 type TeamMember = {
   id: number;
   name: string;
   position: string;
+  bio: string;
   photo_url: string;
   team_type: {
     id: number;
@@ -136,16 +82,14 @@ const TeamMemberModal = ({
 
         {/* Content Sections */}
         <div className="px-6">
-          {/* About Section */}
+          {/* About Section - Made fully responsive without scroll with improved text wrapping */}
           <div className="py-5 border-t border-[#E5E7EB]">
             <h3 className="text-[18px] font-bold text-[#111827] mb-4 relative inline-block">
               About
               <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
             </h3>
-            <div className="max-h-[180px] overflow-y-auto custom-scrollbar pr-2">
-              <p className="text-[15px] text-[#4B5563] leading-[1.7] tracking-wide">
-                {member.about || `${member.name} is a team member at GanzAfrica, working as ${member.position} in the ${member.team_type?.name || 'team'}.`}
-              </p>
+            <div className="text-[15px] text-[#4B5563] leading-[1.7] tracking-wide break-words">
+              <p className="whitespace-normal break-words">{member.bio}</p>
             </div>
           </div>
 
@@ -156,33 +100,48 @@ const TeamMemberModal = ({
               <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
             </h3>
             <div className="flex items-center gap-4">
-              {member.linkedin && (
+              {/* Always show LinkedIn icon - conditionally active */}
+              {member.profile_link ? (
                 <a 
-                  href={member.linkedin}
+                  href={member.profile_link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-[#0A66C2] flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
+                  <div className="w-10 h-10 rounded-full bg-primary-orange flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
                     <Linkedin className="w-5 h-5 text-white" />
                   </div>
                 </a>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                  <Linkedin className="w-5 h-5 text-gray-400" />
+                </div>
               )}
-              {member.twitter && (
+              
+              {/* Always show Twitter icon - conditionally active */}
+              {member.twitter ? (
                 <a 
                   href={member.twitter}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-[#14171A] flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#14171A]/25 group-hover:-translate-y-0.5">
+                  <div className="w-10 h-10 rounded-full bg-secondary-yellow flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#14171A]/25 group-hover:-translate-y-0.5">
                     <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                   </div>
                 </a>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </div>
               )}
-              {member.email && (
+              
+              {/* Always show Email icon - conditionally active */}
+              {member.email ? (
                 <a 
                   href={`mailto:${member.email}`}
                   className="group"
@@ -191,6 +150,10 @@ const TeamMemberModal = ({
                     <Mail className="w-5 h-5 text-white" />
                   </div>
                 </a>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-gray-400" />
+                </div>
               )}
             </div>
           </div>
@@ -329,11 +292,11 @@ const TeamPage: React.FC = () => {
   const [teamTypes, setTeamTypes] = useState<TeamType[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Fetch team types for filters - UPDATED to match the approach from AddTeamPage
+  // Fetch team types for filters
   useEffect(() => {
     const fetchTeamTypes = async () => {
       try {
-        const response = await throttledAxios.get('http://localhost:3002/api/team-types');
+        const response = await apiClient.get('/team-types');
         console.log('Team types response:', response.data);
         
         // Check the structure of the response and extract team types array
@@ -368,7 +331,7 @@ const TeamPage: React.FC = () => {
     const fetchTeams = async () => {
       try {
         setIsLoading(true);
-        const response = await throttledAxios.get('http://localhost:3002/api/teams');
+        const response = await apiClient.get('/teams');
         
         if (response.data && response.data.teams) {
           setTeamMembers(response.data.teams);
