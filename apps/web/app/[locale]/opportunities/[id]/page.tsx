@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '@/lib/api-client';
 import Link from 'next/link';
-import { 
+import {
   ArrowLeft,
   Calendar,
   MapPin,
@@ -28,6 +28,7 @@ import { useParams } from 'next/navigation';
 
 const OpportunityDetailsPage = () => {
   const params = useParams();
+
   interface Opportunity {
     id: string;
     title: string;
@@ -66,13 +67,13 @@ const OpportunityDetailsPage = () => {
       order: number;
     }[];
   }
-  
+
   const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Record<string | number, string>>({});
   const [activeTab, setActiveTab] = useState('details');
-  
+
   // Types of opportunities for display
   const opportunityTypes = {
     fellowship: 'Fellowship',
@@ -101,12 +102,12 @@ const OpportunityDetailsPage = () => {
     const fetchOpportunityData = async () => {
       try {
         setLoading(true);
-        
+
         // Try to fetch opportunity details from API
         try {
-          const response = await axios.get(`http://localhost:3002/api/opportunities/${params.id}`);
+          const response = await apiClient.get(`/opportunities/${params.id}`);
           console.log("API Response:", response.data);
-          
+
           // Check if the response has a nested opportunity object
           if (response.data && response.data.opportunity) {
             console.log("Setting opportunity from nested opportunity object");
@@ -134,7 +135,7 @@ const OpportunityDetailsPage = () => {
 
     fetchOpportunityData();
   }, [params.id]);
-  
+
   // Format date for display
   const formatDate = (dateString: string | number | Date | undefined) => {
     if (!dateString) return 'N/A';
@@ -158,32 +159,32 @@ const OpportunityDetailsPage = () => {
 
   const getStatusBadge = (status: string | undefined): JSX.Element | null => {
     if (!status) return null;
-    
+
     switch(status.toLowerCase()) {
       case 'published':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
             <CheckCircle className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Published</span>
           </span>
         );
       case 'draft':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
             <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Draft</span>
           </span>
         );
       case 'archived':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
             <Book className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Archived</span>
           </span>
         );
       case 'closed':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 whitespace-nowrap">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 whitespace-nowrap">
             <Award className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Closed</span>
           </span>

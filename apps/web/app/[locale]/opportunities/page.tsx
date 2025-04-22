@@ -17,6 +17,7 @@ import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import apiClient from "@/lib/api-client";
 
 
 
@@ -206,7 +207,7 @@ export default function OpportunitiesPage() {
     const fetchOpportunities = async () => {
       try {
         setLoading(true);
-        
+
         // Build query params
         const params: Record<string, any> = {
           limit: 50, // Get a good number of opportunities
@@ -214,17 +215,17 @@ export default function OpportunitiesPage() {
           sort_order: 'desc',
           status: selectedStatus
         };
-        
+
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
-        
+
         console.log('Fetching opportunities with params:', params);
-        
-        // Make API request
-        const response = await throttledAxios.get('http://localhost:3002/api/opportunities', { params });
-        
+
+        // Make API request with apiClient instead of throttledAxios
+        const response = await apiClient.get('/opportunities', { params });
+
         console.log('API response:', response.data);
-        
+
         if (response.data && response.data.opportunities) {
           setOpportunities(response.data.opportunities);
           setError(null);
@@ -237,7 +238,7 @@ export default function OpportunitiesPage() {
         setLoading(false);
       }
     };
-    
+
     fetchOpportunities();
   }, [selectedStatus, selectedType, searchTerm]);
 
