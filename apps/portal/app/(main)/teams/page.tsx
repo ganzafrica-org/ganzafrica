@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { 
   Search, 
   Filter, 
@@ -21,56 +20,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  timeout: 10000,
-});
-
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  // Only retry on 429 status code (too many requests) or network errors
-  if ((response && response.status === 429) || !response) {
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      config.retryCount += 1;
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return axiosInstance(config);
-    }
-  }
-  
-  return Promise.reject(err);
-});
-
-// Add request throttling
-const pendingRequests = {};
-
-const throttledAxios = {
-  get: (url, config = {}) => {
-    const key = `${url}${JSON.stringify(config.params || {})}`;
-    
-    if (pendingRequests[key]) {
-      return pendingRequests[key];
-    }
-    
-    const request = axiosInstance.get(url, config)
-      .finally(() => {
-        delete pendingRequests[key];
-      });
-    
-    pendingRequests[key] = request;
-    return request;
-  },
-  delete: (url, config = {}) => {
-    return axiosInstance.delete(url, config);
-  }
-};
+import apiClient from '@/lib/api-client';
+import { toast } from 'sonner';
 
 const TeamsPage = () => {
   const router = useRouter();
@@ -121,12 +72,13 @@ const TeamsPage = () => {
       case 'delete':
         if (window.confirm('Are you sure you want to delete this team member?')) {
           try {
-            await throttledAxios.delete(`http://localhost:3002/api/teams/${teamId}`);
+            await apiClient.delete(`/teams/${teamId}`);
             const updatedPage = teams.length === 1 && page > 1 ? page - 1 : page;
             setPage(updatedPage);
+            toast.success('Team member deleted successfully');
           } catch (error) {
             console.error('Error deleting team:', error);
-            alert('Failed to delete team member. Please try again.');
+            toast.error(error.response?.data?.message || 'Failed to delete team member');
           }
         }
         break;
@@ -174,10 +126,10 @@ const TeamsPage = () => {
   }, []);
 
   // Handle search input change with debounce
-  const searchTimeoutRef = useRef(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const value: string = e.target.value;
     setSearchTerm(value);
     
     if (searchTimeoutRef.current) {
@@ -190,29 +142,20 @@ const TeamsPage = () => {
   };
   
   // Handle search submission
-  const handleSearchSubmit = (e) => {
+  interface SearchSubmitEvent extends React.FormEvent<HTMLFormElement> {}
+
+  const handleSearchSubmit = (e: SearchSubmitEvent): void => {
     e.preventDefault();
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     setPage(1);
   };
-
-  // Get team type ID from tab name
-  const getTeamTypeIdFromTab = (tab) => {
-    const tabToTypeMap = {
-      'leadership': 1,
-      'technical': 2,
-      'support': 3
-    };
-    return tabToTypeMap[tab] || null;
-  };
-  
   // Fetch tab counts
   const fetchTabCounts = async () => {
     try {
       // Fetch all teams with limit=0 just to get count
-      const response = await throttledAxios.get('http://localhost:3002/api/teams', { 
+      const response = await apiClient.get('/teams', { 
         params: { limit: 0 } 
       });
       
@@ -243,6 +186,8 @@ const TeamsPage = () => {
         all: 0
       });
       setTabCountsLoaded(true);
+      const errorMessage = (error as any)?.response?.data?.message || 'Failed to load team counts';
+      toast.error(errorMessage);
     }
   };
 
@@ -251,15 +196,6 @@ const TeamsPage = () => {
     const fetchTeams = async () => {
       try {
         setLoading(true);
-        
-        // Add a delay between requests to avoid rate limiting
-        const lastRequestTime = window.lastTeamFetchTime || 0;
-        const now = Date.now();
-        const timeSinceLastRequest = now - lastRequestTime;
-        
-        if (timeSinceLastRequest < 500) {
-          await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
-        }
         
         // Build query params
         const params = {
@@ -279,11 +215,8 @@ const TeamsPage = () => {
         
         console.log('Fetching teams with params:', params);
         
-        // Store the time of this request
-        window.lastTeamFetchTime = Date.now();
-        
-        // Make API request with throttled axios
-        const response = await throttledAxios.get('http://localhost:3002/api/teams', { params });
+        // Make API request with apiClient
+        const response = await apiClient.get('/teams', { params });
         
         console.log('API response:', response.data);
         
@@ -308,6 +241,7 @@ const TeamsPage = () => {
       } catch (error) {
         console.error('Error fetching teams:', error);
         setTeams([]);
+        toast.error(error.response?.data?.message || 'Failed to load teams');
       } finally {
         setLoading(false);
       }
