@@ -1,6 +1,8 @@
 "use client";
 
 // Extend the Window interface to include lastAxiosRequestTime and lastNewsFetchTime
+import apiClient from "@/lib/api-client";
+
 declare global {
   interface Window {
     lastAxiosRequestTime?: number;
@@ -309,14 +311,12 @@ const NewsroomPage = () => {
   const [tagCounts, setTagCounts] = useState<Record<string, number>>({});
   const [error, setError] = useState(false);
 
-  // Get API base URL - use environment variable or fallback
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
 
   // Fetch tags
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await throttledAxios.get(`${API_BASE_URL}/news/tags`);
+        const response = await apiClient.get('/news/tags');
         if (response.data && Array.isArray(response.data.tags)) {
           setTags(response.data.tags);
         } else if (Array.isArray(response.data)) {
@@ -333,21 +333,13 @@ const NewsroomPage = () => {
     };
 
     fetchTags();
-  }, [API_BASE_URL]);
+  }, []);
 
   // Fetch all news
   useEffect(() => {
     const fetchAllNews = async () => {
       try {
         setLoading(true);
-
-        const lastRequestTime = window.lastNewsFetchTime || 0;
-        const now = Date.now();
-        const timeSinceLastRequest = now - lastRequestTime;
-
-        if (timeSinceLastRequest < 500) {
-          await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
-        }
 
         const params = {
           page: 1,
@@ -359,12 +351,7 @@ const NewsroomPage = () => {
 
         console.log('Fetching all news with params:', params);
 
-        window.lastNewsFetchTime = Date.now();
-
-        const response = await throttledAxios.get(`${API_BASE_URL}/news`, {
-          params,
-          timeout: 10000
-        });
+        const response = await apiClient.get('/news', { params });
 
         console.log('API response:', response.data);
 
@@ -398,7 +385,7 @@ const NewsroomPage = () => {
     };
 
     fetchAllNews();
-  }, [API_BASE_URL]);
+  }, []);
 
   // Filter news based on activeFilter
   useEffect(() => {
