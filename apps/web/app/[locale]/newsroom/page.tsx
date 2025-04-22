@@ -229,6 +229,15 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
         return coverImage.url;
       }
 
+      // If no cover image is found, try to get the first image
+      const firstImage = item.media.items.find(mediaItem => 
+          mediaItem.type === 'image'
+      );
+      
+      if (firstImage && firstImage.url) {
+        return firstImage.url;
+      }
+
       return null;
     } catch (error) {
       console.error('Error getting cover image:', error);
@@ -258,21 +267,21 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
               )}
             </div>
 
-            {/* Green overlay with 50% opacity */}
-            <div className="absolute inset-0 bg-[#005C3D] opacity-50"></div>
+            {/* Green overlay with reduced opacity to ensure image is visible */}
+            <div className="absolute inset-0 bg-[#005C3D] opacity-30"></div>
 
             {/* Date Badge - White background with green text */}
-            <div className="absolute top-4 left-4 px-4 py-1 bg-white text-primary-green rounded-full text-sm font-medium">
+            <div className="absolute top-4 left-4 px-4 py-1 bg-white text-primary-green rounded-full text-sm font-medium z-10">
               {formatDate(item.publish_date)}
             </div>
 
             {/* Category Label - Transparent background with yellow border and text */}
-            <div className="absolute top-[52px] left-4 px-4 py-1 bg-transparent text-secondary-yellow border border-secondary-yellow rounded-full text-sm font-medium">
+            <div className="absolute top-[52px] left-4 px-4 py-1 bg-transparent text-secondary-yellow border border-secondary-yellow rounded-full text-sm font-medium z-10">
               {getFirstTag(item.tags)}
             </div>
 
             {/* Arrow Button */}
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 right-4 z-10">
               <div className="relative w-10 h-10 rounded-full bg-[#FFB800] flex items-center justify-center cursor-pointer transform transition-all duration-300 ease-out hover:scale-110 hover:rotate-12 hover:bg-primary-green">
                 <ArrowUpRight
                     className="w-5 h-5 text-white transition-transform duration-300 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
