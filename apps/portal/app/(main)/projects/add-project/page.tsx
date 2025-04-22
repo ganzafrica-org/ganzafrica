@@ -35,13 +35,6 @@ const AddProjectPage = () => {
   interface TeamMember {
     id: number;
     name: string;
-    team_type?: string;
-  }
-  
-  const [filteredTeamMembers, setFilteredTeamMembers] = useState<TeamMember[]>([]);
-  interface TeamMember {
-    id: number;
-    name: string;
     team_type?: string | { name: string };
     position?: string;
     photo_url?: string;
@@ -1007,93 +1000,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     };
     
     // Submit without checking for auth token
-    const response = await axios.post(
-      'http://localhost:3002/api/projects',
-      submissionData
-    );
-    
-    console.log('Project created successfully:', response.data);
-    setSuccess(true);
-    
-    // Redirect to project detail or projects list
-    setTimeout(() => {
-      router.push('/projects');
-    }, 2000);
-  } catch (error: any) {
-    console.error('Error creating project:', error);
-    setError(error.response?.data?.message || 'Failed to create project. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
-  interface ProjectData {
-    name: string;
-    description: string;
-    status: string;
-    start_date: string;
-    end_date: string;
-    category_id: number; // Changed to number
-    location: string;
-    goals: {
-      items: Array<{
-        id: string;
-        title: string;
-        description: string;
-        completed: boolean;
-        order: number;
-      }>;
-    };
-    outcomes: {
-      items: Array<{
-        id: string;
-        title: string;
-        description: string;
-        status: string;
-        order: number;
-      }>;
-    };
-    media: {
-      items: Array<{
-        id: string;
-        type: string;
-        url: string;
-        title: string;
-        description: string;
-        tag: string;
-        cover: boolean;
-        order: number;
-        size: number;
-        isExternalUrl: boolean;
-        duration?: number;
-        thumbnailUrl?: string | null;
-      }>;
-    };
-    members: Array<{
-      user_id: number;
-      role: string;
-    }>;
-  }
- // Change this part in your AddProjectPage component
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  setSuccess(false);
-  
-  try {
-    // Create a new object with the correct data types for submission
-    const submissionData: ProjectData = {
-      ...formData,
-      // Convert category_id from string to number
-      category_id: formData.category_id ? parseInt(formData.category_id as string, 10) : null,
-      // Ensure members have numeric user_ids
-      members: formData.members.map(member => ({
-        ...member,
-        user_id: typeof member.user_id === 'string' ? parseInt(member.user_id, 10) : member.user_id
-      }))
-    };
-    
-    // Submit without checking for auth token
     const response = await apiClient.post(
       '/projects',
       submissionData
@@ -1243,7 +1149,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       value={formData.status}
                       onChange={handleChange}
                       className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
-                    >
                     >
                       <option value="planned">Planned</option>
                       <option value="active">Active</option>
@@ -1498,7 +1403,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 >
                   <UserPlus className="w-4 h-4 mr-1" />
                   Add New Team Member
-                  Add New Team Member
                 </a>
               </div>
               
@@ -1531,45 +1435,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                 <div>
                   <label className="block text-sm mb-1">Team Member</label>
-                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className="w-full p-2.5 border border-gray-300 rounded-md text-left flex items-center justify-between bg-white"
-                      >
-                        <span className="text-sm">
-                          {newMember.user_id 
-                            ? getTeamMemberName(newMember.user_id)
-                            : "Select a team member"}
-                        </span>
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search team members..." />
-                        <CommandEmpty>No team members found.</CommandEmpty>
-                        <CommandGroup heading="All Members">
-                          {filteredTeamMembers.map(member => (
-                            <CommandItem
-                              key={member.id}
-                              value={`${member.name}`} 
-                              onSelect={() => {
-                                setNewMember(prev => ({ ...prev, user_id: member.id }));
-                                setPopoverOpen(false);
-                              }}
-                            >
-                              <div className="flex items-center justify-between w-full">
-                                <div>
-                                  {member.name}
-                                </div>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
                   {/* Replace Command component with a simple dropdown to avoid the CMDK issue */}
                   <div className="relative">
                     <select
@@ -1592,19 +1457,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     Role<span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <select
-                      name="role"
-                      value={newMember.role}
-                      onChange={handleMemberChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
-                    >
-                      <option value="">Select a role</option>
-                      {Array.isArray(roles) && roles.map(role => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
                     <select
                       name="role"
                       value={newMember.role}
@@ -1727,7 +1579,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     </div>
                     <div className="flex items-center">
                       <input
-                      <input
                         type="radio"
                         id="mediaTypeVideo"
                         name="type"
@@ -1797,7 +1648,6 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     <div className="mb-4 border rounded overflow-hidden bg-gray-100 p-2 flex items-center justify-center">
                       {newMedia.type === 'image' ? (
                         <div className="text-center p-4">
-                         <Image className="w-8 h-8 mx-auto text-gray-400" />
                          <Image className="w-8 h-8 mx-auto text-gray-400" />
                           <p className="text-sm text-gray-500 mt-2">Image will be loaded from URL</p>
                         </div>
