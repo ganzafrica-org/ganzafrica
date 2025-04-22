@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import apiClient from "@/lib/api-client";
 import { 
   Search, 
   Filter, 
@@ -21,86 +21,6 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  timeout: 10000,
-});
-
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  // Only retry on 429 status code (too many requests) or network errors
-  if ((response && response.status === 429) || !response) {
-    // Set max retry count
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      // Increase retry count
-      config.retryCount += 1;
-      
-      // Exponential backoff: wait longer for each retry
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
-      
-      // Wait for the delay
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Retry the request
-      return axiosInstance(config);
-    }
-  }
-  
-  // If we've reached max retries or it's not a 429 error, reject the promise
-  return Promise.reject(err);
-});
-
-// Add a request interceptor to add a delay between requests
-axiosInstance.interceptors.request.use(async (config) => {
-  // Track time between requests to avoid overwhelming the API
-  const now = Date.now();
-  const lastRequestTime = window.lastAxiosRequestTime || 0;
-  const minRequestInterval = 300; // minimum ms between requests
-  
-  if (now - lastRequestTime < minRequestInterval) {
-    // Wait until the minimum interval has passed
-    const delayMs = minRequestInterval - (now - lastRequestTime);
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-  }
-  
-  // Update the last request time
-  window.lastAxiosRequestTime = Date.now();
-  
-  return config;
-});
-
-// Add a request throttling mechanism
-const pendingRequests = {};
-
-const throttledAxios = {
-  get: (url, config = {}) => {
-    const key = `${url}${JSON.stringify(config.params || {})}`;
-    
-    // If there's already a pending request with the same parameters, return that promise
-    if (pendingRequests[key]) {
-      return pendingRequests[key];
-    }
-    
-    // Otherwise, make a new request
-    const request = axiosInstance.get(url, config)
-      .finally(() => {
-        // Remove from pending requests when done
-        delete pendingRequests[key];
-      });
-    
-    pendingRequests[key] = request;
-    return request;
-  },
-  delete: (url, config = {}) => {
-    return axiosInstance.delete(url, config);
-  }
-};
 
 const OpportunitiesPage = () => {
   const router = useRouter();
@@ -157,7 +77,7 @@ const OpportunitiesPage = () => {
       case 'delete':
         if (window.confirm('Are you sure you want to delete this opportunity?')) {
           try {
-            await throttledAxios.delete(`http://localhost:3002/api/opportunities/${opportunityId}`);
+            await apiClient.delete(`/opportunities/${opportunityId}`);
             // Refresh the opportunities list after deletion
             const updatedPage = opportunities.length === 1 && page > 1 ? page - 1 : page;
             setPage(updatedPage);
@@ -222,19 +142,19 @@ const OpportunitiesPage = () => {
   const fetchTabCounts = async () => {
     try {
       // Fetch all opportunities with limit=0 just to get count
-      const response = await throttledAxios.get('http://localhost:3002/api/opportunities', { 
-        params: { limit: 0 } 
+      const response = await apiClient.get('/opportunities', {
+        params: { limit: 0 }
       });
-      
+
       // Get the total count from the response
       const allCount = parseInt(response.data.pagination?.total) || 0;
-      
+
       // Count opportunities by status from the example data
       let draftCount = 0;
       let publishedCount = 0;
       let archivedCount = 0;
       let closedCount = 0;
-      
+
       if (response.data.opportunities && Array.isArray(response.data.opportunities)) {
         response.data.opportunities.forEach(opportunity => {
           if (opportunity.status === 'draft') draftCount++;
@@ -243,7 +163,7 @@ const OpportunitiesPage = () => {
           else if (opportunity.status === 'closed') closedCount++;
         });
       }
-      
+
       setTabCounts({
         all: allCount,
         draft: draftCount,
@@ -251,7 +171,7 @@ const OpportunitiesPage = () => {
         archived: archivedCount,
         closed: closedCount
       });
-      
+
       setTabCountsLoaded(true);
     } catch (error) {
       console.error('Error fetching tab counts:', error);
@@ -323,17 +243,7 @@ const OpportunitiesPage = () => {
     const fetchOpportunities = async () => {
       try {
         setLoading(true);
-        
-        // Add a delay between requests to avoid rate limiting
-        const lastRequestTime = window.lastOpportunityFetchTime || 0;
-        const now = Date.now();
-        const timeSinceLastRequest = now - lastRequestTime;
-        
-        // If last request was less than 500ms ago, delay this one
-        if (timeSinceLastRequest < 500) {
-          await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
-        }
-        
+
         // Build query params
         const params = {
           page,
@@ -341,33 +251,30 @@ const OpportunitiesPage = () => {
           sort_by: sortBy,
           sort_order: sortOrder
         };
-        
+
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
-        
+
         // Add status filter if not showing all
         if (activeTab !== 'all') {
           params.status = activeTab;
         }
-        
+
         console.log('Fetching opportunities with params:', params);
-        
-        // Store the time of this request
-        window.lastOpportunityFetchTime = Date.now();
-        
-        // Make API request with throttled axios
-        const response = await throttledAxios.get('http://localhost:3002/api/opportunities', { params });
-        
+
+        // Make API request with apiClient
+        const response = await apiClient.get('/opportunities', { params });
+
         console.log('API response:', response.data);
-        
+
         if (response.data) {
           setOpportunities(response.data.opportunities || []);
-          
+
           // Extract pagination info
           const pagination = response.data.pagination || {};
           setTotalOpportunities(parseInt(pagination.total) || 0);
           setTotalPages(pagination.pages || 1);
-          
+
           // If we're not already tracking tab counts, also use this response to update counts
           if (!tabCountsLoaded && response.data.opportunities) {
             fetchTabCounts();
@@ -380,7 +287,8 @@ const OpportunitiesPage = () => {
         setLoading(false);
       }
     };
-    
+
+
     fetchOpportunities();
   }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
 

@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Link from 'next/link';
-import { 
+import {
   ArrowLeft,
   Calendar,
   MapPin,
@@ -16,6 +15,7 @@ import {
   Film,
   AlertCircle
 } from 'lucide-react';
+import apiClient from '@/lib/api-client';
 
 // Define TypeScript interfaces for our data structures
 interface Media {
@@ -89,12 +89,12 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
     const fetchProjectData = async () => {
       try {
         setLoading(true);
-        
+
         // Try to fetch project details from API
         try {
-          const response = await axios.get(`http://localhost:3002/api/projects/${params.id}`);
+          const response = await apiClient.get(`/projects/${params.id}`);
           console.log("API Response:", response.data);
-          
+
           // Check if the response has a nested project object (as shown in the Swagger docs)
           if (response.data && response.data.project) {
             console.log("Setting project from nested project object");
@@ -129,7 +129,7 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
 
         // Try to fetch categories from API (optional)
         try {
-          const categoriesResponse = await axios.get('http://localhost:3002/api/project-categories');
+          const categoriesResponse = await apiClient.get('/project-categories');
           if (categoriesResponse.data && categoriesResponse.data.length > 0) {
             const categoriesMap: Record<number, string> = {};
             categoriesResponse.data.forEach((category: { id: number; name: string }) => {
@@ -143,7 +143,7 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
 
         // Try to fetch users from API (optional)
         try {
-          const usersResponse = await axios.get('http://localhost:3002/api/users');
+          const usersResponse = await apiClient.get('/users');
           if (usersResponse.data && usersResponse.data.length > 0) {
             const usersMap: Record<number, string> = {};
             usersResponse.data.forEach((user: { id: number; first_name: string; last_name: string }) => {
