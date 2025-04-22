@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import apiClient from '@/lib/api-client';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -17,7 +18,6 @@ import {
   Tag as TagIcon
 } from 'lucide-react';
 import Link from 'next/link';
-import apiClient from '@/lib/api-client';
 
 const AddNewsPage = () => {
   const router = useRouter();
@@ -305,9 +305,9 @@ const AddNewsPage = () => {
       ...prev,
       media: {
         items: prev.media.items.map(item =>
-          item.id === mediaId
-            ? { ...item, cover: true }
-            : { ...item, cover: false } // Ensure only one cover image
+            item.id === mediaId
+                ? { ...item, cover: true }
+                : { ...item, cover: false } // Ensure only one cover image
         )
       }
     }));
@@ -393,12 +393,12 @@ const AddNewsPage = () => {
   // Format date for input field
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    
+
     const date = new Date(dateString);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    
+
     return `${year}-${month}-${day}`;
   };
 
@@ -414,7 +414,7 @@ const AddNewsPage = () => {
   // Update publish_date with valid ISO string when date input changes
   const handleDateChange = (e) => {
     const dateValue = e.target.value; // Format: YYYY-MM-DD
-    
+
     if (dateValue) {
       // Create a date object at noon to avoid timezone issues
       const date = new Date(`${dateValue}T12:00:00Z`);
@@ -436,62 +436,62 @@ const AddNewsPage = () => {
     setLoading(true);
     setError('');
     setSuccess(false);
-    
+
     // Validate form data
     if (!formData.title || !formData.content) {
       setError('Please fill in all required fields (Title, Content)');
       setLoading(false);
       return;
     }
-    
+
     try {
       // Convert blob URLs to base64 for storing in the database
       const mediaWithBase64 = await Promise.all(
-        formData.media.items.map(async (media) => {
-          const result = { ...media };
-          
-          // Convert main URL if it's a blob
-          if (media.url && media.url.startsWith('blob:')) {
-            try {
-              const response = await fetch(media.url);
-              const blob = await response.blob();
-              const reader = new FileReader();
-              
-              const base64Url = await new Promise((resolve, reject) => {
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-              
-              result.url = base64Url;
-            } catch (error) {
-              console.error('Error converting blob URL to base64:', error);
+          formData.media.items.map(async (media) => {
+            const result = { ...media };
+
+            // Convert main URL if it's a blob
+            if (media.url && media.url.startsWith('blob:')) {
+              try {
+                const response = await fetch(media.url);
+                const blob = await response.blob();
+                const reader = new FileReader();
+
+                const base64Url = await new Promise((resolve, reject) => {
+                  reader.onloadend = () => resolve(reader.result);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                });
+
+                result.url = base64Url;
+              } catch (error) {
+                console.error('Error converting blob URL to base64:', error);
+              }
             }
-          }
-          
-          // Convert thumbnail URL if it exists and is a blob
-          if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
-            try {
-              const response = await fetch(media.thumbnailUrl);
-              const blob = await response.blob();
-              const reader = new FileReader();
-              
-              const base64Thumbnail = await new Promise((resolve, reject) => {
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-              
-              result.thumbnailUrl = base64Thumbnail;
-            } catch (error) {
-              console.error('Error converting thumbnail URL to base64:', error);
+
+            // Convert thumbnail URL if it exists and is a blob
+            if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
+              try {
+                const response = await fetch(media.thumbnailUrl);
+                const blob = await response.blob();
+                const reader = new FileReader();
+
+                const base64Thumbnail = await new Promise((resolve, reject) => {
+                  reader.onloadend = () => resolve(reader.result);
+                  reader.onerror = reject;
+                  reader.readAsDataURL(blob);
+                });
+
+                result.thumbnailUrl = base64Thumbnail;
+              } catch (error) {
+                console.error('Error converting thumbnail URL to base64:', error);
+              }
             }
-          }
-          
-          return result;
-        })
+
+            return result;
+          })
       );
-      
+
       // Prepare data for API with converted media URLs
       const newsData = {
         ...formData,
@@ -500,17 +500,17 @@ const AddNewsPage = () => {
           items: mediaWithBase64
         }
       };
-      
+
       // Ensure we have a valid publish_date if status is published
       if (formData.status === 'published' && !formData.publish_date) {
         newsData.publish_date = new Date().toISOString();
       }
-      
+
       try {
-        const response = await axios.post('http://localhost:3002/api/news', newsData);
+        const response = await apiClient.post('/news', newsData);
         console.log('News created:', response.data);
         setSuccess(true);
-        
+
         // Revoke all object URLs to prevent memory leaks
         formData.media.items.forEach(media => {
           if (media.url && media.url.startsWith('blob:')) {
@@ -520,16 +520,16 @@ const AddNewsPage = () => {
             URL.revokeObjectURL(media.thumbnailUrl);
           }
         });
-        
+
         // Navigate back to news list after a brief delay
         setTimeout(() => {
           router.push('/news');
         }, 2000);
       } catch (error) {
         console.error('Error creating news:', error);
-        const errorMessage = error.response?.data?.message || 
-                            (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) : 
-                            'Failed to create news article. Please try again.');
+        const errorMessage = error.response?.data?.message ||
+            (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) :
+                'Failed to create news article. Please try again.');
         setError(errorMessage);
       }
     } catch (error) {
