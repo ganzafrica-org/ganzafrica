@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from "@/lib/api-client";
 import Link from 'next/link';
 import { 
   ArrowLeft,
@@ -58,12 +58,12 @@ const OpportunityDetailsPage = ({ params }) => {
     const fetchOpportunityData = async () => {
       try {
         setLoading(true);
-        
-        // Try to fetch opportunity details from API
+
+        // Try to fetch opportunity details from API using apiClient
         try {
-          const response = await axios.get(`http://localhost:3002/api/opportunities/${params.id}`);
+          const response = await apiClient.get(`/opportunities/${params.id}`);
           console.log("API Response:", response.data);
-          
+
           // Check if the response has a nested opportunity object
           if (response.data && response.data.opportunity) {
             console.log("Setting opportunity from nested opportunity object");

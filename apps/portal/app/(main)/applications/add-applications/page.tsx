@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import axios from 'axios';
 import {
   ArrowLeft,
   Calendar,
@@ -21,16 +20,17 @@ import {
   Flag,
   MapPin
 } from 'lucide-react';
+import apiClient from '@/lib/api-client';
 
 const ApplyToOpportunityPage = ({ params }) => {
   const router = useRouter();
   const opportunityId = params?.id;
-  
+
   // State for opportunity details
   const [opportunity, setOpportunity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // State for application form
   const [formData, setFormData] = useState({
     full_name: '',
@@ -47,13 +47,13 @@ const ApplyToOpportunityPage = ({ params }) => {
     resume_url: '',
     custom_answers: {}
   });
-  
+
   // State for form validation and submission
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  
+
   // Fetch opportunity details
   useEffect(() => {
     const fetchOpportunity = async () => {
@@ -62,16 +62,16 @@ const ApplyToOpportunityPage = ({ params }) => {
         setLoading(false);
         return;
       }
-      
+
       try {
         setLoading(true);
-        const response = await axios.get(`/api/opportunities/${opportunityId}`);
-        
+        const response = await apiClient.get(`/opportunities/${opportunityId}`);
+
         if (response.data && response.data.opportunity) {
           setOpportunity(response.data.opportunity);
-          
+
           // Initialize custom answers object based on custom questions
-          if (response.data.opportunity.custom_questions && 
+          if (response.data.opportunity.custom_questions &&
               Array.isArray(response.data.opportunity.custom_questions)) {
             const customAnswers = {};
             response.data.opportunity.custom_questions.forEach(question => {
@@ -98,7 +98,7 @@ const ApplyToOpportunityPage = ({ params }) => {
                 }
               }
             });
-            
+
             setFormData(prev => ({
               ...prev,
               custom_answers: customAnswers
@@ -114,18 +114,18 @@ const ApplyToOpportunityPage = ({ params }) => {
         setLoading(false);
       }
     };
-    
+
     fetchOpportunity();
   }, [opportunityId]);
-  
+
   // Handle form input change
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     if (name.startsWith('custom_')) {
       // Handle custom question fields
       const questionId = name.replace('custom_', '');
-      
+
       setFormData(prevData => ({
         ...prevData,
         custom_answers: {
@@ -146,7 +146,7 @@ const ApplyToOpportunityPage = ({ params }) => {
         [name]: value
       }));
     }
-    
+
     // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -155,12 +155,12 @@ const ApplyToOpportunityPage = ({ params }) => {
       }));
     }
   };
-  
+
   // Handle checkbox or multiselect custom questions
   const handleMultiSelectChange = (questionId, value, isChecked) => {
     setFormData(prevData => {
       const currentValues = [...(prevData.custom_answers[questionId] || [])];
-      
+
       if (isChecked) {
         // Add value if it doesn't exist
         if (!currentValues.includes(value)) {
@@ -173,7 +173,7 @@ const ApplyToOpportunityPage = ({ params }) => {
           currentValues.splice(index, 1);
         }
       }
-      
+
       return {
         ...prevData,
         custom_answers: {
@@ -183,7 +183,7 @@ const ApplyToOpportunityPage = ({ params }) => {
       };
     });
   };
-  
+
   // Handle adding/removing certification fields
   const handleAddCertification = () => {
     setFormData(prev => ({
@@ -191,7 +191,7 @@ const ApplyToOpportunityPage = ({ params }) => {
       certifications: [...prev.certifications, '']
     }));
   };
-  
+
   const handleRemoveCertification = (index) => {
     setFormData(prev => {
       const newCertifications = [...prev.certifications];
@@ -202,7 +202,7 @@ const ApplyToOpportunityPage = ({ params }) => {
       };
     });
   };
-  
+
   const handleCertificationChange = (index, value) => {
     setFormData(prev => {
       const newCertifications = [...prev.certifications];
@@ -213,29 +213,29 @@ const ApplyToOpportunityPage = ({ params }) => {
       };
     });
   };
-  
+
   // Validate form
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Validate required fields
     if (!formData.full_name.trim()) {
       newErrors.full_name = 'Full name is required';
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
       newErrors.email = 'Invalid email format';
     }
-    
+
     // Validate custom questions
     if (opportunity && opportunity.custom_questions) {
       opportunity.custom_questions.forEach(question => {
         if (question.is_required) {
           const answer = formData.custom_answers[question.id];
           const fieldName = `custom_${question.id}`;
-          
+
           if (question.field_type === 'checkbox' || question.field_type === 'multiselect') {
             if (!answer || answer.length === 0) {
               newErrors[fieldName] = 'This field is required';
@@ -252,15 +252,15 @@ const ApplyToOpportunityPage = ({ params }) => {
         }
       });
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!validateForm()) {
       // Scroll to the first error
@@ -271,14 +271,14 @@ const ApplyToOpportunityPage = ({ params }) => {
       }
       return;
     }
-    
+
     setSubmitting(true);
     setSubmitError(null);
-    
+
     try {
       // Submit application
-      const response = await axios.post(`/api/opportunities/${opportunityId}/apply`, formData);
-      
+      const response = await apiClient.post(`/opportunities/${opportunityId}/apply`, formData);
+
       if (response.data) {
         setSubmitSuccess(true);
         // Scroll to top
@@ -287,10 +287,10 @@ const ApplyToOpportunityPage = ({ params }) => {
     } catch (err) {
       console.error('Error submitting application:', err);
       setSubmitError(
-        err.response?.data?.message || 
-        'Failed to submit application. Please try again later.'
+          err.response?.data?.message ||
+          'Failed to submit application. Please try again later.'
       );
-      
+
       // Scroll to error message
       const errorElement = document.getElementById('submit-error');
       if (errorElement) {
@@ -300,7 +300,7 @@ const ApplyToOpportunityPage = ({ params }) => {
       setSubmitting(false);
     }
   };
-  
+
   // Render custom question based on field type
   const renderCustomQuestion = (question) => {
     const { id, question: text, field_type, options, is_required, max_length } = question;
