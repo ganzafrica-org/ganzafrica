@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, 
@@ -22,6 +21,7 @@ import {
   LinkIcon
 } from 'lucide-react';
 import Link from 'next/link';
+import apiClient from '@/lib/api-client';
 
 const AddTeamPage = () => {
   const router = useRouter();
@@ -64,8 +64,8 @@ const AddTeamPage = () => {
   useEffect(() => {
     const fetchTeamTypes = async () => {
       try {
-        // Try to fetch team types from API
-        const response = await axios.get('http://localhost:3002/api/team-types');
+        // Use apiClient instead of direct axios
+        const response = await apiClient.get('/team-types');
         
         // Check the structure of the response and extract team types array
         if (response.data && response.data.teamTypes && Array.isArray(response.data.teamTypes)) {
@@ -270,8 +270,8 @@ const AddTeamPage = () => {
       
       console.log('Submitting team data:', teamData);
       
-      // Send the data to the API
-      const response = await axios.post('http://localhost:3002/api/teams', teamData);
+      // Use apiClient instead of direct axios
+      const response = await apiClient.post('/teams', teamData);
       
       console.log('Team created:', response.data);
       setSuccess(true);

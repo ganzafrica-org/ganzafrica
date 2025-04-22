@@ -35,6 +35,7 @@ import {
   AvatarImage,
 } from "@workspace/ui/components/avatar";
 import { useAuth } from '@/components/auth/auth-provider';
+import apiClient from '@/lib/api-client';
 
 export default function DashboardPage() {
   // Get auth context to access the current user
@@ -56,9 +57,9 @@ export default function DashboardPage() {
   // Fetch data from APIs
   useEffect(() => {
     // Fetch total users
-    fetch('http://localhost:3002/api/users')
-      .then(response => response.json())
-      .then(data => {
+    apiClient.get('/users')
+      .then(response => {
+        const data = response.data;
         // Check if data is an array or has a users property that's an array
         const usersArray = Array.isArray(data) ? data : (data.users || []);
         setTotalUsers(usersArray.length || 0);
@@ -67,9 +68,9 @@ export default function DashboardPage() {
       .catch(error => console.error('Error fetching users:', error));
 
     // Fetch total projects
-    fetch('http://localhost:3002/api/projects')
-      .then(response => response.json())
-      .then(data => {
+    apiClient.get('/projects')
+      .then(response => {
+        const data = response.data;
         // Check if data is an array or has a projects property that's an array
         const projectsArray = Array.isArray(data) ? data : (data.projects || []);
         setTotalProjects(projectsArray.length || 0);
@@ -115,9 +116,9 @@ export default function DashboardPage() {
       .catch(error => console.error('Error fetching projects:', error));
 
     // Fetch total opportunities
-    fetch('http://localhost:3002/api/opportunities')
-      .then(response => response.json())
-      .then(data => {
+    apiClient.get('/opportunities')
+      .then(response => {
+        const data = response.data;
         // Check if data is an array or has an opportunities property that's an array
         const opportunitiesArray = Array.isArray(data) ? data : (data.opportunities || []);
         setTotalOpportunities(opportunitiesArray.length || 0);
@@ -126,9 +127,9 @@ export default function DashboardPage() {
       .catch(error => console.error('Error fetching opportunities:', error));
 
     // Fetch total news
-    fetch('http://localhost:3002/api/news')
-      .then(response => response.json())
-      .then(data => {
+    apiClient.get('/news')
+      .then(response => {
+        const data = response.data;
         // Check if data is an array or has a news property that's an array
         const newsArray = Array.isArray(data) ? data : (data.news || []);
         setTotalNews(newsArray.length || 0);
@@ -138,9 +139,9 @@ export default function DashboardPage() {
       
     // For user engagement data, we'll simulate weekly data based on user activity
     // In a real app, you would have an API endpoint for this
-    fetch('http://localhost:3002/api/users')
-      .then(response => response.json())
-      .then(data => {
+    apiClient.get('/users')
+      .then(response => {
+        const data = response.data;
         // Ensure data is an array
         const userData = Array.isArray(data) ? data : (data.users || []);
         
@@ -171,11 +172,10 @@ export default function DashboardPage() {
       .catch(error => console.error('Error processing user engagement data:', error));
       
     // Fetch recent activities
-    // In a real app, you would have an API endpoint for activity logs
     // For now, we'll use the projects data to simulate activities
-    fetch('http://localhost:3002/api/projects')
-      .then(response => response.json())
-      .then(data => {
+    apiClient.get('/projects')
+      .then(response => {
+        const data = response.data;
         // Ensure data is an array
         const projectData = Array.isArray(data) ? data : (data.projects || []);
         
