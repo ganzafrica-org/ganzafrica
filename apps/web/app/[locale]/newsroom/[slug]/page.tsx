@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, X } from "lucide-react";
 import Container from "@/components/layout/container";
 import axios from 'axios';
+import apiClient from "@/lib/api-client";
 
 // Define the MediaItem type
 interface MediaItem {
@@ -235,7 +236,7 @@ const NewsDetailsPage = async ({ params, searchParams }: PageProps) => {
 
         // In a real implementation, you'd have an endpoint that can fetch by slug
         // For now, we'll get all articles and filter by slug
-        const response = await throttledAxios.get(`${API_BASE_URL}/news`);
+        const response = await apiClient.get('/news');
 
         if (response.data && response.data.news) {
           const articles = response.data.news;
