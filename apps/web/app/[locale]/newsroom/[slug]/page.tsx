@@ -57,17 +57,18 @@ const throttledAxios: ThrottledAxios = {
 };
 
 // Type definitions for page parameters
-type PageProps = {
-  params: {
-    slug: string;
-    locale: string;
-  };
-  searchParams?: Record<string, string | string[] | undefined>;
-};
+interface NewsDetailsPageProps {
+  params: Promise<{ locale: string; slug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
 
-const NewsDetailsPage = async ({ params, searchParams }: PageProps) => {
-  const { locale, slug } = params;
-
+const NewsDetailsPage = async ({ params, searchParams }: NewsDetailsPageProps) => {
+  // Await the params to get the actual values
+  const resolvedParams = await params;
+  const { slug, locale } = resolvedParams;
+  
+  // Await searchParams if they exist
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
 
   // State for media gallery
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
