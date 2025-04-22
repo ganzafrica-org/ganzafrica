@@ -1,23 +1,23 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { 
-  ArrowLeft, 
-  Plus, 
-  X, 
-  Upload, 
-  Image as ImageIcon, 
+import {
+  ArrowLeft,
+  Plus,
+  X,
+  Upload,
+  Image as ImageIcon,
   FileVideo,
-  Check, 
-  AlertCircle, 
-  Loader, 
+  Check,
+  AlertCircle,
+  Loader,
   Calendar,
   ChevronDown,
   Tag as TagIcon
 } from 'lucide-react';
 import Link from 'next/link';
+import apiClient from '@/lib/api-client';
 
 const AddNewsPage = () => {
   const router = useRouter();
@@ -32,7 +32,7 @@ const AddNewsPage = () => {
   const [newTagName, setNewTagName] = useState('');
   const [addingTag, setAddingTag] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
-  
+
   // Valid enum values based on the validation error
   const categories = ['all', 'news', 'blogs', 'reports', 'publications'];
   const statuses = ['published', 'not_published'];
@@ -52,7 +52,7 @@ const AddNewsPage = () => {
   });
 
   // Temporary state for new media
-  const [newMedia, setNewMedia] = useState({ 
+  const [newMedia, setNewMedia] = useState({
     file: null,
     type: 'image',
     title: '',
@@ -66,7 +66,7 @@ const AddNewsPage = () => {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await axios.get('http://localhost:3002/api/news/tags');
+        const response = await apiClient.get('/news/tags');
         if (response.data && Array.isArray(response.data.tags)) {
           setTags(response.data.tags);
         } else if (Array.isArray(response.data)) {
@@ -80,306 +80,32 @@ const AddNewsPage = () => {
         setTags([]);
       }
     };
-    
+
     fetchTags();
   }, []);
-
-  // Handle input change
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  // Handle text area change
-  const handleTextAreaChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Handle file selection
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-      
-      setNewMedia(prev => ({
-        ...prev,
-        file,
-        type: fileType
-      }));
-    }
-  };
-
-  // Handle media input change
-  const handleMediaChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewMedia(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  // Trigger file input click
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Upload file to local storage (simulate upload)
-  const uploadFile = async (file) => {
-    try {
-      setIsUploading(true);
-      setUploadProgress(0);
-      
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(interval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
-      
-      // Create a local URL for the file instead of uploading to server
-      const localUrl = URL.createObjectURL(file);
-      
-      // Clear the interval and finish
-      setTimeout(() => {
-        clearInterval(interval);
-        setUploadProgress(100);
-        setIsUploading(false);
-      }, 1500);
-      
-      return localUrl; // This URL will work in the browser session
-    } catch (error) {
-      console.error('Error creating local file URL:', error);
-      setIsUploading(false);
-      return null;
-    }
-  };
-
-  // Toggle tag selection
-  const toggleTag = (tagId) => {
-    if (selectedTags.includes(tagId)) {
-      setSelectedTags(selectedTags.filter(id => id !== tagId));
-    } else {
-      setSelectedTags([...selectedTags, tagId]);
-    }
-  };
-
-  // Generate a video thumbnail (as a placeholder)
-  const generateVideoThumbnail = async (videoFile) => {
-    return new Promise((resolve) => {
-      const videoElement = document.createElement('video');
-      videoElement.preload = 'metadata';
-      videoElement.playsInline = true;
-      videoElement.muted = true;
-      
-      // Create a URL for the video file
-      const videoURL = URL.createObjectURL(videoFile);
-      videoElement.src = videoURL;
-      
-      // Once the video metadata is loaded, capture the thumbnail
-      videoElement.onloadedmetadata = () => {
-        // Set current time to the first frame
-        videoElement.currentTime = 1; // 1 second in to avoid black frames
-      };
-      
-      // When the current time updates (after seeking)
-      videoElement.onseeked = () => {
-        // Create a canvas and draw the video frame
-        const canvas = document.createElement('canvas');
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-        
-        // Convert the canvas to a data URL (thumbnail)
-        const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
-        
-        // Clean up
-        URL.revokeObjectURL(videoURL);
-        
-        // Return the thumbnail
-        resolve(thumbnailUrl);
-      };
-      
-      // Handle errors
-      videoElement.onerror = () => {
-        URL.revokeObjectURL(videoURL);
-        console.error('Error generating video thumbnail');
-        resolve(null);
-      };
-    });
-  };
-
-  // Add media to media list
-  const addMedia = async () => {
-    if (!newMedia.file || !newMedia.title) return;
-    
-    try {
-      // Get local URL for the file
-      const fileUrl = await uploadFile(newMedia.file);
-      
-      if (!fileUrl) {
-        setError('Failed to create file URL. Please try again.');
-        return;
-      }
-      
-      const mediaId = `media-${Date.now()}`;
-      
-      // For videos, try to generate a thumbnail
-      let thumbnailUrl = null;
-      if (newMedia.type === 'video') {
-        try {
-          thumbnailUrl = await generateVideoThumbnail(newMedia.file);
-        } catch (error) {
-          console.error('Error generating thumbnail:', error);
-          // If thumbnail generation fails, use a placeholder
-          thumbnailUrl = null;
-        }
-      }
-      
-      const mediaToAdd = {
-        id: mediaId,
-        type: newMedia.type,
-        url: fileUrl,
-        title: newMedia.title,
-        cover: newMedia.cover,
-        order: formData.media.items.length + 1,
-        size: newMedia.file.size,
-        // For videos, add duration and thumbnail
-        ...(newMedia.type === 'video' && {
-          duration: 0, // We could calculate actual duration with more complex code
-          thumbnailUrl: thumbnailUrl
-        })
-      };
-      
-      setFormData(prev => ({
-        ...prev,
-        media: {
-          items: [...prev.media.items, mediaToAdd]
-        }
-      }));
-      
-      // Reset new media form
-      setNewMedia({ 
-        file: null,
-        type: 'image',
-        title: '',
-        cover: false
-      });
-      
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-    } catch (error) {
-      console.error('Error adding media:', error);
-      setError('Failed to upload media. Please try again.');
-    }
-  };
-
-  // Select media for editing
-  const selectMedia = (mediaId) => {
-    if (selectedMedia && selectedMedia.id === mediaId) {
-      setSelectedMedia(null);
-    } else {
-      const media = formData.media.items.find(item => item.id === mediaId);
-      setSelectedMedia(media);
-    }
-  };
-
-  // Toggle media as cover
-  const toggleMediaCover = (mediaId) => {
-    setFormData(prev => ({
-      ...prev,
-      media: {
-        items: prev.media.items.map(item => 
-          item.id === mediaId 
-            ? { ...item, cover: true } 
-            : { ...item, cover: false } // Ensure only one cover image
-        )
-      }
-    }));
-    
-    // Update selectedMedia if it's the one being updated
-    if (selectedMedia && selectedMedia.id === mediaId) {
-      setSelectedMedia(prev => ({ ...prev, cover: true }));
-    }
-  };
-
-  // Remove media from list
-  const removeMedia = (mediaId) => {
-    // Revoke the object URL to prevent memory leaks
-    const mediaToRemove = formData.media.items.find(media => media.id === mediaId);
-    if (mediaToRemove) {
-      if (mediaToRemove.url && mediaToRemove.url.startsWith('blob:')) {
-        URL.revokeObjectURL(mediaToRemove.url);
-      }
-      if (mediaToRemove.thumbnailUrl && mediaToRemove.thumbnailUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(mediaToRemove.thumbnailUrl);
-      }
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      media: {
-        items: prev.media.items.filter(media => media.id !== mediaId)
-      }
-    }));
-    
-    if (selectedMedia && selectedMedia.id === mediaId) {
-      setSelectedMedia(null);
-    }
-  };
-
-  // Remove featured image
-  const removeNewMedia = () => {
-    setNewMedia({
-      file: null,
-      type: 'image',
-      title: '',
-      cover: false
-    });
-    
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
 
   // Handle adding a new tag
   const handleAddTag = async () => {
     if (!newTagName.trim()) return;
-    
+
     try {
       setAddingTag(true);
-      
-      const response = await axios.post('http://localhost:3002/api/news/tags', {
+
+      const response = await apiClient.post('/news/tags', {
         name: newTagName.trim()
       });
-      
+
       const newTag = response.data;
-      
+
       // Add the new tag to the tags list
       setTags(prev => [...prev, newTag]);
-      
+
       // Select the newly created tag
       setSelectedTags(prev => [...prev, newTag.id]);
-      
+
       // Reset the new tag name
       setNewTagName('');
-      
+
       // Close the modal
       setShowTagModal(false);
     } catch (error) {

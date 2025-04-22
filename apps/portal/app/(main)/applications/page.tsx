@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, 
-  Filter, 
-  ArrowUp, 
-  MoreHorizontal, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
+import {
+  Search,
+  Filter,
+  ArrowUp,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
   ChevronsRight,
   ArrowRight,
   Eye,
@@ -18,101 +18,19 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  // Set a timeout to avoid hanging requests
-  timeout: 10000,
-});
-
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  // Only retry on 429 status code (too many requests) or network errors
-  if ((response && response.status === 429) || !response) {
-    // Set max retry count
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      // Increase retry count
-      config.retryCount += 1;
-      
-      // Exponential backoff: wait longer for each retry
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
-      
-      // Wait for the delay
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Retry the request
-      return axiosInstance(config);
-    }
-  }
-  
-  // If we've reached max retries or it's not a 429 error, reject the promise
-  return Promise.reject(err);
-});
-
-// Add a request interceptor to add a delay between requests
-axiosInstance.interceptors.request.use(async (config) => {
-  // Track time between requests to avoid overwhelming the API
-  const now = Date.now();
-  const lastRequestTime = window.lastAxiosRequestTime || 0;
-  const minRequestInterval = 300; // minimum ms between requests
-  
-  if (now - lastRequestTime < minRequestInterval) {
-    // Wait until the minimum interval has passed
-    const delayMs = minRequestInterval - (now - lastRequestTime);
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-  }
-  
-  // Update the last request time
-  window.lastAxiosRequestTime = Date.now();
-  
-  return config;
-});
-
-// Add a request throttling mechanism
-const pendingRequests = {};
-
-const throttledAxios = {
-  get: (url, config = {}) => {
-    const key = `${url}${JSON.stringify(config.params || {})}`;
-    
-    // If there's already a pending request with the same parameters, return that promise
-    if (pendingRequests[key]) {
-      return pendingRequests[key];
-    }
-    
-    // Otherwise, make a new request
-    const request = axiosInstance.get(url, config)
-      .finally(() => {
-        // Remove from pending requests when done
-        delete pendingRequests[key];
-      });
-    
-    pendingRequests[key] = request;
-    return request;
-  },
-  delete: (url, config = {}) => {
-    return axiosInstance.delete(url, config);
-  }
-};
+import apiClient from '@/lib/api-client';
 
 const ApplicationsPage = () => {
   const router = useRouter();
   // State for the active tab
   const [activeTab, setActiveTab] = useState('all');
-  
+
   // States for data and UI
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [opportunities, setOpportunities] = useState({});
   const [error, setError] = useState(null);
-  
+
   // States for pagination and filtering
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -121,7 +39,7 @@ const ApplicationsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
-  
+
   // States for tab counts
   const [tabCounts, setTabCounts] = useState({
     all: 0,
@@ -137,7 +55,7 @@ const ApplicationsPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
-  
+
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
     if (openMenuId === id) {
@@ -158,7 +76,7 @@ const ApplicationsPage = () => {
   // Function to handle action click
   const handleAction = async (action, applicationId, opportunityId) => {
     setOpenMenuId(null); // Close the menu
-    
+
     switch(action) {
       case 'view':
         // Navigate to application details page
@@ -171,7 +89,7 @@ const ApplicationsPage = () => {
       case 'delete':
         if (window.confirm('Are you sure you want to delete this application?')) {
           try {
-            await throttledAxios.delete(`http://localhost:3002/api/opportunities/applications/${applicationId}`);
+            await apiClient.delete(`/opportunities/applications/${applicationId}`);
             // Refresh the applications list after deletion
             const updatedPage = applications.length === 1 && page > 1 ? page - 1 : page;
             setPage(updatedPage);
@@ -206,14 +124,14 @@ const ApplicationsPage = () => {
 
   // Add click outside listener to close dropdown
   const menuRef = useRef(null);
-  
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -229,40 +147,40 @@ const ApplicationsPage = () => {
   // Function to extract applications from the response
   const extractApplicationsFromResponse = (response) => {
     if (!response) return [];
-    
+
     // If the response is already an array, return it
     if (Array.isArray(response)) {
       return response;
     }
-    
+
     // If response.applications.items exists and is an array (matches your console output)
-    if (response.applications && 
-        response.applications.items && 
+    if (response.applications &&
+        response.applications.items &&
         Array.isArray(response.applications.items)) {
       return response.applications.items;
     }
-    
+
     // If response.items exists and is an array
     if (response.items && Array.isArray(response.items)) {
       return response.items;
     }
-    
+
     // If response.applications exists and is an array
     if (response.applications && Array.isArray(response.applications)) {
       return response.applications;
     }
-    
+
     // If response.data exists and is an array
     if (response.data && Array.isArray(response.data)) {
       return response.data;
     }
-    
+
     // Last resort: look for any array property in the response
     for (const key in response) {
       if (Array.isArray(response[key])) {
         return response[key];
       }
-      
+
       // Check one level deeper
       if (typeof response[key] === 'object' && response[key] !== null) {
         for (const nestedKey in response[key]) {
@@ -272,277 +190,83 @@ const ApplicationsPage = () => {
         }
       }
     }
-    
+
     // If none of the above worked and response is an object, wrap it in an array
     if (typeof response === 'object' && response !== null && !Array.isArray(response)) {
       return [response];
     }
-    
+
     return [];
   };
 
-  // Get opportunity name and type from opportunity_id
-  const getOpportunityInfo = (application) => {
-    // Always prioritize opportunity_title from the application itself
-    let name = application.opportunity_title || opportunities[application.opportunity_id] || 'Unknown Opportunity';
-    
-    // Determine if it's a fellowship or employee position based on title or other properties
-    let type = '';
-    
-    if (name.toLowerCase().includes('fellowship') || 
-        application.opportunity_type === 'fellowship' ||
-        (application.custom_answers && Object.keys(application.custom_answers).length > 0)) {
-      type = 'Fellowship';
-    } else if (name.toLowerCase().includes('employee') || 
-              name.toLowerCase().includes('position') || 
-              application.opportunity_type === 'employee' ||
-              name.toLowerCase().includes('job')) {
-      type = 'Employee';
-    }
-    
-    return { name, type };
-  };
+  // Fetch applications from API with dependency on relevant state changes
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        setLoading(true);
 
-  // Group applications by opportunity
-  const groupApplicationsByOpportunity = (applications) => {
-    const grouped = {};
-    applications.forEach(app => {
-      const opportunityId = app.opportunity_id;
-      if (!grouped[opportunityId]) {
-        grouped[opportunityId] = [];
-      }
-      grouped[opportunityId].push(app);
-    });
-    return grouped;
-  };
+        // Build query params
+        const params = {
+          page,
+          limit,
+          sort_by: sortBy,
+          sort_order: sortOrder
+        };
 
-  // Get a summary of applications for an opportunity
-  const getOpportunitySummary = (applications) => {
-    if (!applications || applications.length === 0) return {};
-    
-    // Get the first application to get shared information
-    const firstApp = applications[0];
-    const opportunityInfo = getOpportunityInfo(firstApp);
-    
-    // Count applications by status
-    const statusCounts = applications.reduce((counts, app) => {
-      const status = mapStatusForUI(app.status);
-      counts[status] = (counts[status] || 0) + 1;
-      return counts;
-    }, {});
-    
-    return {
-      id: firstApp.opportunity_id,
-      name: opportunityInfo.name,
-      type: opportunityInfo.type,
-      totalApplications: applications.length,
-      statusCounts
-    };
-  };
+        // Add optional filters if they exist
+        if (searchTerm) params.search = searchTerm;
 
-  // Fetch tab counts using the current applications
-  const fetchTabCounts = async () => {
-    try {
-      // Count applications by type
-      let fellowshipCount = 0;
-      let employeeCount = 0;
-      const allCount = applications.length;
-      
-      applications.forEach(application => {
-        const opportunityInfo = getOpportunityInfo(application);
-        if (opportunityInfo.type === 'Fellowship') {
-          fellowshipCount++;
-        } else if (opportunityInfo.type === 'Employee') {
-          employeeCount++;
-        }
-      });
-      
-      setTabCounts({
-        all: allCount,
-        fellowship: fellowshipCount,
-        employee: employeeCount
-      });
-      
-      setTabCountsLoaded(true);
-    } catch (error) {
-      console.error('Error calculating tab counts:', error);
-      // Use default values in case of error
-      setTabCounts({
-        all: applications.length || 0,
-        fellowship: 0,
-        employee: 0
-      });
-      setTabCountsLoaded(true);
-    }
-  };
+        console.log('Fetching applications with params:', params);
 
-// Map API status to UI status
-const mapStatusForUI = (apiStatus) => {
-  const statusMap = {
-    'under_review': 'pending',
-    'approved': 'approved',
-    'rejected': 'rejected',
-    'pending': 'pending',
-    'waitlisted': 'pending',
-    'shortlisted': 'pending',
-    'withdrawn': 'rejected'
-  };
-  
-  return statusMap[apiStatus] || 'pending';
-};
-
-// Filter applications based on active tab
-const getFilteredApplications = () => {
-  if (activeTab === 'all') {
-    return applications;
-  } else if (activeTab === 'fellowship') {
-    return applications.filter(app => {
-      const opportunityInfo = getOpportunityInfo(app);
-      return opportunityInfo.type === 'Fellowship';
-    });
-  } else if (activeTab === 'employee') {
-    return applications.filter(app => {
-      const opportunityInfo = getOpportunityInfo(app);
-      return opportunityInfo.type === 'Employee';
-    });
-  }
-  return applications;
-};
-
-// Add debouncing for search
-const searchTimeoutRef = useRef(null);
-
-// Handle search input change with debounce
-const handleSearchChange = (e) => {
-  const value = e.target.value;
-  setSearchTerm(value);
-  
-  // Clear any existing timeout
-  if (searchTimeoutRef.current) {
-    clearTimeout(searchTimeoutRef.current);
-  }
-  
-  // Set a new timeout to trigger search after user stops typing
-  searchTimeoutRef.current = setTimeout(() => {
-    setPage(1); // Reset to first page when searching
-  }, 500); // 500ms debounce
-};
-
-// Handle search submission
-const handleSearchSubmit = (e) => {
-  e.preventDefault();
-  // Clear any existing timeout
-  if (searchTimeoutRef.current) {
-    clearTimeout(searchTimeoutRef.current);
-  }
-  setPage(1); // Reset to first page when searching
-};
-
-// Handle tab change
-const handleTabChange = (tab) => {
-  setActiveTab(tab);
-  setPage(1); // Reset to first page when changing tabs
-};
-
-// Format date for display
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
-// Get applicant name from API response
-const getApplicantName = (application) => {
-  return application.full_name || 'Unknown Applicant';
-};
-
-// Fetch applications from API with dependency on relevant state changes
-useEffect(() => {
-  const fetchApplications = async () => {
-    try {
-      setLoading(true);
-      
-      // Add a delay between requests to avoid rate limiting
-      const lastRequestTime = window.lastApplicationFetchTime || 0;
-      const now = Date.now();
-      const timeSinceLastRequest = now - lastRequestTime;
-      
-      // If last request was less than 500ms ago, delay this one
-      if (timeSinceLastRequest < 500) {
-        await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
-      }
-      
-      // Build query params
-      const params = {
-        page,
-        limit,
-        sort_by: sortBy,
-        sort_order: sortOrder
-      };
-      
-      // Add optional filters if they exist
-      if (searchTerm) params.search = searchTerm;
-      
-      // We're no longer filtering by status on the API since we're filtering by type
-      
-      console.log('Fetching applications with params:', params);
-      
-      // Store the time of this request
-      window.lastApplicationFetchTime = Date.now();
-      
-      // Make API request with throttled axios
-      const response = await throttledAxios.get('http://localhost:3002/api/opportunities/applications', { 
-          params 
-      });
-        
-      console.log('API response:', response.data);
-      
-      // Extract the applications from the response using our helper function
-      const applicationsData = extractApplicationsFromResponse(response.data);
-      console.log('Extracted applications:', applicationsData);
-      
-      // Set the applications with processed data
-      setApplications(applicationsData);
-      
-      // Update total count for pagination
-      setTotalApplications(applicationsData.length);
-      setTotalPages(Math.ceil(applicationsData.length / limit) || 1);
-      
-      // Update tab counts and opportunities map
-      if (applicationsData.length > 0) {
-        // Create a map of opportunities from the application data
-        const opportunityMap = {...opportunities};
-        applicationsData.forEach(app => {
-          if (app.opportunity_id && app.opportunity_title && !opportunityMap[app.opportunity_id]) {
-            opportunityMap[app.opportunity_id] = app.opportunity_title;
-          }
+        // Make API request with apiClient
+        const response = await apiClient.get('/opportunities/applications', {
+          params
         });
-        
-        // Only update opportunities if we have new data
-        if (Object.keys(opportunityMap).length > Object.keys(opportunities).length) {
-          setOpportunities(opportunityMap);
+
+        console.log('API response:', response.data);
+
+        // Extract the applications from the response using our helper function
+        const applicationsData = extractApplicationsFromResponse(response.data);
+        console.log('Extracted applications:', applicationsData);
+
+        // Set the applications with processed data
+        setApplications(applicationsData);
+
+        // Update total count for pagination
+        setTotalApplications(applicationsData.length);
+        setTotalPages(Math.ceil(applicationsData.length / limit) || 1);
+
+        // Update tab counts and opportunities map
+        if (applicationsData.length > 0) {
+          // Create a map of opportunities from the application data
+          const opportunityMap = {...opportunities};
+          applicationsData.forEach(app => {
+            if (app.opportunity_id && app.opportunity_title && !opportunityMap[app.opportunity_id]) {
+              opportunityMap[app.opportunity_id] = app.opportunity_title;
+            }
+          });
+
+          // Only update opportunities if we have new data
+          if (Object.keys(opportunityMap).length > Object.keys(opportunities).length) {
+            setOpportunities(opportunityMap);
+          }
+
+          // Update the tab counts
+          setTimeout(() => {
+            fetchTabCounts();
+          }, 0);
         }
-        
-        // Update the tab counts
-        setTimeout(() => {
-          fetchTabCounts();
-        }, 0);
+      } catch (error) {
+        console.error('Error fetching applications:', error);
+        setApplications([]);
+        setError(`Failed to fetch applications: ${error.message}`);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-      setApplications([]);
-      setError(`Failed to fetch applications: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  fetchApplications();
-}, [page, limit, searchTerm, sortBy, sortOrder]);
+    };
+
+    fetchApplications();
+  }, [page, limit, searchTerm, sortBy, sortOrder]);
 
 const filteredApplications = getFilteredApplications();
 

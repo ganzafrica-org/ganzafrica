@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { 
-  Search, 
-  Filter, 
-  ArrowUp, 
-  MoreHorizontal, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
+import {
+  Search,
+  Filter,
+  ArrowUp,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
   ChevronsRight,
   ArrowRight,
   Eye,
@@ -26,101 +25,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  timeout: 10000,
-});
-
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  // Only retry on 429 status code (too many requests) or network errors
-  if ((response && response.status === 429) || !response) {
-    // Set max retry count
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      // Increase retry count
-      config.retryCount += 1;
-      
-      // Exponential backoff: wait longer for each retry
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
-      
-      // Wait for the delay
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Retry the request
-      return axiosInstance(config);
-    }
-  }
-  
-  // If we've reached max retries or it's not a 429 error, reject the promise
-  return Promise.reject(err);
-});
-
-// Add a request interceptor to add a delay between requests
-axiosInstance.interceptors.request.use(async (config) => {
-  // Track time between requests to avoid overwhelming the API
-  const now = Date.now();
-  const lastRequestTime = window.lastAxiosRequestTime || 0;
-  const minRequestInterval = 300; // minimum ms between requests
-  
-  if (now - lastRequestTime < minRequestInterval) {
-    // Wait until the minimum interval has passed
-    const delayMs = minRequestInterval - (now - lastRequestTime);
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-  }
-  
-  // Update the last request time
-  window.lastAxiosRequestTime = Date.now();
-  
-  return config;
-});
-
-// Add a request throttling mechanism
-const pendingRequests = {};
-
-const throttledAxios = {
-  get: (url, config = {}) => {
-    const key = `${url}${JSON.stringify(config.params || {})}`;
-    
-    // If there's already a pending request with the same parameters, return that promise
-    if (pendingRequests[key]) {
-      return pendingRequests[key];
-    }
-    
-    // Otherwise, make a new request
-    const request = axiosInstance.get(url, config)
-      .finally(() => {
-        // Remove from pending requests when done
-        delete pendingRequests[key];
-      });
-    
-    pendingRequests[key] = request;
-    return request;
-  },
-  post: (url, data, config = {}) => {
-    return axiosInstance.post(url, data, config);
-  },
-  put: (url, data, config = {}) => {
-    return axiosInstance.put(url, data, config);
-  },
-  delete: (url, config = {}) => {
-    return axiosInstance.delete(url, config);
-  }
-};
+import apiClient from '@/lib/api-client';
 
 const PartnersPage = () => {
   const router = useRouter();
-  
+
   // States for data and UI
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // States for pagination and filtering
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -129,17 +42,17 @@ const PartnersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
-  
+
   // States for modal popups
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [currentPartner, setCurrentPartner] = useState(null);
-  
+
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
-  
+
   // States for form data
   const [formData, setFormData] = useState({
     name: '',
@@ -147,17 +60,17 @@ const PartnersPage = () => {
     website_url: '',
     location: ''
   });
-  
+
   // States for file upload
   const [logoFile, setLogoFile] = useState(null);
   const [uploadMethod, setUploadMethod] = useState('url'); // 'url' or 'upload'
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  
+
   // States for form errors and success
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
-  
+
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
     if (openMenuId === id) {
@@ -169,14 +82,14 @@ const PartnersPage = () => {
 
   // Add click outside listener to close dropdown
   const menuRef = useRef(null);
-  
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -185,17 +98,17 @@ const PartnersPage = () => {
 
   // Add debouncing for search
   const searchTimeoutRef = useRef(null);
-  
+
   // Handle search input change with debounce
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    
+
     // Clear any existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     // Set a new timeout to trigger search after user stops typing
     searchTimeoutRef.current = setTimeout(() => {
       setPage(1); // Reset to first page when searching
@@ -207,7 +120,7 @@ const PartnersPage = () => {
     const fetchPartners = async () => {
       try {
         setLoading(true);
-        
+
         // Build query params
         const params = {
           page,
@@ -215,13 +128,13 @@ const PartnersPage = () => {
           sort_by: sortBy,
           sort_order: sortOrder
         };
-        
+
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
-        
-        // Make API request with throttled axios
-        const response = await throttledAxios.get('http://localhost:3002/api/partners', { params });
-        
+
+        // Make API request with apiClient
+        const response = await apiClient.get('/partners', { params });
+
         if (response.data) {
           // Parse the response data based on structure
           let partnersData = [];
@@ -231,13 +144,13 @@ const PartnersPage = () => {
             setTotalPages(Math.ceil(response.data.length / limit));
           } else if (response.data.partners && Array.isArray(response.data.partners)) {
             partnersData = response.data.partners;
-            
+
             // Extract pagination info if available
             const pagination = response.data.pagination || {};
             setTotalPartners(pagination.total || partnersData.length);
             setTotalPages(pagination.pages || Math.ceil(partnersData.length / limit));
           }
-          
+
           setPartners(partnersData);
         }
       } catch (error) {
@@ -247,7 +160,7 @@ const PartnersPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchPartners();
   }, [page, limit, searchTerm, sortBy, sortOrder]);
 
@@ -351,7 +264,7 @@ const PartnersPage = () => {
   const simulateUpload = async (file) => {
     setIsUploading(true);
     setUploadProgress(0);
-    
+
     return new Promise((resolve) => {
       const interval = setInterval(() => {
         setUploadProgress((prev) => {
@@ -362,12 +275,12 @@ const PartnersPage = () => {
           return prev + 5;
         });
       }, 100);
-      
+
       setTimeout(() => {
         clearInterval(interval);
         setUploadProgress(100);
         setIsUploading(false);
-        
+
         // Convert file to data URL to simulate upload
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -383,37 +296,37 @@ const PartnersPage = () => {
     e.preventDefault();
     setFormError('');
     setFormSuccess('');
-    
+
     try {
       // Validate form
       if (!formData.name) {
         setFormError('Partner name is required');
         return;
       }
-      
+
       let logoUrl = formData.logo;
-      
+
       // If upload method is file and there's a file, process it
       if (uploadMethod === 'upload' && logoFile) {
         logoUrl = await simulateUpload(logoFile);
       }
-      
+
       // Prepare data for API
       const partnerData = {
         ...formData,
         logo: logoUrl
       };
-      
+
       // Make API request
-      await throttledAxios.post('http://localhost:3002/api/partners', partnerData);
-      
+      await apiClient.post('/partners', partnerData);
+
       // Show success message
       setFormSuccess('Partner added successfully');
-      
+
       // Reset form and close modal after a delay
       setTimeout(() => {
         closeAllModals();
-        
+
         // Refresh partners list
         setPage(1);
       }, 1500);
@@ -428,37 +341,37 @@ const PartnersPage = () => {
     e.preventDefault();
     setFormError('');
     setFormSuccess('');
-    
+
     try {
       // Validate form
       if (!formData.name) {
         setFormError('Partner name is required');
         return;
       }
-      
+
       let logoUrl = formData.logo;
-      
+
       // If upload method is file and there's a file, process it
       if (uploadMethod === 'upload' && logoFile) {
         logoUrl = await simulateUpload(logoFile);
       }
-      
+
       // Prepare data for API
       const partnerData = {
         ...formData,
         logo: logoUrl
       };
-      
+
       // Make API request
-      await throttledAxios.put(`http://localhost:3002/api/partners/${currentPartner.id}`, partnerData);
-      
+      await apiClient.put(`/partners/${currentPartner.id}`, partnerData);
+
       // Show success message
       setFormSuccess('Partner updated successfully');
-      
+
       // Reset form and close modal after a delay
       setTimeout(() => {
         closeAllModals();
-        
+
         // Refresh partners list
         setPage(1);
       }, 1500);
@@ -472,11 +385,11 @@ const PartnersPage = () => {
   const handleDeletePartner = async () => {
     try {
       // Make API request
-      await throttledAxios.delete(`http://localhost:3002/api/partners/${currentPartner.id}`);
-      
+      await apiClient.delete(`/partners/${currentPartner.id}`);
+
       // Close modal
       closeAllModals();
-      
+
       // Refresh partners list
       setPage(1);
     } catch (error) {

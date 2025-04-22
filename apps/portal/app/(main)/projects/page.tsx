@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { 
-  Search, 
-  Filter, 
-  ArrowUp, 
-  MoreHorizontal, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
+import {
+  Search,
+  Filter,
+  ArrowUp,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
   ChevronsRight,
   ArrowRight,
   Eye,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import apiClient from '@/lib/api-client';
 
 // Define interfaces for our data structures
 interface Project {
@@ -64,107 +64,17 @@ interface ProjectParams {
   status?: string;
 }
 
-// Extend Window interface to include our custom properties
-declare global {
-  interface Window {
-    lastAxiosRequestTime: number;
-    lastProjectFetchTime: number;
-  }
-}
-
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  // Set a timeout to avoid hanging requests
-  timeout: 10000,
-});
-
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  // Only retry on 429 status code (too many requests) or network errors
-  if ((response && response.status === 429) || !response) {
-    // Set max retry count
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      // Increase retry count
-      config.retryCount += 1;
-      
-      // Exponential backoff: wait longer for each retry
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
-      
-      // Wait for the delay
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      // Retry the request
-      return axiosInstance(config);
-    }
-  }
-  
-  // If we've reached max retries or it's not a 429 error, reject the promise
-  return Promise.reject(err);
-});
-
-// Add a request interceptor to add a delay between requests
-axiosInstance.interceptors.request.use(async (config) => {
-  // Track time between requests to avoid overwhelming the API
-  const now = Date.now();
-  const lastRequestTime = window.lastAxiosRequestTime || 0;
-  const minRequestInterval = 300; // minimum ms between requests
-  
-  if (now - lastRequestTime < minRequestInterval) {
-    // Wait until the minimum interval has passed
-    const delayMs = minRequestInterval - (now - lastRequestTime);
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-  }
-  
-  // Update the last request time
-  window.lastAxiosRequestTime = Date.now();
-  
-  return config;
-});
-
-// Add a request throttling mechanism
-const pendingRequests: { [key: string]: Promise<any> } = {};
-
-const throttledAxios = {
-  get: (url: string, config: { params?: any } = {}) => {
-    const key = `${url}${JSON.stringify(config.params || {})}`;
-    
-    // If there's already a pending request with the same parameters, return that promise
-    if (pendingRequests[key]) {
-      return pendingRequests[key];
-    }
-    
-    // Otherwise, make a new request
-    const request = axiosInstance.get(url, config)
-      .finally(() => {
-        // Remove from pending requests when done
-        delete pendingRequests[key];
-      });
-    
-    pendingRequests[key] = request;
-    return request;
-  },
-  delete: (url: string, config: any = {}) => {
-    return axiosInstance.delete(url, config);
-  }
-};
-
 const ProjectsPage = () => {
   const router = useRouter();
   // State for the active tab
   const [activeTab, setActiveTab] = useState<string>('all');
-  
+
   // States for data and UI
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [categories, setCategories] = useState<Categories>({});
   const [users, setUsers] = useState<Users>({});
-  
+
   // States for pagination and filtering
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
@@ -173,7 +83,7 @@ const ProjectsPage = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<string>('desc');
-  
+
   // States for tab counts
   const [tabCounts, setTabCounts] = useState<TabCounts>({
     all: 0,
@@ -189,7 +99,7 @@ const ProjectsPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  
+
   // Function to toggle dropdown menu
   const toggleMenu = (id: number) => {
     if (openMenuId === id) {
@@ -202,7 +112,7 @@ const ProjectsPage = () => {
   // Function to handle action click
   const handleAction = async (action: string, projectId: number) => {
     setOpenMenuId(null); // Close the menu
-    
+
     switch(action) {
       case 'view':
         // Navigate to project details page
@@ -211,7 +121,7 @@ const ProjectsPage = () => {
       case 'delete':
         if (window.confirm('Are you sure you want to delete this project?')) {
           try {
-            await throttledAxios.delete(`http://localhost:3002/api/projects/${projectId}`);
+            await apiClient.delete(`/projects/${projectId}`);
             // Refresh the projects list after deletion
             const updatedPage = projects.length === 1 && page > 1 ? page - 1 : page;
             setPage(updatedPage);
@@ -253,7 +163,7 @@ const ProjectsPage = () => {
       default: return apiStatus;
     }
   };
-  
+
   // Map UI status to API status
   const mapUIToAPIStatus = (uiStatus: string) => {
     switch(uiStatus) {
@@ -267,14 +177,14 @@ const ProjectsPage = () => {
 
   // Add click outside listener to close dropdown
   const menuRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpenMenuId(null);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -286,18 +196,18 @@ const ProjectsPage = () => {
     const fetchCategories = async () => {
       try {
         console.log('Fetching categories from API...');
-        const response = await throttledAxios.get('http://localhost:3002/api/categories');
+        const response = await apiClient.get('/categories');
         console.log('Categories API response:', response.data);
-        
+
         // Handle different response formats
         if (response.data) {
           let categoriesData = response.data;
-          
+
           // If response is an object with categories property, use that
           if (!Array.isArray(response.data) && response.data.categories && Array.isArray(response.data.categories)) {
             categoriesData = response.data.categories;
           }
-          
+
           // If response is an empty object, provide default categories as fallback
           if (Object.keys(response.data).length === 0) {
             console.log('Empty categories response, using default categories');
@@ -307,10 +217,10 @@ const ProjectsPage = () => {
               { id: 3, name: "Data & Evidence" }
             ];
           }
-          
+
           // Transform the categories array into an object with id as key and name as value
           const categoriesObj: Categories = {};
-          
+
           if (Array.isArray(categoriesData)) {
             categoriesData.forEach((category: Category) => {
               if (category && category.id && category.name) {
@@ -326,7 +236,7 @@ const ProjectsPage = () => {
             // Use default categories
             setCategories({
               1: "Food System",
-              2: "Climate Adaptation", 
+              2: "Climate Adaptation",
               3: "Data & Evidence"
             });
           }
@@ -335,7 +245,7 @@ const ProjectsPage = () => {
           // Use default categories
           setCategories({
             1: "Food System",
-            2: "Climate Adaptation", 
+            2: "Climate Adaptation",
             3: "Data & Evidence"
           });
         }
@@ -345,7 +255,7 @@ const ProjectsPage = () => {
         // Use default categories in case of error
         setCategories({
           1: "Food System",
-          2: "Climate Adaptation", 
+          2: "Climate Adaptation",
           3: "Data & Evidence"
         });
         setCategoriesLoaded(true);
@@ -353,7 +263,7 @@ const ProjectsPage = () => {
     };
 
     fetchCategories();
-    
+
     // Set users (in a real app, you would fetch users from API as well)
     setUsers({
       1: 'Mukamana Fransine',
@@ -367,19 +277,19 @@ const ProjectsPage = () => {
   const fetchTabCounts = async () => {
     try {
       // Fetch all projects with limit=0 just to get count
-      const response = await throttledAxios.get('http://localhost:3002/api/projects', { 
-        params: { limit: 0 } 
+      const response = await apiClient.get('/projects', {
+        params: { limit: 0 }
       });
-      
+
       // Get the total count from the response
       const allCount = parseInt(response.data.pagination?.total) || 0;
-      
+
       // Count projects by status from the example data
       // This assumes we have a complete list of projects when limit=0
       let activeCount = 0;
       let completedCount = 0;
       let plannedCount = 0;
-      
+
       if (response.data.projects && Array.isArray(response.data.projects)) {
         response.data.projects.forEach((project: Project) => {
           if (project.status === 'active') activeCount++;
@@ -387,14 +297,14 @@ const ProjectsPage = () => {
           else if (project.status === 'planned') plannedCount++;
         });
       }
-      
+
       setTabCounts({
         all: allCount,
         active: activeCount,
         completed: completedCount,
         planned: plannedCount
       });
-      
+
       setTabCountsLoaded(true);
     } catch (error) {
       console.error('Error fetching tab counts:', error);
@@ -411,23 +321,23 @@ const ProjectsPage = () => {
 
   // Add debouncing for search
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Handle search input change with debounce
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-    
+
     // Clear any existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     // Set a new timeout to trigger search after user stops typing
     searchTimeoutRef.current = setTimeout(() => {
       setPage(1); // Reset to first page when searching
     }, 500); // 500ms debounce
   };
-  
+
   // Handle search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -443,17 +353,7 @@ const ProjectsPage = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        
-        // Add a delay between requests to avoid rate limiting
-        const lastRequestTime = window.lastProjectFetchTime || 0;
-        const now = Date.now();
-        const timeSinceLastRequest = now - lastRequestTime;
-        
-        // If last request was less than 500ms ago, delay this one
-        if (timeSinceLastRequest < 500) {
-          await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
-        }
-        
+
         // Build query params
         const params: ProjectParams = {
           page,
@@ -461,42 +361,39 @@ const ProjectsPage = () => {
           sort_by: sortBy,
           sort_order: sortOrder
         };
-        
+
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
-        
+
         // Map UI status to API status
         const apiStatus = mapUIToAPIStatus(activeTab);
         if (apiStatus) params.status = apiStatus;
-        
+
         console.log('Fetching projects with params:', params);
-        
-        // Store the time of this request
-        window.lastProjectFetchTime = Date.now();
-        
-        // Make API request with throttled axios
-        const response = await throttledAxios.get('http://localhost:3002/api/projects', { params });
-        
+
+        // Make API request
+        const response = await apiClient.get('/projects', { params });
+
         console.log('API response projects:', response.data.projects);
-        
+
         if (response.data) {
           // Log a sample project to see its structure
           if (response.data.projects && response.data.projects.length > 0) {
             console.log('Sample project structure:', response.data.projects[0]);
-            
+
             // Look for category_id in the projects
             response.data.projects.forEach((project: Project) => {
               console.log(`Project ${project.id} has category_id: ${project.category_id}`);
             });
           }
-          
+
           setProjects(response.data.projects || []);
-          
+
           // Extract pagination info
           const pagination = response.data.pagination || {};
           setTotalProjects(parseInt(pagination.total) || 0);
           setTotalPages(pagination.pages || 1);
-          
+
           // If we're not already tracking tab counts, also use this response to update counts
           if (!tabCountsLoaded && response.data.projects) {
             fetchTabCounts();
@@ -509,7 +406,7 @@ const ProjectsPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProjects();
   }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
 

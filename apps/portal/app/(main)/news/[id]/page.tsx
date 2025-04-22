@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Link from 'next/link';
-import { 
+import {
   ArrowLeft,
   Calendar,
   Clock,
@@ -17,6 +16,7 @@ import {
   FileVideo
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import apiClient from '@/lib/api-client';
 
 // Define interface for news data
 interface MediaItem {
@@ -69,12 +69,12 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
     const fetchNewsData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch news article details
         try {
-          const response = await axios.get(`http://localhost:3002/api/news/${params.id}`);
+          const response = await apiClient.get(`/news/${params.id}`);
           console.log("API Response:", response.data);
-          
+
           // Check if the response has a nested news object
           if (response.data && response.data.news) {
             setNews(response.data.news);
@@ -110,7 +110,7 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
     const handleResize = () => {
       setShowSidebar(window.innerWidth >= 768);
     };
-    
+
     handleResize(); // Set initial state
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
