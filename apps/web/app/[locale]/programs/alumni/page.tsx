@@ -78,7 +78,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            A lifetime of <span className="text-yellow-400 font-bold">Connections</span>, Opportunities and <span className="text-yellow-400 font-bold">Impact</span>
+            A lifetime of <span className="text-yellow-400 font-bold">Connections</span>, Opportunities and Impact
           </motion.h1>
           <motion.h2
             className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
