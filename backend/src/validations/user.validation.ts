@@ -23,8 +23,8 @@ export const createUserSchema = z.object({
         .positive("Role ID must be a positive integer")
         .or(z.string().regex(/^\d+$/).transform(Number))
         .optional(),
-      avatar_url: z.string().url().optional(),
-      email_verified: z.boolean().optional(),
+        avatar_url: z.string().optional(),
+        email_verified: z.boolean().optional(),
       sendVerificationEmail: z.boolean().optional(),
     })
     .refine((data) => data.role_id !== undefined, {
@@ -46,8 +46,8 @@ export const updateUserSchema = z.object({
       .positive()
       .or(z.string().regex(/^\d+$/).transform(Number))
       .optional(),
-    avatar_url: z.string().url().optional().nullable(),
-    email_verified: z.boolean().optional(),
+      avatar_url: z.string().optional(),
+      email_verified: z.boolean().optional(),
     is_active: z.boolean().optional(),
   }),
 });

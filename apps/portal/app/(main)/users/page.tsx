@@ -98,6 +98,12 @@ const userSchema = z.object({
   sendVerificationEmail: z.boolean().default(true)
 });
 
+// Define interface for role
+interface Role {
+  id: number;
+  name: string;
+}
+
 const UserManagement = () => {
 
   // State for user data and pagination
@@ -128,6 +134,9 @@ const UserManagement = () => {
   // File input ref for CSV import
   const fileInputRef = useRef(null);
 
+  // State for roles
+  const [roles, setRoles] = useState<Role[]>([]);
+
   // Initialize form with react-hook-form and zod validation
   const form = useForm({
     resolver: zodResolver(userSchema),
@@ -146,6 +155,11 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
   }, [currentPage, sortBy, sortOrder, selectedRoleId, isActive, searchQuery]);
+
+  // Fetch roles on component mount
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -169,6 +183,24 @@ const UserManagement = () => {
       setShowAddUserDialog(true);
     }
   }, [editingUser]);
+
+  // Fetch roles from API
+  const fetchRoles = async () => {
+    try {
+      const response = await apiClient.get('/roles');
+      if (response.data && Array.isArray(response.data.roles)) {
+        setRoles(response.data.roles);
+      } else if (Array.isArray(response.data)) {
+        setRoles(response.data);
+      } else {
+        console.error('Unexpected roles response format:', response.data);
+        setRoles([]);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      setRoles([]);
+    }
+  };
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -342,6 +374,12 @@ const UserManagement = () => {
     }
   };
 
+  // Get role name by ID
+  const getRoleNameById = (roleId) => {
+    const role = roles.find(r => r.id === roleId);
+    return role ? role.name : 'Unknown';
+  };
+
   return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
@@ -389,19 +427,20 @@ const UserManagement = () => {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Select
-                      value={selectedRoleId || ""}
-                      onValueChange={(value) => setSelectedRoleId(value === "" ? null : parseInt(value))}
-                  >
+                <Select
+                  value={selectedRoleId === null ? "all" : selectedRoleId.toString()}
+                  onValueChange={(value) => setSelectedRoleId(value === "all" ? null : parseInt(value))}
+                >
                     <SelectTrigger className="w-32 sm:w-40">
                       <SelectValue placeholder="All roles" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All roles">All roles</SelectItem>
-                      <SelectItem value="1001">Public</SelectItem>
-                      <SelectItem value="1002">Member</SelectItem>
-                      <SelectItem value="1003">Editor</SelectItem>
-                      <SelectItem value="1004">Admin</SelectItem>
+                      <SelectItem value="all">All roles</SelectItem>
+                      {roles.map(role => (
+                        <SelectItem key={role.id} value={role.id.toString()}>
+                          {role.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 
@@ -637,10 +676,11 @@ const UserManagement = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="1001">Public</SelectItem>
-                              <SelectItem value="1002">Member</SelectItem>
-                              <SelectItem value="1003">Editor</SelectItem>
-                              <SelectItem value="1004">Admin</SelectItem>
+                              {roles.map(role => (
+                                <SelectItem key={role.id} value={role.id.toString()}>
+                                  {role.name}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -790,10 +830,7 @@ const UserManagement = () => {
                               <TableCell>{user.name}</TableCell>
                               <TableCell>{user.email}</TableCell>
                               <TableCell>
-                                {user.role_id === 1001 ? "Public" :
-                                    user.role_id === 1002 ? "Member" :
-                                        user.role_id === 1003 ? "Editor" :
-                                            user.role_id === 1004 ? "Admin" : "Unknown"}
+                                {getRoleNameById(user.role_id)}
                               </TableCell>
                             </TableRow>
                         ))}
@@ -819,22 +856,20 @@ const UserManagement = () => {
               <Button
                   onClick={handleImportUsers}
                   disabled={isImporting || importData.length === 0}
-                  className="bg-primary-green"
-              >
-                {isImporting ? (
-                    <>
-                      <Loader className="h-4 w-4 mr-2 animate-spin" />
-                      Importing...
-                    </>
-                ) : (
-                    `Import ${importData.length} Users`
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-  );
-};
-
-export default UserManagement;
+                  className="bg-primary-green">
+                  {isImporting ? (
+                      <>
+                        <Loader className="h-4 w-4 mr-2 animate-spin" />Importing...
+                      </>
+                  ) : (
+                      `Import ${importData.length} Users`
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+    );
+  };
+  
+  export default UserManagement;
