@@ -447,7 +447,10 @@ const ApplicationsPage = () => {
     fetchApplications();
   }, [page, limit, searchTerm, sortBy, sortOrder]);
 
-const filteredApplications = getFilteredApplications();
+const filteredApplications = applications.filter(application => {
+  // Add your filtering logic here, for example:
+  return activeTab === 'all' || application.type === activeTab;
+});
 
 return (
   <div className="p-6 max-w-full">
