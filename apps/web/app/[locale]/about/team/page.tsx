@@ -21,6 +21,7 @@ type TeamMember = {
   linkedin?: string;
   twitter?: string;
   email?: string;
+  profile_link?: string;
   created_at: string;
 };
 
