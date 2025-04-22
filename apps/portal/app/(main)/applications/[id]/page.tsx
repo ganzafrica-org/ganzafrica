@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Link from 'next/link';
-import { 
+import {
   ArrowLeft,
   Calendar,
   MapPin,
@@ -22,6 +21,7 @@ import {
   Users,
   Laptop
 } from 'lucide-react';
+import apiClient from '@/lib/api-client';
 
 const OpportunityDetailsPage = ({ params }) => {
   const [opportunity, setOpportunity] = useState(null);
@@ -29,7 +29,7 @@ const OpportunityDetailsPage = ({ params }) => {
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState({});
   const [activeTab, setActiveTab] = useState('details');
-  
+
   // Types of opportunities for display
   const opportunityTypes = {
     fellowship: 'Fellowship',
@@ -58,12 +58,12 @@ const OpportunityDetailsPage = ({ params }) => {
     const fetchOpportunityData = async () => {
       try {
         setLoading(true);
-        
+
         // Try to fetch opportunity details from API
         try {
-          const response = await axios.get(`http://localhost:3002/api/opportunities/${params.id}`);
+          const response = await apiClient.get(`/opportunities/${params.id}`);
           console.log("API Response:", response.data);
-          
+
           // Check if the response has a nested opportunity object
           if (response.data && response.data.opportunity) {
             console.log("Setting opportunity from nested opportunity object");
@@ -91,7 +91,7 @@ const OpportunityDetailsPage = ({ params }) => {
 
     fetchOpportunityData();
   }, [params.id]);
-  
+
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -111,7 +111,7 @@ const OpportunityDetailsPage = ({ params }) => {
   // Map status for display
   const getStatusBadge = (status) => {
     if (!status) return null;
-    
+
     switch(status.toLowerCase()) {
       case 'published':
         return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">• Published</span>;

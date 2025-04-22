@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play, Link as LinkIcon } from 'lucide-react';
 import Link from 'next/link';
+import apiClient from '@/lib/api-client';
 
 // Import shadcn/ui components
 import {
@@ -39,6 +39,17 @@ const AddProjectPage = () => {
   }
   
   const [filteredTeamMembers, setFilteredTeamMembers] = useState<TeamMember[]>([]);
+  interface TeamMember {
+    id: number;
+    name: string;
+    team_type?: string | { name: string };
+    position?: string;
+    photo_url?: string;
+    first_name?: string;
+    last_name?: string;
+  }
+
+  const [filteredTeamMembers, setFilteredTeamMembers] = useState<TeamMember[]>([]);
   const [roles, setRoles] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -72,7 +83,7 @@ const AddProjectPage = () => {
   const [newGoal, setNewGoal] = useState({ title: '', description: '', completed: false });
   const [newOutcome, setNewOutcome] = useState({ title: '', description: '', status: 'pending' });
   const [newMember, setNewMember] = useState({ user_id: '', role: '' });
-  const [newMedia, setNewMedia] = useState({ 
+  const [newMedia, setNewMedia] = useState({
     file: null,
     type: 'image',
     title: '',
@@ -88,7 +99,7 @@ const AddProjectPage = () => {
       if (videoPreviewUrl && videoPreviewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(videoPreviewUrl);
       }
-      
+
       // Revoke all media blob URLs
       formData.media.items.forEach(media => {
         if (media.url && media.url.startsWith('blob:')) {
@@ -103,7 +114,7 @@ const AddProjectPage = () => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesResponse = await axios.get('http://localhost:3002/api/categories');
+        const categoriesResponse = await apiClient.get('/categories');
         // Check the structure of the response and extract categories array
         if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
           setCategories(categoriesResponse.data.categories);
@@ -113,10 +124,10 @@ const AddProjectPage = () => {
           console.error('Unexpected categories response format:', categoriesResponse.data);
           setCategories([]);
         }
-        
+
         // Fetch roles
         try {
-          const rolesResponse = await axios.get('http://localhost:3002/api/roles');
+          const rolesResponse = await apiClient.get('/roles');
           // Extract roles data based on response structure
           if (rolesResponse.data && Array.isArray(rolesResponse.data.roles)) {
             setRoles(rolesResponse.data.roles);
@@ -127,12 +138,12 @@ const AddProjectPage = () => {
           console.error('Error fetching roles:', error);
           setRoles([]);
         }
-        
+
         // Fetch teams
         try {
-          const teamsResponse = await axios.get('http://localhost:3002/api/teams');
-          console.log('Teams response:', teamsResponse.data); // Debug log
-          
+          const teamsResponse = await apiClient.get('/teams');
+          console.log('Teams response:', teamsResponse.data);
+
           // Check the structure of the response and extract teams array
           let allTeamMembers = [];
           if (teamsResponse.data && Array.isArray(teamsResponse.data.teams)) {
@@ -145,22 +156,52 @@ const AddProjectPage = () => {
             console.error('Unexpected teams response format:', teamsResponse.data);
             setTeams([]);
           }
-          
-          // Filter team members with team_type of "team" or "fellow" (case-insensitive)
-          const filtered = allTeamMembers.filter(member => {
-            if (!member.team_type) return false;
-            
-            const teamType = member.team_type.toLowerCase();
-            return teamType === "team" || teamType === "fellow";
+
+          // Safety check to ensure allTeamMembers is an array before proceeding
+          if (!Array.isArray(allTeamMembers)) {
+            console.error('allTeamMembers is not an array:', allTeamMembers);
+            allTeamMembers = [];
+          }
+
+          // Ensure each member has the required properties for the Command component
+          const processedMembers = allTeamMembers.map(member => {
+            // Make sure member has all required fields
+            return {
+              id: member.id || 0,
+              name: member.name || '',
+              team_type: member.team_type || '',
+              // Add any other properties needed for display
+              position: member.position || '',
+              photo_url: member.photo_url || '',
+              first_name: member.first_name || '',
+              last_name: member.last_name || ''
+            };
           });
-          
-          console.log('Filtered team members:', filtered); // Debug log
-          
+
+          // Filter team members with team_type of "team" or "fellow" (case-insensitive)
+          const filtered = processedMembers.filter(member => {
+            // Handle team_type as an object or string - ensure we have a string before calling toLowerCase()
+            let teamTypeName = '';
+
+            if (typeof member.team_type === 'string') {
+              teamTypeName = member.team_type;
+            } else if (member.team_type && typeof member.team_type === 'object' && member.team_type.name) {
+              teamTypeName = member.team_type.name;
+            }
+
+            // Safely convert to lowercase if teamTypeName is a string
+            const teamTypeNameLower = typeof teamTypeName === 'string' ? teamTypeName.toLowerCase() : '';
+
+            return teamTypeNameLower === "team" || teamTypeNameLower === "fellow";
+          });
+
+          console.log('Filtered team members:', filtered);
+
           if (filtered.length === 0) {
             // If no filtered results, include all team members as fallback
             console.log('No filtered team members found, using all members as fallback');
-            setFilteredTeamMembers(allTeamMembers);
-            setUsers(allTeamMembers);
+            setFilteredTeamMembers(processedMembers);
+            setUsers(processedMembers);
           } else {
             setFilteredTeamMembers(filtered);
             setUsers(filtered);
@@ -169,6 +210,7 @@ const AddProjectPage = () => {
           console.error('Error fetching teams:', error);
           setTeams([]);
           setFilteredTeamMembers([]);
+          setUsers([]);
         }
       } catch (error) {
         console.error('Error fetching categories:', error);
@@ -176,7 +218,7 @@ const AddProjectPage = () => {
         setCategories([]);
       }
     };
-    
+
     fetchData();
   }, []);
 
@@ -871,10 +913,15 @@ const AddProjectPage = () => {
   const getTeamMemberName = (userId) => {
     const user = filteredTeamMembers.find(member => member.id === userId);
     if (user) {
-      return `${user.first_name} ${user.last_name}`;
+      if (user.name) {
+        return user.name;
+      } else if (user.first_name || user.last_name) {
+        return `${user.first_name || ''} ${user.last_name || ''}`;
+      }
     }
     return `Team Member ${userId}`;
   };
+
 
   // Get role name by ID
   const getRoleNameById = (roleId) => {
@@ -962,6 +1009,93 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     // Submit without checking for auth token
     const response = await axios.post(
       'http://localhost:3002/api/projects',
+      submissionData
+    );
+    
+    console.log('Project created successfully:', response.data);
+    setSuccess(true);
+    
+    // Redirect to project detail or projects list
+    setTimeout(() => {
+      router.push('/projects');
+    }, 2000);
+  } catch (error: any) {
+    console.error('Error creating project:', error);
+    setError(error.response?.data?.message || 'Failed to create project. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+  interface ProjectData {
+    name: string;
+    description: string;
+    status: string;
+    start_date: string;
+    end_date: string;
+    category_id: number; // Changed to number
+    location: string;
+    goals: {
+      items: Array<{
+        id: string;
+        title: string;
+        description: string;
+        completed: boolean;
+        order: number;
+      }>;
+    };
+    outcomes: {
+      items: Array<{
+        id: string;
+        title: string;
+        description: string;
+        status: string;
+        order: number;
+      }>;
+    };
+    media: {
+      items: Array<{
+        id: string;
+        type: string;
+        url: string;
+        title: string;
+        description: string;
+        tag: string;
+        cover: boolean;
+        order: number;
+        size: number;
+        isExternalUrl: boolean;
+        duration?: number;
+        thumbnailUrl?: string | null;
+      }>;
+    };
+    members: Array<{
+      user_id: number;
+      role: string;
+    }>;
+  }
+ // Change this part in your AddProjectPage component
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setSuccess(false);
+  
+  try {
+    // Create a new object with the correct data types for submission
+    const submissionData: ProjectData = {
+      ...formData,
+      // Convert category_id from string to number
+      category_id: formData.category_id ? parseInt(formData.category_id as string, 10) : null,
+      // Ensure members have numeric user_ids
+      members: formData.members.map(member => ({
+        ...member,
+        user_id: typeof member.user_id === 'string' ? parseInt(member.user_id, 10) : member.user_id
+      }))
+    };
+    
+    // Submit without checking for auth token
+    const response = await apiClient.post(
+      '/projects',
       submissionData
     );
     
@@ -1109,6 +1243,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       value={formData.status}
                       onChange={handleChange}
                       className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                    >
                     >
                       <option value="planned">Planned</option>
                       <option value="active">Active</option>
@@ -1363,6 +1498,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 >
                   <UserPlus className="w-4 h-4 mr-1" />
                   Add New Team Member
+                  Add New Team Member
                 </a>
               </div>
               
@@ -1434,12 +1570,41 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {/* Replace Command component with a simple dropdown to avoid the CMDK issue */}
+                  <div className="relative">
+                    <select
+                        value={newMember.user_id || ''}
+                        onChange={(e) => setNewMember(prev => ({ ...prev, user_id: e.target.value }))}
+                        className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                    >
+                      <option value="">Select a team member</option>
+                      {filteredTeamMembers && filteredTeamMembers.length > 0 && filteredTeamMembers.map(member => (
+                          <option key={member.id} value={member.id}>
+                            {member.name || `Team Member ${member.id}`}
+                          </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     Role<span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
+                    <select
+                      name="role"
+                      value={newMember.role}
+                      onChange={handleMemberChange}
+                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+                    >
+                      <option value="">Select a role</option>
+                      {Array.isArray(roles) && roles.map(role => (
+                        <option key={role.id} value={role.id}>
+                          {role.name}
+                        </option>
+                      ))}
+                    </select>
                     <select
                       name="role"
                       value={newMember.role}
@@ -1562,6 +1727,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     </div>
                     <div className="flex items-center">
                       <input
+                      <input
                         type="radio"
                         id="mediaTypeVideo"
                         name="type"
@@ -1631,6 +1797,7 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                     <div className="mb-4 border rounded overflow-hidden bg-gray-100 p-2 flex items-center justify-center">
                       {newMedia.type === 'image' ? (
                         <div className="text-center p-4">
+                         <Image className="w-8 h-8 mx-auto text-gray-400" />
                          <Image className="w-8 h-8 mx-auto text-gray-400" />
                           <p className="text-sm text-gray-500 mt-2">Image will be loaded from URL</p>
                         </div>

@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  MoreHorizontal, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
+import {
+  Search,
+  Filter,
+  Plus,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
   ChevronsRight,
   ArrowRight,
   Eye,
@@ -21,84 +20,17 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-// Create an axios instance with retry configuration
-const axiosInstance = axios.create({
-  timeout: 10000,
-});
-
-// Add a retry interceptor
-axiosInstance.interceptors.response.use(undefined, async (err) => {
-  const { config, response } = err;
-  
-  if ((response && response.status === 429) || !response) {
-    const maxRetries = 3;
-    config.retryCount = config.retryCount || 0;
-    
-    if (config.retryCount < maxRetries) {
-      config.retryCount += 1;
-      
-      const delay = Math.pow(2, config.retryCount) * 1000;
-      console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
-      
-      return axiosInstance(config);
-    }
-  }
-  
-  return Promise.reject(err);
-});
-
-// Add a request interceptor to add a delay between requests
-axiosInstance.interceptors.request.use(async (config) => {
-  const now = Date.now();
-  const lastRequestTime = window.lastAxiosRequestTime || 0;
-  const minRequestInterval = 300; // minimum ms between requests
-  
-  if (now - lastRequestTime < minRequestInterval) {
-    const delayMs = minRequestInterval - (now - lastRequestTime);
-    await new Promise(resolve => setTimeout(resolve, delayMs));
-  }
-  
-  window.lastAxiosRequestTime = Date.now();
-  
-  return config;
-});
-
-// Add a request throttling mechanism
-const pendingRequests = {};
-
-const throttledAxios = {
-  get: (url, config = {}) => {
-    const key = `${url}${JSON.stringify(config.params || {})}`;
-    
-    if (pendingRequests[key]) {
-      return pendingRequests[key];
-    }
-    
-    const request = axiosInstance.get(url, config)
-      .finally(() => {
-        delete pendingRequests[key];
-      });
-    
-    pendingRequests[key] = request;
-    return request;
-  },
-  delete: (url, config = {}) => {
-    return axiosInstance.delete(url, config);
-  }
-};
+import apiClient from '@/lib/api-client';
 
 const NewsListPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('all');
-  
+
   // States for data and UI
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tags, setTags] = useState([]);
-  
+
   // States for pagination and filtering
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -107,7 +39,7 @@ const NewsListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('publish_date'); // Updated to publish_date
   const [sortOrder, setSortOrder] = useState('desc');
-  
+
   // States for tab counts
   const [tabCounts, setTabCounts] = useState({
     all: 0
@@ -117,7 +49,7 @@ const NewsListPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
-  
+
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
     if (openMenuId === id) {
@@ -130,7 +62,7 @@ const NewsListPage = () => {
   // Function to handle action click
   const handleAction = async (action, newsId) => {
     setOpenMenuId(null); // Close the menu
-    
+
     switch(action) {
       case 'view':
         router.push(`/news/${newsId}`);
@@ -141,7 +73,7 @@ const NewsListPage = () => {
       case 'delete':
         if (window.confirm('Are you sure you want to delete this news article?')) {
           try {
-            await throttledAxios.delete(`http://localhost:3002/api/news/${newsId}`);
+            await apiClient.delete(`/news/${newsId}`);
             // Refresh the news list after deletion
             const updatedPage = news.length === 1 && page > 1 ? page - 1 : page;
             setPage(updatedPage);
@@ -168,14 +100,14 @@ const NewsListPage = () => {
 
   // Add click outside listener to close dropdown
   const menuRef = useRef(null);
-  
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -186,7 +118,7 @@ const NewsListPage = () => {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await throttledAxios.get('http://localhost:3002/api/news/tags');
+        const response = await apiClient.get('/news/tags');
         if (response.data && Array.isArray(response.data.tags)) {
           setTags(response.data.tags);
         } else if (Array.isArray(response.data)) {
@@ -200,7 +132,7 @@ const NewsListPage = () => {
         setTags([]);
       }
     };
-    
+
     fetchTags();
   }, []);
 
@@ -208,29 +140,29 @@ const NewsListPage = () => {
   const fetchTabCounts = async () => {
     try {
       // Get total count of news articles
-      const newsResponse = await throttledAxios.get('http://localhost:3002/api/news', { 
-        params: { limit: 0 } 
+      const newsResponse = await apiClient.get('/news', {
+        params: { limit: 0 }
       });
-      
+
       const allCount = parseInt(newsResponse.data.pagination?.total) || 0;
-      
+
       // Initialize the counts object with the 'all' count
       const counts = { all: allCount };
-      
+
       // Get count per tag
       if (tags && tags.length > 0) {
         // We already have the tags from the earlier fetch, but now we need to count articles per tag
         for (const tag of tags) {
           // For each tag, we could fetch the count from the API or calculate from existing data
           // This depends on your API capabilities
-          const tagResponse = await throttledAxios.get('http://localhost:3002/api/news', {
+          const tagResponse = await apiClient.get('/news', {
             params: { tag_id: tag.id, limit: 0 }
           });
-          
+
           counts[tag.id] = parseInt(tagResponse.data.pagination?.total) || 0;
         }
       }
-      
+
       setTabCounts(counts);
       setTabCountsLoaded(true);
     } catch (error) {
@@ -243,21 +175,21 @@ const NewsListPage = () => {
 
   // Add debouncing for search
   const searchTimeoutRef = useRef(null);
-  
+
   // Handle search input change with debounce
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    
+
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       setPage(1); // Reset to first page when searching
     }, 500); // 500ms debounce
   };
-  
+
   // Handle search submission
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -272,44 +204,34 @@ const NewsListPage = () => {
     const fetchNews = async () => {
       try {
         setLoading(true);
-        
-        const lastRequestTime = window.lastNewsFetchTime || 0;
-        const now = Date.now();
-        const timeSinceLastRequest = now - lastRequestTime;
-        
-        if (timeSinceLastRequest < 500) {
-          await new Promise(resolve => setTimeout(resolve, 500 - timeSinceLastRequest));
-        }
-        
+
         const params = {
           page,
           limit,
           sort_by: sortBy,
           sort_order: sortOrder
         };
-        
+
         if (searchTerm) params.search = searchTerm;
-        
+
         // If a tag is selected (not "all"), filter by tag_id
         if (activeTab !== 'all') {
           params.tag_id = activeTab;
         }
-        
+
         console.log('Fetching news with params:', params);
-        
-        window.lastNewsFetchTime = Date.now();
-        
-        const response = await throttledAxios.get('http://localhost:3002/api/news', { params });
-        
+
+        const response = await apiClient.get('/news', { params });
+
         console.log('API response:', response.data);
-        
+
         if (response.data) {
           setNews(response.data.news || []);
-          
+
           const pagination = response.data.pagination || {};
           setTotalNews(parseInt(pagination.total) || 0);
           setTotalPages(pagination.pages || 1);
-          
+
           if (!tabCountsLoaded && response.data.news) {
             fetchTabCounts();
           }
@@ -321,7 +243,7 @@ const NewsListPage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchNews();
   }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, tags.length]);
 
