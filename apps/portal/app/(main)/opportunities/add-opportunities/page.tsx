@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Loader, Calendar, X, UserPlus, Plus, Trash2 } from 'lucide-react';
 import MultipleSelector, { Option } from '@workspace/ui/components/multiple-selector';
+import apiClient from "@/lib/api-client";
 
 // Define opportunity types and their respective schemas
 const opportunityTypes = [
@@ -481,7 +482,7 @@ const CreateOpportunityForm = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    
+
     try {
       // Prepare data for API in the expected format
       let opportunityData: any = {
@@ -493,7 +494,7 @@ const CreateOpportunityForm = () => {
         location: formData.location,
         application_deadline: formData.application_deadline,
         category_id: formData.category_id,
-        
+
         // Ensure eligibility criteria is properly structured
         eligibility_criteria: {
           countries: formData.eligibility_criteria.countries || [],
@@ -502,7 +503,7 @@ const CreateOpportunityForm = () => {
           skills_required: formData.eligibility_criteria.skills_required || [],
           other_requirements: formData.eligibility_criteria.other_requirements || []
         },
-        
+
         // Ensure custom questions are properly formatted
         custom_questions: formData.custom_questions.map(q => ({
           question: q.question,
@@ -542,39 +543,14 @@ const CreateOpportunityForm = () => {
           }
         };
       }
-      
+
       console.log('Submitting opportunity data:', opportunityData);
-      
-      // Make the actual API call
-      const jsonData = JSON.stringify(opportunityData);
-      console.log('Raw JSON being sent:', jsonData);
-      
-      const response = await fetch('http://localhost:3002/api/opportunities', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonData,
-        credentials: 'include' // Include this if you're using cookie authentication
-      });
-      
-      const responseText = await response.text();
-      console.log('Response from server:', responseText);
-      
-      if (!response.ok) {
-        let errorMessage = 'Failed to create opportunity';
-        try {
-          const errorData = JSON.parse(responseText);
-          errorMessage = errorData.message || errorData.error || errorMessage;
-          console.error('Detailed error:', errorData);
-        } catch (e) {
-          console.error('Error parsing error response:', e);
-        }
-        throw new Error(errorMessage);
-      }
-      
-      const result = responseText ? JSON.parse(responseText) : {};
-      
+
+      // Make the API call with apiClient
+      const response = await apiClient.post('/opportunities', opportunityData);
+
+      console.log('Response from server:', response.data);
+
       // Success - redirect or show success message
       alert('Opportunity created successfully!');
       router.push('/opportunities');
@@ -585,6 +561,7 @@ const CreateOpportunityForm = () => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="max-w-7xl mx-auto p-6">
