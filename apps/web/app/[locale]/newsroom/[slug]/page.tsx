@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, X } from "lucide-react";
 import Container from "@/components/layout/container";
 import axios from 'axios';
 import apiClient from "@/lib/api-client";
+import { useParams, useSearchParams } from "next/navigation";
 
 // Define the MediaItem type
 interface MediaItem {
@@ -56,19 +57,12 @@ const throttledAxios: ThrottledAxios = {
   }
 };
 
-// Type definitions for page parameters
-interface NewsDetailsPageProps {
-  params: Promise<{ locale: string; slug: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-}
-
-const NewsDetailsPage = async ({ params, searchParams }: NewsDetailsPageProps) => {
-  // Await the params to get the actual values
-  const resolvedParams = await params;
-  const { slug, locale } = resolvedParams;
+const NewsDetailsPage = () => {
+  // Use hooks to get params from the URL
+  const params = useParams<{ locale: string; slug: string }>();
+  const searchParams = useSearchParams();
   
-  // Await searchParams if they exist
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const { slug, locale } = params;
 
   // State for media gallery
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);

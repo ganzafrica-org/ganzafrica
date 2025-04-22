@@ -42,6 +42,10 @@ const TeamMemberModal = ({
   onClose: () => void;
 }) => {
   if (!isOpen) return null;
+  
+  // Count words in the bio
+  const wordCount = member.bio.split(/\s+/).filter(word => word.length > 0).length;
+  const shouldScroll = wordCount > 80;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -83,13 +87,17 @@ const TeamMemberModal = ({
 
         {/* Content Sections */}
         <div className="px-6">
-          {/* About Section - Made fully responsive without scroll with improved text wrapping */}
+          {/* About Section - With conditional scrolling */}
           <div className="py-5 border-t border-[#E5E7EB]">
             <h3 className="text-[18px] font-bold text-[#111827] mb-4 relative inline-block">
               About
               <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
             </h3>
-            <div className="text-[15px] text-[#4B5563] leading-[1.7] tracking-wide break-words">
+            <div 
+              className={`text-[15px] text-[#4B5563] leading-[1.7] tracking-wide break-words ${
+                shouldScroll ? 'max-h-[200px] overflow-y-auto custom-scrollbar pr-2' : ''
+              }`}
+            >
               <p className="whitespace-normal break-words">{member.bio}</p>
             </div>
           </div>
