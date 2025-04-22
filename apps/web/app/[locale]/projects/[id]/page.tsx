@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Link from 'next/link';
 import { 
   ArrowLeft,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
+import apiClient from '@/lib/api-client';
 
 // Define TypeScript interfaces for our data structures
 interface Media {
@@ -133,7 +133,7 @@ const ProjectDetailsPage = () => {
         setLoading(true);
         
         // Fetch project data
-        const projectResponse = await axios.get(`http://localhost:3002/api/projects/${params.id}`);
+        const projectResponse = await apiClient.get(`/projects/${params.id}`);
         console.log("API Response:", projectResponse.data);
         
         // Check if the response has a nested project object
@@ -150,7 +150,7 @@ const ProjectDetailsPage = () => {
 
         // Fetch categories
         try {
-          const categoriesResponse = await axios.get('http://localhost:3002/api/project-categories');
+          const categoriesResponse = await apiClient.get('/project-categories');
           if (categoriesResponse.data && categoriesResponse.data.length > 0) {
             const categoriesData: Category[] = categoriesResponse.data.map((category: { id: number; name: string }) => ({
               id: category.id.toString(),
@@ -166,7 +166,7 @@ const ProjectDetailsPage = () => {
 
         // Fetch users
         try {
-          const usersResponse = await axios.get('http://localhost:3002/api/users');
+          const usersResponse = await apiClient.get('/users');
           if (usersResponse.data && usersResponse.data.length > 0) {
             const usersData: User[] = usersResponse.data.map((user: { id: number; first_name: string; last_name: string }) => ({
               id: user.id.toString(),
@@ -553,7 +553,7 @@ const ProjectDetailsPage = () => {
                       </div>
                       <p className="text-gray-600 dark:text-gray-400 break-words">{goal.description}</p>
                     </div>
-                  )                  )}
+                  ))}
                 </div>
               </div>
             )}
