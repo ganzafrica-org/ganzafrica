@@ -199,6 +199,185 @@ const ApplicationsPage = () => {
     return [];
   };
 
+  // Get opportunity name and type from opportunity_id
+  const getOpportunityInfo = (application) => {
+    // Always prioritize opportunity_title from the application itself
+    let name = application.opportunity_title || opportunities[application.opportunity_id] || 'Unknown Opportunity';
+
+    // Determine if it's a fellowship or employee position based on title or other properties
+    let type = '';
+
+    if (name.toLowerCase().includes('fellowship') ||
+        application.opportunity_type === 'fellowship' ||
+        (application.custom_answers && Object.keys(application.custom_answers).length > 0)) {
+      type = 'Fellowship';
+    } else if (name.toLowerCase().includes('employee') ||
+        name.toLowerCase().includes('position') ||
+        application.opportunity_type === 'employee' ||
+        name.toLowerCase().includes('job')) {
+      type = 'Employee';
+    }
+
+    return { name, type };
+  };
+
+  // Group applications by opportunity
+  const groupApplicationsByOpportunity = (applications) => {
+    const grouped = {};
+    applications.forEach(app => {
+      const opportunityId = app.opportunity_id;
+      if (!grouped[opportunityId]) {
+        grouped[opportunityId] = [];
+      }
+      grouped[opportunityId].push(app);
+    });
+    return grouped;
+  };
+
+  // Get a summary of applications for an opportunity
+  const getOpportunitySummary = (applications) => {
+    if (!applications || applications.length === 0) return {};
+
+    // Get the first application to get shared information
+    const firstApp = applications[0];
+    const opportunityInfo = getOpportunityInfo(firstApp);
+
+    // Count applications by status
+    const statusCounts = applications.reduce((counts, app) => {
+      const status = mapStatusForUI(app.status);
+      counts[status] = (counts[status] || 0) + 1;
+      return counts;
+    }, {});
+
+    return {
+      id: firstApp.opportunity_id,
+      name: opportunityInfo.name,
+      type: opportunityInfo.type,
+      totalApplications: applications.length,
+      statusCounts
+    };
+  };
+
+  // Fetch tab counts using the current applications
+  const fetchTabCounts = async () => {
+    try {
+      // Count applications by type
+      let fellowshipCount = 0;
+      let employeeCount = 0;
+      const allCount = applications.length;
+
+      applications.forEach(application => {
+        const opportunityInfo = getOpportunityInfo(application);
+        if (opportunityInfo.type === 'Fellowship') {
+          fellowshipCount++;
+        } else if (opportunityInfo.type === 'Employee') {
+          employeeCount++;
+        }
+      });
+
+      setTabCounts({
+        all: allCount,
+        fellowship: fellowshipCount,
+        employee: employeeCount
+      });
+
+      setTabCountsLoaded(true);
+    } catch (error) {
+      console.error('Error calculating tab counts:', error);
+      // Use default values in case of error
+      setTabCounts({
+        all: applications.length || 0,
+        fellowship: 0,
+        employee: 0
+      });
+      setTabCountsLoaded(true);
+    }
+  };
+
+// Map API status to UI status
+  const mapStatusForUI = (apiStatus) => {
+    const statusMap = {
+      'under_review': 'pending',
+      'approved': 'approved',
+      'rejected': 'rejected',
+      'pending': 'pending',
+      'waitlisted': 'pending',
+      'shortlisted': 'pending',
+      'withdrawn': 'rejected'
+    };
+
+    return statusMap[apiStatus] || 'pending';
+  };
+
+// Filter applications based on active tab
+  const getFilteredApplications = () => {
+    if (activeTab === 'all') {
+      return applications;
+    } else if (activeTab === 'fellowship') {
+      return applications.filter(app => {
+        const opportunityInfo = getOpportunityInfo(app);
+        return opportunityInfo.type === 'Fellowship';
+      });
+    } else if (activeTab === 'employee') {
+      return applications.filter(app => {
+        const opportunityInfo = getOpportunityInfo(app);
+        return opportunityInfo.type === 'Employee';
+      });
+    }
+    return applications;
+  };
+
+// Add debouncing for search
+  const searchTimeoutRef = useRef(null);
+
+// Handle search input change with debounce
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set a new timeout to trigger search after user stops typing
+    searchTimeoutRef.current = setTimeout(() => {
+      setPage(1); // Reset to first page when searching
+    }, 500); // 500ms debounce
+  };
+
+// Handle search submission
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    setPage(1); // Reset to first page when searching
+  };
+
+// Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setPage(1); // Reset to first page when changing tabs
+  };
+
+// Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+// Get applicant name from API response
+  const getApplicantName = (application) => {
+    return application.full_name || 'Unknown Applicant';
+  };
+
   // Fetch applications from API with dependency on relevant state changes
   useEffect(() => {
     const fetchApplications = async () => {
