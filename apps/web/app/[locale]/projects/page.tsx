@@ -3,7 +3,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import Image from 'next/image';
 import { 
   Search, 
@@ -23,16 +22,12 @@ import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { DecoratedHeading } from "@/components/layout/headertext";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import Header from "@/components/layout/header";
+import apiClient from '@/lib/api-client';
 
 // Register ScrollTrigger plugin for animations
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
-
-// Create an axios instance
-const axiosInstance = axios.create({
-  timeout: 10000,
-});
 
 // Project Card Component with hover effects
 const ProjectCard: React.FC<{
@@ -541,7 +536,7 @@ const ProjectsPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axiosInstance.get('http://localhost:3002/api/categories');
+        const response = await apiClient.get('/categories');
         
         // Handle different response formats
         if (response.data) {
@@ -603,7 +598,7 @@ const ProjectsPage = () => {
         // Attempt to fetch from API
         try {
           console.log('Fetching projects from API...');
-          const response = await axiosInstance.get('http://localhost:3002/api/projects', { params });
+          const response = await apiClient.get('/projects', { params });
           
           if (response.data) {
             const projectsList = response.data.projects || [];
@@ -1285,7 +1280,7 @@ const ProjectsPage = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
   );
 };
 
