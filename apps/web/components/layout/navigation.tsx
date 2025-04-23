@@ -624,14 +624,15 @@ export default function Navigation({
               <div className="mr-2">
                 <LanguageSwitcher />
               </div>
-              <Link href={`/${locale}/login`}>
-                <Button
-                  size="sm"
-                  className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
-                >
-                  {dict?.cta?.sign_in || "Sign In"}
-                </Button>
-              </Link>
+              <Link href={`${process.env.NEXT_PUBLIC_LOGIN_URL}`}>
+  <Button
+    size="sm"
+    className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
+  >
+    {dict?.cta?.sign_in || "Sign In"}
+  </Button>
+</Link>
+
               <div className="md:hidden">
                 <Button
                   variant="ghost"
