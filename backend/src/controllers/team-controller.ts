@@ -101,6 +101,17 @@ export const createTeam = async (req: Request, res: Response) => {
  *         schema:
  *           type: number
  *         description: Filter teams by team type ID
+ *       - in: query
+ *         name: sort_by
+ *         schema:
+ *           type: string
+ *         description: Field to sort by (defaults to created_at)
+ *       - in: query
+ *         name: sort_order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order (asc or desc, defaults to desc)
  *     responses:
  *       200:
  *         description: List of team members
@@ -114,8 +125,13 @@ export const listTeams = async (req: Request, res: Response) => {
     const teamTypeId = req.query.team_type_id
       ? Number(req.query.team_type_id)
       : undefined;
+    
+    // Get sort parameters with defaults
+    const sortBy = req.query.sort_by?.toString() || 'created_at';
+    const sortOrder = req.query.sort_order?.toString() || 'desc';
 
-    const teams = await teamService.listTeams(teamTypeId);
+    // Pass sorting parameters to service
+    const teams = await teamService.listTeams(teamTypeId, sortBy, sortOrder);
 
     res.status(200).json({ teams });
   } catch (error) {
