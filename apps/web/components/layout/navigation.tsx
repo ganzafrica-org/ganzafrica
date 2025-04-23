@@ -352,21 +352,6 @@ export default function Navigation({
             )}
           </div>
 
-          {/* Opportunities */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-opportunities")}
-            >
-              {dict?.navigation?.opportunities || "Opportunities"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-projects" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
-            </button>
-          </div>
-
           {/* News & Updates */}
           <div className="flex flex-col">
             <button
@@ -486,7 +471,7 @@ export default function Navigation({
                               Our Approach to Food Systems
                             </div>
                             <p className="text-sm leading-tight text-muted-foreground">
-                              Explore our approach focused on sustainable
+                              Explore our programs focused on sustainable
                               development, climate resilience, and food security
                               across Africa.
                             </p>
@@ -517,7 +502,7 @@ export default function Navigation({
                         <NavigationMenuLink asChild>
                           <a
                             className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/programs/fellowship`}
+                            href={`/${locale}/programs`}
                           >
                             <div className="mb-2 mt-4 text-lg font-medium">
                               Our Programs
@@ -577,7 +562,6 @@ export default function Navigation({
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
-          
 
                 {/* News & Updates Dropdown */}
                 <NavigationMenuItem>
@@ -624,15 +608,14 @@ export default function Navigation({
               <div className="mr-2">
                 <LanguageSwitcher />
               </div>
-              <Link href={`${process.env.NEXT_PUBLIC_LOGIN_URL}`}>
-  <Button
-    size="sm"
-    className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
-  >
-    {dict?.cta?.sign_in || "Sign In"}
-  </Button>
-</Link>
-
+              <Link href={`/${locale}/login`}>
+                <Button
+                  size="sm"
+                  className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
+                >
+                  {dict?.cta?.sign_in || "Sign In"}
+                </Button>
+              </Link>
               <div className="md:hidden">
                 <Button
                   variant="ghost"
