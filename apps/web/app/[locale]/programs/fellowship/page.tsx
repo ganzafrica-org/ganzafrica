@@ -336,7 +336,7 @@ export default function FellowshipPage() {
                     playsInline
                     className="w-full h-full object-cover"
                   >
-                    <source src="/videos/Farmers obervation 2.mp4" type="video/mp4" />
+                    <source src="/videos/Farmers obervation 3.mp4" type="video/mp4" />
                   </video>
                   <div className="absolute inset-0 bg-black/30"></div>
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
