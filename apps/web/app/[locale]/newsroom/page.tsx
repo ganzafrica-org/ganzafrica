@@ -1,7 +1,7 @@
 "use client";
 
-// Extend the Window interface to include lastAxiosRequestTime and lastNewsFetchTime
 import apiClient from "@/lib/api-client";
+
 
 declare global {
   interface Window {
@@ -229,6 +229,15 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
         return coverImage.url;
       }
 
+      // If no cover image is found, try to get the first image
+      const firstImage = item.media.items.find(mediaItem => 
+          mediaItem.type === 'image'
+      );
+      
+      if (firstImage && firstImage.url) {
+        return firstImage.url;
+      }
+
       return null;
     } catch (error) {
       console.error('Error getting cover image:', error);
@@ -258,21 +267,21 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
               )}
             </div>
 
-            {/* Green overlay with 50% opacity */}
-            <div className="absolute inset-0 bg-[#005C3D] opacity-50"></div>
+            {/* Green overlay with reduced opacity to ensure image is visible */}
+            <div className="absolute inset-0 bg-[#005C3D] opacity-30"></div>
 
             {/* Date Badge - White background with green text */}
-            <div className="absolute top-4 left-4 px-4 py-1 bg-white text-primary-green rounded-full text-sm font-medium">
+            <div className="absolute top-4 left-4 px-4 py-1 bg-white text-primary-green rounded-full text-sm font-medium z-10">
               {formatDate(item.publish_date)}
             </div>
 
             {/* Category Label - Transparent background with yellow border and text */}
-            <div className="absolute top-[52px] left-4 px-4 py-1 bg-transparent text-secondary-yellow border border-secondary-yellow rounded-full text-sm font-medium">
+            <div className="absolute top-[52px] left-4 px-4 py-1 bg-transparent text-secondary-yellow border border-secondary-yellow rounded-full text-sm font-medium z-10">
               {getFirstTag(item.tags)}
             </div>
 
             {/* Arrow Button */}
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 right-4 z-10">
               <div className="relative w-10 h-10 rounded-full bg-[#FFB800] flex items-center justify-center cursor-pointer transform transition-all duration-300 ease-out hover:scale-110 hover:rotate-12 hover:bg-primary-green">
                 <ArrowUpRight
                     className="w-5 h-5 text-white transition-transform duration-300 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
@@ -403,7 +412,7 @@ const NewsroomPage = () => {
   }, [activeFilter, allNews]);
 
   return (
-      <main className="bg-[#F5F5F5] min-h-screen">
+      <main className="min-h-screen">
         {/* Hero Section */}
         <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
           {/* Background Image - Using Next.js Image is fine for local images */}
@@ -433,7 +442,7 @@ const NewsroomPage = () => {
             </h2>
           </div>
         </section>
-        <div className="w-full overflow-hidden">
+        <div className="w-full overflo-hidden">
           <div className="flex justify-center">
             <HeaderBelt />
           </div>
@@ -441,7 +450,7 @@ const NewsroomPage = () => {
 
         <Container className="py-12">
           {/* Navigation */}
-          <nav className="mb-12 flex items-center justify-center space-x-12 overflow-x-auto pb-4 scrollbar-hide border-b border-gray-200">
+          <nav className="mb-12 flex items-center justify-center space-x-12 overflow-x-auto pb-4 scrollbar-hide">
             <NavigationItem
                 label="All"
                 isActive={activeFilter === "all"}

@@ -71,23 +71,19 @@ export default function Home() {
             <source src="/videos/hero-video.mp4" type="video/mp4" />
           </video>
         </div>
+
+        
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <motion.h1
+          <h1
             className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
           >
-            A lifetime of <span className="text-yellow-400 font-bold">Connections</span>, Opportunities and <span className="text-yellow-400 font-bold">Impact</span>
-          </motion.h1>
-          <motion.h2
+            A lifetime of <span className="text-yellow-400 font-bold">Connections</span>, Opportunities <span className="text-yellow-400 font-bold">and Impact </span>
+          </h1>
+          <h2
             className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
           >
             ALUMNI NETWORK
-          </motion.h2>
+          </h2>
         </div>
       </section>
 

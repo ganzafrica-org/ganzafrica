@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Link from 'next/link';
 import { 
   ArrowLeft,
@@ -22,7 +21,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import Image from 'next/image';
+import apiClient from '@/lib/api-client';
 
 // Define TypeScript interfaces for our data structures
 interface Media {
@@ -53,14 +52,15 @@ interface Outcome {
 }
 
 interface Member {
-  id: string | number;
-  project_id: number;
-  user_id: number;
+  id?: string | number;
+  project_id?: number;
+  user_id: number; // This is the key field we need
   role: string;
   image?: string;
   name?: string;
-  start_date: string | null;
-  end_date: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_active?: boolean;
 }
 
 interface Project {
@@ -98,6 +98,8 @@ interface Category {
 interface User {
   id: string;
   name: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 const ProjectDetailsPage = () => {
@@ -110,20 +112,12 @@ const ProjectDetailsPage = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  // Handle external image URLs - Modified to work with Next.js Image component
-  const getValidImageSrc = (url: string, isExternalUrl?: boolean) => {
-    // If it's explicitly marked as external URL, use a Next.js Image configuration approach
-    if (isExternalUrl) {
-      return '/api/placeholder/800/400';
+  // Improved function to handle image URLs with proper fallback
+  const getValidImageSrc = (url: string | undefined): string => {
+    if (!url || url.trim() === '') {
+      return '/images/news/maize.avif'; // Default fallback image
     }
-    
-    // If it's a local URL or an API placeholder, use it directly
-    if (url && (url.startsWith('/') || url.startsWith('http://localhost') || url.startsWith('https://localhost'))) {
-      return url;
-    }
-    
-    // For any other URL (likely external), use a placeholder
-    return '/api/placeholder/800/400';
+    return url;
   };
 
   // Fetch the project data
@@ -133,30 +127,58 @@ const ProjectDetailsPage = () => {
         setLoading(true);
         
         // Fetch project data
-        const projectResponse = await axios.get(`http://localhost:3002/api/projects/${params.id}`);
+        const projectResponse = await apiClient.get(`/projects/${params.id}`);
         console.log("API Response:", projectResponse.data);
         
-        // Check if the response has a nested project object
+        // Check if the response has a nested project object or direct data
+        let projectData;
         if (projectResponse.data && projectResponse.data.project) {
           console.log("Setting project from nested project object");
-          setProject(projectResponse.data.project);
+          projectData = projectResponse.data.project;
         } else if (projectResponse.data && projectResponse.data.id) {
           // Direct project object
           console.log("Setting project from direct response");
-          setProject(projectResponse.data);
+          projectData = projectResponse.data;
         } else {
           throw new Error("Invalid project data structure");
         }
+        
+        // Ensure members is always an array
+        if (!projectData.members) {
+          projectData.members = [];
+        } else if (!Array.isArray(projectData.members)) {
+          // If members is not an array, convert it
+          console.log("Converting members to array format");
+          projectData.members = Object.values(projectData.members);
+        }
+        
+        // Debug the members data
+        console.log("Project members:", projectData.members);
+        
+        // Make sure goals, outcomes and media are properly initialized
+        if (!projectData.goals) projectData.goals = { items: [] };
+        if (!projectData.outcomes) projectData.outcomes = { items: [] };
+        if (!projectData.media) projectData.media = { items: [] };
+        
+        setProject(projectData);
 
         // Fetch categories
         try {
-          const categoriesResponse = await axios.get('http://localhost:3002/api/project-categories');
-          if (categoriesResponse.data && categoriesResponse.data.length > 0) {
+          const categoriesResponse = await apiClient.get('/project-categories');
+          if (categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
             const categoriesData: Category[] = categoriesResponse.data.map((category: { id: number; name: string }) => ({
               id: category.id.toString(),
               name: category.name,
-              description: "Description not available", // You can update this if the API provides descriptions
-              icon: "🌾" // You can update this if the API provides icons
+              description: "Description not available", 
+              icon: "🌾" 
+            }));
+            setCategories(categoriesData);
+          } else if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
+            const categoriesData: Category[] = categoriesResponse.data.categories.map((category: { id: number; name: string }) => ({
+              id: category.id.toString(),
+              name: category.name,
+              description: "Description not available",
+              icon: "🌾"
             }));
             setCategories(categoriesData);
           }
@@ -164,17 +186,29 @@ const ProjectDetailsPage = () => {
           console.log('Using fallback categories');
         }
 
-        // Fetch users
+        // Fetch users for member data
         try {
-          const usersResponse = await axios.get('http://localhost:3002/api/users');
-          if (usersResponse.data && usersResponse.data.length > 0) {
+          const usersResponse = await apiClient.get('/users');
+          if (usersResponse.data && Array.isArray(usersResponse.data)) {
             const usersData: User[] = usersResponse.data.map((user: { id: number; first_name: string; last_name: string }) => ({
               id: user.id.toString(),
-              name: `${user.first_name} ${user.last_name}`
+              name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || `User ${user.id}`,
+              first_name: user.first_name,
+              last_name: user.last_name
+            }));
+            setUsers(usersData);
+          } else if (usersResponse.data && Array.isArray(usersResponse.data.users)) {
+            // Alternative response format
+            const usersData: User[] = usersResponse.data.users.map((user: { id: number; name?: string; first_name?: string; last_name?: string }) => ({
+              id: user.id.toString(),
+              name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || `User ${user.id}`,
+              first_name: user.first_name,
+              last_name: user.last_name
             }));
             setUsers(usersData);
           }
         } catch (error) {
+          console.error('Error fetching users:', error);
         }
 
       } catch (error) {
@@ -209,14 +243,14 @@ const ProjectDetailsPage = () => {
   const getUserName = (userId: number | undefined) => {
     if (!userId) return 'Unknown';
     const user = users.find(u => u.id === userId.toString());
-    return user ? user.name : 'Unknown User';
+    return user ? user.name : `User ${userId}`;
   };
 
   // Extract team lead from project members
   const getTeamLead = () => {
     if (!project?.members) return null;
     const lead = project.members.find(member => member.role.toLowerCase().includes('lead'));
-    return lead ? { name: lead.name, role: lead.role } : null;
+    return lead ? { name: lead.name || getUserName(lead.user_id), role: lead.role } : null;
   };
 
   // Map status for display
@@ -257,24 +291,46 @@ const ProjectDetailsPage = () => {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
-  // Render media item
+  // Render media item with proper error handling
   const renderMediaItem = (media: Media) => {
     return (
       <div key={media.id} className="relative aspect-video rounded-lg overflow-hidden">
         {media.type === 'image' ? (
-          <Image
-            src={getValidImageSrc(media.url, media.isExternalUrl)}
+          <img
+            src={getValidImageSrc(media.url)}
             alt={media.title || 'Project media'}
-            width={800}
-            height={450}
             className="object-cover w-full h-full"
+            onError={(e) => {
+              e.currentTarget.src = '/images/news/maize.avif';
+            }}
           />
         ) : (
-          <video
-            src={media.url}
-            controls
-            className="w-full h-full object-cover"
-          />
+          <div className="relative w-full h-full">
+            <video
+              src={media.url}
+              controls
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // Add fallback UI for video errors
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  parent.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-center bg-gray-100">
+                      <div class="text-center">
+                        <div class="text-gray-400 mb-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                          </svg>
+                        </div>
+                        <p class="text-gray-500">Video could not be loaded</p>
+                      </div>
+                    </div>
+                  `;
+                }
+              }}
+            />
+          </div>
         )}
         {media.caption && (
           <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2 text-sm">
@@ -397,13 +453,13 @@ const ProjectDetailsPage = () => {
       <div className="relative h-[50vh] sm:h-[70vh] md:h-[80vh] lg:h-[90vh] w-full overflow-hidden">
         {featuredMedia ? (
           <div className="relative w-full h-full">
-            <Image
-              src={getValidImageSrc(featuredMedia.url, featuredMedia.isExternalUrl)}
+            <img
+              src={getValidImageSrc(featuredMedia.url)}
               alt={project.name}
-              width={1920}
-              height={1080}
               className="object-cover w-full h-full"
-              priority
+              onError={(e) => {
+                e.currentTarget.src = '/images/news/maize.avif';
+              }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
           </div>
@@ -412,48 +468,6 @@ const ProjectDetailsPage = () => {
             <div className="text-center">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-800 flex items-center justify-center">
                 <ImageIcon className="w-12 h-12 text-gray-600" />
-              </div>
-
-              {/* Project Info */}
-              <div className="mt-8 space-y-8">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Information</h2>
-                </div>
-                <div className="space-y-4 w-full overflow-hidden">
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Location</h3>
-                    <p className="text-gray-600 dark:text-gray-400 break-words">{project.location || 'Not specified'}</p>
-                  </div>
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h3>
-                    <p className="text-gray-600 dark:text-gray-400 break-words">
-                      {formatDate(project.start_date)} - {formatDate(project.end_date)}
-                    </p>
-                  </div>
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Status</h3>
-                    <div className="mt-1">{getStatusBadge(project.status)}</div>
-                  </div>
-                  {project.category_id && (
-                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Category</h3>
-                      <p className="text-gray-600 dark:text-gray-400 break-words">{getCategoryName(project.category_id)}</p>
-                    </div>
-                  )}
-                  {project.created_at && (
-                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Created</h3>
-                      <p className="text-gray-600 dark:text-gray-400">{formatDate(project.created_at)}</p>
-                    </div>
-                  )}
-                  {project.other_information && (
-                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Additional Information</h3>
-                      <p className="text-gray-600 dark:text-gray-400 break-words">{project.other_information}</p>
-                    </div>
-                  )}
-                </div>
               </div>
               <p className="text-gray-400 text-lg">No featured image available</p>
             </div>
@@ -553,7 +567,7 @@ const ProjectDetailsPage = () => {
                       </div>
                       <p className="text-gray-600 dark:text-gray-400 break-words">{goal.description}</p>
                     </div>
-                  )                  )}
+                  ))}
                 </div>
               </div>
             )}
@@ -616,7 +630,7 @@ const ProjectDetailsPage = () => {
                                 <div key={index} className="flex items-start gap-2">
                                   <span className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mt-0.5 text-gray-600 dark:text-gray-300">•</span>
                                   <span className="text-gray-600 dark:text-gray-300">{metric}</span>
-                                </div>
+                                  </div>
                               ))}
                             </div>
                           )}
@@ -641,16 +655,50 @@ const ProjectDetailsPage = () => {
                   </p>
                 </div>
 
-                <div className="relative">
+                <div className="relative group">
                   {/* Featured Media */}
                   <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 group">
-                    <Image
-                      src={getValidImageSrc(galleryMedia[activeImageIndex]?.url || '/api/placeholder/1200/675', galleryMedia[activeImageIndex]?.isExternalUrl)}
-                      alt={galleryMedia[activeImageIndex]?.title || 'Featured media'}
-                      width={1200}
-                      height={675}
-                      className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
-                    />
+                    {galleryMedia[activeImageIndex]?.type === 'image' ? (
+                      <img
+                        src={getValidImageSrc(galleryMedia[activeImageIndex]?.url)}
+                        alt={galleryMedia[activeImageIndex]?.title || 'Featured media'}
+                        className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/news/maize.avif';
+                        }}
+                      />
+                    ) : galleryMedia[activeImageIndex]?.type === 'video' ? (
+                      <div className="w-full h-full">
+                        <video
+                          src={galleryMedia[activeImageIndex]?.url}
+                          controls
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Add fallback UI for video errors
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `
+                                <div class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-700">
+                                  <div class="text-center">
+                                    <div class="text-gray-400 mb-2">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                      </svg>
+                                    </div>
+                                    <p class="text-gray-500">Video could not be loaded</p>
+                                  </div>
+                                </div>
+                              `;
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <ImageIcon className="w-16 h-16 text-gray-400" />
+                      </div>
+                    )}
                     {galleryMedia[activeImageIndex]?.type === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <button 
@@ -687,13 +735,26 @@ const ProjectDetailsPage = () => {
                         }}
                         aria-label={`View ${item.title || `image ${index + 1}`}`}
                       >
-                        <Image
-                          src={getValidImageSrc(item.url, item.isExternalUrl)}
-                          alt={item.title || `Gallery item ${index + 1}`}
-                          width={200}
-                          height={112}
-                          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                        />
+                        {item.type === 'image' ? (
+                          <img
+                            src={getValidImageSrc(item.url)}
+                            alt={item.title || `Gallery item ${index + 1}`}
+                            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                            onError={(e) => {
+                              e.currentTarget.src = '/images/news/maize.avif';
+                            }}
+                          />
+                        ) : item.type === 'video' ? (
+                          <div className="relative w-full h-full bg-gray-200 dark:bg-gray-700">
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <Film className="w-10 h-10 text-gray-400" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <FileText className="w-8 h-8 text-gray-400" />
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
                         {item.type === 'video' && (
                           <div className="absolute inset-0 flex items-center justify-center">
@@ -709,151 +770,168 @@ const ProjectDetailsPage = () => {
                         )}
                       </div>
                     ))}
-                 </div>
+                  </div>
 
-{/* Navigation Arrows */}
-{galleryMedia.length > 1 && (
-  <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 flex justify-between pointer-events-none">
-    <button
-      onClick={handlePrevImage}
-      className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
-      aria-label="Previous image"
-      title="View previous image"
-    >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M15 18l-6-6 6-6" />
-      </svg>
-    </button>
-    <button
-      onClick={handleNextImage}
-      className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
-      aria-label="Next image"
-      title="View next image"
-    >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 18l6-6-6-6" />
-      </svg>
-    </button>
-  </div>
-)}
+                  {/* Navigation Arrows */}
+                  {galleryMedia.length > 1 && (
+                    <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 flex justify-between pointer-events-none">
+                      <button
+                        onClick={handlePrevImage}
+                        className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
+                        aria-label="Previous image"
+                        title="View previous image"
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={handleNextImage}
+                        className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
+                        aria-label="Next image"
+                        title="View next image"
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
 
-{/* Current Image Indicator */}
-{galleryMedia.length > 1 && (
-  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
-    {galleryMedia.map((_, index) => (
-      <button
-        key={index}
-        onClick={() => setActiveImageIndex(index)}
-        className={`w-2 h-2 rounded-full transition-all duration-300 ${
-          index === activeImageIndex 
-            ? 'w-8 bg-yellow-400' 
-            : 'bg-white/50 hover:bg-white/80'
-        }`}
-        aria-label={`Go to image ${index + 1}`}
-        title={`View image ${index + 1}`}
-      />
-    ))}
-  </div>
-)}
-</div>
-</div>
-)}
-</div>
+                  {/* Current Image Indicator */}
+                  {galleryMedia.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                      {galleryMedia.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setActiveImageIndex(index)}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            index === activeImageIndex 
+                              ? 'w-8 bg-yellow-400' 
+                              : 'bg-white/50 hover:bg-white/80'
+                          }`}
+                          aria-label={`Go to image ${index + 1}`}
+                          title={`View image ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
-{/* Right Column */}
-<div className="lg:col-span-1 space-y-8">
-{/* Team Members */}
-<div className="sticky top-0">
-<div className="space-y-8">
-<div className="flex items-center gap-4 flex-wrap">
-<div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
-<h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Team</h2>
-</div>
-<div className="space-y-4 w-full overflow-hidden">
-{project.members && project.members.length > 0 ? project.members.map(member => (
-  <div key={member.id} className="flex items-center gap-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-    <div className="w-16 h-16 relative">
-      {member.image ? (
-        <Image
-          src={getValidImageSrc(member.image, true)}
-          alt={member.name || member.role}
-          width={64}
-          height={64}
-          className="rounded-full object-cover w-full h-full ring-2 ring-primary-green/20"
-        />
-      ) : (
-        <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center ring-2 ring-primary-green/20">
-          <span className="text-xl font-semibold text-gray-600 dark:text-gray-300">
-            {(member.name || getUserName(member.user_id) || "Unknown").charAt(0)}
-          </span>
+          {/* Right Column */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* Team Members */}
+            <div className="sticky top-0">
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Team</h2>
+                </div>
+                <div className="space-y-4 w-full overflow-hidden">
+                  {project.members && Array.isArray(project.members) && project.members.length > 0 ? project.members.map((member, index) => {
+                    // We need to ensure we have a unique key even if member.id is missing
+                    const memberKey = member.id || `member-${index}-${member.user_id}`;
+                    const memberName = member.name || getUserName(member.user_id);
+                    
+                    return (
+                      <div key={memberKey} className="flex items-center gap-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <div className="w-16 h-16 relative">
+                          {member.image ? (
+                            <img
+                              src={getValidImageSrc(member.image)}
+                              alt={memberName}
+                              className="rounded-full object-cover w-full h-full ring-2 ring-primary-green/20"
+                              onError={(e) => {
+                                // Replace with initials on error
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `
+                                    <div class="w-full h-full rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center ring-2 ring-primary-green/20">
+                                      <span class="text-xl font-semibold text-gray-600 dark:text-gray-300">
+                                        ${memberName.charAt(0)}
+                                      </span>
+                                    </div>
+                                  `;
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center ring-2 ring-primary-green/20">
+                              <span className="text-xl font-semibold text-gray-600 dark:text-gray-300">
+                                {memberName.charAt(0)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 dark:text-white">{memberName}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">{member.role}</p>
+                          {member.start_date && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {formatDate(member.start_date)} - {formatDate(member.end_date)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }) : (
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl text-center">
+                      <p className="text-gray-600 dark:text-gray-400">No team members assigned to this project</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Project Info */}
+              <div className="mt-8 space-y-8">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Information</h2>
+                </div>
+                <div className="space-y-4 w-full overflow-hidden">
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Location</h3>
+                    <p className="text-gray-600 dark:text-gray-400 break-words">{project.location || 'Not specified'}</p>
+                  </div>
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h3>
+                    <p className="text-gray-600 dark:text-gray-400 break-words">
+                      {formatDate(project.start_date)} - {formatDate(project.end_date)}
+                    </p>
+                  </div>
+                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Status</h3>
+                    <div className="mt-1">{getStatusBadge(project.status)}</div>
+                  </div>
+                  {project.category_id && (
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Category</h3>
+                      <p className="text-gray-600 dark:text-gray-400 break-words">{getCategoryName(project.category_id)}</p>
+                    </div>
+                  )}
+                  {project.created_at && (
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Created</h3>
+                      <p className="text-gray-600 dark:text-gray-400">{formatDate(project.created_at)}</p>
+                    </div>
+                  )}
+                  {project.other_information && (
+                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
+                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Additional Information</h3>
+                      <p className="text-gray-600 dark:text-gray-400 break-words">{project.other_information}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
-    <div className="flex-1">
-      <h3 className="font-semibold text-gray-900 dark:text-white">{member.name || getUserName(member.user_id) || "Unknown"}</h3>
-      <p className="text-sm text-gray-600 dark:text-gray-300">{member.role}</p>
-      {member.start_date && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {formatDate(member.start_date)} - {formatDate(member.end_date)}
-        </p>
-      )}
-    </div>
-  </div>
-)) : (
-  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl text-center">
-    <p className="text-gray-600 dark:text-gray-400">No team members assigned to this project</p>
-  </div>
-)}
-</div>
-</div>
-
-{/* Project Info */}
-<div className="mt-8 space-y-8">
-<div className="flex items-center gap-4 flex-wrap">
-<div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
-<h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Information</h2>
-</div>
-<div className="space-y-4 w-full overflow-hidden">
-<div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Location</h3>
-  <p className="text-gray-600 dark:text-gray-400 break-words">{project.location || 'Not specified'}</p>
-</div>
-<div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h3>
-  <p className="text-gray-600 dark:text-gray-400 break-words">
-    {formatDate(project.start_date)} - {formatDate(project.end_date)}
-  </p>
-</div>
-<div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-  <h3 className="font-medium text-gray-900 dark:text-white mb-2">Status</h3>
-  <div className="mt-1">{getStatusBadge(project.status)}</div>
-</div>
-{project.category_id && (
-  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Category</h3>
-    <p className="text-gray-600 dark:text-gray-400 break-words">{getCategoryName(project.category_id)}</p>
-  </div>
-)}
-{project.created_at && (
-  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Created</h3>
-    <p className="text-gray-600 dark:text-gray-400">{formatDate(project.created_at)}</p>
-  </div>
-)}
-{project.other_information && (
-  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Additional Information</h3>
-    <p className="text-gray-600 dark:text-gray-400 break-words">{project.other_information}</p>
-  </div>
-)}
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-);
+  );
 };
 
 export default ProjectDetailsPage;

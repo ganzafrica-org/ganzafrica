@@ -405,7 +405,7 @@ export default function FellowshipApplyPage() {
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                         required
                           title="Enter your first name"
                           placeholder="Enter your first name"
@@ -421,7 +421,7 @@ export default function FellowshipApplyPage() {
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                         required
                           title="Enter your last name"
                           placeholder="Enter your last name"
@@ -438,7 +438,7 @@ export default function FellowshipApplyPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Enter your email address"
                         placeholder="Enter your email address"
@@ -463,7 +463,7 @@ export default function FellowshipApplyPage() {
                         name="phone"
                         value={formData.phone}
                         onChange={handlePhoneChange}
-                          className="w-full pl-24 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                          className="w-full pl-24 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                           required
                           title="Enter your phone number"
                         placeholder={formData.selectedCountry.format}
@@ -496,7 +496,7 @@ export default function FellowshipApplyPage() {
                         name="nationalId"
                         value={formData.nationalId}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                         required
                         title="Enter your national ID number"
                         placeholder="Enter your national ID number"
@@ -513,7 +513,7 @@ export default function FellowshipApplyPage() {
                           name="city"
                           value={formData.city}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                           required
                           title="Enter your city"
                           placeholder="Enter your city"
@@ -529,7 +529,7 @@ export default function FellowshipApplyPage() {
                         name="country"
                         value={formData.country}
                         onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                         required
                           title="Enter your country"
                           placeholder="Enter your country"
@@ -551,7 +551,7 @@ export default function FellowshipApplyPage() {
                       name="educationLevel"
                       value={formData.educationLevel}
                       onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                       title="Select your education level"
                     >
@@ -573,7 +573,7 @@ export default function FellowshipApplyPage() {
                       name="educationField"
                       value={formData.educationField}
                       onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                         required
                         title="Enter your field of study"
                         placeholder="Enter your field of study"
@@ -589,7 +589,7 @@ export default function FellowshipApplyPage() {
                         value={formData.careerExperience}
                         onChange={handleInputChange}
                         rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Describe your career experience and training"
                         placeholder="Share your professional journey, including relevant work experience and training..."
@@ -673,7 +673,7 @@ export default function FellowshipApplyPage() {
                       value={formData.motivation}
                       onChange={handleInputChange}
                       rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Explain your motivation for applying"
                         placeholder="What motivates you to apply for this fellowship program?"
@@ -689,7 +689,7 @@ export default function FellowshipApplyPage() {
                       value={formData.fiveYearVision}
                       onChange={handleInputChange}
                       rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Describe your five-year vision"
                         placeholder="Where do you see yourself in five years? What goals do you want to achieve?"
@@ -711,7 +711,7 @@ export default function FellowshipApplyPage() {
                       value={formData.desiredImpact}
                       onChange={handleInputChange}
                       rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Describe the impact you want to make"
                         placeholder="What impact do you want to make in your community and country?"
@@ -727,7 +727,7 @@ export default function FellowshipApplyPage() {
                       value={formData.communityRole}
                       onChange={handleInputChange}
                       rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Describe your role in the community"
                         placeholder="How do you currently contribute to your community?"
@@ -743,7 +743,7 @@ export default function FellowshipApplyPage() {
                       value={formData.nationalStrategy}
                       onChange={handleInputChange}
                       rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Describe the national strategy you want to contribute to"
                         placeholder="Which national strategy, policy or flagship programme do you want to contribute to and why?"
@@ -765,7 +765,7 @@ export default function FellowshipApplyPage() {
                       value={formData.ganzAfricaHelp}
                       onChange={handleInputChange}
                       rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Explain how GanzAfrica can help you achieve your goals"
                         placeholder="How do you think GanzAfrica will help you achieve your career goals?"
@@ -781,7 +781,7 @@ export default function FellowshipApplyPage() {
                       value={formData.ganzAfricaContribution}
                       onChange={handleInputChange}
                       rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                       required
                         title="Describe your potential contributions to GanzAfrica"
                         placeholder="What unique skills, perspectives, or contributions can you offer to GanzAfrica?"
