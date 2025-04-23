@@ -1,7 +1,7 @@
 "use client";
 
-// Extend the Window interface to include lastAxiosRequestTime and lastNewsFetchTime
 import apiClient from "@/lib/api-client";
+
 
 declare global {
   interface Window {
@@ -412,7 +412,7 @@ const NewsroomPage = () => {
   }, [activeFilter, allNews]);
 
   return (
-      <main className="bg-[#F5F5F5] min-h-screen">
+      <main className="min-h-screen">
         {/* Hero Section */}
         <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
           {/* Background Image - Using Next.js Image is fine for local images */}
@@ -442,7 +442,7 @@ const NewsroomPage = () => {
             </h2>
           </div>
         </section>
-        <div className="w-full overflow-hidden">
+        <div className="w-full overflo-hidden">
           <div className="flex justify-center">
             <HeaderBelt />
           </div>
@@ -450,7 +450,7 @@ const NewsroomPage = () => {
 
         <Container className="py-12">
           {/* Navigation */}
-          <nav className="mb-12 flex items-center justify-center space-x-12 overflow-x-auto pb-4 scrollbar-hide border-b border-gray-200">
+          <nav className="mb-12 flex items-center justify-center space-x-12 overflow-x-auto pb-4 scrollbar-hide">
             <NavigationItem
                 label="All"
                 isActive={activeFilter === "all"}
