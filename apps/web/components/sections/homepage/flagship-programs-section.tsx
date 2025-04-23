@@ -13,6 +13,7 @@ interface Program {
   link: string;
   date?: string;
   iconColor: string;
+  icon: React.ReactNode; // Added icon property
 }
 
 interface FlagshipProgramsSectionProps {
@@ -24,6 +25,26 @@ export default function FlagshipProgramsSection({
                                                   locale,
                                                   dict,
                                                 }: FlagshipProgramsSectionProps) {
+  // Define SVG icons for each program
+  const FellowshipIcon = () => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 11.5C14.7614 11.5 17 9.26142 17 6.5C17 3.73858 14.7614 1.5 12 1.5C9.23858 1.5 7 3.73858 7 6.5C7 9.26142 9.23858 11.5 12 11.5Z" fill="white"/>
+        <path d="M17 15.6C17 13.2 14.8 11.3 12 11.3C9.2 11.3 7 13.2 7 15.6V22.5H17V15.6Z" fill="white"/>
+        <path d="M22.6 11.3C24.5 11.3 24.5 8.8 22.6 8.8C22.1 8.8 21.7 9.2 21.7 9.7V10.4C21.7 10.9 22.1 11.3 22.6 11.3Z" fill="white"/>
+        <path d="M19.5 9.7C19.5 8.6 19.1 7.5 18.2 6.7C19.2 8.3 19 10.3 17.7 11.6L16.9 12.4C17.9 12.9 18.9 13.6 19.5 14.7V22.5H20.6C21.1 22.5 21.5 22.1 21.5 21.6V15.1C21.5 14 21 12.9 20.1 12.1C19.6 11.7 19.5 11 19.5 10.3V9.7Z" fill="white"/>
+        <path d="M5.8 10.4V9.7C5.8 9.2 5.4 8.8 4.9 8.8C3 8.8 3 11.3 4.9 11.3C5.4 11.3 5.8 10.9 5.8 10.4Z" fill="white"/>
+        <path d="M5.8 9.7V10.3C5.8 11 5.7 11.7 5.2 12.1C4.3 12.9 3.8 14 3.8 15.1V21.6C3.8 22.1 4.2 22.5 4.7 22.5H5.8V14.7C6.4 13.6 7.4 12.9 8.4 12.4L7.6 11.6C6.3 10.3 6.1 8.3 7.1 6.7C6.2 7.5 5.8 8.6 5.8 9.7Z" fill="white"/>
+      </svg>
+  );
+
+  const AlumniIcon = () => (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L3 7L12 12L21 7L12 2Z" fill="white"/>
+        <path d="M3 12L5 13.1V17.4C5 17.4 8.5 19.9 12 19.9C15.5 19.9 19 17.4 19 17.4V13.1L21 12" fill="white"/>
+        <path d="M3 17L5 18.1V21.1L7.5 22.5L10 21.1V19.1L7.5 20.5L5 19.1" fill="white"/>
+      </svg>
+  );
+
   // Get programs from dictionary or use defaults
   const programs: Program[] = [
     {
@@ -35,7 +56,8 @@ export default function FlagshipProgramsSection({
       image: "/images/ganzafrica-fellows.jpg",
       link: `/${locale}/programs/fellowship`,
       date: "Year-round",
-      iconColor: "#4e958b" // primary-green equivalent
+      iconColor: "#005C30", // primary-green equivalent
+      icon: <FellowshipIcon />
     },
     {
       id: "alumni",
@@ -46,7 +68,8 @@ export default function FlagshipProgramsSection({
       image: "/images/ganzafrica-fellows.jpg",
       link: `/${locale}/programs/alumni`,
       date: "Year-round",
-      iconColor: "#C32361" // primary-orange equivalent
+      iconColor: "#F8B712", // primary-orange equivalent
+      icon: <AlumniIcon />
     },
   ];
 
@@ -109,6 +132,7 @@ export default function FlagshipProgramsSection({
                         }}
                     >
                       {program.title}
+                      {/* Replaced colored div with SVG icon */}
                       <span
                           style={{
                             position: 'absolute',
@@ -116,12 +140,16 @@ export default function FlagshipProgramsSection({
                             right: '0',
                             transform: 'translateY(-50%)',
                             width: '35px',
-                            height: '23px',
+                            height: '35px',
                             backgroundColor: program.iconColor,
-                            backgroundSize: '100% auto',
-                            display: 'inline-block'
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '4px'
                           }}
-                      ></span>
+                      >
+                    {program.icon}
+                  </span>
                     </h2>
                     <h3
                         style={{
