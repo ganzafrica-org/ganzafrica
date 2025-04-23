@@ -1,10 +1,12 @@
+'use client';
+
 import React from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Phone, Mail, Leaf, Send } from "lucide-react";
+import { MapPin, Phone, Mail, Leaf, Send, CheckCircle2, Building2 } from "lucide-react";
 import { safeAccess } from "@/lib/utils/safeAccess";
-import { default as HeaderBelt } from "@/components/layout/headerBelt";
+import { motion } from "framer-motion";
 
 interface ContactUsContentProps {
     dict: any;
@@ -17,6 +19,9 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
         phone: "",
         message: "",
     });
+
+    const [activeTab, setActiveTab] = React.useState('rwanda');
+    const [showPointer, setShowPointer] = React.useState(true);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -39,223 +44,395 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
         console.log("Newsletter submitted");
     };
 
+    const handlePointerClick = () => {
+        setShowPointer(false);
+    };
+
+    const tabs = [
+        { id: 'rwanda', label: 'Rwanda Office', icon: Building2 },
+        { id: 'burkina', label: 'Burkina Faso Office', icon: Building2 },
+    ];
+
+    const fadeInUp = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+    };
+
+    const staggerContainer = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemFadeIn = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0 }
+    };
+
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Hero Section with Background Image */}
-            <div className="relative h-[500px]"
-                 style={{
-                     backgroundImage: "url('https://images.unsplash.com/photo-1560493676-04071c5f467b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')",
-                     backgroundSize: 'cover',
-                     backgroundPosition: 'center'
-                 }}>
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-
-                {/* Header with cut-out sections */}
-                <header className="relative z-20">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                        <div className="flex justify-between items-center py-4">
-                            {/* Logo section with white background cut-out */}
-                            <div className="relative bg-white p-4 -ml-4 rounded-br-3xl">
-                                <div className="flex items-center">
-                                    <Leaf className="h-8 w-8 text-emerald-600" />
-                                    <span className="ml-2 text-xl font-bold text-emerald-600">GanzAfrica</span>
-                                </div>
+            <motion.section 
+                className="relative h-[400px] md:h-[500px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8 }}
+            >
+                <div className="absolute inset-0">
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                    >
+                        <source src="/videos/hero-video.mp4" type="video/mp4" />
+                    </video>
+                    <div className="absolute inset-0 bg-black/60" />
+                </div>
+                <div className="relative z-10 h-full flex items-center justify-center">
+                    <div className="container mx-auto px-4 text-center">
+                        <motion.h1 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                            className="text-3xl md:text-5xl font-bold text-white mb-4"
+                        >
+                            Get in <span className="text-[#FDB022]">Touch</span> With Our Team
+                        </motion.h1>
+                        <motion.p 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                            className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6"
+                        >
+                            Have questions or want to learn more about our programs? We're here to help.
+                        </motion.p>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.4 }}
+                            className="flex items-center justify-center gap-6 text-white/90"
+                        >
+                            <div className="flex items-center">
+                                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                                <span>24/7 Support</span>
                             </div>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Hero Content */}
-                <div className="relative z-10 flex items-center justify-center h-full text-center">
-                    <div className="space-y-4">
-                        <h1 className="text-4xl md:text-5xl font-bold text-white">
-                            Get in <span className="text-yellow-400">Touch</span> With Our<br />
-                            Team Today
-                        </h1>
-                        <div className="text-6xl font-bold text-yellow-400">Contact Us</div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
+                            <div className="flex items-center">
+                                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                                <span>Quick Response</span>
+                            </div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
+                            <div className="flex items-center">
+                                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                                <span>Expert Team</span>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
-            </div>
-            <HeaderBelt />
+            </motion.section>
 
-
-            {/* Contact Form and Newsletter Section */}
-            <div className="py-12 bg-white">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col lg:flex-row gap-8">
+            {/* Main Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20">
+                <motion.div 
+                    className="bg-white rounded-xl shadow-xl p-8 md:p-10"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Contact Form */}
-
-                        <div className="flex-1">
-                            <h2 className="text-2xl font-bold mb-4">
-                                <span className="text-primary-green">Connect </span>
-                                <span className="text-yellow-500">With Us</span>
-                            </h2>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Input
-                                        type="email"
-                                        name="email"
-                                        value={formState.email}
-                                        onChange={handleChange}
-                                        placeholder={safeAccess(dict, 'contact.form_email', "Email")}
-                                        className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
-                                        required
-                                    />
+                        <motion.div 
+                            className="space-y-6"
+                            variants={fadeInUp}
+                            initial="hidden"
+                            animate="visible"
+                        >
+                            <motion.h2 
+                                className="text-2xl font-bold text-[#005c3d] mb-6"
+                                variants={itemFadeIn}
+                            >
+                                Send Us a Message
+                            </motion.h2>
+                            <motion.form 
+                                onSubmit={handleSubmit} 
+                                className="space-y-6"
+                                variants={staggerContainer}
+                                initial="hidden"
+                                animate="visible"
+                            >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Name *
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            name="name"
+                                            value={formState.name}
+                                            onChange={handleChange}
+                                            placeholder="Enter your name"
+                                            className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Email *
+                                        </label>
+                                        <Input
+                                            type="email"
+                                            name="email"
+                                            value={formState.email}
+                                            onChange={handleChange}
+                                            placeholder="Enter your email"
+                                            className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Phone
+                                    </label>
                                     <Input
                                         type="tel"
                                         name="phone"
                                         value={formState.phone}
                                         onChange={handleChange}
-                                        placeholder={safeAccess(dict, 'contact.form_phone', "Phone")}
-                                        className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
+                                        placeholder="Enter your phone number"
+                                        className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                     />
                                 </div>
-                                <Input
-                                    type="text"
-                                    name="name"
-                                    value={formState.name}
-                                    onChange={handleChange}
-                                    placeholder={safeAccess(dict, 'contact.form_name', "Name")}
-                                    className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 font-medium-small"
-                                    required
-                                />
-                                <Textarea
-                                    name="message"
-                                    value={formState.message}
-                                    onChange={handleChange}
-                                    placeholder={safeAccess(dict, 'contact.form_message', "Message")}
-                                    className="w-full h-40 bg-white border-2 border-gray-300 rounded-3xl px-5 py-4 font-medium-small"
-                                    required
-                                />
                                 <div>
-                                    <Button
-                                        type="submit"
-                                        className="bg-primary-orange hover:bg-secondary-green text-white px-8 py-2 h-12 rounded-full font-bold-caption flex items-center gap-2"
-                                    >
-                                        {safeAccess(dict, 'contact.submit', "Submit Button")}
-                                        <Send className="h-4 w-4" />
-                                    </Button>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Message *
+                                    </label>
+                                    <Textarea
+                                        name="message"
+                                        value={formState.message}
+                                        onChange={handleChange}
+                                        placeholder="How can we help you?"
+                                        className="w-full h-40 bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                                        required
+                                    />
                                 </div>
-                            </form>
-                        </div>
-
-                        {/* Newsletter Form */}
-                        <div className="lg:w-1/3 bg-primary-green rounded-lg p-8 text-white">
-                            <h3 className="font-h4 mb-4">
-                                {safeAccess(dict, 'contact.newsletter', "Our Newsletters")}
-                            </h3>
-                            <p className="mb-6 font-regular-paragraph">
-                                {safeAccess(dict, 'contact.newsletter_desc',
-                                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.")}
-                            </p>
-                            <form onSubmit={handleNewsletterSubmit} className="space-y-4">
-                                <Input
-                                    type="email"
-                                    placeholder="Email"
-                                    className="w-full bg-white border-2 border-gray-300 rounded-full px-5 py-4 h-12 text-dark font-medium-small"
-                                    required
-                                />
                                 <Button
                                     type="submit"
-                                    className="w-full bg-primary-orange hover:bg-dark text-white py-2 rounded-full h-12 font-bold-caption"
+                                    className="w-full bg-[#005c3d] hover:bg-[#009758] text-white px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
                                 >
-                                    {safeAccess(dict, 'contact.submit', "Submit Button")}
+                                    Send Message
+                                    <Send className="h-4 w-4" />
                                 </Button>
-                            </form>
-                        </div>
+                            </motion.form>
+                        </motion.div>
+
+                        {/* Contact Information with Tabs */}
+                        <motion.div 
+                            className="space-y-8"
+                            variants={fadeInUp}
+                            initial="hidden"
+                            animate="visible"
+                            transition={{ delay: 0.3 }}
+                        >
+                            <motion.div 
+                                className="bg-[#FFFDEB] rounded-lg p-8"
+                                variants={itemFadeIn}
+                            >
+                                <h3 className="text-xl font-bold text-[#005c3d] mb-4">
+                                    Stay Updated
+                                </h3>
+                                <p className="text-gray-600 mb-6">
+                                    Subscribe to our newsletter to receive updates about our programs, events, and opportunities.
+                                </p>
+                                <form onSubmit={handleNewsletterSubmit} className="space-y-4">
+                                    <Input
+                                        type="email"
+                                        placeholder="Enter your email"
+                                        className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                                        required
+                                    />
+                                    <Button
+                                        type="submit"
+                                        className="w-full bg-[#FDB022] hover:bg-[#E69B1E] text-white px-8 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+                                    >
+                                        Subscribe
+                                    </Button>
+                                </form>
+                            </motion.div>
+
+                            {/* Office Information Tabs */}
+                            <motion.div 
+                                className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden"
+                                variants={itemFadeIn}
+                            >
+                                {/* Tab Navigation */}
+                                <div className="flex border-b border-gray-200">
+                                    {tabs.map((tab) => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`flex-1 px-6 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-all duration-300 ${
+                                                activeTab === tab.id
+                                                    ? 'bg-[#005c3d] text-white'
+                                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            <tab.icon className="h-5 w-5" />
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Tab Content */}
+                                <div className="p-6">
+                                    {activeTab === 'rwanda' && (
+                                        <div className="space-y-4">
+                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
+                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
+                                                            <Phone className="h-5 w-5 text-[#005c3d]" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-600">(250) 799 390 199</p>
+                                                            <p className="text-xs text-gray-500">Mon-Fri, 8:00 AM - 5:00 PM</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center space-x-3 pl-4">
+                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
+                                                            <Mail className="h-5 w-5 text-[#005c3d]" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-600">info@ganzafrica.org</p>
+                                                            <p className="text-xs text-gray-500">Response within 24 hours</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
+                                                        <MapPin className="h-5 w-5 text-[#005c3d]" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-600">27 House, KG 594 St</p>
+                                                        <p className="text-gray-600">Kigali, Rwanda</p>
+                                                        <p className="text-xs text-gray-500">East Africa Regional Hub</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'burkina' && (
+                                        <div className="space-y-4">
+                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
+                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
+                                                            <Phone className="h-5 w-5 text-[#005c3d]" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-600">Coming Soon</p>
+                                                            <p className="text-xs text-gray-500">Mon-Fri, 8:00 AM - 5:00 PM</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center space-x-3 pl-4">
+                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
+                                                            <Mail className="h-5 w-5 text-[#005c3d]" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-gray-600">info@ganzafrica.org</p>
+                                                            <p className="text-xs text-gray-500">Response within 24 hours</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
+                                                        <MapPin className="h-5 w-5 text-[#005c3d]" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-600">Ouagadougou</p>
+                                                        <p className="text-gray-600">Burkina Faso</p>
+                                                        <p className="text-xs text-gray-500">West Africa Regional Hub</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        </motion.div>
                     </div>
-                </div>
-            </div>
+                </motion.div>
 
-            {/* Contact Information Cards */}
-            <div className="py-10 bg-white">
-                <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Phone */}
-                        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 flex items-start">
-                            <div className="flex-shrink-0 bg-emerald-100 p-3 rounded-full mr-4">
-                                <Phone className="h-5 w-5 text-emerald-600" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-emerald-600 mb-1">Call Us</h3>
-                                <p className="text-gray-800 font-medium">(+250) 7876534</p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Mon-Fri from 8am to 5pm
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Email */}
-                        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 flex items-start">
-                            <div className="flex-shrink-0 bg-emerald-100 p-3 rounded-full mr-4">
-                                <Mail className="h-5 w-5 text-emerald-600" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-emerald-600 mb-1">Email Us</h3>
-                                <p className="text-gray-800 font-medium">shemachristia@ganzafrica.id</p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    We'll respond as soon as possible
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Location */}
-                        <div className="bg-white border-2 border-gray-300 rounded-lg p-6 flex items-start">
-                            <div className="flex-shrink-0 bg-emerald-100 p-3 rounded-full mr-4">
-                                <MapPin className="h-5 w-5 text-emerald-600" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-emerald-600 mb-1">Visit Us</h3>
-                                <p className="text-gray-800 font-medium">Kigali, Rwanda</p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    KN 5 Rd, Kigali Business Center
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Map Section */}
-            <div className="py-2 bg-white">
-                <div className="container mx-auto px-4">
-                    <div className="h-96 w-full rounded-lg overflow-hidden border-2 border-gray-300 relative">
+                {/* Map Section */}
+                <motion.div 
+                    className="mt-8 mb-16"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                >
+                    <motion.div 
+                        className="h-[400px] w-full rounded-lg overflow-hidden border-2 border-gray-200 relative shadow-lg"
+                        whileHover={{ scale: 1.01 }}
+                        transition={{ duration: 0.3 }}
+                    >
                         <iframe
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5080550483483!2d30.053!3d-1.944!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMcKwNTYnNDQuNCJTIDMwwrAwMycxMC44IkU!5e0!3m2!1sen!2sus!4v1616434174542!5m2!1sen!2sus&iwloc=B&output=embed"
+                            src={activeTab === 'rwanda' 
+                                ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5391413519837!2d30.086420174725987!3d-1.9367383980456767!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7bf79ceaa49e0e1%3A0xdf3900088362ba30!2sGanzAfrica!5e0!3m2!1sen!2sus!4v1745400915436!5m2!1sen!2sus"
+                                : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d124958.73162347189!2d-1.786902!3d12.368446!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe391a7ba14962e7%3A0xf4dacb6c506517ed!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1647881234567!5m2!1sen!2sus"
+                            }
                             width="100%"
                             height="100%"
                             style={{ border: 0 }}
                             allowFullScreen
                             loading="lazy"
                             referrerPolicy="no-referrer-when-downgrade"
-                            title="GanzAfrica Location"
+                            title={activeTab === 'rwanda' ? "GanzAfrica Rwanda Location" : "GanzAfrica Burkina Faso Location"}
                         ></iframe>
-
-                    </div>
-                    {/* Box Positioned on Top of Red Pin */}
-                    <div
-                        className="absolute z-10"
-                        style={{
-                            top: '70%',
-                            left: '50%',
-                            transform: 'translate(-50%, -100%)',
-                        }}
-                    >
-                        <div className="bg-white p-3 rounded-lg shadow-md border-2 border-emerald-600">
-                            <div className="flex items-center">
-                                <div className="bg-red-500 p-2 rounded-full mr-2">
-                                    <MapPin className="h-6 w-6 text-white" />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-emerald-600">GanzAfrica</p>
-                                    <p className="text-xs text-gray-700">27 House, KG 594 St, Kigali</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="w-4 h-4 bg-emerald-600 rotate-45 mx-auto -mt-2"></div>
-                    </div>
-                </div>
+                        {showPointer && (
+                            <motion.div 
+                                className="absolute top-[48%] left-[48%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-opacity duration-300"
+                                onClick={handlePointerClick}
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.8, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <motion.div 
+                                    className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-4 border-2 border-[#005c3d] hover:scale-105 transition-transform duration-300"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <div className="flex flex-col items-center space-y-2">
+                                        <div className="flex-shrink-0 bg-white p-2">
+                                            <img 
+                                                src="/images/logo.png" 
+                                                alt="GanzAfrica Logo" 
+                                                className="h-12 w-auto object-contain"
+                                            />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-sm font-medium text-[#005c3d]">{activeTab === 'rwanda' ? 'Rwanda Office' : 'Burkina Faso Office'}</p>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                                <div className="w-4 h-4 bg-[#005c3d] rotate-45 mx-auto -mt-2"></div>
+                            </motion.div>
+                        )}
+                    </motion.div>
+                </motion.div>
             </div>
         </div>
     );
