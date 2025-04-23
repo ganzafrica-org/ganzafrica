@@ -1,6 +1,6 @@
 import { db } from "../db/client";
 import { teams, team_types } from "../db/schema/teams";
-import { eq } from "drizzle-orm";
+import { eq, asc, desc } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
 
@@ -280,34 +280,71 @@ export async function deleteTeam(id: number): Promise<boolean> {
 }
 
 // List all teams
-export async function listTeams(teamTypeId?: number): Promise<TeamOutput[]> {
+// List all teams
+export async function listTeams(
+  teamTypeId?: number,
+  sortBy: string = 'created_at',
+  sortOrder: string = 'desc'
+): Promise<TeamOutput[]> {
   try {
-    // Create different query paths instead of reassigning
-    const teamsResult = teamTypeId
-        ? await db.select().from(teams).where(eq(teams.team_type_id, teamTypeId))
-        : await db.select().from(teams);
+    // Define query parameters
+    const whereConditions = teamTypeId ? [eq(teams.team_type_id, teamTypeId)] : [];
+    
+    // Define order by based on sort parameters
+    let orderByConditions: any[] = [];
+    
+    // Handle sorting based on the column
+    switch (sortBy) {
+      case 'name':
+        orderByConditions = sortOrder.toLowerCase() === 'asc' 
+          ? [asc(teams.name), desc(teams.created_at)]
+          : [desc(teams.name), desc(teams.created_at)];
+        break;
+      case 'team_type_id':
+        orderByConditions = sortOrder.toLowerCase() === 'asc'
+          ? [asc(teams.team_type_id), desc(teams.created_at)]
+          : [desc(teams.team_type_id), desc(teams.created_at)];
+        break;
+      case 'updated_at':
+        orderByConditions = sortOrder.toLowerCase() === 'asc'
+          ? [asc(teams.updated_at), desc(teams.created_at)]
+          : [desc(teams.updated_at), desc(teams.created_at)];
+        break;
+      case 'created_at':
+      default:
+        orderByConditions = sortOrder.toLowerCase() === 'asc'
+          ? [asc(teams.created_at)]
+          : [desc(teams.created_at)];
+        break;
+    }
+    
+    // Execute the query in a single call to avoid chaining issues
+    const teamsResult = await db
+      .select()
+      .from(teams)
+      .where(whereConditions.length > 0 ? whereConditions[0] : undefined)
+      .orderBy(...orderByConditions);
 
     // Get all team types
     const teamTypesResult = await db.select().from(team_types);
 
     // Create a map of team types by ID for quick lookup
     const teamTypesMap = teamTypesResult.reduce(
-        (map, type) => {
-          map[type.id] = type;
-          return map;
-        },
-        {} as { [key: number]: any },
+      (map, type) => {
+        map[type.id] = type;
+        return map;
+      },
+      {} as { [key: number]: any },
     );
 
     return teamsResult.map((team) =>
-        mapToTeamOutput(team, teamTypesMap[team.team_type_id]),
+      mapToTeamOutput(team, teamTypesMap[team.team_type_id]),
     );
   } catch (error) {
     logger.error("Error listing teams", error);
     throw new AppError("Failed to list team members", 500);
   }
 }
-
 // Helper function to map database team to TeamOutput type
 function mapToTeamOutput(team: any, teamType?: any): TeamOutput {
   return {
