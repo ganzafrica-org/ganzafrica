@@ -624,7 +624,7 @@ export default function Navigation({
               <div className="mr-2">
                 <LanguageSwitcher />
               </div>
-              <Link href={`/${locale}/login`}>
+              <Link href="https://ganzafrica.onrender.com/" target="_blank" rel="noopener noreferrer">
                 <Button
                   size="sm"
                   className="bg-primary-green hover:bg-primary-green/90 text-white px-6"

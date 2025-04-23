@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import path from "path";
 import * as dotenv from "dotenv";
 import { setupTriggers } from "./setup-triggers";
+import { up } from "./01_create_roles";
 
 // Load environment variables
 const envPath = path.resolve(__dirname, "../../../.env");
@@ -33,6 +34,8 @@ async function runMigrations() {
     // Setup triggers
     await setupTriggers();
     console.log("Triggers setup completed");
+
+    await up(db);
 
     console.log("All database migrations completed successfully!");
   } catch (error) {

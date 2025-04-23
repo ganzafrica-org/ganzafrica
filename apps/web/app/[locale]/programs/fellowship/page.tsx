@@ -14,6 +14,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { useParams } from 'next/navigation';
+import apiClient from '@/lib/api-client';
 
 // Define the type for opportunities
 type Opportunity = {
@@ -21,51 +22,25 @@ type Opportunity = {
   title: string;
 };
 
+// Interface for the testimonial data from the API
 interface Testimonial {
-  id: number;
-  name: string;
-  role: string;
-  quote: string;
-  image: string;
+    id: number;
+    author_name: string;
+    position: string;
+    image: string;
+    description: string;
+    company: string;
+    occupation: string;
+    date: string;
+    rating: number;
+    created_at: string;
+    updated_at: string;
 }
 
-const testimonials: Testimonial[] = [
-  {
-    id: 1,
-    name: "Claude Mugabe",
-    role: "Former Smart Water Management Fellow",
-    quote: "I have found immense value in my role as a Smart Water fellow at GanzAfrica... a pivotal aspect of my journey has been participating in the MINAGRI team where collaboration with fellows from diverse backgrounds was key. I am confident that the lessons learned at GanzAfrica will contribute significantly",
-    image: "/images/ganzafrica-fellows.jpg"
-  },
-  {
-    id: 2,
-    name: "Sarah Kimani",
-    role: "Agrifood Systems Fellow",
-    quote: "The GanzAfrica fellowship transformed my career in agricultural innovation. Working alongside experienced mentors and a community of passionate professionals gave me the skills and network to make a real difference in my community.",
-    image: "/images/ganzafrica-fellows.jpg"
-  },
-  {
-    id: 3,
-    name: "John Mwangi",
-    role: "Climate Change Fellow",
-    quote: "Being part of the GanzAfrica fellowship opened doors to incredible opportunities in climate action. The hands-on experience and mentorship I received helped me develop innovative solutions for sustainable agriculture.",
-    image: "/images/ganzafrica-fellows.jpg"
-  },
-  {
-    id: 4,
-    name: "Grace Mutua",
-    role: "Data & Evidence Fellow",
-    quote: "The fellowship program at GanzAfrica equipped me with crucial skills in data analysis and evidence-based decision making. The collaborative environment and expert guidance helped me grow both professionally and personally.",
-    image: "/images/ganzafrica-fellows.jpg"
-  },
-  {
-    id: 5,
-    name: "David Okello",
-    role: "Natural Resource Management Fellow",
-    quote: "Through the GanzAfrica fellowship, I gained practical experience in sustainable resource management. The program's focus on real-world challenges and innovative solutions has been invaluable for my career development.",
-    image: "/images/ganzafrica-fellows.jpg"
-  }
-];
+// Interface for the API response
+interface TestimonialsResponse {
+    testimonials: Testimonial[];
+}
 
 const benefits = [
   {
@@ -131,7 +106,9 @@ export default function FellowshipPage() {
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const topicsRef = useRef<HTMLDivElement>(null);
   const [featuredOpportunity, setFeaturedOpportunity] = useState<Opportunity | null>(null);
-
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
@@ -166,6 +143,42 @@ export default function FellowshipPage() {
 
     return () => clearInterval(slideInterval);
   }, []);
+
+  // Fetch testimonials from the API
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get<TestimonialsResponse>('/testimonials');
+        setTestimonials(response.data.testimonials);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching testimonials:', err);
+        setError('Failed to load testimonials');
+        // Set fallback testimonials in case of error
+        setTestimonials([
+          {
+            id: 1,
+            author_name: "Marie Claire Uwamahoro",
+            position: "Sustainable Agriculture Fellow",
+            description: "The GanzAfrica fellowship has been transformative for my career in sustainable agriculture. The hands-on experience and mentorship I received helped me develop innovative solutions for sustainable farming practices in Rwanda.",
+            image: "/images/fellows/marie-claire.jpg",
+            company: "GA",
+            occupation: "fellow",
+            date: new Date().toISOString(),
+            rating: 5,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
   return (
       <div className="min-h-screen bg-white font-sans">
         <Header locale={locale} dict={dict} />
@@ -315,14 +328,21 @@ export default function FellowshipPage() {
                   transition={{ duration: 0.8 }}
                   className="w-[60%]"
               >
-                <img
-                    src="/images/team-group-photo.jpg"
-                    alt="Fellowship team"
-                    className="w-full h-[500px] object-cover rounded-lg"
-                />
-                <div className="absolute top-1/2 left-[25%] transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="w-20 h-20 rounded-full bg-[#FDB022] flex items-center justify-center cursor-pointer hover:bg-[#FDB022]/90 transition-colors">
-                    <Play fill="white" className="w-8 h-8 text-white ml-1" />
+                <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
+                  <video 
+                    autoPlay 
+                    loop 
+                    muted 
+                    playsInline
+                    className="w-full h-full object-cover"
+                  >
+                    <source src="/videos/Farmers obervation 2.mp4" type="video/mp4" />
+                  </video>
+                  <div className="absolute inset-0 bg-black/30"></div>
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-20 h-20 rounded-full bg-[#FDB022] flex items-center justify-center cursor-pointer hover:bg-[#FDB022]/90 transition-colors">
+                      <Play fill="white" className="w-8 h-8 text-white ml-1" />
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -507,70 +527,87 @@ export default function FellowshipPage() {
               <h3 className="text-3xl font-bold text-[#045F3C] mb-12">Say about the Fellowship</h3>
             </div>
 
-            <div className="max-w-5xl mx-auto px-12">
-              {/* Profile Images Row */}
-              <div className="flex justify-center items-center gap-6 mb-12">
-                {testimonials.map((testimonial, index) => {
-                  const isActive = currentTestimonial === index;
-                  const isPrevious = (currentTestimonial === index + 1) || (currentTestimonial === 0 && index === testimonials.length - 1);
-                  const isNext = (currentTestimonial === index - 1) || (currentTestimonial === testimonials.length - 1 && index === 0);
+            {loading ? (
+              <div className="max-w-5xl mx-auto px-12">
+                {/* Loading skeleton */}
+                <div className="flex justify-center items-center gap-6 mb-12">
+                  {[1, 2, 3, 4, 5].map((_, index) => (
+                    <div key={index} className="w-24 h-24 rounded-full bg-gray-200 animate-pulse" />
+                  ))}
+                </div>
+                <div className="text-center">
+                  <div className="h-32 bg-gray-200 animate-pulse rounded-lg mb-8" />
+                  <div className="h-8 w-48 bg-gray-200 animate-pulse rounded mx-auto" />
+                </div>
+              </div>
+            ) : error ? (
+              <div className="text-center text-red-500">{error}</div>
+            ) : (
+              <div className="max-w-5xl mx-auto px-12">
+                {/* Profile Images Row */}
+                <div className="flex justify-center items-center gap-6 mb-12">
+                  {testimonials.map((testimonial, index) => {
+                    const isActive = currentTestimonial === index;
+                    const isPrevious = (currentTestimonial === index + 1) || (currentTestimonial === 0 && index === testimonials.length - 1);
+                    const isNext = (currentTestimonial === index - 1) || (currentTestimonial === testimonials.length - 1 && index === 0);
 
-                  return (
+                    return (
                       <div
-                          key={testimonial.id}
-                          className={`transition-all duration-500 transform ${
-                              isActive ? 'w-24 h-24 z-20 scale-110' :
-                                  isPrevious || isNext ? 'w-16 h-16 z-10 opacity-50 scale-90' :
-                                      'w-12 h-12 opacity-30 scale-75'
-                          }`}
+                        key={testimonial.id}
+                        className={`transition-all duration-500 transform ${
+                          isActive ? 'w-24 h-24 z-20 scale-110' :
+                            isPrevious || isNext ? 'w-16 h-16 z-10 opacity-50 scale-90' :
+                              'w-12 h-12 opacity-30 scale-75'
+                        }`}
                       >
                         <div className={`rounded-full overflow-hidden transition-all duration-500 h-full w-full ${
-                            isActive ? 'ring-4 ring-yellow-400' : ''
+                          isActive ? 'ring-4 ring-yellow-400' : ''
                         }`}>
                           <Image
-                              src={testimonial.image}
-                              alt={testimonial.name}
-                              width={isActive ? 96 : 64}
-                              height={isActive ? 96 : 64}
-                              className="w-full h-full object-cover"
+                            src={testimonial.image}
+                            alt={testimonial.author_name}
+                            width={isActive ? 96 : 64}
+                            height={isActive ? 96 : 64}
+                            className="w-full h-full object-cover"
                           />
                         </div>
                       </div>
-                  );
-                })}
-              </div>
-
-              {/* Testimonial Content */}
-              <div className="relative">
-                <div className="text-center px-4 md:px-16">
-                  <div className="min-h-[120px] relative">
-                    <p className="text-gray-600 text-lg mb-8 transition-all duration-500 transform">
-                      {testimonials[currentTestimonial]?.quote || ''}
-                    </p>
-                  </div>
-                  <div className="transform transition-all duration-500">
-                    <h4 className="text-2xl font-bold mb-2 text-[#045F3C]">{testimonials[currentTestimonial]?.name || ''}</h4>
-                    <p className="text-gray-600">{testimonials[currentTestimonial]?.role || ''}</p>
-                  </div>
+                    );
+                  })}
                 </div>
 
-                {/* Navigation Arrows */}
-                <button
+                {/* Testimonial Content */}
+                <div className="relative">
+                  <div className="text-center px-4 md:px-16">
+                    <div className="min-h-[120px] relative">
+                      <p className="text-gray-600 text-lg mb-8 transition-all duration-500 transform">
+                        {testimonials[currentTestimonial]?.description || ''}
+                      </p>
+                    </div>
+                    <div className="transform transition-all duration-500">
+                      <h4 className="text-2xl font-bold mb-2 text-[#045F3C]">{testimonials[currentTestimonial]?.author_name || ''}</h4>
+                      <p className="text-gray-600">{testimonials[currentTestimonial]?.position || ''}</p>
+                    </div>
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  <button
                     onClick={prevTestimonial}
                     className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-full"
                     aria-label="Previous testimonial"
-                >
-                  <ArrowLeft className="w-6 h-6 text-white" />
-                </button>
-                <button
+                  >
+                    <ArrowLeft className="w-6 h-6 text-white" />
+                  </button>
+                  <button
                     onClick={nextTestimonial}
                     className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-full"
                     aria-label="Next testimonial"
-                >
-                  <ArrowRight className="w-6 h-6 text-white" />
-                </button>
+                  >
+                    <ArrowRight className="w-6 h-6 text-white" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </Container>
         </section>
       </div>

@@ -16,10 +16,8 @@ import {
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
-
-
 
 export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -47,20 +45,123 @@ export default function Home() {
     };
   }, []);
 
+  // Advanced animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.8,
+        ease: [0.6, -0.05, 0.01, 0.99]
+      }
+    }
+  };
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.3,
+        duration: 0.8
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.8, y: 20 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      y: 0,
+      transition: { 
+        duration: 0.6,
+        ease: [0.6, -0.05, 0.01, 0.99]
+      }
+    },
+    hover: { 
+      scale: 1.05,
+      y: -5,
+      transition: { 
+        duration: 0.3,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { opacity: 0, scale: 1.1, y: 20 },
+    visible: { 
+      opacity: 1, 
+      scale: 1,
+      y: 0,
+      transition: { 
+        duration: 1,
+        ease: [0.6, -0.05, 0.01, 0.99]
+      }
+    },
+    hover: {
+      scale: 1.05,
+      transition: { duration: 0.3 }
+    }
+  };
+
+  const textVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: [0.6, -0.05, 0.01, 0.99]
+      }
+    }
+  };
+
+  const quoteVariants = {
+    hidden: { opacity: 0, y: 20, rotate: -5 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      rotate: -2,
+      transition: {
+        duration: 0.8,
+        ease: [0.6, -0.05, 0.01, 0.99]
+      }
+    }
+  };
+
   return (
     <main className="min-h-screen bg-white font-rubik">
       {/* Background Pattern */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <motion.div 
+        className="fixed inset-0 z-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+      >
         <img
           src="/images/leaf.jpg"
           alt="Background Pattern"
           className="w-full h-full object-cover opacity-[0.08]"
         />
-      </div>
+      </motion.div>
 
-      {/* Hero Section - Full width */}
-      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-        <div className="absolute inset-0 bg-black/70">
+      {/* Hero Section */}
+      <motion.section 
+        className="relative w-full h-[400px] sm:h-[500px] overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, ease: "easeOut" }}
+      >
+        <motion.div 
+          className="absolute inset-0 bg-black/70"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.5, delay: 0.2 }}
+        >
           <video 
             autoPlay 
             muted 
@@ -70,22 +171,34 @@ export default function Home() {
           >
             <source src="/videos/hero-video.mp4" type="video/mp4" />
           </video>
-        </div>
+        </motion.div>
 
-        
-        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <h1
+        <motion.div 
+          className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.4, ease: [0.6, -0.05, 0.01, 0.99] }}
+        >
+          <motion.h1
             className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
+            variants={textVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: 0.6 }}
           >
             A lifetime of <span className="text-yellow-400 font-bold">Connections</span>, Opportunities <span className="text-yellow-400 font-bold">and Impact </span>
-          </h1>
-          <h2
+          </motion.h1>
+          <motion.h2
             className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
+            variants={textVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ delay: 0.8 }}
           >
             ALUMNI NETWORK
-          </h2>
-        </div>
-      </section>
+          </motion.h2>
+        </motion.div>
+      </motion.section>
 
       {/* Categories Bar - Full width */}
        <div className="flex justify-center">
@@ -95,112 +208,191 @@ export default function Home() {
       {/* Content with standard page margins */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Mission Section */}
-        <section className="py-8 relative">
+        <motion.section 
+          className="py-8 relative"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="rounded-full overflow-hidden aspect-square border-8 border-[#F8B712] shadow-xl bg-white">
+            <motion.div 
+              className="relative"
+              variants={fadeInUp}
+            >
+              <motion.div 
+                className="rounded-full overflow-hidden aspect-square border-8 border-[#F8B712] shadow-xl bg-white"
+                variants={imageVariants}
+                whileHover="hover"
+              >
                 <img
                   src="/images/launch event.jpg"
                   alt="Mission"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                 />
-              </div>
-              <div className="absolute -bottom-8 -left-4 w-52 h-52 rounded-full overflow-hidden border-8 border-[#F8B712] shadow-lg bg-white">
+              </motion.div>
+              <motion.div 
+                className="absolute -bottom-8 -left-4 w-52 h-52 rounded-full overflow-hidden border-8 border-[#F8B712] shadow-lg bg-white"
+                variants={imageVariants}
+                whileHover="hover"
+                transition={{ delay: 0.2 }}
+              >
                 <img
                   src="/images/Happy fellows.jpg"
                   alt="Mission Detail"
                   className="w-full h-full object-cover"
                 />
-              </div>
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold mb-6">
+              </motion.div>
+            </motion.div>
+            <motion.div variants={fadeInUp}>
+              <motion.h2 
+                className="text-3xl font-bold mb-6"
+                variants={textVariants}
+              >
                 <span className="text-black">Mission </span>
                 <span className="text-[#045f3c]">Statement</span>
-              </h2>
-              <p className="text-base text-gray-700 mb-6">
+              </motion.h2>
+              <motion.p 
+                className="text-base text-gray-700 mb-6"
+                variants={textVariants}
+              >
                 Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa.
-              </p>
-              <p className="italic text-lg text-black font-medium mb-6 border-l-4 border-[#045f3c] pl-4">
+              </motion.p>
+              <motion.p 
+                className="italic text-lg text-black font-medium mb-6 border-l-4 border-[#045f3c] pl-4"
+                variants={textVariants}
+              >
                 "To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact."
-              </p>
-              <div className="flex gap-8">
+              </motion.p>
+              <motion.div 
+                className="flex gap-8"
+                variants={staggerContainer}
+              >
                 {["Knowledge Sharing", "Mentorship", "Collaboration and Networking"].map((principle, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-yellow-400" />
+                  <motion.div 
+                    key={index} 
+                    className="flex items-center gap-2"
+                    variants={textVariants}
+                  >
+                    <motion.div 
+                      className="w-4 h-4 rounded-full bg-yellow-400"
+                      whileHover={{ scale: 1.2 }}
+                      transition={{ duration: 0.2 }}
+                    />
                     <span className="text-base text-black font-medium">{principle}</span>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Stats Section */}
-        <section className="py-8 bg-[#F5F5F5]/90 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-8">
+        <motion.section 
+          className="py-8 bg-[#F5F5F5]/90 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-8"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <AlumniCard className="bg-gradient-to-br from-[#045f3c] to-[#034028] text-white p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-br-none shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#056d45] rounded-full -translate-y-12 translate-x-12 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-[#056d45] rounded-full translate-y-8 -translate-x-8 opacity-30"></div>
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-white/10 p-4 rounded-full mb-4">
-                    <Users className="w-12 h-12" />
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+              >
+                <AlumniCard className="bg-gradient-to-br from-[#045f3c] to-[#034028] text-white p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-br-none shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-[#056d45] rounded-full -translate-y-12 translate-x-12 opacity-50"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-[#056d45] rounded-full translate-y-8 -translate-x-8 opacity-30"></div>
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className="bg-white/10 p-4 rounded-full mb-4">
+                      <Users className="w-12 h-12" />
+                    </div>
+                    <h3 className="text-xl mb-4 font-medium">Transitioned Fellows</h3>
+                    <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">27</p>
                   </div>
-                  <h3 className="text-xl mb-4 font-medium">Transitioned Fellows</h3>
-                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">27</p>
-                </div>
-              </AlumniCard>
+                </AlumniCard>
+              </motion.div>
 
-              <AlumniCard className="bg-[#FFF8E1] p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-tl-none rounded-br-none shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#F8B712] rounded-full -translate-y-16 translate-x-16 opacity-10"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F8B712] rounded-full translate-y-12 -translate-x-12 opacity-10"></div>
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-[#045f3c]/10 p-4 rounded-full mb-4">
-                    <Briefcase className="w-12 h-12 text-[#045f3c]" />
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+              >
+                <AlumniCard className="bg-[#FFF8E1] p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-tl-none rounded-br-none shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#F8B712] rounded-full -translate-y-16 translate-x-16 opacity-10"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F8B712] rounded-full translate-y-12 -translate-x-12 opacity-10"></div>
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className="bg-[#045f3c]/10 p-4 rounded-full mb-4">
+                      <Briefcase className="w-12 h-12 text-[#045f3c]" />
+                    </div>
+                    <h3 className="text-xl mb-4 font-medium text-[#045f3c]">Alumni Projects</h3>
+                    <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-[#F8B712] to-[#d49a0f]">12+</p>
                   </div>
-                  <h3 className="text-xl mb-4 font-medium text-[#045f3c]">Alumni Projects</h3>
-                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-[#F8B712] to-[#d49a0f]">12+</p>
-                </div>
-              </AlumniCard>
+                </AlumniCard>
+              </motion.div>
 
-              <AlumniCard className="bg-gradient-to-bl from-[#045f3c] to-[#034028] text-white p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-tl-none shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-[#056d45] rounded-full -translate-y-10 translate-x-10 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-28 h-28 bg-[#056d45] rounded-full translate-y-14 -translate-x-14 opacity-30"></div>
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-white/10 p-4 rounded-full mb-4">
-                    <Calendar className="w-12 h-12" />
+              <motion.div
+                variants={cardVariants}
+                whileHover="hover"
+              >
+                <AlumniCard className="bg-gradient-to-bl from-[#045f3c] to-[#034028] text-white p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-tl-none shadow-lg relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-[#056d45] rounded-full -translate-y-10 translate-x-10 opacity-50"></div>
+                  <div className="absolute bottom-0 left-0 w-28 h-28 bg-[#056d45] rounded-full translate-y-14 -translate-x-14 opacity-30"></div>
+                  <div className="flex flex-col items-center relative z-10">
+                    <div className="bg-white/10 p-4 rounded-full mb-4">
+                      <Calendar className="w-12 h-12" />
+                    </div>
+                    <h3 className="text-xl mb-4 font-medium">Events</h3>
+                    <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">5+</p>
                   </div>
-                  <h3 className="text-xl mb-4 font-medium">Events</h3>
-                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">5+</p>
-                </div>
-              </AlumniCard>
+                </AlumniCard>
+              </motion.div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Purpose Section */}
-        <section className="py-8 relative">
+        <motion.section 
+          className="py-8 relative"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+        >
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="absolute -top-6 right-6 bg-[#F8B712] text-black p-5 rounded-lg shadow-lg transform -rotate-2 z-20">
+            <motion.div 
+              className="relative"
+              variants={fadeInUp}
+            >
+              <motion.div 
+                className="absolute -top-6 right-6 bg-[#F8B712] text-black p-5 rounded-lg shadow-lg transform -rotate-2 z-20"
+                variants={quoteVariants}
+              >
                 <div className="relative">
                   <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-[#F8B712] rotate-45"></div>
                   <p className="text-xl font-bold relative z-10">"Once a GanzAfrica, Always a Changemaker!"</p>
                 </div>
-              </div>
-              <img
+              </motion.div>
+              <motion.img
                 src="/images/form.jpg"
                 alt="Purpose"
                 className="rounded-lg shadow-xl relative z-10"
+                variants={imageVariants}
+                whileHover="hover"
               />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold mb-8">
+            </motion.div>
+            <motion.div variants={fadeInUp}>
+              <motion.h2 
+                className="text-3xl font-bold mb-8"
+                variants={textVariants}
+              >
                 <span className="text-black">Purpose of the </span>
                 <span className="text-[#045f3c]">Alumni Network</span>
-              </h2>
-              <div className="space-y-8">
+              </motion.h2>
+              <motion.div 
+                className="space-y-8"
+                variants={staggerContainer}
+              >
                 {[
                   {
                     title: "Networking and Professional Development",
@@ -228,32 +420,56 @@ export default function Home() {
                     color: "#D8D413"
                   }
                 ].map((item, index, arr) => (
-                  <div key={index} className="relative">
+                  <motion.div 
+                    key={index} 
+                    className="relative"
+                    variants={textVariants}
+                  >
                     <div className="flex gap-3">
-                      <CheckCircle2 className="w-6 h-6 flex-shrink-0" style={{ color: item.color }} />
+                      <motion.div 
+                        className="w-6 h-6 flex-shrink-0"
+                        whileHover={{ scale: 1.2, rotate: 360 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <CheckCircle2 style={{ color: item.color }} />
+                      </motion.div>
                       <div>
                         <h3 className="text-lg font-bold text-[#045f3c] mb-1">{item.title}</h3>
                         <p className="text-gray-600 text-base">{item.description}</p>
                       </div>
                     </div>
                     {index < arr.length - 1 && (
-                      <div className="absolute left-3 top-8 bottom-0 border-l-2 border-dotted border-black opacity-20 h-12"></div>
+                      <motion.div 
+                        className="absolute left-3 top-8 bottom-0 border-l-2 border-dotted border-black opacity-20 h-12"
+                        initial={{ height: 0 }}
+                        whileInView={{ height: "3rem" }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                      />
                     )}
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Projects Section */}
-        <section className="py-8 relative z-10">
-          <div className="text-center mb-12">
+        <motion.section 
+          className="py-8 relative z-10"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+        >
+          <motion.div 
+            className="text-center mb-12"
+            variants={textVariants}
+          >
             <h2 className="text-3xl font-bold">
               <span className="text-black">Alumni </span>
               <span className="text-[#045f3c]">Projects</span>
             </h2>
-          </div>
+          </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
@@ -272,16 +488,22 @@ export default function Home() {
                 icon: <Cloud className="w-6 h-6" />
               }
             ].map((project, index) => (
-              <AlumniCard key={index} className="bg-[#045f3c] text-white p-8 rounded-xl transform hover:scale-105 transition-transform group">
-                <div className="flex items-center gap-2 mb-4">
-                  {project.icon}
-                  <Badge className="bg-yellow-400 text-black text-base px-3 py-1 group-hover:bg-[#045f3c] group-hover:text-white transition-colors">{project.tag}</Badge>
-                </div>
-                <p className="text-base leading-relaxed group-hover:text-white/90">{project.description}</p>
-                {index < 2 && (
-                  <div className="absolute left-1/2 -bottom-8 transform -translate-x-1/2 border-l-2 border-dotted border-[#045f3c] opacity-20 h-8"></div>
-                )}
-              </AlumniCard>
+              <motion.div
+                key={index}
+                variants={cardVariants}
+                whileHover="hover"
+              >
+                <AlumniCard className="bg-[#045f3c] text-white p-8 rounded-xl transform hover:scale-105 transition-transform group">
+                  <div className="flex items-center gap-2 mb-4">
+                    {project.icon}
+                    <Badge className="bg-yellow-400 text-black text-base px-3 py-1 group-hover:bg-[#045f3c] group-hover:text-white transition-colors">{project.tag}</Badge>
+                  </div>
+                  <p className="text-base leading-relaxed group-hover:text-white/90">{project.description}</p>
+                  {index < 2 && (
+                    <div className="absolute left-1/2 -bottom-8 transform -translate-x-1/2 border-l-2 border-dotted border-[#045f3c] opacity-20 h-8"></div>
+                  )}
+                </AlumniCard>
+              </motion.div>
             ))}
           </div>
           <div className="flex justify-end mt-8">
@@ -290,17 +512,26 @@ export default function Home() {
               <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
-        </section>
+        </motion.section>
 
         {/* Events Section */}
-        <section className="py-8 bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8">
+        <motion.section 
+          className="py-8 bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
+            <motion.div 
+              className="text-center mb-8"
+              variants={textVariants}
+            >
               <h2 className="text-3xl font-bold">
                 <span className="text-black">Alumni </span>
                 <span className="text-[#045f3c]">Events</span>
               </h2>
-            </div>
+            </motion.div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
@@ -325,41 +556,46 @@ export default function Home() {
                   image: "/images/Sustainable Land Use Fellows.jpg"
                 }
               ].map((event, index) => (
-                <Link 
-                  key={index} 
-                  href={`/programs/one-event/${event.id}`} 
-                  className="block transform hover:scale-105 transition-transform duration-300"
+                <motion.div
+                  key={index}
+                  variants={cardVariants}
+                  whileHover="hover"
                 >
-                  <AlumniCard className="overflow-hidden border-2 border-[#045f3c] group cursor-pointer h-full">
-                    <div className="relative h-48">
-                      <img
-                        src={event.image}
-                        alt={event.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute bottom-3 left-3 flex items-center gap-3">
-                        <Badge className="bg-white text-black text-base px-3 py-1 group-hover:bg-[#F8B712] transition-colors duration-300">{event.date}</Badge>
-                        <Badge className="bg-[#045f3c] text-white text-base px-3 py-1 group-hover:bg-[#F8B712] group-hover:text-black transition-colors duration-300">{event.type}</Badge>
+                  <Link 
+                    href={`/programs/one-event/${event.id}`} 
+                    className="block transform transition-transform duration-300"
+                  >
+                    <AlumniCard className="overflow-hidden border-2 border-[#045f3c] group cursor-pointer h-full">
+                      <div className="relative h-48">
+                        <img
+                          src={event.image}
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-3 left-3 flex items-center gap-3">
+                          <Badge className="bg-white text-black text-base px-3 py-1 group-hover:bg-[#F8B712] transition-colors duration-300">{event.date}</Badge>
+                          <Badge className="bg-[#045f3c] text-white text-base px-3 py-1 group-hover:bg-[#F8B712] group-hover:text-black transition-colors duration-300">{event.type}</Badge>
+                        </div>
+                        <Button 
+                          size="icon" 
+                          className="absolute bottom-3 right-3 rounded-full bg-[#F8B712] hover:bg-[#045f3c] hover:text-white w-10 h-10 transition-colors duration-300"
+                        >
+                          <ArrowRight className="w-5 h-5" />
+                        </Button>
                       </div>
-                      <Button 
-                        size="icon" 
-                        className="absolute bottom-3 right-3 rounded-full bg-[#F8B712] hover:bg-[#045f3c] hover:text-white w-10 h-10 transition-colors duration-300"
-                      >
-                        <ArrowRight className="w-5 h-5" />
-                      </Button>
-                    </div>
-                    <div className="p-5 group-hover:bg-[#045f3c] transition-colors duration-300">
-                      <h3 className="font-bold text-lg mb-2 group-hover:text-white transition-colors duration-300 line-clamp-2">{event.title}</h3>
-                      <p className="text-gray-600 text-sm group-hover:text-white/80 transition-colors duration-300">
-                        Young professionals are at the forefront of accelerating CAADP implementation...
-                      </p>
-                    </div>
-                  </AlumniCard>
-                </Link>
+                      <div className="p-5 group-hover:bg-[#045f3c] transition-colors duration-300">
+                        <h3 className="font-bold text-lg mb-2 group-hover:text-white transition-colors duration-300 line-clamp-2">{event.title}</h3>
+                        <p className="text-gray-600 text-sm group-hover:text-white/80 transition-colors duration-300">
+                          Young professionals are at the forefront of accelerating CAADP implementation...
+                        </p>
+                      </div>
+                    </AlumniCard>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           </div>
-        </section>
+        </motion.section>
       </div>
     </main>
   );

@@ -6,13 +6,13 @@ import { rateLimit } from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import "express-async-errors";
 import swaggerUi from "swagger-ui-express";
-import swaggerSpecs from "./swagger/specs";
-import { env, Logger, constants } from "./config";
-import { checkDatabaseConnection } from "./db/client";
-import { errorHandler, notFoundHandler } from "./middlewares";
+import swaggerSpecs from "@/swagger/specs";
+import { env, Logger, constants } from "@/config";
+import { checkDatabaseConnection } from "@/db/client";
+import { errorHandler, notFoundHandler } from "@/middlewares";
 
 // Import routes
-import apiRoutes from "./routes";
+import apiRoutes from "@/routes";
 
 // Setup logger
 const logger = new Logger("App");

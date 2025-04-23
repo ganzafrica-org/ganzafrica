@@ -1,6 +1,6 @@
-import 'module-alias/register';
-import app from "./app";
-import { env, Logger } from "./config";
+
+import app from "@/app";
+import { env, Logger } from "@/config";
 
 const logger = new Logger("Server");
 const PORT = env.API_PORT || 3002;
