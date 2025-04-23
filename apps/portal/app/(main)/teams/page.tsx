@@ -83,7 +83,7 @@ const TeamsPage = () => {
         }
         break;
       case 'update':
-        router.push(`/teams/edit-team/${teamId}`);
+        router.push(`/teams/edit/${teamId}`);
         break;
       default:
         break;
