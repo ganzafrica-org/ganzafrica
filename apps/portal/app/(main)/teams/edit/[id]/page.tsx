@@ -36,6 +36,7 @@ const EditTeamPage = ({ params }) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [usePhotoUrl, setUsePhotoUrl] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [originalTeamData, setOriginalTeamData] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -79,6 +80,9 @@ const EditTeamPage = ({ params }) => {
         
         if (response.data && response.data.team) {
           const team = response.data.team;
+          
+          // Store the complete original team data
+          setOriginalTeamData(team);
           
           // Determine if this is a URL or file upload
           if (team.photo_url && team.photo_url.startsWith('http')) {
@@ -326,17 +330,29 @@ const EditTeamPage = ({ params }) => {
         }
       }
       
-      // Prepare data for API
+      // Create the update payload while explicitly preserving the created_at timestamp
+      // This is crucial to maintain the team member's position in sorted lists
       const teamData = {
-        ...formData,
+        name: formData.name,
+        position: formData.position,
+        email: formData.email,
+        bio: formData.bio,
         photo_url: finalPhotoUrl,
-        team_type_id: parseInt(formData.team_type_id)
+        profile_link: formData.profile_link,
+        skills: formData.skills,
+        team_type_id: parseInt(formData.team_type_id),
+        // IMPORTANT: Preserve the original creation timestamp to maintain sorting order
+        created_at: originalTeamData.created_at
       };
       
       console.log('Updating team data:', teamData);
       
-      // Use apiClient instead of direct axios
-      const response = await apiClient.put(`/teams/${teamId}`, teamData);
+      // Use apiClient to update the team member
+      const response = await apiClient.put(`/teams/${teamId}`, teamData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       console.log('Team updated:', response.data);
       setSuccess(true);

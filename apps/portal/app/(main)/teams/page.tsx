@@ -5,6 +5,7 @@ import {
   Search, 
   Filter, 
   ArrowUp, 
+  ArrowDown,
   MoreHorizontal, 
   ChevronLeft, 
   ChevronRight, 
@@ -151,6 +152,33 @@ const TeamsPage = () => {
     }
     setPage(1);
   };
+
+  // Handle sort changes
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    setSortBy(e.target.value);
+    setPage(1); // Reset to first page when sorting changes
+  };
+
+  // Handle order changes
+  const handleOrderChange = (): void => {
+    setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    setPage(1); // Reset to first page when order changes
+  };
+  
+  // Get team type ID from tab name
+  const getTeamTypeIdFromTab = (tabName: string): number | undefined => {
+    if (tabName === 'all') return undefined;
+    
+    // Map tab names to team type IDs
+    const tabToTypeId: {[key: string]: number} = {
+      'leadership': 1,
+      'technical': 2,
+      'support': 3
+    };
+    
+    return tabToTypeId[tabName.toLowerCase()];
+  };
+
   // Fetch tab counts
   const fetchTabCounts = async () => {
     try {
@@ -198,7 +226,7 @@ const TeamsPage = () => {
         setLoading(true);
         
         // Build query params
-        const params = {
+        const params: {[key: string]: any} = {
           page,
           limit,
           sort_by: sortBy,
@@ -328,6 +356,41 @@ const TeamsPage = () => {
       </button>
     ));
   };
+  
+  // Sort options component
+  const SortOptions = () => {
+    const sortOptions = [
+      { value: 'created_at', label: 'Creation Date' },
+      { value: 'name', label: 'Name' },
+      { value: 'team_type_id', label: 'Team Type' }
+    ];
+
+    return (
+      <div className="flex items-center space-x-2">
+        <label className="text-sm text-gray-600">Sort by:</label>
+        <select
+          value={sortBy}
+          onChange={handleSortChange}
+          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded p-2"
+        >
+          {sortOptions.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleOrderChange}
+          className="p-2 border border-gray-300 rounded"
+          title={sortOrder === 'desc' ? 'Sort Ascending' : 'Sort Descending'}
+        >
+          {sortOrder === 'desc' ? 
+            <ArrowUp className="w-4 h-4" /> : 
+            <ArrowDown className="w-4 h-4" />}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="p-6 max-w-full">
@@ -361,29 +424,32 @@ const TeamsPage = () => {
         </h2>
 
         {/* Search and filter */}
-        <div className="flex justify-end mb-4">
-          <div className="relative w-64">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search className="w-4 h-4 text-gray-500" />
+        <div className="flex justify-between mb-4">
+          <SortOptions />
+          <div className="flex">
+            <div className="relative w-64">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="w-4 h-4 text-gray-500" />
+              </div>
+              <form onSubmit={handleSearchSubmit}>
+                <input 
+                  type="text" 
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
+                  placeholder="Search team members"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+              </form>
             </div>
-            <form onSubmit={handleSearchSubmit}>
-              <input 
-                type="text" 
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
-                placeholder="Search team members"
-                value={searchTerm}
-                onChange={handleSearchChange}
-              />
-            </form>
+            <button 
+              className="ml-2 p-2.5 bg-green-700 text-white rounded"
+              onClick={() => {
+                // Open a filter modal or expand filter options
+              }}
+            >
+              <Filter className="w-5 h-5" />
+            </button>
           </div>
-          <button 
-            className="ml-2 p-2.5 bg-green-700 text-white rounded"
-            onClick={() => {
-              // Open a filter modal or expand filter options
-            }}
-          >
-            <Filter className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Teams list view */}
