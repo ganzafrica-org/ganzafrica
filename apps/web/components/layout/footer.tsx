@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Home, Phone, Mail } from "lucide-react";
 import { LinkedInIcon, TwitterIcon } from "@/components/ui/icons";
+import { Button } from "@workspace/ui/components/button";
 
 export default function Footer({
   locale,
@@ -98,11 +99,14 @@ export default function Footer({
           <div>
             <h3 className="font-semibold text-secondary-yellow mb-4 text-lg">{dict.footer.explore}</h3>
             <ul className="space-y-3">
-              <li>
-                <Link href={`/${locale}/member-login`} className="hover:text-secondary-yellow transition-colors">
-                  {dict.footer.login}
-                </Link>
-              </li>
+            <a
+  href={`${process.env.LOGIN_URL}`}
+  className=" hover:text-secondary-yellow transition-colors"
+>
+  Member Login
+</a>
+
+      
               <li>
                 <Link href={`/${locale}/opportunities`} className="hover:text-secondary-yellow transition-colors">
                   {dict.footer.opportunities}
