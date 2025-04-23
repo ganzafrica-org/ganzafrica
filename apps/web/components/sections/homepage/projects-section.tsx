@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { DecoratedHeading } from '@/components/layout/headertext';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, ArrowRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 
 
@@ -171,13 +172,17 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
         // Fallback image if no feature image is found
         return '/images/placeholder.png';
     };
-    
 
     // Helper function to truncate description
     const truncateDescription = (description: string, maxLength = 150) => {
         if (!description) return '';
         if (description.length <= maxLength) return description;
         return description.substring(0, maxLength) + '...';
+    };
+
+    // Project URL builder
+    const getProjectUrl = (projectId: number) => {
+        return `/${locale}/projects/${projectId}`;
     };
 
     // Show loading skeleton
@@ -203,6 +208,8 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
         );
     }
 
+    const activeProject = projects[activeIndex];
+
     return (
         <section className="py-16 md:py-24 bg-secondary-green/10 relative overflow-hidden">
             <div className="container mx-auto px-4">
@@ -226,23 +233,29 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                                 <div
                                     key={project.id}
                                     className={`
-                    absolute rounded-2xl overflow-hidden transition-all duration-500
-                    ${getSlidePosition(idx)}
-                  `}
+                                        absolute rounded-2xl overflow-hidden transition-all duration-500
+                                        ${getSlidePosition(idx)}
+                                    `}
                                 >
                                     <div className="relative w-full h-full">
-                                    <img
-    src={getFeatureImageUrl(project)}
-    alt={project.name}
-    className="w-full h-full object-cover"
-/>
+                                        <img
+                                            src={getFeatureImageUrl(project)}
+                                            alt={project.name}
+                                            className="w-full h-full object-cover"
+                                        />
 
                                         <div className="absolute inset-0 bg-black/40" />
 
-                                        {/* Feature tag */}
-                                        <div className="absolute top-4 left-4 bg-primary-orange text-white text-xs uppercase tracking-wider px-2 py-1 rounded">
-                                            Feature
-                                        </div>
+
+                                        {/* View project link - Only visible for center slide */}
+                                        {idx === activeIndex && (
+                                            <Link
+                                                href={getProjectUrl(project.id)}
+                                                className="absolute top-4 right-4 bg-white text-primary-green flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-full hover:bg-primary-green hover:text-white transition-colors"
+                                            >
+                                                <Eye size={16} /> View Project
+                                            </Link>
+                                        )}
 
                                         <div className="absolute bottom-6 right-6 max-w-[80%] bg-primary-green/90 backdrop-blur-sm rounded-lg p-4">
                                             <h3 className="text-lg md:text-xl font-bold text-white mb-2">{project.name}</h3>
@@ -279,72 +292,83 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                         </button>
                     </div>
                 </div>
+
+                {/* Call to action to view all projects */}
+                <div className="text-center mt-12">
+                    <Link
+                        href={`/${locale}/projects`}
+                        className="inline-flex items-center gap-2 bg-primary-green hover:bg-primary-green/90 text-white py-3 px-6 rounded-lg transition-colors"
+                    >
+                        <span>{dict?.cta?.view_all_projects || "View All Projects"}</span>
+                        <ArrowRight size={18} />
+                    </Link>
+                </div>
             </div>
 
             <style jsx>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        
-        .slider-content > div {
-          position: absolute;
-          height: 26rem;
-          width: 20rem;
-          transition: all 0.5s ease-in-out;
-          transform-style: preserve-3d;
-          box-shadow: 0px 0.4rem 1.6rem rgba(0, 0, 0, 0.1);
-        }
+                .perspective-1000 {
+                    perspective: 1000px;
+                }
+                
+                .slider-content > div {
+                    position: absolute;
+                    height: 26rem;
+                    width: 20rem;
+                    transition: all 0.5s ease-in-out;
+                    transform-style: preserve-3d;
+                    box-shadow: 0px 0.4rem 1.6rem rgba(0, 0, 0, 0.1);
+                }
 
-        .position-1 {
-          left: 15%;
-          transform: translate(-50%, 0) rotateY(-2deg) scale(0.8, 0.8);
-          opacity: 0.5;
-          z-index: 1;
-        }
+                .position-1 {
+                    left: 15%;
+                    transform: translate(-50%, 0) rotateY(-2deg) scale(0.8, 0.8);
+                    opacity: 0.5;
+                    z-index: 1;
+                }
 
-        .position-2 {
-          left: 32%;
-          transform: translate(-50%, 0) rotateY(-1deg) scale(0.9, 0.9);
-          opacity: 0.95;
-          z-index: 2;
-        }
+                .position-2 {
+                    left: 32%;
+                    transform: translate(-50%, 0) rotateY(-1deg) scale(0.9, 0.9);
+                    opacity: 0.95;
+                    z-index: 2;
+                }
 
-        .position-3 {
-          left: 50%;
-          transform: translate(-50%, 0) rotateY(0deg) scale(1, 1);
-          opacity: 1;
-          z-index: 4;
-          box-shadow: 0px 0.4rem 1.6rem rgba(0, 0, 0, 0.5);
-        }
+                .position-3 {
+                    left: 50%;
+                    transform: translate(-50%, 0) rotateY(0deg) scale(1, 1);
+                    opacity: 1;
+                    z-index: 4;
+                    box-shadow: 0px 0.4rem 1.6rem rgba(0, 0, 0, 0.5);
+                }
 
-        .position-4 {
-          left: 68%;
-          transform: translate(-50%, 0) rotateY(1deg) scale(0.9, 0.9);
-          opacity: 0.95;
-          z-index: 2;
-        }
+                .position-4 {
+                    left: 68%;
+                    transform: translate(-50%, 0) rotateY(1deg) scale(0.9, 0.9);
+                    opacity: 0.95;
+                    z-index: 2;
+                }
 
-        .position-5 {
-          left: 85%;
-          transform: translate(-50%, 0) rotateY(2deg) scale(0.8, 0.8);
-          opacity: 0.5;
-          z-index: 1;
-        }
+                .position-5 {
+                    left: 85%;
+                    transform: translate(-50%, 0) rotateY(2deg) scale(0.8, 0.8);
+                    opacity: 0.5;
+                    z-index: 1;
+                }
 
-        .position-none {
-          left: 50%;
-          transform: translate(-50%, 0) rotateY(0deg) scale(0.7, 0.7);
-          opacity: 0;
-          z-index: 0;
-        }
+                .position-none {
+                    left: 50%;
+                    transform: translate(-50%, 0) rotateY(0deg) scale(0.7, 0.7);
+                    opacity: 0;
+                    z-index: 0;
+                }
 
-        @media (max-width: 768px) {
-          .slider-content > div {
-            height: 20rem;
-            width: 14rem;
-          }
-        }
-      `}</style>
+                @media (max-width: 768px) {
+                    .slider-content > div {
+                        height: 20rem;
+                        width: 14rem;
+                    }
+                }
+            `}</style>
         </section>
     );
 }
