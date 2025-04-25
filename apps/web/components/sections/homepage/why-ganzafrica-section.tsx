@@ -97,26 +97,6 @@ export default function WhyGanzAfricaSection({
                 priority
                 className="object-cover"
               />
-
-              {/* Agriculture Professional Leader speech bubble */}
-              <div className="absolute top-10 left-10 w-32">
-                {/* Speech bubble with tail pointing to bottom right */}
-                <div className="relative bg-secondary-yellow p-4 rotate-[-2deg] shadow-md rounded-md">
-                  <p
-                    className="text-dark font-bold text-sm leading-tight"
-                    style={{ fontFamily: "'Covered By Your Grace', cursive" }}
-                  >
-                    {dict.home?.why_section?.sticky_note_line1 || "Agriculture"}
-                    <br />
-                    {dict.home?.why_section?.sticky_note_line2 ||
-                      "Professional"}
-                    <br />
-                    {dict.home?.why_section?.sticky_note_line3 || "Leader"}
-                  </p>
-                  {/* Speech bubble tail pointing to bottom right */}
-                  <div className="absolute bottom-0 right-4 w-4 h-4 bg-secondary-yellow transform rotate-45 translate-y-2"></div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -134,11 +114,6 @@ export default function WhyGanzAfricaSection({
                 cornerColor="bg-primary-orange"
               />
             </div>
-
-            <p className="text-gray-600 mb-8 font-regular-paragraph">
-              {dict.home?.why_section?.description ||
-                "There are many variations of passages of available but the majority have suffered alteration in some form by injected humor or random word which don't look even."}
-            </p>
 
             <div className="space-y-6">
               {/* Bullet Point 1 */}

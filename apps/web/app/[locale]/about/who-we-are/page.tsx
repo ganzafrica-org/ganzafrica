@@ -164,8 +164,8 @@ const PromiseCard: FC<PromiseCardProps> = ({
         <ul className="space-y-3 sm:space-y-4">
           {content.map((item, index) => (
             <li key={index} className="flex items-start">
-              <span className={`${textColor} font-bold mr-2 sm:mr-3 mt-1`}>•</span>
-              <span className={`${textColor} font-medium text-sm sm:text-base`}>
+              <span className={`${textColor} mr-2 sm:mr-3 mt-1 `}>•</span>
+              <span className={`${textColor}text-sm sm:text-base text-white`}>
                 {item}
               </span>
             </li>
@@ -175,8 +175,8 @@ const PromiseCard: FC<PromiseCardProps> = ({
         <ul className="space-y-4 sm:space-y-6">
           {items?.map((item, index) => (
             <li key={index} className="flex items-start">
-              <span className={`${textColor} font-bold mr-2 sm:mr-3 mt-1`}>•</span>
-              <span className={`${textColor} font-medium text-sm sm:text-base`}>
+              <span className={`${textColor}  mr-2 sm:mr-3 mt-1`}>•</span>
+              <span className={`${textColor}  text-sm sm:text-base`}>
                 {item}
               </span>
             </li>
@@ -302,7 +302,7 @@ export default async function AboutPage(props: PageProps) {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/team.png"
+            src="/images/SHIR5142-Enhanced-NR.jpg"
             alt="Agricultural fields"
             fill
             className="object-cover"
@@ -317,11 +317,8 @@ export default async function AboutPage(props: PageProps) {
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
           <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
             <span className="font-bold text-yellow-400">Empowering</span>{" "}
-            <span className="font-normal">Africa's Future</span>
-            <br />
-            <span className="font-normal">Through</span>{" "}
-            <span className="font-bold text-yellow-400">Transformative</span>
-          </h1>
+            <span className="font-normal">Africa's Future <span className="font-bold text-yellow-400"> Food System</span></span> Leaders
+            <br />          </h1>
           <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
             WHO WE ARE
           </h2>
@@ -339,7 +336,7 @@ export default async function AboutPage(props: PageProps) {
               <div className="relative mx-auto" style={{ width: 'fit-content' }}>
                 <div className="rounded-full overflow-hidden w-[300px] h-[300px] md:w-[400px] md:h-[400px] border-4 border-transparent">
                   <Image
-                    src="/images/team.png"
+                    src="/images/Presenting.jpg"
                     alt="Hands holding grain"
                     width={400}
                     height={400}
@@ -349,7 +346,7 @@ export default async function AboutPage(props: PageProps) {
 
                 <div className="absolute -bottom-10 -left-10 rounded-full overflow-hidden w-[120px] h-[120px] md:w-[150px] md:h-[150px] border-4 border-green-700">
                   <Image
-                    src="/images/1.jpg"
+                    src="/images/GroupMico.jpeg"
                     alt="Smiling person"
                     width={150}
                     height={150}
@@ -417,26 +414,25 @@ export default async function AboutPage(props: PageProps) {
           <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
             {/* Left side - Team Image */}
             <div className="w-full md:w-1/2 mb-6 md:mb-0">
-              <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[500px]">
+              <div className="rounded-3xl overflow-hidden h-[80px] sm:h-[300px] md:h-[400px]">
                 <Image
-                  src="/images/team.png"
+                  src="/images/_BAB8852.jpg"
                   alt="GanzAfrica team members"
-                  width={500}
-                  height={500}
+                  width={300}
+                  height={300}
                   className="w-full h-full object-cover"
                 />
               </div>
             </div>
-
             {/* Right side - Mission Cards */}
             <div className="w-full md:w-1/2 flex flex-col space-y-6 sm:space-y-8">
               <div className="bg-yellow-50 rounded-3xl p-6 sm:p-8 relative">
                 <div className="flex items-center mb-4">
-                  <div className="bg-primary-orange text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
-                    <span className="mr-2">●</span> Our Vision
+                  <div className="bg-primary-orange text-white font-bold md:text-xl  rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
+                    <span className="mr-2"></span> Our Vision
                   </div>
                 </div>
-                <p className="text-base md:text-xl font-bold text-gray-900">
+                <p className="text-base md:text-x  text-gray-900">
                   {dict?.about?.aspirations?.mission_1 ||
                     "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"}
                 </p>
@@ -448,11 +444,11 @@ export default async function AboutPage(props: PageProps) {
 
               <div className="bg-green-800 rounded-3xl p-6 sm:p-8 relative">
                 <div className="flex items-center mb-4">
-                  <div className="bg-green-500 text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
-                    <span className="mr-2">●</span> {dict?.about?.aspirations?.mission_label || "Our Mission"}
+                  <div className="bg-green-500 text-white md:text-xl font-bold rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
+                    <span className="mr-2"></span> {dict?.about?.aspirations?.mission_label || "Our Mission"}
                   </div>
                 </div>
-                <p className="text-base md:text-xl font-bold text-white">
+                <p className="text-base md:text-x  text-gray-900 text-white">
                   {dict?.about?.aspirations?.mission_2 ||
                     "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."}
                 </p>
@@ -567,7 +563,7 @@ export default async function AboutPage(props: PageProps) {
 
               <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                 <Image
-                  src="/images/team-members-2.jpg"
+                  src="/images/Collaboration.jpg"
                   alt="GanzAfrica Office"
                   width={400}
                   height={300}
@@ -580,7 +576,7 @@ export default async function AboutPage(props: PageProps) {
             <div className="flex flex-col gap-4">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                 <Image
-                  src="/images/team-members-1.jpg"
+                  src="/images/Mico(Trainer).jpeg"
                   alt="GanzAfrica Team"
                   width={400}
                   height={300}
@@ -625,7 +621,7 @@ export default async function AboutPage(props: PageProps) {
 
               <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                 <Image
-                  src="/images/team-group-photo.jpg"
+                  src="/images/Merci_Farm.jpg"
                   alt="GanzAfrica Team Members"
                   width={400}
                   height={300}
@@ -638,7 +634,7 @@ export default async function AboutPage(props: PageProps) {
       </section>
 
       {/* Our Promise */}
-      <section className="py-8 sm:py-12 md:py-16 bg-white">
+      <section className="py-8 sm:py-12 md:py-16 bg-white text-base md:text-xl ">
         <div className="flex justify-center mb-6 sm:mb-10">
           <DecoratedHeading
             firstText={dict?.about?.promise?.heading_first || "Our"}

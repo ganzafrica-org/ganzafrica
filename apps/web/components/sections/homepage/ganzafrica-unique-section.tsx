@@ -58,7 +58,7 @@ export default function GanzAfricaUniqueSection({
       title: dict?.unique?.elements?.data?.title || "Data and Evidence",
       description:
           dict?.unique?.elements?.data?.description ||
-          "We champion a data-based approach, equipping our fellows with key skills in data analytics to support evidence-based decision-making and policy design.",
+          "We champion a data & evidence-based approach, equipping our fellows with key skills in data analytics to support evidence-informed decisions and policies.",
       icon: <DataIcon />, // Custom SVG icon
       color: "primary-orange",
     },
@@ -66,7 +66,7 @@ export default function GanzAfricaUniqueSection({
       title: dict?.unique?.elements?.implementation?.title || "Implementation",
       description:
           dict?.unique?.elements?.implementation?.description ||
-          "We go beyond ideas, cultivating a generation of young african leaders with the skills and resources to translate their vision into reality, implementing solutions to improve communities livelihood in Africa.",
+          "We go beyond ideas, cultivating a generation of young african leaders with the skills and resources to translate their vision into reality, implementing solutions to improve community livelihoods in Africa.",
       icon: <ImplementationIcon />, // Custom SVG icon
       color: "primary-green",
     },

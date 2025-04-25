@@ -81,14 +81,6 @@ const aboutItems: MenuItem[] = [
   },
 ];
 
-const ourApproachItems: MenuItem[] = [
-  {
-    title: "Food Systems",
-    href: "/our-approach",
-    description: "Developing sustainable food systems for communities across Africa.",
-  },
-];
-
 const programsItems: MenuItem[] = [
   {
     title: "Fellowship",
@@ -101,14 +93,6 @@ const programsItems: MenuItem[] = [
     href: "/programs/alumni",
     description:
       "A network of graduates continuing to make an impact across the continent.",
-  },
-];
-
-const projectItems: MenuItem[] = [
-  {
-    title: "Projects",
-    href: "/projects",
-    description: "Discover our projects and their impact.",
   },
 ];
 
@@ -262,35 +246,15 @@ export default function Navigation({
             )}
           </div>
 
-          {/* Our Approach */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-our-approach")}
-            >
-              {dict?.navigation?.our_approach || "Our Approach"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-our-approach" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
-            </button>
-            {activeDropdown === "mobile-our-approach" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {ourApproachItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Our Approach - Direct Link */}
+          <Link
+            href={`/${locale}/our-approach`}
+            className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            {dict?.navigation?.our_approach || "Our Approach"}
+          </Link>
 
           {/* Programs */}
           <div className="flex flex-col">
@@ -322,35 +286,15 @@ export default function Navigation({
             )}
           </div>
 
-          {/* Projects */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-projects")}
-            >
-              {dict?.navigation?.projects || "Projects"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-projects" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
-            </button>
-            {activeDropdown === "mobile-projects" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {projectItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Projects - Direct Link */}
+          <Link
+            href={`/${locale}/projects`}
+            className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            {dict?.navigation?.projects || "Projects"}
+          </Link>
 
           {/* News & Updates */}
           <div className="flex flex-col">
@@ -454,41 +398,15 @@ export default function Navigation({
                   </NavigationMenuContent>
                 </NavigationMenuItem>
                 
-                {/* Our Approach Dropdown */} 
+                {/* Our Approach - Direct Link */} 
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
-                    {dict?.navigation?.our_approach || "Our Approach"}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/our-approach`}
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Approach to Food Systems
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Explore our programs focused on sustainable
-                              development, climate resilience, and food security
-                              across Africa.
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
-                      {ourApproachItems.map((item) => (
-                        <ListItem
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          title={item.title}
-                        >
-                          {item.description}
-                        </ListItem>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
+                  <Link href={`/${locale}/our-approach`} passHref>
+                    <NavigationMenuLink 
+                      className={`${getNavItemColor()} block px-4 py-2 hover:text-accent-foreground font-medium`}
+                    >
+                      {dict?.navigation?.our_approach || "Our Approach"}
+                    </NavigationMenuLink>
+                  </Link>
                 </NavigationMenuItem>
 
                 {/* Programs Dropdown */}
@@ -527,40 +445,15 @@ export default function Navigation({
                   </NavigationMenuContent>
                 </NavigationMenuItem>
 
-                {/* Projects Dropdown */}
+                {/* Projects - Direct Link */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
-                    {dict?.navigation?.projects || "Projects"}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/projects`}
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Projects
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Discover our innovative projects and their impact
-                              on communities across Africa.
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
-                      {projectItems.map((item) => (
-                        <ListItem
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          title={item.title}
-                        >
-                          {item.description}
-                        </ListItem>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
+                  <Link href={`/${locale}/projects`} passHref>
+                    <NavigationMenuLink 
+                      className={`${getNavItemColor()} block px-4 py-2 hover:text-accent-foreground font-medium`}
+                    >
+                      {dict?.navigation?.projects || "Projects"}
+                    </NavigationMenuLink>
+                  </Link>
                 </NavigationMenuItem>
 
                 {/* News & Updates Dropdown */}

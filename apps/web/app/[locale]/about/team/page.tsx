@@ -294,7 +294,7 @@ if (typeof document !== 'undefined') {
 }
 
 const TeamPage: React.FC = () => {
-  const [activeFilter, setActiveFilter] = useState<FilterCategory>('all'); // Default to 'all'
+  const [activeFilter, setActiveFilter] = useState<FilterCategory>('advisory board'); // Changed default to 'advisory board'
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);

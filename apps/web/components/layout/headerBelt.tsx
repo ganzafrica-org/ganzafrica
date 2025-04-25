@@ -9,13 +9,13 @@ const HeaderBelt = () => {
           <div className="marquee-content flex whitespace-nowrap animate-marquee">
             <div className="flex space-x-8 px-4 mx-4">
               <span className="text-base font-medium">• Food Systems</span>
-              <span className="text-base font-medium">• Data & Evidence</span>
+              <span className="text-base font-medium">• Climate Adaptation </span>
               <span className="text-base font-medium">• Co-creation</span>
               <span className="text-base font-medium">• Data & Evidence</span>
             </div>
             <div className="flex space-x-8 px-4 mx-4">
               <span className="text-base font-medium">• Food Systems</span>
-              <span className="text-base font-medium">• Data & Evidence</span>
+              <span className="text-base font-medium">• Climate Adaptation </span>
               <span className="text-base font-medium">• Co-creation</span>
               <span className="text-base font-medium">• Data & Evidence</span>
             </div>

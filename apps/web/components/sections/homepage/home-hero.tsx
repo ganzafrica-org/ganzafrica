@@ -155,14 +155,6 @@ export default function HomeHero({
     },
   ];
 
-  const ourApproachItems: MenuItem[] = [
-    {
-      title: "Food Systems",
-      href: "/our-approach",
-      description: "Developing sustainable food systems for communities across Africa.",
-    },
-  ];
-
   const programsItems: MenuItem[] = [
     {
       title: "Fellowship",
@@ -175,14 +167,6 @@ export default function HomeHero({
       href: "/programs/alumni",
       description:
         "A network of graduates continuing to make an impact across the continent.",
-    },
-  ];
-
-  const projectItems: MenuItem[] = [
-    {
-      title: "Projects",
-      href: "/projects",
-      description: "Discover our projects and their impact.",
     },
   ];
   
@@ -402,42 +386,15 @@ export default function HomeHero({
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            {/* Our Approach Dropdown */}
+            {/* Our Approach - Direct Link */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.our_approach || "Our Approach"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/our-approach`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Approach to Food Systems
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Explore our programs focused on sustainable
-                              development, climate resilience, and food security
-                              across Africa.
-                            </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {ourApproachItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
+              <Link href={`/${locale}/our-approach`} passHref>
+                <NavigationMenuLink 
+                  className={`${textColor} block px-4 py-2 hover:text-accent-foreground font-medium`}
+                >
+                  {dict.navigation?.our_approach || "Our Approach"}
+                </NavigationMenuLink>
+              </Link>
             </NavigationMenuItem>
             
             {/* Programs */}
@@ -477,42 +434,17 @@ export default function HomeHero({
               </NavigationMenuContent>
             </NavigationMenuItem>
             
-            {/* Projects */}
+            {/* Projects - Direct Link */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.projects || "Projects"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/projects`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Projects
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Discover our innovative projects and their impact
-                              on communities across Africa.
-                            </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {projectItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
+              <Link href={`/${locale}/projects`} passHref>
+                <NavigationMenuLink 
+                  className={`${textColor} block px-4 py-2 hover:text-accent-foreground font-medium`}
+                >
+                  {dict.navigation?.projects || "Projects"}
+                </NavigationMenuLink>
+              </Link>
             </NavigationMenuItem>
+
             {/* News & Updates */}
             <NavigationMenuItem>
               <NavigationMenuTrigger className={textColor}>
@@ -599,33 +531,15 @@ export default function HomeHero({
             )}
           </div>
 
-          {/* Our approach */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-what-we-do")}
-            >
-              {dict.navigation?.our_approach || "Our approach"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-what-we-do" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-what-we-do" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {ourApproachItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Our approach - Direct Link */}
+          <Link
+            href={`/${locale}/our-approach`}
+            className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            {dict.navigation?.our_approach || "Our Approach"}
+          </Link>
 
           {/* Programs */}
           <div className="flex flex-col">
@@ -655,33 +569,15 @@ export default function HomeHero({
             )}
           </div>
 
-          {/* Projects */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-community")}
-            >
-              {dict.navigation?.projects || "Community Hub"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-community" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-community" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {projectItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Projects - Direct Link */}
+          <Link
+            href={`/${locale}/projects`}
+            className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            {dict.navigation?.projects || "Projects"}
+          </Link>
 
           {/* News & Updates */}
           <div className="flex flex-col">
@@ -840,7 +736,7 @@ export default function HomeHero({
           </h1>
           <p className="text-xl md:text-2xl max-w-3xl mx-auto">
             {dict?.home?.hero?.subtitle ||
-              "Empowering youth through sustainable land management"}
+              "Empowering youth to adress agri-food systems challenges in africa"}
           </p>
         </div>
       </div>

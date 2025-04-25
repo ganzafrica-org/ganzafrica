@@ -30,7 +30,7 @@ const FoodSystemPage = ({}) => {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/food-system.jpeg"
+            src="/images/harvest3.png"
             alt="Food System"
             fill
             sizes="100vw"
@@ -63,7 +63,7 @@ const FoodSystemPage = ({}) => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
-            FOOD SYSTEM
+            OUR APPROACH TO FOOD SYSTEM
           </motion.h2>
         </div>
       </section>
