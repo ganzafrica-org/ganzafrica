@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 
 import {
   NavigationMenu,
@@ -201,31 +201,41 @@ export default function Navigation({
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-40 bg-white pt-20 md:hidden overflow-y-auto">
-        <div className="absolute right-4 top-6">
+      <div className="fixed inset-0 z-50 bg-white w-screen h-screen overflow-y-auto md:hidden">
+        <div className="flex justify-between items-center px-4 py-4 border-b">
+          <Link href={`/${locale}`} className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="relative h-14 w-24">
+              <Image
+                src="/images/logo.png"
+                alt="GanzAfrica"
+                fill
+                sizes="(max-width: 768px) 300px, 200px"
+                className="object-contain"
+                priority
+              />
+            </div>
+          </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="text-black hover:bg-gray-100"
+            className="text-black hover:bg-[#F5F5F5] transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Close menu"
           >
             <X className="h-6 w-6" />
           </Button>
         </div>
-        <nav className="container mx-auto px-4 py-6 flex flex-col space-y-4">
+        <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
           {/* Mobile About with submenu */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-about")}
             >
               {dict?.navigation?.about || "About"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
+              />
             </button>
             {activeDropdown === "mobile-about" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
@@ -233,7 +243,7 @@ export default function Navigation({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -249,7 +259,7 @@ export default function Navigation({
           {/* Our Approach - Direct Link */}
           <Link
             href={`/${locale}/our-approach`}
-            className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
+            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
             onClick={() => setIsMobileMenuOpen(false)}
             prefetch={true}
           >
@@ -257,17 +267,15 @@ export default function Navigation({
           </Link>
 
           {/* Programs */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-programs")}
             >
               {dict?.navigation?.programs || "Programs"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
+              />
             </button>
             {activeDropdown === "mobile-programs" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
@@ -275,7 +283,7 @@ export default function Navigation({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -289,7 +297,7 @@ export default function Navigation({
           {/* Projects - Direct Link */}
           <Link
             href={`/${locale}/projects`}
-            className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green"
+            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
             onClick={() => setIsMobileMenuOpen(false)}
             prefetch={true}
           >
@@ -297,17 +305,15 @@ export default function Navigation({
           </Link>
 
           {/* News & Updates */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-news")}
             >
               News & Updates
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              <ChevronDown
+                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
+              />
             </button>
             {activeDropdown === "mobile-news" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
@@ -315,7 +321,7 @@ export default function Navigation({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -324,6 +330,18 @@ export default function Navigation({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Add sign in button at the bottom */}
+          <div className="mt-auto pt-6 border-t">
+            <Link href={`/${locale}/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+              <Button
+                size="lg"
+                className="w-full bg-primary-green hover:bg-primary-green/90 text-white"
+              >
+                {dict?.cta?.sign_in || "Sign In"}
+              </Button>
+            </Link>
           </div>
         </nav>
       </div>
@@ -360,7 +378,7 @@ export default function Navigation({
               <NavigationMenuList>
                 {/* About Dropdown */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
+                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base font-medium`}>
                     {dict?.navigation?.about || "About"}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -402,7 +420,7 @@ export default function Navigation({
                 <NavigationMenuItem>
                   <Link href={`/${locale}/our-approach`} passHref>
                     <NavigationMenuLink 
-                      className={`${getNavItemColor()} block px-4 py-2 hover:text-accent-foreground font-medium`}
+                      className={`${getNavItemColor()} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
                     >
                       {dict?.navigation?.our_approach || "Our Approach"}
                     </NavigationMenuLink>
@@ -411,7 +429,7 @@ export default function Navigation({
 
                 {/* Programs Dropdown */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
+                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base font-medium`}>
                     {dict?.navigation?.programs || "Programs"}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -449,7 +467,7 @@ export default function Navigation({
                 <NavigationMenuItem>
                   <Link href={`/${locale}/projects`} passHref>
                     <NavigationMenuLink 
-                      className={`${getNavItemColor()} block px-4 py-2 hover:text-accent-foreground font-medium`}
+                      className={`${getNavItemColor()} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
                     >
                       {dict?.navigation?.projects || "Projects"}
                     </NavigationMenuLink>
@@ -458,7 +476,7 @@ export default function Navigation({
 
                 {/* News & Updates Dropdown */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
+                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base font-medium`}>
                     News & Updates
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -495,13 +513,11 @@ export default function Navigation({
             </NavigationMenu>
           </div>
 
-          {/* Right side items with inverted top-left corner */}
-          <div className="min-h-full p-4 w-56 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="mr-2">
-                <LanguageSwitcher />
-              </div>
-              <Link href={`/${locale}/login`}>
+          {/* Right side items */}
+          <div className="min-h-full p-4 w-auto flex items-center">
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <Link href={`/${locale}/login`} className="hidden md:block">
                 <Button
                   size="sm"
                   className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
@@ -513,7 +529,7 @@ export default function Navigation({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-black hover:bg-gray-100"
+                  className="text-black hover:bg-[#F5F5F5] transition-colors"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                 >

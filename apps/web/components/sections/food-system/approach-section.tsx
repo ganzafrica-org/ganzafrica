@@ -47,16 +47,16 @@ const ApproachSection = () => {
   return (
     <section className="py-16 bg-gray-50">
       <Container>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Left image */}
+        <div className="flex flex-col md:flex-row items-stretch justify-between gap-8 max-w-7xl mx-auto">
+          {/* Left image - hidden on small and medium devices */}
           <motion.div
-            className="w-full md:w-1/4"
+            className="w-full md:w-1/3 hidden lg:block lg:w-1/4"
             variants={imageVariantLeft}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            <div className="relative">
+            <div className="relative h-full">
               {/* This creates the transparent overlay with big rounded white borders */}
               <div className="absolute inset-2.5 rounded-[20px] border-4 border-white z-10"></div>
               <div className="relative overflow-hidden h-[400px]">
@@ -71,9 +71,9 @@ const ApproachSection = () => {
             </div>
           </motion.div>
 
-          {/* Center content */}
+          {/* Center content - larger width on large screens */}
           <motion.div
-            className="w-full md:w-2/4 text-center px-6 bg-[#F5F5F5] bg-opacity-75 py-14 rounded-[20px]"
+            className="w-full md:w-1/2 lg:w-2/4 flex flex-col justify-center px-8 bg-[#F5F5F5] bg-opacity-75 py-16 rounded-[20px]"
             variants={fadeIn}
             initial="hidden"
             whileInView="visible"
@@ -100,15 +100,15 @@ const ApproachSection = () => {
             </Link>
           </motion.div>
 
-          {/* Right image */}
+          {/* Right image - shorter on mobile */}
           <motion.div
-            className="w-full md:w-1/4"
+            className="w-full md:w-1/2 lg:w-1/4"
             variants={imageVariantRight}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            <div className="relative">
+            <div className="relative h-[300px] md:h-full">
               {/* This creates the transparent overlay with big rounded white borders */}
               <div className="absolute inset-2.5 rounded-[20px] border-4 border-white z-10"></div>
               <div className="relative overflow-hidden h-[400px]">
