@@ -149,14 +149,15 @@ const PromiseCard: FC<PromiseCardProps> = ({
   const labelColor = type === "partners" ? "bg-primary-orange" : "bg-green-500";
   const textColor = type === "partners" ? "text-gray-800" : "text-white";
   const label = `Promise to ${type}`;
+  const iconBg = type === "partners" ? "bg-primary-orange" : "bg-green-600";
 
   return (
-    <div className={`${bgColor} rounded-3xl p-4 sm:p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
-      <div className="flex items-center mb-3 sm:mb-4">
+    <div className={`${bgColor} rounded-3xl p-6 sm:p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
+      <div className="flex items-center mb-4">
         <div
-          className={`${labelColor} text-white rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs font-bold`}
+          className={`${labelColor} text-white font-bold md:text-xl rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium`}
         >
-          {label}
+          <span className="mr-2"></span> {label}
         </div>
       </div>
 
@@ -165,7 +166,7 @@ const PromiseCard: FC<PromiseCardProps> = ({
           {content.map((item, index) => (
             <li key={index} className="flex items-start">
               <span className={`${textColor} mr-2 sm:mr-3 mt-1 `}>•</span>
-              <span className={`${textColor}text-sm sm:text-base text-white`}>
+              <span className={`${textColor} text-sm sm:text-base`}>
                 {item}
               </span>
             </li>
@@ -175,13 +176,24 @@ const PromiseCard: FC<PromiseCardProps> = ({
         <ul className="space-y-4 sm:space-y-6">
           {items?.map((item, index) => (
             <li key={index} className="flex items-start">
-              <span className={`${textColor}  mr-2 sm:mr-3 mt-1`}>•</span>
-              <span className={`${textColor}  text-sm sm:text-base`}>
+              <span className={`${textColor} mr-2 sm:mr-3 mt-1`}>•</span>
+              <span className={`${textColor} text-sm sm:text-base`}>
                 {item}
               </span>
             </li>
           ))}
         </ul>
+      )}
+      
+      {hasCurvedCorner && (
+        <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" 
+             style={{ borderBottomLeftRadius: "100%" }} />
+      )}
+      
+      {type === "fellows" && (
+        <div className="absolute -top-4 -right-4 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+          <Telescope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+        </div>
       )}
     </div>
   );
@@ -556,7 +568,7 @@ export default async function AboutPage(props: PageProps) {
                   {dict?.about?.approach?.identify_title || "Identify"}
                 </h2>
                 <p className="text-gray-800 text-base">
-                  {dict?.about?.approach?.identify_text ||
+                {dict?.about?.approach?.identify_text ||
                     "Identify leaders who are committed and passionate about the sustainable stewardship of land, agriculture, and the environment, and who can be trained and capacitated to provide expertise to public, and private sectors and communities."}
                 </p>
               </div>

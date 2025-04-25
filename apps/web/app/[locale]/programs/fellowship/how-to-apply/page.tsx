@@ -1,39 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from "@workspace/ui/components/button";
 import Header from "@/components/layout/header";
 import { Container } from "@/components/container";
-import { Twitter, Linkedin, Mail, Phone, Users, Blocks, Briefcase, Users2 } from 'lucide-react';
-import Image from 'next/image';
+import {Users, Blocks, Briefcase, Users2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
-
-// Use this hook to get the dictionary if needed
-// import { useDictionary } from '@/hooks/use-dictionary'; // Implement this hook if needed
+import { default as HeaderBelt } from "@/components/layout/headerBelt";
 
 const applicationSteps = [
   {
     id: 1,
+    title: "Fellowship Advertised",
+    description: "GanzAfrica Fellowship opportunities are announced through our online channels and partner networks across Africa.",
+    image: "/images/fellowship-advertised.png"
+  },
+  {
+    id: 2,
     title: "Applications Received",
     description: "Submit your application through our online portal. Make sure to include all required documents and information.",
     image: "/images/application-received.png"
   },
   {
-    id: 2,
+    id: 3,
     title: "Applications Reviewed",
     description: "Our team carefully reviews each application, assessing qualifications, experience, and alignment with our mission.",
     image: "/images/application-review.png"
   },
   {
-    id: 3,
-    title: "Finalist Chosen",
-    description: "Selected candidates proceed to interviews and additional assessments to determine final fellowship recipients.",
-    image: "/images/finalist-chosen.png"
+    id: 4,
+    title: "Interviews Conducted",
+    description: "Selected candidates are invited to participate in oral and written interviews to further assess their suitability.",
+    image: "/images/interviews-conducted.png"
   },
   {
-    id: 4,
-    title: "Fellows Notified",
+    id: 5,
+    title: "Finalists Selected & Notified",
     description: "Successful candidates are notified and begin their journey with GanzAfrica Fellowship Program.",
     image: "/images/fellows-notified.png"
   }
@@ -137,27 +140,20 @@ const FellowshipJourney = () => {
 };
 
 export default function HowToApplyPage() {
-  const [isNotifying, setIsNotifying] = useState(false);
-
   // Get locale from URL params
   const params = useParams<{ locale: string }>();
   const locale = params.locale as string;
+  const bannerRef = useRef(null);
 
   // Example of how you might get dictionary data if needed
   // const dict = useDictionary(locale);
-
-  const handleNotifyMe = () => {
-    setIsNotifying(true);
-    // Add notification logic here
-    setTimeout(() => setIsNotifying(false), 2000);
-  };
 
   return (
       <div className="min-h-screen bg-white">
         <Header locale={locale} dict={{}} /> {/* Pass empty object for dict or implement dict fetching */}
 
         {/* Hero Section */}
-        <section className="relative h-[500px] bg-[url('/images/agriculture-bg.jpg')] bg-cover bg-center">
+        <section className="relative h-[500px] bg-[url('/images/Welcoming.jpg')] bg-cover bg-center">
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40" />
           <div className="relative z-10 h-full flex items-center justify-center">
             <div className="container mx-auto px-4 text-center">
@@ -169,66 +165,44 @@ export default function HowToApplyPage() {
               >
                 Apply by completing our
                 <br />
-                <span className="text-[#FDB022]">online application</span>
+                <span className="text-primary-orange">online application</span>
               </motion.h1>
               <motion.p
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
-                  className="text-xl text-white/90 max-w-2xl mx-auto"
+                  className="text-xl text-white/90 max-w-2xl mx-auto mb-8"
               >
                 Join our fellowship program and become part of Africa's next generation of leaders in sustainable development
               </motion.p>
+              <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                <Button
+                    onClick={() => window.location.href = '/apply'}
+                    className="bg-primary-orange hover:bg-[#e9a01f] text-white px-10 py-3 text-lg font-bold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-white/20"
+                >
+                    APPLY NOW
+                </Button>
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Social Media Section */}
-        <div className="bg-gradient-to-r from-[#FDB022] to-[#FFC53D] py-8">
-          <Container>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-[#045F3C] font-semibold text-lg">Stay connected for updates via social media.</p>
-              <div className="flex items-center gap-6">
-                <a href="#" className="text-[#045F3C] hover:text-[#034830] transition-colors hover:scale-110 transform">
-                  <Twitter className="w-7 h-7" />
-                </a>
-                <a href="#" className="text-[#045F3C] hover:text-[#034830] transition-colors hover:scale-110 transform">
-                  <Linkedin className="w-7 h-7" />
-                </a>
-                <a href="#" className="text-[#045F3C] hover:text-[#034830] transition-colors hover:scale-110 transform">
-                  <Mail className="w-7 h-7" />
-                </a>
-                <a href="#" className="text-[#045F3C] hover:text-[#034830] transition-colors hover:scale-110 transform">
-                  <Phone className="w-7 h-7" />
-                </a>
-              </div>
-            </div>
-          </Container>
+        <div ref={bannerRef} className="w-full overflow-hidden">
+        <div className="flex justify-center">
+          <HeaderBelt />
         </div>
+      </div>
 
         {/* Application Status Section */}
         <section className="relative py-20 bg-[url('/images/pattern-bg.png')] bg-repeat">
           <div className="absolute inset-0 bg-white/80"></div>
           <Container className="relative">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 bg-red-50 text-red-600 px-6 py-3 rounded-full shadow-sm">
-                <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
-                <p className="font-medium">Applications are currently closed</p>
-              </div>
-              <p className="mt-6 text-gray-600 text-lg">
-                Click here to be notified when the next Cohort opens, for now,
-                <br />The Application is <span className="text-red-600 font-medium">closed</span>.
-              </p>
-              <Button
-                  onClick={handleNotifyMe}
-                  className="mt-8 bg-[#045F3C] hover:bg-[#034830] text-white px-10 py-4 text-lg font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                {isNotifying ? 'Notifying...' : 'NOTIFY ME'}
-              </Button>
-            </div>
-
             <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl font-bold text-center mb-16">What To Expect</h2>
+              <h2 className="text-3xl font-bold text-center mb-16">Application <span className='text-primary-green'>Process</span></h2>
 
               <div className="relative">
                 {/* Vertical Timeline Line */}

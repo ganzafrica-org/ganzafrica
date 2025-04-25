@@ -250,16 +250,18 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
 
   return (
       <Link href={`/${locale}/newsroom/${slug}`} className="block group">
-        <div className="relative bg-white rounded-[24px] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl">
+        <div className="relative bg-white rounded-[24px] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl border border-gray-200">
           <div className="relative aspect-[16/10]">
-            {/* Image Container - Using regular img tag instead of next/image */}
-            <div className="w-full h-full">
+            {/* Image Container - Modified to push images down for better face visibility */}
+            <div className="w-full h-full overflow-hidden">
               {imageUrl ? (
-                  <img
-                      src={imageUrl}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
-                  />
+                  <div className="w-full h-full relative" style={{ transform: 'translateY(-15%)' }}>
+                    <img
+                        src={imageUrl}
+                        alt={item.title}
+                        className="w-full h-[130%] object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
+                    />
+                  </div>
               ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <span className="text-gray-400">No image</span>
@@ -413,35 +415,36 @@ const NewsroomPage = () => {
 
   return (
       <main className="min-h-screen">
-        {/* Hero Section */}
-        <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-          {/* Background Image - Using Next.js Image is fine for local images */}
-          <div className="absolute inset-0 z-0">
-            <Image
-                src="/images/team.png"
-                alt="Ganz Africa Newsroom"
-                fill
-                sizes="100vw"
-                className="object-cover"
-                priority
-            />
-          </div>
+    {/* Hero Section */}
+<section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
+  <div className="absolute inset-0 z-0">
+    <div className="relative w-full h-[130%]" style={{ transform: 'translateY(-18%)' }}>
+      <Image
+        src="/images/DSC_1430.JPG"
+        alt="Ganz Africa Newsroom"
+        fill
+        className="object-cover object-top"
+        priority
+      />
+    </div>
+  </div>
+  
+  {/* Dark overlay */}
+  <div className="absolute inset-0 bg-black/70 z-10"></div>
 
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-black/70 z-10"></div>
-
-          {/* Content */}
-          <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-            <h1 className="text-white text-2xl sm:text-3xl md:text-4xl  mb-2 leading-tight">
-              Empowering{" "}
-              <span className="text-yellow-400 font-bold">Africa's Future</span>{" "}
-              Through Transformative
-            </h1>
-            <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
-              NEWS &UPDATES
-            </h2>
-          </div>
-        </section>
+  {/* Content */}
+  <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
+    <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
+    Sharing{" "}
+      <span className="text-yellow-400 font-bold">Our Progress </span>{" "} and  
+      <span className="text-yellow-400 font-bold">      Transformative Impact
+      </span>
+    </h1>
+    <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+      NEWS &UPDATES
+    </h2>
+  </div>
+</section>
         <div className="w-full overflo-hidden">
           <div className="flex justify-center">
             <HeaderBelt />
