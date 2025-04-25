@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Play, Circle, Check } from 'lucide-react';
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Container } from "@/components/container";
-import { DecoratedHeading } from "@/components/decorated-heading";
+import { DecoratedHeading } from "@/components/layout/headertext";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import Image from 'next/image';
@@ -255,14 +255,14 @@ export default function FellowshipPage() {
                   transition={{ delay: 0.4, duration: 0.8 }}
                   className="order-1 md:order-2"
               >
-                <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                  Discover tomorrow's{" "}
-                  <span className="block text-[#045F3C]">leaders today</span>
-                </h2>
-                <p className="text-gray-600 text-lg mb-6">
+                <DecoratedHeading
+                  firstText="Discover tomorrow's"
+                  secondText="leaders today"
+                />
+                <p className="text-gray-600 text-sm md:text-base mb-6">
                   A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders.
                 </p>
-                <p className="text-gray-600 text-lg mb-8">
+                <p className="text-gray-600 text-sm md:text-base mb-8">
                   Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
                 </p>
 
@@ -289,40 +289,42 @@ export default function FellowshipPage() {
           </div>
 
           {/* Left Leaf */}
-          <div className="absolute left-0 top-1/4 -translate-x-1/4 opacity-10">
+          <div className="absolute left-0 top-1/4 -translate-x-1/4 opacity-10 hidden sm:block">
             <img
                 src="/images/leaf.png"
                 alt="Decorative leaf"
-                className="w-64 h-64 transform -rotate-12"
+                className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 transform -rotate-12"
             />
           </div>
 
           {/* Right Leaf */}
-          <div className="absolute right-0 bottom-1/4 translate-x-1/4 opacity-10">
+          <div className="absolute right-0 bottom-1/4 translate-x-1/4 opacity-10 hidden sm:block">
             <img
                 src="/images/leaf.png"
                 alt="Decorative leaf"
-                className="w-64 h-64 transform rotate-12"
+                className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 transform rotate-12"
             />
           </div>
 
-          <div className="container mx-auto px-6 md:px-12 lg:px-20 relative z-10">
-            <div className="relative">
+          <div className="container mx-auto px-4 sm:px-6 md:px-12 lg:px-20 relative z-10">
+            <div className="relative flex flex-col md:block">
               <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.8 }}
-                  className="w-[60%]"
+                  className="w-full md:w-[60%] mb-8 md:mb-0"
               >
-                <img
-                    src="/images/team-group-photo.jpg"
-                    alt="Fellowship team"
-                    className="w-full h-[500px] object-cover rounded-lg"
-                />
-                <div className="absolute top-1/2 left-[25%] transform -translate-x-1/2 -translate-y-1/2">
-                  <div className="w-20 h-20 rounded-full bg-[#FDB022] flex items-center justify-center cursor-pointer hover:bg-[#FDB022]/90 transition-colors">
-                    <Play fill="white" className="w-8 h-8 text-white ml-1" />
+                <div className="relative">
+                  <img
+                      src="/images/team-group-photo.jpg"
+                      alt="Fellowship team"
+                      className="w-full h-[300px] sm:h-[400px] md:h-[500px] object-cover rounded-lg"
+                  />
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FDB022] flex items-center justify-center cursor-pointer hover:bg-[#FDB022]/90 transition-colors">
+                      <Play fill="white" className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" />
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -332,17 +334,19 @@ export default function FellowshipPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.3, duration: 0.8 }}
-                  className="absolute top-12 right-0 w-[50%] bg-white p-6 rounded-lg shadow-lg"
+                  className="w-full md:absolute md:top-12 md:right-0 md:w-[50%] bg-white p-4 sm:p-6 rounded-lg shadow-lg"
               >
-                <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                  About the <span className="text-[#045F3C]">Fellowship</span>
-                </h2>
-                <p className="text-gray-600 text-lg mb-8">
+                <DecoratedHeading
+                  firstText="About the"
+                  secondText="Fellowship"
+                  className='mb-4 sm:mb-5'
+                />
+                <p className="text-gray-600 text-sm sm:text-base mb-6 sm:mb-8">
                   Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.
                 </p>
-
+                
                 <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
-                  <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-8 py-3 text-lg rounded-lg">
+                  <Button className="w-full sm:w-auto bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg rounded-lg">
                     How to Apply
                   </Button>
                 </Link>
@@ -350,7 +354,6 @@ export default function FellowshipPage() {
             </div>
           </div>
         </motion.section>
-
         <motion.section
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -401,7 +404,7 @@ export default function FellowshipPage() {
                       </div>
                       <div className="p-6">
                         <h3 className="text-lg font-bold mb-2">{benefit.title}</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed">{benefit.description}</p>
+                        <p className="text-gray-600 text-sm md:text-base leading-relaxed">{benefit.description}</p>
                       </div>
                     </motion.div>
                 ))}
@@ -433,7 +436,7 @@ export default function FellowshipPage() {
                 </div>
                 <div className="p-6">
                   <h3 className="text-lg font-bold mb-2">Develop Your Skills</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">Our fully funded program offers training, apprenticeships, and work experience to enhance your expertise and showcase your talent.</p>
+                  <p className="text-gray-600 text-sm md:text-base leading-relaxed">Our fully funded program offers training, apprenticeships, and work experience to enhance your expertise and showcase your talent.</p>
                 </div>
               </motion.div>
             </div>
@@ -503,71 +506,83 @@ export default function FellowshipPage() {
         <section className="py-16 bg-gray-50">
           <Container>
             <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-2">Checkout Fellows</h2>
-              <h3 className="text-3xl font-bold text-[#045F3C] mb-12">Say about the Fellowship</h3>
+              <DecoratedHeading
+                firstText="Checkout Fellows"
+                secondText="Say about the Fellowship"
+                className="max-w-3xl mx-auto flex flex-col items-center gap-2"
+              />
             </div>
 
-            <div className="max-w-5xl mx-auto px-12">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-12">
               {/* Profile Images Row */}
-              <div className="flex justify-center items-center gap-6 mb-12">
+              <div className="flex justify-center items-center gap-4 sm:gap-6 mb-12">
                 {testimonials.map((testimonial, index) => {
                   const isActive = currentTestimonial === index;
                   const isPrevious = (currentTestimonial === index + 1) || (currentTestimonial === 0 && index === testimonials.length - 1);
                   const isNext = (currentTestimonial === index - 1) || (currentTestimonial === testimonials.length - 1 && index === 0);
 
                   return (
-                      <div
-                          key={testimonial.id}
-                          className={`transition-all duration-500 transform ${
-                              isActive ? 'w-24 h-24 z-20 scale-110' :
-                                  isPrevious || isNext ? 'w-16 h-16 z-10 opacity-50 scale-90' :
-                                      'w-12 h-12 opacity-30 scale-75'
-                          }`}
+                    <div
+                      key={testimonial.id}
+                      className={`transition-all duration-500 transform aspect-square ${
+                        isActive 
+                          ? 'w-20 sm:w-24 z-20 scale-110' 
+                          : isPrevious || isNext 
+                          ? 'w-14 sm:w-16 z-10 opacity-50 scale-90' 
+                          : 'w-10 sm:w-12 opacity-30 scale-75'
+                      }`}
+                    >
+                      <div 
+                        className={`rounded-full overflow-hidden transition-all duration-500 w-full h-full ${
+                          isActive ? 'ring-4 ring-[#FDB022]' : ''
+                        }`}
                       >
-                        <div className={`rounded-full overflow-hidden transition-all duration-500 h-full w-full ${
-                            isActive ? 'ring-4 ring-yellow-400' : ''
-                        }`}>
-                          <Image
-                              src={testimonial.image}
-                              alt={testimonial.name}
-                              width={isActive ? 96 : 64}
-                              height={isActive ? 96 : 64}
-                              className="w-full h-full object-cover"
-                          />
-                        </div>
+                        <Image
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          width={96}
+                          height={96}
+                          className="w-full h-full object-cover"
+                          style={{ aspectRatio: '1/1' }}
+                        />
                       </div>
+                    </div>
                   );
                 })}
               </div>
 
               {/* Testimonial Content */}
-              <div className="relative">
-                <div className="text-center px-4 md:px-16">
-                  <div className="min-h-[120px] relative">
-                    <p className="text-gray-600 text-lg mb-8 transition-all duration-500 transform">
+              <div className="relative px-12">
+                <div className="text-center">
+                  <div className="min-h-[120px] relative mb-8">
+                    <p className="text-gray-600 text-base transition-all duration-500 transform">
                       {testimonials[currentTestimonial]?.quote || ''}
                     </p>
                   </div>
                   <div className="transform transition-all duration-500">
-                    <h4 className="text-2xl font-bold mb-2 text-[#045F3C]">{testimonials[currentTestimonial]?.name || ''}</h4>
-                    <p className="text-gray-600">{testimonials[currentTestimonial]?.role || ''}</p>
+                    <h4 className="text-2xl font-bold mb-2 text-[#045F3C]">
+                      {testimonials[currentTestimonial]?.name || ''}
+                    </h4>
+                    <p className="text-gray-600">
+                      {testimonials[currentTestimonial]?.role || ''}
+                    </p>
                   </div>
                 </div>
 
                 {/* Navigation Arrows */}
                 <button
-                    onClick={prevTestimonial}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-full"
-                    aria-label="Previous testimonial"
+                  onClick={prevTestimonial}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors"
+                  aria-label="Previous testimonial"
                 >
-                  <ArrowLeft className="w-6 h-6 text-white" />
+                  <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </button>
                 <button
-                    onClick={nextTestimonial}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-full"
-                    aria-label="Next testimonial"
+                  onClick={nextTestimonial}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors"
+                  aria-label="Next testimonial"
                 >
-                  <ArrowRight className="w-6 h-6 text-white" />
+                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </button>
               </div>
             </div>
