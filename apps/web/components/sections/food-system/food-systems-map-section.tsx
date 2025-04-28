@@ -582,7 +582,7 @@ const FoodSystemsMapSection = () => {
               </motion.div>
 
               <motion.button
-                className="bg-primary-orange hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors w-full sm:w-auto"
+                className="bg-primary-orange hover:bg-yellow-600 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors w-full sm:w-auto"
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
