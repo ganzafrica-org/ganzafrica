@@ -308,7 +308,7 @@ export default function OpportunitiesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            Be part of a <span className="text-yellow-400 font-bold">dynamic team</span> driving innovation
+            Be part of a <span className="text-yellow-400 font-bold">dynamic team</span> driving transformation
           </motion.h2>
           <motion.h1
             className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"

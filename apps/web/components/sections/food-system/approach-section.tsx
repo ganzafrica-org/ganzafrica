@@ -59,12 +59,12 @@ const ApproachSection = () => {
             <div className="relative h-full">
               {/* This creates the transparent overlay with big rounded white borders */}
               <div className="absolute inset-2.5 rounded-[20px] border-4 border-white z-10"></div>
-              <div className="relative h-full rounded-[20px] overflow-hidden">
+              <div className="relative overflow-hidden h-[400px]">
                 <Image
-                  src="/images/food-system-1.png"
+                  src="/images/Fellows2.jpeg"
                   alt="Food in hands"
                   width={300}
-                  height={500}
+                  height={600}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -79,12 +79,8 @@ const ApproachSection = () => {
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-left lg:text-center">
-              <span>Our Approach</span>
-              <br />
-              <span className="text-primary-green mt-2 block">to Food Systems</span>
-            </h2>
-            <p className="text-gray-600 mb-8 max-w-2xl mx-auto text-justify leading-relaxed">
+
+            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
               To GanzAfrica, Food Systems are far more than just the journey
               from farm to table. They are complex, interconnected networks that
               shape livelihoods, health, and the environment. That is why
@@ -93,17 +89,15 @@ const ApproachSection = () => {
               broader whole. This holistic perspective enables us to drive
               meaningful transformation across the entire ecosystem.
             </p>
-            <div className="text-center">
-              <Link href="/projects">
-                <motion.button
-                  className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-4 rounded-lg font-medium transition-colors text-lg shadow-md hover:shadow-lg"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Checkout our projects
-                </motion.button>
-              </Link>
-            </div>
+            <Link href={`/${"locale"}/projects`}>
+              <motion.button
+                className="bg-primary-orange hover:bg-yellow-500 text-white px-6 py-3 rounded-md font-medium transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Checkout our projects
+              </motion.button>
+            </Link>
           </motion.div>
 
           {/* Right image - shorter on mobile */}
@@ -117,12 +111,12 @@ const ApproachSection = () => {
             <div className="relative h-[300px] md:h-full">
               {/* This creates the transparent overlay with big rounded white borders */}
               <div className="absolute inset-2.5 rounded-[20px] border-4 border-white z-10"></div>
-              <div className="relative h-full rounded-[20px] overflow-hidden">
+              <div className="relative overflow-hidden h-[400px]">
                 <Image
-                  src="/images/food-system-1.png"
+                  src="/images/harvest2.png"
                   alt="Food in hands"
                   width={300}
-                  height={500}
+                  height={600}
                   className="w-full h-full object-cover"
                 />
               </div>

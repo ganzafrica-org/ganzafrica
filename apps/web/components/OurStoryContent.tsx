@@ -1,8 +1,16 @@
+"use client";
+
 import Image from "next/image";
 import SectionWithScrollAnimation from "@/components/layout/SectionWithScroll";
-import React from "react";
+import React, { useState, useRef } from "react";
 import {getDictionary} from "@/lib/get-dictionary";
 import HeaderBelt from "@/components/layout/headerBelt";
+import { 
+    PersonIcon, 
+    AudioMutedIcon,
+    AudioUnmutedIcon,
+    FullscreenIcon
+} from "@/components/ui/icons";
 
 type Props = {
     dict: Awaited<ReturnType<typeof getDictionary>>;
@@ -11,33 +19,53 @@ type Props = {
 
 export default function OurStoryContent({ dict, isFrench }: Props) {
     const contentClass = isFrench ? "flex-1 overflow-y-auto pr-2" : "flex-1";
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [isMuted, setIsMuted] = useState(true);
+    
+    const toggleMute = () => {
+        if (videoRef.current) {
+            videoRef.current.muted = !videoRef.current.muted;
+            setIsMuted(!isMuted);
+        }
+    };
+    
+    const toggleFullScreen = () => {
+        if (videoRef.current) {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                videoRef.current.requestFullscreen();
+            }
+        }
+    };
 
     return (
         <div className="min-h-screen bg-white">
             {/* Hero Section */}
             <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-                {/* Background Image */}
+                {/* Background Image - Modified positioning to center on faces */}
                 <div className="absolute inset-0 z-0">
                     <Image
-                        src="/images/team.png"
+                        src="/images/SHIR5142-Enhanced-NR.jpg"
                         alt="Agricultural fields"
                         fill
-                        className="object-cover"
+                        className="object-cover object-center"
+                        style={{ objectPosition: "center 30%" }}
                         priority
                     />
                 </div>
 
-                {/* Dark overlay */}
-                <div className="absolute inset-0 bg-black opacity-70 z-10"></div>
+                {/* Dark overlay - Reduced opacity for better visibility */}
+                <div className="absolute inset-0 bg-black opacity-60 z-10"></div>
 
                 {/* Content */}
                 <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
                     <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-                        <span className="font-bold text-yellow-400">Empowering</span>{" "}
-                        <span className="font-normal">Africa's Future</span>
+                        <span className="font-bold text-yellow-400">Building Sustainable</span>{" "}
+                        <span className="font-normal">Solutions With</span>
                         <br />
-                        <span className="font-normal">Through</span>{" "}
-                        <span className="font-bold text-yellow-400">Transformative</span>
+                        <span className="font-bold text-yellow-400">African Communities!
+                        </span>
                     </h1>
 
                     <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
@@ -75,7 +103,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
                         dict?.about?.vision_text ||
                         "I realized that bridging these gaps would require a unique approach, one that involved equipping young, talented graduates with the tools to support impactful initiatives. These professionals would need to be embedded within very institutions that needed transformation. The GanzAfrica program embodies this vision. It identifies promising young professionals with the right attitudes and equips them with the skills to support mandated institutions, make evidence-based decisions, adopt systems thinking, and drive sustainable change. Fellows are strategically placed as change agents in partner public institutions, where they gain invaluable real-world experience while contributing fresh ideas. The interplay between personal skills, theoretical training and practical application is at the heart of what makes GanzAfrica unique and impactful."
                     }
-                    imageUrl="/images/Image.png"
+                    imageUrl="/images/SHIR5183-Enhanced-NR.jpg"
                     imageAlt={dict?.about?.team_photo_alt || "GanzAfrica team"}
                     bgColor="bg-[#FFFDEB]"
                     accentColor="bg-primary-orange"
@@ -94,7 +122,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
                         dict?.about?.progress_text ||
                         "In just over two years since our first cohort of fellows joined public institutions, we have witnessed tangible results. Not only have our fellows brought fresh perspectives and innovative approaches to their roles, but they also facilitated operational efficiencies that are supporting institutional decision-makers to yield better outcomes within these institutions. Their contributions range from analyzing data sets, providing policy insights, and fostering a culture of accountability. Importantly, their work is starting to have a lasting impact on how institutions in the broader East African food systems, ensuring they are more sustainable, inclusive, and responsive to the needs of the population. Yet all this could not be achieved without the collaborative efforts of dedicated partners in these institutions, whose support has played a crucial role in making GA a reality. Their commitment and belief in our mission have been instrumental in driving the success of GanzAfrica."
                     }
-                    imageUrl="/images/nlteam.png"
+                    imageUrl="/images/_BAB8914.jpg"
                     imageAlt={dict?.about?.team_photo_alt || "GanzAfrica lessons"}
                     bgColor="bg-[#F9F9FB]"
                     accentColor="bg-primary-green"
@@ -103,22 +131,65 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
                     contentClass={contentClass}
                 />
 
-                {/* Section 4 */}
-                <SectionWithScrollAnimation
-                    number="04"
-                    title={dict?.about?.success_title || "Fellow Success Stories"}
-                    text={
-                        dict?.about?.success_text ||
-                        "We are equally proud of the individual journeys of our fellows. Many have leveraged their experience with GanzAfrica to secure meaningful and impactful roles within the public sector and beyond. Reinforcing our core belief in the power of investing in young professionals and equipping them with the skills to lead. At GanzAfrica, we see our fellows not just as participants in a program but as changemakers who will continue to drive transformation long after their time with us."
-                    }
-                    imageUrl="/images/team2.png"
-                    imageAlt={dict?.about?.fellows_photo_alt || "GanzAfrica fellows"}
-                    bgColor="bg-[#FFFDEB]"
-                    accentColor="bg-primary-orange"
-                    textColor="text-primary-orange"
-                    imageFirst={true}
-                    contentClass={contentClass}
-                />
+               {/* Section 4 - Fellow Success Stories */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden">
+    {/* Video - Left side on desktop */}
+    <div className="h-full w-full md:order-1 relative">
+        <div className="w-full h-full relative hidden md:block">
+            <video 
+                ref={videoRef}
+                className="w-full h-full object-cover rounded-sm"
+                src="/videos/farmer1.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+            />
+            
+            {/* Video Controls */}
+          {/* Video Controls */}
+<div className="absolute bottom-4 right-4 flex space-x-3">
+    <button 
+        onClick={toggleMute}
+        className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
+        aria-label={isMuted ? "Unmute video" : "Mute video"}
+    >
+        {isMuted ? <AudioMutedIcon /> : <AudioUnmutedIcon />}
+    </button>
+    
+    <button 
+        onClick={toggleFullScreen}
+        className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
+        aria-label="View in full screen"
+    >
+        <FullscreenIcon />
+    </button>
+</div>
+        </div>
+    </div>
+    
+    {/* Text content - Right side on desktop */}
+    <div className="p-10 bg-[#FFFDEB] min-h-full lg:h-[510px] w-full rounded-sm md:order-2">
+        <div className="flex flex-col h-full w-full">
+            <div className="bg-primary-orange text-white w-16 h-16 flex items-center justify-center text-2xl rounded-md font-bold mb-2">
+                04
+            </div>
+            <h2 className="text-primary-orange sm:font-h5 md:font-h4 mb-2">
+                {dict?.about?.success_title || "Fellow Success Stories"}
+            </h2>
+            <div className={contentClass}>
+                <p className="text-black font-regular-small text-sm text-justify">
+                    {dict?.about?.success_text ||
+                    "We are equally proud of the individual journeys of our fellows. Many have leveraged their experience with GanzAfrica to secure meaningful and impactful roles within the public sector and beyond. Reinforcing our core belief in the power of investing in young professionals and equipping them with the skills to lead. At GanzAfrica, we see our fellows not just as participants in a program but as changemakers who will continue to drive transformation long after their time with us."}
+                </p>
+                
+                {/* Added Person Icon */}
+                <div className="mt-4 flex items-center justify-center">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
                 {/* Section 5*/}
                 <SectionWithScrollAnimation
@@ -128,7 +199,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
                         dict?.about?.lessons_text ||
                         "As we reflect on our first two years of implementation, we remain steadfast in our commitment to continuous learning and adaptation. Each challenge and lesson shapes our strategy for the future. For instance, we have learned the importance of tailoring our training to address the specific needs of the institutions we partner with. We have also seen the value of fostering strong relationships with these organizations to ensure that the placement of fellows leads to long-term, systemic change rather than temporary solutions."
                     }
-                    imageUrl="/images/tdteam.png"
+                    imageUrl="/images/Fellows3.jpeg"
                     imageAlt={dict?.about?.lessons_photo_alt || "GanzAfrica lessons"}
                     bgColor="bg-[#F9F9FB]"
                     accentColor="bg-primary-green"
@@ -145,7 +216,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
                         dict?.about?.future_text ||
                         "Looking ahead, we are excited about expanding the reach and impact of the GanzAfrica program. Our goal is to continue driving meaningful change, scale our operations, and build a growing network of technically skilled, innovative leaders who are passionate about transforming food systems and addressing other critical societal challenges. The journey has just begun, but we are already witnessing the positive impact of our work across the region. Together with our partners, fellows, and host institutions, we are committed to continued growth, shaping a sustainable future for Africa with innovation, efficiency, and excellence."
                     }
-                    imageUrl="/images/minagriteam.png"
+                    imageUrl="/images/_BAB8908.jpg"
                     imageAlt={dict?.about?.team_members_alt || "GanzAfrica team members"}
                     bgColor="bg-[#FFFDEB]"
                     accentColor="bg-primary-orange"
