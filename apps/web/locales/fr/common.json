@@ -253,7 +253,7 @@
   "home": {
     "hero": {
       "title": "Un Avenir Prospère et Durable pour l'Afrique",
-      "subtitle": "Nous formons de jeunes professionnels pour qu'ils atteignent des carrières à fort impact en abordant les défis du système agroalimentaire de l'Afrique et en améliorant les moyens de subsistance des communautés.",
+      "subtitle": "Autonomiser les jeunes pour relever les défis des systèmes agroalimentaires en Afrique",
       "title_after": {
         "line1": "UN AVENIR",
         "line2": "PROSPÈRE ET DURABLE",
@@ -309,6 +309,7 @@
     "go_home": "Retour à l'accueil"
   },
   "meta": {
+
     "home_description": "GanzAfrica - Autonomiser les jeunes par la gestion durable des terres, l'agriculture et les initiatives environnementales au Rwanda.",
     "projects_description": "Découvrez nos projets à impact concentrés sur l'agriculture durable et l'adaptation au changement climatique au Rwanda."
   },
