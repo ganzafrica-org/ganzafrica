@@ -45,49 +45,25 @@ const imageVariantRight = {
 
 const ApproachSection = () => {
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="pt-16 pb-0 bg-gray-50">
       <Container>
-        <div className="flex flex-col md:flex-row items-stretch justify-between gap-8 max-w-7xl mx-auto">
-          {/* Left image - hidden on small and medium devices */}
-          <motion.div
-            className="w-full md:w-1/3 hidden lg:block lg:w-1/4"
-            variants={imageVariantLeft}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            <div className="relative h-full">
-              {/* This creates the transparent overlay with big rounded white borders */}
-              <div className="absolute inset-2.5 rounded-[20px] border-4 border-white z-10"></div>
-              <div className="relative overflow-hidden h-[400px]">
-                <Image
-                  src="/images/Fellows2.jpeg"
-                  alt="Food in hands"
-                  width={300}
-                  height={600}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Center content - larger width on large screens */}
-          <motion.div
-            className="w-full md:w-1/2 lg:w-2/4 flex flex-col justify-center px-8 bg-[#F5F5F5] bg-opacity-75 py-16 rounded-[20px]"
+        <div className="flex flex-col lg:flex-row items-stretch justify-between gap-8 max-w-7xl mx-auto">
+          {/* Content section - 50% width */}
+          <motion.div 
+            className="w-full lg:w-1/2 flex flex-col justify-center px-8 bg-[#F5F5F5] bg-opacity-75 py-16 rounded-[20px] "
             variants={fadeIn}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-
-            <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-              To GanzAfrica, Food Systems are far more than just the journey
-              from farm to table. They are complex, interconnected networks that
-              shape livelihoods, health, and the environment. That is why
-              GanzAfrica adopts a systems thinking approach to examine how
-              different elements interact and influence one another within the
-              broader whole. This holistic perspective enables us to drive
-              meaningful transformation across the entire ecosystem.
+            <p className="text-gray-600 mb-8 text-base text-justify max-w-2xl mx-auto">
+              To GanzAfrica, food systems are far more than just the journey from farm to fork. They are complex, interconnected networks that shape livelihoods, health, and the environment. Food systems influence how land is used, how food is grown, how natural resources are managed, and how communities thrive or struggle. Yet, in many parts of Africa, these systems remain fragmented, unsustainable, and unable to fully serve the people who depend on them the most.
+              <br />
+              <br />
+              GanzAfrica adopts a systems approach — a holistic framework that seeks to understand the complexity of food systems by examining how different elements interact and influence one another within the broader whole. Rather than addressing issues in isolation, we focus on the dynamic relationships between nature, people, and the economy. This holistic perspective enables us to drive meaningful transformation across the entire ecosystem — from land management and agricultural practices to environmental sustainability and market systems.
+              <br />
+              <br />
+              We work collaboratively with local communities, governments, and private sector partners to transform fragmented value chains into integrated, resilient systems that benefit all stakeholders — especially smallholder farmers and rural communities who are often left behind.
             </p>
             <Link href={`/${"locale"}/projects`}>
               <motion.button
@@ -100,24 +76,22 @@ const ApproachSection = () => {
             </Link>
           </motion.div>
 
-          {/* Right image - shorter on mobile */}
+          {/* Right image - now 50% width */}
           <motion.div
-            className="w-full md:w-1/2 lg:w-1/4"
+            className="w-full lg:w-1/2"
             variants={imageVariantRight}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            <div className="relative h-[300px] md:h-full">
-              {/* This creates the transparent overlay with big rounded white borders */}
+            <div className="relative h-full">
               <div className="absolute inset-2.5 rounded-[20px] border-4 border-white z-10"></div>
-              <div className="relative overflow-hidden h-[400px]">
+              <div className="relative overflow-hidden h-full rounded-[20px]">
                 <Image
                   src="/images/harvest2.png"
                   alt="Food in hands"
-                  width={300}
-                  height={600}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               </div>
             </div>

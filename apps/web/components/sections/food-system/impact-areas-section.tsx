@@ -117,50 +117,31 @@ const ImpactAreasSection = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 sm:px-6 md:px-7 lg:px-0"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4 sm:px-6 md:px-7 lg:px-0"
         >
-          {/* Left column - large card */}
-          <div className="h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px]">
-          <Card
-                  title="Climate Change Adaptation"
-                  description="We work collaboratively with local communities, governments, and private sector partners to develop practical strategies to help communities, especially smallholder farmers and rural communities who are often affected,  adapt to the impacts of climate change."
-                  image="/images/Fellows1.jpeg"
-                  className="h-full"
-                />
-          </div>
-
-          {/* Right column - stacked content */}
-          <div className="flex flex-col gap-6">
-            {/* Top row - two cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="h-[300px] sm:h-[240px] md:h-[240px] lg:h-[290px]">
-                
-                <Card
+          <div className="h-[300px] sm:h-[400px]">
+            <Card
               title="Digital Systems"
               description="We leverage cutting-edge technology to enhance the use of data and evidence to support decision-making, optimizing food value chains for greater efficiency, transparency, and sustainability."
               image="/images/_BAB8842.jpg"
               className="h-full"
             />
-              </div>
-              <div className="h-[300px] sm:h-[240px] md:h-[240px] lg:h-[290px]">
-                <Card
-                  title="Policy Implementation"
-                  description="We collaborate with  government and all our stakeholders, to advance the implementation of policies to promote sustainable agriculture, improve food security, and create supportive environments for thriving food systems."
-                  image="/images/implementation.jpeg"
-                  className="h-full"
-                />
-              </div>
-            </div>
-            
-            {/* Bottom row - one wide card */}
-            <div className="h-[300px] sm:h-[240px] md:h-[240px] lg:h-[290px]">
-              <Card
-                title="Data & Evidence"
-                description="Without robust data and evidence, food system interventions risk being ineffective or even counterproductive. That’s why we push for data and research to drive better practices, improve outcomes, and guide informed decisions that support sustainable, equitable food systems."
-                image="/images/Mico (Trainer).jpeg"
-                className="h-full"
-              />
-            </div>
+          </div>
+          <div className="h-[300px] sm:h-[400px]">
+            <Card
+              title="Policy Implementation"
+              description="We collaborate with government and all our stakeholders, to advance the implementation of policies to promote sustainable agriculture, improve food security, and create supportive environments for thriving food systems."
+              image="/images/implementation.jpeg"
+              className="h-full"
+            />
+          </div>
+          <div className="h-[300px] sm:h-[400px] md:col-span-2 lg:col-span-1">
+            <Card
+              title="Data & Evidence"
+              description="Without robust data and evidence, food system interventions risk being ineffective or even counterproductive. That's why we push for data and research to drive better practices, improve outcomes, and guide informed decisions that support sustainable, equitable food systems."
+              image="/images/Mico (Trainer).jpeg"
+              className="h-full"
+            />
           </div>
         </motion.div>
       </Container>

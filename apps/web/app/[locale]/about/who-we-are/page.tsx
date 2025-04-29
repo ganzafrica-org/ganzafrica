@@ -1,6 +1,5 @@
 import { getDictionary } from "@/lib/get-dictionary";
 import Image from "next/image";
-import { PersonIcon, BikeIcon } from "@/components/ui/icons";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
@@ -155,7 +154,7 @@ const PromiseCard: FC<PromiseCardProps> = ({
     <div className={`${bgColor} rounded-3xl p-6 sm:p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
       <div className="flex items-center mb-4">
         <div
-          className={`${labelColor} text-white font-bold md:text-xl rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium`}
+          className={`${labelColor} text-white font-bold md:text-xl rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm`}
         >
           <span className="mr-2"></span> {label}
         </div>
@@ -456,7 +455,7 @@ export default async function AboutPage(props: PageProps) {
 
               <div className="bg-green-800 rounded-3xl p-6 sm:p-8 relative">
                 <div className="flex items-center mb-4">
-                  <div className="bg-green-500 text-white md:text-xl font-bold rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
+                  <div className="bg-green-500 text-white md:text-xl font-bold rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm">
                     <span className="mr-2"></span> {dict?.about?.aspirations?.mission_label || "Our Mission"}
                   </div>
                 </div>
