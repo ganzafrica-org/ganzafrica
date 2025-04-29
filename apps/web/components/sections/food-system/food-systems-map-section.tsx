@@ -301,49 +301,60 @@ const FoodSystemsMapSection = () => {
   const [stats, setStats] = useState([
     { label: "Fellows", count: 0 },
     { label: "Projects", count: 0 },
-    { label: "Communities", count: 0 },
     { label: "Countries", count: 0 }
   ]);
 
   const mapRef = useRef(null);
   const mapIframeRef = useRef(null);
   
-  // Fetch projects from API and update map locations
+  // Fetch map data including projects and fellows from API
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchMapData = async () => {
       try {
         setLoading(true);
         
-        // Fetch projects from API
-        const response = await apiClient.get('/projects');
+        // Fetch both projects and fellows data in parallel
+        const [projectsResponse, fellowsResponse] = await Promise.all([
+          apiClient.get('/projects'),
+          apiClient.get('/fellows')
+        ]);
         
-        if (response.data) {
-          const projectsList = response.data.projects || [];
-          
+        const projectsList = projectsResponse.data?.projects || [];
+        const fellowsList = fellowsResponse.data?.fellows || [];
+        
+        if (projectsList.length > 0 || fellowsList.length > 0) {
           // Generate map locations from projects
           const locations = generateMapLocations(projectsList);
           setProjectLocations(locations);
           
-          // Update stats based on actual data
+          // Calculate stats for the selected country
+          const countryProjects = projectsList.filter(p => {
+            const locationInfo = parseLocation(p.location);
+            return locationInfo.country === selectedCountry;
+          });
+          
+          const countryFellows = fellowsList.filter(f => {
+            const locationInfo = parseLocation(f.location || '');
+            return locationInfo.country === selectedCountry;
+          });
+          
+          // Update stats with actual data
+          setStats([
+            { label: "Fellows", count: countryFellows.length },
+            { label: "Projects", count: countryProjects.length },
+            { label: "Countries", count: 2 }
+          ]);
+          
+          // Update countries list based on data
           const countriesSet = new Set();
-          const communitiesSet = new Set();
           
           projectsList.forEach(project => {
             if (project.location) {
               const locationInfo = parseLocation(project.location);
               countriesSet.add(locationInfo.country);
-              communitiesSet.add(project.location.toLowerCase().trim());
             }
           });
           
-          setStats([
-            { label: "Fellows", count: 20 }, // This would come from a different API endpoint
-            { label: "Projects", count: projectsList.length },
-            { label: "Communities", count: communitiesSet.size },
-            { label: "Countries", count: countriesSet.size }
-          ]);
-          
-          // Update countries list based on data
           const uniqueCountries = Array.from(countriesSet).map(countryCode => {
             const name = countryCode === 'rwanda' ? 'Rwanda' : 
                       countryCode === 'burkina' ? 'Burkina Faso' : 
@@ -367,7 +378,7 @@ const FoodSystemsMapSection = () => {
           setCountries(uniqueCountries);
         }
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        console.error('Error fetching map data:', error);
         
         // For demonstration, generate mock data if API fails
         const mockProjects = [
@@ -404,10 +415,15 @@ const FoodSystemsMapSection = () => {
         const locations = generateMapLocations(mockProjects);
         setProjectLocations(locations);
         
+        // Filter mock data by selected country
+        const countrySpecificMockProjects = mockProjects.filter(p => {
+          const locationInfo = parseLocation(p.location);
+          return locationInfo.country === selectedCountry;
+        });
+        
         setStats([
-          { label: "Fellows", count: 20 },
-          { label: "Projects", count: mockProjects.length },
-          { label: "Communities", count: 3 },
+          { label: "Fellows", count: 0 }, // No mock fellows, just show 0 if API fails
+          { label: "Projects", count: countrySpecificMockProjects.length },
           { label: "Countries", count: 2 }
         ]);
       } finally {
@@ -415,8 +431,8 @@ const FoodSystemsMapSection = () => {
       }
     };
     
-    fetchProjects();
-  }, []);
+    fetchMapData();
+  }, [selectedCountry]);
   
   // Filtered locations based on selected country
   const filteredLocations = projectLocations.filter(
