@@ -15,6 +15,8 @@ interface SectionProps {
   textColor: string;
   imageFirst: boolean;
   contentClass: string;
+  videoRef?: React.RefObject<HTMLVideoElement>;
+  isVideoSection?: boolean;
 }
 
 export default function SectionWithScrollAnimation({
@@ -28,30 +30,32 @@ export default function SectionWithScrollAnimation({
   textColor,
   imageFirst,
   contentClass,
+  videoRef,
+  isVideoSection = false,
 }: SectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
-
+  
   // Create faster, more responsive scroll-based animation
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start 0.95", "start 0.5"], // Narrower range for faster transition
   });
-
+  
   // Create grid order based on image position
   const contentOrder = !imageFirst ? "md:order-1" : "md:order-2";
   const imageOrder = !imageFirst ? "md:order-2" : "md:order-1";
-
+  
   // Animation variants for coming from sides
   const contentInitialX = !imageFirst ? -100 : 100;
   const imageInitialX = !imageFirst ? 100 : -100;
-
+  
   return (
     <div
       ref={sectionRef}
       className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden"
     >
       <motion.div
-        className={`p-10 ${bgColor}  min-h-full lg:h-[510px] w-full rounded-sm ${contentOrder}`}
+        className={`p-10 ${bgColor} min-h-full lg:h-[510px] w-full rounded-sm ${contentOrder}`}
         initial={{ opacity: 0, x: contentInitialX }}
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
@@ -68,7 +72,7 @@ export default function SectionWithScrollAnimation({
             {number}
           </motion.div>
           <motion.h2
-            className={`${textColor} sm: font-h5  md:font-h4 mb-2`}
+            className={`${textColor} sm: font-h5 md:font-h4 mb-2`}
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.25, delay: 0.2 }}
@@ -91,12 +95,33 @@ export default function SectionWithScrollAnimation({
         viewport={{ once: false, margin: "-10% 0px -10% 0px" }}
       >
         <div className="w-full h-full relative hidden md:block">
-          <Image
-            src={imageUrl}
-            alt={imageAlt}
-            fill
-            className="object-cover rounded-sm"
-          />
+          {isVideoSection && videoRef ? (
+            <video
+              ref={videoRef}
+              src={imageUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="object-cover rounded-sm w-full h-full"
+            />
+          ) : imageUrl.endsWith('.mp4') ? (
+            <video
+              src={imageUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="object-cover rounded-sm w-full h-full"
+            />
+          ) : (
+            <Image
+              src={imageUrl}
+              alt={imageAlt}
+              fill
+              className="object-cover rounded-sm"
+            />
+          )}
         </div>
       </motion.div>
     </div>

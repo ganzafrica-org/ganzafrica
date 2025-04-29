@@ -1,27 +1,35 @@
 'use client';
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@/components/ui/textarea";
-import { MapPin, Phone, Mail, Leaf, Send, CheckCircle2, Building2 } from "lucide-react";
+import { MapPin, Phone, Mail, Leaf, Send, CheckCircle2, Building2, AlertCircle } from "lucide-react";
 import { safeAccess } from "@/lib/utils/safeAccess";
 import { motion } from "framer-motion";
+import apiClient from "@/lib/api-client";
 
 interface ContactUsContentProps {
     dict: any;
 }
 
 const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
-    const [formState, setFormState] = React.useState({
+    const [formState, setFormState] = useState({
         name: "",
         email: "",
         phone: "",
         message: "",
+        location: "rwanda", 
     });
 
-    const [activeTab, setActiveTab] = React.useState('rwanda');
-    const [showPointer, setShowPointer] = React.useState(true);
+    const [activeTab, setActiveTab] = useState('rwanda');
+    const [showPointer, setShowPointer] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [formSuccess, setFormSuccess] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
+    const [newsletterEmail, setNewsletterEmail] = useState("");
+    const [newsletterSuccess, setNewsletterSuccess] = useState(false);
+    const [newsletterError, setNewsletterError] = useState<string | null>(null);
 
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -33,19 +41,93 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
         }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Form submitted:", formState);
-        setFormState({ name: "", email: "", phone: "", message: "" });
+        setSubmitting(true);
+        setFormError(null);
+        
+        try {
+            // Update location based on active tab
+            const contactData = {
+                ...formState,
+                location: activeTab, // Set location based on the active tab
+            };
+            
+            // Send to the API endpoint
+            const response = await apiClient.post('/contacts', contactData);
+            
+            // Show success message and reset form
+            setFormSuccess(true);
+            setFormState({
+                name: "",
+                email: "",
+                phone: "",
+                message: "",
+                location: activeTab,
+            });
+            
+            // Reset success message after 5 seconds
+            setTimeout(() => {
+                setFormSuccess(false);
+            }, 5000);
+            
+        } catch (error: any) {
+            console.error("Error submitting contact form:", error);
+            
+            // Set appropriate error message
+            if (error.response && error.response.data && error.response.data.message) {
+                setFormError(error.response.data.message);
+            } else {
+                setFormError("An error occurred while submitting the form. Please try again later.");
+            }
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const handleNewsletterSubmit = (e: React.FormEvent) => {
+    const handleNewsletterSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Newsletter submitted");
+        
+        if (!newsletterEmail) return;
+        
+        setNewsletterError(null);
+        
+        try {
+            const response = await apiClient.post('/newsletter/subscribe', {
+                email: newsletterEmail
+            });
+            
+            // Show success message and reset form
+            setNewsletterSuccess(true);
+            setNewsletterEmail("");
+            
+            // Reset success message after 5 seconds
+            setTimeout(() => {
+                setNewsletterSuccess(false);
+            }, 5000);
+        } catch (error: any) {
+            console.error("Error subscribing to newsletter:", error);
+            
+            // Set appropriate error message
+            if (error.response && error.response.data && error.response.data.message) {
+                setNewsletterError(error.response.data.message);
+            } else {
+                setNewsletterError("Failed to subscribe. Please try again later.");
+            }
+        }
     };
 
     const handlePointerClick = () => {
         setShowPointer(false);
+    };
+
+    const handleTabChange = (tabId: string) => {
+        setActiveTab(tabId);
+        // Update location in form state when tab changes
+        setFormState(prev => ({
+            ...prev,
+            location: tabId
+        }));
     };
 
     const tabs = [
@@ -159,6 +241,29 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                             >
                                 Send Us a Message
                             </motion.h2>
+                            
+                            {/* Success Message */}
+                            {formSuccess && (
+                                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start">
+                                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
+                                    <div>
+                                        <p className="font-medium">Message sent successfully!</p>
+                                        <p className="text-sm">Thank you for contacting us. We'll get back to you as soon as possible.</p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Error Message */}
+                            {formError && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
+                                    <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
+                                    <div>
+                                        <p className="font-medium">Submission failed</p>
+                                        <p className="text-sm">{formError}</p>
+                                    </div>
+                                </div>
+                            )}
+                            
                             <motion.form 
                                 onSubmit={handleSubmit} 
                                 className="space-y-6"
@@ -179,6 +284,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                             placeholder="Enter your name"
                                             className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                             required
+                                            disabled={submitting}
                                         />
                                     </div>
                                     <div>
@@ -193,6 +299,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                             placeholder="Enter your email"
                                             className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                             required
+                                            disabled={submitting}
                                         />
                                     </div>
                                 </div>
@@ -207,6 +314,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                         onChange={handleChange}
                                         placeholder="Enter your phone number"
                                         className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
+                                        disabled={submitting}
                                     />
                                 </div>
                                 <div>
@@ -220,14 +328,34 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                         placeholder="How can we help you?"
                                         className="w-full h-40 bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                         required
+                                        disabled={submitting}
                                     />
                                 </div>
+                                {/* Hidden input for location value */}
+                                <input 
+                                    type="hidden" 
+                                    name="location" 
+                                    value={formState.location} 
+                                />
                                 <Button
                                     type="submit"
                                     className="w-full bg-[#005c3d] hover:bg-[#009758] text-white px-8 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+                                    disabled={submitting}
                                 >
-                                    Send Message
-                                    <Send className="h-4 w-4" />
+                                    {submitting ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Sending...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Send Message
+                                            <Send className="h-4 w-4" />
+                                        </>
+                                    )}
                                 </Button>
                             </motion.form>
                         </motion.div>
@@ -250,10 +378,35 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 <p className="text-gray-600 mb-6">
                                     Subscribe to our newsletter to receive updates about our programs, events, and opportunities.
                                 </p>
+                                
+                                {/* Newsletter Success Message */}
+                                {newsletterSuccess && (
+                                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start mb-4">
+                                        <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
+                                        <div>
+                                            <p className="font-medium">Subscribed successfully!</p>
+                                            <p className="text-sm">Thank you for subscribing to our newsletter.</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* Newsletter Error Message */}
+                                {newsletterError && (
+                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start mb-4">
+                                        <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
+                                        <div>
+                                            <p className="font-medium">Subscription failed</p>
+                                            <p className="text-sm">{newsletterError}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                
                                 <form onSubmit={handleNewsletterSubmit} className="space-y-4">
                                     <Input
                                         type="email"
                                         placeholder="Enter your email"
+                                        value={newsletterEmail}
+                                        onChange={(e) => setNewsletterEmail(e.target.value)}
                                         className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                         required
                                     />
@@ -276,7 +429,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                     {tabs.map((tab) => (
                                         <button
                                             key={tab.id}
-                                            onClick={() => setActiveTab(tab.id)}
+                                            onClick={() => handleTabChange(tab.id)}
                                             className={`flex-1 px-6 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-all duration-300 ${
                                                 activeTab === tab.id
                                                     ? 'bg-[#005c3d] text-white'

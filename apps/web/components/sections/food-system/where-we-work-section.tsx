@@ -59,7 +59,7 @@ const WhereWeWorkSection = () => {
             className="relative h-full rounded-[20px] overflow-hidden"
           >
             <Image
-              src="/images/food-system-1.png"
+              src="/images/Fellows7.jpg"
               alt="Hands holding wheat grains"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"

@@ -44,24 +44,5 @@ router.delete(
   projectController.deleteProject,
 );
 
-// Project member routes without authentication
-router.post(
-  "/:id/members",
-  validate(projectValidation.addProjectMemberSchema),
-  projectController.addProjectMember,
-);
-
-router.delete(
-  "/:id/members/:userId",
-  validate(projectValidation.removeProjectMemberSchema),
-  projectController.removeProjectMember,
-);
-
-// Import projects (still need admin role)
-router.post(
-  "/import",
-  validate(projectValidation.importProjectsSchema),
-  projectController.importProjects,
-);
 
 export default router;

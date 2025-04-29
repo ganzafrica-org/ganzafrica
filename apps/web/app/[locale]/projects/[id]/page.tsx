@@ -18,7 +18,8 @@ import {
   Users,
   Target,
   Award,
-  XCircle
+  XCircle,
+  Building
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import apiClient from '@/lib/api-client';
@@ -61,6 +62,25 @@ interface Member {
   start_date?: string | null;
   end_date?: string | null;
   is_active?: boolean;
+  team?: {
+    id: number;
+    name: string;
+    position?: string;
+    photo_url?: string;
+  };
+}
+
+interface Partner {
+  id?: number;
+  project_id?: number;
+  partner_id: number;
+  partner?: {
+    id: number;
+    name: string;
+    logo?: string;
+    website_url?: string;
+    location?: string;
+  };
 }
 
 interface Project {
@@ -86,10 +106,11 @@ interface Project {
   created_at: string;
   updated_at: string;
   members: Member[];
+  partners: Partner[];
 }
 
 interface Category {
-  id: string;
+  id: number | string;
   name: string;
   description?: string;
   icon?: string;
@@ -126,6 +147,40 @@ const ProjectDetailsPage = () => {
       try {
         setLoading(true);
         
+        // Fetch categories first, before fetching the project
+        try {
+          const categoriesResponse = await apiClient.get('/categories');
+          console.log("Categories response:", categoriesResponse.data);
+          
+          // Handle different possible API response formats
+          if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
+            setCategories(categoriesResponse.data.categories);
+          } else if (Array.isArray(categoriesResponse.data)) {
+            setCategories(categoriesResponse.data);
+          } else if (categoriesResponse.data && typeof categoriesResponse.data === 'object') {
+            // Handle case where response might be an object with category IDs as keys
+            const categoryArray = Object.entries(categoriesResponse.data).map(([id, data]) => {
+              const category = data as any;
+              return {
+                id: Number(id),
+                name: category.name || `Category ${id}`
+              };
+            });
+            setCategories(categoryArray);
+          }
+        } catch (error) {
+          console.error('Error fetching categories:', error);
+          // Try alternate endpoint
+          try {
+            const altCategoriesResponse = await apiClient.get('/project-categories');
+            if (altCategoriesResponse.data && Array.isArray(altCategoriesResponse.data)) {
+              setCategories(altCategoriesResponse.data);
+            }
+          } catch (altError) {
+            console.error('Error fetching from alternate categories endpoint:', altError);
+          }
+        }
+        
         // Fetch project data
         const projectResponse = await apiClient.get(`/projects/${params.id}`);
         console.log("API Response:", projectResponse.data);
@@ -152,8 +207,17 @@ const ProjectDetailsPage = () => {
           projectData.members = Object.values(projectData.members);
         }
         
+        // Ensure partners is always an array
+        if (!projectData.partners) {
+          projectData.partners = [];
+        } else if (!Array.isArray(projectData.partners)) {
+          console.log("Converting partners to array format");
+          projectData.partners = Object.values(projectData.partners);
+        }
+        
         // Debug the members data
         console.log("Project members:", projectData.members);
+        console.log("Project partners:", projectData.partners);
         
         // Make sure goals, outcomes and media are properly initialized
         if (!projectData.goals) projectData.goals = { items: [] };
@@ -161,30 +225,6 @@ const ProjectDetailsPage = () => {
         if (!projectData.media) projectData.media = { items: [] };
         
         setProject(projectData);
-
-        // Fetch categories
-        try {
-          const categoriesResponse = await apiClient.get('/project-categories');
-          if (categoriesResponse.data && Array.isArray(categoriesResponse.data)) {
-            const categoriesData: Category[] = categoriesResponse.data.map((category: { id: number; name: string }) => ({
-              id: category.id.toString(),
-              name: category.name,
-              description: "Description not available", 
-              icon: "🌾" 
-            }));
-            setCategories(categoriesData);
-          } else if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
-            const categoriesData: Category[] = categoriesResponse.data.categories.map((category: { id: number; name: string }) => ({
-              id: category.id.toString(),
-              name: category.name,
-              description: "Description not available",
-              icon: "🌾"
-            }));
-            setCategories(categoriesData);
-          }
-        } catch (error) {
-          console.log('Using fallback categories');
-        }
 
         // Fetch users for member data
         try {
@@ -232,11 +272,39 @@ const ProjectDetailsPage = () => {
     });
   };
 
-  // Get category name from category_id
+  // Get category name from category_id by directly inspecting the categories array
   const getCategoryName = (categoryId: number | undefined) => {
-    if (!categoryId) return 'Unknown';
-    const category = categories.find(cat => cat.id === categoryId.toString());
-    return category ? category.name : 'Unknown Category';
+    if (!categoryId) return 'Not specified';
+    
+    console.log("Looking for category with ID:", categoryId);
+    console.log("Available categories:", categories);
+    
+    // Try to find the category in the array with proper type handling
+    if (categories && categories.length > 0) {
+      const category = categories.find(cat => 
+        Number(cat.id) === Number(categoryId)
+      );
+      
+      if (category) {
+        console.log("Found category:", category);
+        return category.name;
+      }
+    }
+    
+    // Fallback to hardcoded values if needed
+    const fallbackCategories: Record<number, string> = {
+      1: 'Food system',
+      2: 'Climate adaptation',
+      3: 'Data & Evidence'
+    };
+    
+    if (categoryId in fallbackCategories) {
+      console.log("Using fallback category name");
+      return fallbackCategories[categoryId];
+    }
+    
+    // Last resort fallback
+    return `Category ${categoryId}`;
   };
 
   // Get user name from user_id
@@ -246,11 +314,38 @@ const ProjectDetailsPage = () => {
     return user ? user.name : `User ${userId}`;
   };
 
+  // Get team member name
+  const getTeamMemberName = (member: Member) => {
+    if (member.team && member.team.name) {
+      return member.team.name;
+    }
+    if (member.name) {
+      return member.name;
+    }
+    return getUserName(member.user_id);
+  };
+
+  // Get partner name
+  const getPartnerName = (partner: Partner) => {
+    if (partner.partner && partner.partner.name) {
+      return partner.partner.name;
+    }
+    return `Partner ${partner.partner_id}`;
+  };
+
+  // Get partner logo
+  const getPartnerLogo = (partner: Partner) => {
+    if (partner.partner && partner.partner.logo) {
+      return partner.partner.logo;
+    }
+    return null;
+  };
+
   // Extract team lead from project members
   const getTeamLead = () => {
     if (!project?.members) return null;
     const lead = project.members.find(member => member.role.toLowerCase().includes('lead'));
-    return lead ? { name: lead.name || getUserName(lead.user_id), role: lead.role } : null;
+    return lead ? { name: getTeamMemberName(lead), role: lead.role } : null;
   };
 
   // Map status for display
@@ -418,6 +513,9 @@ const ProjectDetailsPage = () => {
 
   // Debug output
   console.log("Current project state:", project);
+  console.log("Available categories:", categories);
+  console.log("Project category ID:", project?.category_id);
+  console.log("Category name display:", getCategoryName(project?.category_id));
   
   if (!project) {
     return (
@@ -630,7 +728,7 @@ const ProjectDetailsPage = () => {
                                 <div key={index} className="flex items-start gap-2">
                                   <span className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mt-0.5 text-gray-600 dark:text-gray-300">•</span>
                                   <span className="text-gray-600 dark:text-gray-300">{metric}</span>
-                                  </div>
+                                </div>
                               ))}
                             </div>
                           )}
@@ -821,112 +919,119 @@ const ProjectDetailsPage = () => {
             )}
           </div>
 
-          {/* Right Column */}
+          {/* Right Column - Simplified with only Team Members and Partners */}
           <div className="lg:col-span-1 space-y-8">
-            {/* Team Members */}
-            <div className="sticky top-0">
-              <div className="space-y-8">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Team</h2>
-                </div>
-                <div className="space-y-4 w-full overflow-hidden">
-                  {project.members && Array.isArray(project.members) && project.members.length > 0 ? project.members.map((member, index) => {
-                    // We need to ensure we have a unique key even if member.id is missing
-                    const memberKey = member.id || `member-${index}-${member.user_id}`;
-                    const memberName = member.name || getUserName(member.user_id);
-                    
-                    return (
-                      <div key={memberKey} className="flex items-center gap-4 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <div className="w-16 h-16 relative">
-                          {member.image ? (
-                            <img
-                              src={getValidImageSrc(member.image)}
-                              alt={memberName}
-                              className="rounded-full object-cover w-full h-full ring-2 ring-primary-green/20"
-                              onError={(e) => {
-                                // Replace with initials on error
-                                const parent = e.currentTarget.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = `
-                                    <div class="w-full h-full rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center ring-2 ring-primary-green/20">
-                                      <span class="text-xl font-semibold text-gray-600 dark:text-gray-300">
-                                        ${memberName.charAt(0)}
-                                      </span>
-                                    </div>
-                                  `;
-                                }
-                              }}
-                            />
+            {/* Team Members - Updated to match example */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Team</h2>
+              </div>
+              
+              {project.members && Array.isArray(project.members) && project.members.length > 0 ? (
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6">
+                  <div className="space-y-6">
+                    {project.members.map((member, index) => {
+                      const memberName = getTeamMemberName(member);
+                      const memberKey = member.id || `member-${index}-${member.user_id}`;
+                      const photoUrl = member.image || (member.team && member.team.photo_url);
+                      
+                      return (
+                        <div 
+                          key={memberKey}
+                          className="flex items-center gap-3"
+                        >
+                          {photoUrl ? (
+                            <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                              <img 
+                                src={getValidImageSrc(photoUrl)}
+                                alt={memberName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `
+                                      <div class="w-12 h-12 flex items-center justify-center bg-gray-200 rounded-full dark:bg-gray-700">
+                                        <span class="text-lg font-bold text-gray-700 dark:text-gray-300">
+                                          ${memberName.charAt(0).toUpperCase()}
+                                        </span>
+                                      </div>
+                                    `;
+                                  }
+                                }}
+                              />
+                            </div>
                           ) : (
-                            <div className="w-full h-full rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center ring-2 ring-primary-green/20">
-                              <span className="text-xl font-semibold text-gray-600 dark:text-gray-300">
-                                {memberName.charAt(0)}
+                            <div className="w-12 h-12 flex items-center justify-center bg-gray-200 rounded-full dark:bg-gray-700 flex-shrink-0">
+                              <span className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                                {memberName.charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
+                          <p className="text-gray-900 dark:text-white font-semibold text-lg">{memberName}</p>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 dark:text-white">{memberName}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">{member.role}</p>
-                          {member.start_date && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {formatDate(member.start_date)} - {formatDate(member.end_date)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }) : (
-                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl text-center">
-                      <p className="text-gray-600 dark:text-gray-400">No team members assigned to this project</p>
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-
-              {/* Project Info */}
-              <div className="mt-8 space-y-8">
+              ) : (
+                <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl text-center">
+                  <p className="text-gray-600 dark:text-gray-400">No team members assigned to this project</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Partners - Added to display logos and names */}
+            {project.partners && project.partners.length > 0 && (
+              <div className="space-y-6">
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="h-0.5 w-12 bg-primary-green flex-shrink-0"></div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Project Information</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Partners</h2>
                 </div>
-                <div className="space-y-4 w-full overflow-hidden">
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Location</h3>
-                    <p className="text-gray-600 dark:text-gray-400 break-words">{project.location || 'Not specified'}</p>
+                
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    {project.partners.map((partner, index) => {
+                      const partnerName = getPartnerName(partner);
+                      const partnerLogo = getPartnerLogo(partner);
+                      const partnerKey = partner.id || `partner-${index}-${partner.partner_id}`;
+                      
+                      return (
+                        <div 
+                          key={partnerKey}
+                          className="flex flex-col items-center text-center gap-3 p-4"
+                        >
+                          <div className="w-20 h-20 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                            {partnerLogo ? (
+                              <img 
+                                src={partnerLogo}
+                                alt={partnerName}
+                                className="max-w-full max-h-full object-contain"
+                                onError={(e) => {
+                                  // Fallback to icon
+                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.parentElement!.innerHTML = 
+                                    `<div class="flex items-center justify-center w-full h-full">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
+                                        <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                                        <line x1="9" y1="22" x2="9" y2="16"></line>
+                                        <line x1="15" y1="22" x2="15" y2="16"></line>
+                                      </svg>
+                                    </div>`;
+                                }}
+                              />
+                            ) : (
+                              <Building className="w-10 h-10 text-gray-400" />
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{partnerName}</p>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Duration</h3>
-                    <p className="text-gray-600 dark:text-gray-400 break-words">
-                      {formatDate(project.start_date)} - {formatDate(project.end_date)}
-                    </p>
-                  </div>
-                  <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2">Status</h3>
-                    <div className="mt-1">{getStatusBadge(project.status)}</div>
-                  </div>
-                  {project.category_id && (
-                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Category</h3>
-                      <p className="text-gray-600 dark:text-gray-400 break-words">{getCategoryName(project.category_id)}</p>
-                    </div>
-                  )}
-                  {project.created_at && (
-                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Created</h3>
-                      <p className="text-gray-600 dark:text-gray-400">{formatDate(project.created_at)}</p>
-                    </div>
-                  )}
-                  {project.other_information && (
-                    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                      <h3 className="font-medium text-gray-900 dark:text-white mb-2">Additional Information</h3>
-                      <p className="text-gray-600 dark:text-gray-400 break-words">{project.other_information}</p>
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

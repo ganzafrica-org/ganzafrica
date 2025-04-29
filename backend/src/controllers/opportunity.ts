@@ -11,9 +11,6 @@ const logger = new Logger('OpportunityController');
  *   post:
  *     summary: Create a new opportunity (fellowship or employment)
  *     tags: [Opportunities]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -27,17 +24,13 @@ const logger = new Logger('OpportunityController');
  *         description: Opportunity created successfully
  *       400:
  *         description: Validation error
- *       401:
- *         description: Unauthorized
  *       500:
  *         description: Server error
  */
 export const createOpportunity = async (req: Request, res: Response) => {
     try {
-        const userId = req.user?.id;
-        if (!userId) {
-            throw new AppError('Unauthorized', 401);
-        }
+        // Use a default user ID or get it from request if authenticated
+        const userId = req.user?.id || 1; // Default to ID 1 if not authenticated
 
         const opportunityData = {
             ...req.body,
@@ -71,9 +64,6 @@ export const createOpportunity = async (req: Request, res: Response) => {
  *   get:
  *     summary: List all opportunities
  *     tags: [Opportunities]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: query
  *         name: type
@@ -95,8 +85,6 @@ export const createOpportunity = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: List of opportunities
- *       401:
- *         description: Unauthorized
  *       500:
  *         description: Server error
  */
@@ -132,9 +120,6 @@ export const listOpportunities = async (req: Request, res: Response) => {
  *   get:
  *     summary: Get opportunity by ID
  *     tags: [Opportunities]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -144,8 +129,6 @@ export const listOpportunities = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Opportunity found
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Opportunity not found
  *       500:
@@ -179,9 +162,6 @@ export const getOpportunityById = async (req: Request, res: Response) => {
  *   put:
  *     summary: Update an opportunity
  *     tags: [Opportunities]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -201,8 +181,6 @@ export const getOpportunityById = async (req: Request, res: Response) => {
  *         description: Opportunity updated successfully
  *       400:
  *         description: Validation error
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Opportunity not found
  *       500:
@@ -240,9 +218,6 @@ export const updateOpportunity = async (req: Request, res: Response) => {
  *   post:
  *     summary: Publish an opportunity
  *     tags: [Opportunities]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -252,8 +227,6 @@ export const updateOpportunity = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Opportunity published successfully
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Opportunity not found
  *       500:
@@ -290,9 +263,6 @@ export const publishOpportunity = async (req: Request, res: Response) => {
  *   post:
  *     summary: Close an opportunity
  *     tags: [Opportunities]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -302,8 +272,6 @@ export const publishOpportunity = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Opportunity closed successfully
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Opportunity not found
  *       500:
@@ -340,9 +308,6 @@ export const closeOpportunity = async (req: Request, res: Response) => {
  *   delete:
  *     summary: Delete an opportunity
  *     tags: [Opportunities]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -352,8 +317,6 @@ export const closeOpportunity = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Opportunity deleted successfully
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Opportunity not found
  *       500:
@@ -387,9 +350,59 @@ export const deleteOpportunity = async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /applications:
+ *   post:
+ *     summary: Submit a general GanzAfrica application
+ *     tags: [Applications]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ApplicationSubmission'
+ *     responses:
+ *       201:
+ *         description: Application submitted successfully
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Server error
+ */
+export const submitGeneralApplication = async (req: Request, res: Response) => {
+    try {
+        const applicationData = req.body;
+        const userId = req.user?.id; // Optional, applicant might not be a logged-in user
+        
+        if (userId) {
+            applicationData.user_id = userId;
+        }
+
+        const application = await opportunityService.submitApplication(applicationData);
+
+        res.status(201).json({
+            message: 'Application submitted successfully',
+            application
+        });
+    } catch (error) {
+        logger.error('Submit general application error', error);
+        if (error instanceof AppError) {
+            return res.status(error.statusCode).json({
+                error: 'Application Submission Error',
+                message: error.message
+            });
+        }
+        res.status(500).json({
+            error: 'Application Submission Error',
+            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+        });
+    }
+};
+
+/**
+ * @swagger
  * /opportunities/{id}/apply:
  *   post:
- *     summary: Submit an application for an opportunity
+ *     summary: Submit an application for a specific opportunity
  *     tags: [Applications]
  *     parameters:
  *       - in: path
@@ -451,9 +464,6 @@ export const submitApplication = async (req: Request, res: Response) => {
  *   get:
  *     summary: List applications for an opportunity
  *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -468,8 +478,6 @@ export const submitApplication = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: List of applications
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Opportunity not found
  *       500:
@@ -500,13 +508,10 @@ export const listApplications = async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /opportunities/applications/{id}:
+ * /applications/{id}:
  *   get:
  *     summary: Get application by ID
  *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -516,8 +521,6 @@ export const listApplications = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Application found
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Application not found
  *       500:
@@ -547,13 +550,10 @@ export const getApplicationById = async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /opportunities/applications/{id}/status:
+ * /applications/{id}/status:
  *   put:
  *     summary: Update application status
  *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -569,8 +569,6 @@ export const getApplicationById = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: Application status updated successfully
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Application not found
  *       500:
@@ -604,13 +602,10 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /opportunities/applications:
+ * /applications:
  *   get:
  *     summary: List all applications across all opportunities
  *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: query
  *         name: status
@@ -630,8 +625,6 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
  *     responses:
  *       200:
  *         description: List of all applications
- *       401:
- *         description: Unauthorized
  *       500:
  *         description: Server error
  */
@@ -661,13 +654,10 @@ export const listAllApplications = async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /opportunities/applications/{id}/review:
+ * /applications/{id}/review:
  *   post:
  *     summary: Submit a review for an application
  *     tags: [Applications]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -683,8 +673,6 @@ export const listAllApplications = async (req: Request, res: Response) => {
  *     responses:
  *       201:
  *         description: Review submitted successfully
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: Application not found
  *       500:
@@ -693,11 +681,9 @@ export const listAllApplications = async (req: Request, res: Response) => {
 export const submitApplicationReview = async (req: Request, res: Response) => {
     try {
         const applicationId = Number(req.params.id);
-        const reviewerId = req.user?.id;
-
-        if (!reviewerId) {
-            throw new AppError('Unauthorized', 401);
-        }
+        
+        // Use a default reviewer ID
+        const reviewerId = req.user?.id || 1; // Default to ID 1 if not authenticated
 
         const reviewData = {
             application_id: applicationId,
@@ -739,12 +725,12 @@ export const opportunityController = {
     closeOpportunity,
     deleteOpportunity,
     submitApplication,
+    submitGeneralApplication,
     listApplications,
     getApplicationById,
     updateApplicationStatus,
     submitApplicationReview,
     listAllApplications,
-
 };
 
 // Default export for the controller object

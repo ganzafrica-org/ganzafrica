@@ -155,14 +155,6 @@ export default function HomeHero({
     },
   ];
 
-  const ourApproachItems: MenuItem[] = [
-    {
-      title: "Food Systems",
-      href: "/our-approach",
-      description: "Developing sustainable food systems for communities across Africa.",
-    },
-  ];
-
   const programsItems: MenuItem[] = [
     {
       title: "Fellowship",
@@ -175,14 +167,6 @@ export default function HomeHero({
       href: "/programs/alumni",
       description:
         "A network of graduates continuing to make an impact across the continent.",
-    },
-  ];
-
-  const projectItems: MenuItem[] = [
-    {
-      title: "Projects",
-      href: "/projects",
-      description: "Discover our projects and their impact.",
     },
   ];
   
@@ -367,7 +351,7 @@ export default function HomeHero({
           <NavigationMenuList>
             {/* About */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
+              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
                 {dict.navigation?.about || "About"}
               </NavigationMenuTrigger>
               <NavigationMenuContent>
@@ -402,47 +386,20 @@ export default function HomeHero({
               </NavigationMenuContent>
             </NavigationMenuItem>
 
-            {/* Our Approach Dropdown */}
+            {/* Our Approach - Direct Link */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.our_approach || "Our Approach"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/our-approach`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Approach to Food Systems
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Explore our programs focused on sustainable
-                              development, climate resilience, and food security
-                              across Africa.
-                            </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {ourApproachItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
+              <Link href={`/${locale}/our-approach`} passHref>
+                <NavigationMenuLink 
+                  className={`${textColor} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
+                >
+                  {dict.navigation?.our_approach || "Our Approach"}
+                </NavigationMenuLink>
+              </Link>
             </NavigationMenuItem>
             
             {/* Programs */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
+              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
                 {dict.navigation?.programs || "Programs"}
               </NavigationMenuTrigger>
               <NavigationMenuContent>
@@ -477,45 +434,20 @@ export default function HomeHero({
               </NavigationMenuContent>
             </NavigationMenuItem>
             
-            {/* Projects */}
+            {/* Projects - Direct Link */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.projects || "Projects"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/projects`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Projects
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Discover our innovative projects and their impact
-                              on communities across Africa.
-                            </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {projectItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
+              <Link href={`/${locale}/projects`} passHref>
+                <NavigationMenuLink 
+                  className={`${textColor} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
+                >
+                  {dict.navigation?.projects || "Projects"}
+                </NavigationMenuLink>
+              </Link>
             </NavigationMenuItem>
+
             {/* News & Updates */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
+              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
                 News & Updates
               </NavigationMenuTrigger>
               <NavigationMenuContent>
@@ -558,23 +490,35 @@ export default function HomeHero({
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-40 bg-white pt-20 md:hidden overflow-y-auto">
-        <div className="absolute right-4 top-6">
+      <div className="fixed inset-0 z-50 bg-white w-screen h-screen overflow-y-auto md:hidden">
+        <div className="flex justify-between items-center px-4 py-4 border-b">
+          <Link href={`/${locale}`} className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="relative h-14 w-24">
+              <Image
+                src="/images/logo.png"
+                alt="GanzAfrica"
+                fill
+                sizes="(max-width: 768px) 300px, 200px"
+                className="object-contain"
+                priority
+              />
+            </div>
+          </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="text-black hover:bg-gray-100"
+            className="text-black hover:bg-[#F5F5F5] transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Close menu"
           >
             <X className="h-6 w-6" />
           </Button>
         </div>
-        <nav className="container mx-auto px-4 py-6 flex flex-col space-y-4">
+        <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
           {/* Mobile About with submenu */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-about")}
             >
               {dict.navigation?.about || "About"}
@@ -588,49 +532,33 @@ export default function HomeHero({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
-                    {item.title}
+                    {dict?.about?.[
+                      item.title.toLowerCase().replace(/ /g, "_")
+                    ] || item.title}
                   </Link>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Our approach */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-what-we-do")}
-            >
-              {dict.navigation?.our_approach || "Our approach"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-what-we-do" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-what-we-do" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {ourApproachItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Our Approach - Direct Link */}
+          <Link
+            href={`/${locale}/our-approach`}
+            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            {dict.navigation?.our_approach || "Our Approach"}
+          </Link>
 
           {/* Programs */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-programs")}
             >
               {dict.navigation?.programs || "Programs"}
@@ -644,7 +572,7 @@ export default function HomeHero({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -655,38 +583,20 @@ export default function HomeHero({
             )}
           </div>
 
-          {/* Projects */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-community")}
-            >
-              {dict.navigation?.projects || "Community Hub"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-community" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-community" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {projectItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Projects - Direct Link */}
+          <Link
+            href={`/${locale}/projects`}
+            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            {dict.navigation?.projects || "Projects"}
+          </Link>
 
           {/* News & Updates */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-news")}
             >
               News & Updates
@@ -700,7 +610,7 @@ export default function HomeHero({
                   <Link
                     key={item.href}
                     href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -709,6 +619,18 @@ export default function HomeHero({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Add sign in button at the bottom */}
+          <div className="mt-auto pt-6 border-t">
+            <Link href={`/${locale}/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+              <Button
+                size="lg"
+                className="w-full bg-primary-green hover:bg-primary-green/90 text-white"
+              >
+                {dict?.cta?.sign_in || "Sign In"}
+              </Button>
+            </Link>
           </div>
         </nav>
       </div>
@@ -748,18 +670,16 @@ export default function HomeHero({
             {/* Desktop Navigation */}
             {renderDesktopNavigation()}
 
-            {/* Right side items with inverted top-left corner */}
-            <div className="bg-white rounded-tl-none rounded-bl-2xl min-h-full p-4 w-56 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="mr-2">
-                  <LanguageSwitcher />
-                </div>
-                <Link href={`/${locale}/login`}>
+            {/* Right side items */}
+            <div className="bg-white rounded-tl-none rounded-bl-2xl min-h-full p-4 w-auto flex items-center">
+              <div className="flex items-center gap-2">
+                <LanguageSwitcher />
+                <Link href={`/${locale}/login`} className="hidden md:block">
                   <Button
                     size="sm"
                     className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
                   >
-                    {dict.cta?.sign_in || "Sign In"}
+                    {dict?.cta?.sign_in || "Sign In"}
                   </Button>
                 </Link>
                 <div className="md:hidden">
@@ -767,7 +687,7 @@ export default function HomeHero({
                     variant="ghost"
                     size="icon"
                     className={cn(
-                      "hover:bg-white/20",
+                      "hover:bg-[#F5F5F5] transition-colors",
                       !animationStarted ||
                         navRef.current?.getAttribute("data-overlay-passed") !==
                           "true"

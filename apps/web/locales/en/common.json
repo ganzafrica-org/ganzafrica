@@ -249,7 +249,7 @@
   "home": {
     "hero": {
       "title": "Sustainable Solutions for Rwanda's Future",
-      "subtitle": "Empowering youth through sustainable land management, agriculture, and environmental initiatives",
+      "subtitle": "Empowering youth to adress agri-food systems challenges in africa",
       "title_after": {
         "line1": "A PROSPEROUS AND",
         "line2": "SUSTAINABLE",
@@ -265,11 +265,13 @@
       "communities_reached": "Communities Reached"
     },
     "fellow_section": {
-      "heading_first": "GanzAfrica",
-      "heading_second": "Empowering Youth to Transform Food Systems",
+      "heading_first": "Empower Youth to",
+      "heading_second": "Transform Africa's Food Systems",
       "description": "GanzAfrica empowers Africa's youth with the skills, knowledge, and opportunities to drive sustainable food systems transformation. Through training, mentorship, and work placements, we equip young leaders to tackle challenges in agriculture, environmental stewardship, and land management. Our holistic approach integrates data literacy, evidence-based decision-making, and leadership development, bridging the gap between education and employment. By fostering expertise and professional networks, GanzAfrica prepares youth to build resilient communities and contribute to a thriving Africa.",
-      "career_placement": "Career Placement & Impact",
-      "data_solutions": "Data-Driven Solutions",
+      "Training": "Training",
+      "data_solutions": "Data Driven Impact",
+      "career_placement": "Career Placement",
+      "mentorship": "Mentorship",
       "training": "Training & Mentorship",
       "fellows_count": "75+",
       "fellows_label": "Fellows",

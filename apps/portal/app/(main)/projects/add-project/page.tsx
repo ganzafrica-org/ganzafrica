@@ -1,8 +1,8 @@
-"use client";
+"use client"
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play, Link as LinkIcon, File, FilePlus, Building } from 'lucide-react';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 
@@ -26,12 +26,17 @@ import { Check as CheckIcon } from "lucide-react";
 const AddProjectPage = () => {
   const router = useRouter();
   const fileInputRef = useRef(null);
+  const documentFileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState<any[]>([]);
+  const [partners, setPartners] = useState<any[]>([]);
+  const [openTeamPopover, setOpenTeamPopover] = useState(false);
+  const [openPartnerPopover, setOpenPartnerPopover] = useState(false);
+  
   interface TeamMember {
     id: number;
     name: string;
@@ -50,6 +55,10 @@ const AddProjectPage = () => {
   const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
   const [mediaSourceType, setMediaSourceType] = useState('file');
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<any[]>([]);
+  const [teamSearchValue, setTeamSearchValue] = useState('');
+  const [partnerSearchValue, setPartnerSearchValue] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -69,13 +78,17 @@ const AddProjectPage = () => {
     media: {
       items: []
     },
-    members: []
+    members: [],
+    partners: [] as Array<{ partner_id: number }>,
+    documents: []
   });
 
   // Temporary state
   const [newGoal, setNewGoal] = useState({ title: '', description: '', completed: false });
   const [newOutcome, setNewOutcome] = useState({ title: '', description: '', status: 'pending' });
-  const [newMember, setNewMember] = useState({ user_id: '', role: '' });
+  const [newMember, setNewMember] = useState({ team_id: '', role: '' });
+  const [newPartner, setNewPartner] = useState({ partner_id: '' });
+  const [newDocument, setNewDocument] = useState({ name: '', file: null, file_url: '', file_size: 0 });
   const [newMedia, setNewMedia] = useState({
     file: null,
     type: 'image',
@@ -102,7 +115,7 @@ const AddProjectPage = () => {
     };
   }, [formData.media.items, videoPreviewUrl]);
 
-  // Fetch categories, users, teams and roles on component mount
+  // Fetch categories, users, teams, partners and roles on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -130,6 +143,25 @@ const AddProjectPage = () => {
         } catch (error) {
           console.error('Error fetching roles:', error);
           setRoles([]);
+        }
+
+        // Fetch partners
+        try {
+          const partnersResponse = await apiClient.get('/partners');
+          console.log('Partners response:', partnersResponse.data);
+
+          // Extract partners array
+          if (partnersResponse.data && Array.isArray(partnersResponse.data.partners)) {
+            setPartners(partnersResponse.data.partners);
+          } else if (Array.isArray(partnersResponse.data)) {
+            setPartners(partnersResponse.data);
+          } else {
+            console.error('Unexpected partners response format:', partnersResponse.data);
+            setPartners([]);
+          }
+        } catch (error) {
+          console.error('Error fetching partners:', error);
+          setPartners([]);
         }
 
         // Fetch teams
@@ -260,26 +292,150 @@ const AddProjectPage = () => {
     }));
   };
 
-  // Handle selecting a team member
-  const handleTeamMemberSelect = (userId) => {
-    // Check if user is already a member
-    const alreadyMember = formData.members.some(
-      member => member.user_id === userId
+  // Handle document file selection
+  const handleDocumentFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNewDocument(prev => ({
+        ...prev,
+        file: file,
+        name: prev.name || file.name,
+        file_size: file.size
+      }));
+    }
+  };
+
+  // Handle document input change
+  const handleDocumentChange = (e) => {
+    const { name, value } = e.target;
+    setNewDocument(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Add document
+  const addDocument = async () => {
+    if (!newDocument.file || !newDocument.name) {
+      setError('Please select a file and provide a name');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(interval);
+            return prev;
+          }
+          return prev + 5;
+        });
+      }, 100);
+      
+      // Create local file URL
+      const fileUrl = URL.createObjectURL(newDocument.file);
+      
+      // Finish upload simulation
+      setTimeout(() => {
+        clearInterval(interval);
+        setUploadProgress(100);
+        setIsUploading(false);
+        
+        // Add document to form data
+        const documentToAdd = {
+          name: newDocument.name,
+          file_url: fileUrl,
+          file_size: newDocument.file.size
+        };
+        
+        setFormData(prev => ({
+          ...prev,
+          documents: [...prev.documents, documentToAdd]
+        }));
+        
+        // Reset document form
+        setNewDocument({ name: '', file: null, file_url: '', file_size: 0 });
+        if (documentFileInputRef.current) {
+          documentFileInputRef.current.value = '';
+        }
+      }, 1500);
+    } catch (error) {
+      console.error('Error adding document:', error);
+      setError('Failed to add document. Please try again.');
+      setIsUploading(false);
+    }
+  };
+
+  // Remove document
+  const removeDocument = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }));
+  };
+
+// Handle selecting a team member
+const handleTeamMemberSelect = (teamId) => {
+  // Check if the role is selected
+  if (!selectedRole) {
+    alert('Please select a role first');
+    return;
+  }
+  
+  // Check if team member is already a member
+  const alreadyMember = formData.members.some(
+    member => member.team_id === teamId
+  );
+  
+  if (!alreadyMember) {
+    const memberToAdd = {
+      team_id: teamId,
+      role: selectedRole // This will now be one of: 'lead', 'member', 'supervisor', 'contributor'
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      members: [...prev.members, memberToAdd]
+    }));
+  }
+  
+  setOpenTeamPopover(false);
+};
+
+// Get role name for display
+const getRoleNameById = (roleId) => {
+  // For the fixed role values, return the formatted display name
+  if (roleId === 'lead') return 'Lead';
+  if (roleId === 'member') return 'Member';
+  if (roleId === 'supervisor') return 'Supervisor';
+  if (roleId === 'contributor') return 'Contributor';
+  
+  // Fallback for any other role (should not happen with fixed values)
+  return roleId?.toString();
+};
+  // Handle selecting a partner
+  const handlePartnerSelect = (partnerId) => {
+    // Check if partner is already added
+    const alreadyAdded = formData.partners.some(
+      partner => partner.partner_id === partnerId
     );
     
-    if (!alreadyMember && newMember.role) {
-      const memberToAdd = {
-        user_id: userId,
-        role: newMember.role
+    if (!alreadyAdded) {
+      const partnerToAdd = {
+        partner_id: partnerId
       };
       
       setFormData(prev => ({
         ...prev,
-        members: [...prev.members, memberToAdd]
+        partners: [...prev.partners, partnerToAdd]
       }));
     }
     
-    setPopoverOpen(false);
+    setOpenPartnerPopover(false);
   };
 
   // Handle file selection
@@ -415,6 +571,11 @@ const AddProjectPage = () => {
   // Trigger file input click
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+
+  // Trigger document file input click
+  const triggerDocumentFileInput = () => {
+    documentFileInputRef.current?.click();
   };
 
   // Upload file to server (modified to use local URLs)
@@ -720,20 +881,20 @@ const AddProjectPage = () => {
 
   // Add member to members list
   const addMember = () => {
-    if (!newMember.user_id || !newMember.role) return;
+    if (!newMember.team_id || !newMember.role) return;
     
     const memberToAdd = {
-      user_id: parseInt(newMember.user_id),
+      team_id: parseInt(newMember.team_id),
       role: newMember.role
     };
     
     // Check if user is already a member
     const alreadyMember = formData.members.some(
-      member => member.user_id === memberToAdd.user_id
+      member => member.team_id === memberToAdd.team_id
     );
     
     if (alreadyMember) {
-      alert('This user is already a project member');
+      alert('This team member is already a project member');
       return;
     }
     
@@ -743,7 +904,33 @@ const AddProjectPage = () => {
     }));
     
     // Reset new member form
-    setNewMember({ user_id: '', role: 'member' });
+    setNewMember({ team_id: '', role: 'member' });
+  };
+
+  // Add partner to partners list
+  const addPartner = () => {
+    if (!newPartner.partner_id) return;
+    
+    const partnerToAdd = {
+      partner_id: parseInt(newPartner.partner_id)
+    };
+    
+    // Check if partner is already added
+    const alreadyAdded = formData.partners.some(
+      partner => partner.partner_id === partnerToAdd.partner_id
+    );
+    
+    if (alreadyAdded) {
+      alert('This partner is already added to the project');
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      partners: [...prev.partners, partnerToAdd]
+    }));
+    
+    // Reset new partner form
+    setNewPartner({ partner_id: '' });
   };
 
   // Remove goal from list
@@ -792,10 +979,18 @@ const AddProjectPage = () => {
   };
 
   // Remove member from list
-  const removeMember = (userId) => {
+  const removeMember = (teamId) => {
     setFormData(prev => ({
       ...prev,
-      members: prev.members.filter(member => member.user_id !== userId)
+      members: prev.members.filter(member => member.team_id !== teamId)
+    }));
+  };
+
+  // Remove partner from list
+  const removePartner = (partnerId) => {
+    setFormData(prev => ({
+      ...prev,
+      partners: prev.partners.filter(partner => partner.partner_id !== partnerId)
     }));
   };
 
@@ -903,24 +1098,30 @@ const AddProjectPage = () => {
   };
 
   // Get team member name
-  const getTeamMemberName = (userId) => {
-    const user = filteredTeamMembers.find(member => member.id === userId);
-    if (user) {
-      if (user.name) {
-        return user.name;
-      } else if (user.first_name || user.last_name) {
-        return `${user.first_name || ''} ${user.last_name || ''}`;
+  const getTeamMemberName = (teamId) => {
+    const team = filteredTeamMembers.find(member => member.id === teamId);
+    if (team) {
+      if (team.name) {
+        return team.name;
+      } else if (team.first_name || team.last_name) {
+        return `${team.first_name || ''} ${team.last_name || ''}`;
       }
     }
-    return `Team Member ${userId}`;
+    return `Team Member ${teamId}`;
   };
 
+  // Get partner name
+  interface Partner {
+    id: number;
+    name: string;
+  }
 
-  // Get role name by ID
-  const getRoleNameById = (roleId) => {
-    const role = roles.find((r) => r.id?.toString() === roleId?.toString());
-    return role ? role.name : roleId?.toString();
+  const getPartnerName = (partnerId: number): string => {
+    const partner: Partner | undefined = partners.find((p: Partner) => p.id === partnerId);
+    return partner ? partner.name : `Partner ${partnerId}`;
   };
+
+  // Removed duplicate declaration of getRoleNameById
 
   // Format file size display
   const formatFileSize = (bytes) => {
@@ -931,6 +1132,11 @@ const AddProjectPage = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Navigate to add partner page
+  const navigateToAddPartner = () => {
+    router.push('/partners/add');
+  };
+
   // Handle form submission
   interface ProjectData {
     name: string;
@@ -938,7 +1144,7 @@ const AddProjectPage = () => {
     status: string;
     start_date: string;
     end_date: string;
-    category_id: number; // Changed to number
+    category_id: number;
     location: string;
     goals: {
       items: Array<{
@@ -975,50 +1181,59 @@ const AddProjectPage = () => {
       }>;
     };
     members: Array<{
-      user_id: number;
+      team_id: number;
       role: string;
+      start_date: string; // Added start_date according to backend requirements
+    }>;
+    partners: Array<{
+      partner_id: number;
+    }>;
+    documents: Array<{
+      name: string;
+      file_url: string;
+      file_size?: number;
     }>;
   }
- // Change this part in your AddProjectPage component
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  setSuccess(false);
-  
-  try {
-    // Create a new object with the correct data types for submission
-    const submissionData: ProjectData = {
-      ...formData,
-      // Convert category_id from string to number
-      category_id: formData.category_id ? parseInt(formData.category_id as string, 10) : null,
-      // Ensure members have numeric user_ids
-      members: formData.members.map(member => ({
-        ...member,
-        user_id: typeof member.user_id === 'string' ? parseInt(member.user_id, 10) : member.user_id
-      }))
-    };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess(false);
     
-    // Submit without checking for auth token
-    const response = await apiClient.post(
-      '/projects',
-      submissionData
-    );
-    
-    console.log('Project created successfully:', response.data);
-    setSuccess(true);
-    
-    // Redirect to project detail or projects list
-    setTimeout(() => {
-      router.push('/projects');
-    }, 2000);
-  } catch (error: any) {
-    console.error('Error creating project:', error);
-    setError(error.response?.data?.message || 'Failed to create project. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      // Create a new object with the correct data types for submission
+      const submissionData: ProjectData = {
+        ...formData,
+        category_id: formData.category_id ? parseInt(formData.category_id as string, 10) : 0,
+        members: formData.members.map(member => ({
+          ...(typeof member === 'object' && member !== null ? member : {}),
+          team_id: typeof member.team_id === 'string' ? parseInt(member.team_id, 10) : member.team_id,
+          role: member.role, 
+          start_date: formData.start_date
+        })),
+        // Rest of the data...
+      };
+      
+      console.log('Submitting project data:', submissionData);
+      
+      // Submit to API
+      const response = await apiClient.post('/projects', submissionData);
+      
+      console.log('Project created successfully:', response.data);
+      setSuccess(true);
+      
+      // Redirect to project detail or projects list
+      setTimeout(() => {
+        router.push('/projects');
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error creating project:', error);
+      setError(error.response?.data?.message || 'Failed to create project. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -1381,45 +1596,185 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         </div>
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
+       {/* Team members */}
+<div className="mb-8 p-6">
+  <div className="flex">
+    {/* Left column - section title */}
+    <div className="w-1/4 pr-8">
+      <h2 className="text-xl font-bold">Team</h2>
+      <p className="text-gray-600 text-sm">Who will be working on this project?</p>
+    </div>
+    
+    {/* Right column - form fields */}
+    <div className="w-3/4">
+      <div className="mb-4 flex justify-between items-center">
+        <label className="block text-sm font-medium">
+          Team Members<span className="text-red-500">*</span>
+        </label>
+        <a 
+          href="/teams/add-team"
+          className="text-sm flex items-center text-green-700 hover:text-green-800"
+        >
+          <UserPlus className="w-4 h-4 mr-1" />
+          Add New Team Member
+        </a>
+      </div>
+      
+      {/* Members list */}
+      {formData.members.length === 0 ? (
+        <p className="text-gray-500 text-sm italic mb-4">No team members added yet.</p>
+      ) : (
+        <div className="bg-gray-50 rounded-md mb-4">
+          <div className="divide-y divide-gray-200">
+            {formData.members.map(member => (
+              <div key={member.team_id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-green-50">
+                <div className="col-span-6">{getTeamMemberName(member.team_id)}</div>
+                <div className="col-span-5 text-gray-600">{getRoleNameById(member.role)}</div>
+                <div className="col-span-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeMember(member.team_id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Role selection first - Using fixed string enum values instead of IDs */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">
+          Role<span className="text-red-500">*</span>
+        </label>
+        <div className="relative">
+          <select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+          >
+            <option value="">Select a role</option>
+            <option value="lead">Lead</option>
+            <option value="member">Member</option>
+            <option value="supervisor">Supervisor</option>
+            <option value="contributor">Contributor</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+        </div>
+      </div>
+      
+      {/* Team member selection with Popover */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-1">
+          Add Team Members<span className="text-red-500">*</span>
+        </label>
+        <Popover open={openTeamPopover} onOpenChange={setOpenTeamPopover}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="w-full flex items-center justify-between p-2.5 border border-gray-300 rounded-md bg-white text-left"
+              disabled={!selectedRole}
+            >
+              <span className="text-gray-500">
+                {selectedRole ? 'Select team members...' : 'Please select a role first'}
+              </span>
+              <ChevronDown className="w-5 h-5 text-gray-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0" align="start">
+            <Command>
+              <CommandInput 
+                placeholder="Search team members..." 
+                value={teamSearchValue}
+                onValueChange={setTeamSearchValue}
+              />
+              <CommandEmpty>No team members found.</CommandEmpty>
+              <CommandGroup>
+                <ScrollArea className="h-[200px]">
+                  {filteredTeamMembers.map(member => {
+                    // Check if this team member is already in the project
+                    const isAdded = formData.members.some(
+                      m => m.team_id === member.id
+                    );
+                    
+                    return (
+                      <CommandItem
+                        key={member.id}
+                        value={member.name || member.id.toString()}
+                        onSelect={() => {
+                          if (!isAdded) {
+                            handleTeamMemberSelect(member.id);
+                          }
+                        }}
+                        disabled={isAdded}
+                        className={isAdded ? 'opacity-50' : ''}
+                      >
+                        <div className="flex items-center space-x-2">
+                          {isAdded ? (
+                            <CheckIcon className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <div className="h-4 w-4" />
+                          )}
+                          <span>
+                            {member.name || `Team Member ${member.id}`}
+                            {member.position && ` - ${member.position}`}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </ScrollArea>
+              </CommandGroup>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
+  </div>
+</div>
+        {/* Horizontal line divider */}
+        <hr className="border-t border-gray-200" />
 
-        {/* Team members */}
+        {/* Partners Section */}
         <div className="mb-8 p-6">
           <div className="flex">
             {/* Left column - section title */}
             <div className="w-1/4 pr-8">
-              <h2 className="text-xl font-bold">Team</h2>
-              <p className="text-gray-600 text-sm">Who will be working on this project?</p>
+              <h2 className="text-xl font-bold">Partners</h2>
+              <p className="text-gray-600 text-sm">Organizations partnering on this project</p>
             </div>
             
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="mb-4 flex justify-between items-center">
                 <label className="block text-sm font-medium">
-                  Team Members<span className="text-red-500">*</span>
+                  Project Partners
                 </label>
                 <a 
-                  href="/teams/add-team"
-                  className="text-sm flex items-center text-green-700 hover:text-green-800"
-                >
-                  <UserPlus className="w-4 h-4 mr-1" />
-                  Add New Team Member
-                </a>
+          href="/partners"
+          className="text-sm flex items-center text-green-700 hover:text-green-800"
+        >
+          <UserPlus className="w-4 h-4 mr-1" />
+          Add New Partners
+        </a>
               </div>
               
-              {/* Members list */}
-              {formData.members.length === 0 ? (
-                <p className="text-gray-500 text-sm italic mb-4">No team members added yet.</p>
+              {/* Partners list */}
+              {formData.partners.length === 0 ? (
+                <p className="text-gray-500 text-sm italic mb-4">No partners added yet.</p>
               ) : (
                 <div className="bg-gray-50 rounded-md mb-4">
                   <div className="divide-y divide-gray-200">
-                    {formData.members.map(member => (
-                      <div key={member.user_id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-green-50">
-                        <div className="col-span-6">{getTeamMemberName(member.user_id)}</div>
-                        <div className="col-span-5 text-gray-600">{getRoleNameById(member.role)}</div>
+                    {formData.partners.map(partner => (
+                      <div key={partner.partner_id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-blue-50">
+                        <div className="col-span-11">{getPartnerName(partner.partner_id)}</div>
                         <div className="col-span-1 flex justify-end">
                           <button
                             type="button"
-                            onClick={() => removeMember(member.user_id)}
+                            onClick={() => removePartner(partner.partner_id)}
                             className="text-red-500 hover:text-red-700"
                           >
                             <X className="w-4 h-4" />
@@ -1431,48 +1786,77 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
                 </div>
               )}
               
-              {/* Add member form with MultiSelect */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label className="block text-sm mb-1">Team Member</label>
-                  {/* Replace Command component with a simple dropdown to avoid the CMDK issue */}
-                  <div className="relative">
-                    <select
-                        value={newMember.user_id || ''}
-                        onChange={(e) => setNewMember(prev => ({ ...prev, user_id: e.target.value }))}
-                        className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+              {/* Partner selection with Popover */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-1">
+                  Add Partners
+                </label>
+                <Popover open={openPartnerPopover} onOpenChange={setOpenPartnerPopover}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-between p-2.5 border border-gray-300 rounded-md bg-white text-left"
                     >
-                      <option value="">Select a team member</option>
-                      {filteredTeamMembers && filteredTeamMembers.length > 0 && filteredTeamMembers.map(member => (
-                          <option key={member.id} value={member.id}>
-                            {member.name || `Team Member ${member.id}`}
-                          </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Role<span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="role"
-                      value={newMember.role}
-                      onChange={handleMemberChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
-                    >
-                      <option value="">Select a role</option>
-                      {Array.isArray(roles) && roles.map(role => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
+                      <span className="text-gray-500">Select partners...</span>
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0" align="start">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search partners..." 
+                        value={partnerSearchValue}
+                        onValueChange={setPartnerSearchValue}
+                      />
+                      <CommandEmpty>
+                        <div className="py-6 text-center">
+                          <p className="text-sm text-gray-500 mb-2">No partners found</p>
+                          <button
+                            type="button"
+                            onClick={navigateToAddPartner}
+                            className="text-sm flex items-center justify-center mx-auto text-green-700 hover:text-green-800"
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add New Partner
+                          </button>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup>
+                        <ScrollArea className="h-[200px]">
+                          {partners.map(partner => {
+                            // Check if this partner is already added
+                            const isAdded = formData.partners.some(
+                              p => p.partner_id === partner.id
+                            );
+                            
+                            return (
+                              <CommandItem
+                                key={partner.id}
+                                value={partner.name || partner.id.toString()}
+                                onSelect={() => {
+                                  if (!isAdded) {
+                                    handlePartnerSelect(partner.id);
+                                  }
+                                }}
+                                disabled={isAdded}
+                                className={isAdded ? 'opacity-50' : ''}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  {isAdded ? (
+                                    <CheckIcon className="h-4 w-4 text-green-600" />
+                                  ) : (
+                                    <div className="h-4 w-4" />
+                                  )}
+                                  <span>{partner.name || `Partner ${partner.id}`}</span>
+                                </div>
+                              </CommandItem>
+                            );
+                          })}
+                        </ScrollArea>
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </div>
@@ -1491,6 +1875,116 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
             
             {/* Right column - form fields */}
             <div className="w-3/4">
+              {/* Document upload section */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold mb-4">Project Documents</h3>
+                
+                {/* Documents list */}
+                {formData.documents.length === 0 ? (
+                  <p className="text-gray-500 text-sm italic mb-4">No documents added yet.</p>
+                ) : (
+                  <div className="bg-gray-50 rounded-md mb-4 divide-y divide-gray-200">
+                    {formData.documents.map((doc, index) => (
+                      <div key={index} className="p-3 flex items-center justify-between">
+                        <div className="flex items-center">
+                          <File className="w-5 h-5 text-blue-500 mr-3" />
+                          <div>
+                            <p className="font-medium text-sm">{doc.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {doc.file_size ? formatFileSize(doc.file_size) : 'Unknown size'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeDocument(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Document upload form */}
+                <div className="border border-gray-300 rounded-md p-4">
+                  <h4 className="font-medium text-sm mb-3">Add Document</h4>
+                  
+                  <div className="mb-3">
+                    <label className="block text-sm mb-1">Document Name <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={newDocument.name}
+                      onChange={handleDocumentChange}
+                      placeholder="Enter document name"
+                      className="w-full p-2.5 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm mb-1">File <span className="text-red-500">*</span></label>
+                    <input
+                      type="file"
+                      ref={documentFileInputRef}
+                      onChange={handleDocumentFileChange}
+                      className="hidden"
+                    />
+                    
+                    <div 
+                      onClick={triggerDocumentFileInput}
+                      className="w-full border-2 border-dashed border-gray-300 p-4 rounded-md text-center cursor-pointer hover:bg-gray-50"
+                    >
+                      <FilePlus className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600">Click to select a file</p>
+                      {newDocument.file && (
+                        <p className="mt-2 text-xs text-green-600 font-medium">
+                          {newDocument.file.name} ({formatFileSize(newDocument.file.size)})
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {isUploading && (
+                    <div className="mb-4">
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 text-center">
+                        Uploading: {uploadProgress}%
+                      </div>
+                    </div>
+                  )}
+                  
+                  <button
+                    type="button"
+                    onClick={addDocument}
+                    disabled={!newDocument.file || !newDocument.name || isUploading}
+                    className={`w-full py-2 px-4 rounded-md text-white flex items-center justify-center ${
+                      !newDocument.file || !newDocument.name || isUploading
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Document
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              {/* Media section */}
+              <h3 className="text-lg font-semibold mb-4">Media Content</h3>
+              
               {/* Media source toggle */}
               <div className="flex mb-4 border border-gray-200 rounded-md overflow-hidden">
                 <button
@@ -1881,6 +2375,5 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
       </form>
     </div>
   );
-};
-
+}
 export default AddProjectPage;

@@ -13,8 +13,13 @@ import {
   FileText,
   Image,
   Film,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Eye,
+  Building,
+  Users
 } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 
 // Define TypeScript interfaces for our data structures
@@ -30,6 +35,14 @@ interface Media {
   description?: string;
   thumbnailUrl?: string;
   duration?: number;
+  isExternalUrl?: boolean;
+}
+
+interface Document {
+  id?: string;
+  name: string;
+  file_url: string;
+  file_size: number;
 }
 
 interface Goal {
@@ -48,13 +61,48 @@ interface Outcome {
   description: string;
 }
 
-interface Member {
+interface TeamInfo {
+  id: number;
+  name: string;
+  position?: string;
+  photo_url?: string;
+  bio?: string;
+  email?: string;
+}
+
+interface TeamMember {
   id: number;
   project_id: number;
-  user_id: number;
+  team_id: number;
   role: string;
   start_date: string;
   end_date: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  team?: TeamInfo;
+}
+
+interface PartnerInfo {
+  id: number;
+  name: string;
+  logo?: string;
+  website_url?: string;
+  location?: string;
+}
+
+interface Partner {
+  id: number;
+  project_id: number;
+  partner_id: number;
+  created_at: string;
+  updated_at: string;
+  partner?: PartnerInfo;
+}
+
+interface Category {
+  id: number | string;
+  name: string;
 }
 
 interface Project {
@@ -64,31 +112,72 @@ interface Project {
   status: string;
   start_date: string;
   end_date: string;
-  created_by: number;
+  created_by?: number;
   category_id: number;
   location: string;
   goals: { items: Goal[] };
   outcomes: { items: Outcome[] };
   media: { items: Media[] };
+  documents: Document[];
+  members: TeamMember[];
+  partners: Partner[];
   other_information: string | null;
   created_at: string;
   updated_at: string;
-  members: Member[];
 }
 
-const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
+const ProjectDetailsPage = () => {
+  const params = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Record<number, string>>({});
-  const [users, setUsers] = useState<Record<number, string>>({});
+  const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState('details');
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+
+  // Improved function to handle image URLs with proper fallback
+  const getValidImageSrc = (url: string | undefined): string => {
+    if (!url || url.trim() === '') {
+      return '/images/news/maize.avif'; // Default fallback image
+    }
+    return url;
+  };
 
   // Fetch the project data
   useEffect(() => {
     const fetchProjectData = async () => {
       try {
         setLoading(true);
+        
+        // Fetch categories first
+        try {
+          const categoriesResponse = await apiClient.get('/categories');
+          console.log("Categories response:", categoriesResponse.data);
+          
+          // Handle different response formats
+          if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
+            setCategories(categoriesResponse.data.categories);
+          } else if (Array.isArray(categoriesResponse.data)) {
+            setCategories(categoriesResponse.data);
+          } else {
+            console.log('Using fallback categories structure');
+            const categoriesMap: Record<number, string> = {
+              1: 'Food system',
+              2: 'Climate adaptation',
+              3: 'Data & Evidence'
+            };
+            
+            // Convert to array format expected by the component
+            const categoriesArray = Object.entries(categoriesMap).map(([id, name]) => ({
+              id: Number(id),
+              name
+            }));
+            
+            setCategories(categoriesArray);
+          }
+        } catch (error) {
+          console.error('Error fetching categories:', error);
+        }
 
         // Try to fetch project details from API
         try {
@@ -112,49 +201,6 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
           setError('Failed to fetch project details. Please try again later.');
         }
 
-        // Set fallback categories
-        setCategories({
-          1: 'Food system',
-          2: 'Climate adaptation',
-          3: 'Data & Evidence'
-        });
-
-        // Set fallback users
-        setUsers({
-          1: 'Mukamana Fransine',
-          2: 'John Doe',
-          3: 'Jane Smith',
-          4: 'Mukamana Fransine'
-        });
-
-        // Try to fetch categories from API (optional)
-        try {
-          const categoriesResponse = await apiClient.get('/project-categories');
-          if (categoriesResponse.data && categoriesResponse.data.length > 0) {
-            const categoriesMap: Record<number, string> = {};
-            categoriesResponse.data.forEach((category: { id: number; name: string }) => {
-              categoriesMap[category.id] = category.name;
-            });
-            setCategories(categoriesMap);
-          }
-        } catch (error) {
-          console.log('Using fallback categories');
-        }
-
-        // Try to fetch users from API (optional)
-        try {
-          const usersResponse = await apiClient.get('/users');
-          if (usersResponse.data && usersResponse.data.length > 0) {
-            const usersMap: Record<number, string> = {};
-            usersResponse.data.forEach((user: { id: number; first_name: string; last_name: string }) => {
-              usersMap[user.id] = `${user.first_name} ${user.last_name}`;
-            });
-            setUsers(usersMap);
-          }
-        } catch (error) {
-          console.log('Using fallback users');
-        }
-
       } catch (error) {
         console.error('Error in overall project data fetching:', error);
         setError('Failed to fetch project details. Please try again later.');
@@ -176,32 +222,70 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
     });
   };
 
-  // Get category name from category_id
+  // Get category name from category_id by directly inspecting the categories array
   const getCategoryName = (categoryId: number | undefined) => {
-    if (!categoryId) return 'Unknown';
-    return categories[categoryId] || 'Unknown Category';
+    if (!categoryId) return 'Not specified';
+    
+    // Try to find the category in the array
+    // Use Number conversion to handle any type mismatches
+    if (categories && categories.length > 0) {
+      const category = categories.find(cat => 
+        Number(cat.id) === Number(categoryId)
+      );
+      
+      if (category) {
+        return category.name;
+      }
+    }
+    
+    // If not found in the categories array, try a direct lookup by ID
+    // This can happen if the API returned numbered keys instead of an array
+    if (categories && (categoryId in categories)) {
+      return categories[categoryId].name;
+    }
+    
+    // Return just the ID as fallback
+    return `Category ${categoryId}`;
   };
 
-  // Get user name from user_id
-  const getUserName = (userId: number | undefined) => {
-    if (!userId) return 'Unknown';
-    return users[userId] || 'Unknown User';
+  // Get team member name
+  const getTeamMemberName = (member: TeamMember) => {
+    if (member.team && member.team.name) {
+      return member.team.name;
+    }
+    return `Team Member ${member.team_id}`;
+  };
+
+  // Get partner name
+  const getPartnerName = (partner: Partner) => {
+    if (partner.partner && partner.partner.name) {
+      return partner.partner.name;
+    }
+    return `Partner ${partner.partner_id}`;
+  };
+
+  // Get partner logo
+  const getPartnerLogo = (partner: Partner) => {
+    if (partner.partner && partner.partner.logo) {
+      return partner.partner.logo;
+    }
+    return null;
   };
 
   // Extract team lead from project members
   const getTeamLead = () => {
     if (!project || !project.members || project.members.length === 0) {
       // If no members, use created_by as fallback for lead
-      return getUserName(project?.created_by);
+      return 'Not assigned';
     }
     
     const lead = project.members.find(member => member.role === 'lead');
     if (lead) {
-      // Return user name from our users map if available
-      return getUserName(lead.user_id);
+      // Return team name from the nested team object if available
+      return getTeamMemberName(lead);
     } else {
-      // Fallback to created_by
-      return getUserName(project.created_by);
+      // Fallback to first team member
+      return getTeamMemberName(project.members[0]);
     }
   };
 
@@ -223,9 +307,60 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
 
   // Get file size in readable format
   const formatFileSize = (bytes: number) => {
+    if (!bytes || bytes === 0) return 'Unknown size';
     if (bytes < 1024) return bytes + ' bytes';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  // Get file icon based on filename
+  const getFileIcon = (filename: string) => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    
+    switch (extension) {
+      case 'pdf':
+        return <FileText className="w-6 h-6 text-red-500" />;
+      case 'doc':
+      case 'docx':
+        return <FileText className="w-6 h-6 text-blue-500" />;
+      case 'xls':
+      case 'xlsx':
+        return <FileText className="w-6 h-6 text-green-500" />;
+      case 'ppt':
+      case 'pptx':
+        return <FileText className="w-6 h-6 text-orange-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return <Image className="w-6 h-6 text-purple-500" />;
+      default:
+        return <FileText className="w-6 h-6 text-gray-500" />;
+    }
+  };
+
+  // Open document in new tab
+  const viewDocument = (document: Document) => {
+    setSelectedDocument(document);
+    
+    // Open document in a new tab if it's a common viewable format
+    const url = document.file_url;
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
+
+  // Download document
+  const downloadDocument = (document: Document) => {
+    // Create an anchor element and trigger download
+    if (document.file_url) {
+      const a = document.createElement('a');
+      a.href = document.file_url;
+      a.download = document.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   };
 
   // Render media item
@@ -240,9 +375,13 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
         {media.type === 'image' ? (
           <div className="mb-3">
             <img 
-              src={media.url} 
+              src={getValidImageSrc(media.url)} 
               alt={media.title} 
               className="w-full h-48 object-cover rounded"
+              onError={(e) => {
+                // Fallback to placeholder on error
+                (e.target as HTMLImageElement).src = '/api/placeholder/400/300?text=Image+Not+Available';
+              }}
             />
           </div>
         ) : media.type === 'video' ? (
@@ -269,6 +408,7 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
         <div className="text-sm text-gray-500">
           {media.description && <p className="mb-1">{media.description}</p>}
           <p>Size: {formatFileSize(media.size)}</p>
+          {media.isExternalUrl && <p className="text-xs text-blue-500">External URL</p>}
         </div>
       </div>
     );
@@ -305,6 +445,7 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
 
   // Debug output
   console.log("Current project state:", project);
+  console.log("Categories:", categories);
   
   if (!project) {
     return (
@@ -383,6 +524,20 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
             </li>
             <li className="mb-6">
               <button 
+                onClick={() => setActiveTab('documents')}
+                className={`w-full text-left flex items-start ${activeTab === 'documents' ? 'text-green-700' : 'text-gray-700'}`}
+              >
+                <div className="flex-shrink-0 mt-1">
+                  <div className={`w-3 h-3 rounded-full ${activeTab === 'documents' ? 'bg-green-700' : 'bg-gray-300'}`}></div>
+                </div>
+                <div className="ml-4">
+                  <p className="font-semibold">Documents</p>
+                  <p className="text-sm text-gray-500">Project documentation and files</p>
+                </div>
+              </button>
+            </li>
+            <li className="mb-6">
+              <button 
                 onClick={() => setActiveTab('media')}
                 className={`w-full text-left flex items-start ${activeTab === 'media' ? 'text-green-700' : 'text-gray-700'}`}
               >
@@ -390,8 +545,22 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
                   <div className={`w-3 h-3 rounded-full ${activeTab === 'media' ? 'bg-green-700' : 'bg-gray-300'}`}></div>
                 </div>
                 <div className="ml-4">
-                  <p className="font-semibold">File & Uploads</p>
-                  <p className="text-sm text-gray-500">Project artifacts and file collection</p>
+                  <p className="font-semibold">Media Gallery</p>
+                  <p className="text-sm text-gray-500">Project images and videos</p>
+                </div>
+              </button>
+            </li>
+            <li className="mb-6">
+              <button 
+                onClick={() => setActiveTab('partners')}
+                className={`w-full text-left flex items-start ${activeTab === 'partners' ? 'text-green-700' : 'text-gray-700'}`}
+              >
+                <div className="flex-shrink-0 mt-1">
+                  <div className={`w-3 h-3 rounded-full ${activeTab === 'partners' ? 'bg-green-700' : 'bg-gray-300'}`}></div>
+                </div>
+                <div className="ml-4">
+                  <p className="font-semibold">Partners</p>
+                  <p className="text-sm text-gray-500">Project partner organizations</p>
                 </div>
               </button>
             </li>
@@ -406,219 +575,385 @@ const ProjectDetailsPage = ({ params }: { params: { id: string } }) => {
               {/* Project featured image */}
               <div className="mb-8">
                 {project.media && project.media.items && project.media.items.length > 0 && (
-                  project.media.items.find(item => item.tag === 'feature') ? (
+                  project.media.items.find(item => item.tag === 'feature' || item.cover) ? (
                     <img 
-                      src={project.media.items.find(item => item.tag === 'feature')?.url || '/api/placeholder/800/400'} 
-                      alt={project.name}
-                      className="w-full h-64 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-400">No featured image</p>
-                    </div>
-                  )
-                )}
-              </div>
-                 {/* Description */}
-                 <div className="mb-8">
-                <h2 className="text-xl font-bold mb-4">Project Description</h2>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="whitespace-pre-line">{project.description || 'No description provided.'}</p>
-                </div>
-              </div>
-              {/* Basic info section */}
-              <div className="mb-8">
-                <h2 className="text-xl font-bold mb-4">Basic Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Tag className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Category</span>
-                    </div>
-                    <p className="font-medium">{getCategoryName(project.category_id)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <MapPin className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Location</span>
-                    </div>
-                    <p className="font-medium">{project.location || 'Not specified'}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Calendar className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Start Date</span>
-                    </div>
-                    <p className="font-medium">{formatDate(project.start_date)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Calendar className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">End Date</span>
-                    </div>
-                    <p className="font-medium">{formatDate(project.end_date)}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <User className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Team Lead</span>
-                    </div>
-                    <p className="font-medium">{getTeamLead()}</p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center mb-2">
-                      <Clock className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Created</span>
-                    </div>
-                    <p className="font-medium">{formatDate(project.created_at)}</p>
-                  </div>
-                </div>
-              </div>
-
-           
-
-              {/* Goals */}
-              <div className="mb-8">
-                <h2 className="text-xl font-bold mb-4">Project Goals</h2>
-                {project.goals && project.goals.items && project.goals.items.length > 0 ? (
-                  <div className="space-y-4">
-                    {project.goals.items.map((goal) => (
-                      <div key={goal.id} className="p-4 bg-gray-50 rounded-lg border-l-4 border-green-700">
-                        <div className="flex items-start mb-2">
-                          <div className="mr-2 mt-1">
-                            <CheckCircle className={`w-4 h-4 ${goal.completed ? 'text-green-600' : 'text-gray-400'}`} />
-                          </div>
-                          <h3 className="font-medium">{goal.title}</h3>
-                        </div>
-                        <p className="text-gray-600 ml-6">{goal.description}</p>
-                      </div>
-                    ))}
-                  </div>
+                    src={getValidImageSrc(project.media.items.find(item => item.tag === 'feature' || item.cover)?.url || '/api/placeholder/800/400')} 
+                    alt={project.name}
+                    className="w-full h-64 object-cover rounded-lg"
+                    onError={(e) => {
+                      // Fallback to placeholder on error
+                      (e.target as HTMLImageElement).src = '/api/placeholder/800/400?text=Image+Not+Available';
+                    }}
+                  />
                 ) : (
-                  <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
-                    No goals defined for this project.
+                  <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <p className="text-gray-400">No featured image</p>
                   </div>
-                )}
-              </div>
-
-              {/* Outcomes */}
-              <div className="mb-8">
-                <h2 className="text-xl font-bold mb-4">Project Outcomes</h2>
-                {project.outcomes && project.outcomes.items && project.outcomes.items.length > 0 ? (
-                  <div className="space-y-4">
-                    {project.outcomes.items.map((outcome) => (
-                      <div key={outcome.id} className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-medium">{outcome.title}</h3>
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            outcome.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            outcome.status === 'in-progress' ? 'bg-orange-100 text-orange-800' :
-                            'bg-purple-100 text-purple-800'
-                          }`}>
-                            {outcome.status.charAt(0).toUpperCase() + outcome.status.slice(1)}
-                          </span>
-                        </div>
-                        <p className="text-gray-600">{outcome.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
-                    No outcomes defined for this project.
-                  </div>
-                )}
-              </div>
-
-              {/* Other Information */}
-              {project.other_information && (
-                <div className="mb-8">
-                  <h2 className="text-xl font-bold mb-4">Other Relevant Information</h2>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="whitespace-pre-line">{project.other_information}</p>
-                  </div>
-                </div>
+                )
               )}
             </div>
-          )}
+            
+            {/* Description */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold mb-4">Project Description</h2>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="whitespace-pre-line">{project.description || 'No description provided.'}</p>
+              </div>
+            </div>
+            
+            {/* Basic info section */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold mb-4">Basic Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <Tag className="w-4 h-4 text-gray-500 mr-2" />
+                    <span className="text-sm text-gray-500">Category</span>
+                  </div>
+                  <p className="font-medium">{getCategoryName(project.category_id)}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <MapPin className="w-4 h-4 text-gray-500 mr-2" />
+                    <span className="text-sm text-gray-500">Location</span>
+                  </div>
+                  <p className="font-medium">{project.location || 'Not specified'}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                    <span className="text-sm text-gray-500">Start Date</span>
+                  </div>
+                  <p className="font-medium">{formatDate(project.start_date)}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                    <span className="text-sm text-gray-500">End Date</span>
+                  </div>
+                  <p className="font-medium">{formatDate(project.end_date)}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <User className="w-4 h-4 text-gray-500 mr-2" />
+                    <span className="text-sm text-gray-500">Team Lead</span>
+                  </div>
+                  <p className="font-medium">{getTeamLead()}</p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <Clock className="w-4 h-4 text-gray-500 mr-2" />
+                    <span className="text-sm text-gray-500">Created</span>
+                  </div>
+                  <p className="font-medium">{formatDate(project.created_at)}</p>
+                </div>
+              </div>
+            </div>
 
-          {/* Team tab */}
-          {activeTab === 'team' && (
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h2 className="text-xl font-bold mb-6">Project Team</h2>
-              
-              {project.members && project.members.length > 0 ? (
+            {/* Goals */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold mb-4">Project Goals</h2>
+              {project.goals && project.goals.items && project.goals.items.length > 0 ? (
                 <div className="space-y-4">
-                  {project.members.map((member) => (
-                    <div key={member.id} className="p-4 bg-gray-50 rounded-lg flex items-start">
-                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
-                        <span className="text-green-700 font-bold">
-                          {getUserName(member.user_id).split(' ').map(name => name[0]).join('')}
-                        </span>
+                  {project.goals.items.map((goal) => (
+                    <div key={goal.id} className="p-4 bg-gray-50 rounded-lg border-l-4 border-green-700">
+                      <div className="flex items-start mb-2">
+                        <div className="mr-2 mt-1">
+                          <CheckCircle className={`w-4 h-4 ${goal.completed ? 'text-green-600' : 'text-gray-400'}`} />
+                        </div>
+                        <h3 className="font-medium">{goal.title}</h3>
                       </div>
-                      <div>
-                        <h3 className="font-medium">{getUserName(member.user_id)}</h3>
-                        <p className="text-sm text-gray-500 capitalize mb-1">{member.role}</p>
-                        <p className="text-xs text-gray-400">
-                          Joined: {formatDate(member.start_date)}
-                          {member.end_date && ` • Left: ${formatDate(member.end_date)}`}
-                        </p>
-                      </div>
+                      <p className="text-gray-600 ml-6">{goal.description}</p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
-                  No team members assigned to this project.
+                  No goals defined for this project.
                 </div>
               )}
             </div>
-          )}
 
-          {/* Media tab */}
-          {activeTab === 'media' && (
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h2 className="text-xl font-bold mb-6">Project Media</h2>
-              
-              {project.media && project.media.items && project.media.items.length > 0 ? (
-                <div>
-                  <div className="mb-6">
-                    <h3 className="font-medium text-gray-500 mb-2">Feature Media</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {project.media.items
-                        .filter(item => item.tag === 'feature')
-                        .map(renderMediaItem)}
+            {/* Outcomes */}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold mb-4">Project Outcomes</h2>
+              {project.outcomes && project.outcomes.items && project.outcomes.items.length > 0 ? (
+                <div className="space-y-4">
+                  {project.outcomes.items.map((outcome) => (
+                    <div key={outcome.id} className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-medium">{outcome.title}</h3>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          outcome.status === 'completed' || outcome.status === 'achieved' ? 'bg-green-100 text-green-800' :
+                          outcome.status === 'in-progress' ? 'bg-orange-100 text-orange-800' :
+                          'bg-purple-100 text-purple-800'
+                        }`}>
+                          {outcome.status.charAt(0).toUpperCase() + outcome.status.slice(1)}
+                        </span>
+                      </div>
+                      <p className="text-gray-600">{outcome.description}</p>
                     </div>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <h3 className="font-medium text-gray-500 mb-2">Description Media</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {project.media.items
-                        .filter(item => item.tag === 'description')
-                        .map(renderMediaItem)}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-medium text-gray-500 mb-2">Other Media</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {project.media.items
-                        .filter(item => item.tag === 'others' || !['feature', 'description'].includes(item.tag))
-                        .map(renderMediaItem)}
-                    </div>
-                  </div>
+                  ))}
                 </div>
               ) : (
                 <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
-                  No media files uploaded for this project.
+                  No outcomes defined for this project.
                 </div>
               )}
             </div>
-          )}
-        </div>
+
+            {/* Other Information */}
+            {project.other_information && (
+              <div className="mb-8">
+                <h2 className="text-xl font-bold mb-4">Other Relevant Information</h2>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="whitespace-pre-line">{project.other_information}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Team tab */}
+        {activeTab === 'team' && (
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-bold mb-6">Project Team</h2>
+            
+            {project.members && project.members.length > 0 ? (
+              <div className="space-y-6">
+                {project.members.map((member) => (
+                  <div key={member.id} className="flex items-center gap-3">
+                    {member.team && member.team.photo_url ? (
+                      <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                        <img 
+                          src={getValidImageSrc(member.team.photo_url)}
+                          alt={getTeamMemberName(member)}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `
+                                <div class="w-12 h-12 flex items-center justify-center bg-gray-200 rounded-full dark:bg-gray-700">
+                                  <span class="text-lg font-bold text-gray-700 dark:text-gray-300">
+                                    ${getTeamMemberName(member).charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              `;
+                            }
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 flex items-center justify-center bg-gray-200 rounded-full dark:bg-gray-700 flex-shrink-0">
+                        <span className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                          {getTeamMemberName(member).charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <p className="text-gray-900 dark:text-white font-semibold text-lg">{getTeamMemberName(member)}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
+                No team members assigned to this project.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Documents tab */}
+        {activeTab === 'documents' && (
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-bold mb-6">Project Documents</h2>
+            
+            {project.documents && project.documents.length > 0 ? (
+              <div className="space-y-4">
+                {project.documents.map((document, index) => (
+                  <div key={document.id || index} className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100">
+                    {getFileIcon(document.name)}
+                    <div className="ml-4 flex-grow">
+                      <h3 className="font-medium">{document.name}</h3>
+                      <p className="text-xs text-gray-500">{formatFileSize(document.file_size)}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => viewDocument(document)}
+                        className="p-2 bg-blue-50 text-blue-700 rounded hover:bg-blue-100 flex items-center"
+                        title="View document"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => downloadDocument(document)}
+                        className="p-2 bg-green-50 text-green-700 rounded hover:bg-green-100 flex items-center"
+                        title="Download document"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
+                No documents uploaded for this project.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Partners tab */}
+        {activeTab === 'partners' && (
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-bold mb-6">Project Partners</h2>
+            
+            {project.partners && project.partners.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {project.partners.map((partner) => {
+                  const partnerName = getPartnerName(partner);
+                  const partnerLogo = getPartnerLogo(partner);
+                  const partnerKey = partner.id || `partner-${partner.partner_id}`;
+                  
+                  return (
+                    <div 
+                      key={partnerKey}
+                      className="flex items-center p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div className="w-16 h-16 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                        {partnerLogo ? (
+                          <img 
+                            src={partnerLogo}
+                            alt={partnerName}
+                            className="max-w-full max-h-full object-contain"
+                            onError={(e) => {
+                              // Fallback to icon
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.parentElement!.innerHTML = 
+                                `<div class="flex items-center justify-center w-full h-full">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400">
+                                    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                                    <line x1="9" y1="22" x2="9" y2="16"></line>
+                                    <line x1="15" y1="22" x2="15" y2="16"></line>
+                                  </svg>
+                                </div>`;
+                            }}
+                          />
+                        ) : (
+                          <Building className="w-10 h-10 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="font-medium">{partnerName}</h3>
+                        <p className="text-sm text-gray-600">Partner Organization</p>
+                        {partner.partner?.location && (
+                          <p className="text-xs text-gray-500">{partner.partner.location}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
+                No partner organizations assigned to this project.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Media tab */}
+        {activeTab === 'media' && (
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-bold mb-6">Project Media</h2>
+            
+            {project.media && project.media.items && project.media.items.length > 0 ? (
+              <div>
+                <div className="mb-6">
+                  <h3 className="font-medium text-gray-500 mb-2">Feature Media</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {project.media.items
+                      .filter(item => item.tag === 'feature')
+                      .map(renderMediaItem)}
+                    {project.media.items.filter(item => item.tag === 'feature').length === 0 && (
+                      <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center col-span-full">
+                        No feature media available.
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <h3 className="font-medium text-gray-500 mb-2">Description Media</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {project.media.items
+                      .filter(item => item.tag === 'description')
+                      .map(renderMediaItem)}
+                    {project.media.items.filter(item => item.tag === 'description').length === 0 && (
+                      <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center col-span-full">
+                        No description media available.
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium text-gray-500 mb-2">Other Media</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {project.media.items
+                      .filter(item => item.tag === 'others' || !['feature', 'description'].includes(item.tag))
+                      .map(renderMediaItem)}
+                    {project.media.items.filter(item => item.tag === 'others' || !['feature', 'description'].includes(item.tag)).length === 0 && (
+                      <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center col-span-full">
+                        No other media available.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
+                No media files uploaded for this project.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
-  );
+    
+    {/* Document preview modal */}
+    {selectedDocument && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+          <div className="p-4 flex justify-between items-center border-b">
+            <h3 className="font-bold">{selectedDocument.name}</h3>
+            <button 
+              onClick={() => setSelectedDocument(null)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="p-4 overflow-auto max-h-[calc(90vh-8rem)]">
+            {/* Content preview would go here */}
+            <div className="flex justify-center">
+              <a 
+                href={selectedDocument.file_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 inline-flex items-center"
+              >
+                <Eye className="w-4 h-4 mr-2" /> Open Document in New Tab
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+);
 };
 
 export default ProjectDetailsPage;

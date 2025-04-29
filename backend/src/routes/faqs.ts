@@ -15,7 +15,6 @@ const router: Router = Router();
 // FAQs routes
 router.post(
   "/",
-  authenticate,
   validate(faqValidation.createFaqSchema),
   faqController.createFaq,
 );
@@ -30,14 +29,12 @@ router.get(
 
 router.put(
   "/:id",
-  authenticate,
   validate(faqValidation.updateFaqSchema),
   faqController.updateFaq,
 );
 
 router.delete(
   "/:id",
-  authenticate,
   validate(faqValidation.deleteFaqSchema),
   faqController.deleteFaq,
 );
