@@ -23,6 +23,7 @@
     "@workspace/ui": "workspace:*",
     "axios": "^1.8.4",
     "chart.js": "^4.4.8",
+    "cmdk": "^1.1.1",
     "cross-env": "^7.0.3",
     "date-fns": "^4.1.0",
     "jwt-decode": "^4.0.0",

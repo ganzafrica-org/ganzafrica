@@ -133,6 +133,53 @@ export const updateEmploymentSchema = z.object({
     employment_details: employmentDetailsSchema.partial().optional()
   }))
 });
+// GanzAfrica Application Schema - with all required fields for GENERAL applications
+export const generalApplicationSchema = z.object({
+  body: z.object({
+    // Personal Information
+    first_name: z.string().min(2, 'First name must be at least 2 characters long'),
+    last_name: z.string().min(2, 'Last name must be at least 2 characters long'),
+    email: z.string().email('Invalid email format'),
+    phone: z.string().min(6, 'Phone number must be at least 6 characters long'),
+    national_id: z.string().min(3, 'National ID must be at least 3 characters long'),
+    city: z.string().min(2, 'City must be at least 2 characters long'),
+    country: z.string().min(2, 'Country must be at least 2 characters long'),
+    
+    // Education & Experience
+    education_level: z.enum([
+      'high_school', 
+      'associate_degree', 
+      'bachelors_degree', 
+      'masters_degree', 
+      'doctorate', 
+      'professional_certification', 
+      'other'
+    ]),
+    field_of_study: z.string().min(2, 'Field of study must be at least 2 characters long'),
+    career_experience: z.string().min(10, 'Career experience must be at least 10 characters long'),
+    cv_url: z.string().min(5, 'CV upload is required'),
+    supporting_docs_url: z.string().optional(),
+    
+    // Vision & Motivation
+    motivation: z.string().min(10, 'Motivation must be at least 10 characters long'),
+    five_year_vision: z.string().min(10, 'Five-year vision must be at least 10 characters long'),
+    
+    // Community Impact
+    desired_impact: z.string().min(10, 'Desired impact must be at least 10 characters long'),
+    community_role: z.string().min(10, 'Community role must be at least 10 characters long'),
+    national_strategy: z.string().min(10, 'National strategy contribution must be at least 10 characters long'),
+    
+    // Programme Relevance
+    how_ganzafrica_can_help: z.string().min(10, 'This field must be at least 10 characters long'),
+    contribution_to_ganzafrica: z.string().min(10, 'This field must be at least 10 characters long'),
+    data_processing_consent: z.boolean().refine(val => val === true, {
+      message: 'You must consent to data processing to submit your application'
+    }),
+    
+    // Optional fields for opportunity-specific applications
+    user_id: z.number().optional(),
+  })
+});
 
 // Schema for application submission
 export const applicationSubmissionSchema = z.object({
@@ -202,6 +249,7 @@ export const opportunityValidation = {
   updateFellowshipSchema,
   updateEmploymentSchema,
   applicationSubmissionSchema,
+  generalApplicationSchema,
   updateApplicationStatusSchema,
   applicationReviewSchema
 };
