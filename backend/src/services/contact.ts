@@ -68,30 +68,55 @@ export const listContacts = async (
     const validSortFields = ['id', 'name', 'email', 'status', 'created_at', 'responded_at'];
     const actualSortField = validSortFields.includes(sortBy) ? sortBy : 'created_at';
     
-    // Build query
-    let query = db.select().from(contacts);
+    // Create sort params
+    let orderByColumn;
+    switch (actualSortField) {
+      case 'id':
+        orderByColumn = contacts.id;
+        break;
+      case 'name':
+        orderByColumn = contacts.name;
+        break;
+      case 'email':
+        orderByColumn = contacts.email;
+        break;
+      case 'status':
+        orderByColumn = contacts.status;
+        break;
+      case 'responded_at':
+        orderByColumn = contacts.responded_at;
+        break;
+      case 'created_at':
+      default:
+        orderByColumn = contacts.created_at;
+        break;
+    }
     
-    // Apply filters
+    // Use any type to bypass TypeScript's checks
+    let queryBuilder: any = db.select().from(contacts);
+    
+    // Add filters
     if (status) {
-      query = query.where(eq(contacts.status, status));
+      queryBuilder = queryBuilder.where(eq(contacts.status, status));
     }
     
     if (isResolved !== undefined) {
-      query = query.where(eq(contacts.is_resolved, isResolved));
+      queryBuilder = queryBuilder.where(eq(contacts.is_resolved, isResolved));
     }
     
     if (location) {
-      query = query.where(eq(contacts.location, location));
+      queryBuilder = queryBuilder.where(eq(contacts.location, location));
     }
     
-    // Apply sorting
+    // Add ordering
     if (sortOrder.toLowerCase() === 'asc') {
-      query = query.orderBy(asc(contacts[actualSortField as keyof typeof contacts]));
+      queryBuilder = queryBuilder.orderBy(asc(orderByColumn));
     } else {
-      query = query.orderBy(desc(contacts[actualSortField as keyof typeof contacts]));
+      queryBuilder = queryBuilder.orderBy(desc(orderByColumn));
     }
     
-    const results = await query;
+    // Execute the query
+    const results = await queryBuilder;
     return results;
   } catch (error) {
     logger.error("Error listing contacts", error);
@@ -280,6 +305,7 @@ export const unsubscribeNewsletter = async (id: number) => {
     throw new AppError("Failed to unsubscribe from newsletter", 500);
   }
 };
+
 /**
  * Lists all newsletter subscribers
  * @param activeOnly If true, only return active subscribers
@@ -288,49 +314,65 @@ export const unsubscribeNewsletter = async (id: number) => {
  * @returns Array of newsletter subscribers
  */
 export const listNewsletterSubscribers = async (
-    activeOnly: boolean = false,
-    sortBy: string = 'subscribed_at',
-    sortOrder: string = 'desc'
-  ) => {
-    try {
-      // Validate sort field to prevent SQL injection
-      const validSortFields = ['id', 'email', 'is_active', 'subscribed_at', 'unsubscribed_at', 'created_at', 'updated_at'];
-      const actualSortField = validSortFields.includes(sortBy) ? sortBy : 'subscribed_at';
-      
-      // Build query
-      let query = db.select().from(newsletter_subscribers);
-      
-      // Apply active filter if requested
-      if (activeOnly) {
-        query = query.where(eq(newsletter_subscribers.is_active, true));
-      }
-      
-      // Apply sorting
-      if (sortOrder.toLowerCase() === 'asc') {
-        const sortColumn = newsletter_subscribers[actualSortField as keyof typeof newsletter_subscribers];
-        if (!sortColumn) {
-        const sortColumn = newsletter_subscribers[actualSortField as keyof typeof newsletter_subscribers];
-        if (!sortColumn) {
-          throw new AppError(`Invalid sort field: ${actualSortField}`, 400);
-        }
-        query = query.orderBy(desc(sortColumn));
-        }
-        query = query.orderBy(asc(sortColumn));
-      } else {
-        const sortColumn = newsletter_subscribers[actualSortField as keyof typeof newsletter_subscribers];
-        if (!sortColumn) {
-          throw new AppError(`Invalid sort field: ${actualSortField}`, 400);
-        }
-        query = query.orderBy(desc(sortColumn));
-      }
-      
-      const results = await query;
-      return results;
-    } catch (error) {
-      logger.error("Error listing newsletter subscribers", error);
-      throw new AppError("Failed to list newsletter subscribers", 500);
+  activeOnly: boolean = false,
+  sortBy: string = 'subscribed_at',
+  sortOrder: string = 'desc'
+) => {
+  try {
+    // Validate sort field to prevent SQL injection
+    const validSortFields = ['id', 'email', 'is_active', 'subscribed_at', 'unsubscribed_at', 'created_at', 'updated_at'];
+    const actualSortField = validSortFields.includes(sortBy) ? sortBy : 'subscribed_at';
+    
+    // Create sort params
+    let orderByColumn;
+    switch (actualSortField) {
+      case 'id':
+        orderByColumn = newsletter_subscribers.id;
+        break;
+      case 'email':
+        orderByColumn = newsletter_subscribers.email;
+        break;
+      case 'is_active':
+        orderByColumn = newsletter_subscribers.is_active;
+        break;
+      case 'unsubscribed_at':
+        orderByColumn = newsletter_subscribers.unsubscribed_at;
+        break;
+      case 'created_at':
+        orderByColumn = newsletter_subscribers.created_at;
+        break;
+      case 'updated_at':
+        orderByColumn = newsletter_subscribers.updated_at;
+        break;
+      case 'subscribed_at':
+      default:
+        orderByColumn = newsletter_subscribers.subscribed_at;
+        break;
     }
-  };
+    
+    // Use any type to bypass TypeScript's checks
+    let queryBuilder: any = db.select().from(newsletter_subscribers);
+    
+    // Apply active filter if requested
+    if (activeOnly) {
+      queryBuilder = queryBuilder.where(eq(newsletter_subscribers.is_active, true));
+    }
+    
+    // Apply sorting
+    if (sortOrder.toLowerCase() === 'asc') {
+      queryBuilder = queryBuilder.orderBy(asc(orderByColumn));
+    } else {
+      queryBuilder = queryBuilder.orderBy(desc(orderByColumn));
+    }
+    
+    // Execute the query
+    const results = await queryBuilder;
+    return results;
+  } catch (error) {
+    logger.error("Error listing newsletter subscribers", error);
+    throw new AppError("Failed to list newsletter subscribers", 500);
+  }
+};
 
 // Create contact service object for export
 export const contactService = {

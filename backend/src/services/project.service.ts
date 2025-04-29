@@ -251,6 +251,95 @@ type ProjectSearchParams = {
   partner_id?: number;
 };
 
+// Define types for database results
+type MembershipResultItem = {
+  membership: {
+    id: number;
+    project_id: number;
+    team_id: number;
+    role: string;
+    start_date: Date;
+    end_date: Date | null;
+    is_active: boolean;
+    created_at: Date;
+    updated_at: Date;
+  };
+  team: {
+    id: number;
+    name: string;
+    position: string | null;
+    photo_url: string | null;
+    bio: string | null;
+    email: string | null;
+  } | null;
+};
+
+type PartnershipResultItem = {
+  partnership: {
+    id: number;
+    project_id: number;
+    partner_id: number;
+    created_at: Date;
+    updated_at: Date;
+  };
+  partner: {
+    id: number;
+    name: string;
+    logo: string | null;
+    website_url: string | null;
+    location: string | null;
+  } | null;
+};
+
+interface TeamDetails {
+  id: number;
+  name: string;
+  position?: string | null;
+  photo_url?: string | null;
+  bio?: string | null;
+  email?: string | null;
+}
+
+interface ProjectMemberDetails {
+  id: number;
+  project_id: number;
+  team_id: number;
+  role: string;
+  start_date: Date;
+  end_date?: Date | null;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+  team?: TeamDetails;
+}
+
+interface PartnerDetails {
+  id: number;
+  name: string;
+  logo?: string | null;
+  website_url?: string | null;
+  location?: string | null;
+}
+
+interface ProjectPartnerDetails {
+  id: number;
+  project_id: number;
+  partner_id: number;
+  created_at: Date;
+  updated_at: Date;
+  partner?: PartnerDetails;
+}
+
+interface ProjectDocumentDetails {
+  id: number;
+  project_id: number;
+  name: string;
+  file_url: string;
+  file_size?: number | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 // In projectService.ts, modify the createProject function:
 
 export async function createProject(
@@ -350,73 +439,7 @@ export async function createProject(
         .leftJoin(teams, eq(project_members.team_id, teams.id))
         .where(eq(project_members.project_id, projectId));
 
-      interface TeamDetails {
-        id: number;
-        name: string;
-        position?: string | null;
-        photo_url?: string | null;
-        bio?: string | null;
-        email?: string | null;
-      }
-
-      interface ProjectMemberDetails {
-        id: number;
-        project_id: number;
-        team_id: number;
-        role: string;
-        start_date: Date;
-        end_date?: Date | null;
-        is_active: boolean;
-        created_at: Date;
-        updated_at: Date;
-        team?: TeamDetails;
-      }
-
-      interface TeamDetails {
-        id: number;
-        name: string;
-        position?: string | null;
-        photo_url?: string | null;
-        bio?: string | null;
-        email?: string | null;
-      }
-
-      interface ProjectMemberDetails {
-        id: number;
-        project_id: number;
-        team_id: number;
-        role: string;
-        start_date: Date;
-        end_date?: Date | null;
-        is_active: boolean;
-        created_at: Date;
-        updated_at: Date;
-        team?: TeamDetails;
-      }
-
-      interface TeamDetails {
-        id: number;
-        name: string;
-        position?: string | null;
-        photo_url?: string | null;
-        bio?: string | null;
-        email?: string | null;
-      }
-
-      interface ProjectMemberDetails {
-        id: number;
-        project_id: number;
-        team_id: number;
-        role: string;
-        start_date: Date;
-        end_date?: Date | null;
-        is_active: boolean;
-        created_at: Date;
-        updated_at: Date;
-        team?: TeamDetails;
-      }
-
-      const projectMembers: ProjectMemberDetails[] = membersResult.map((item): ProjectMemberDetails => ({
+      const projectMembers: ProjectMemberDetails[] = membersResult.map((item: MembershipResultItem): ProjectMemberDetails => ({
         id: item.membership.id,
         project_id: item.membership.project_id,
         team_id: item.membership.team_id,
@@ -448,58 +471,7 @@ export async function createProject(
         .leftJoin(partners, eq(project_partners.partner_id, partners.id))
         .where(eq(project_partners.project_id, projectId));
 
-      interface PartnerDetails {
-        id: number;
-        name: string;
-        logo?: string | null;
-        website_url?: string | null;
-        location?: string | null;
-      }
-
-      interface ProjectPartnerDetails {
-        id: number;
-        project_id: number;
-        partner_id: number;
-        created_at: Date;
-        updated_at: Date;
-        partner?: PartnerDetails;
-      }
-
-      interface PartnerDetails {
-        id: number;
-        name: string;
-        logo?: string | null;
-        website_url?: string | null;
-        location?: string | null;
-      }
-
-      interface ProjectPartnerDetails {
-        id: number;
-        project_id: number;
-        partner_id: number;
-        created_at: Date;
-        updated_at: Date;
-        partner?: PartnerDetails;
-      }
-
-      interface PartnerDetails {
-        id: number;
-        name: string;
-        logo?: string | null;
-        website_url?: string | null;
-        location?: string | null;
-      }
-
-      interface ProjectPartnerDetails {
-        id: number;
-        project_id: number;
-        partner_id: number;
-        created_at: Date;
-        updated_at: Date;
-        partner?: PartnerDetails;
-      }
-
-      const projectPartners: ProjectPartnerDetails[] = partnersResult.map((item): ProjectPartnerDetails => ({
+      const projectPartners: ProjectPartnerDetails[] = partnersResult.map((item: PartnershipResultItem): ProjectPartnerDetails => ({
         id: item.partnership.id,
         project_id: item.partnership.project_id,
         partner_id: item.partnership.partner_id,
@@ -522,7 +494,7 @@ export async function createProject(
         .from(project_documents)
         .where(eq(project_documents.project_id, projectId));
 
-      interface ProjectDocumentDetails {
+      const projectDocuments: ProjectDocumentDetails[] = documents.map((doc: {
         id: number;
         project_id: number;
         name: string;
@@ -530,29 +502,7 @@ export async function createProject(
         file_size?: number | null;
         created_at: Date;
         updated_at: Date;
-      }
-
-      interface ProjectDocumentDetails {
-        id: number;
-        project_id: number;
-        name: string;
-        file_url: string;
-        file_size?: number | null;
-        created_at: Date;
-        updated_at: Date;
-      }
-
-      interface ProjectDocumentDetails {
-        id: number;
-        project_id: number;
-        name: string;
-        file_url: string;
-        file_size?: number | null;
-        created_at: Date;
-        updated_at: Date;
-      }
-
-      const projectDocuments: ProjectDocumentDetails[] = documents.map((doc): ProjectDocumentDetails => ({
+      }): ProjectDocumentDetails => ({
         id: doc.id,
         project_id: doc.project_id,
         name: doc.name,
