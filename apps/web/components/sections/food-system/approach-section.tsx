@@ -45,7 +45,7 @@ const imageVariantRight = {
 
 const ApproachSection = () => {
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="pt-16 pb-0 bg-gray-50">
       <Container>
         <div className="flex flex-col md:flex-row items-stretch justify-between gap-8 max-w-7xl mx-auto">
           {/* Left image - hidden on small and medium devices */}
@@ -98,21 +98,30 @@ const ApproachSection = () => {
                 Checkout our projects
               </motion.button>
             </Link>
+            <Link href={`/${"locale"}/projects`}>
+              <motion.button
+                className="bg-primary-orange hover:bg-yellow-500 text-white px-6 py-3 rounded-md font-medium transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Checkout our projects
+              </motion.button>
+            </Link>
           </motion.div>
 
-          {/* Right image - shorter on mobile */}
+          {/* Right image - now 50% width */}
           <motion.div
-            className="w-full md:w-1/2 lg:w-1/4"
+            className="w-full lg:w-1/2"
             variants={imageVariantRight}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
           >
-            <div className="relative h-[300px] md:h-full">
-              {/* This creates the transparent overlay with big rounded white borders */}
+            <div className="relative h-full">
               <div className="absolute inset-2.5 rounded-[20px] border-4 border-white z-10"></div>
               <div className="relative overflow-hidden h-[400px]">
                 <Image
+                  src="/images/harvest2.png"
                   src="/images/harvest2.png"
                   alt="Food in hands"
                   width={300}

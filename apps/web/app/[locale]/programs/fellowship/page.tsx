@@ -14,6 +14,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { useParams } from 'next/navigation';
+import { AudioMutedIcon, AudioUnmutedIcon, FullscreenIcon } from "@/components/ui/icons";
 
 // Define the type for opportunities
 type Opportunity = {
@@ -71,12 +72,12 @@ const benefits = [
   {
     title: "Tackle Challenges",
     description: "Join a like-minded cohort to address major land, agricultural, and environmental challenges in Africa, making a meaningful impact in your community.",
-    image: "/images/food-system.jpeg"
+    image: "/images/SHIR5142-Enhanced-NR.jpg"
   },
   {
     title: "Gain Global Experience",
     description: "Work on transformative projects with world-class industry specialists, be mentored by experts, and participate in the co-creation of innovative solutions in our focus areas.",
-    image: "/images/climate-adaptation.jpg"
+    image: "/images/Mico(Trainer).jpeg"
   },
   {
     title: "Develop Your Skills",
@@ -131,7 +132,8 @@ export default function FellowshipPage() {
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const topicsRef = useRef<HTMLDivElement>(null);
   const [featuredOpportunity, setFeaturedOpportunity] = useState<Opportunity | null>(null);
-
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
 
   const nextTestimonial = () => {
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
@@ -166,6 +168,24 @@ export default function FellowshipPage() {
 
     return () => clearInterval(slideInterval);
   }, []);
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !videoRef.current.muted;
+      setIsMuted(!isMuted);
+    }
+  };
+  
+  const toggleFullScreen = () => {
+    if (videoRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        videoRef.current.requestFullscreen();
+      }
+    }
+  };
+
   return (
       <div className="min-h-screen bg-white font-sans">
         <Header locale={locale} dict={dict} />
@@ -243,7 +263,7 @@ export default function FellowshipPage() {
                   className="order-2 md:order-1"
               >
                 <img
-                    src="/images/food-system-1.png"
+                    src="/images/SHIR5142-Enhanced-NR.jpg"
                     alt="Food System"
                     className="rounded-lg w-full h-[500px] object-cover"
                 />
@@ -265,11 +285,14 @@ export default function FellowshipPage() {
                 <p className="text-gray-600 text-sm md:text-base mb-8">
                   Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
                 </p>
-
                 <Link href={`/${locale}/about/team`}>
-                  <Button className="bg-primary-orange hover:bg-primary-orange text-black font-medium px-8 py-3 text-lg rounded-lg">
+                  <motion.button
+                    className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     Meet the Fellows
-                  </Button>
+                  </motion.button>
                 </Link>
               </motion.div>
             </div>
@@ -316,14 +339,32 @@ export default function FellowshipPage() {
                   className="w-full md:w-[60%] mb-8 md:mb-0"
               >
                 <div className="relative">
-                  <img
-                      src="/images/team-group-photo.jpg"
-                      alt="Fellowship team"
-                      className="w-full h-[300px] sm:h-[400px] md:h-[500px] object-cover rounded-lg"
-                  />
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FDB022] flex items-center justify-center cursor-pointer hover:bg-[#FDB022]/90 transition-colors">
-                      <Play fill="white" className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" />
+                  <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-lg overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      className="w-full h-full object-cover"
+                      src="/videos/farmer1.mp4"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                    />
+                    {/* Video Controls */}
+                    <div className="absolute bottom-4 right-4 flex space-x-3">
+                      <button 
+                        onClick={toggleMute}
+                        className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
+                        aria-label={isMuted ? "Unmute video" : "Mute video"}
+                      >
+                        {isMuted ? <AudioMutedIcon /> : <AudioUnmutedIcon />}
+                      </button>
+                      <button 
+                        onClick={toggleFullScreen}
+                        className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
+                        aria-label="View in full screen"
+                      >
+                        <FullscreenIcon />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -346,9 +387,13 @@ export default function FellowshipPage() {
                 </p>
                 
                 <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
-                  <Button className="w-full sm:w-auto bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg rounded-lg">
+                  <motion.button
+                    className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white px-6 py-3 rounded-md font-medium transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
                     How to Apply
-                  </Button>
+                  </motion.button>
                 </Link>
               </motion.div>
             </div>
@@ -421,7 +466,7 @@ export default function FellowshipPage() {
                 <div className="p-3">
                   <div className="rounded-xl overflow-hidden relative h-[600px]">
                     <Image
-                        src="/images/food-system-1.png"
+                        src="/images/ganzafrica-fellows.jpg"
                         alt="Develop Your Skills"
                         width={800}
                         height={600}

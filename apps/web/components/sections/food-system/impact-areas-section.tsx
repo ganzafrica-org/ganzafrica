@@ -44,19 +44,23 @@ const titleVariants = {
 
 // Card component for impact areas
 const Card = ({
+const Card = ({
   title,
   description,
   image,
+  className = ""
   className = ""
 }: {
   title: string;
   description: string;
   image: string;
   className?: string;
+  className?: string;
 }) => {
   return (
     <motion.div
       variants={itemVariants}
+      className={`group relative overflow-hidden rounded-2xl ${className}`}
       className={`group relative overflow-hidden rounded-2xl ${className}`}
     >
       <Image
@@ -70,7 +74,31 @@ const Card = ({
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 group-hover:opacity-0 transition-opacity duration-300">
         <div className="absolute bottom-0 left-0 right-0 p-6">
           <h3 className="text-2xl font-bold text-white">{title}</h3>
+      <Image
+        src={image}
+        alt={title}
+        width={500}
+        height={300}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+      {/* Base overlay with gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70 group-hover:opacity-0 transition-opacity duration-300">
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <h3 className="text-2xl font-bold text-white">{title}</h3>
         </div>
+      </div>
+      
+      {/* Hover state content */}
+      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300">
+        <div className="absolute bottom-0 left-0 right-0 p-6 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+          <p className="text-white text-base mb-4">{description}</p>
+          <motion.button
+            className="w-10 h-10 rounded-full bg-primary-green flex items-center justify-center cursor-pointer hover:bg-primary-green/90 transition-colors"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ArrowRight className="w-5 h-5 text-white" />
+          </motion.button>
       </div>
       
       {/* Hover state content */}
