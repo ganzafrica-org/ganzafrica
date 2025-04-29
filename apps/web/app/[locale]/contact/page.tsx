@@ -2,7 +2,6 @@ import React from "react";
 import { getDictionary } from "@/lib/get-dictionary";
 import ContactUsContent from "@/components/ContactUsContent";
 
-
 // This function will run server-side because it's inside a Server Component
 type Params = Promise<{ locale: string }>;
 

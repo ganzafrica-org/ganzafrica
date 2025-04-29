@@ -293,80 +293,128 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 <div className="p-6">
                                     {activeTab === 'rwanda' && (
                                         <div className="space-y-4">
-                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
-                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                            <Phone className="h-5 w-5 text-[#005c3d]" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-600">(250) 799 390 199</p>
-                                                            <p className="text-xs text-gray-500">Mon-Fri, 8:00 AM - 5:00 PM</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center space-x-3 pl-4">
-                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                            <Mail className="h-5 w-5 text-[#005c3d]" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-600">info@ganzafrica.org</p>
-                                                            <p className="text-xs text-gray-500">Response within 24 hours</p>
-                                                        </div>
-                                                    </div>
+                                            {/* Contact Information */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                              {/* Phone Section */}
+                                              <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex items-start space-x-3">
+                                                  <div className="flex-shrink-0">
+                                                    <Phone className="w-5 h-5 text-[#045F3C]" />
+                                                  </div>
+                                                  <div>
+                                                    <h3 className="text-base font-semibold mb-1">Phone</h3>
+                                                    <a href="tel:+250799390199" className="text-sm text-gray-600 hover:text-[#045F3C] transition-colors block">
+                                                      (250) 799 390 199
+                                                    </a>
+                                                    <p className="text-xs text-gray-500">
+                                                      Mon-Fri, 8:00 AM - 5:00 PM
+                                                    </p>
+                                                  </div>
                                                 </div>
-                                            </div>
+                                              </div>
 
-                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                        <MapPin className="h-5 w-5 text-[#005c3d]" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-gray-600">27 House, KG 594 St</p>
-                                                        <p className="text-gray-600">Kigali, Rwanda</p>
-                                                        <p className="text-xs text-gray-500">East Africa Regional Hub</p>
-                                                    </div>
+                                              {/* Email Section */}
+                                              <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex items-start space-x-3">
+                                                  <div className="flex-shrink-0">
+                                                    <Mail className="w-5 h-5 text-[#045F3C]" />
+                                                  </div>
+                                                  <div>
+                                                    <h3 className="text-base font-semibold mb-1">Email</h3>
+                                                    <a href="mailto:info@ganzafrica.org" className="text-sm text-gray-600 hover:text-[#045F3C] transition-colors block">
+                                                      info@ganzafrica.org
+                                                    </a>
+                                                    <p className="text-xs text-gray-500">
+                                                      Response within 24 hours
+                                                    </p>
+                                                  </div>
                                                 </div>
+                                              </div>
+
+                                              {/* Address Section */}
+                                              <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex items-start space-x-3">
+                                                  <div className="flex-shrink-0">
+                                                    <MapPin className="w-5 h-5 text-[#045F3C]" />
+                                                  </div>
+                                                  <div>
+                                                    <h3 className="text-base font-semibold mb-1">Address</h3>
+                                                    <p className="text-sm text-gray-600">
+                                                      27 House, KG 594 St
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                      Kigali, Rwanda
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                      East Africa Regional Hub
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              </div>
                                             </div>
                                         </div>
                                     )}
 
                                     {activeTab === 'burkina' && (
                                         <div className="space-y-4">
-                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
-                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                            <Phone className="h-5 w-5 text-[#005c3d]" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-600">Coming Soon</p>
-                                                            <p className="text-xs text-gray-500">Mon-Fri, 8:00 AM - 5:00 PM</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center space-x-3 pl-4">
-                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                            <Mail className="h-5 w-5 text-[#005c3d]" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-600">info@ganzafrica.org</p>
-                                                            <p className="text-xs text-gray-500">Response within 24 hours</p>
-                                                        </div>
-                                                    </div>
+                                            {/* Contact Information */}
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                              {/* Phone Section */}
+                                              <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex items-start space-x-3">
+                                                  <div className="flex-shrink-0">
+                                                    <Phone className="w-5 h-5 text-[#045F3C]" />
+                                                  </div>
+                                                  <div>
+                                                    <h3 className="text-base font-semibold mb-1">Phone</h3>
+                                                    <p className="text-sm text-gray-600">
+                                                      Coming Soon
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                      Mon-Fri, 8:00 AM - 5:00 PM
+                                                    </p>
+                                                  </div>
                                                 </div>
-                                            </div>
+                                              </div>
 
-                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                        <MapPin className="h-5 w-5 text-[#005c3d]" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-gray-600">Ouagadougou</p>
-                                                        <p className="text-gray-600">Burkina Faso</p>
-                                                        <p className="text-xs text-gray-500">West Africa Regional Hub</p>
-                                                    </div>
+                                              {/* Email Section */}
+                                              <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex items-start space-x-3">
+                                                  <div className="flex-shrink-0">
+                                                    <Mail className="w-5 h-5 text-[#045F3C]" />
+                                                  </div>
+                                                  <div>
+                                                    <h3 className="text-base font-semibold mb-1">Email</h3>
+                                                    <a href="mailto:info@ganzafrica.org" className="text-sm text-gray-600 hover:text-[#045F3C] transition-colors block">
+                                                      info@ganzafrica.org
+                                                    </a>
+                                                    <p className="text-xs text-gray-500">
+                                                      Response within 24 hours
+                                                    </p>
+                                                  </div>
                                                 </div>
+                                              </div>
+
+                                              {/* Address Section */}
+                                              <div className="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                                                <div className="flex items-start space-x-3">
+                                                  <div className="flex-shrink-0">
+                                                    <MapPin className="w-5 h-5 text-[#045F3C]" />
+                                                  </div>
+                                                  <div>
+                                                    <h3 className="text-base font-semibold mb-1">Address</h3>
+                                                    <p className="text-sm text-gray-600">
+                                                      Ouagadougou
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                      Burkina Faso
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                      West Africa Regional Hub
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              </div>
                                             </div>
                                         </div>
                                     )}

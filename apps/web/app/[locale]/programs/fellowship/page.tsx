@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, ArrowRight, Play, Circle, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, Circle, Check, Pause, Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { Container } from "@/components/container";
@@ -24,23 +24,92 @@ type Opportunity = {
 
 // Interface for the testimonial data from the API
 interface Testimonial {
-    id: number;
-    author_name: string;
-    position: string;
-    image: string;
-    description: string;
-    company: string;
-    occupation: string;
-    date: string;
-    rating: number;
-    created_at: string;
-    updated_at: string;
+  id: number;
+  author_name: string;
+  position: string;
+  image: string;
+  description: string;
+  company: string;
+  occupation: string;
+  date: string;
+  rating: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Interface for the API response
 interface TestimonialsResponse {
-    testimonials: Testimonial[];
+  testimonials: Testimonial[];
 }
+
+// Fallback testimonials in case of API failure
+const fallbackTestimonials: Testimonial[] = [
+  {
+    id: 1,
+    author_name: "Claude Mugabe",
+    position: "Former Smart Water Management Fellow",
+    description: "I have found immense value in my role as a Smart Water fellow at GanzAfrica... a pivotal aspect of my journey has been participating in the MINAGRI team where collaboration with fellows from diverse backgrounds was key. I am confident that the lessons learned at GanzAfrica will contribute significantly",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    author_name: "Sarah Kimani",
+    position: "Agrifood Systems Fellow",
+    description: "The GanzAfrica fellowship transformed my career in agricultural innovation. Working alongside experienced mentors and a community of passionate professionals gave me the skills and network to make a real difference in my community.",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 3,
+    author_name: "John Mwangi",
+    position: "Climate Change Fellow",
+    description: "Being part of the GanzAfrica fellowship opened doors to incredible opportunities in climate action. The hands-on experience and mentorship I received helped me develop innovative solutions for sustainable agriculture.",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 4,
+    author_name: "Grace Mutua",
+    position: "Data & Evidence Fellow",
+    description: "The fellowship program at GanzAfrica equipped me with crucial skills in data analysis and evidence-based decision making. The collaborative environment and expert guidance helped me grow both professionally and personally.",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 5,
+    author_name: "David Okello",
+    position: "Natural Resource Management Fellow",
+    description: "Through the GanzAfrica fellowship, I gained practical experience in sustainable resource management. The program's focus on real-world challenges and innovative solutions has been invaluable for my career development.",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+];
 
 const benefits = [
   {
@@ -109,14 +178,13 @@ export default function FellowshipPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const nextTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-  };
-
-  const prevTestimonial = () => {
-    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-  };
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const extendedTopics = [...topics, ...topics];
@@ -135,15 +203,6 @@ export default function FellowshipPage() {
     return () => clearInterval(scrollAnimation);
   }, []);
 
-  useEffect(() => {
-    // Auto slide testimonials every 5 seconds
-    const slideInterval = setInterval(() => {
-      nextTestimonial();
-    }, 5000);
-
-    return () => clearInterval(slideInterval);
-  }, []);
-
   // Fetch testimonials from the API
   useEffect(() => {
     const fetchTestimonials = async () => {
@@ -156,27 +215,99 @@ export default function FellowshipPage() {
         console.error('Error fetching testimonials:', err);
         setError('Failed to load testimonials');
         // Set fallback testimonials in case of error
-        setTestimonials([
-          {
-            id: 1,
-            author_name: "Marie Claire Uwamahoro",
-            position: "Sustainable Agriculture Fellow",
-            description: "The GanzAfrica fellowship has been transformative for my career in sustainable agriculture. The hands-on experience and mentorship I received helped me develop innovative solutions for sustainable farming practices in Rwanda.",
-            image: "/images/fellows/marie-claire.jpg",
-            company: "GA",
-            occupation: "fellow",
-            date: new Date().toISOString(),
-            rating: 5,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }
-        ]);
+        setTestimonials(fallbackTestimonials);
       } finally {
         setLoading(false);
       }
     };
 
     fetchTestimonials();
+  }, []);
+
+  // Start automatic rotation when testimonials are loaded
+  useEffect(() => {
+    if (testimonials.length === 0) return;
+
+    const startInterval = () => {
+      // Clear any existing interval first
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      intervalRef.current = setInterval(() => {
+        setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
+      }, 5000); // Change every 5 seconds
+    };
+
+    startInterval();
+
+    // Clear interval on component unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [testimonials.length]);
+
+  // Reset interval when manually changing testimonial
+  const handleTestimonialChange = (index: number) => {
+    setCurrentTestimonial(index);
+
+    // Don't clear the interval, just let it continue
+    // This ensures the auto-slide never stops
+  };
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      setVolume(newVolume);
+      if (newVolume === 0) {
+        setIsMuted(true);
+      } else if (isMuted) {
+        setIsMuted(false);
+      }
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      videoContainerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  // Handle fullscreen change
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   return (
@@ -321,15 +452,58 @@ export default function FellowshipPage() {
 
           <div className="container mx-auto px-6 md:px-12 lg:px-20 relative z-10">
             <div className="relative">
+              {/* Content Section - Now on top for mobile */}
+              <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3, duration: 0.8 }}
+                  className="w-full md:w-[50%] md:absolute md:top-12 md:right-0 bg-white p-6 rounded-lg shadow-lg mb-8 md:mb-0"
+              >
+                <motion.h2 
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4, duration: 0.8 }}
+                  className="text-4xl md:text-5xl font-bold mb-6"
+                >
+                  About the <span className="text-[#045F3C]">Fellowship</span>
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5, duration: 0.8 }}
+                  className="text-gray-600 text-lg mb-8"
+                >
+                  Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.6, duration: 0.8 }}
+                >
+                  <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
+                    <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-8 py-3 text-lg rounded-lg transform hover:scale-105 transition-all duration-300">
+                      How to Apply
+                    </Button>
+                  </Link>
+                </motion.div>
+              </motion.div>
+
+              {/* Video Section - Now on bottom for mobile */}
               <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.8 }}
-                  className="w-[60%]"
+                  className="w-full md:w-[60%] relative"
               >
-                <div className="relative w-full h-[500px] rounded-lg overflow-hidden">
+                <div className="relative w-full h-[300px] md:h-[500px] rounded-lg overflow-hidden">
                   <video 
+                    ref={videoRef}
                     autoPlay 
                     loop 
                     muted 
@@ -340,120 +514,18 @@ export default function FellowshipPage() {
                   </video>
                   <div className="absolute inset-0 bg-black/30"></div>
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="w-20 h-20 rounded-full bg-[#FDB022] flex items-center justify-center cursor-pointer hover:bg-[#FDB022]/90 transition-colors">
-                      <Play fill="white" className="w-8 h-8 text-white ml-1" />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                  initial={{ opacity: 0, y: 50 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3, duration: 0.8 }}
-                  className="absolute top-12 right-0 w-[50%] bg-white p-6 rounded-lg shadow-lg"
-              >
-                <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                  About the <span className="text-[#045F3C]">Fellowship</span>
-                </h2>
-                <p className="text-gray-600 text-lg mb-8">
-                  Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.
-                </p>
-
-                <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
-                  <Button className="bg-[#FDB022] hover:bg-[#FDB022]/90 text-black font-medium px-8 py-3 text-lg rounded-lg">
-                    How to Apply
-                  </Button>
-                </Link>
-              </motion.div>
-            </div>
-          </div>
-        </motion.section>
-
-        <motion.section
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="py-12 md:py-16 bg-white"
-        >
-          <div className="container mx-auto px-6 md:px-12 lg:px-16">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="text-center max-w-2xl mx-auto mb-8"
-            >
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                Benefits of <span className="text-[#045F3C]">Joining GanzAfrica</span>
-              </h2>
-              <p className="text-gray-600 text-base">
-                Begin your journey of impact and growth with GanzAfrica. Discover the
-                benefits of joining our program:
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div className="space-y-6">
-                {benefits.slice(0, 2).map((benefit, index) => (
-                    <motion.div
-                        key={benefit.title}
-                        initial={{ opacity: 0, y: 50 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: index * 0.2, duration: 0.8 }}
-                        className="bg-white rounded-[16px] overflow-hidden border border-gray-100"
+                    <button
+                      onClick={togglePlay}
+                      className="w-16 md:w-20 h-16 md:h-20 rounded-full bg-[#FDB022] flex items-center justify-center cursor-pointer hover:bg-[#FDB022]/90 transition-colors"
+                      aria-label={isPlaying ? "Pause video" : "Play video"}
                     >
-                      <div className="p-3">
-                        <div className="rounded-xl overflow-hidden relative">
-                          <Image
-                              src={benefit.image}
-                              alt={benefit.title}
-                              width={600}
-                              height={200}
-                              className="w-full h-[200px] object-cover"
-                              style={{ objectPosition: "center center" }}
-                          />
-                        </div>
-                      </div>
-                      <div className="p-6">
-                        <h3 className="text-lg font-bold mb-2">{benefit.title}</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed">{benefit.description}</p>
-                      </div>
-                    </motion.div>
-                ))}
-              </div>
-
-              {/* Right Column */}
-              <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.4, duration: 0.8 }}
-                  className="bg-white rounded-[16px] overflow-hidden border border-gray-100 h-full"
-              >
-                <div className="p-3">
-                  <div className="rounded-xl overflow-hidden relative h-[600px]">
-                    <Image
-                        src="/images/food-system-1.png"
-                        alt="Develop Your Skills"
-                        width={800}
-                        height={600}
-                        className="w-full h-full object-cover"
-                        style={{
-                          objectPosition: "center center",
-                          objectFit: "cover"
-                        }}
-                        priority
-                    />
+                      {isPlaying ? (
+                        <Pause fill="white" className="w-8 h-8 text-white" />
+                      ) : (
+                        <Play fill="white" className="w-8 h-8 text-white ml-1" />
+                      )}
+                    </button>
                   </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-lg font-bold mb-2">Develop Your Skills</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">Our fully funded program offers training, apprenticeships, and work experience to enhance your expertise and showcase your talent.</p>
                 </div>
               </motion.div>
             </div>
@@ -520,32 +592,39 @@ export default function FellowshipPage() {
           </div>
         </motion.section>
 
-        <section className="py-16 bg-gray-50">
+        {/* Testimonials Section */}
+        <motion.section
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="py-12 md:py-16 bg-gray-50"
+        >
           <Container>
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold mb-2">Checkout Fellows</h2>
-              <h3 className="text-3xl font-bold text-[#045F3C] mb-12">Say about the Fellowship</h3>
+            <div className="text-center mb-6 md:mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold mb-2">Checkout Fellows</h2>
+              <h3 className="text-2xl md:text-3xl font-bold text-[#045F3C] mb-6 md:mb-8">Say about the Fellowship</h3>
             </div>
 
             {loading ? (
-              <div className="max-w-5xl mx-auto px-12">
+              <div className="max-w-5xl mx-auto px-4 md:px-12">
                 {/* Loading skeleton */}
-                <div className="flex justify-center items-center gap-6 mb-12">
+                <div className="flex justify-center items-center gap-4 md:gap-6 mb-6 md:mb-8">
                   {[1, 2, 3, 4, 5].map((_, index) => (
-                    <div key={index} className="w-24 h-24 rounded-full bg-gray-200 animate-pulse" />
+                    <div key={index} className="w-14 md:w-20 h-14 md:h-20 rounded-full bg-gray-200 animate-pulse" />
                   ))}
                 </div>
                 <div className="text-center">
-                  <div className="h-32 bg-gray-200 animate-pulse rounded-lg mb-8" />
-                  <div className="h-8 w-48 bg-gray-200 animate-pulse rounded mx-auto" />
+                  <div className="h-20 md:h-24 bg-gray-200 animate-pulse rounded-lg mb-4 md:mb-6" />
+                  <div className="h-5 md:h-6 w-28 md:w-40 bg-gray-200 animate-pulse rounded mx-auto" />
                 </div>
               </div>
             ) : error ? (
               <div className="text-center text-red-500">{error}</div>
             ) : (
-              <div className="max-w-5xl mx-auto px-12">
+              <div className="max-w-5xl mx-auto px-4 md:px-12">
                 {/* Profile Images Row */}
-                <div className="flex justify-center items-center gap-6 mb-12">
+                <div className="flex justify-center items-center gap-3 md:gap-6 mb-6 md:mb-8">
                   {testimonials.map((testimonial, index) => {
                     const isActive = currentTestimonial === index;
                     const isPrevious = (currentTestimonial === index + 1) || (currentTestimonial === 0 && index === testimonials.length - 1);
@@ -554,20 +633,21 @@ export default function FellowshipPage() {
                     return (
                       <div
                         key={testimonial.id}
-                        className={`transition-all duration-500 transform ${
-                          isActive ? 'w-24 h-24 z-20 scale-110' :
-                            isPrevious || isNext ? 'w-16 h-16 z-10 opacity-50 scale-90' :
-                              'w-12 h-12 opacity-30 scale-75'
+                        className={`transition-all duration-500 transform cursor-pointer ${
+                          isActive ? 'w-14 md:w-20 h-14 md:h-20 z-20 scale-110' :
+                            isPrevious || isNext ? 'w-10 md:w-16 h-10 md:h-16 z-10 opacity-50 scale-90' :
+                              'w-8 md:w-12 h-8 md:h-12 opacity-30 scale-75'
                         }`}
+                        onClick={() => handleTestimonialChange(index)}
                       >
                         <div className={`rounded-full overflow-hidden transition-all duration-500 h-full w-full ${
-                          isActive ? 'ring-4 ring-yellow-400' : ''
+                          isActive ? 'ring-2 md:ring-4 ring-yellow-400' : ''
                         }`}>
                           <Image
                             src={testimonial.image}
                             alt={testimonial.author_name}
-                            width={isActive ? 96 : 64}
-                            height={isActive ? 96 : 64}
+                            width={isActive ? 80 : 64}
+                            height={isActive ? 80 : 64}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -578,38 +658,61 @@ export default function FellowshipPage() {
 
                 {/* Testimonial Content */}
                 <div className="relative">
-                  <div className="text-center px-4 md:px-16">
-                    <div className="min-h-[120px] relative">
-                      <p className="text-gray-600 text-lg mb-8 transition-all duration-500 transform">
-                        {testimonials[currentTestimonial]?.description || ''}
-                      </p>
+                  <div className="text-center px-2 md:px-16">
+                    <div className="min-h-[120px] md:min-h-[150px] relative mb-4 md:mb-6">
+                      {testimonials.map((testimonial, index) => (
+                        <div
+                          key={testimonial.id}
+                          className={`absolute w-full transition-all duration-500 ${
+                            index === currentTestimonial 
+                              ? 'opacity-100 translate-y-0 z-10' 
+                              : 'opacity-0 translate-y-4 pointer-events-none z-0'
+                          }`}
+                        >
+                          <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl mx-auto line-clamp-4 md:line-clamp-none">
+                            {testimonial.description}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                    <div className="transform transition-all duration-500">
-                      <h4 className="text-2xl font-bold mb-2 text-[#045F3C]">{testimonials[currentTestimonial]?.author_name || ''}</h4>
-                      <p className="text-gray-600">{testimonials[currentTestimonial]?.position || ''}</p>
+                    <div className="min-h-[50px] md:min-h-[60px] relative">
+                      {testimonials.map((testimonial, index) => (
+                        <div
+                          key={`name-${testimonial.id}`}
+                          className={`absolute w-full transition-all duration-500 ${
+                            index === currentTestimonial 
+                              ? 'opacity-100 translate-y-0 z-10' 
+                              : 'opacity-0 translate-y-4 pointer-events-none z-0'
+                          }`}
+                        >
+                          <h4 className="text-lg md:text-xl font-bold mb-1 md:mb-2 text-[#045F3C]">{testimonial.author_name}</h4>
+                          <p className="text-gray-600 text-xs md:text-sm">{testimonial.position}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   {/* Navigation Arrows */}
                   <button
-                    onClick={prevTestimonial}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-full"
+                    onClick={() => handleTestimonialChange((currentTestimonial - 1 + testimonials.length) % testimonials.length)}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-7 md:w-10 h-7 md:h-10 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-1/2 md:-translate-x-full"
                     aria-label="Previous testimonial"
                   >
-                    <ArrowLeft className="w-6 h-6 text-white" />
+                    <ArrowLeft className="w-3.5 md:w-5 h-3.5 md:h-5 text-white" />
                   </button>
                   <button
-                    onClick={nextTestimonial}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-full"
+                    onClick={() => handleTestimonialChange((currentTestimonial + 1) % testimonials.length)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 w-7 md:w-10 h-7 md:h-10 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-1/2 md:translate-x-full"
                     aria-label="Next testimonial"
                   >
-                    <ArrowRight className="w-6 h-6 text-white" />
+                    <ArrowRight className="w-3.5 md:w-5 h-3.5 md:h-5 text-white" />
                   </button>
                 </div>
               </div>
             )}
           </Container>
-        </section>
+        </motion.section>
       </div>
-  );
-}
+    );
+  }
+
