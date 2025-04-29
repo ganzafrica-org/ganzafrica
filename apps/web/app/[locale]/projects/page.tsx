@@ -922,10 +922,6 @@ const ProjectsPage = () => {
       
       {!loading && (
         <>
-        <div className="text-center mb-8">
-          <DecoratedHeading firstText="Our" secondText="Projects" />
-        </div>
-
           
           {/* Search and Filter - aligned with projects content area */}
           <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -936,7 +932,7 @@ const ProjectsPage = () => {
               <input
                 type="text"
                 placeholder="Search projects by name, location, or category..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 bg-white"
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
@@ -1088,7 +1084,7 @@ const ProjectsPage = () => {
                 </div>
               </div>
               
-              <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+              <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors">
                 Highlights of our work
               </button>
             </div>
