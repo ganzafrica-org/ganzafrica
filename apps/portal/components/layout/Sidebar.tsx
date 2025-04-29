@@ -18,7 +18,9 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  UserPlus
+  UserPlus,
+  MessageSquare,
+  Mail
 
 } from 'lucide-react';
 
@@ -32,6 +34,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const [usersOpen, setUsersOpen] = useState(false);
   const [teamsOpen, setTeamsOpen] = useState(false);
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
+  const [helpFAQsOpen, setHelpFAQsOpen] = useState(false);
 
 
     const toggleOpportunities = () => {
@@ -46,6 +49,12 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
       }
     };
 
+    const toggleHelpFAQs = () => {
+      if (!isCollapsed) {
+        setHelpFAQsOpen(!helpFAQsOpen);
+      }
+    };
+
   useEffect(() => {
     // Auto-open dropdowns based on active route
     if (pathname === '/projects' || pathname.startsWith('/projects/') ||
@@ -55,6 +64,11 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
     if (pathname === '/users' || pathname.startsWith('/users/') ||
         pathname === '/roles' || pathname.startsWith('/roles/')) {
       setUsersOpen(true);
+    }
+    if (pathname === '/faqs' || pathname.startsWith('/faqs/') ||
+        pathname === '/contact' || pathname.startsWith('/contact/') ||
+        pathname === '/subscribers' || pathname.startsWith('/subscribers/')) {
+      setHelpFAQsOpen(true);
     }
   }, [pathname]);
 
@@ -329,15 +343,14 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                   {!isCollapsed && <span className="ml-3 font-medium">News & Updates</span>}
                 </Link>
                 <Link
-    href="/partners"
-    className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-        pathname === '/partners' || pathname.startsWith('/partners/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
-    }`}
->
-    <Users className="w-5 h-5 flex-shrink-0" />
-    {!isCollapsed && <span className="ml-3 font-medium">Partners</span>}
-</Link>
-
+                  href="/partners"
+                  className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                      pathname === '/partners' || pathname.startsWith('/partners/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <Users className="w-5 h-5 flex-shrink-0" />
+                  {!isCollapsed && <span className="ml-3 font-medium">Partners</span>}
+                </Link>
 
                 <Link
                     href="/testimonials"
@@ -349,15 +362,86 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                   {!isCollapsed && <span className="ml-3 font-medium">Testimonials</span>}
                 </Link>
 
-                <Link
-                    href="/faqs"
-                    className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                        pathname === '/faqs' || pathname.startsWith('/faqs/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                {/* Help & FAQs Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={toggleHelpFAQs}
+                    className={`flex items-center w-full ${isCollapsed ? 'justify-center px-3' : 'justify-between px-4'} py-2.5 rounded-lg transition-colors ${
+                      pathname === '/faqs' || pathname.startsWith('/faqs/') || 
+                      pathname === '/contact' || pathname.startsWith('/contact/') ||
+                      pathname === '/subscribers' || pathname.startsWith('/subscribers/')
+                      ? 'bg-white/10 text-white' 
+                      : 'text-white/80 hover:bg-white/5 hover:text-white'
                     }`}
-                >
-                  <HelpCircle className="w-5 h-5 flex-shrink-0" />
-                  {!isCollapsed && <span className="ml-3 font-medium">FAQs</span>}
-                </Link>
+                  >
+                    <div className="flex items-center">
+                      <HelpCircle className="w-5 h-5 flex-shrink-0" />
+                      {!isCollapsed && <span className="ml-3 font-medium">Help & FAQs</span>}
+                    </div>
+                    {!isCollapsed && (
+                      helpFAQsOpen ? 
+                      <ChevronDown className="w-4 h-4" /> : 
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </button>
+                  
+                  {/* Help & FAQs dropdown menu */}
+                  {!isCollapsed && helpFAQsOpen && (
+                    <div className="pl-11 mt-1 space-y-1">
+                      <Link
+                        href="/faqs"
+                        className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                          pathname === '/faqs' || pathname.startsWith('/faqs/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <HelpCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="font-medium">FAQs</span>
+                      </Link>
+                      <Link
+                        href="/contact"
+                        className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                          pathname === '/contact' || pathname.startsWith('/contact/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="font-medium">Contact Us</span>
+                      </Link>
+                      <Link
+                        href="/subscribers"
+                        className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                          pathname === '/subscribers' || pathname.startsWith('/subscribers/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="font-medium">Subscribers</span>
+                      </Link>
+                    </div>
+                  )}
+                  
+                  {/* Compact menu for collapsed sidebar */}
+                  {isCollapsed && (
+                    <div className="absolute left-full ml-2 z-10 w-48 mt-1 bg-[#045F3C] rounded-lg shadow-lg transform -translate-x-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150">
+                      <Link
+                        href="/faqs"
+                        className="block px-4 py-2 text-white/80 hover:bg-white/5 hover:text-white rounded-t-lg"
+                      >
+                        FAQs
+                      </Link>
+                      <Link
+                        href="/contact"
+                        className="block px-4 py-2 text-white/80 hover:bg-white/5 hover:text-white"
+                      >
+                        Contact Us
+                      </Link>
+                      <Link
+                        href="/subscribers"
+                        className="block px-4 py-2 text-white/80 hover:bg-white/5 hover:text-white rounded-b-lg"
+                      >
+                        Subscribers
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </nav>
             </div>
           </div>

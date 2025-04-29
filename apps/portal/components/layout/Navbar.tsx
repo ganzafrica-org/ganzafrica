@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import Link from 'next/link';
 import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
+import { jwtDecode } from 'jwt-decode';
 
 interface Notification {
   id: number;
@@ -64,8 +65,8 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       try {
-        // Using jwtDecode which should be imported at the top of the file
-        const decodedToken = require('jwt-decode')(token);
+        // Use the imported jwtDecode function instead of require
+        const decodedToken = jwtDecode(token);
         console.log('Raw token payload:', decodedToken);
       } catch (error) {
         console.error('Error decoding token:', error);

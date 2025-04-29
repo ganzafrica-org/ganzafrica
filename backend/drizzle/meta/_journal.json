@@ -2,6 +2,26 @@
   "version": "5",
   "dialect": "pg",
   "entries": [
-
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1745828212570,
+      "tag": "0000_broken_doctor_faustus",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1745915281777,
+      "tag": "0001_small_ultimates",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1745929792855,
+      "tag": "0002_sparkling_bloodaxe",
+      "breakpoints": true
+    }
   ]
 }

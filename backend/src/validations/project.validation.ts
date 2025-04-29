@@ -42,15 +42,27 @@ const outcomeItemSchema = z.object({
   order: z.number().optional(),
 });
 
-// Project member validation
+// Project member validation - Changed from user_id to team_id
 const projectMemberSchema = z.object({
-  user_id: z.string().min(1, "User ID is required"),
+  team_id: z.number().int().positive("Team ID is required"),
   role: projectMemberRoleEnum,
   start_date: z.string().transform((val) => new Date(val)),
   end_date: z
     .string()
     .transform((val) => new Date(val))
     .optional(),
+});
+
+// Project partner validation
+const projectPartnerSchema = z.object({
+  partner_id: z.number().int().positive("Partner ID is required"),
+});
+
+// Project document validation
+const projectDocumentSchema = z.object({
+  name: z.string().min(1, "Document name is required"),
+  file_url: z.string().min(1, "File URL is required"),
+  file_size: z.number().optional(),
 });
 
 // Create project validation
@@ -65,6 +77,7 @@ export const createProjectSchema = z.object({
       .transform((val) => new Date(val))
       .optional(),
     category_id: z.number().int().positive("Category ID is required"),
+    partner_id: z.number().int().positive().optional(),
     location: z.string().optional(),
     impacted_people: z.number().int().optional(),
     
@@ -84,6 +97,8 @@ export const createProjectSchema = z.object({
     other_information: z.record(z.any()).optional(),
     
     members: z.array(projectMemberSchema).optional(),
+    partners: z.array(projectPartnerSchema).optional(),
+    documents: z.array(projectDocumentSchema).optional(),
   }),
 });
 
@@ -106,6 +121,7 @@ export const updateProjectSchema = z.object({
       .optional()
       .nullable(),
     category_id: z.number().int().positive().optional(),
+    partner_id: z.number().int().positive().optional(),
     location: z.string().optional(),
     impacted_people: z.number().int().optional(),
     
@@ -155,8 +171,9 @@ export const listProjectsSchema = z.object({
     sort_by: z.string().optional(),
     sort_order: z.enum(["asc", "desc"]).optional(),
     status: z.string().optional(),
-    member_id: z.string().optional(),
+    team_id: z.string().optional(), // Changed from member_id to team_id
     category_id: z.string().optional(),
+    partner_id: z.string().optional(), // Added partner_id
   }),
 });
 
@@ -172,7 +189,7 @@ export const addProjectMemberSchema = z.object({
 export const removeProjectMemberSchema = z.object({
   params: z.object({
     id: z.string().min(1, "Project ID is required"),
-    userId: z.string().min(1, "User ID is required"),
+    userId: z.string().min(1, "Team ID is required"), // Changed parameter name description
   }),
 });
 
@@ -190,6 +207,7 @@ export const importProjectsSchema = z.object({
           .transform((val) => new Date(val))
           .optional(),
         category_id: z.number().int().positive("Category ID is required"),
+        partner_id: z.number().int().positive().optional(),
         location: z.string().optional(),
         impacted_people: z.number().int().optional(),
         
@@ -209,6 +227,8 @@ export const importProjectsSchema = z.object({
         other_information: z.record(z.any()).optional(),
         
         members: z.array(projectMemberSchema).optional(),
+        partners: z.array(projectPartnerSchema).optional(),
+        documents: z.array(projectDocumentSchema).optional(),
       }),
     )
     .min(1, "At least one project is required"),

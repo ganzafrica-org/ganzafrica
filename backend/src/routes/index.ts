@@ -10,7 +10,9 @@ import partenerRoutes from "./partner.routes";
 import testimonialRoutes from "./testimonial.routes";
 import faqRoutes from "./faqs";
 import newsRourtes from "./news.routes";
-import opportunity from "./opportunity";
+import opportunityRoutes from "./opportunity";
+import contactRoutes from "./contact";
+import  newsletterRouter  from "./newsletter";
 
 const router: Router = Router();
 
@@ -25,6 +27,11 @@ router.use("/partners", partenerRoutes);
 router.use("/testimonials", testimonialRoutes);
 router.use("/faqs", faqRoutes);
 router.use("/news", newsRourtes);
-router.use("/opportunities", opportunity);
+router.use("/opportunities", opportunityRoutes);
+router.use("/applications", opportunityRoutes);
+router.use("/contacts", contactRoutes);
+router.use("/newsletter", newsletterRouter);
+
+
 
 export default router;
