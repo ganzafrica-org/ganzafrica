@@ -7,7 +7,8 @@ import {
   Rocket,
   Target,
   GraduationCap,
-  Search
+  Search,
+  Briefcase
 } from "lucide-react";
 import { useState, useEffect, SetStateAction } from "react";
 import HeaderBelt from "@/components/layout/headerBelt";
@@ -19,9 +20,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import apiClient from "@/lib/api-client";
 
-
-
-type Status = "published" | "draft" | "archived" | "closed";
+type Status = "published" | "closed";
 type OpportunityType = "all" | "fellowship" | "employment";
 
 // Create an axios instance with retry configuration
@@ -109,6 +108,8 @@ const getOpportunityIcon = (type: string | undefined) => {
       return <GraduationCap className="w-6 h-6" />;
     case 'internship':
       return <Laptop className="w-6 h-6" />;
+    case 'employment':
+      return <Briefcase className="w-6 h-6" />;
     case 'grant':
       return <Database className="w-6 h-6" />;
     case 'scholarship':
@@ -127,7 +128,9 @@ const getOpportunityColor = (type: string | undefined) => {
     case 'fellowship':
       return "#045f3c";
     case 'internship':
-      return "#2563eb";
+      return "primary-green";
+    case 'employment':
+      return "primary-green";
     case 'grant':
       return "#16a34a";
     case 'scholarship':
@@ -173,11 +176,9 @@ const styles = `
   }
 `;
 
-
-
 export default function OpportunitiesPage() {
-    const params = useParams();
-    const locale = params.locale || 'en';
+  const params = useParams();
+  const locale = params.locale || 'en';
   const [selectedStatus, setSelectedStatus] = useState<Status>("published");
   const [selectedType, setSelectedType] = useState<OpportunityType>("all");
   const [searchTerm, setSearchTerm] = useState('');
@@ -208,28 +209,43 @@ export default function OpportunitiesPage() {
       try {
         setLoading(true);
 
-        // Build query params
-        const params: Record<string, any> = {
-          limit: 50, // Get a good number of opportunities
-          sort_by: 'created_at',
-          sort_order: 'desc',
-          status: selectedStatus
-        };
-
-        // Add optional filters if they exist
-        if (searchTerm) params.search = searchTerm;
-
-        console.log('Fetching opportunities with params:', params);
-
-        // Make API request with apiClient instead of throttledAxios
-        const response = await apiClient.get('/opportunities', { params });
-
+        // Make API request to get all opportunities
+        const response = await apiClient.get('/opportunities');
         console.log('API response:', response.data);
 
-        if (response.data && response.data.opportunities) {
-          setOpportunities(response.data.opportunities);
-          setError(null);
+        let allOpportunities = [];
+
+        // Handle different response structures
+        if (response.data && Array.isArray(response.data)) {
+          allOpportunities = response.data;
+        } else if (response.data && Array.isArray(response.data.opportunities)) {
+          allOpportunities = response.data.opportunities;
+        } else if (response.data && typeof response.data === 'object') {
+          // Handle case where it's an object with opportunity data
+          allOpportunities = Object.values(response.data);
         }
+
+        // Filter opportunities to only include those with types 'fellowship' or 'employment'
+        // and status 'published' or 'closed'
+        const filteredOpportunities = allOpportunities.filter((opp: any) => {
+          // Check if the opportunity is of the correct type
+          const validType = opp.type && 
+            (opp.type.toLowerCase() === 'fellowship' || 
+             opp.type.toLowerCase() === 'employment' ||
+             opp.type.toLowerCase() === 'internship' ||
+             (opp.employment_type && typeof opp.employment_type === 'string'));
+
+          // Check if the opportunity has the correct status
+          const validStatus = opp.status && 
+            (opp.status.toLowerCase() === 'published' || 
+             opp.status.toLowerCase() === 'closed');
+
+          return validType && validStatus;
+        });
+
+        console.log('Filtered opportunities:', filteredOpportunities);
+        setOpportunities(filteredOpportunities);
+        setError(null);
       } catch (error) {
         console.error('Error fetching opportunities:', error);
         setError('Failed to fetch opportunities. Please try again later.');
@@ -240,14 +256,30 @@ export default function OpportunitiesPage() {
     };
 
     fetchOpportunities();
-  }, [selectedStatus, selectedType, searchTerm]);
+  }, []);
 
-  // Filter opportunities by type if type filter is active
+  // Filter opportunities by status and type based on user selection
   const filteredOpportunities = opportunities.filter(opportunity => {
-    if (selectedType === "all") return true;
-    if (selectedType === "fellowship" && opportunity.type?.toLowerCase() === "fellowship") return true;
-    if (selectedType === "employment" && opportunity.type && ["internship", "full-time", "part-time", "contract"].includes(opportunity.type.toLowerCase())) return true;
-    return false;
+    // Filter by status
+    const statusMatch = opportunity.status && opportunity.status.toLowerCase() === selectedStatus.toLowerCase();
+    
+// Filter by type
+let typeMatch = true;
+if (selectedType !== "all") {
+  if (selectedType === "fellowship") {
+    typeMatch = opportunity.type?.toLowerCase() === "fellowship" || false;
+  } else if (selectedType === "employment") {
+    typeMatch = !!opportunity.type && 
+      ["employment", "internship", "full-time", "part-time", "contract"].includes(opportunity.type.toLowerCase());
+  }
+}
+    
+    // Filter by search term
+    const searchMatch = !searchTerm || 
+      (opportunity.title && opportunity.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (opportunity.description && opportunity.description.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    return statusMatch && typeMatch && searchMatch;
   });
 
   // Group opportunities by type for display sections
@@ -256,7 +288,7 @@ export default function OpportunitiesPage() {
   );
   
   const employmentOpportunities = filteredOpportunities.filter(
-    opp => ["internship", "full-time", "part-time", "contract"].includes((opp.type ?? "").toLowerCase())
+    opp => ["employment", "internship", "full-time", "part-time", "contract"].includes((opp.type ?? "").toLowerCase())
   );
 
   // Format date for display
@@ -442,12 +474,12 @@ export default function OpportunitiesPage() {
                               </span>
                             </div>
                             
-                            <p className="text-gray-600 mb-6 line-clamp-3">{opportunity.description}</p>
+                            <p className="text-gray-600 mb-6 line-clamp-3">{opportunity.description || 'No description available'}</p>
                             
                             <div className="mb-6">
                               <h4 className="text-sm font-semibold text-gray-700 mb-2">Requirements:</h4>
                               <ul className="text-sm text-gray-600 space-y-1 pl-5 list-disc">
-                                {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || []).slice(0, 3).map((req, index) => (
+                                {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || ['No specific requirements listed']).slice(0, 3).map((req, index) => (
                                   <li key={index}>{req}</li>
                                 ))}
                                 {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || []).length > 3 && (
@@ -460,25 +492,30 @@ export default function OpportunitiesPage() {
                               <span className="px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                                 Duration: {opportunity.duration || 'Variable'}
                               </span>
-                              <span className="px-3 py-1 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-100">
-                                Deadline: {opportunity.application_deadline ? new Date(opportunity.application_deadline).toLocaleDateString() : 'Ongoing'}
+                              <span className="px-3 py-1 text-xs font-medium rounded-full bg-purple-50 text-primary-green border border-purple-100">
+                                Deadline: {opportunity.application_deadline ? formatDate(opportunity.application_deadline) : 'Ongoing'}
                               </span>
                             </div>
                             
                             <div className="flex space-x-3">
-                              
-                            <Link
-    href={`/${locale}/opportunities/${opportunity.id}`}
-    className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
-  >
-    View Details
-  </Link>
-  <Link 
-    href={`/${locale}/opportunities/${opportunity.id}/apply`}
-    className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:primary-green transition-colors"
-  >
-    Apply Now
-  </Link>
+                              <Link
+                                href={`/${locale}/opportunities/${opportunity.id}`}
+                                className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
+                              >
+                                View Details
+                              </Link>
+                              {opportunity.status === 'published' ? (
+                                <Link 
+                                  href={`/${locale}/opportunities/${opportunity.id}/apply`}
+                                  className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:primary-green transition-colors"
+                                >
+                                  Apply Now
+                                </Link>
+                              ) : (
+                                <span className="flex-1 py-2 px-4 bg-gray-300 text-gray-600 font-medium rounded-md text-center cursor-not-allowed">
+                                  Applications Closed
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -493,7 +530,7 @@ export default function OpportunitiesPage() {
                     <div className="text-center mb-12">
                       <h2 className="text-3xl font-bold">
                         <span className="text-black">Employment </span>
-                        <span className="text-[#2563eb]">Opportunities</span>
+                        <span className="text-primary-green">Opportunities</span>
                       </h2>
                     </div>
 
@@ -518,12 +555,12 @@ export default function OpportunitiesPage() {
                               </span>
                             </div>
                             
-                            <p className="text-gray-600 mb-6 line-clamp-3">{opportunity.description}</p>
+                            <p className="text-gray-600 mb-6 line-clamp-3">{opportunity.description || 'No description available'}</p>
                             
                             <div className="mb-6">
                               <h4 className="text-sm font-semibold text-gray-700 mb-2">Requirements:</h4>
                               <ul className="text-sm text-gray-600 space-y-1 pl-5 list-disc">
-                                {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || []).slice(0, 3).map((req, index) => (
+                                {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || ['No specific requirements listed']).slice(0, 3).map((req, index) => (
                                   <li key={index}>{req}</li>
                                 ))}
                                 {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || []).length > 3 && (
@@ -536,24 +573,30 @@ export default function OpportunitiesPage() {
                               <span className="px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                                 {opportunity.employment_type || opportunity.type || 'Job'}
                               </span>
-                              <span className="px-3 py-1 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-100">
-                                Deadline: {opportunity.application_deadline ? new Date(opportunity.application_deadline).toLocaleDateString() : 'Ongoing'}
+                              <span className="px-3 py-1 text-xs font-medium rounded-full bg-purple-50 text-primary-green border border-purple-100">
+                                Deadline: {opportunity.application_deadline ? formatDate(opportunity.application_deadline) : 'Ongoing'}
                               </span>
                             </div>
                             
                             <div className="flex space-x-3">
                               <Link
-                                href={`/opportunities/${opportunity.id}`}
-                                className="flex-1 py-2 px-4 bg-white border border-[#2563eb] text-[#2563eb] font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
+                                href={`/${locale}/opportunities/${opportunity.id}`}
+                                className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
                               >
                                 View Details
                               </Link>
-                              <a 
-                                href={`/opportunities/${opportunity.id}/apply`}
-                                className="flex-1 py-2 px-4 bg-[#2563eb] text-white font-medium rounded-md text-center hover:bg-[#1d4ed8] transition-colors"
-                              >
-                                Apply Now
-                              </a>
+                              {opportunity.status === 'published' ? (
+                                <Link 
+                                  href={`/${locale}/opportunities/${opportunity.id}/apply`}
+                                  className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:bg-primary-green transition-colors"
+                                >
+                                  Apply Now
+                                </Link>
+                              ) : (
+                                <span className="flex-1 py-2 px-4 bg-gray-300 text-gray-600 font-medium rounded-md text-center cursor-not-allowed">
+                                  Applications Closed
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

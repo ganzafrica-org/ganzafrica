@@ -8,6 +8,8 @@ import { Container } from "@/components/container";
 import {Users, Blocks, Briefcase, Users2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
+import Link from 'next/link';
+
 
 const applicationSteps = [
   {
@@ -144,6 +146,14 @@ export default function HowToApplyPage() {
   const params = useParams<{ locale: string }>();
   const locale = params.locale as string;
   const bannerRef = useRef(null);
+  type Opportunity = {
+    id: string;
+    title: string;
+    description: string;
+  };
+
+  const [featuredOpportunity, setFeaturedOpportunity] = useState<Opportunity | null>(null);
+  
 
   // Example of how you might get dictionary data if needed
   // const dict = useDictionary(locale);
@@ -180,12 +190,11 @@ export default function HowToApplyPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.8, delay: 0.4 }}
               >
-                <Button
-                    onClick={() => window.location.href = '/apply'}
-                    className="bg-primary-orange hover:bg-[#e9a01f] text-white px-10 py-3 text-lg font-bold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-white/20"
-                >
-                    APPLY NOW
-                </Button>
+                <Link href={`/${locale}/programs/fellowship/${featuredOpportunity?.id}/apply`}>
+                <Button className="bg-primary-orange hover:bg-primary-orange/90 text-white font-semibold px-6 py-4 text-base">
+                    Apply now
+                  </Button>
+                </Link>
               </motion.div>
             </div>
           </div>

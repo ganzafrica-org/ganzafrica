@@ -3,11 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, ArrowRight, Play, Circle, Check } from 'lucide-react';
 import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent } from "@workspace/ui/components/card";
 import { Container } from "@/components/container";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import Header from "@/components/layout/header";
-import Footer from "@/components/layout/footer";
 import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
@@ -15,6 +13,7 @@ import { motion } from 'framer-motion';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { useParams } from 'next/navigation';
 import { AudioMutedIcon, AudioUnmutedIcon, FullscreenIcon } from "@/components/ui/icons";
+import apiClient from '@/lib/api-client';
 
 // Define the type for opportunities
 type Opportunity = {
@@ -22,49 +21,92 @@ type Opportunity = {
   title: string;
 };
 
+// Interface for the testimonial data from the API
 interface Testimonial {
   id: number;
-  name: string;
-  role: string;
-  quote: string;
+  author_name: string;
+  position: string;
   image: string;
+  description: string;
+  company: string;
+  occupation: string;
+  date: string;
+  rating: number;
+  created_at: string;
+  updated_at: string;
 }
 
-const testimonials: Testimonial[] = [
+// Interface for the API response
+interface TestimonialsResponse {
+  testimonials: Testimonial[];
+}
+
+// Fallback testimonials in case of API failure
+const fallbackTestimonials: Testimonial[] = [
   {
     id: 1,
-    name: "Claude Mugabe",
-    role: "Former Smart Water Management Fellow",
-    quote: "I have found immense value in my role as a Smart Water fellow at GanzAfrica... a pivotal aspect of my journey has been participating in the MINAGRI team where collaboration with fellows from diverse backgrounds was key. I am confident that the lessons learned at GanzAfrica will contribute significantly",
-    image: "/images/ganzafrica-fellows.jpg"
+    author_name: "Claude Mugabe",
+    position: "Former Smart Water Management Fellow",
+    description: "I have found immense value in my role as a Smart Water fellow at GanzAfrica... a pivotal aspect of my journey has been participating in the MINAGRI team where collaboration with fellows from diverse backgrounds was key. I am confident that the lessons learned at GanzAfrica will contribute significantly",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: 2,
-    name: "Sarah Kimani",
-    role: "Agrifood Systems Fellow",
-    quote: "The GanzAfrica fellowship transformed my career in agricultural innovation. Working alongside experienced mentors and a community of passionate professionals gave me the skills and network to make a real difference in my community.",
-    image: "/images/ganzafrica-fellows.jpg"
+    author_name: "Sarah Kimani",
+    position: "Agrifood Systems Fellow",
+    description: "The GanzAfrica fellowship transformed my career in agricultural innovation. Working alongside experienced mentors and a community of passionate professionals gave me the skills and network to make a real difference in my community.",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: 3,
-    name: "John Mwangi",
-    role: "Climate Change Fellow",
-    quote: "Being part of the GanzAfrica fellowship opened doors to incredible opportunities in climate action. The hands-on experience and mentorship I received helped me develop innovative solutions for sustainable agriculture.",
-    image: "/images/ganzafrica-fellows.jpg"
+    author_name: "John Mwangi",
+    position: "Climate Change Fellow",
+    description: "Being part of the GanzAfrica fellowship opened doors to incredible opportunities in climate action. The hands-on experience and mentorship I received helped me develop innovative solutions for sustainable agriculture.",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: 4,
-    name: "Grace Mutua",
-    role: "Data & Evidence Fellow",
-    quote: "The fellowship program at GanzAfrica equipped me with crucial skills in data analysis and evidence-based decision making. The collaborative environment and expert guidance helped me grow both professionally and personally.",
-    image: "/images/ganzafrica-fellows.jpg"
+    author_name: "Grace Mutua",
+    position: "Data & Evidence Fellow",
+    description: "The fellowship program at GanzAfrica equipped me with crucial skills in data analysis and evidence-based decision making. The collaborative environment and expert guidance helped me grow both professionally and personally.",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: 5,
-    name: "David Okello",
-    role: "Natural Resource Management Fellow",
-    quote: "Through the GanzAfrica fellowship, I gained practical experience in sustainable resource management. The program's focus on real-world challenges and innovative solutions has been invaluable for my career development.",
-    image: "/images/ganzafrica-fellows.jpg"
+    author_name: "David Okello",
+    position: "Natural Resource Management Fellow",
+    description: "Through the GanzAfrica fellowship, I gained practical experience in sustainable resource management. The program's focus on real-world challenges and innovative solutions has been invaluable for my career development.",
+    image: "/images/ganzafrica-fellows.jpg",
+    company: "GA",
+    occupation: "fellow",
+    date: new Date().toISOString(),
+    rating: 5,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   }
 ];
 
@@ -129,6 +171,9 @@ export default function FellowshipPage() {
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [currentTestimonial, setCurrentTestimonial] = useState<number>(0);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const topicsRef = useRef<HTMLDivElement>(null);
   const [featuredOpportunity, setFeaturedOpportunity] = useState<Opportunity | null>(null);
@@ -161,6 +206,26 @@ export default function FellowshipPage() {
   }, []);
 
   useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get<TestimonialsResponse>('/testimonials');
+        setTestimonials(response.data.testimonials);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching testimonials:', err);
+        setError('Failed to load testimonials');
+        // Set fallback testimonials in case of error
+        setTestimonials(fallbackTestimonials);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
+  useEffect(() => {
     // Auto slide testimonials every 5 seconds
     const slideInterval = setInterval(() => {
       nextTestimonial();
@@ -168,6 +233,13 @@ export default function FellowshipPage() {
 
     return () => clearInterval(slideInterval);
   }, []);
+
+  const handleTestimonialChange = (index: number) => {
+    setCurrentTestimonial(index);
+
+    // Don't clear the interval, just let it continue
+    // This ensures the auto-slide never stops
+  };
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -233,7 +305,7 @@ export default function FellowshipPage() {
                     How to Apply
                   </Button>
                 </Link>
-                <Link href={`/${locale}/opportunities/${featuredOpportunity?.id}/apply`}>
+                <Link href={`/${locale}/programs/fellowship/${featuredOpportunity?.id}/apply`}>
                   <Button className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white font-semibold px-6 py-4 text-base">
                     Apply now
                   </Button>
@@ -548,91 +620,125 @@ export default function FellowshipPage() {
           </div>
         </motion.section>
 
-        <section className="py-16 bg-gray-50">
+        <motion.section
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="py-12 md:py-16 bg-gray-50"
+        >
           <Container>
-            <div className="text-center mb-12">
-              <DecoratedHeading
-                firstText="Checkout Fellows"
-                secondText="Say about the Fellowship"
-                className="max-w-3xl mx-auto flex flex-col items-center gap-2"
-              />
+            <div className="text-center mb-6 md:mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold mb-2">Checkout What Fellows </h2>
+              <h3 className="text-2xl md:text-3xl font-bold text-[#045F3C] mb-6 md:mb-8">Say about Our Fellowship</h3>
             </div>
 
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-12">
-              {/* Profile Images Row */}
-              <div className="flex justify-center items-center gap-4 sm:gap-6 mb-12">
-                {testimonials.map((testimonial, index) => {
-                  const isActive = currentTestimonial === index;
-                  const isPrevious = (currentTestimonial === index + 1) || (currentTestimonial === 0 && index === testimonials.length - 1);
-                  const isNext = (currentTestimonial === index - 1) || (currentTestimonial === testimonials.length - 1 && index === 0);
-
-                  return (
-                    <div
-                      key={testimonial.id}
-                      className={`transition-all duration-500 transform aspect-square ${
-                        isActive 
-                          ? 'w-20 sm:w-24 z-20 scale-110' 
-                          : isPrevious || isNext 
-                          ? 'w-14 sm:w-16 z-10 opacity-50 scale-90' 
-                          : 'w-10 sm:w-12 opacity-30 scale-75'
-                      }`}
-                    >
-                      <div 
-                        className={`rounded-full overflow-hidden transition-all duration-500 w-full h-full ${
-                          isActive ? 'ring-4 ring-[#FDB022]' : ''
-                        }`}
-                      >
-                        <Image
-                          src={testimonial.image}
-                          alt={testimonial.name}
-                          width={96}
-                          height={96}
-                          className="w-full h-full object-cover"
-                          style={{ aspectRatio: '1/1' }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Testimonial Content */}
-              <div className="relative px-12">
-                <div className="text-center">
-                  <div className="min-h-[120px] relative mb-8">
-                    <p className="text-gray-600 text-base transition-all duration-500 transform">
-                      {testimonials[currentTestimonial]?.quote || ''}
-                    </p>
+            {loading ? (
+                <div className="max-w-5xl mx-auto px-4 md:px-12">
+                  {/* Loading skeleton */}
+                  <div className="flex justify-center items-center gap-4 md:gap-6 mb-6 md:mb-8">
+                    {[1, 2, 3, 4, 5].map((_, index) => (
+                        <div key={index} className="w-14 md:w-20 h-14 md:h-20 rounded-full bg-gray-200 animate-pulse" />
+                    ))}
                   </div>
-                  <div className="transform transition-all duration-500">
-                    <h4 className="text-2xl font-bold mb-2 text-[#045F3C]">
-                      {testimonials[currentTestimonial]?.name || ''}
-                    </h4>
-                    <p className="text-gray-600">
-                      {testimonials[currentTestimonial]?.role || ''}
-                    </p>
+                  <div className="text-center">
+                    <div className="h-20 md:h-24 bg-gray-200 animate-pulse rounded-lg mb-4 md:mb-6" />
+                    <div className="h-5 md:h-6 w-28 md:w-40 bg-gray-200 animate-pulse rounded mx-auto" />
                   </div>
                 </div>
+            ) : error ? (
+                <div className="text-center text-red-500">{error}</div>
+            ) : (
+                <div className="max-w-5xl mx-auto px-4 md:px-12">
+                  {/* Profile Images Row */}
+                  <div className="flex justify-center items-center gap-3 md:gap-6 mb-6 md:mb-8">
+                    {testimonials.map((testimonial, index) => {
+                      const isActive = currentTestimonial === index;
+                      const isPrevious = (currentTestimonial === index + 1) || (currentTestimonial === 0 && index === testimonials.length - 1);
+                      const isNext = (currentTestimonial === index - 1) || (currentTestimonial === testimonials.length - 1 && index === 0);
 
-                {/* Navigation Arrows */}
-                <button
-                  onClick={prevTestimonial}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors"
-                  aria-label="Previous testimonial"
-                >
-                  <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </button>
-                <button
-                  onClick={nextTestimonial}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors"
-                  aria-label="Next testimonial"
-                >
-                  <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </button>
-              </div>
-            </div>
+                      return (
+                          <div
+                              key={testimonial.id}
+                              className={`transition-all duration-500 transform cursor-pointer ${
+                                  isActive ? 'w-14 md:w-20 h-14 md:h-20 z-20 scale-110' :
+                                      isPrevious || isNext ? 'w-10 md:w-16 h-10 md:h-16 z-10 opacity-50 scale-90' :
+                                          'w-8 md:w-12 h-8 md:h-12 opacity-30 scale-75'
+                              }`}
+                              onClick={() => handleTestimonialChange(index)}
+                          >
+                            <div className={`rounded-full overflow-hidden transition-all duration-500 h-full w-full ${
+                                isActive ? 'ring-2 md:ring-4 ring-yellow-400' : ''
+                            }`}>
+                              <Image
+                                  src={testimonial.image}
+                                  alt={testimonial.author_name}
+                                  width={isActive ? 80 : 64}
+                                  height={isActive ? 80 : 64}
+                                  className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Testimonial Content */}
+                  <div className="relative">
+                    <div className="text-center px-2 md:px-16">
+                      <div className="min-h-[120px] md:min-h-[150px] relative mb-4 md:mb-6">
+                        {testimonials.map((testimonial, index) => (
+                            <div
+                                key={testimonial.id}
+                                className={`absolute w-full transition-all duration-500 ${
+                                    index === currentTestimonial
+                                        ? 'opacity-100 translate-y-0 z-10'
+                                        : 'opacity-0 translate-y-4 pointer-events-none z-0'
+                                }`}
+                            >
+                              <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl mx-auto line-clamp-4 md:line-clamp-none">
+                                {testimonial.description}
+                              </p>
+                            </div>
+                        ))}
+                      </div>
+                      <div className="min-h-[50px] md:min-h-[60px] relative">
+                        {testimonials.map((testimonial, index) => (
+                            <div
+                                key={`name-${testimonial.id}`}
+                                className={`absolute w-full transition-all duration-500 ${
+                                    index === currentTestimonial
+                                        ? 'opacity-100 translate-y-0 z-10'
+                                        : 'opacity-0 translate-y-4 pointer-events-none z-0'
+                                }`}
+                            >
+                              <h4 className="text-lg md:text-xl font-bold mb-1 md:mb-2 text-[#045F3C]">{testimonial.author_name}</h4>
+                              <p className="text-gray-600 text-xs md:text-sm">{testimonial.position}</p>
+                            </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Navigation Arrows */}
+                    <button
+                        onClick={() => handleTestimonialChange((currentTestimonial - 1 + testimonials.length) % testimonials.length)}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-7 md:w-10 h-7 md:h-10 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-1/2 md:-translate-x-full"
+                        aria-label="Previous testimonial"
+                    >
+                      <ArrowLeft className="w-3.5 md:w-5 h-3.5 md:h-5 text-white" />
+                    </button>
+                    <button
+                        onClick={() => handleTestimonialChange((currentTestimonial + 1) % testimonials.length)}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 w-7 md:w-10 h-7 md:h-10 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-1/2 md:translate-x-full"
+                        aria-label="Next testimonial"
+                    >
+                      <ArrowRight className="w-3.5 md:w-5 h-3.5 md:h-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+            )}
           </Container>
-        </section>
+        </motion.section>
       </div>
   );
 }

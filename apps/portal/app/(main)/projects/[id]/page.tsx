@@ -482,7 +482,7 @@ const ProjectDetailsPage = () => {
           <p className="text-gray-500 text-sm">Projects / View</p>
         </div>
         <Link 
-          href={`/projects/edit-project/${project.id}`} 
+          href={`/projects/edit/${project.id}`} 
           className="px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
         >
           Edit Project

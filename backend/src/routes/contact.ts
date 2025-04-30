@@ -29,7 +29,6 @@ router.get(
 
 router.put(
   "/:id",
-  authenticate,
   validate(contactValidation.updateContactSchema),
   contactController.updateContact
 );

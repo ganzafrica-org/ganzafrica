@@ -1,14 +1,14 @@
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
+import { db } from "../db/client";
+import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
-import { AppError } from "@/middlewares";
+import { AppError } from "../middlewares";
 import { constants } from "../config";
 import { hashPassword } from "./auth.service";
-import { User, CreateUserInput, UpdateUserInput } from "@/services/types";
+import { User, CreateUserInput, UpdateUserInput } from "./types";
 import {
   sendVerificationEmail,
   sendWelcomeEmail,
-} from "@/services/email.service";
+} from "../services/email.service";
 import { createToken } from "./auth.service";
 
 /**
