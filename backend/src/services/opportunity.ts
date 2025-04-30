@@ -52,20 +52,40 @@ export type OpportunityFilters = {
     category_id?: number;
 };
 
+// Updated ApplicationInput type to match the GanzAfrica application schema
 export type ApplicationInput = {
-    opportunity_id: number;
-    full_name: string;
+    // Personal Information
+    first_name: string;
+    last_name: string;
     email: string;
-    phone?: string;
-    gender?: string;
-    nationality?: string;
-    country?: string;
-    education_level?: string;
-    institution?: string;
-    field_of_study?: string;
-    graduation_year?: number;
-    certifications?: string[];
-    resume_url?: string;
+    phone: string;
+    national_id: string;
+    city: string;
+    country: string;
+    
+    // Education & Experience
+    education_level: string;
+    field_of_study: string;
+    career_experience: string;
+    cv_url: string;
+    supporting_docs_url?: string;
+    
+    // Vision & Motivation
+    motivation: string;
+    five_year_vision: string;
+    
+    // Community Impact
+    desired_impact: string;
+    community_role: string;
+    national_strategy: string;
+    
+    // Programme Relevance
+    how_ganzafrica_can_help: string;
+    contribution_to_ganzafrica: string;
+    data_processing_consent: boolean;
+    
+    // Optional fields for opportunity-specific applications
+    opportunity_id?: number;
     custom_answers?: Record<string, any>;
     user_id?: number;
 };
@@ -466,55 +486,80 @@ export async function listOpportunities(filters: OpportunityFilters): Promise<an
 
 // Application-related functions
 
-// Submit a new application
+// Submit a new application (can be general or for a specific opportunity)
 export async function submitApplication(applicationData: ApplicationInput): Promise<any> {
     try {
-        // Check if opportunity exists and is published
-        const opportunity = await getOpportunityById(applicationData.opportunity_id);
-        if (!opportunity) {
-            throw new AppError('Opportunity not found', 404);
-        }
-        
-        if (opportunity.status !== 'published') {
-            throw new AppError('Applications can only be submitted for published opportunities', 400);
-        }
-
-        // Validate custom answers against opportunity's custom questions
-        if (opportunity.custom_questions && opportunity.custom_questions.length > 0) {
-            const requiredQuestions = opportunity.custom_questions
-                .filter((q: any) => q.is_required)
-                .map((q: any) => q.id);
+        // If opportunity_id is provided, check if opportunity exists and is published
+        if (applicationData.opportunity_id) {
+            const opportunity = await getOpportunityById(applicationData.opportunity_id);
+            if (!opportunity) {
+                throw new AppError('Opportunity not found', 404);
+            }
             
-            // Ensure all required questions have answers
-            if (requiredQuestions.length > 0) {
-                const providedAnswers = Object.keys(applicationData.custom_answers || {});
-                const missingRequiredQuestions: string[] = requiredQuestions.filter((id: string) => !providedAnswers.includes(id));
+            if (opportunity.status !== 'published') {
+                throw new AppError('Applications can only be submitted for published opportunities', 400);
+            }
+
+            // Validate custom answers against opportunity's custom questions
+            if (opportunity.custom_questions && opportunity.custom_questions.length > 0) {
+                const requiredQuestions = opportunity.custom_questions
+                    .filter((q: any) => q.is_required)
+                    .map((q: any) => q.id);
                 
-                if (missingRequiredQuestions.length > 0) {
-                    throw new AppError('All required questions must be answered', 400);
+                // Ensure all required questions have answers
+                if (requiredQuestions.length > 0) {
+                    const providedAnswers = Object.keys(applicationData.custom_answers || {});
+                    const missingRequiredQuestions: string[] = requiredQuestions.filter((id: string) => !providedAnswers.includes(id));
+                    
+                    if (missingRequiredQuestions.length > 0) {
+                        throw new AppError('All required questions must be answered', 400);
+                    }
                 }
             }
         }
 
-        // Insert application record
+        // Insert application record with GanzAfrica specific fields
         const [createdApplication] = await db.insert(applications).values({
-            opportunity_id: applicationData.opportunity_id,
-            full_name: applicationData.full_name,
+            // Personal Information
+            first_name: applicationData.first_name,
+            last_name: applicationData.last_name,
             email: applicationData.email,
             phone: applicationData.phone,
-            gender: applicationData.gender as any,
-            nationality: applicationData.nationality,
+            national_id: applicationData.national_id,
+            city: applicationData.city,
             country: applicationData.country,
+            
+            // Education & Experience
             education_level: applicationData.education_level as any,
-            institution: applicationData.institution,
             field_of_study: applicationData.field_of_study,
-            graduation_year: applicationData.graduation_year,
-            certifications: applicationData.certifications,
-            resume_url: applicationData.resume_url,
+            career_experience: applicationData.career_experience,
+            cv_url: applicationData.cv_url,
+            supporting_docs_url: applicationData.supporting_docs_url,
+            
+            // Vision & Motivation
+            motivation: applicationData.motivation,
+            five_year_vision: applicationData.five_year_vision,
+            
+            // Community Impact
+            desired_impact: applicationData.desired_impact,
+            community_role: applicationData.community_role,
+            national_strategy: applicationData.national_strategy,
+            
+            // Programme Relevance
+            how_ganzafrica_can_help: applicationData.how_ganzafrica_can_help,
+            contribution_to_ganzafrica: applicationData.contribution_to_ganzafrica,
+            data_processing_consent: applicationData.data_processing_consent,
+            
+            // Optional fields - only populated for opportunity-specific applications
+            opportunity_id: applicationData.opportunity_id,
             custom_answers: applicationData.custom_answers || {},
+            
+            // Status and tracking
             status: 'submitted',
             submission_date: new Date(),
             user_id: applicationData.user_id,
+            
+            // Timestamps
             created_at: new Date(),
             updated_at: new Date()
         }).returning();
@@ -645,11 +690,11 @@ export async function listAllApplications(status?: string, page: number = 1, lim
         const totalCount = Number(countResult[0]?.count || 0);
         
         // Get all opportunity IDs from the results
-        const opportunityIds = [...new Set(applicationResults.map(app => app.opportunity_id))];
+        const opportunityIds = [...new Set(applicationResults.filter(app => app.opportunity_id).map(app => app.opportunity_id))];
         
         // Fetch opportunity details for these IDs
         const opportunityDetails = opportunityIds.length > 0
-            ? await db.select().from(opportunities).where(inArray(opportunities.id, opportunityIds))
+            ? await db.select().from(opportunities).where(inArray(opportunities.id, opportunityIds.filter((id): id is number => id !== null)))
             : [];
         
         // Create map of opportunity details
@@ -661,7 +706,7 @@ export async function listAllApplications(status?: string, page: number = 1, lim
         // Enhance applications with opportunity title
         const enhancedApplications = applicationResults.map(app => ({
             ...app,
-            opportunity_title: opportunityMap[app.opportunity_id]?.title || 'Unknown Opportunity'
+            opportunity_title: app.opportunity_id ? (opportunityMap[app.opportunity_id]?.title || 'Unknown Opportunity') : 'General Application'
         }));
         
         return {
