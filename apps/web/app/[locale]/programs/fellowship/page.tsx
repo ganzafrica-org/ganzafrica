@@ -629,8 +629,8 @@ export default function FellowshipPage() {
         >
           <Container>
             <div className="text-center mb-6 md:mb-8">
-              <h2 className="text-3xl md:text-4xl font-bold mb-2">Checkout Fellows</h2>
-              <h3 className="text-2xl md:text-3xl font-bold text-[#045F3C] mb-6 md:mb-8">Say about the Fellowship</h3>
+              <h2 className="text-3xl md:text-4xl font-bold mb-2">Checkout What Fellows </h2>
+              <h3 className="text-2xl md:text-3xl font-bold text-[#045F3C] mb-6 md:mb-8">Say about Our Fellowship</h3>
             </div>
 
             {loading ? (

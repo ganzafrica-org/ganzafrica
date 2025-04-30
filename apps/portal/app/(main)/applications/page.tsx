@@ -669,27 +669,9 @@ const ApplicationsPage = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleAction('view', application.id)}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="View details"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleAction('status', application.id)}
-                          className="text-green-600 hover:text-green-800"
-                          title="Change status"
-                        >
-                          <RefreshCw className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleAction('delete', application.id)}
-                          className="text-red-600 hover:text-red-800"
-                          title="Delete"
-                        >
-                          <Trash className="w-5 h-5" />
-                        </button>
+                       
+                      
+                     
                         <div className="relative">
                           <button 
                             className="text-gray-500 hover:text-gray-700"
