@@ -6,7 +6,6 @@ import Image from "next/image";
 import HeaderBelt from "@/components/layout/headerBelt";
 import WhereWeWorkSection from "@/components/sections/food-system/where-we-work-section";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
-import FoodSystemsMapSection from "@/components/sections/food-system/food-systems-map-section";
 import ApproachSection from "@/components/sections/food-system/approach-section";
 
 // Animation variants
@@ -80,7 +79,6 @@ const FoodSystemPage = ({}) => {
         <ApproachSection />
         <WhereWeWorkSection />
         <ImpactAreasSection />
-        <FoodSystemsMapSection />
       </motion.div>
     </main>
   );
