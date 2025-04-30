@@ -6,11 +6,11 @@ import { opportunityValidation } from "../validations/opportunity";
 const router: Router = Router();
 
 /**
- * @swagger
- * tags:
- *   name: Opportunities
- *   description: Opportunity management endpoints for fellowships and employment positions
- */
+* @swagger
+* tags:
+*   name: Opportunities
+*   description: Opportunity management endpoints for fellowships and employment positions
+*/
 
 // Routes with no parameters
 router.get(

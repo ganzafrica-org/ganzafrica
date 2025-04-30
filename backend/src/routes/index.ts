@@ -11,10 +11,15 @@ import testimonialRoutes from "./testimonial.routes";
 import faqRoutes from "./faqs";
 import newsRourtes from "./news.routes";
 import opportunityRoutes from "./opportunity";
+<<<<<<< HEAD
 import applicationRoutes from "./application";
 import contactRoutes from "./contact";
 import  newsletterRouter  from "./newsletter";
 
+=======
+import contactRoutes from "./contact";
+import  newsletterRouter  from "./newsletter";
+>>>>>>> 46d65ae8005e640e916d5e7763a93c568731decc
 
 const router: Router = Router();
 
@@ -30,7 +35,10 @@ router.use("/testimonials", testimonialRoutes);
 router.use("/faqs", faqRoutes);
 router.use("/news", newsRourtes);
 router.use("/opportunities", opportunityRoutes);
+<<<<<<< HEAD
 router.use("/applications", applicationRoutes); 
+=======
+>>>>>>> 46d65ae8005e640e916d5e7763a93c568731decc
 router.use("/applications", opportunityRoutes);
 router.use("/contacts", contactRoutes);
 router.use("/newsletter", newsletterRouter);

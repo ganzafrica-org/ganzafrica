@@ -360,7 +360,7 @@ export default function HomeHero({
                     <NavigationMenuLink asChild>
                       <Link
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/about`}
+                        href={`/${locale}/about/who-we-are`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
                           About Us
@@ -408,7 +408,7 @@ export default function HomeHero({
                     <NavigationMenuLink asChild>
                       <Link
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/programs`}
+                        href={`/${locale}/programs/fellowship`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
                           Our Programs
@@ -791,28 +791,28 @@ export default function HomeHero({
         ref={finalContentRef}
         className="absolute inset-0 z-40 opacity-0 pt-24"
       >
-        <div className="container mx-auto px-4 text-center mt-20">
-          <h1 className="text-3xl md:text-4xl font-bold mb-6">
-            <span className="text-primary-green">
-              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
-              <br />
-              {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
-            </span>{" "}
+        <div className="container mx-auto px-4 text-center mt-12 sm:mt-16 md:mt-20">
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">
+    <span className="text-primary-green">
+      {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
+      <br />
+      {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
+    </span>{" "}
             <span className="text-primary-orange">
-              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
+      {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
               {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
-            </span>
+    </span>
           </h1>
 
-          <p className="text-base max-w-3xl mx-auto mb-8 text-gray-800">
+          <p className="text-xs sm:text-sm md:text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800">
             {dict?.home?.hero?.subtitle ||
-              "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
+                "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
           </p>
 
           <Link href={`/${locale}/about/who-we-are`} prefetch={true}>
             <Button
-              size="lg"
-              className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-6 py-3"
+                size="lg"
+                className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base"
             >
               {dict?.cta?.discover_more || "Discover More"}
             </Button>
@@ -820,24 +820,24 @@ export default function HomeHero({
         </div>
 
         {/* Leaves */}
-        <div className="absolute -left-1 top-1/3 transform rotate-[31.83deg] -translate-x-1/4 z-50 md:w-[200px] w-[150px] aspect-square">
+        <div className="absolute -left-1 top-1/3 transform rotate-[31.83deg] -translate-x-1/4 z-50 w-0 sm:w-[100px] md:w-[150px] lg:w-[200px] hidden sm:block aspect-square">
           <Image
-            src="/images/leaf.png"
-            alt="Decorative leaf"
-            fill
-            className="object-contain"
-            priority
-          />
-        </div>
-
-        <div className="absolute -right-1 top-1/4 rotate-[-60deg] transform translate-x-1/4 z-50 md:w-[200px] w-[150px] aspect-square overflow-hidden">
-          <div className="relative w-full h-full">
-            <Image
               src="/images/leaf.png"
               alt="Decorative leaf"
               fill
-              className="object-contain rotate-180"
+              className="object-contain"
               priority
+          />
+        </div>
+
+        <div className="absolute -right-1 top-1/4 rotate-[-60deg] transform translate-x-1/4 z-50 w-0 sm:w-[100px] md:w-[150px] lg:w-[200px] hidden sm:block aspect-square overflow-hidden">
+          <div className="relative w-full h-full">
+            <Image
+                src="/images/leaf.png"
+                alt="Decorative leaf"
+                fill
+                className="object-contain rotate-180"
+                priority
             />
           </div>
         </div>

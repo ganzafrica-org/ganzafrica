@@ -544,7 +544,8 @@ export default async function AboutPage(props: PageProps) {
       </section>
 
       {/* Our Approach Grid Section */}
-      <section className="py-8 sm:py-12 md:py-16 bg-white">
+      {/*}
+       <section className="py-8 sm:py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex justify-center mb-6 sm:mb-10">
             <DecoratedHeading
@@ -554,7 +555,7 @@ export default async function AboutPage(props: PageProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-            {/* Left Column - Identify */}
+
             <div className="flex flex-col gap-4">
               <div
                 style={{ backgroundColor: "#FFFDEB" }}
@@ -583,7 +584,7 @@ export default async function AboutPage(props: PageProps) {
               </div>
             </div>
 
-            {/* Middle Column - Main Image + Establish */}
+
             <div className="flex flex-col gap-4">
               <div className="aspect-[4/3] rounded-2xl overflow-hidden">
                 <Image
@@ -612,7 +613,7 @@ export default async function AboutPage(props: PageProps) {
               </div>
             </div>
 
-            {/* Right Column - Deploy + Image */}
+
             <div className="flex flex-col gap-4">
               <div
                 style={{ backgroundColor: "#FFFDEB" }}
@@ -643,7 +644,7 @@ export default async function AboutPage(props: PageProps) {
           </div>
         </div>
       </section>
-
+*/}
       {/* Our Promise */}
       <section className="py-8 sm:py-12 md:py-16 bg-white text-base md:text-xl ">
         <div className="flex justify-center mb-6 sm:mb-10">
