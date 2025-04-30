@@ -263,16 +263,16 @@ export default function OpportunitiesPage() {
     // Filter by status
     const statusMatch = opportunity.status && opportunity.status.toLowerCase() === selectedStatus.toLowerCase();
     
-    // Filter by type
-    let typeMatch = true;
-    if (selectedType !== "all") {
-      if (selectedType === "fellowship") {
-        typeMatch = opportunity.type?.toLowerCase() === "fellowship";
-      } else if (selectedType === "employment") {
-        typeMatch = opportunity.type && 
-          ["employment", "internship", "full-time", "part-time", "contract"].includes(opportunity.type.toLowerCase());
-      }
-    }
+// Filter by type
+let typeMatch = true;
+if (selectedType !== "all") {
+  if (selectedType === "fellowship") {
+    typeMatch = opportunity.type?.toLowerCase() === "fellowship" || false;
+  } else if (selectedType === "employment") {
+    typeMatch = !!opportunity.type && 
+      ["employment", "internship", "full-time", "part-time", "contract"].includes(opportunity.type.toLowerCase());
+  }
+}
     
     // Filter by search term
     const searchMatch = !searchTerm || 
