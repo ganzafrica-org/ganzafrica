@@ -233,7 +233,7 @@ export default function FellowshipPage() {
                     How to Apply
                   </Button>
                 </Link>
-                <Link href={`/${locale}/opportunities/${featuredOpportunity?.id}/apply`}>
+                <Link href={`/${locale}/programs/fellowship/${featuredOpportunity?.id}/apply`}>
                   <Button className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white font-semibold px-6 py-4 text-base">
                     Apply now
                   </Button>

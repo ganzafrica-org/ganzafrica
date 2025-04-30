@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, FileText, Upload, CheckCircle2, ChevronDown, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight, FileText, Upload, CheckCircle2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { Button } from '@workspace/ui/components/button';
+import { Input } from '@workspace/ui/components/input';
+import { Textarea } from '@workspace/ui/components/textarea';
 import { useRouter } from 'next/navigation';
 import apiClient from "@/lib/api-client";
 
@@ -52,19 +55,6 @@ const countries: Country[] = [
   },
 ];
 
-// Custom question types
-type CustomQuestionType = 'text' | 'textarea' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'file';
-
-type CustomQuestion = {
-  id: string;
-  question: string;
-  field_type: CustomQuestionType;
-  options?: string[];
-  is_required: boolean;
-  max_length?: number;
-  order: number;
-};
-
 type FormData = {
   firstName: string;
   lastName: string;
@@ -75,13 +65,11 @@ type FormData = {
   city: string;
   country: string;
   educationLevel: string;
-  institution: string;
-  graduationYear: string;
   educationField: string;
   cv: File | null;
   supportingDocs: File | null;
   careerExperience: string;
-  certifications: string[];
+  leadershipExample: string;
   motivation: string;
   fiveYearVision: string;
   desiredImpact: string;
@@ -90,9 +78,6 @@ type FormData = {
   ganzAfricaHelp: string;
   ganzAfricaContribution: string;
   consent: boolean;
-  gender: string;
-  nationality: string;
-  customAnswers: Record<string, any>;
 };
 
 const initialFormData: FormData = {
@@ -112,13 +97,11 @@ const initialFormData: FormData = {
   city: '',
   country: '',
   educationLevel: '',
-  institution: '',
-  graduationYear: '',
   educationField: '',
   cv: null,
   supportingDocs: null,
   careerExperience: '',
-  certifications: [],
+  leadershipExample: '',
   motivation: '',
   fiveYearVision: '',
   desiredImpact: '',
@@ -127,9 +110,6 @@ const initialFormData: FormData = {
   ganzAfricaHelp: '',
   ganzAfricaContribution: '',
   consent: false,
-  gender: '',
-  nationality: '',
-  customAnswers: {}
 };
 
 const steps = [
@@ -138,7 +118,6 @@ const steps = [
   { title: 'Work Aspirations', description: 'Career goals' },
   { title: 'Impact to the Community', description: 'Social contribution' },
   { title: 'Programme Relevance', description: 'Final steps' },
-  { title: 'Custom Questions', description: 'Opportunity-specific questions' }
 ];
 
 const slideVariants = {
@@ -158,77 +137,27 @@ const slideVariants = {
   })
 };
 
-interface OpportunityApplicationFormProps {
-  opportunityId: number | string;
-  opportunity?: any;
-}
+// Add type for step numbers
+type StepNumber = 0 | 1 | 2 | 3 | 4;
 
-export default function OpportunityApplicationForm({ opportunityId, opportunity }: OpportunityApplicationFormProps) {
+export default function FellowshipApplyPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
-  const [opportunityData, setOpportunityData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   
-  // Fetch opportunity details if not provided
-  useEffect(() => {
-    if (opportunity) {
-      setOpportunityData(opportunity);
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchOpportunity = async () => {
-      try {
-        setIsLoading(true);
-        const response = await apiClient.get(`/opportunities/${opportunityId}`);
-        setOpportunityData(response.data?.opportunity || response.data);
-        setError(null);
-      } catch (err) {
-        console.error("Failed to fetch opportunity details:", err);
-        setError("Failed to load opportunity details. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (opportunityId) {
-      fetchOpportunity();
-    }
-  }, [opportunityId, opportunity]);
-
-  // Adjust steps based on whether there are custom questions
-  useEffect(() => {
-    if (opportunityData) {
-      const hasCustomQuestions = opportunityData.custom_questions && 
-                                 Array.isArray(opportunityData.custom_questions) && 
-                                 opportunityData.custom_questions.length > 0;
-      
-      // Remove custom questions step if there are none
-      if (!hasCustomQuestions) {
-        steps.pop();
-      }
-    }
-  }, [opportunityData]);
+  // Opportunity ID (if applying to a specific opportunity)
+  // This could be passed as a URL parameter
+  const opportunityId = null; // Set to actual ID if applying to specific opportunity
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
-    if (type === 'checkbox') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: (e.target as HTMLInputElement).checked
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,41 +186,17 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
     setIsCountryDropdownOpen(false);
   };
 
-  const handleCertificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    
-    if (value.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        certifications: [...prev.certifications, value.trim()]
-      }));
-      
-      // Clear the input
-      e.target.value = '';
-    }
-  };
-
-  const removeCertification = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      certifications: prev.certifications.filter((_, i) => i !== index)
-    }));
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'cv' | 'supportingDocs') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('File size must be less than 2MB');
         return;
       }
-      
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error('Only PDF, DOC or DOCX files are allowed');
+      if (file.type !== 'application/pdf') {
+        toast.error('Only PDF files are allowed');
         return;
       }
-      
       setFormData(prev => ({
         ...prev,
         [field]: file
@@ -300,37 +205,9 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
     }
   };
 
-  const handleCustomAnswerChange = (questionId: string, value: any, fieldType: CustomQuestionType) => {
-    // Handle different field types appropriately
-    let processedValue = value;
-    
-    if (fieldType === 'multiselect') {
-      // For multiselect, we need to update an array
-      const currentValues = formData.customAnswers[questionId] || [];
-      if (Array.isArray(currentValues)) {
-        const valueIndex = currentValues.indexOf(value);
-        if (valueIndex === -1) {
-          processedValue = [...currentValues, value];
-        } else {
-          processedValue = currentValues.filter(v => v !== value);
-        }
-      } else {
-        processedValue = [value];
-      }
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      customAnswers: {
-        ...prev.customAnswers,
-        [questionId]: processedValue
-      }
-    }));
-  };
-
   const validateStep = () => {
     switch (currentStep) {
-      case 0: // Personal Information
+      case 0:
         if (!formData.firstName || !formData.lastName || !formData.phone || !formData.nationalId || !formData.email || !formData.city || !formData.country) {
           toast.error('Please fill in all required fields');
           return false;
@@ -344,54 +221,53 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
           return false;
         }
         break;
-      case 1: // Education & Experience
+      case 1:
         if (!formData.educationLevel || !formData.educationField || !formData.cv || !formData.careerExperience) {
           toast.error('Please fill in all required fields');
           return false;
         }
         break;
-      case 2: // Vision & Motivation
+      case 2:
         if (!formData.motivation || !formData.fiveYearVision) {
           toast.error('Please fill in all required fields');
           return false;
         }
         break;
-      case 3: // Community Impact
+      case 3:
         if (!formData.desiredImpact || !formData.communityRole || !formData.nationalStrategy) {
           toast.error('Please fill in all required fields');
           return false;
         }
         break;
-      case 4: // Programme Relevance
+      case 4:
         if (!formData.ganzAfricaHelp || !formData.ganzAfricaContribution || !formData.consent) {
           toast.error('Please fill in all required fields and accept the terms');
           return false;
-        }
-        break;
-      case 5: // Custom Questions
-        if (opportunityData?.custom_questions) {
-          const requiredQuestions = opportunityData.custom_questions.filter((q: CustomQuestion) => q.is_required);
-          for (const question of requiredQuestions) {
-            const answer = formData.customAnswers[question.id];
-            if (answer === undefined || answer === null || answer === '' || (Array.isArray(answer) && answer.length === 0)) {
-              toast.error(`Please answer all required questions: ${question.question}`);
-              return false;
-            }
-          }
         }
         break;
     }
     return true;
   };
 
-  // Create a file upload function
+  // Create a fake file upload function as a placeholder
+  // In a real implementation, we would need a proper file upload service
   const uploadFileAndGetUrl = async (file: File, fileType: string): Promise<string> => {
-    // Simulate a file upload - in a real app, you'd upload to your server or cloud storage
+    // Since there's no actual file upload endpoint, we'll simulate one
+    // In a real implementation, you'd upload to S3, Cloudinary, or another storage service
+    
+    // This would create a deterministic URL based on the file name and time
+    // which we're using to simulate a real upload URL
     const fileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
     const timestamp = new Date().getTime();
     const mockUploadUrl = `https://example-storage.com/${fileType}/${timestamp}_${fileName}`;
     
-    // Simulate a delay for the upload
+    // In a real implementation, we'd do something like:
+    // const formData = new FormData();
+    // formData.append('file', file);
+    // const response = await apiClient.post('/upload-endpoint', formData);
+    // return response.data.url;
+    
+    // For now, just pause briefly to simulate network request
     await new Promise(resolve => setTimeout(resolve, 300));
     
     return mockUploadUrl;
@@ -404,7 +280,7 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
     setIsSubmitting(true);
   
     try {
-      // Process file uploads
+      // Instead of converting to base64, we'll simulate getting URLs
       let cvUrl = "";
       let supportingDocsUrl = "";
       
@@ -418,68 +294,50 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
         supportingDocsUrl = await uploadFileAndGetUrl(formData.supportingDocs, 'supporting_docs');
       }
       
-      // Prepare the application data in both formats to accommodate potential backend inconsistencies
+      // Prepare the application data in the exact format backend expects
       const applicationData = {
-        // Both formats for name fields
-        full_name: `${formData.firstName} ${formData.lastName}`,
         first_name: formData.firstName,
         last_name: formData.lastName,
-        
-        // Basic information
         email: formData.email,
         phone: formData.phone,
         national_id: formData.nationalId,
         city: formData.city,
         country: formData.country,
-        gender: formData.gender || undefined,
-        nationality: formData.nationality || undefined,
-        
-        // Education details
         education_level: formData.educationLevel,
         field_of_study: formData.educationField,
-        institution: formData.institution || undefined,
-        graduation_year: formData.graduationYear ? parseInt(formData.graduationYear) : undefined,
-        certifications: formData.certifications.length > 0 ? formData.certifications : undefined,
-        
-        // Experience and files
         career_experience: formData.careerExperience,
-        cv_url: cvUrl,
-        supporting_docs_url: supportingDocsUrl || undefined,
-        
-        // Vision and motivation
+        cv_url: cvUrl, // Use URL instead of base64
+        supporting_docs_url: supportingDocsUrl || null,
         motivation: formData.motivation,
         five_year_vision: formData.fiveYearVision,
-        
-        // Impact and community
         desired_impact: formData.desiredImpact,
         community_role: formData.communityRole,
         national_strategy: formData.nationalStrategy,
-        
-        // Program relevance
         how_ganzafrica_can_help: formData.ganzAfricaHelp,
         contribution_to_ganzafrica: formData.ganzAfricaContribution,
-        
-        // Consent
-        data_processing_consent: formData.consent,
-        
-        // Custom answers
-        custom_answers: formData.customAnswers
+        data_processing_consent: formData.consent
       };
   
-      // Determine the endpoint based on opportunity ID
-      const endpoint = `/${opportunityId}/apply`;
+      // Determine if this is a general application or for a specific opportunity
+      const endpoint = opportunityId 
+        ? `/opportunities/${opportunityId}/apply` 
+        : `/applications`;
   
       // Submit the application
-      const response = await apiClient.post(endpoint, applicationData);
+      const response = await apiClient.post(endpoint, applicationData, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
   
       // Application was submitted successfully
       toast.success('Application submitted successfully!');
       
       // Redirect after success
       setTimeout(() => {
-        router.push('/en/opportunities?success=true');
+        router.push('/en/programs/fellowship?success=true');
       }, 1500);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Application submission error:', error);
       
       // Handle error response from the API
@@ -490,7 +348,7 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
         
         // If there are validation errors, display them
         if (error.response.data.details && Array.isArray(error.response.data.details)) {
-          error.response.data.details.forEach((detail: any) => {
+          error.response.data.details.forEach((detail) => {
             toast.error(`${detail.path}: ${detail.message}`);
           });
         }
@@ -548,196 +406,9 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
     </div>
   );
 
-  // Render custom questions
-  const renderCustomQuestions = () => {
-    if (!opportunityData?.custom_questions || !Array.isArray(opportunityData.custom_questions) || opportunityData.custom_questions.length === 0) {
-      return (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No additional questions for this opportunity.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-8">
-        <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Opportunity-Specific Questions</h3>
-        
-        {opportunityData.custom_questions
-          .sort((a: CustomQuestion, b: CustomQuestion) => a.order - b.order)
-          .map((question: CustomQuestion) => (
-            <div key={question.id} className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                {question.question} {question.is_required && <span className="text-red-500">*</span>}
-              </label>
-              
-              {question.field_type === 'text' && (
-                <input
-                  type="text"
-                  value={formData.customAnswers[question.id] || ''}
-                  onChange={(e) => handleCustomAnswerChange(question.id, e.target.value, question.field_type)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
-                  required={question.is_required}
-                  maxLength={question.max_length}
-                />
-              )}
-              
-              {question.field_type === 'textarea' && (
-                <textarea
-                  value={formData.customAnswers[question.id] || ''}
-                  onChange={(e) => handleCustomAnswerChange(question.id, e.target.value, question.field_type)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
-                  required={question.is_required}
-                  maxLength={question.max_length}
-                  rows={4}
-                />
-              )}
-              
-              {question.field_type === 'select' && question.options && (
-                <select
-                  value={formData.customAnswers[question.id] || ''}
-                  onChange={(e) => handleCustomAnswerChange(question.id, e.target.value, question.field_type)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
-                  required={question.is_required}
-                >
-                  <option value="">Select an option</option>
-                  {question.options.map((option, idx) => (
-                    <option key={idx} value={option}>{option}</option>
-                  ))}
-                </select>
-              )}
-              
-              {question.field_type === 'multiselect' && question.options && (
-  <div className="space-y-2 border border-gray-300 rounded-md p-3">
-    {question.options.map((option, idx) => {
-      const isSelected = Array.isArray(formData.customAnswers[question.id]) && 
-                        formData.customAnswers[question.id]?.includes(option);
-      return (
-        <div key={idx} className="flex items-center">
-          <input
-            type="checkbox"
-            id={`${question.id}-${idx}`}
-            checked={isSelected}
-            onChange={() => handleCustomAnswerChange(question.id, option, question.field_type)}
-            className="mr-2"
-          />
-          <label htmlFor={`${question.id}-${idx}`} className="text-sm text-gray-700">
-            {option}
-          </label>
-        </div>
-      );
-    })}
-  </div>
-)}
-              
-              {question.field_type === 'radio' && question.options && (
-                <div className="space-y-2 border border-gray-300 rounded-md p-3">
-                  {question.options.map((option, idx) => (
-                    <div key={idx} className="flex items-center">
-                      <input
-                        type="radio"
-                        id={`${question.id}-${idx}`}
-                        name={question.id}
-                        value={option}
-                        checked={formData.customAnswers[question.id] === option}
-                        onChange={() => handleCustomAnswerChange(question.id, option, question.field_type)}
-                        className="mr-2"
-                        required={question.is_required}
-                      />
-                      <label htmlFor={`${question.id}-${idx}`} className="text-sm text-gray-700">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {question.field_type === 'checkbox' && question.options && (
-                <div className="space-y-2 border border-gray-300 rounded-md p-3">
-                  {question.options.map((option, idx) => (
-                    <div key={idx} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`${question.id}-${idx}`}
-                        checked={formData.customAnswers[question.id] === option}
-                        onChange={() => handleCustomAnswerChange(question.id, option, question.field_type)}
-                        className="mr-2"
-                      />
-                      <label htmlFor={`${question.id}-${idx}`} className="text-sm text-gray-700">
-                        {option}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {question.field_type === 'file' && (
-                <div className="flex items-center space-x-2">
-                  <input 
-                    type="file"
-                    id={`${question.id}-file`}
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleCustomAnswerChange(question.id, file, question.field_type);
-                      }
-                    }}
-                    required={question.is_required}
-                  />
-                  <label
-                    htmlFor={`${question.id}-file`}
-                    className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
-                  >
-                    <Upload className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="text-sm text-gray-700">Choose File</span>
-                  </label>
-                  {formData.customAnswers[question.id] && (
-                    <div className="flex items-center text-sm text-green-600">
-                      <CheckCircle2 className="w-4 h-4 mr-1" />
-                      <span>File uploaded</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-      </div>
-    );
-  };
-
-  // Loading and error states
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#005c3d] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading application form...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md w-full text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-red-700 mb-2">Error Loading Application</h2>
-          <p className="text-red-600 mb-6">{error}</p>
-          <button
-            onClick={() => router.push('/en/opportunities')}
-            className="px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
-          >
-            Return to Opportunities
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-16">
-      {/* Hero Section with Opportunity Title */}
+      {/* Hero Section */}
       <section className="relative h-[400px] md:h-[500px]">
         <div className="absolute inset-0">
           <video
@@ -759,7 +430,7 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
               transition={{ duration: 0.8 }}
               className="text-3xl md:text-5xl font-bold text-white mb-4"
             >
-              Apply for <span className="text-[#FDB022]">{opportunityData?.title || 'Opportunity'}</span>
+              Fellowship <span className="text-[#FDB022]">Application</span>
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
@@ -767,8 +438,8 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6"
             >
-              {opportunityData?.description?.substring(0, 120) || 'Complete the application form below to apply for this opportunity.'}
-              {opportunityData?.description?.length > 120 ? '...' : ''}
+              Take the first step towards becoming a leader in sustainable development. 
+              Our fellowship program offers unique opportunities for growth, learning, and impact.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -778,17 +449,17 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
             >
               <div className="flex items-center">
                 <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
-                <span>{opportunityData?.type || 'Opportunity'}</span>
+                <span>6-month program</span>
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
               <div className="flex items-center">
                 <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
-                <span>{opportunityData?.location || 'Location varies'}</span>
+                <span>Expert mentorship</span>
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
               <div className="flex items-center">
                 <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
-                <span>Deadline: {new Date(opportunityData?.application_deadline || Date.now()).toLocaleDateString()}</span>
+                <span>Project-based learning</span>
               </div>
             </motion.div>
           </div>
@@ -960,43 +631,6 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="nationality">
-                          Nationality
-                        </label>
-                        <input
-                          type="text"
-                          id="nationality"
-                          name="nationality"
-                          value={formData.nationality}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
-                          title="Enter your nationality"
-                          placeholder="Enter your nationality"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="gender">
-                          Gender
-                        </label>
-                        <select
-                          id="gender"
-                          name="gender"
-                          value={formData.gender}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
-                          title="Select your gender"
-                        >
-                          <option value="">Select your gender</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
-                          <option value="non_binary">Non-binary</option>
-                          <option value="prefer_not_to_say">Prefer not to say</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-                    </div>
                   </div>
                 )}
 
@@ -1026,40 +660,6 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                         <option value="other">Other</option>
                       </select>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="institution">
-                          Institution/University
-                        </label>
-                        <input
-                          type="text"
-                          id="institution"
-                          name="institution"
-                          value={formData.institution}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
-                          title="Enter your institution name"
-                          placeholder="Enter your institution name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="graduationYear">
-                          Graduation Year
-                        </label>
-                        <input
-                          type="number"
-                          id="graduationYear"
-                          name="graduationYear"
-                          value={formData.graduationYear}
-                          onChange={handleInputChange}
-                          min="1950"
-                          max="2030"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
-                          title="Enter your graduation year"
-                          placeholder="Enter your graduation year"
-                        />
-                      </div>
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="educationField">
                         Field of Study *
@@ -1075,50 +675,6 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                         title="Enter your field of study"
                         placeholder="Enter your field of study"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Certifications
-                      </label>
-                      <div className="space-y-3">
-                        <div className="flex items-center">
-                          <input
-                            type="text"
-                            id="certificationInput"
-                            placeholder="Add certification and press Enter"
-                            className="flex-grow px-4 py-2 border border-gray-300 rounded-l-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                handleCertificationChange(e as unknown as React.ChangeEvent<HTMLInputElement>);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => handleCertificationChange({ target: { value: (document.getElementById('certificationInput') as HTMLInputElement).value } } as React.ChangeEvent<HTMLInputElement>)}
-                            className="px-4 py-2 bg-[#005c3d] text-white rounded-r-md hover:bg-[#00482e]"
-                          >
-                            Add
-                          </button>
-                        </div>
-                        {formData.certifications.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {formData.certifications.map((cert, idx) => (
-                              <div key={idx} className="flex items-center bg-gray-100 px-3 py-1 rounded-full">
-                                <span className="text-sm text-gray-800">{cert}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => removeCertification(idx)}
-                                  className="ml-2 text-gray-500 hover:text-red-500"
-                                >
-                                  &times;
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="careerExperience">
@@ -1138,7 +694,7 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="cv">
-                        CV (PDF, DOC, DOCX) *
+                        CV (PDF) *
                       </label>
                       <div className="flex items-center space-x-2">
                         <input
@@ -1146,10 +702,10 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                           id="cv"
                           name="cv"
                           onChange={(e) => handleFileChange(e, 'cv')}
-                          accept=".pdf,.doc,.docx"
+                          accept=".pdf"
                           className="hidden"
                           required
-                          title="Upload your CV"
+                          title="Upload your CV in PDF format"
                         />
                         <label
                           htmlFor="cv"
@@ -1161,15 +717,15 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                         {formData.cv && (
                           <div className="flex items-center text-sm text-green-600">
                             <CheckCircle2 className="w-4 h-4 mr-1" />
-                            <span>CV uploaded: {formData.cv.name}</span>
+                            <span>CV uploaded</span>
                           </div>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">Max file size: 5MB</p>
+                      <p className="mt-1 text-sm text-gray-500">Max file size: 2MB</p>
                     </div>
-                    <div>
+                                          <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="supportingDocs">
-                        Supporting Documents (PDF, DOC, DOCX)
+                        Supporting Documents (PDF)
                       </label>
                       <div className="flex items-center space-x-2">
                         <input
@@ -1177,9 +733,9 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                           id="supportingDocs"
                           name="supportingDocs"
                           onChange={(e) => handleFileChange(e, 'supportingDocs')}
-                          accept=".pdf,.doc,.docx"
+                          accept=".pdf"
                           className="hidden"
-                          title="Upload supporting documents"
+                          title="Upload supporting documents in PDF format"
                         />
                         <label
                           htmlFor="supportingDocs"
@@ -1191,11 +747,11 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                         {formData.supportingDocs && (
                           <div className="flex items-center text-sm text-green-600">
                             <CheckCircle2 className="w-4 h-4 mr-1" />
-                            <span>Documents uploaded: {formData.supportingDocs.name}</span>
+                            <span>Documents uploaded</span>
                           </div>
                         )}
                       </div>
-                      <p className="mt-1 text-sm text-gray-500">Max file size: 5MB</p>
+                      <p className="mt-1 text-sm text-gray-500">Max file size: 2MB</p>
                     </div>
                   </div>
                 )}
@@ -1216,7 +772,7 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d] bg-white text-gray-800 placeholder-gray-400"
                         required
                         title="Explain your motivation for applying"
-                        placeholder="What motivates you to apply for this opportunity?"
+                        placeholder="What motivates you to apply for this fellowship program?"
                       />
                     </div>
                     <div>
@@ -1344,8 +900,6 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                     </div>
                   </div>
                 )}
-
-                {currentStep === 5 && renderCustomQuestions()}
               </motion.div>
             </AnimatePresence>
 
@@ -1393,11 +947,9 @@ export default function OpportunityApplicationForm({ opportunityId, opportunity 
                 </button>
               )}
             </div>
-            </form>
+          </form>
         </div>
       </div>
     </div>
-
   );
-}                
-                    
+}

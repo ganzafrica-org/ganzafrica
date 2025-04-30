@@ -9,11 +9,9 @@ import { cn } from "@workspace/ui/lib/utils";
 import { Dialog, DialogContent } from "@workspace/ui/components/dialog";
 
 // The main issue might be related to how we're forwarding the ref
-// Let's try a different approach by using a regular component instead of forwardRef for the main Command
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive>
->(function Command({ className, ...props }, ref) {
+  React.ComponentPropsWithoutRef<typeof CommandPrimitive>>(function Command({ className, ...props }, ref) {
   return (
     <CommandPrimitive
       ref={ref}
@@ -125,8 +123,7 @@ CommandSeparator.displayName = "CommandSeparator";
 
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
->(function CommandItem({ className, ...props }, ref) {
+  React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>>(function CommandItem({ className, ...props }, ref) {
   return (
     <CommandPrimitive.Item
       ref={ref}
