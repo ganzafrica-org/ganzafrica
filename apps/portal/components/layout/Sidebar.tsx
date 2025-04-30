@@ -193,7 +193,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                         pathname === '/opportunities' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                       }`}
                     >
-                      <span className="font-medium">All Opportunities</span>
+                      <span className="font-medium">Opportunities</span>
                     </Link>
                     <Link
                       href="/applications"
@@ -201,7 +201,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                         pathname === '/applications' || pathname.startsWith('/applications/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                       }`}
                     >
-                      <span className="font-medium">Applications</span>
+                      <span className="font-medium">General Applications</span>
                     </Link>
                   </div>
                 )}

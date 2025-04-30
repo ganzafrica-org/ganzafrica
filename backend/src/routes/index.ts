@@ -11,8 +11,10 @@ import testimonialRoutes from "./testimonial.routes";
 import faqRoutes from "./faqs";
 import newsRourtes from "./news.routes";
 import opportunityRoutes from "./opportunity";
+import applicationRoutes from "./application";
 import contactRoutes from "./contact";
 import  newsletterRouter  from "./newsletter";
+
 
 const router: Router = Router();
 
@@ -28,6 +30,7 @@ router.use("/testimonials", testimonialRoutes);
 router.use("/faqs", faqRoutes);
 router.use("/news", newsRourtes);
 router.use("/opportunities", opportunityRoutes);
+router.use("/applications", applicationRoutes); 
 router.use("/applications", opportunityRoutes);
 router.use("/contacts", contactRoutes);
 router.use("/newsletter", newsletterRouter);

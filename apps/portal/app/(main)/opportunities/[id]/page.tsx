@@ -20,15 +20,36 @@ import {
   CheckCircle,
   Book,
   Users,
-  Laptop
+  Laptop,
+  Eye,
+  RefreshCw,
+  XCircle,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Filter
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const OpportunityDetailsPage = ({ params }) => {
+  const router = useRouter();
   const [opportunity, setOpportunity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState({});
   const [activeTab, setActiveTab] = useState('details');
+  
+  // States for applicants tab
+  const [applicants, setApplicants] = useState([]);
+  const [applicantsLoading, setApplicantsLoading] = useState(false);
+  const [applicantsError, setApplicantsError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalApplicants, setTotalApplicants] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   
   // Types of opportunities for display
   const opportunityTypes = {
@@ -92,6 +113,74 @@ const OpportunityDetailsPage = ({ params }) => {
     fetchOpportunityData();
   }, [params.id]);
   
+  // Fetch applicants when the applicants tab is active
+  useEffect(() => {
+    if (activeTab === 'applicants' && params.id) {
+      fetchApplicants();
+    }
+  }, [activeTab, params.id, page, limit, searchTerm, filterStatus]);
+  
+  // Function to fetch applicants for this opportunity
+  const fetchApplicants = async () => {
+    try {
+      setApplicantsLoading(true);
+      
+      // Build query params
+      const queryParams = {
+        page,
+        limit,
+        opportunity_id: params.id
+      };
+      
+      // Add additional filters if set
+      if (searchTerm) queryParams.search = searchTerm;
+      if (filterStatus !== 'all') queryParams.status = filterStatus;
+      
+      const response = await apiClient.get(`/applications`, {
+        params: queryParams
+      });
+      
+      console.log("Applicants Response:", response.data);
+      
+      // Process the response data based on its structure
+      let applicantsData = [];
+      let paginationData = { total: 0, pages: 1 };
+      
+      if (response.data.applications && response.data.applications.items) {
+        applicantsData = response.data.applications.items;
+        paginationData = response.data.applications.pagination || paginationData;
+      } else if (Array.isArray(response.data)) {
+        applicantsData = response.data;
+        paginationData.total = response.data.length;
+      } else if (response.data.items && Array.isArray(response.data.items)) {
+        applicantsData = response.data.items;
+        paginationData = response.data.pagination || paginationData;
+      }
+      
+      setApplicants(applicantsData);
+      setTotalApplicants(paginationData.total);
+      setTotalPages(paginationData.pages || Math.ceil(paginationData.total / limit) || 1);
+      setApplicantsError(null);
+    } catch (error) {
+      console.error('Error fetching applicants:', error);
+      setApplicantsError('Failed to load applicants. Please try again.');
+      setApplicants([]);
+    } finally {
+      setApplicantsLoading(false);
+    }
+  };
+  
+  // Handle pagination
+  const goToPage = (newPage) => {
+    setPage(newPage);
+  };
+  
+  // Handle search
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setPage(1); // Reset to first page when searching
+  };
+  
   // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -124,6 +213,41 @@ const OpportunityDetailsPage = ({ params }) => {
       default:
         return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• {status}</span>;
     }
+  };
+  
+  // Get application status badge
+  const getApplicationStatusBadge = (status) => {
+    if (!status) return null;
+    
+    switch(status.toLowerCase()) {
+      case 'approved':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center inline-flex"><CheckCircle className="w-3 h-3 mr-1" />Approved</span>;
+      case 'rejected':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 flex items-center inline-flex"><XCircle className="w-3 h-3 mr-1" />Rejected</span>;
+      case 'pending':
+      case 'under_review':
+      case 'submitted':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 flex items-center inline-flex"><Clock className="w-3 h-3 mr-1" />Pending</span>;
+      case 'shortlisted':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 flex items-center inline-flex"><CheckCircle className="w-3 h-3 mr-1" />Shortlisted</span>;
+      case 'waitlisted':
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 flex items-center inline-flex"><Clock className="w-3 h-3 mr-1" />Waitlisted</span>;
+      default:
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{status}</span>;
+    }
+  };
+  
+  // Get applicant name
+  const getApplicantName = (application) => {
+    if (application.full_name) {
+      return application.full_name;
+    }
+    
+    if (application.first_name && application.last_name) {
+      return `${application.first_name} ${application.last_name}`;
+    }
+    
+    return 'Unknown Applicant';
   };
 
   if (loading) {
@@ -260,6 +384,20 @@ const OpportunityDetailsPage = ({ params }) => {
                 <div className="ml-4">
                   <p className="font-semibold">Application Form</p>
                   <p className="text-sm text-gray-500">Custom questions for applicants</p>
+                </div>
+              </button>
+            </li>
+            <li className="mb-6">
+              <button 
+                onClick={() => setActiveTab('applicants')}
+                className={`w-full text-left flex items-start ${activeTab === 'applicants' ? 'text-green-700' : 'text-gray-700'}`}
+              >
+                <div className="flex-shrink-0 mt-1">
+                  <div className={`w-3 h-3 rounded-full ${activeTab === 'applicants' ? 'bg-green-700' : 'bg-gray-300'}`}></div>
+                </div>
+                <div className="ml-4">
+                  <p className="font-semibold">Applicants</p>
+                  <p className="text-sm text-gray-500">View people who applied</p>
                 </div>
               </button>
             </li>
@@ -505,8 +643,8 @@ const OpportunityDetailsPage = ({ params }) => {
             </div>
           )}
 
-          {/* Application Form tab */}
-          {activeTab === 'application' && (
+         {/* Application Form tab */}
+         {activeTab === 'application' && (
             <div className="bg-white p-6 rounded-lg border border-gray-200">
               <h2 className="text-xl font-bold mb-6">Application Form</h2>
               
@@ -554,6 +692,208 @@ const OpportunityDetailsPage = ({ params }) => {
               ) : (
                 <div className="p-4 bg-gray-50 rounded-lg text-gray-500 text-center">
                   No custom questions defined for this opportunity's application form.
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Applicants tab */}
+          {activeTab === 'applicants' && (
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">Applicants ({totalApplicants})</h2>
+                <div className="flex items-center gap-2">
+                  <select 
+                    className="px-3 py-2 border border-gray-300 rounded text-sm"
+                    value={filterStatus}
+                    onChange={(e) => {
+                      setFilterStatus(e.target.value);
+                      setPage(1); // Reset to first page when filtering
+                    }}
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="under_review">Under Review</option>
+                    <option value="shortlisted">Shortlisted</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  
+                  <button
+                    onClick={() => fetchApplicants()}
+                    className="p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded"
+                    title="Refresh applicants"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Search */}
+              <div className="mb-6">
+                <form onSubmit={handleSearch} className="flex items-center">
+                  <div className="relative flex-grow">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <Search className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <input
+                      type="text"
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-green-500 focus:border-green-500 block w-full pl-10 p-2.5"
+                      placeholder="Search applicants by name or email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    className="p-2.5 bg-green-700 text-white rounded-r-lg hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300"
+                  >
+                    <Search className="w-5 h-5" />
+                  </button>
+                </form>
+              </div>
+              
+              {/* Applicants table */}
+              <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                {applicantsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-700 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading applicants...</p>
+                  </div>
+                ) : applicantsError ? (
+                  <div className="text-center py-12">
+                    <div className="text-red-600 mb-4">
+                      <AlertCircle className="h-10 w-10 mx-auto" />
+                    </div>
+                    <p className="text-red-600 font-medium">{applicantsError}</p>
+                    <button 
+                      onClick={() => fetchApplicants()}
+                      className="mt-4 px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : applicants.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                      <Users className="h-12 w-12 mx-auto" />
+                    </div>
+                    <p className="text-xl font-medium mb-2">No applicants found</p>
+                    <p className="text-gray-500">
+                      {searchTerm || filterStatus !== 'all' 
+                        ? "Try adjusting your search or filter criteria" 
+                        : "This opportunity doesn't have any applications yet"}
+                    </p>
+                  </div>
+                ) : (
+                  <table className="w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted On</th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {applicants.map((applicant) => (
+                        <tr key={applicant.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{getApplicantName(applicant)}</div>
+                              <div className="text-sm text-gray-500">{applicant.email}</div>
+                              {applicant.phone && <div className="text-xs text-gray-500">{applicant.phone}</div>}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(applicant.submission_date || applicant.created_at)}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            {getApplicationStatusBadge(applicant.status)}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => router.push(`/applications/${applicant.id}`)}
+                                className="text-blue-600 hover:text-blue-900 p-1"
+                                title="View application details"
+                              >
+                                <Eye className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  router.push(`/applications/${applicant.id}?changeStatus=true`);
+                                }}
+                                className="text-green-600 hover:text-green-900 p-1"
+                                title="Change application status"
+                              >
+                                <RefreshCw className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{applicants.length > 0 ? ((page - 1) * limit) + 1 : 0}</span> to <span className="font-medium">{Math.min(page * limit, totalApplicants)}</span> of <span className="font-medium">{totalApplicants}</span> applicants
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => goToPage(Math.max(1, page - 1))}
+                      disabled={page === 1}
+                      className={`p-2 rounded-md ${
+                        page === 1 
+                          ? 'text-gray-400 cursor-not-allowed' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = idx + 1;
+                      } else if (page <= 3) {
+                        pageNum = idx + 1;
+                      } else if (page >= totalPages - 2) {
+                        pageNum = totalPages - 4 + idx;
+                      } else {
+                        pageNum = page - 2 + idx;
+                      }
+                      
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => goToPage(pageNum)}
+                          className={`px-3 py-1 text-sm rounded-md ${
+                            page === pageNum
+                              ? 'bg-green-700 text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => goToPage(Math.min(totalPages, page + 1))}
+                      disabled={page === totalPages}
+                      className={`p-2 rounded-md ${
+                        page === totalPages 
+                          ? 'text-gray-400 cursor-not-allowed' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
