@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { authService, userService, emailService } from "../services";
-import { AppError } from "@/middlewares";
+import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
-import { db } from "@/db/client";
+import { db } from "../db/client";
 import { eq } from "drizzle-orm";
-import { roles, users } from "@/db/schema";
+import { roles, users } from "../db/schema";
 
 
 const logger = new Logger("AuthController");

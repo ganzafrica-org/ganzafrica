@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { AppError } from "@/middlewares";
 import { constants } from "../config";
 import { hashPassword } from "./auth.service";
-import { User, CreateUserInput, UpdateUserInput } from "@/services/types";
+import { User, CreateUserInput, UpdateUserInput } from "./types";
 import {
   sendVerificationEmail,
   sendWelcomeEmail,

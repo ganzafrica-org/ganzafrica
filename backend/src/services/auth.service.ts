@@ -1,12 +1,12 @@
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import * as crypto from "crypto";
-import {db, withDbTransaction} from "@/db/client";
-import {password_reset_tokens, sessions, users, verification_tokens, roles} from "@/db/schema";
+import {db, withDbTransaction} from "../db/client";
+import {password_reset_tokens, sessions, users, verification_tokens, roles} from "../db/schema";
 import {and, eq} from "drizzle-orm";
 import {constants, env, Logger} from "../config";
-import {sendPasswordResetEmail, } from "@/services/email.service";
-import {AppError} from "@/middlewares";
+import {sendPasswordResetEmail, } from "./email.service";
+import {AppError} from "../middlewares";
 
 const logger = new Logger("AuthService");
 
