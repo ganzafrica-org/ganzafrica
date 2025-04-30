@@ -46,17 +46,21 @@ const statItemVariants = {
   },
 };
 
-// Location parsing and mapping utilities
-function parseLocation(locationString) {
+interface LocationInfo {
+  country: string;
+  location: string;
+}
+
+function parseLocation(locationString: string | undefined): LocationInfo {
   if (!locationString) return { country: 'rwanda', location: 'Rwanda' };
   
   const locationLower = locationString.toLowerCase();
   
   // Detect country - more flexible approach
-  let country = 'other'; // Default for unknown countries
+  let country: string = 'other'; // Default for unknown countries
   
   // Known country mappings
-  const countryMappings = {
+  const countryMappings: Record<string, string> = {
     'rwanda': 'rwanda',
     'burkina': 'burkina',
     'burkina faso': 'burkina',
@@ -71,16 +75,17 @@ function parseLocation(locationString) {
   });
   
   // Extract specific location if present
-  let location = locationString;
+  let location: string = locationString;
   if (locationString && locationString.includes(',')) {
     // Take first part before comma as specific location
+    // @ts-ignore
     location = locationString.split(',')[0].trim();
   }
   
   return { country, location };
 }
 
-function getMapCoordinates(locationInfo) {
+function getMapCoordinates(locationInfo: LocationInfo) {
   const { country, location } = locationInfo;
   
   // Known specific locations - can be expanded with more locations
@@ -90,24 +95,6 @@ function getMapCoordinates(locationInfo) {
       lng: 30.0619,
       mapPosition: { x: 380, y: 300 },
       mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
-    },
-    "musanze": { 
-      lat: -1.4969, 
-      lng: 29.6259,
-      mapPosition: { x: 300, y: 180 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63776.95946876503!2d29.591339705532292!3d-1.4968819286622052!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dc4e45426592c5%3A0x7bf59f53e5c2b097!2sMusanze%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712019657396!5m2!1sen!2sus"
-    },
-    "nyabihu": { 
-      lat: -1.6579, 
-      lng: 29.5006,
-      mapPosition: { x: 220, y: 250 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63780.843420073026!2d29.498345699999998!3d-1.6578639!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dc5918838703c5%3A0xfb77da79fea2e4eb!2sNyabihu%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712019752780!5m2!1sen!2sus"
-    },
-    "ouagadougou": { 
-      lat: 12.3714, 
-      lng: -1.5197,
-      mapPosition: { x: 320, y: 230 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
     }
   };
   
@@ -134,8 +121,8 @@ function getMapCoordinates(locationInfo) {
   };
   
   // Try to find exact match for the location
-  const locationKey = location.toLowerCase().trim();
-  if (knownLocations[locationKey]) {
+  const locationKey = location.toLowerCase().trim() as keyof typeof knownLocations;
+  if (locationKey in knownLocations) {
     return {
       mapCoordinates: { 
         lat: knownLocations[locationKey].lat, 
@@ -147,7 +134,7 @@ function getMapCoordinates(locationInfo) {
   }
   
   // Fall back to country defaults
-  if (countryDefaults[country]) {
+  if (countryDefaults[country as keyof typeof countryDefaults]) {
     return {
       mapCoordinates: { 
         lat: countryDefaults[country].lat, 
@@ -166,276 +153,224 @@ function getMapCoordinates(locationInfo) {
   };
 }
 
-// Distribute project positions evenly across the map
-function distributeProjectPositions(projects, country) {
-  if (!projects || !Array.isArray(projects) || projects.length === 0) {
-    return [];
-  }
-  
-  // Define map areas by country
-  const mapAreas = {
-    "rwanda": {
-      width: 600,
-      height: 400,
-      xOffset: 150,
-      yOffset: 100,
-      spacing: 100 // Space between projects
-    },
-    "burkina": {
-      width: 600,
-      height: 400,
-      xOffset: 150,
-      yOffset: 100,
-      spacing: 100
-    },
-    "other": {
-      width: 600,
-      height: 400,
-      xOffset: 150,
-      yOffset: 100,
-      spacing: 100
-    }
+interface Project {
+  id: number;
+  name: string;
+  description: string;
+  location: string;
+  status: string;
+  created_at: string;
+  category_id: string | number;
+  media?: {
+    items?: { tag: string; url: string }[];
   };
-  
-  const mapArea = mapAreas[country] || mapAreas.other;
-  const countryProjects = projects.filter(p => p.country === country);
-  
-  // Create a grid layout
-  const projectsPerRow = Math.ceil(Math.sqrt(countryProjects.length));
-  const cellWidth = mapArea.width / projectsPerRow;
-  const cellHeight = mapArea.height / Math.ceil(countryProjects.length / projectsPerRow);
-  
-  // Place each project in a cell
-  return countryProjects.map((project, index) => {
-    const row = Math.floor(index / projectsPerRow);
-    const col = index % projectsPerRow;
-    
-    // Add some randomness for natural distribution
-    const randomOffset = {
-      x: Math.random() * (cellWidth * 0.3) - (cellWidth * 0.15),
-      y: Math.random() * (cellHeight * 0.3) - (cellHeight * 0.15)
-    };
-    
-    const x = mapArea.xOffset + (col * cellWidth) + (cellWidth / 2) + randomOffset.x;
-    const y = mapArea.yOffset + (row * cellHeight) + (cellHeight / 2) + randomOffset.y;
-    
-    return {
-      ...project,
-      mapPosition: { x, y }
-    };
-  });
+  contact_person?: string;
 }
 
-function generateMapLocations(projects) {
+interface MapCoordinates {
+  lat: number;
+  lng: number;
+}
+
+interface MapPosition {
+  x: number;
+  y: number;
+}
+
+interface MapLocation {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  country: string;
+  location: string;
+  address: string;
+  mapCoordinates: MapCoordinates;
+  mapPosition: MapPosition;
+  mapUrl: string;
+  contactPerson: string;
+  url: string;
+}
+
+function generateMapLocations(projects: Project[]): MapLocation[] {
   if (!projects || !Array.isArray(projects) || projects.length === 0) {
     return [];
   }
   
-  const projectsWithBasicData = projects.map((project, index) => {
+  console.log("Generating map locations for projects:", projects.length);
+  
+  // @ts-ignore
+  return projects.map((project, index) => {
+    console.log(`Processing project ${index + 1}:`, project.id, project.name, project.location);
+    
     // Make sure we have some location data - use defaults if needed
     const locationString = project.location || `Project ${project.id} Location`;
     
     // Parse the location string
-    const locationInfo = parseLocation(locationString);
+    const locationInfo: LocationInfo = parseLocation(locationString);
+    console.log(`  Parsed location:`, locationInfo);
     
-    // Get map coordinates and URL based on location
-    const { mapCoordinates, mapPosition, mapUrl } = getMapCoordinates(locationInfo);
+    // Calculate a unique position based on project ID to avoid overlaps
+    const defaultPosition: MapPosition = {
+      x: 100 + (index % 5) * 100,  // Distribute horizontally
+      y: 100 + Math.floor(index / 5) * 80  // Distribute vertically
+    };
     
-    // Get feature image or use fallback
-    const image = project.media?.items?.find(item => item.tag === 'feature')?.url || '/images/news/maize.avif';
+    // Simple default map coordinates based on country
+    const defaultCoordinates: Record<string, MapCoordinates> = {
+      'rwanda': { lat: -1.9441, lng: 30.0619 },
+      'burkina': { lat: 12.3714, lng: -1.5197 },
+      'other': { lat: 0, lng: 20 }, // Africa center
+      'unknown': { lat: 0, lng: 0 } // Fallback
+    };
     
-    // Create and return location object
+    // Default map URLs
+    const defaultMapUrls: Record<string, string> = {
+      'rwanda': "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus",
+      'burkina': "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus",
+      'other': "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus",
+      'unknown': "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus"
+    };
+    
+    // Use defaults when needed
+    const country = locationInfo.country;
+    const coordinates = defaultCoordinates[country] || defaultCoordinates.unknown;
+    const mapUrl = defaultMapUrls[country] || defaultMapUrls.unknown;
+    
     return {
       id: project.id,
       title: project.name || 'Untitled Project',
       description: project.description || 'No description available',
-      image: image,
-      country: locationInfo.country,
+      image: project.media?.items?.find(item => item.tag === 'feature')?.url || '/images/news/maize.avif',
+      country: country,
       location: locationInfo.location,
       address: locationString,
-      mapCoordinates: mapCoordinates,
-      mapPosition: mapPosition,
+      mapCoordinates: coordinates,
+      mapPosition: defaultPosition,
       mapUrl: mapUrl,
       contactPerson: project.contact_person || 'Project Contact',
       url: `/projects/${project.id}`
     };
   });
-  
-  // Group projects by country
-  const countries = [...new Set(projectsWithBasicData.map(p => p.country))];
-  let allProjectsDistributed = [];
-  
-  // Distribute projects for each country
-  countries.forEach(country => {
-    const countryProjects = distributeProjectPositions(projectsWithBasicData, country);
-    allProjectsDistributed = [...allProjectsDistributed, ...countryProjects];
-  });
-  
-  return allProjectsDistributed;
 }
 
-// Get feature image from project media
-const getFeatureImage = (project) => {
-  if (project.media && project.media.items && project.media.items.length > 0) {
-    const featureImage = project.media.items.find((item) => item.tag === 'feature');
-    if (featureImage) {
-      return featureImage.url;
-    }
-  }
-  // Return placeholder images in a pattern based on project ID
-  const imageIndex = (project.id % 3) + 1;
-  return `/images/news/team-members-${imageIndex}.jpg`;
-};
-
 const FoodSystemsMapSection = () => {
+  // States for data
   const [selectedCountry, setSelectedCountry] = useState("rwanda");
   const [selectedProject, setSelectedProject] = useState(null);
   const [expandedCard, setExpandedCard] = useState(null);
   const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
   const [projectLocations, setProjectLocations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [countries, setCountries] = useState([
-    { name: "Rwanda", value: "rwanda" },
-    { name: "Burkina Faso", value: "burkina" }
-  ]);
-  const [stats, setStats] = useState([
-    { label: "Fellows", count: 0 },
-    { label: "Projects", count: 0 },
-    { label: "Countries", count: 0 }
-  ]);
-
   const mapRef = useRef(null);
   const mapIframeRef = useRef(null);
+
+  // Stats state - will be populated from projects data
+  const [stats, setStats] = useState([
+    { label: "Fellows", count: 0 },
+    { label: "Projects", count: 0 }
+  ]);
+
+  // Get unique countries from projects for the dropdown
+  const getUniqueCountries = () => {
+    // Start with default countries
+    const defaultCountries = [
+      { name: 'Rwanda', value: 'rwanda' },
+      { name: 'Burkina Faso', value: 'burkina' }
+    ];
+    
+    // Add any other countries from projects
+    if (projectLocations && projectLocations.length > 0) {
+      const countrySet = new Set(defaultCountries.map(c => c.value));
+      
+      projectLocations.forEach(location => {
+        if (location.country && !countrySet.has(location.country)) {
+          countrySet.add(location.country);
+          defaultCountries.push({
+            name: location.country.charAt(0).toUpperCase() + location.country.slice(1), // Capitalize
+            value: location.country
+          });
+        }
+      });
+    }
+    
+    return defaultCountries;
+  };
   
-  // Fetch map data including projects and fellows from API
+  const countries = getUniqueCountries();
+
+  // Update map dimensions on resize and component mount
   useEffect(() => {
-    const fetchMapData = async () => {
+    const updateMapDimensions = () => {
+      if (mapRef.current) {
+        setMapDimensions({
+          width: mapRef.current.offsetWidth,
+          height: mapRef.current.offsetHeight,
+        });
+      }
+    };
+
+    updateMapDimensions();
+    window.addEventListener("resize", updateMapDimensions);
+
+    return () => {
+      window.removeEventListener("resize", updateMapDimensions);
+    };
+  }, []);
+
+  // Fetch projects from API and update map locations
+  useEffect(() => {
+    const fetchProjects = async () => {
       try {
         setLoading(true);
         
-        // Fetch both projects and fellows data in parallel
-        const [projectsResponse, fellowsResponse] = await Promise.all([
-          apiClient.get('/projects'),
-          apiClient.get('/fellows')
-        ]);
+        // Fetch all projects
+        const response = await apiClient.get('/projects');
         
-        const projectsList = projectsResponse.data?.projects || [];
-        const fellowsList = fellowsResponse.data?.fellows || [];
-        
-        if (projectsList.length > 0 || fellowsList.length > 0) {
+        if (response.data) {
+          const projectsList = response.data.projects || [];
+          console.log(`Fetched ${projectsList.length} projects from API`);
+
           // Generate map locations from projects
           const locations = generateMapLocations(projectsList);
-          setProjectLocations(locations);
+          console.log(`Generated ${locations.length} map locations`);
+            setProjectLocations(locations);
           
-          // Calculate stats for the selected country
-          const countryProjects = projectsList.filter(p => {
-            const locationInfo = parseLocation(p.location);
-            return locationInfo.country === selectedCountry;
-          });
-          
-          const countryFellows = fellowsList.filter(f => {
-            const locationInfo = parseLocation(f.location || '');
-            return locationInfo.country === selectedCountry;
-          });
-          
-          // Update stats with actual data
-          setStats([
-            { label: "Fellows", count: countryFellows.length },
-            { label: "Projects", count: countryProjects.length },
-            { label: "Countries", count: 2 }
-          ]);
-          
-          // Update countries list based on data
-          const countriesSet = new Set();
+          // Update stats based on projects data
+          const uniqueCountries = new Set();
+          const uniqueCommunities = new Set();
           
           projectsList.forEach(project => {
             if (project.location) {
               const locationInfo = parseLocation(project.location);
-              countriesSet.add(locationInfo.country);
+              uniqueCountries.add(locationInfo.country);
+              uniqueCommunities.add(locationInfo.location);
             }
           });
-          
-          const uniqueCountries = Array.from(countriesSet).map(countryCode => {
-            const name = countryCode === 'rwanda' ? 'Rwanda' : 
-                      countryCode === 'burkina' ? 'Burkina Faso' : 
-                      countryCode.charAt(0).toUpperCase() + countryCode.slice(1);
-            return { name, value: countryCode };
-          });
-          
-          // Make sure we always have Rwanda and Burkina Faso in the list
-          const defaultCountries = [
-            { name: 'Rwanda', value: 'rwanda' },
-            { name: 'Burkina Faso', value: 'burkina' }
-          ];
-          
-          const countryValues = uniqueCountries.map(c => c.value);
-          defaultCountries.forEach(defaultCountry => {
-            if (!countryValues.includes(defaultCountry.value)) {
-              uniqueCountries.push(defaultCountry);
-            }
-          });
-          
-          setCountries(uniqueCountries);
+
+          setStats([
+            { label: "Fellows", count: projectsList.length * 2 }, // Assuming 2 fellows per project
+            { label: "Projects", count: projectsList.length }
+          ]);
         }
       } catch (error) {
-        console.error('Error fetching map data:', error);
-        
-        // For demonstration, generate mock data if API fails
-        const mockProjects = [
-          {
-            id: 1,
-            name: "Sustainable Farming Initiative",
-            description: "The agricultural training program targets new sustainable farming practices to improve crop yields and food security.",
-            location: "Musanze, Rwanda",
-            contact_person: "Jean Bosco"
-          },
-          {
-            id: 2,
-            name: "Rural Development Program",
-            description: "Supporting rural communities with agricultural resources and training to create sustainable livelihoods.",
-            location: "Nyabihu, Rwanda",
-            contact_person: "Marie Claire"
-          },
-          {
-            id: 3,
-            name: "Agribusiness Accelerator",
-            description: "Supporting agricultural entrepreneurs to develop sustainable businesses and increase productivity.",
-            location: "Ouagadougou, Burkina Faso",
-            contact_person: "Ibrahim Ouedraogo"
-          },
-          {
-            id: 4,
-            name: "Climate Adaptation Project",
-            description: "Helping farmers adapt to changing climate conditions with resilient crop varieties and practices.",
-            location: "Kigali, Rwanda",
-            contact_person: "Alice Mutoni"
-          }
-        ];
-        
-        const locations = generateMapLocations(mockProjects);
-        setProjectLocations(locations);
-        
-        // Filter mock data by selected country
-        const countrySpecificMockProjects = mockProjects.filter(p => {
-          const locationInfo = parseLocation(p.location);
-          return locationInfo.country === selectedCountry;
-        });
-        
-        setStats([
-          { label: "Fellows", count: 0 }, // No mock fellows, just show 0 if API fails
-          { label: "Projects", count: countrySpecificMockProjects.length },
-          { label: "Countries", count: 2 }
-        ]);
+        console.error('Error fetching projects:', error);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchMapData();
-  }, [selectedCountry]);
-  
-  // Filtered locations based on selected country
+    fetchProjects();
+  }, []);
+
+  // Don't filter by country for the map - show all projects
+  // Instead, just set initial visibility based on selected country 
   const filteredLocations = projectLocations.filter(
+    (location) => location.country === selectedCountry
+  );
+
+  // Get projects for the selected country (for initial view)
+  const selectedCountryProjects = projectLocations.filter(
     (location) => location.country === selectedCountry
   );
 
@@ -449,34 +384,14 @@ const FoodSystemsMapSection = () => {
     setSelectedCountry(e.target.value);
     setSelectedProject(null);
     setExpandedCard(null);
-    
-    // When changing country, update the iframe URL to show the country
-    if (mapIframeRef.current) {
-      const countryProject = projectLocations.find(p => p.country === e.target.value);
-      if (countryProject) {
-        mapIframeRef.current.src = countryProject.mapUrl;
-      }
-    }
   };
 
   const handleProjectClick = (projectId) => {
-    const project = projectLocations.find(p => p.id === projectId);
-    
     if (selectedProject === projectId) {
       setExpandedCard(expandedCard === projectId ? null : projectId);
     } else {
       setSelectedProject(projectId);
       setExpandedCard(null);
-      
-      // Update the iframe to zoom to the exact project location
-      if (mapIframeRef.current && project) {
-        // Create a URL that centers on the exact coordinates with a higher zoom level
-        const zoom = 14; // Higher zoom level for better detail
-        const markerLabel = project.location.substring(0, 1).toUpperCase(); // Use first letter of location as marker label
-        
-        mapIframeRef.current.src = 
-          `${project.mapUrl}&center=${project.mapCoordinates.lat},${project.mapCoordinates.lng}&zoom=${zoom}&markers=color:red%7Clabel:${markerLabel}%7C${project.mapCoordinates.lat},${project.mapCoordinates.lng}`;
-      }
     }
   };
 
@@ -498,42 +413,12 @@ const FoodSystemsMapSection = () => {
     const x = (position.x / 600) * mapDimensions.width;
     const y = (position.y / 400) * mapDimensions.height;
     
-    // Ensure positions are within map boundaries with some padding
+    // Ensure positions are within map boundaries
     return { 
       x: Math.min(Math.max(x, 50), mapDimensions.width - 50),
       y: Math.min(Math.max(y, 50), mapDimensions.height - 50)
     };
   };
-
-  // Update map dimensions on resize and component mount
-  useEffect(() => {
-    const updateMapDimensions = () => {
-      if (mapRef.current) {
-        setMapDimensions({
-          width: mapRef.current.offsetWidth,
-          height: mapRef.current.offsetHeight,
-        });
-      }
-    };
-
-    updateMapDimensions();
-    
-    // Use ResizeObserver for more accurate size tracking
-    if (typeof ResizeObserver !== 'undefined' && mapRef.current) {
-      const resizeObserver = new ResizeObserver(updateMapDimensions);
-      resizeObserver.observe(mapRef.current);
-      
-      return () => {
-        if (mapRef.current) resizeObserver.unobserve(mapRef.current);
-      };
-    } else {
-      // Fallback to window resize event
-      window.addEventListener("resize", updateMapDimensions);
-      return () => {
-        window.removeEventListener("resize", updateMapDimensions);
-      };
-    }
-  }, []);
 
   return (
     <section className="py-16 bg-white">
@@ -563,14 +448,8 @@ const FoodSystemsMapSection = () => {
         ) : (
           <div className="flex flex-col items-center mb-10">
             {/* Country selector and highlights button */}
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
-              <motion.div
-                className="relative inline-block w-full sm:w-56"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6 }}
-              >
+            <div className="flex justify-center items-center gap-4 mb-6">
+              <div className="relative inline-block w-72">
                 <select
                   value={selectedCountry}
                   onChange={handleCountryChange}
@@ -595,19 +474,7 @@ const FoodSystemsMapSection = () => {
                     />
                   </svg>
                 </div>
-              </motion.div>
-
-              <motion.button
-                className="bg-primary-orange hover:bg-yellow-600 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors w-full sm:w-auto"
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Highlights of our work
-              </motion.button>
+              </div>
             </div>
 
             {/* Stats grid */}
@@ -643,180 +510,172 @@ const FoodSystemsMapSection = () => {
           transition={{ duration: 0.8 }}
           ref={mapRef}
         >
-          {/* Google Maps iframe with marker */}
+          {/* Google Maps iframe */}
           <iframe
             ref={mapIframeRef}
-            src={
-              currentProject
-                ? `${currentProject.mapUrl}&center=${currentProject.mapCoordinates.lat},${currentProject.mapCoordinates.lng}&zoom=14&markers=color:red%7Clabel:${currentProject.location.substring(0, 1).toUpperCase()}%7C${currentProject.mapCoordinates.lat},${currentProject.mapCoordinates.lng}`
-                : filteredLocations.length > 0
-                ? filteredLocations[0]?.mapUrl
-                : selectedCountry === 'burkina'
-                  ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
-                  : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
-                }
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="GanzAfrica Location"
-              ></iframe>
-    
-              {/* Project markers with in-map cards */}
-              {filteredLocations.map((location) => {
-                const position = getMarkerPosition(location.mapPosition);
-                const isSelected = selectedProject === location.id;
-                const isExpanded = expandedCard === location.id;
-    
-                return (
+            src={currentProject ? 
+                `${currentProject.mapUrl}&markers=color:red%7Clabel:G%7C${currentProject.mapCoordinates.lat},${currentProject.mapCoordinates.lng}` : 
+                selectedCountryProjects.length > 0 ?
+                  selectedCountryProjects[0]?.mapUrl ?? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus" :
+                  // Fallback maps for each country with no markers if no projects
+                  selectedCountry === 'burkina' ?
+                    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus" :
+                    selectedCountry === 'rwanda' ?
+                      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus" :
+                      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus"
+            }
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="GanzAfrica Location"
+          ></iframe>
+
+          {/* Project markers */}
+          {filteredLocations.map((location) => {
+            const position = getMarkerPosition(location.mapPosition);
+            const isSelected = selectedProject === location.id;
+            const isExpanded = expandedCard === location.id;
+
+            return (
+              <div
+                key={location.id}
+                className="absolute z-10"
+                style={{
+                  left: `${position.x}px`,
+                  top: `${position.y}px`,
+                }}
+              >
+                {/* Project marker */}
+                <div
+                  className="relative cursor-pointer"
+                  onClick={() => handleProjectClick(location.id)}
+                >
+                  {/* Marker with profile image */}
                   <div
-                    key={location.id}
-                    className="absolute z-10"
+                    className={`rounded-full overflow-hidden transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-200 ${isSelected ? "scale-110" : ""}`}
                     style={{
-                      left: `${position.x}px`,
-                      top: `${position.y}px`,
+                      width: "50px",
+                      height: "50px",
+                      border: `3px solid ${isSelected ? "#F59E0B" : "#047857"}`,
+                      boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
                     }}
                   >
-                    {/* Project marker */}
-                    <div
-                      className="relative cursor-pointer"
-                      onClick={() => handleProjectClick(location.id)}
-                    >
-                      {/* Marker with profile image - enhanced visibility */}
-                      <div
-                        className={`rounded-full overflow-hidden transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-200 ${isSelected ? "scale-110" : ""}`}
-                        style={{
-                          width: "60px",
-                          height: "60px",
-                          border: `4px solid ${isSelected ? "#F59E0B" : "#047857"}`,
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                          zIndex: isSelected ? 20 : 10,
-                        }}
-                      >
+                    <img
+                      src={location.image}
+                      alt={location.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Location label */}
+                  {isSelected && (
+                  <div
+                      className="absolute whitespace-nowrap text-center mt-1 text-xs font-medium bg-white px-2 py-1 rounded-md shadow-sm -translate-x-1/2"
+                      style={{ top: "100%", left: "50%" }}
+                  >
+                    {location.location}
+                  </div>
+                  )}
+                </div>
+
+                {/* Project card */}
+                {isSelected && (
+                  <div
+                    className={`absolute bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 z-20 ${isExpanded ? "w-64" : "w-52"}`}
+                    style={{
+                      top: "-105px",
+                      left: "-110px",
+                      transform: isExpanded ? "scale(1.1)" : "scale(1)",
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Card content */}
+                    <div className="relative">
+                      {/* Project image */}
+                      <div className={`relative ${isExpanded ? "h-32" : "h-24"}`}>
                         <img
                           src={location.image}
                           alt={location.title}
                           className="w-full h-full object-cover"
                         />
+                        <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-0.5 text-xs font-semibold rounded">
+                          {location.location}
+                        </div>
+
+                        {/* Expand/collapse button */}
+                        <button
+                          className="absolute bottom-2 right-2 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100"
+                          onClick={(e) => handleExpandClick(location.id, e)}
+                        >
+                          {isExpanded ? (
+                            <X className="w-4 h-4 text-gray-600" />
+                          ) : (
+                            <Info className="w-4 h-4 text-gray-600" />
+                          )}
+                        </button>
                       </div>
-    
-                      {/* Location label - always visible */}
-                      <div
-                        className={`absolute whitespace-nowrap text-center mt-1 text-xs font-medium bg-white px-2 py-1 rounded-md shadow-md -translate-x-1/2 transition-all duration-300 ${isSelected ? 'text-green-700 font-bold' : 'text-gray-700'}`}
-                        style={{ 
-                          top: "100%", 
-                          left: "50%",
-                          opacity: isSelected ? 1 : 0.9,
-                          transform: `translate(-50%, ${isSelected ? '8px' : '4px'}) scale(${isSelected ? 1.1 : 1})`,
-                          boxShadow: isSelected ? '0 4px 8px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)'
-                        }}
-                      >
-                        {location.location}
+
+                      {/* Project info */}
+                      <div className="p-3">
+                        <h3 className="font-bold text-green-700 text-sm mb-1 line-clamp-1">
+                          {location.title}
+                        </h3>
+
+                        {isExpanded ? (
+                          <>
+                            <p className="text-xs text-gray-600 mb-2">
+                              {location.description}
+                            </p>
+                            <div className="flex items-start mb-2">
+                              <MapPin className="h-3 w-3 text-yellow-500 mt-0.5 flex-shrink-0" />
+                              <p className="text-xs text-gray-600 ml-1">
+                                {location.address}
+                              </p>
+                            </div>
+                            <div className="text-xs text-gray-600 mb-3">
+                              Contact: {location.contactPerson}
+                            </div>
+                            <a
+                              href={location.url}
+                              className="text-xs text-yellow-600 hover:text-yellow-800 font-medium inline-flex items-center"
+                            >
+                              Learn more
+                              <ChevronRight className="ml-1 w-3 h-3" />
+                            </a>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                              {location.description}
+                            </p>
+                            <a 
+                              href={location.url} 
+                              className="text-xs text-yellow-600 hover:text-yellow-800 font-medium"
+                            >
+                              View details
+                            </a>
+                          </>
+                        )}
                       </div>
                     </div>
-    
-                    {/* Project card - improved styling */}
-                    {isSelected && (
-                      <div
-                        className={`absolute bg-white rounded-lg shadow-xl overflow-hidden transition-all duration-300 z-30 ${isExpanded ? "w-72" : "w-60"}`}
-                        style={{
-                          top: "-120px",
-                          left: "-110px",
-                          transform: isExpanded ? "scale(1.05)" : "scale(1)",
-                          borderTop: "3px solid #047857",
-                          boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {/* Card content */}
-                        <div className="relative">
-                          {/* Project image */}
-                          <div
-                            className={`relative ${isExpanded ? "h-36" : "h-28"}`}
-                          >
-                            <img
-                              src={location.image}
-                              alt={location.title}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute top-2 left-2 bg-yellow-500 text-white px-3 py-1 text-xs font-semibold rounded-md shadow-sm">
-                              {location.location}
-                            </div>
-    
-                            {/* Expand/collapse button */}
-                            <button
-                              className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-all duration-200"
-                              onClick={(e) => handleExpandClick(location.id, e)}
-                            >
-                              {isExpanded ? (
-                                <X className="w-5 h-5 text-gray-700" />
-                              ) : (
-                                <Info className="w-5 h-5 text-green-700" />
-                              )}
-                            </button>
-                          </div>
-    
-                          {/* Project info */}
-                          <div className="p-3">
-                            <h3 className="font-bold text-green-700 text-sm mb-1 line-clamp-1">
-                              {location.title}
-                            </h3>
-    
-                            {isExpanded ? (
-                              <>
-                                <p className="text-xs text-gray-600 mb-2">
-                                  {location.description}
-                                </p>
-                                <div className="flex items-start mb-2">
-                                  <MapPin className="h-3 w-3 text-yellow-500 mt-0.5 flex-shrink-0" />
-                                  <p className="text-xs text-gray-600 ml-1">
-                                    {location.address}
-                                  </p>
-                                </div>
-                                <div className="text-xs text-gray-600 mb-3">
-                                  Contact: {location.contactPerson}
-                                </div>
-                                <a
-                                  href={location.url}
-                                  className="text-xs text-yellow-600 hover:text-yellow-800 font-medium inline-flex items-center bg-yellow-50 rounded-md px-2 py-1 transition-colors hover:bg-yellow-100"
-                                  >
-                                  Learn more
-                                  <ChevronRight className="ml-1 w-3 h-3" />
-                                </a>
-                              </>
-                            ) : (
-                              <>
-                                <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-                                  {location.description}
-                                </p>
-                                <a 
-                                  href={location.url} 
-                                  className="text-xs text-green-700 hover:text-green-800 font-medium inline-flex items-center"
-                                >
-                                  View details
-                                  <ChevronRight className="ml-1 w-3 h-3" />
-                                </a>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                );
-              })}
-            </motion.div>
-    
-            {/* Instructions */}
-            <div className="mt-4 text-center text-sm text-gray-600">
-              Click on a project marker to view details. The map will zoom to
-              the selected location.
-            </div>
-          </Container>
-        </section>
-      );
-    };
-    
-    export default FoodSystemsMapSection;
+                )}
+              </div>
+            );
+          })}
+        </motion.div>
+
+        {/* Instructions */}
+        <div className="mt-4 text-center text-sm text-gray-600">
+          Click on a project marker to view details. The map will zoom to
+          the selected location.
+        </div>
+      </Container>
+    </section>
+  );
+};
+
+export default FoodSystemsMapSection;

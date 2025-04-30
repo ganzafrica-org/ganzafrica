@@ -462,7 +462,7 @@ const ProjectsPage = () => {
     contactPerson: string;
     url: string;
   }
-
+  
   const [projectLocations, setProjectLocations] = useState<ProjectLocation[]>([]);
   const mapRef = useRef(null);
   const mapIframeRef = useRef(null);

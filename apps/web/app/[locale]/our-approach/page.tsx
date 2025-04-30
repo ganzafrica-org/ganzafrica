@@ -79,7 +79,7 @@ const FoodSystemPage = ({}) => {
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
         <ApproachSection />
         <WhereWeWorkSection />
-        <ImpactAreasSection />
+        {/* <ImpactAreasSection /> */}
         <FoodSystemsMapSection />
       </motion.div>
     </main>

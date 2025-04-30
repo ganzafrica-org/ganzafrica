@@ -1644,7 +1644,6 @@ const getRoleNameById = (roleId) => {
           </div>
         </div>
       )}
-      
       {/* Role selection first - Using fixed string enum values instead of IDs */}
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">
