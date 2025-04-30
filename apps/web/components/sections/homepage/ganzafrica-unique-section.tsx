@@ -108,7 +108,7 @@ export default function GanzAfricaUniqueSection({
                 <video
                     ref={videoRef}
                     src="/videos/farmers-in-field.mp4" // Your video file path
-                    poster="/images/farmers-working.jpg" // Optional: keep the thumbnail as a poster
+                    poster="/images/famer-feild.png" // Optional: keep the thumbnail as a poster
                     className="w-full h-full object-cover"
                     onEnded={() => setVideoPlaying(false)}
                 />

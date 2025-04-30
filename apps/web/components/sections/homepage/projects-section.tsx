@@ -244,7 +244,7 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                                             className="w-full h-full object-cover"
                                         />
 
-                                        <div className="absolute inset-0 bg-black/40" />
+                                        <div className={`absolute inset-0 ${idx === activeIndex ? 'bg-black/20' : 'bg-black/80'}`} />
 
 
                                         {/* View project link - Only visible for center slide */}
@@ -316,7 +316,7 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                     width: 20rem;
                     transition: all 0.5s ease-in-out;
                     transform-style: preserve-3d;
-                    box-shadow: 0px 0.4rem 1.6rem rgba(0, 0, 0, 0.1);
+                    box-shadow: 0px 0.4rem 1.6rem rgba(0, 0, 0, 0.3); /* Shadow for ALL slides */
                 }
 
                 .position-1 {
@@ -338,7 +338,7 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                     transform: translate(-50%, 0) rotateY(0deg) scale(1, 1);
                     opacity: 1;
                     z-index: 4;
-                    box-shadow: 0px 0.4rem 1.6rem rgba(0, 0, 0, 0.5);
+                    box-shadow: none
                 }
 
                 .position-4 {
