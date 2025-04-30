@@ -341,16 +341,16 @@ export default function FellowshipApplyPage() {
       console.error('Application submission error:', error);
       
       // Handle error response from the API
-      if (error.response && error.response.data) {
+      if (error instanceof Error && (error as any).response && (error as any).response.data) {
         // If the error has a structured response
-        const errorMessage = error.response.data.message || error.response.data.error || 'Failed to submit application';
+        const errorMessage = (error as any)?.response?.data?.message || (error as any)?.response?.data?.error || 'Failed to submit application';
         toast.error(errorMessage);
         
         // If there are validation errors, display them
-        if (error.response.data.details && Array.isArray(error.response.data.details)) {
-          error.response.data.details.forEach((detail) => {
+        if ((error as any)?.response?.data?.details && Array.isArray((error as any).response.data.details)) {
+            ((error as any)?.response?.data?.details as { path: string; message: string }[]).forEach((detail) => {
             toast.error(`${detail.path}: ${detail.message}`);
-          });
+            });
         }
       } else {
         // Generic error message
