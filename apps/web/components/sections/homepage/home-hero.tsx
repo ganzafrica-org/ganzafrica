@@ -360,7 +360,7 @@ export default function HomeHero({
                     <NavigationMenuLink asChild>
                       <Link
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/about`}
+                        href={`/${locale}/about/who-we-are`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
                           About Us
@@ -408,7 +408,7 @@ export default function HomeHero({
                     <NavigationMenuLink asChild>
                       <Link
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/programs`}
+                        href={`/${locale}/programs/fellowship`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
                           Our Programs
