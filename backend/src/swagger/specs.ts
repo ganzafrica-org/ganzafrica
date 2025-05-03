@@ -42,7 +42,7 @@ if (!swaggerSpec) {
     servers: [
       {
         url: env.NODE_ENV === "production"
-            ? `https://backend-cbx8.onrender.com/api`
+            ? `/api`
             : `/api`, // Changed to use relative path
         description: env.NODE_ENV === "production" ? "Production server" : "Development server",
       },
