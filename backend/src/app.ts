@@ -73,7 +73,7 @@ app.get("/api/health", async (req: Request, res: Response) => {
 });
 
 // API documentation
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // API routes
 app.use("/api", apiRoutes);
