@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { constants, Logger } from '../config';
 import { verifyToken } from '../services/auth.service';
-import { db } from '@/db/client';
-import { users, roles, user_roles } from '@/db/schema';
+import { db } from '../db/client';
+import { users, roles, user_roles } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 
 const logger = new Logger('AuthMiddleware');
