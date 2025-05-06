@@ -139,7 +139,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
             <video 
                 ref={videoRef}
                 className="w-full h-full object-cover rounded-sm"
-                src="/videos/farmer1.mp4"
+                src="/videos/lysa.mp4"
                 autoPlay
                 muted
                 loop
