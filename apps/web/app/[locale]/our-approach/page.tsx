@@ -66,7 +66,7 @@ const FoodSystemPage = ({}) => {
           </motion.h2>
         </div>
       </section>
-
+      
       {/* Banner Section */}
       <div className="w-full overflow-hidden">
         <div className="flex justify-center">
