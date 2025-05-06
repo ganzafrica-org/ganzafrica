@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: '/portal',
+  // Use basePath conditionally based on environment
+  basePath: process.env.NODE_ENV === 'production' ? '/portal' : '',
   transpilePackages: ["@workspace/ui"],
   images: {
     remotePatterns: [

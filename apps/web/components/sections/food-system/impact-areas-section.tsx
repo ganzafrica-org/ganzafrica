@@ -6,7 +6,63 @@ import Container from "@/components/layout/container";
 import { MapPin, X, ChevronRight, Info, Search, Plus, Minus } from "lucide-react";
 import apiClient from "@/lib/api-client";
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
+// Define TypeScript interfaces
+interface Coordinates {
+  lat: number;
+  lng: number;
+  mapUrl?: string;
+}
+
+interface Project {
+  id: string;
+  name?: string;
+  description?: string;
+  country?: string;
+  location?: string;
+  community?: string;
+  address?: string;
+  mapUrl?: string;
+  contactPerson?: string;
+  media?: {
+    items?: Array<{
+      tag?: string;
+      url?: string;
+      type?: string;
+    }>;
+  };
+}
+
+interface ProjectLocation {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  image: string;
+  country: string;
+  location: string;
+  address: string;
+  mapCoordinates: Coordinates;
+  mapPosition: {
+    x: number;
+    y: number;
+  };
+  mapUrl: string | null;
+  contactPerson: string;
+  url: string;
+}
+
+interface CountryOption {
+  name: string;
+  value: string;
+}
+
+interface StatsData {
+  projects: number;
+  communities: number;
+  countries: number;
+}
 
 // Animation variants
 const fadeIn = {
@@ -45,185 +101,235 @@ const statItemVariants = {
 };
 
 const ClimateInitiativesMapSection = () => {
+  // Get the locale from URL params
+  const params = useParams();
+  const locale = params.locale || 'en';
   
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
-  const [mapZoom, setMapZoom] = useState(8); // Default zoom level
-  const [mapCenter, setMapCenter] = useState(null); // Track map center coordinates
-  const [hoveredProject, setHoveredProject] = useState(null);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [mapDimensions, setMapDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [mapZoom, setMapZoom] = useState<number>(8); // Default zoom level
+  const [mapCenter, setMapCenter] = useState<Coordinates | null>(null); // Track map center coordinates
+  const [hoveredProject, setHoveredProject] = useState<string | null>(null);
 
   // State for API data
-  const [statsData, setStatsData] = useState({
+  const [statsData, setStatsData] = useState<StatsData>({
     projects: 0,
     communities: 0,
     countries: 2, // Fixed to 2 countries: Rwanda and Burkina Faso
   });
-  const [projectLocations, setProjectLocations] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [multipleProjectsAtLocation, setMultipleProjectsAtLocation] = useState({});
+  const [projectLocations, setProjectLocations] = useState<ProjectLocation[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [multipleProjectsAtLocation, setMultipleProjectsAtLocation] = useState<Record<string, string[]>>({});
   
   // Ensure Rwanda is first in the list and selected by default
-  const [countries, setCountries] = useState([
+  const [countries, setCountries] = useState<CountryOption[]>([
     { name: 'Rwanda', value: 'rwanda' },
     { name: 'Burkina Faso', value: 'burkina faso' },
     { name: 'Other', value: 'other' }
   ]);
   // Set Rwanda as the default selected country
-  const [selectedCountry, setSelectedCountry] = useState('rwanda');
+  const [selectedCountry, setSelectedCountry] = useState<string>('rwanda');
 
-  const mapRef = useRef(null);
-  const mapIframeRef = useRef(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapIframeRef = useRef<HTMLIFrameElement>(null);
 
   // Helper function to determine if a location is in Rwanda
- // Helper function to determine if a location is in Rwanda
-const isRwandaDistrict = (location: string | null | undefined): boolean => {
-  if (!location) return false;
-  
-  const rwandaDistricts = [
-    // Kigali Province
-    'gasabo', 'kicukiro', 'nyarugenge', 'kigali',
+  const isRwandaDistrict = (location: string | null | undefined): boolean => {
+    if (!location) return false;
     
-    // Eastern Province
-    'bugesera', 'gatsibo', 'kayonza', 'kirehe', 'ngoma', 'nyagatare', 'rwamagana',
+    const rwandaDistricts = [
+      // Kigali Province
+      'gasabo', 'kicukiro', 'nyarugenge', 'kigali',
+      
+      // Eastern Province
+      'bugesera', 'gatsibo', 'kayonza', 'kirehe', 'ngoma', 'nyagatare', 'rwamagana',
+      
+      // Northern Province
+      'burera', 'gicumbi', 'gakenke', 'musanze', 'rulindo',
+      
+      // Southern Province
+      'huye', 'ruhango', 'nyamagabe', 'gisagara', 'muhanga', 'kamonyi', 'nyanza', 'nyaruguru',
+      
+      // Western Province
+      'karongi', 'nyabihu', 'rubavu', 'rusizi', 'ngororero', 'nyamasheke', 'rutsiro',
+      
+      // General Rwanda terms
+      'rwanda', 'kigali'
+    ];
     
-    // Northern Province
-    'burera', 'gicumbi', 'gakenke', 'musanze', 'rulindo',
+    const locationLower = location.toLowerCase().trim();
     
-    // Southern Province
-    'huye', 'ruhango', 'nyamagabe', 'gisagara', 'muhanga', 'kamonyi', 'nyanza', 'nyaruguru',
-    
-    // Western Province
-    'karongi', 'nyabihu', 'rubavu', 'rusizi', 'ngororero', 'nyamasheke', 'rutsiro',
-    
-    // General Rwanda terms
-    'rwanda', 'kigali'
-  ];
-  
-  const locationLower = location.toLowerCase().trim();
-  
-  // Check if the location includes any Rwanda district name
-  return rwandaDistricts.some(district => 
-    locationLower === district || 
-    locationLower.includes(` ${district}`) || 
-    locationLower.includes(`${district} `) ||
-    locationLower.includes(`${district},`)
-  );
-};
-
- // Define an interface for coordinates
-interface Coordinates {
-  lat: number;
-  lng: number;
-}
-
-// Helper function to get coordinates from location name
-const getCoordinatesForLocation = (location: string | null | undefined): Coordinates => {
-  // Default coordinates for countries in case specific location is not found
-  const defaultCoordinates: Record<string, Coordinates> = {
-    'rwanda': { lat: -1.9403, lng: 29.8739 }, // Kigali
-    'burkina faso': { lat: 12.3714, lng: -1.5197 }, // Ouagadougou
-    'default': { lat: 0, lng: 20 } // Central Africa
+    // Check if the location includes any Rwanda district name
+    return rwandaDistricts.some(district => 
+      locationLower === district || 
+      locationLower.includes(` ${district}`) || 
+      locationLower.includes(`${district} `) ||
+      locationLower.includes(`${district},`)
+    );
   };
-  
-  // Map of known locations and their coordinates
-  const locationCoordinates: Record<string, Coordinates> = {
-    // Kigali Province
-    'kigali': { lat: -1.9403, lng: 29.8739 },
-    'gasabo': { lat: -1.8952, lng: 30.0591 },
-    'kicukiro': { lat: -1.9929, lng: 30.0567 },
-    'nyarugenge': { lat: -1.9437, lng: 30.0611 },
+
+  // Helper function to get coordinates from location name
+  const getCoordinatesForLocation = (location: string | null | undefined): Coordinates => {
+    // Known specific locations with pre-defined map URLs
+    const knownLocations = {
+      // Kigali Province
+      "kigali": { 
+        lat: -1.9441, 
+        lng: 30.0619,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
+      },
+      "gasabo": { lat: -1.8952, lng: 30.0591 },
+      "kicukiro": { lat: -1.9929, lng: 30.0567 },
+      "nyarugenge": { lat: -1.9437, lng: 30.0611 },
+      
+      // Eastern Province
+      "bugesera": { lat: -2.1564, lng: 30.2572 },
+      "gatsibo": { lat: -1.5737, lng: 30.4560 },
+      "kayonza": { lat: -1.9407, lng: 30.4583 },
+      "kirehe": { lat: -2.2676, lng: 30.6531 },
+      "ngoma": { lat: -2.1476, lng: 30.4638 },
+      "nyagatare": { lat: -1.2977, lng: 30.3253 },
+      "rwamagana": { lat: -1.9490, lng: 30.4351 },
+      
+      // Northern Province
+      "burera": { lat: -1.4645, lng: 29.8250 },
+      "gicumbi": { lat: -1.7036, lng: 30.0597 },
+      "gakenke": { lat: -1.6963, lng: 29.7842 },
+      "musanze": { lat: -1.4969, lng: 29.6259 },
+      "rulindo": { lat: -1.7169, lng: 29.9844 },
+      
+      // Southern Province
+      "huye": { lat: -2.6076, lng: 29.7429 },
+      "ruhango": { lat: -2.0658, lng: 29.7767 },
+      "nyamagabe": { lat: -2.4773, lng: 29.5664 },
+      "gisagara": { lat: -2.6060, lng: 29.8729 },
+      "muhanga": { lat: -1.9747, lng: 29.7561 },
+      "kamonyi": { lat: -1.9978, lng: 29.9197 },
+      "nyanza": { lat: -2.3516, lng: 29.7509 },
+      "nyaruguru": { lat: -2.8084, lng: 29.5318 },
+      
+      // Western Province
+      "karongi": { lat: -2.1579, lng: 29.3878 },
+      "nyabihu": { lat: -1.6579, lng: 29.5006 },
+      "rubavu": { lat: -1.6794, lng: 29.2336 },
+      "rusizi": { lat: -2.5184, lng: 28.9066 },
+      "ngororero": { lat: -1.8870, lng: 29.5865 },
+      "nyamasheke": { lat: -2.3253, lng: 29.1208 },
+      "rutsiro": { lat: -1.9520, lng: 29.3257 },
+      
+      // Burkina Faso
+      "ouagadougou": { 
+        lat: 12.3714, 
+        lng: -1.5197,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
+      },
+      "bobo-dioulasso": { lat: 11.1777, lng: -4.2958 },
+      "koudougou": { lat: 12.2530, lng: -2.3748 },
+      "banfora": { lat: 10.6376, lng: -4.7580 },
+      "dédougou": { lat: 12.4634, lng: -3.4663 }
+    };
     
-    // Eastern Province
-    'bugesera': { lat: -2.1564, lng: 30.2572 },
-    'gatsibo': { lat: -1.5737, lng: 30.4560 },
-    'kayonza': { lat: -1.9407, lng: 30.4583 },
-    'kirehe': { lat: -2.2676, lng: 30.6531 },
-    'ngoma': { lat: -2.1476, lng: 30.4638 },
-    'nyagatare': { lat: -1.2977, lng: 30.3253 },
-    'rwamagana': { lat: -1.9490, lng: 30.4351 },
+    // Country defaults (used when specific location not found)
+    const countryDefaults = {
+      "rwanda": {
+        lat: -1.9441, 
+        lng: 30.0619,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
+      },
+      "burkina faso": {
+        lat: 12.3714, 
+        lng: -1.5197,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
+      },
+      "other": {
+        lat: 0, 
+        lng: 20,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus"
+      }
+    };
     
-    // Northern Province
-    'burera': { lat: -1.4645, lng: 29.8250 },
-    'gicumbi': { lat: -1.7036, lng: 30.0597 },
-    'gakenke': { lat: -1.6963, lng: 29.7842 },
-    'musanze': { lat: -1.4969, lng: 29.6259 },
-    'rulindo': { lat: -1.7169, lng: 29.9844 },
-    
-    // Southern Province
-    'huye': { lat: -2.6076, lng: 29.7429 },
-    'ruhango': { lat: -2.0658, lng: 29.7767 },
-    'nyamagabe': { lat: -2.4773, lng: 29.5664 },
-    'gisagara': { lat: -2.6060, lng: 29.8729 },
-    'muhanga': { lat: -1.9747, lng: 29.7561 },
-    'kamonyi': { lat: -1.9978, lng: 29.9197 },
-    'nyanza': { lat: -2.3516, lng: 29.7509 },
-    'nyaruguru': { lat: -2.8084, lng: 29.5318 },
-    
-    // Western Province
-    'karongi': { lat: -2.1579, lng: 29.3878 },
-    'nyabihu': { lat: -1.6579, lng: 29.5006 },
-    'rubavu': { lat: -1.6794, lng: 29.2336 },
-    'rusizi': { lat: -2.5184, lng: 28.9066 },
-    'ngororero': { lat: -1.8870, lng: 29.5865 },
-    'nyamasheke': { lat: -2.3253, lng: 29.1208 },
-    'rutsiro': { lat: -1.9520, lng: 29.3257 },
-    
-    // Burkina Faso
-    'ouagadougou': { lat: 12.3714, lng: -1.5197 },
-    'bobo-dioulasso': { lat: 11.1777, lng: -4.2958 },
-    'koudougou': { lat: 12.2530, lng: -2.3748 },
-    'banfora': { lat: 10.6376, lng: -4.7580 },
-    'dédougou': { lat: 12.4634, lng: -3.4663 }
-  };
-  
-  if (!location) 
-    return defaultCoordinates['default'] || { lat: 0, lng: 0 };
-  
-  const locationLower = location.toLowerCase().trim();
-  
-  // Check if we have exact coordinates for this location
-  if (locationCoordinates[locationLower]) {
-    return locationCoordinates[locationLower];
-  }
-  
-  // If location has multiple parts (e.g. "Rubavu, Kigali"), use the first one
-  if (locationLower.includes(',')) {
-    const firstLocation = locationLower.split(',')[0]?.trim() || '';
-    if (locationCoordinates[firstLocation]) {
-      return locationCoordinates[firstLocation];
+    // If no location provided, return default central Africa coordinates
+    if (!location) {
+      return { 
+        lat: countryDefaults.other.lat, 
+        lng: countryDefaults.other.lng,
+        mapUrl: countryDefaults.other.mapUrl
+      } as Coordinates;
     }
-  }
-  
-// Option 1: Add a fallback return value at the end of the function
-for (const country in defaultCoordinates) {
-  if (locationLower.includes(country)) {
-    return defaultCoordinates[country];
-  }
-}
-
-return { lat: 0, lng: 0 }; 
-  
-  // Default to central Africa if nothing else matches
-  return defaultCoordinates['default'];
-};
+    
+    const locationLower = location.toLowerCase().trim();
+    
+    // Check if we have exact coordinates for this location
+    if (locationLower in knownLocations) {
+      const locationData = knownLocations[locationLower as keyof typeof knownLocations];
+      // Return coordinates and map URL if available
+      return { 
+        lat: locationData.lat, 
+        lng: locationData.lng,
+        mapUrl: 'mapUrl' in locationData ? locationData.mapUrl : undefined
+      } as Coordinates;
+    }
+    
+    // If location has multiple parts (e.g. "Rubavu, Kigali"), use the first one
+    if (locationLower.includes(',')) {
+      const firstLocation = locationLower.split(',')[0]?.trim() || '';
+      if (firstLocation in knownLocations) {
+        const locationData = knownLocations[firstLocation as keyof typeof knownLocations];
+        return { 
+          lat: locationData.lat, 
+          lng: locationData.lng,
+          mapUrl: 'mapUrl' in locationData ? locationData.mapUrl : undefined
+        } as Coordinates;
+      }
+    }
+    
+    // Check if the location includes a country name and return its default coordinates
+    if (locationLower.includes('rwanda')) {
+      return { 
+        lat: countryDefaults.rwanda.lat, 
+        lng: countryDefaults.rwanda.lng,
+        mapUrl: countryDefaults.rwanda.mapUrl
+      } as Coordinates;
+    }
+    
+    if (locationLower.includes('burkina')) {
+      return { 
+        lat: countryDefaults["burkina faso"].lat, 
+        lng: countryDefaults["burkina faso"].lng,
+        mapUrl: countryDefaults["burkina faso"].mapUrl 
+      } as Coordinates;
+    }
+    
+    // Default to central Africa if nothing else matches
+    return { 
+      lat: countryDefaults.other.lat, 
+      lng: countryDefaults.other.lng,
+      mapUrl: countryDefaults.other.mapUrl
+    } as Coordinates;
+  };
 
   // Generate Google Maps URL with appropriate zoom level for a specific location
-  const generateMapUrl = (coordinates: Coordinates | null, zoomLevel = 12) => {
+  const generateMapUrl = (coordinates: Coordinates | null, zoomLevel = 12): string | null => {
     if (!coordinates) return null;
     
-    // Use a better format for Google Maps embed that shows the terrain more clearly
+    // If the coordinates include a pre-defined map URL, use that
+    if (coordinates.mapUrl) {
+      return coordinates.mapUrl;
+    }
+    
+    // Otherwise use a dynamically generated one
     return `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d${250000 / Math.pow(2, zoomLevel)}!2d${coordinates.lng}!3d${coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1712019657396!5m2!1sen!2sus`;
   };
 
   // Helper function to calculate map position from coordinates with better precision
-  const getMapPosition = (coordinates) => {
+  const getMapPosition = (coordinates: Coordinates | null) => {
     if (!coordinates) return { x: 300, y: 200 };
     
     // Get current map dimensions
     const mapWidth = mapDimensions.width || 600;
     const mapHeight = mapDimensions.height || 400;
     
-    let x, y;
+    let x: number, y: number;
     
     if (selectedCountry === 'rwanda') {
       // Rwanda-specific mapping (approximate bounds: lat -3 to 0, lng 28.5 to 31)
@@ -258,7 +364,7 @@ return { lat: 0, lng: 0 };
   };
 
   // Function to handle clusters of projects at the same location
-  const getClusteredPosition = (basePosition, index, total) => {
+  const getClusteredPosition = (basePosition: { x: number; y: number }, index: number, total: number) => {
     if (total <= 1) return basePosition;
     
     // Calculate radius based on number of projects (larger clusters = larger radius)
@@ -278,7 +384,7 @@ return { lat: 0, lng: 0 };
   };
 
   // Function to get project images from media items
-  const getProjectImage = (project) => {
+  const getProjectImage = (project: Project): string => {
     if (!project || !project.media || !project.media.items || project.media.items.length === 0) {
       return '/images/food-system-1.png'; // Default image
     }
@@ -293,8 +399,8 @@ return { lat: 0, lng: 0 };
       item.url && item.type === 'image'
     );
     
-    return featureImage ? featureImage.url : 
-           anyImage ? anyImage.url : 
+    return featureImage?.url || 
+           anyImage?.url || 
            '/images/food-system-1.png';
   };
 
@@ -310,7 +416,7 @@ return { lat: 0, lng: 0 };
     if (!projectLocations || projectLocations.length === 0) return;
     
     // Group projects by location key (based on coordinates)
-    const locationGroups = {};
+    const locationGroups: Record<string, string[]> = {};
     
     projectLocations.forEach(location => {
       if (!location.mapCoordinates) return;
@@ -326,7 +432,7 @@ return { lat: 0, lng: 0 };
     });
     
     // Filter to only include locations with multiple projects
-    const multiLocations = {};
+    const multiLocations: Record<string, string[]> = {};
     Object.entries(locationGroups).forEach(([key, ids]) => {
       if (ids.length > 1) {
         multiLocations[key] = ids;
@@ -354,9 +460,13 @@ return { lat: 0, lng: 0 };
     ) : [];
 
   // Event handlers
-  const handleOutsideClick = (e) => {
+  const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Check if the click is outside of any card
-    if (selectedProject && !e.target.closest('.project-card') && !e.target.closest('.map-control') && !e.target.closest('.projects-carousel')) {
+    const target = e.target as HTMLElement;
+    if (selectedProject && 
+        !target.closest('.project-card') && 
+        !target.closest('.map-control') && 
+        !target.closest('.projects-carousel')) {
       setSelectedProject(null);
       // Reset map zoom when closing project view
       setMapZoom(8);
@@ -372,7 +482,7 @@ return { lat: 0, lng: 0 };
     }
   };
 
-  const handleCountryChange = (e) => {
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const country = e.target.value;
     setSelectedCountry(country);
     setSelectedProject(null);
@@ -389,7 +499,7 @@ return { lat: 0, lng: 0 };
     }
   };
 
-  const handleProjectClick = (projectId) => {
+  const handleProjectClick = (projectId: string) => {
     const project = projectLocations.find(p => p.id === projectId);
     
     // Close existing project
@@ -419,7 +529,7 @@ return { lat: 0, lng: 0 };
     }
   };
 
-  const handleCloseProject = (e) => {
+  const handleCloseProject = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedProject(null);
     // Reset map zoom
@@ -445,18 +555,22 @@ return { lat: 0, lng: 0 };
   };
 
   // Show all projects at this location when clicking the cluster indicator
-  const handleClusterClick = (locationKey, e) => {
+  const handleClusterClick = (locationKey: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
     // Show a modal or expand the card to display all projects at this location
     // For now, we'll just select the first project in the cluster
-    if (multipleProjectsAtLocation[locationKey] && multipleProjectsAtLocation[locationKey].length > 0) {
-      handleProjectClick(multipleProjectsAtLocation[locationKey][0]);
+    const projectsAtLocation = multipleProjectsAtLocation[locationKey];
+    if (projectsAtLocation && projectsAtLocation.length > 0) {
+      const firstProjectId = projectsAtLocation[0];
+      if (firstProjectId) {
+        handleProjectClick(firstProjectId);
+      }
     }
   };
 
   // Mouse hover handlers for projects
-  const handleProjectMouseEnter = (projectId) => {
+  const handleProjectMouseEnter = (projectId: string) => {
     setHoveredProject(projectId);
   };
 
@@ -465,7 +579,7 @@ return { lat: 0, lng: 0 };
   };
 
   // Get appropriate position for marker based on map dimensions
-  const getMarkerPosition = (position) => {
+  const getMarkerPosition = (position: { x: number; y: number }) => {
     const x = (position.x / 600) * mapDimensions.width;
     const y = (position.y / 400) * mapDimensions.height;
     return { x, y };
@@ -480,7 +594,7 @@ return { lat: 0, lng: 0 };
       .then(response => {
         const data = response.data;
         // Check if data is an array or has a projects property that's an array
-        const projectsArray = Array.isArray(data) ? data : (data.projects || []);
+        const projectsArray: Project[] = Array.isArray(data) ? data : (data.projects || []);
         
         // Update stats with total projects count
         setStatsData(prev => ({
@@ -489,7 +603,7 @@ return { lat: 0, lng: 0 };
         }));
         
         // Extract unique countries
-        const uniqueCountries = new Set();
+        const uniqueCountries = new Set<string>();
         projectsArray.forEach(project => {
           if (project.country) {
             uniqueCountries.add(project.country.toLowerCase());
@@ -503,7 +617,7 @@ return { lat: 0, lng: 0 };
         }));
         
         // Format countries for dropdown - make sure to always include Rwanda, Burkina Faso, and Other
-        const countryOptions = [];
+        const countryOptions: CountryOption[] = [];
         
         // Always include Rwanda as the first option
         countryOptions.push({ name: 'Rwanda', value: 'rwanda' });
@@ -535,8 +649,8 @@ return { lat: 0, lng: 0 };
         setCountries(countryOptions);
         
         // Process projects into location data
-        const locations = [];
-        const communities = new Set();
+        const locations: ProjectLocation[] = [];
+        const communities = new Set<string>();
         
         projectsArray.forEach(project => {
           // Determine project country based on location district
@@ -684,13 +798,35 @@ return { lat: 0, lng: 0 };
     window.addEventListener('resize', updateMapDimensions);
     
     // Add click event listener to handle clicks outside project cards
-    document.addEventListener('mousedown', handleOutsideClick);
+    // We need to use a wrapper function to convert React.MouseEvent to DOM MouseEvent
+    const handleOutsideClickDOM = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (selectedProject && 
+          !target.closest('.project-card') && 
+          !target.closest('.map-control') && 
+          !target.closest('.projects-carousel')) {
+        setSelectedProject(null);
+        // Reset map zoom when closing project view
+        setMapZoom(8);
+        
+        // Reset map center to country default
+        if (selectedCountry === 'rwanda') {
+          setMapCenter({ lat: -1.9403, lng: 29.8739 }); // Kigali, Rwanda
+        } else if (selectedCountry === 'burkina faso') {
+          setMapCenter({ lat: 12.3714, lng: -1.5197 }); // Ouagadougou, Burkina Faso
+        } else {
+          setMapCenter(null); // Default view
+        }
+      }
+    };
+    
+    document.addEventListener('mousedown', handleOutsideClickDOM);
 
     return () => {
       window.removeEventListener('resize', updateMapDimensions);
-      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('mousedown', handleOutsideClickDOM);
     };
-  }, [selectedProject]);
+  }, [selectedProject, selectedCountry]);
 
   return (
     <section className="py-16 bg-white">
@@ -708,44 +844,14 @@ return { lat: 0, lng: 0 };
           </h2>
           <p className="text-gray-600 max-w-3xl mx-auto">
             GanzAfrica operates across Africa, equipping young professionals with the skills and
-            opportunities to drive meaningful change in Africa's agri-food systems.
+            opportunities to drive meaningful change in Africa&apos;s agri-food systems.
             We currently have projects in {statsData.countries} {statsData.countries === 1 ? 'country' : 'countries'}.
           </p>
         </motion.div>
         
         <div className="flex flex-col items-center mb-10">
           {/* Country selector and highlights button */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
     
-            <motion.div
-              className="relative inline-block w-full sm:w-56"
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6 }}
-            >
-              <select
-                value={selectedCountry}
-                onChange={handleCountryChange}
-                className="appearance-none bg-white border border-green-700 rounded-md py-2 pl-3 pr-10 w-full text-gray-700 focus:outline-none"
-              >
-                {countries.map((country) => (
-                  <option key={country.value} value={country.value}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-green-700">
-                <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </motion.div>
-            <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors">
-                Highlights of our work
-              </button>
-          </div>
-
           {/* Stats grid - Using dynamic data from API */}
           <motion.div
             className="grid grid-cols-3 gap-6 max-w-xl mx-auto mb-8"
@@ -764,7 +870,7 @@ return { lat: 0, lng: 0 };
               <p className="text-3xl font-bold text-green-700">
                 {isLoading ? '...' : statsData.communities}
               </p>
-              <p className="text-sm text-gray-600">Communities</p>
+              <p className="text-sm text-gray-600">Districts </p>
             </motion.div>
             <motion.div className="text-center" variants={statItemVariants}>
               <p className="text-3xl font-bold text-green-700">
@@ -774,6 +880,36 @@ return { lat: 0, lng: 0 };
             </motion.div>
           </motion.div>
         </div>
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
+    
+    <motion.div
+      className="relative inline-block w-full sm:w-56"
+      initial={{ opacity: 0, x: -20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6 }}
+    >
+      <select
+        value={selectedCountry}
+        onChange={handleCountryChange}
+        className="appearance-none bg-white border border-green-700 rounded-md py-2 pl-3 pr-10 w-full text-gray-700 focus:outline-none"
+      >
+        {countries.map((country) => (
+          <option key={country.value} value={country.value}>
+            {country.name}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-green-700">
+        <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+      </div>
+    </motion.div>
+    <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors">
+        Highlights of our work
+      </button>
+  </div>
 
         {/* Map visualization */}
         <motion.div
@@ -783,7 +919,6 @@ return { lat: 0, lng: 0 };
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8 }}
           ref={mapRef}
-          onClick={handleOutsideClick} // Add click handler to the map container
         >
           {isLoading ? (
             <div className="flex items-center justify-center h-full bg-gray-100">
@@ -792,25 +927,22 @@ return { lat: 0, lng: 0 };
           ) : filteredLocations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full bg-gray-100">
               <p className="text-gray-700 font-medium text-lg mb-2">No Projects Yet</p>
-              <p className="text-gray-500">We don't have any projects in {selectedCountry.charAt(0).toUpperCase() + selectedCountry.slice(1)} yet.</p>
+              <p className="text-gray-500">We don&apos;t have any projects in {selectedCountry.charAt(0).toUpperCase() + selectedCountry.slice(1)} yet.</p>
             </div>
           ) : (
             <>
               {/* Google Maps iframe - using location of current project if selected */}
               <iframe
                 ref={mapIframeRef}
-                src={currentProject && currentProject.mapCoordinates
-                  ? generateMapUrl(currentProject.mapCoordinates, mapZoom)
-                  : generateMapUrl(
-                      mapCenter || (
-                        selectedCountry === 'rwanda' 
-                          ? { lat: -1.9403, lng: 29.8739 } // Rwanda
-                          : selectedCountry === 'burkina faso'
-                            ? { lat: 12.3714, lng: -1.5197 } // Burkina Faso
-                            : { lat: 0, lng: 20 } // Default Central Africa
-                      ),
-                      mapZoom // Dynamic zoom level
-                    )
+                src={currentProject && currentProject.mapCoordinates && currentProject.mapCoordinates.mapUrl
+                  ? currentProject.mapCoordinates.mapUrl
+                  : mapCenter && mapCenter.mapUrl
+                    ? mapCenter.mapUrl
+                    : selectedCountry === 'rwanda' 
+                      ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
+                      : selectedCountry === 'burkina faso'
+                        ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
+                        : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus"
                 }
                 width="100%"
                 height="100%"
@@ -853,8 +985,8 @@ return { lat: 0, lng: 0 };
                   
                   if (multipleProjectsAtLocation[clusterKey]) {
                     isInCluster = true;
-                    clusterTotal = multipleProjectsAtLocation[clusterKey].length;
-                    clusterIndex = multipleProjectsAtLocation[clusterKey].indexOf(location.id);
+                    clusterTotal = (multipleProjectsAtLocation[clusterKey] ?? []).length;
+                    clusterIndex = (multipleProjectsAtLocation[clusterKey] ?? []).indexOf(location.id);
                     
                     // If index not found, use a default
                     if (clusterIndex === -1) clusterIndex = locationIndex % clusterTotal;
@@ -910,8 +1042,9 @@ return { lat: 0, lng: 0 };
                           alt={location.title}
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/images/food-system-1.png'; // Fallback image
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = '/images/food-system-1.png'; // Fallback image
                           }}
                         />
                       </div>
@@ -967,8 +1100,9 @@ return { lat: 0, lng: 0 };
                               alt={location.title}
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = '/images/food-system-1.png'; // Fallback image
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = '/images/food-system-1.png'; // Fallback image
                               }}
                             />
                             <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-0.5 text-xs font-semibold rounded">
@@ -985,12 +1119,12 @@ return { lat: 0, lng: 0 };
                                 <p className="text-xs text-gray-600 mb-2 line-clamp-2">
                                   {location.description}
                                 </p>
-                                <a
-                                  href={location.url}
+                                <Link
+                                  href={`/${locale}/projects/${location.projectId}`}
                                   className="text-xs text-yellow-600 hover:text-yellow-800 font-medium"
                                 >
                                   Learn more
-                                </a>
+                                </Link>
                               </>
                           </div>
                         </div>
@@ -1008,17 +1142,22 @@ return { lat: 0, lng: 0 };
                       Projects in this location:
                     </p>
                     {projectsAtSameLocation.map((project) => (
-                    <Link href={`projects/${project.id}`} className="block group">
+                      <div 
+                        key={project.id} 
+                        className="block group cursor-pointer"
+                        onClick={() => handleProjectClick(project.id)}
+                      >
                         <img
                           src={project.image}
                           alt={project.title}
-                          className="w-full h-full object-cover"
+                          className="w-8 h-8 rounded-full object-cover border-2 border-transparent group-hover:border-yellow-500"
                           onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/images/food-system-1.png';
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = '/images/food-system-1.png';
                           }}
                         />
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
