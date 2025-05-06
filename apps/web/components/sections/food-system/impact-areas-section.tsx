@@ -1,14 +1,68 @@
-// @ts-nocheck
-
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Container from "@/components/layout/container";
-import { MapPin, X, ChevronRight, Info } from "lucide-react";
-import { DecoratedHeading } from "@/components/layout/headertext";
-import apiClient from '@/lib/api-client';
+import { MapPin, X, ChevronRight, Info, Search, Plus, Minus } from "lucide-react";
+import apiClient from "@/lib/api-client";
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+
+// Define TypeScript interfaces
+interface Coordinates {
+  lat: number;
+  lng: number;
+  mapUrl?: string;
+}
+
+interface Project {
+  id: string;
+  name?: string;
+  description?: string;
+  country?: string;
+  location?: string;
+  community?: string;
+  address?: string;
+  mapUrl?: string;
+  contactPerson?: string;
+  media?: {
+    items?: Array<{
+      tag?: string;
+      url?: string;
+      type?: string;
+    }>;
+  };
+}
+
+interface ProjectLocation {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  image: string;
+  country: string;
+  location: string;
+  address: string;
+  mapCoordinates: Coordinates;
+  mapPosition: {
+    x: number;
+    y: number;
+  };
+  mapUrl: string | null;
+  contactPerson: string;
+  url: string;
+}
+
+interface CountryOption {
+  name: string;
+  value: string;
+}
+
+interface StatsData {
+  projects: number;
+  communities: number;
+  countries: number;
+}
 
 // Animation variants
 const fadeIn = {
@@ -18,9 +72,9 @@ const fadeIn = {
     y: 0,
     transition: {
       duration: 0.6,
-      ease: "easeOut",
-    },
-  },
+      ease: "easeOut"
+    }
+  }
 };
 
 const statsVariants = {
@@ -30,8 +84,8 @@ const statsVariants = {
     transition: {
       staggerChildren: 0.1,
       delayChildren: 0.3,
-    },
-  },
+    }
+  }
 };
 
 const statItemVariants = {
@@ -41,499 +95,738 @@ const statItemVariants = {
     scale: 1,
     transition: {
       duration: 0.4,
-      ease: "easeOut",
-    },
-  },
+      ease: "easeOut"
+    }
+  }
 };
 
-// Location parsing and mapping utilities
-function parseLocation(locationString) {
-  if (!locationString) return { country: 'rwanda', location: 'Rwanda' };
+const ClimateInitiativesMapSection = () => {
+  // Get the locale from URL params
+  const params = useParams();
+  const locale = params.locale || 'en';
   
-  const locationLower = locationString.toLowerCase();
-  
-  // Detect country - more flexible approach
-  let country = 'other'; // Default for unknown countries
-  
-  // Known country mappings
-  const countryMappings = {
-    'rwanda': 'rwanda',
-    'burkina': 'burkina',
-    'burkina faso': 'burkina',
-    // Add more countries as needed
-  };
-  
-  // Try to identify country from the location string
-  Object.entries(countryMappings).forEach(([keyword, countryCode]) => {
-    if (locationLower.includes(keyword)) {
-      country = countryCode;
-    }
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [mapDimensions, setMapDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
+  const [mapZoom, setMapZoom] = useState<number>(8); // Default zoom level
+  const [mapCenter, setMapCenter] = useState<Coordinates | null>(null); // Track map center coordinates
+  const [hoveredProject, setHoveredProject] = useState<string | null>(null);
+
+  // State for API data
+  const [statsData, setStatsData] = useState<StatsData>({
+    projects: 0,
+    communities: 0,
+    countries: 2, // Fixed to 2 countries: Rwanda and Burkina Faso
   });
+  const [projectLocations, setProjectLocations] = useState<ProjectLocation[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [multipleProjectsAtLocation, setMultipleProjectsAtLocation] = useState<Record<string, string[]>>({});
   
-  // Extract specific location if present
-  let location = locationString;
-  if (locationString && locationString.includes(',')) {
-    // Take first part before comma as specific location
-    location = locationString.split(',')[0].trim();
-  }
-  
-  return { country, location };
-}
-
-function getMapCoordinates(locationInfo) {
-  const { country, location } = locationInfo;
-  
-  // Known specific locations - can be expanded with more locations
-  const knownLocations = {
-    "kigali": { 
-      lat: -1.9441, 
-      lng: 30.0619,
-      mapPosition: { x: 380, y: 300 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
-    },
-    "musanze": { 
-      lat: -1.4969, 
-      lng: 29.6259,
-      mapPosition: { x: 300, y: 180 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63776.95946876503!2d29.591339705532292!3d-1.4968819286622052!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dc4e45426592c5%3A0x7bf59f53e5c2b097!2sMusanze%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712019657396!5m2!1sen!2sus"
-    },
-    "nyabihu": { 
-      lat: -1.6579, 
-      lng: 29.5006,
-      mapPosition: { x: 220, y: 250 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63780.843420073026!2d29.498345699999998!3d-1.6578639!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dc5918838703c5%3A0xfb77da79fea2e4eb!2sNyabihu%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712019752780!5m2!1sen!2sus"
-    },
-    "ouagadougou": { 
-      lat: 12.3714, 
-      lng: -1.5197,
-      mapPosition: { x: 320, y: 230 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
-    }
-  };
-  
-  // Country defaults (used when specific location not found)
-  const countryDefaults = {
-    "rwanda": {
-      lat: -1.9441, 
-      lng: 30.0619,
-      mapPosition: { x: 380, y: 300 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
-    },
-    "burkina": {
-      lat: 12.3714, 
-      lng: -1.5197,
-      mapPosition: { x: 320, y: 230 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
-    },
-    "other": {
-      lat: 0, 
-      lng: 20,
-      mapPosition: { x: 350, y: 250 },
-      mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus"
-    }
-  };
-  
-  // Try to find exact match for the location
-  const locationKey = location.toLowerCase().trim();
-  if (knownLocations[locationKey]) {
-    return {
-      mapCoordinates: { 
-        lat: knownLocations[locationKey].lat, 
-        lng: knownLocations[locationKey].lng 
-      },
-      mapPosition: knownLocations[locationKey].mapPosition,
-      mapUrl: knownLocations[locationKey].mapUrl
-    };
-  }
-  
-  // Fall back to country defaults
-  if (countryDefaults[country]) {
-    return {
-      mapCoordinates: { 
-        lat: countryDefaults[country].lat, 
-        lng: countryDefaults[country].lng 
-      },
-      mapPosition: countryDefaults[country].mapPosition,
-      mapUrl: countryDefaults[country].mapUrl
-    };
-  }
-  
-  // Ultimate fallback to other (default for unknown countries)
-  return {
-    mapCoordinates: { lat: 0, lng: 20 },
-    mapPosition: { x: 350, y: 250 },
-    mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus"
-  };
-}
-
-// Distribute project positions evenly across the map
-function distributeProjectPositions(projects, country) {
-  if (!projects || !Array.isArray(projects) || projects.length === 0) {
-    return [];
-  }
-  
-  // Define map areas by country
-  const mapAreas = {
-    "rwanda": {
-      width: 600,
-      height: 400,
-      xOffset: 150,
-      yOffset: 100,
-      spacing: 100 // Space between projects
-    },
-    "burkina": {
-      width: 600,
-      height: 400,
-      xOffset: 150,
-      yOffset: 100,
-      spacing: 100
-    },
-    "other": {
-      width: 600,
-      height: 400,
-      xOffset: 150,
-      yOffset: 100,
-      spacing: 100
-    }
-  };
-  
-  const mapArea = mapAreas[country] || mapAreas.other;
-  const countryProjects = projects.filter(p => p.country === country);
-  
-  // Create a grid layout
-  const projectsPerRow = Math.ceil(Math.sqrt(countryProjects.length));
-  const cellWidth = mapArea.width / projectsPerRow;
-  const cellHeight = mapArea.height / Math.ceil(countryProjects.length / projectsPerRow);
-  
-  // Place each project in a cell
-  return countryProjects.map((project, index) => {
-    const row = Math.floor(index / projectsPerRow);
-    const col = index % projectsPerRow;
-    
-    // Add some randomness for natural distribution
-    const randomOffset = {
-      x: Math.random() * (cellWidth * 0.3) - (cellWidth * 0.15),
-      y: Math.random() * (cellHeight * 0.3) - (cellHeight * 0.15)
-    };
-    
-    const x = mapArea.xOffset + (col * cellWidth) + (cellWidth / 2) + randomOffset.x;
-    const y = mapArea.yOffset + (row * cellHeight) + (cellHeight / 2) + randomOffset.y;
-    
-    return {
-      ...project,
-      mapPosition: { x, y }
-    };
-  });
-}
-
-function generateMapLocations(projects) {
-  if (!projects || !Array.isArray(projects) || projects.length === 0) {
-    return [];
-  }
-  
-  const projectsWithBasicData = projects.map((project, index) => {
-    // Make sure we have some location data - use defaults if needed
-    const locationString = project.location || `Project ${project.id} Location`;
-    
-    // Parse the location string
-    const locationInfo = parseLocation(locationString);
-    
-    // Get map coordinates and URL based on location
-    const { mapCoordinates, mapPosition, mapUrl } = getMapCoordinates(locationInfo);
-    
-    // Get feature image or use fallback
-    const image = project.media?.items?.find(item => item.tag === 'feature')?.url || '/images/news/maize.avif';
-    
-    // Create and return location object
-    return {
-      id: project.id,
-      title: project.name || 'Untitled Project',
-      description: project.description || 'No description available',
-      image: image,
-      country: locationInfo.country,
-      location: locationInfo.location,
-      address: locationString,
-      mapCoordinates: mapCoordinates,
-      mapPosition: mapPosition,
-      mapUrl: mapUrl,
-      contactPerson: project.contact_person || 'Project Contact',
-      url: `/projects/${project.id}`
-    };
-  });
-  
-  // Group projects by country
-  const countries = [...new Set(projectsWithBasicData.map(p => p.country))];
-  let allProjectsDistributed = [];
-  
-  // Distribute projects for each country
-  countries.forEach(country => {
-    const countryProjects = distributeProjectPositions(projectsWithBasicData, country);
-    allProjectsDistributed = [...allProjectsDistributed, ...countryProjects];
-  });
-  
-  return allProjectsDistributed;
-}
-
-// Get feature image from project media
-const getFeatureImage = (project) => {
-  if (project.media && project.media.items && project.media.items.length > 0) {
-    const featureImage = project.media.items.find((item) => item.tag === 'feature');
-    if (featureImage) {
-      return featureImage.url;
-    }
-  }
-  // Return placeholder images in a pattern based on project ID
-  const imageIndex = (project.id % 3) + 1;
-  return `/images/news/team-members-${imageIndex}.jpg`;
-};
-
-const FoodSystemsMapSection = () => {
-  const [selectedCountry, setSelectedCountry] = useState("rwanda");
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [expandedCard, setExpandedCard] = useState(null);
-  const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
-  const [projectLocations, setProjectLocations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [countries, setCountries] = useState([
-    { name: "Rwanda", value: "rwanda" },
-    { name: "Burkina Faso", value: "burkina" }
+  // Ensure Rwanda is first in the list and selected by default
+  const [countries, setCountries] = useState<CountryOption[]>([
+    { name: 'Rwanda', value: 'rwanda' },
+    { name: 'Burkina Faso', value: 'burkina faso' },
+    { name: 'Other', value: 'other' }
   ]);
-  const [stats, setStats] = useState([
-    { label: "Fellows", count: 0 },
-    { label: "Projects", count: 0 },
-    { label: "Countries", count: 0 }
-  ]);
+  // Set Rwanda as the default selected country
+  const [selectedCountry, setSelectedCountry] = useState<string>('rwanda');
 
-  const mapRef = useRef(null);
-  const mapIframeRef = useRef(null);
-  
-  // Fetch map data including projects and fellows from API
-  useEffect(() => {
-    const fetchMapData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch both projects and fellows data in parallel
-        const [projectsResponse, fellowsResponse] = await Promise.all([
-          apiClient.get('/projects'),
-          apiClient.get('/fellows')
-        ]);
-        
-        const projectsList = projectsResponse.data?.projects || [];
-        const fellowsList = fellowsResponse.data?.fellows || [];
-        
-        if (projectsList.length > 0 || fellowsList.length > 0) {
-          // Generate map locations from projects
-          const locations = generateMapLocations(projectsList);
-          setProjectLocations(locations);
-          
-          // Calculate stats for the selected country
-          const countryProjects = projectsList.filter(p => {
-            const locationInfo = parseLocation(p.location);
-            return locationInfo.country === selectedCountry;
-          });
-          
-          const countryFellows = fellowsList.filter(f => {
-            const locationInfo = parseLocation(f.location || '');
-            return locationInfo.country === selectedCountry;
-          });
-          
-          // Update stats with actual data
-          setStats([
-            { label: "Fellows", count: countryFellows.length },
-            { label: "Projects", count: countryProjects.length },
-            { label: "Countries", count: 2 }
-          ]);
-          
-          // Update countries list based on data
-          const countriesSet = new Set();
-          
-          projectsList.forEach(project => {
-            if (project.location) {
-              const locationInfo = parseLocation(project.location);
-              countriesSet.add(locationInfo.country);
-            }
-          });
-          
-          const uniqueCountries = Array.from(countriesSet).map(countryCode => {
-            const name = countryCode === 'rwanda' ? 'Rwanda' : 
-                      countryCode === 'burkina' ? 'Burkina Faso' : 
-                      countryCode.charAt(0).toUpperCase() + countryCode.slice(1);
-            return { name, value: countryCode };
-          });
-          
-          // Make sure we always have Rwanda and Burkina Faso in the list
-          const defaultCountries = [
-            { name: 'Rwanda', value: 'rwanda' },
-            { name: 'Burkina Faso', value: 'burkina' }
-          ];
-          
-          const countryValues = uniqueCountries.map(c => c.value);
-          defaultCountries.forEach(defaultCountry => {
-            if (!countryValues.includes(defaultCountry.value)) {
-              uniqueCountries.push(defaultCountry);
-            }
-          });
-          
-          setCountries(uniqueCountries);
-        }
-      } catch (error) {
-        console.error('Error fetching map data:', error);
-        
-        // For demonstration, generate mock data if API fails
-        const mockProjects = [
-          {
-            id: 1,
-            name: "Sustainable Farming Initiative",
-            description: "The agricultural training program targets new sustainable farming practices to improve crop yields and food security.",
-            location: "Musanze, Rwanda",
-            contact_person: "Jean Bosco"
-          },
-          {
-            id: 2,
-            name: "Rural Development Program",
-            description: "Supporting rural communities with agricultural resources and training to create sustainable livelihoods.",
-            location: "Nyabihu, Rwanda",
-            contact_person: "Marie Claire"
-          },
-          {
-            id: 3,
-            name: "Agribusiness Accelerator",
-            description: "Supporting agricultural entrepreneurs to develop sustainable businesses and increase productivity.",
-            location: "Ouagadougou, Burkina Faso",
-            contact_person: "Ibrahim Ouedraogo"
-          },
-          {
-            id: 4,
-            name: "Climate Adaptation Project",
-            description: "Helping farmers adapt to changing climate conditions with resilient crop varieties and practices.",
-            location: "Kigali, Rwanda",
-            contact_person: "Alice Mutoni"
-          }
-        ];
-        
-        const locations = generateMapLocations(mockProjects);
-        setProjectLocations(locations);
-        
-        // Filter mock data by selected country
-        const countrySpecificMockProjects = mockProjects.filter(p => {
-          const locationInfo = parseLocation(p.location);
-          return locationInfo.country === selectedCountry;
-        });
-        
-        setStats([
-          { label: "Fellows", count: 0 }, // No mock fellows, just show 0 if API fails
-          { label: "Projects", count: countrySpecificMockProjects.length },
-          { label: "Countries", count: 2 }
-        ]);
-      } finally {
-        setLoading(false);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapIframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Helper function to determine if a location is in Rwanda
+  const isRwandaDistrict = (location: string | null | undefined): boolean => {
+    if (!location) return false;
+    
+    const rwandaDistricts = [
+      // Kigali Province
+      'gasabo', 'kicukiro', 'nyarugenge', 'kigali',
+      
+      // Eastern Province
+      'bugesera', 'gatsibo', 'kayonza', 'kirehe', 'ngoma', 'nyagatare', 'rwamagana',
+      
+      // Northern Province
+      'burera', 'gicumbi', 'gakenke', 'musanze', 'rulindo',
+      
+      // Southern Province
+      'huye', 'ruhango', 'nyamagabe', 'gisagara', 'muhanga', 'kamonyi', 'nyanza', 'nyaruguru',
+      
+      // Western Province
+      'karongi', 'nyabihu', 'rubavu', 'rusizi', 'ngororero', 'nyamasheke', 'rutsiro',
+      
+      // General Rwanda terms
+      'rwanda', 'kigali'
+    ];
+    
+    const locationLower = location.toLowerCase().trim();
+    
+    // Check if the location includes any Rwanda district name
+    return rwandaDistricts.some(district => 
+      locationLower === district || 
+      locationLower.includes(` ${district}`) || 
+      locationLower.includes(`${district} `) ||
+      locationLower.includes(`${district},`)
+    );
+  };
+
+  // Helper function to get coordinates from location name
+  const getCoordinatesForLocation = (location: string | null | undefined): Coordinates => {
+    // Known specific locations with pre-defined map URLs
+    const knownLocations = {
+      // Kigali Province
+      "kigali": { 
+        lat: -1.9441, 
+        lng: 30.0619,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
+      },
+      "gasabo": { lat: -1.8952, lng: 30.0591 },
+      "kicukiro": { lat: -1.9929, lng: 30.0567 },
+      "nyarugenge": { lat: -1.9437, lng: 30.0611 },
+      
+      // Eastern Province
+      "bugesera": { lat: -2.1564, lng: 30.2572 },
+      "gatsibo": { lat: -1.5737, lng: 30.4560 },
+      "kayonza": { lat: -1.9407, lng: 30.4583 },
+      "kirehe": { lat: -2.2676, lng: 30.6531 },
+      "ngoma": { lat: -2.1476, lng: 30.4638 },
+      "nyagatare": { lat: -1.2977, lng: 30.3253 },
+      "rwamagana": { lat: -1.9490, lng: 30.4351 },
+      
+      // Northern Province
+      "burera": { lat: -1.4645, lng: 29.8250 },
+      "gicumbi": { lat: -1.7036, lng: 30.0597 },
+      "gakenke": { lat: -1.6963, lng: 29.7842 },
+      "musanze": { lat: -1.4969, lng: 29.6259 },
+      "rulindo": { lat: -1.7169, lng: 29.9844 },
+      
+      // Southern Province
+      "huye": { lat: -2.6076, lng: 29.7429 },
+      "ruhango": { lat: -2.0658, lng: 29.7767 },
+      "nyamagabe": { lat: -2.4773, lng: 29.5664 },
+      "gisagara": { lat: -2.6060, lng: 29.8729 },
+      "muhanga": { lat: -1.9747, lng: 29.7561 },
+      "kamonyi": { lat: -1.9978, lng: 29.9197 },
+      "nyanza": { lat: -2.3516, lng: 29.7509 },
+      "nyaruguru": { lat: -2.8084, lng: 29.5318 },
+      
+      // Western Province
+      "karongi": { lat: -2.1579, lng: 29.3878 },
+      "nyabihu": { lat: -1.6579, lng: 29.5006 },
+      "rubavu": { lat: -1.6794, lng: 29.2336 },
+      "rusizi": { lat: -2.5184, lng: 28.9066 },
+      "ngororero": { lat: -1.8870, lng: 29.5865 },
+      "nyamasheke": { lat: -2.3253, lng: 29.1208 },
+      "rutsiro": { lat: -1.9520, lng: 29.3257 },
+      
+      // Burkina Faso
+      "ouagadougou": { 
+        lat: 12.3714, 
+        lng: -1.5197,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
+      },
+      "bobo-dioulasso": { lat: 11.1777, lng: -4.2958 },
+      "koudougou": { lat: 12.2530, lng: -2.3748 },
+      "banfora": { lat: 10.6376, lng: -4.7580 },
+      "dédougou": { lat: 12.4634, lng: -3.4663 }
+    };
+    
+    // Country defaults (used when specific location not found)
+    const countryDefaults = {
+      "rwanda": {
+        lat: -1.9441, 
+        lng: 30.0619,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
+      },
+      "burkina faso": {
+        lat: 12.3714, 
+        lng: -1.5197,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
+      },
+      "other": {
+        lat: 0, 
+        lng: 20,
+        mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus"
       }
     };
     
-    fetchMapData();
-  }, [selectedCountry]);
-  
-  // Filtered locations based on selected country
-  const filteredLocations = projectLocations.filter(
-    (location) => location.country === selectedCountry
-  );
+    // If no location provided, return default central Africa coordinates
+    if (!location) {
+      return { 
+        lat: countryDefaults.other.lat, 
+        lng: countryDefaults.other.lng,
+        mapUrl: countryDefaults.other.mapUrl
+      } as Coordinates;
+    }
+    
+    const locationLower = location.toLowerCase().trim();
+    
+    // Check if we have exact coordinates for this location
+    if (locationLower in knownLocations) {
+      const locationData = knownLocations[locationLower as keyof typeof knownLocations];
+      // Return coordinates and map URL if available
+      return { 
+        lat: locationData.lat, 
+        lng: locationData.lng,
+        mapUrl: 'mapUrl' in locationData ? locationData.mapUrl : undefined
+      } as Coordinates;
+    }
+    
+    // If location has multiple parts (e.g. "Rubavu, Kigali"), use the first one
+    if (locationLower.includes(',')) {
+      const firstLocation = locationLower.split(',')[0]?.trim() || '';
+      if (firstLocation in knownLocations) {
+        const locationData = knownLocations[firstLocation as keyof typeof knownLocations];
+        return { 
+          lat: locationData.lat, 
+          lng: locationData.lng,
+          mapUrl: 'mapUrl' in locationData ? locationData.mapUrl : undefined
+        } as Coordinates;
+      }
+    }
+    
+    // Check if the location includes a country name and return its default coordinates
+    if (locationLower.includes('rwanda')) {
+      return { 
+        lat: countryDefaults.rwanda.lat, 
+        lng: countryDefaults.rwanda.lng,
+        mapUrl: countryDefaults.rwanda.mapUrl
+      } as Coordinates;
+    }
+    
+    if (locationLower.includes('burkina')) {
+      return { 
+        lat: countryDefaults["burkina faso"].lat, 
+        lng: countryDefaults["burkina faso"].lng,
+        mapUrl: countryDefaults["burkina faso"].mapUrl 
+      } as Coordinates;
+    }
+    
+    // Default to central Africa if nothing else matches
+    return { 
+      lat: countryDefaults.other.lat, 
+      lng: countryDefaults.other.lng,
+      mapUrl: countryDefaults.other.mapUrl
+    } as Coordinates;
+  };
 
-  // Get current project for map
-  const currentProject = selectedProject 
-    ? projectLocations.find(p => p.id === selectedProject) 
+  // Generate Google Maps URL with appropriate zoom level for a specific location
+  const generateMapUrl = (coordinates: Coordinates | null, zoomLevel = 12): string | null => {
+    if (!coordinates) return null;
+    
+    // If the coordinates include a pre-defined map URL, use that
+    if (coordinates.mapUrl) {
+      return coordinates.mapUrl;
+    }
+    
+    // Otherwise use a dynamically generated one
+    return `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d${250000 / Math.pow(2, zoomLevel)}!2d${coordinates.lng}!3d${coordinates.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1712019657396!5m2!1sen!2sus`;
+  };
+
+  // Helper function to calculate map position from coordinates with better precision
+  const getMapPosition = (coordinates: Coordinates | null) => {
+    if (!coordinates) return { x: 300, y: 200 };
+    
+    // Get current map dimensions
+    const mapWidth = mapDimensions.width || 600;
+    const mapHeight = mapDimensions.height || 400;
+    
+    let x: number, y: number;
+    
+    if (selectedCountry === 'rwanda') {
+      // Rwanda-specific mapping (approximate bounds: lat -3 to 0, lng 28.5 to 31)
+      const latNormalized = (coordinates.lat + 3) / 3; // 0 to 1 (south to north)
+      const lngNormalized = (coordinates.lng - 28.5) / 2.5; // 0 to 1 (west to east)
+      
+      // Scale to map size (with padding)
+      const padding = 40;
+      x = padding + (lngNormalized * (mapWidth - padding * 2));
+      y = mapHeight - padding - (latNormalized * (mapHeight - padding * 2)); // Flip Y (north is up)
+    } 
+    else if (selectedCountry === 'burkina faso') {
+      // Burkina Faso mapping (approximate bounds: lat 9 to 15, lng -6 to 3)
+      const latNormalized = (coordinates.lat - 9) / 6; // 0 to 1 (south to north)
+      const lngNormalized = (coordinates.lng + 6) / 9; // 0 to 1 (west to east)
+      
+      const padding = 40;
+      x = padding + (lngNormalized * (mapWidth - padding * 2));
+      y = mapHeight - padding - (latNormalized * (mapHeight - padding * 2)); // Flip Y (north is up)
+    }
+    else {
+      // Default calculation for other countries
+      // Convert from global coordinates to map coordinates
+      const latNormalized = (90 - coordinates.lat) / 180; // 0 to 1 (north to south)
+      const lngNormalized = (coordinates.lng + 180) / 360; // 0 to 1 (west to east)
+      
+      x = lngNormalized * mapWidth;
+      y = latNormalized * mapHeight;
+    }
+    
+    return { x, y };
+  };
+
+  // Function to handle clusters of projects at the same location
+  const getClusteredPosition = (basePosition: { x: number; y: number }, index: number, total: number) => {
+    if (total <= 1) return basePosition;
+    
+    // Calculate radius based on number of projects (larger clusters = larger radius)
+    const radius = Math.min(15, 8 + (total * 2)); 
+    
+    // Calculate angle based on position in cluster
+    const angle = (index / total) * 2 * Math.PI;
+    
+    // Calculate offset using circle placement
+    const offsetX = Math.cos(angle) * radius;
+    const offsetY = Math.sin(angle) * radius;
+    
+    return {
+      x: basePosition.x + offsetX,
+      y: basePosition.y + offsetY
+    };
+  };
+
+  // Function to get project images from media items
+  const getProjectImage = (project: Project): string => {
+    if (!project || !project.media || !project.media.items || project.media.items.length === 0) {
+      return '/images/food-system-1.png'; // Default image
+    }
+    
+    // Try to find a feature image first
+    const featureImage = project.media.items.find(item => 
+      item.tag === 'feature' && item.url && item.type === 'image'
+    );
+    
+    // If no feature image, use the first available image
+    const anyImage = project.media.items.find(item => 
+      item.url && item.type === 'image'
+    );
+    
+    return featureImage?.url || 
+           anyImage?.url || 
+           '/images/food-system-1.png';
+  };
+
+  // This effect is for initially focusing the map on Rwanda
+  useEffect(() => {
+    // Focus map on Rwanda when component mounts
+    const rwandaCoords = { lat: -1.9403, lng: 29.8739 }; // Kigali, Rwanda
+    setMapCenter(rwandaCoords);
+  }, []);
+
+  // Effect to handle project clustering
+  useEffect(() => {
+    if (!projectLocations || projectLocations.length === 0) return;
+    
+    // Group projects by location key (based on coordinates)
+    const locationGroups: Record<string, string[]> = {};
+    
+    projectLocations.forEach(location => {
+      if (!location.mapCoordinates) return;
+      
+      // Create a key for this location based on coordinates (rounded to reduce minor variations)
+      const key = `${location.mapCoordinates.lat.toFixed(4)},${location.mapCoordinates.lng.toFixed(4)}`;
+      
+      if (!locationGroups[key]) {
+        locationGroups[key] = [];
+      }
+      
+      locationGroups[key].push(location.id);
+    });
+    
+    // Filter to only include locations with multiple projects
+    const multiLocations: Record<string, string[]> = {};
+    Object.entries(locationGroups).forEach(([key, ids]) => {
+      if (ids.length > 1) {
+        multiLocations[key] = ids;
+      }
+    });
+    
+    setMultipleProjectsAtLocation(multiLocations);
+  }, [projectLocations]);
+
+  // Filtered locations based on selected country
+  const filteredLocations = selectedCountry 
+    ? projectLocations.filter(location => location.country.toLowerCase() === selectedCountry.toLowerCase())
+    : projectLocations;
+
+  const currentProject = selectedProject
+    ? projectLocations.find(p => p.id === selectedProject)
     : null;
 
+  // Find all projects at the same location as the currently selected project
+  const projectsAtSameLocation = currentProject ? 
+    projectLocations.filter(p => 
+      p.mapCoordinates && currentProject.mapCoordinates &&
+      p.mapCoordinates.lat.toFixed(4) === currentProject.mapCoordinates.lat.toFixed(4) && 
+      p.mapCoordinates.lng.toFixed(4) === currentProject.mapCoordinates.lng.toFixed(4)
+    ) : [];
+
   // Event handlers
-  const handleCountryChange = (e) => {
-    setSelectedCountry(e.target.value);
-    setSelectedProject(null);
-    setExpandedCard(null);
-    
-    // When changing country, update the iframe URL to show the country
-    if (mapIframeRef.current) {
-      const countryProject = projectLocations.find(p => p.country === e.target.value);
-      if (countryProject) {
-        mapIframeRef.current.src = countryProject.mapUrl;
+  const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Check if the click is outside of any card
+    const target = e.target as HTMLElement;
+    if (selectedProject && 
+        !target.closest('.project-card') && 
+        !target.closest('.map-control') && 
+        !target.closest('.projects-carousel')) {
+      setSelectedProject(null);
+      // Reset map zoom when closing project view
+      setMapZoom(8);
+      
+      // Reset map center to country default
+      if (selectedCountry === 'rwanda') {
+        setMapCenter({ lat: -1.9403, lng: 29.8739 }); // Kigali, Rwanda
+      } else if (selectedCountry === 'burkina faso') {
+        setMapCenter({ lat: 12.3714, lng: -1.5197 }); // Ouagadougou, Burkina Faso
+      } else {
+        setMapCenter(null); // Default view
       }
     }
   };
 
-  const handleProjectClick = (projectId) => {
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const country = e.target.value;
+    setSelectedCountry(country);
+    setSelectedProject(null);
+    // Reset map zoom when changing country
+    setMapZoom(8);
+    
+    // Set map center based on selected country
+    if (country === 'rwanda') {
+      setMapCenter({ lat: -1.9403, lng: 29.8739 }); // Kigali, Rwanda
+    } else if (country === 'burkina faso') {
+      setMapCenter({ lat: 12.3714, lng: -1.5197 }); // Ouagadougou, Burkina Faso
+    } else {
+      setMapCenter(null); // Default view
+    }
+  };
+
+  const handleProjectClick = (projectId: string) => {
     const project = projectLocations.find(p => p.id === projectId);
     
+    // Close existing project
     if (selectedProject === projectId) {
-      setExpandedCard(expandedCard === projectId ? null : projectId);
-    } else {
-      setSelectedProject(projectId);
-      setExpandedCard(null);
+      setSelectedProject(null);
+      // Reset map zoom
+      setMapZoom(8);
       
-      // Update the iframe to zoom to the exact project location
-      if (mapIframeRef.current && project) {
-        // Create a URL that centers on the exact coordinates with a higher zoom level
-        const zoom = 14; // Higher zoom level for better detail
-        const markerLabel = project.location.substring(0, 1).toUpperCase(); // Use first letter of location as marker label
-        
-        mapIframeRef.current.src = 
-          `${project.mapUrl}&center=${project.mapCoordinates.lat},${project.mapCoordinates.lng}&zoom=${zoom}&markers=color:red%7Clabel:${markerLabel}%7C${project.mapCoordinates.lat},${project.mapCoordinates.lng}`;
+      // Reset map center to country default
+      if (selectedCountry === 'rwanda') {
+        setMapCenter({ lat: -1.9403, lng: 29.8739 }); // Kigali, Rwanda
+      } else if (selectedCountry === 'burkina faso') {
+        setMapCenter({ lat: 12.3714, lng: -1.5197 }); // Ouagadougou, Burkina Faso
+      } else {
+        setMapCenter(null); // Default view
+      }
+    } else {
+      // Set new selected project
+      setSelectedProject(projectId);
+      // Increase map zoom for focus on location
+      setMapZoom(14);
+      
+      // Center map on this project
+      if (project && project.mapCoordinates) {
+        setMapCenter(project.mapCoordinates);
       }
     }
   };
 
-  const handleExpandClick = (projectId, e) => {
+  const handleCloseProject = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpandedCard(expandedCard === projectId ? null : projectId);
+    setSelectedProject(null);
+    // Reset map zoom
+    setMapZoom(8);
+    
+    // Reset map center to country default
+    if (selectedCountry === 'rwanda') {
+      setMapCenter({ lat: -1.9403, lng: 29.8739 }); // Kigali, Rwanda
+    } else if (selectedCountry === 'burkina faso') {
+      setMapCenter({ lat: 12.3714, lng: -1.5197 }); // Ouagadougou, Burkina Faso
+    } else {
+      setMapCenter(null); // Default view
+    }
   };
 
-  // Make sure project positions are always visible within the map dimensions
-  const getMarkerPosition = (position) => {
-    if (!position || !mapDimensions.width || !mapDimensions.height) {
-      // Default positions distributed across the map if position data is missing
-      const defaultX = Math.random() * 0.8 * (mapDimensions.width || 600) + 0.1 * (mapDimensions.width || 600);
-      const defaultY = Math.random() * 0.8 * (mapDimensions.height || 400) + 0.1 * (mapDimensions.height || 400);
-      return { x: defaultX, y: defaultY };
-    }
+  // Handle zoom in/out buttons
+  const handleZoomIn = () => {
+    setMapZoom(prev => Math.min(prev + 1, 18));
+  };
+
+  const handleZoomOut = () => {
+    setMapZoom(prev => Math.max(prev - 1, 6));
+  };
+
+  // Show all projects at this location when clicking the cluster indicator
+  const handleClusterClick = (locationKey: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     
-    // Scale position from reference dimensions (600x400) to actual map dimensions
+    // Show a modal or expand the card to display all projects at this location
+    // For now, we'll just select the first project in the cluster
+    const projectsAtLocation = multipleProjectsAtLocation[locationKey];
+    if (projectsAtLocation && projectsAtLocation.length > 0) {
+      const firstProjectId = projectsAtLocation[0];
+      if (firstProjectId) {
+        handleProjectClick(firstProjectId);
+      }
+    }
+  };
+
+  // Mouse hover handlers for projects
+  const handleProjectMouseEnter = (projectId: string) => {
+    setHoveredProject(projectId);
+  };
+
+  const handleProjectMouseLeave = () => {
+    setHoveredProject(null);
+  };
+
+  // Get appropriate position for marker based on map dimensions
+  const getMarkerPosition = (position: { x: number; y: number }) => {
     const x = (position.x / 600) * mapDimensions.width;
     const y = (position.y / 400) * mapDimensions.height;
-    
-    // Ensure positions are within map boundaries with some padding
-    return { 
-      x: Math.min(Math.max(x, 50), mapDimensions.width - 50),
-      y: Math.min(Math.max(y, 50), mapDimensions.height - 50)
-    };
+    return { x, y };
   };
 
-  // Update map dimensions on resize and component mount
+  // Fetch data from APIs
+  useEffect(() => {
+    setIsLoading(true);
+    
+    // Fetch projects data
+    apiClient.get('/projects')
+      .then(response => {
+        const data = response.data;
+        // Check if data is an array or has a projects property that's an array
+        const projectsArray: Project[] = Array.isArray(data) ? data : (data.projects || []);
+        
+        // Update stats with total projects count
+        setStatsData(prev => ({
+          ...prev,
+          projects: projectsArray.length || 0
+        }));
+        
+        // Extract unique countries
+        const uniqueCountries = new Set<string>();
+        projectsArray.forEach(project => {
+          if (project.country) {
+            uniqueCountries.add(project.country.toLowerCase());
+          }
+        });
+        
+        // Keep countries fixed at 2
+        setStatsData(prev => ({
+          ...prev,
+          countries: 2 // Fixed to 2 countries
+        }));
+        
+        // Format countries for dropdown - make sure to always include Rwanda, Burkina Faso, and Other
+        const countryOptions: CountryOption[] = [];
+        
+        // Always include Rwanda as the first option
+        countryOptions.push({ name: 'Rwanda', value: 'rwanda' });
+        
+        // Add Burkina Faso if it exists
+        if (uniqueCountries.has('burkina faso')) {
+          countryOptions.push({ name: 'Burkina Faso', value: 'burkina faso' });
+          // Remove from set to avoid duplication
+          uniqueCountries.delete('burkina faso');
+        } else {
+          // Add anyway as second option
+          countryOptions.push({ name: 'Burkina Faso', value: 'burkina faso' });
+        }
+        
+        // Remove Rwanda from the set to avoid duplication
+        uniqueCountries.delete('rwanda');
+        
+        // Add all other countries
+        Array.from(uniqueCountries).sort().forEach(country => {
+          countryOptions.push({
+            name: country.charAt(0).toUpperCase() + country.slice(1),
+            value: country.toLowerCase()
+          });
+        });
+        
+        // Always include "Other" as the last option
+        countryOptions.push({ name: 'Other', value: 'other' });
+        
+        setCountries(countryOptions);
+        
+        // Process projects into location data
+        const locations: ProjectLocation[] = [];
+        const communities = new Set<string>();
+        
+        projectsArray.forEach(project => {
+          // Determine project country based on location district
+          let projectCountry = 'burkina faso'; // Default to Burkina Faso if not a Rwanda district
+          
+          // If project has explicit country, normalize it
+          if (project.country) {
+            const normalizedCountry = project.country.toLowerCase();
+            if (normalizedCountry.includes('rwanda') || normalizedCountry.includes('rw')) {
+              projectCountry = 'rwanda';
+            } else if (normalizedCountry.includes('burkina') || normalizedCountry.includes('bf')) {
+              projectCountry = 'burkina faso';
+            }
+          }
+          
+          // Check if location is a Rwanda district - this overrides the country field
+          if (project.location && isRwandaDistrict(project.location)) {
+            projectCountry = 'rwanda';
+          }
+          
+          // Get project image from media items
+          const projectImage = getProjectImage(project);
+          
+          // Handle project with multiple locations
+          if (project.location) {
+            // Split location if it contains commas (multiple locations)
+            const locationsList = project.location.split(',').map(loc => loc.trim());
+            
+            // Add each location to the communities set
+            locationsList.forEach(loc => {
+              if (loc) communities.add(loc);
+            });
+            
+            // Create a map entry for each location
+            locationsList.forEach((locationName, index) => {
+              // Get accurate coordinates for this location
+              const coordinates = getCoordinatesForLocation(locationName);
+              
+              // Calculate proper map position based on real coordinates
+              const mapPosition = getMapPosition(coordinates);
+              
+              // Generate map URL based on coordinates
+              const mapUrl = generateMapUrl(coordinates);
+              
+              locations.push({
+                id: `${project.id}-${locationName}-${index}`,
+                projectId: project.id,
+                title: project.name || "Project",
+                description: project.description || "A sustainable initiative to improve local communities",
+                image: projectImage,
+                country: projectCountry,
+                location: locationName,
+                address: project.address || `${locationName}, ${project.country || 'Rwanda'}`,
+                mapCoordinates: coordinates,
+                mapPosition: mapPosition,
+                mapUrl: project.mapUrl || mapUrl,
+                contactPerson: project.contactPerson || 'Project Manager',
+                url: `/projects/${project.id}` || '/projects/default'
+              });
+            });
+          } else if (project.community) {
+            // If project has community but no location, use community as location
+            const communityName = project.community.trim();
+            communities.add(communityName);
+            
+            const coordinates = getCoordinatesForLocation(communityName);
+            const mapPosition = getMapPosition(coordinates);
+            
+            // Generate map URL based on coordinates
+            const mapUrl = generateMapUrl(coordinates);
+            
+            locations.push({
+              id: `${project.id}-${communityName}`,
+              projectId: project.id,
+              title: project.name || "Project",
+              description: project.description || "A sustainable initiative to improve local communities",
+              image: projectImage,
+              country: projectCountry,
+              location: communityName,
+              address: project.address || `${communityName}, ${project.country || 'Rwanda'}`,
+              mapCoordinates: coordinates,
+              mapPosition: mapPosition,
+              mapUrl: project.mapUrl || mapUrl,
+              contactPerson: project.contactPerson || 'Project Manager',
+              url: `/projects/${project.id}` || '/projects/default'
+            });
+          } else {
+            // Default location (country capital or something generic)
+            const defaultLocation = project.country || 'Rwanda';
+            communities.add(defaultLocation);
+            
+            const coordinates = getCoordinatesForLocation(defaultLocation);
+            const mapPosition = getMapPosition(coordinates);
+            
+            // Generate map URL based on coordinates
+            const mapUrl = generateMapUrl(coordinates);
+            
+            locations.push({
+              id: `${project.id}-default`,
+              projectId: project.id,
+              title: project.name || "Project",
+              description: project.description || "A sustainable initiative to improve local communities",
+              image: projectImage,
+              country: projectCountry,
+              location: defaultLocation,
+              address: project.address || `${defaultLocation}`,
+              mapCoordinates: coordinates,
+              mapPosition: mapPosition,
+              mapUrl: project.mapUrl || mapUrl,
+              contactPerson: project.contactPerson || 'Project Manager',
+              url: `/projects/${project.id}` || '/projects/default'
+            });
+          }
+        });
+        
+        setProjectLocations(locations);
+        
+        // Update stats with communities count
+        setStatsData(prev => ({
+          ...prev,
+          communities: communities.size || 0
+        }));
+      })
+      .catch(error => {
+        console.error('Error fetching projects:', error);
+        setIsLoading(false);
+      });
+  
+    // Set loading to false after projects are loaded
+    setIsLoading(false);
+  }, []);
+
+  // Effects
   useEffect(() => {
     const updateMapDimensions = () => {
       if (mapRef.current) {
         setMapDimensions({
           width: mapRef.current.offsetWidth,
-          height: mapRef.current.offsetHeight,
+          height: mapRef.current.offsetHeight
         });
       }
     };
 
     updateMapDimensions();
+    window.addEventListener('resize', updateMapDimensions);
     
-    // Use ResizeObserver for more accurate size tracking
-    if (typeof ResizeObserver !== 'undefined' && mapRef.current) {
-      const resizeObserver = new ResizeObserver(updateMapDimensions);
-      resizeObserver.observe(mapRef.current);
-      
-      return () => {
-        if (mapRef.current) resizeObserver.unobserve(mapRef.current);
-      };
-    } else {
-      // Fallback to window resize event
-      window.addEventListener("resize", updateMapDimensions);
-      return () => {
-        window.removeEventListener("resize", updateMapDimensions);
-      };
-    }
-  }, []);
+    // Add click event listener to handle clicks outside project cards
+    // We need to use a wrapper function to convert React.MouseEvent to DOM MouseEvent
+    const handleOutsideClickDOM = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (selectedProject && 
+          !target.closest('.project-card') && 
+          !target.closest('.map-control') && 
+          !target.closest('.projects-carousel')) {
+        setSelectedProject(null);
+        // Reset map zoom when closing project view
+        setMapZoom(8);
+        
+        // Reset map center to country default
+        if (selectedCountry === 'rwanda') {
+          setMapCenter({ lat: -1.9403, lng: 29.8739 }); // Kigali, Rwanda
+        } else if (selectedCountry === 'burkina faso') {
+          setMapCenter({ lat: 12.3714, lng: -1.5197 }); // Ouagadougou, Burkina Faso
+        } else {
+          setMapCenter(null); // Default view
+        }
+      }
+    };
+    
+    document.addEventListener('mousedown', handleOutsideClickDOM);
+
+    return () => {
+      window.removeEventListener('resize', updateMapDimensions);
+      document.removeEventListener('mousedown', handleOutsideClickDOM);
+    };
+  }, [selectedProject, selectedCountry]);
 
   return (
     <section className="py-16 bg-white">
@@ -546,93 +839,77 @@ const FoodSystemsMapSection = () => {
           className="text-center mb-10"
         >
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            <span>Our Food Systems actions </span>
-            <span className="text-primary-green">across Africa</span>
+            <span>Where we </span>
+            <span className="text-primary-green"> work</span>
           </h2>
           <p className="text-gray-600 max-w-3xl mx-auto">
-            GanzAfrica operates in multiple countries, equipping young professionals
-            with the skills and opportunities to drive meaningful change in
-            Africa's agri-food systems.
+            GanzAfrica operates across Africa, equipping young professionals with the skills and
+            opportunities to drive meaningful change in Africa&apos;s agri-food systems.
+            We currently have projects in {statsData.countries} {statsData.countries === 1 ? 'country' : 'countries'}.
           </p>
         </motion.div>
-
-        {loading ? (
-          <div className="w-full h-64 flex items-center justify-center">
-            <div className="w-12 h-12 border-4 border-green-700 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center mb-10">
-            {/* Country selector and highlights button */}
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
-              <motion.div
-                className="relative inline-block w-full sm:w-56"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6 }}
-              >
-                <select
-                  value={selectedCountry}
-                  onChange={handleCountryChange}
-                  className="appearance-none bg-white border border-green-700 rounded-md py-2 pl-3 pr-10 w-full text-gray-700 focus:outline-none"
-                >
-                  {countries.map((country) => (
-                    <option key={country.value} value={country.value}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-green-700">
-                  <svg
-                    className="h-4 w-4 fill-current"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </motion.div>
-
-              <motion.button
-                className="bg-primary-orange hover:bg-yellow-600 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors w-full sm:w-auto"
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.6 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Highlights of our work
-              </motion.button>
-            </div>
-
-            {/* Stats grid */}
-            <motion.div
-              className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-xl mx-auto mb-8"
-              variants={statsVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
-            >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  className="text-center"
-                  variants={statItemVariants}
-                >
-                  <p className="text-3xl font-bold text-green-700">
-                    {stat.count}
-                  </p>
-                  <p className="text-sm text-gray-600">{stat.label}</p>
-                </motion.div>
-              ))}
+        
+        <div className="flex flex-col items-center mb-10">
+          {/* Country selector and highlights button */}
+    
+          {/* Stats grid - Using dynamic data from API */}
+          <motion.div
+            className="grid grid-cols-3 gap-6 max-w-xl mx-auto mb-8"
+            variants={statsVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            <motion.div className="text-center" variants={statItemVariants}>
+              <p className="text-3xl font-bold text-green-700">
+                {isLoading ? '...' : statsData.projects}
+              </p>
+              <p className="text-sm text-gray-600">Projects</p>
             </motion.div>
-          </div>
-        )}
+            <motion.div className="text-center" variants={statItemVariants}>
+              <p className="text-3xl font-bold text-green-700">
+                {isLoading ? '...' : statsData.communities}
+              </p>
+              <p className="text-sm text-gray-600">Districts </p>
+            </motion.div>
+            <motion.div className="text-center" variants={statItemVariants}>
+              <p className="text-3xl font-bold text-green-700">
+                {isLoading ? '...' : statsData.countries}
+              </p>
+              <p className="text-sm text-gray-600">Countries</p>
+            </motion.div>
+          </motion.div>
+        </div>
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8">
+    
+    <motion.div
+      className="relative inline-block w-full sm:w-56"
+      initial={{ opacity: 0, x: -20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6 }}
+    >
+      <select
+        value={selectedCountry}
+        onChange={handleCountryChange}
+        className="appearance-none bg-white border border-green-700 rounded-md py-2 pl-3 pr-10 w-full text-gray-700 focus:outline-none"
+      >
+        {countries.map((country) => (
+          <option key={country.value} value={country.value}>
+            {country.name}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-green-700">
+        <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+        </svg>
+      </div>
+    </motion.div>
+    <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors">
+        Highlights of our work
+      </button>
+  </div>
 
         {/* Map visualization */}
         <motion.div
@@ -643,17 +920,29 @@ const FoodSystemsMapSection = () => {
           transition={{ duration: 0.8 }}
           ref={mapRef}
         >
-          {/* Google Maps iframe with marker */}
-          <iframe
-            ref={mapIframeRef}
-            src={
-              currentProject
-                ? `${currentProject.mapUrl}&center=${currentProject.mapCoordinates.lat},${currentProject.mapCoordinates.lng}&zoom=14&markers=color:red%7Clabel:${currentProject.location.substring(0, 1).toUpperCase()}%7C${currentProject.mapCoordinates.lat},${currentProject.mapCoordinates.lng}`
-                : filteredLocations.length > 0
-                ? filteredLocations[0]?.mapUrl
-                : selectedCountry === 'burkina'
-                  ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
-                  : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full bg-gray-100">
+              <p className="text-gray-500">Loading map...</p>
+            </div>
+          ) : filteredLocations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full bg-gray-100">
+              <p className="text-gray-700 font-medium text-lg mb-2">No Projects Yet</p>
+              <p className="text-gray-500">We don&apos;t have any projects in {selectedCountry.charAt(0).toUpperCase() + selectedCountry.slice(1)} yet.</p>
+            </div>
+          ) : (
+            <>
+              {/* Google Maps iframe - using location of current project if selected */}
+              <iframe
+                ref={mapIframeRef}
+                src={currentProject && currentProject.mapCoordinates && currentProject.mapCoordinates.mapUrl
+                  ? currentProject.mapCoordinates.mapUrl
+                  : mapCenter && mapCenter.mapUrl
+                    ? mapCenter.mapUrl
+                    : selectedCountry === 'rwanda' 
+                      ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63817.18087378733!2d30.019363028729005!3d-1.944098787600761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca42968f6b901%3A0xfba4f422b2a13a89!2sKigali%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712031042989!5m2!1sen!2sus"
+                      : selectedCountry === 'burkina faso'
+                        ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus"
+                        : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31397.814232798383!2d20.053565!3d0.084886!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1779fe8521916c39%3A0x2caec1cf01ad37f!2sAfrica!5e0!3m2!1sen!2sus!4v1681732186562!5m2!1sen!2sus"
                 }
                 width="100%"
                 height="100%"
@@ -661,15 +950,67 @@ const FoodSystemsMapSection = () => {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="GanzAfrica Location"
+                title={`GanzAfrica Projects Map - ${selectedCountry.charAt(0).toUpperCase() + selectedCountry.slice(1)}`}
               ></iframe>
-    
+
+              {/* Map controls for zoom */}
+              <div className="absolute top-3 right-3 flex flex-col space-y-2 map-control z-10">
+                <button 
+                  className="bg-white rounded-full w-8 h-8 shadow-md flex items-center justify-center hover:bg-gray-100"
+                  onClick={handleZoomIn}
+                >
+                  <Plus className="w-5 h-5 text-gray-700" />
+                </button>
+                <button 
+                  className="bg-white rounded-full w-8 h-8 shadow-md flex items-center justify-center hover:bg-gray-100"
+                  onClick={handleZoomOut}
+                >
+                  <Minus className="w-5 h-5 text-gray-700" />
+                </button>
+              </div>
+
               {/* Project markers with in-map cards */}
-              {filteredLocations.map((location) => {
-                const position = getMarkerPosition(location.mapPosition);
+              {filteredLocations.map((location, locationIndex) => {
+                // Get marker position using improved positioning logic based on real coordinates
+                const basePosition = getMarkerPosition(location.mapPosition);
+                
+                // Check if this location is part of a cluster
+                let isInCluster = false;
+                let clusterKey = '';
+                let clusterIndex = 0;
+                let clusterTotal = 1;
+                
+                if (location.mapCoordinates) {
+                  clusterKey = `${location.mapCoordinates.lat.toFixed(4)},${location.mapCoordinates.lng.toFixed(4)}`;
+                  
+                  if (multipleProjectsAtLocation[clusterKey]) {
+                    isInCluster = true;
+                    clusterTotal = (multipleProjectsAtLocation[clusterKey] ?? []).length;
+                    clusterIndex = (multipleProjectsAtLocation[clusterKey] ?? []).indexOf(location.id);
+                    
+                    // If index not found, use a default
+                    if (clusterIndex === -1) clusterIndex = locationIndex % clusterTotal;
+                  }
+                }
+                
+                // Apply clustered positioning if this is part of a cluster
+                const position = isInCluster ? 
+                  getClusteredPosition(basePosition, clusterIndex, clusterTotal) : 
+                  basePosition;
+                
                 const isSelected = selectedProject === location.id;
-                const isExpanded = expandedCard === location.id;
-    
+                const isHovered = hoveredProject === location.id;
+                
+                // Show total count for first marker in each cluster
+                const showClusterCount = isInCluster && clusterIndex === 0;
+
+                // But still render if map is not properly sized yet to avoid flickering
+                if (mapDimensions.width > 50 && mapDimensions.height > 50 &&
+                    (position.x < 0 || position.x > mapDimensions.width || 
+                     position.y < 0 || position.y > mapDimensions.height)) {
+                  return null;
+                }
+
                 return (
                   <div
                     key={location.id}
@@ -683,123 +1024,108 @@ const FoodSystemsMapSection = () => {
                     <div
                       className="relative cursor-pointer"
                       onClick={() => handleProjectClick(location.id)}
+                      onMouseEnter={() => handleProjectMouseEnter(location.id)}
+                      onMouseLeave={handleProjectMouseLeave}
                     >
-                      {/* Marker with profile image - enhanced visibility */}
+                      {/* Marker with profile image */}
                       <div
-                        className={`rounded-full overflow-hidden transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-200 ${isSelected ? "scale-110" : ""}`}
+                        className={`rounded-full overflow-hidden transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-200 ${isSelected ? 'scale-110 z-30' : 'hover:scale-105'}`}
                         style={{
-                          width: "60px",
-                          height: "60px",
-                          border: `4px solid ${isSelected ? "#F59E0B" : "#047857"}`,
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                          zIndex: isSelected ? 20 : 10,
+                          width: '40px',
+                          height: '40px',
+                          border: `3px solid ${isSelected ? '#F59E0B' : '#047857'}`,
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
                         }}
                       >
                         <img
                           src={location.image}
                           alt={location.title}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = '/images/food-system-1.png'; // Fallback image
+                          }}
                         />
                       </div>
-    
-                      {/* Location label - always visible */}
-                      <div
-                        className={`absolute whitespace-nowrap text-center mt-1 text-xs font-medium bg-white px-2 py-1 rounded-md shadow-md -translate-x-1/2 transition-all duration-300 ${isSelected ? 'text-green-700 font-bold' : 'text-gray-700'}`}
-                        style={{ 
-                          top: "100%", 
-                          left: "50%",
-                          opacity: isSelected ? 1 : 0.9,
-                          transform: `translate(-50%, ${isSelected ? '8px' : '4px'}) scale(${isSelected ? 1.1 : 1})`,
-                          boxShadow: isSelected ? '0 4px 8px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)'
-                        }}
-                      >
-                        {location.location}
-                      </div>
+
+                      {/* Location label - show on hover or when selected */}
+                      {(isSelected || isHovered) && (
+                        <div
+                          className="absolute whitespace-nowrap text-center mt-1 text-xs font-medium bg-white px-2 py-1 rounded-md shadow-sm -translate-x-1/2"
+                          style={{ top: '100%', left: '50%' }}
+                        >
+                          {location.location}
+                        </div>
+                      )}
+                      
+                      {/* Cluster indicator - show for first marker in cluster */}
+                      {showClusterCount && clusterTotal > 1 && (
+                        <div 
+                          className="absolute bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center -translate-x-1/2 -translate-y-1/2"
+                          style={{ top: '-8px', right: '-8px' }}
+                          onClick={(e) => handleClusterClick(clusterKey, e)}
+                        >
+                          {clusterTotal}
+                        </div>
+                      )}
                     </div>
-    
-                    {/* Project card - improved styling */}
-                    {isSelected && (
+
+                    {/* Project card - show on selection or hover */}
+                    {(isSelected || isHovered) && (
                       <div
-                        className={`absolute bg-white rounded-lg shadow-xl overflow-hidden transition-all duration-300 z-30 ${isExpanded ? "w-72" : "w-60"}`}
+                        className="absolute bg-white rounded-lg shadow-lg overflow-hidden z-20 project-card w-52"
                         style={{
-                          top: "-120px",
-                          left: "-110px",
-                          transform: isExpanded ? "scale(1.05)" : "scale(1)",
-                          borderTop: "3px solid #047857",
-                          boxShadow: "0 10px 25px rgba(0,0,0,0.2)"
+                          top: '-105px',
+                          left: '-110px',
+                          pointerEvents: isSelected ? 'auto' : 'none', 
+                          transition: isSelected ? 'all 0.3s ease' : 'none'
                         }}
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {/* Close button in top right corner */}
+                        <button
+                          className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 z-30"
+                          onClick={handleCloseProject}
+                        >
+                          <X className="w-4 h-4 text-gray-600" />
+                        </button>
+                        
                         {/* Card content */}
                         <div className="relative">
                           {/* Project image */}
-                          <div
-                            className={`relative ${isExpanded ? "h-36" : "h-28"}`}
-                          >
+                          <div className="relative h-24">
                             <img
                               src={location.image}
                               alt={location.title}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = '/images/food-system-1.png'; // Fallback image
+                              }}
                             />
-                            <div className="absolute top-2 left-2 bg-yellow-500 text-white px-3 py-1 text-xs font-semibold rounded-md shadow-sm">
+                            <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-0.5 text-xs font-semibold rounded">
                               {location.location}
                             </div>
-    
-                            {/* Expand/collapse button */}
-                            <button
-                              className="absolute bottom-2 right-2 bg-white rounded-full p-1.5 shadow-md hover:bg-gray-100 transition-all duration-200"
-                              onClick={(e) => handleExpandClick(location.id, e)}
-                            >
-                              {isExpanded ? (
-                                <X className="w-5 h-5 text-gray-700" />
-                              ) : (
-                                <Info className="w-5 h-5 text-green-700" />
-                              )}
-                            </button>
                           </div>
-    
+
                           {/* Project info */}
                           <div className="p-3">
                             <h3 className="font-bold text-green-700 text-sm mb-1 line-clamp-1">
                               {location.title}
                             </h3>
-    
-                            {isExpanded ? (
-                              <>
-                                <p className="text-xs text-gray-600 mb-2">
-                                  {location.description}
-                                </p>
-                                <div className="flex items-start mb-2">
-                                  <MapPin className="h-3 w-3 text-yellow-500 mt-0.5 flex-shrink-0" />
-                                  <p className="text-xs text-gray-600 ml-1">
-                                    {location.address}
-                                  </p>
-                                </div>
-                                <div className="text-xs text-gray-600 mb-3">
-                                  Contact: {location.contactPerson}
-                                </div>
-                                <a
-                                  href={location.url}
-                                  className="text-xs text-yellow-600 hover:text-yellow-800 font-medium inline-flex items-center bg-yellow-50 rounded-md px-2 py-1 transition-colors hover:bg-yellow-100"
-                                  >
-                                  Learn more
-                                  <ChevronRight className="ml-1 w-3 h-3" />
-                                </a>
-                              </>
-                            ) : (
                               <>
                                 <p className="text-xs text-gray-600 mb-2 line-clamp-2">
                                   {location.description}
                                 </p>
-                                <a 
-                                  href={location.url} 
-                                  className="text-xs text-green-700 hover:text-green-800 font-medium inline-flex items-center"
+                                <Link
+                                  href={`/${locale}/projects/${location.projectId}`}
+                                  className="text-xs text-yellow-600 hover:text-yellow-800 font-medium"
                                 >
-                                  View details
-                                  <ChevronRight className="ml-1 w-3 h-3" />
-                                </a>
+                                  Learn more
+                                </Link>
                               </>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -807,16 +1133,47 @@ const FoodSystemsMapSection = () => {
                   </div>
                 );
               })}
-            </motion.div>
-    
-            {/* Instructions */}
-            <div className="mt-4 text-center text-sm text-gray-600">
-              Click on a project marker to view details. The map will zoom to
-              the selected location.
-            </div>
-          </Container>
-        </section>
-      );
-    };
-    
-    export default FoodSystemsMapSection;
+              
+              {/* Show projects at the same location carousel - when a project is selected and has others at same location */}
+              {selectedProject && projectsAtSameLocation.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 projects-carousel">
+                  <div className="bg-white rounded-lg shadow-lg p-2 flex space-x-2 items-center">
+                    <p className="text-xs font-medium text-gray-700 mr-1">
+                      Projects in this location:
+                    </p>
+                    {projectsAtSameLocation.map((project) => (
+                      <div 
+                        key={project.id} 
+                        className="block group cursor-pointer"
+                        onClick={() => handleProjectClick(project.id)}
+                      >
+                        <img
+                          src={project.image}
+                          alt={project.title}
+                          className="w-8 h-8 rounded-full object-cover border-2 border-transparent group-hover:border-yellow-500"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = '/images/food-system-1.png';
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </motion.div>
+
+        {/* Instructions */}
+        <div className="mt-4 text-center text-sm text-gray-600">
+          Hover over a project marker to view details. Click a marker to focus the map on that location.
+          Use the + and - buttons to adjust zoom level. Numbers on markers indicate multiple projects in that location.
+        </div>
+      </Container>
+    </section>
+  );
+};
+
+export default ClimateInitiativesMapSection;
