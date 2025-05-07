@@ -29,7 +29,7 @@ const FoodSystemPage = ({}) => {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/harvest3.png"
+            src="/images/harvest3.jpg"
             alt="Food System"
             fill
             sizes="100vw"
@@ -39,7 +39,7 @@ const FoodSystemPage = ({}) => {
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
+        <div className="absolute inset-0 bg-black/50 z-10"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
