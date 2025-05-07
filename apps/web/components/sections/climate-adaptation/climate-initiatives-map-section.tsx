@@ -6,6 +6,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import Container from "@/components/layout/container";
 import { MapPin, X, ChevronRight, Info } from "lucide-react";
+import apiClient from "@/lib/api-client";
 
 // Animation variants
 const fadeIn = {
@@ -45,71 +46,26 @@ const statItemVariants = {
 
 const ClimateInitiavesMapSection = () => {
     const [selectedCountry, setSelectedCountry] = useState('rwanda');
-    const [selectedProject, setSelectedProject] = useState<number | null>(null);
-    const [expandedCard, setExpandedCard] = useState<number | null>(null);
+    const [selectedProject, setSelectedProject] = useState(null);
+    const [expandedCard, setExpandedCard] = useState(null);
     const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
+    
+    // State for API data
+    const [statsData, setStatsData] = useState({
+        fellows: 0,
+        projects: 0,
+        communities: 0,
+        countries: 2, // This is static as we know there are 2 countries
+    });
+    const [projectLocations, setProjectLocations] = useState([]);
 
     const mapRef = useRef(null);
     const mapIframeRef = useRef(null);
-
-    // Stats data
-    const stats = [
-        { label: 'Fellows', count: 20 },
-        { label: 'Projects', count: '20+' },
-        { label: 'Communities', count: 15 },
-        { label: 'Countries', count: 2 },
-    ];
 
     // Countries data
     const countries = [
         { name: 'Rwanda', value: 'rwanda' },
         { name: 'Burkina Faso', value: 'burkina' },
-    ];
-
-    // Project locations data
-    const projectLocations = [
-        {
-            id: 1,
-            title: 'Sustainable Farming Initiative',
-            description: 'The agricultural training program targets new sustainable farming practices to improve crop yields and food security.',
-            image: '/images/food-system-1.png',
-            country: 'rwanda',
-            location: 'Musanze',
-            address: 'Kinigi Sector, Musanze District, Rwanda',
-            mapCoordinates: { lat: -1.4969, lng: 29.6259 },
-            mapPosition: { x: 300, y: 180 },
-            mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63776.95946876503!2d29.591339705532292!3d-1.4968819286622052!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dc4e45426592c5%3A0x7bf59f53e5c2b097!2sMusanze%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712019657396!5m2!1sen!2sus",
-            contactPerson: 'Jean Bosco',
-            url: '/projects/sustainable-farming'
-        },
-        {
-            id: 2,
-            title: 'Rural Development Program',
-            description: 'Supporting rural communities with agricultural resources and training to create sustainable livelihoods.',
-            image: '/images/food-system-1.png',
-            country: 'rwanda',
-            location: 'Nyabihu',
-            address: 'Mukamira Sector, Nyabihu District, Rwanda',
-            mapCoordinates: { lat: -1.6579, lng: 29.5006 },
-            mapPosition: { x: 220, y: 250 },
-            mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63780.843420073026!2d29.498345699999998!3d-1.6578639!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dc5918838703c5%3A0xfb77da79fea2e4eb!2sNyabihu%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712019752780!5m2!1sen!2sus",
-            contactPerson: 'Marie Claire',
-            url: '/projects/rural-development'
-        },
-        {
-            id: 3,
-            title: 'Agribusiness Accelerator',
-            description: 'Supporting agricultural entrepreneurs to develop sustainable businesses and increase productivity.',
-            image: '/images/food-system-1.png',
-            country: 'burkina',
-            location: 'Ouagadougou',
-            address: 'Ouagadougou, Burkina Faso',
-            mapCoordinates: { lat: 12.3714, lng: -1.5197 },
-            mapPosition: { x: 320, y: 230 },
-            mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125171.40082591335!2d-1.6126624448655638!3d12.36712576629056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe2e9c23908451f%3A0x1f1d8074e9c2d0ab!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1712031172461!5m2!1sen!2sus",
-            contactPerson: 'Ibrahim Ouedraogo',
-            url: '/projects/agribusiness-burkina'
-        },
     ];
 
     // Filtered locations based on selected country
@@ -128,7 +84,7 @@ const ClimateInitiavesMapSection = () => {
         setExpandedCard(null);
     };
 
-    const handleProjectClick = (projectId: number | null) => {
+    const handleProjectClick = (projectId) => {
         if (selectedProject === projectId) {
             setExpandedCard(expandedCard === projectId ? null : projectId);
         } else {
@@ -137,18 +93,90 @@ const ClimateInitiavesMapSection = () => {
         }
     };
 
-    const handleExpandClick = (projectId: number | React.SetStateAction<null>, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    const handleExpandClick = (projectId, e) => {
         e.stopPropagation();
         setExpandedCard(expandedCard === projectId ? null : projectId);
     };
 
-    const getMarkerPosition = (position: { x: any; y: any; }) => {
+    const getMarkerPosition = (position) => {
         const x = (position.x / 600) * mapDimensions.width;
         const y = (position.y / 400) * mapDimensions.height;
         return { x, y };
     };
 
-    // Effects
+    // Fetch data from APIs
+    useEffect(() => {
+        // Fetch projects data
+        apiClient.get('/projects')
+            .then(response => {
+                const data = response.data;
+                // Check if data is an array or has a projects property that's an array
+                const projectsArray = Array.isArray(data) ? data : (data.projects || []);
+                
+                // Update stats with total projects count
+                setStatsData(prev => ({
+                    ...prev,
+                    projects: projectsArray.length || 0
+                }));
+                
+                // Process projects into location data
+                const locations = projectsArray.map(project => ({
+                    id: project.id,
+                    title: project.name,
+                    description: project.description || "A sustainable initiative to improve local communities",
+                    image: project.image || '/images/food-system-1.png',
+                    country: project.country?.toLowerCase() || 'rwanda',
+                    location: project.location || 'Kigali',
+                    address: project.address || `${project.location}, Rwanda`,
+                    mapCoordinates: project.coordinates || { lat: -1.9403, lng: 29.8739 },
+                    mapPosition: project.mapPosition || { x: 300, y: 200 },
+                    mapUrl: project.mapUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d63776.95946876503!2d29.591339705532292!3d-1.4968819286622052!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dc4e45426592c5%3A0x7bf59f53e5c2b097!2sMusanze%2C%20Rwanda!5e0!3m2!1sen!2sus!4v1712019657396!5m2!1sen!2sus",
+                    contactPerson: project.contactPerson || 'Project Manager',
+                    url: `/projects/${project.id}` || '/projects/default'
+                }));
+                
+                setProjectLocations(locations);
+                
+                // Count unique communities
+                const communities = new Set();
+                projectsArray.forEach(project => {
+                    if (project.community) {
+                        communities.add(project.community);
+                    }
+                });
+                
+                setStatsData(prev => ({
+                    ...prev,
+                    communities: communities.size || 0
+                }));
+                
+                console.log('Processed project locations:', locations);
+            })
+            .catch(error => console.error('Error fetching projects:', error));
+        
+        // Fetch team members to count fellows
+        apiClient.get('/teams')
+            .then(response => {
+                const data = response.data;
+                // Check if data is an array or has a teams property that's an array
+                const teamsArray = Array.isArray(data) ? data : (data.teams || []);
+                
+                // Count team members with type 'fellow'
+                const fellowsCount = teamsArray.filter(
+                    member => member.team_type === 'fellow'
+                ).length;
+                
+                setStatsData(prev => ({
+                    ...prev,
+                    fellows: fellowsCount || 0
+                }));
+                
+                console.log('Fellows count:', fellowsCount);
+            })
+            .catch(error => console.error('Error fetching teams:', error));
+    }, []);
+
+    // Effects for map dimensions
     useEffect(() => {
         const updateMapDimensions = () => {
             if (mapRef.current) {
@@ -228,7 +256,7 @@ const ClimateInitiavesMapSection = () => {
                         </motion.button>
                     </div>
 
-                    {/* Stats grid */}
+                    {/* Stats grid - Now using dynamic data from API */}
                     <motion.div
                         className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-xl mx-auto mb-8"
                         variants={statsVariants}
@@ -236,16 +264,22 @@ const ClimateInitiavesMapSection = () => {
                         whileInView="visible"
                         viewport={{ once: true, margin: "-100px" }}
                     >
-                        {stats.map((stat, index) => (
-                            <motion.div
-                                key={index}
-                                className="text-center"
-                                variants={statItemVariants}
-                            >
-                                <p className="text-3xl font-bold text-green-700">{stat.count}</p>
-                                <p className="text-sm text-gray-600">{stat.label}</p>
-                            </motion.div>
-                        ))}
+                        <motion.div className="text-center" variants={statItemVariants}>
+                            <p className="text-3xl font-bold text-green-700">{statsData.fellows}</p>
+                            <p className="text-sm text-gray-600">Fellows</p>
+                        </motion.div>
+                        <motion.div className="text-center" variants={statItemVariants}>
+                            <p className="text-3xl font-bold text-green-700">{statsData.projects}</p>
+                            <p className="text-sm text-gray-600">Projects</p>
+                        </motion.div>
+                        <motion.div className="text-center" variants={statItemVariants}>
+                            <p className="text-3xl font-bold text-green-700">{statsData.communities}</p>
+                            <p className="text-sm text-gray-600">Communities</p>
+                        </motion.div>
+                        <motion.div className="text-center" variants={statItemVariants}>
+                            <p className="text-3xl font-bold text-green-700">{statsData.countries}</p>
+                            <p className="text-sm text-gray-600">Countries</p>
+                        </motion.div>
                     </motion.div>
                 </div>
 
