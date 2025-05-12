@@ -29,6 +29,8 @@ import {
   LineChart,
   ResponsiveContainer,
   ReferenceLine
+  ResponsiveContainer,
+  ReferenceLine
 } from 'recharts';
 import {
   Avatar,
@@ -481,6 +483,18 @@ export default function DashboardPage() {
     : 10;
   const yAxisDomain = [0, Math.max(10, Math.ceil(maxProjectValue * 1.2))];
 
+  // Calculate the max value for Y-axis domain in project chart
+  const maxProjectValue = projectStatsData.length > 0 
+    ? Math.max(
+        ...projectStatsData.map(item => Math.max(
+          item.completed || 0, 
+          item.pending || 0, 
+          item.total || 0
+        ))
+      )
+    : 10;
+  const yAxisDomain = [0, Math.max(10, Math.ceil(maxProjectValue * 1.2))];
+
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Welcome Section */}
@@ -505,6 +519,7 @@ export default function DashboardPage() {
           <CardFooter className="flex items-center pt-0 pb-4 px-4">
             <div className="flex items-center">
               <span className="text-xs md:text-sm text-primary-green font-medium">↑ 6.5%</span>
+              <span className="text-xs md:text-sm text-primary-green font-medium">↑ 6.5%</span>
               <span className="text-xs md:text-sm text-black dark:text-white ml-1">since last week</span>
             </div>
           </CardFooter>
@@ -527,6 +542,10 @@ export default function DashboardPage() {
                 {trendData.completedTrend >= 0 ? `↑ ${trendData.completedTrend}%` : `↓ ${Math.abs(trendData.completedTrend)}%`}
               </span>
               <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400 ml-1">completed projects</span>
+              <span className={`text-xs md:text-sm ${trendData.completedTrend >= 0 ? 'text-primary-green' : 'text-red-500'} font-medium`}>
+                {trendData.completedTrend >= 0 ? `↑ ${trendData.completedTrend}%` : `↓ ${Math.abs(trendData.completedTrend)}%`}
+              </span>
+              <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400 ml-1">completed projects</span>
             </div>
           </CardFooter>
         </Card>
@@ -544,6 +563,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardFooter className="flex items-center pt-0 pb-4 px-4">
             <div className="flex items-center">
+              <span className="text-xs md:text-sm text-blue font-medium">↑ 6.5%</span>
               <span className="text-xs md:text-sm text-blue font-medium">↑ 6.5%</span>
               <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400 ml-1">since last week</span>
             </div>
@@ -564,6 +584,7 @@ export default function DashboardPage() {
           <CardFooter className="flex items-center pt-0 pb-4 px-4">
             <div className="flex items-center">
               <span className="text-xs md:text-sm text-secondary-green font-medium">↑ 6.5%</span>
+              <span className="text-xs md:text-sm text-secondary-green font-medium">↑ 6.5%</span>
               <span className="text-xs md:text-sm text-black dark:text-white ml-1">since last week</span>
             </div>
           </CardFooter>
@@ -573,8 +594,17 @@ export default function DashboardPage() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
         {/* Project Statistics - UPDATED CHART */}
+        {/* Project Statistics - UPDATED CHART */}
         <Card className="shadow-sm dark:bg-gray-800">
           <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
+            <div>
+              <CardTitle className="text-base md:text-lg font-semibold dark:text-white">Project Status Comparison</CardTitle>
+              <CardDescription className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {trendData.completedTrend >= 0 
+                  ? `Completed projects increasing by ${trendData.completedTrend}%` 
+                  : `Completed projects decreasing by ${Math.abs(trendData.completedTrend)}%`}
+              </CardDescription>
+            </div>
             <div>
               <CardTitle className="text-base md:text-lg font-semibold dark:text-white">Project Status Comparison</CardTitle>
               <CardDescription className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -607,12 +637,22 @@ export default function DashboardPage() {
                     tickLine={false}
                     axisLine={false}
                     domain={yAxisDomain}
+                    domain={yAxisDomain}
                     tick={{ fontSize: 11 }}
                     label={{ value: 'Number of Projects', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: 12 }, dx: -10 }}
                   />
                   <ChartTooltip
                     cursor={{ strokeDasharray: '3 3' }}
                     content={<ChartTooltipContent indicator="dashed" />}
+                  />
+                  <Line 
+                    type="monotone"
+                    dataKey="total" 
+                    stroke="var(--color-total)" 
+                    strokeWidth={1}
+                    strokeDasharray="3 3"
+                    dot={{ fill: "var(--color-total)", r: 3 }}
+                    activeDot={{ r: 5 }}
                   />
                   <Line 
                     type="monotone"
@@ -855,6 +895,20 @@ export default function DashboardPage() {
                 <div className={`pb-3 md:pb-4 ${index < activeProjects.length - 1 ? "border-b dark:border-gray-700 w-full" : "w-full"}`}>
                   <h4 className="text-sm md:text-base font-medium dark:text-white line-clamp-1">{project.name}</h4>
                   <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{project.description}</p>
+                  {projectDetails[project.id] && (
+                    <div className="mt-2">
+                      <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-1">
+                        <div 
+                          className="bg-primary-green rounded-full h-1.5" 
+                          style={{ width: `${projectDetails[project.id].progress || 0}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Progress</span>
+                        <span className="text-xs font-medium dark:text-white">{projectDetails[project.id].progress || 0}%</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
