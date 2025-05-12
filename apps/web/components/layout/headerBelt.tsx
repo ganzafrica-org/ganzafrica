@@ -3,7 +3,7 @@ import React from "react";
 
 const HeaderBelt = () => {
   return (
-    <div className="bg-yellow-400  py-4 w-full relative overflow-hidden">
+    <div className="bg-primary-orange  py-4 w-full relative overflow-hidden">
       <div className="flex justify-center items-center w-full">
         <div className="marquee-container overflow-hidden w-full max-w-2xl mx-auto">
           <div className="marquee-content flex whitespace-nowrap animate-marquee">

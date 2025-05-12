@@ -326,14 +326,18 @@ export default async function AboutPage(props: PageProps) {
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-            <span className="font-bold text-yellow-400">Empowering</span>{" "}
-            <span className="font-normal">Africa's Future <span className="font-bold text-yellow-400"> Food System</span></span> Leaders
-            <br />          </h1>
-          <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
-            WHO WE ARE
-          </h2>
-        </div>
+    <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-6">
+    WHO WE ARE
+    </h2>
+    <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
+        <span className=" font-normal ">Empowering  Africa's Future</span>{" "}
+        <span className="font-normal"> Food System</span>
+        <br />
+        <span className=" font-normal">Leaders</span>
+    </h1>
+</div>
+
+
       </section>
 
       <HeaderBelt />

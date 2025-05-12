@@ -20,7 +20,7 @@ const logger = new Logger("ProjectController");
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -147,20 +147,12 @@ const logger = new Logger("ProjectController");
  *                   properties:
  *                     partner_id:
  *                       type: integer
- *               documents:
+ *               files:
  *                 type: array
  *                 items:
- *                   type: object
- *                   required:
- *                     - name
- *                     - file_url
- *                   properties:
- *                     name:
- *                       type: string
- *                     file_url:
- *                       type: string
- *                     file_size:
- *                       type: integer
+ *                   type: string
+ *                   format: binary
+ *                 description: Multiple files can be uploaded
  *     responses:
  *       201:
  *         description: Project created successfully
@@ -189,15 +181,74 @@ export const createProject = async (req: Request, res: Response) => {
       });
     }
 
+    // Process uploaded files if any
+    const uploadedFiles = req.files as Express.Multer.File[] || [];
+    const documents = uploadedFiles.map(file => ({
+      name: file.originalname,
+      file_url: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
+      file_size: file.size
+    }));
+
+    // Parse JSON fields if they're sent as strings
+    let goals, outcomes, media, other_information, members, partners;
+    
+    try {
+      if (req.body.goals && typeof req.body.goals === 'string') {
+        goals = JSON.parse(req.body.goals);
+      } else {
+        goals = req.body.goals;
+      }
+      
+      if (req.body.outcomes && typeof req.body.outcomes === 'string') {
+        outcomes = JSON.parse(req.body.outcomes);
+      } else {
+        outcomes = req.body.outcomes;
+      }
+      
+      if (req.body.media && typeof req.body.media === 'string') {
+        media = JSON.parse(req.body.media);
+      } else {
+        media = req.body.media;
+      }
+      
+      if (req.body.other_information && typeof req.body.other_information === 'string') {
+        other_information = JSON.parse(req.body.other_information);
+      } else {
+        other_information = req.body.other_information;
+      }
+      
+      if (req.body.members && typeof req.body.members === 'string') {
+        members = JSON.parse(req.body.members);
+      } else {
+        members = req.body.members;
+      }
+      
+      if (req.body.partners && typeof req.body.partners === 'string') {
+        partners = JSON.parse(req.body.partners);
+      } else {
+        partners = req.body.partners;
+      }
+    } catch (error) {
+      logger.error("Error parsing JSON fields", error);
+      return res.status(400).json({
+        error: "Validation Error",
+        message: "Invalid JSON in request body",
+      });
+    }
+
     // Parse dates from strings to Date objects and ensure IDs are numbers
     const projectData = {
       ...req.body,
+      goals,
+      outcomes,
+      media,
+      other_information,
       start_date: new Date(req.body.start_date),
       end_date: req.body.end_date ? new Date(req.body.end_date) : undefined,
       
       // Parse team member data if provided
-      members: req.body.members
-        ? req.body.members.map((member: any) => ({
+      members: members
+        ? members.map((member: any) => ({
             ...member,
             team_id: Number(member.team_id),
             start_date: new Date(member.start_date),
@@ -206,15 +257,15 @@ export const createProject = async (req: Request, res: Response) => {
         : undefined,
         
       // Parse partners data if provided
-      partners: req.body.partners
-        ? req.body.partners.map((partner: any) => ({
+      partners: partners
+        ? partners.map((partner: any) => ({
             ...partner,
             partner_id: Number(partner.partner_id),
           }))
         : undefined,
         
-      // Pass through documents data if provided
-      documents: req.body.documents,
+      // Add uploaded documents
+      documents: [...(req.body.documents || []), ...documents],
     };
 
     const project = await projectService.createProject(projectData);
@@ -311,7 +362,7 @@ export const getProjectById = async (req: Request, res: Response) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -342,6 +393,12 @@ export const getProjectById = async (req: Request, res: Response) => {
  *                 type: object
  *               other_information:
  *                 type: object
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Multiple files can be uploaded
  *     responses:
  *       200:
  *         description: Project updated successfully
@@ -358,14 +415,70 @@ export const updateProject = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
 
+    // Process uploaded files if any
+    const uploadedFiles = req.files as Express.Multer.File[] || [];
+    const newDocuments = uploadedFiles.map(file => ({
+      name: file.originalname,
+      file_url: `${req.protocol}://${req.get("host")}/uploads/${file.filename}`,
+      file_size: file.size
+    }));
+
+    // Parse JSON fields if they're sent as strings
+    let goals, outcomes, media, other_information;
+    
+    try {
+      if (req.body.goals && typeof req.body.goals === 'string') {
+        goals = JSON.parse(req.body.goals);
+      } else {
+        goals = req.body.goals;
+      }
+      
+      if (req.body.outcomes && typeof req.body.outcomes === 'string') {
+        outcomes = JSON.parse(req.body.outcomes);
+      } else {
+        outcomes = req.body.outcomes;
+      }
+      
+      if (req.body.media && typeof req.body.media === 'string') {
+        media = JSON.parse(req.body.media);
+      } else {
+        media = req.body.media;
+      }
+      
+      if (req.body.other_information && typeof req.body.other_information === 'string') {
+        other_information = JSON.parse(req.body.other_information);
+      } else {
+        other_information = req.body.other_information;
+      }
+    } catch (error) {
+      logger.error("Error parsing JSON fields", error);
+      return res.status(400).json({
+        error: "Validation Error",
+        message: "Invalid JSON in request body",
+      });
+    }
+
     // Parse dates from strings to Date objects
     const projectData = {
       ...req.body,
+      goals,
+      outcomes,
+      media,
+      other_information,
       start_date: req.body.start_date
         ? new Date(req.body.start_date)
         : undefined,
       end_date: req.body.end_date ? new Date(req.body.end_date) : undefined,
     };
+
+    // If new documents were uploaded, get the existing project first to append new documents
+    if (newDocuments.length > 0) {
+      const existingProject = await projectService.getProjectById(id);
+      const existingDocuments = existingProject.documents || [];
+      
+      // Add documents field to projectData
+      projectData.documents = [...existingDocuments, ...newDocuments];
+    }
 
     const project = await projectService.updateProject(id, projectData);
 

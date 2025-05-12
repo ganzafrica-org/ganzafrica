@@ -90,7 +90,7 @@ const ProjectCard: React.FC<{
             
             {/* Yellow circle with arrow icon in top right */}
             <div className="absolute top-3 right-3 z-10">
-              <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center transition-all duration-500 shadow-lg transform group-hover:rotate-90">
+              <div className="w-8 h-8 rounded-full text-primary-orange flex items-center justify-center transition-all duration-500 shadow-lg transform group-hover:rotate-90">
                 <ArrowRight className="w-4 h-4 text-white" />
               </div>
             </div>
@@ -562,13 +562,13 @@ const ProjectsPage = () => {
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-            <span>Turning</span> <span className="text-yellow-400 font-bold">Ideas</span> <span>Into</span> <br />
-            <span>Action</span>
-          </h1>
-          <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+        <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
             PROJECTS
           </h2>
+          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
+            <span>Turning Ideas Into Action</span> 
+          </h1>
+        
         </div>
       </section>
       

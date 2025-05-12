@@ -3,6 +3,7 @@ import { projectController } from "../controllers/project";
 import { validate } from "../middlewares";
 import { projectValidation } from "../validations";
 import { constants } from "../config";
+import upload from '../middlewares/upload'; // Import the upload middleware
 
 const router: Router = Router();
 
@@ -17,9 +18,11 @@ const router: Router = Router();
 router.post(
   "/",
   validate(projectValidation.createProjectSchema),
+  upload.array("files", 10),
   projectController.createProject,
 );
 
+// Other routes remain unchanged
 router.get(
   "/",
   validate(projectValidation.listProjectsSchema),
@@ -35,7 +38,8 @@ router.get(
 router.put(
   "/:id",
   validate(projectValidation.updateProjectSchema),
-  projectController.updateProject,
+  upload.array("files", 10),
+   projectController.updateProject,
 );
 
 router.delete(
@@ -43,6 +47,5 @@ router.delete(
   validate(projectValidation.deleteProjectSchema),
   projectController.deleteProject,
 );
-
 
 export default router;

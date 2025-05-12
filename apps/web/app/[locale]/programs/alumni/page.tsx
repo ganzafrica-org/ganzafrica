@@ -74,16 +74,18 @@ export default function Home() {
 
         
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <h1
-            className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
-          >
-            A lifetime of <span className="text-yellow-400 font-bold">Connections</span>, Opportunities <span className="text-yellow-400 font-bold">and Impact </span>
-          </h1>
-          <h2
-            className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
+        <h2
+            className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8"
           >
             ALUMNI NETWORK
           </h2>
+          <h1
+            className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
+          >
+            A lifetime of <span className="font-normal">Connections</span>, Opportunities <span className="font-normal">and</span> <br/>
+            Impact
+          </h1>
+        
         </div>
       </section>
 
@@ -127,7 +129,7 @@ export default function Home() {
               <div className="flex gap-8">
                 {["Knowledge Sharing", "Mentorship", "Collaboration and Networking"].map((principle, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full bg-yellow-400" />
+                    <div className="w-4 h-4 rounded-full text-primary-orange" />
                     <span className="text-base text-black font-medium">{principle}</span>
                   </div>
                 ))}
@@ -275,7 +277,7 @@ export default function Home() {
               <AlumniCard key={index} className="bg-[#045f3c] text-white p-8 rounded-xl transform hover:scale-105 transition-transform group">
                 <div className="flex items-center gap-2 mb-4">
                   {project.icon}
-                  <Badge className="bg-yellow-400 text-black text-base px-3 py-1 group-hover:bg-[#045f3c] group-hover:text-white transition-colors">{project.tag}</Badge>
+                  <Badge className="text-primary-orange text-black text-base px-3 py-1 group-hover:bg-[#045f3c] group-hover:text-white transition-colors">{project.tag}</Badge>
                 </div>
                 <p className="text-base leading-relaxed group-hover:text-white/90">{project.description}</p>
                 {index < 2 && (

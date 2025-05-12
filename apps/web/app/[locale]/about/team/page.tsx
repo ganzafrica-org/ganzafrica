@@ -386,15 +386,19 @@ const TeamPage: React.FC = () => {
         </header>
 
         {/* Hero Content */}
-        <div className="relative z-10 flex items-center justify-center h-full text-center">
-          <div className="space-y-4">
-            <h1 className="text-3xl md:text-5xl text-white">
-              Our <span className="text-yellow-400 font-bold">Team</span> & <span className='text-yellow-400 font-bold'>Advisory</span><br />
-              Board
-            </h1>
-            <div className="text-6xl font-bold text-yellow-400">Members</div>
-          </div>
-        </div>
+        <div className="relative z-10 flex items-center justify-center h-full text-center mt-[-50px]">
+  <div className="space-y-8">
+    <div className="text-6xl font-bold text-primary-orange">MEMBERS</div>
+
+    <h1 className="text-3xl md:text-5xl text-white">
+      Our <span className="font-normal">Team</span> & <span className='font-normal'>Advisory       Board
+      </span>
+
+    </h1>
+  </div>
+</div>
+
+   
       </div>
 
       {/* Yellow Belt Section */}

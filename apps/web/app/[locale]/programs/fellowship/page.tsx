@@ -601,7 +601,7 @@ export default function FellowshipPage() {
                     >
                       <div className="p-3">
                         <div className="rounded-xl overflow-hidden relative">
-                          <Image
+                          <img
                               src={benefit.image}
                               alt={benefit.title}
                               width={600}
@@ -761,7 +761,7 @@ export default function FellowshipPage() {
                             <div className={`rounded-full overflow-hidden h-full w-full transition-all duration-300 ${
                                 isActive ? 'ring-2 md:ring-4 ring-yellow-400' : 'ring-1 ring-gray-200'
                             }`}>
-                              <Image
+                              <img
                                   src={testimonial.image}
                                   alt={testimonial.author_name}
                                   width={80}
@@ -812,7 +812,7 @@ export default function FellowshipPage() {
                     {/* Navigation Arrows - Positioned on sides */}
                     <button
                         onClick={prevTestimonial}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-1/2 md:-translate-x-5"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full text-primary-orange flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-1/2 md:-translate-x-5"
                         aria-label="Previous testimonial"
                     >
                       <ArrowLeft className="w-5 h-5 text-white" />

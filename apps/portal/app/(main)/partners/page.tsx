@@ -48,7 +48,15 @@ const PartnersPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [currentPartner, setCurrentPartner] = useState(null);
+  interface Partner {
+    id: string;
+    name: string;
+    logo?: string;
+    website_url?: string;
+    location?: string;
+  }
+
+  const [currentPartner, setCurrentPartner] = useState<Partner | null>(null);
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -70,6 +78,9 @@ const PartnersPage = () => {
   // States for form errors and success
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+
+  // Added state for delete success message
+  const [deleteSuccess, setDeleteSuccess] = useState('');
 
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
@@ -208,14 +219,14 @@ const PartnersPage = () => {
   };
 
   // Open delete partner modal
-  const openDeleteModal = (partner) => {
+  const openDeleteModal = (partner: Partner) => {
     setCurrentPartner(partner);
     setOpenMenuId(null);
     setShowDeleteModal(true);
   };
 
   // Open view partner modal
-  const openViewModal = (partner) => {
+  const openViewModal = (partner:Partner) => {
     setCurrentPartner(partner);
     setOpenMenuId(null);
     setShowViewModal(true);
@@ -248,7 +259,7 @@ const PartnersPage = () => {
   };
 
   // Handle upload method change
-  const handleUploadMethodChange = (method) => {
+  const handleUploadMethodChange = (method: 'url' | 'upload'): void => {
     setUploadMethod(method);
     if (method === 'url') {
       setLogoFile(null);
@@ -260,35 +271,39 @@ const PartnersPage = () => {
     }
   };
 
-  // Simulate file upload
-  const simulateUpload = async (file) => {
+  // Handle file upload to backend
+  const uploadFile = async (file) => {
     setIsUploading(true);
     setUploadProgress(0);
-
-    return new Promise((resolve) => {
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 95) {
-            clearInterval(interval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
-
-      setTimeout(() => {
-        clearInterval(interval);
-        setUploadProgress(100);
-        setIsUploading(false);
-
-        // Convert file to data URL to simulate upload
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          resolve(reader.result);
-        };
-        reader.readAsDataURL(file);
-      }, 1500);
-    });
+    
+    try {
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Update the path to match your backend route structure
+      const response = await apiClient.post('/uploads/file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+      
+      // Return the file URL from the response
+      if (response.data && response.data.success) {
+        return response.data.file.url;
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Handle add partner submission
@@ -308,7 +323,12 @@ const PartnersPage = () => {
 
       // If upload method is file and there's a file, process it
       if (uploadMethod === 'upload' && logoFile) {
-        logoUrl = await simulateUpload(logoFile);
+        try {
+          logoUrl = await uploadFile(logoFile);
+        } catch (error) {
+          setFormError('Failed to upload logo. Please try again.');
+          return;
+        }
       }
 
       // Prepare data for API
@@ -353,7 +373,12 @@ const PartnersPage = () => {
 
       // If upload method is file and there's a file, process it
       if (uploadMethod === 'upload' && logoFile) {
-        logoUrl = await simulateUpload(logoFile);
+        try {
+          logoUrl = await uploadFile(logoFile);
+        } catch (error) {
+          setFormError('Failed to upload logo. Please try again.');
+          return;
+        }
       }
 
       // Prepare data for API
@@ -387,18 +412,38 @@ const PartnersPage = () => {
       // Make API request
       await apiClient.delete(`/partners/${currentPartner.id}`);
 
+      // Set delete success message
+      setDeleteSuccess(`Partner "${currentPartner.name}" was successfully deleted`);
+
       // Close modal
       closeAllModals();
 
-      // Refresh partners list
-      setPage(1);
+      // Refresh partners list by updating the page
+      const updatedPartners = partners.filter(partner => partner.id !== currentPartner.id);
+      setPartners(updatedPartners);
+      
+      // Update total count
+      setTotalPartners(prev => prev - 1);
+      
+      // Check if we need to navigate to previous page
+      if (updatedPartners.length === 0 && page > 1) {
+        setPage(prev => prev - 1);
+      } else {
+        // Otherwise explicitly refresh the current page
+        setPage(current => current);
+      }
+      
+      // Clear the success message after 3 seconds
+      setTimeout(() => {
+        setDeleteSuccess('');
+      }, 3000);
     } catch (error) {
       console.error('Error deleting partner:', error);
       setFormError(error.response?.data?.message || 'Failed to delete partner. Please try again.');
     }
   };
 
-  // Render logo preview
+  // Render logo preview - Fixed to properly handle image errors
   const renderLogoPreview = (logoUrl) => {
     if (!logoUrl) return null;
     
@@ -409,6 +454,7 @@ const PartnersPage = () => {
           alt="Logo Preview" 
           className="h-16 object-contain" 
           onError={(e) => {
+            console.error(`Failed to load image preview: ${logoUrl}`);
             e.target.onerror = null;
             e.target.src = '/api/placeholder/64/64';
           }}
@@ -434,6 +480,31 @@ const PartnersPage = () => {
     setPage(1); // Reset to first page when searching
   };
 
+  // Image error handling function
+  const handleImageError = (e, fallbackText) => {
+    console.error(`Failed to load image: ${e.target.src}`);
+    // Create a canvas element for the fallback
+    const canvas = document.createElement('canvas');
+    canvas.width = 40;
+    canvas.height = 40;
+    const ctx = canvas.getContext('2d');
+    
+    // Fill background
+    ctx.fillStyle = '#f3f4f6';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add text
+    ctx.fillStyle = '#6b7280';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fallbackText || 'P', canvas.width/2, canvas.height/2);
+    
+    // Replace image with canvas data
+    e.target.onerror = null; // Prevent infinite error loop
+    e.target.src = canvas.toDataURL('image/png');
+  };
+
   return (
     <div className="p-6 max-w-full">
       {/* Header with title and buttons */}
@@ -456,6 +527,14 @@ const PartnersPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Delete success message */}
+      {deleteSuccess && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md flex items-start">
+          <CheckCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+          <span>{deleteSuccess}</span>
+        </div>
+      )}
 
       {/* Search and filter */}
       <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
@@ -529,9 +608,14 @@ const PartnersPage = () => {
                             src={partner.logo} 
                             alt={partner.name} 
                             className="h-full w-full object-contain"
+                            onLoad={() => console.log(`Successfully loaded image: ${partner.logo}`)}
                             onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = '/api/placeholder/40/40';
+                              console.error(`Failed to load image: ${partner.logo}`);
+                              e.target.onerror = null; // Prevent infinite error loops
+                              
+                              // Create fallback with initial letter
+                              const fallbackText = partner.name?.charAt(0)?.toUpperCase() || 'P';
+                              handleImageError(e, fallbackText);
                             }}
                           />
                         ) : (
@@ -589,7 +673,7 @@ const PartnersPage = () => {
                             onClick={() => openDeleteModal(partner)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                           >
-                            <Trash className="w-4 h-4 mr-2" />
+                            <Trash className="w-4 h-4 mr-2 " />
                             Delete
                           </button>
                         </div>
@@ -714,6 +798,18 @@ const PartnersPage = () => {
                   Partner Logo
                 </label>
                 <div className="flex space-x-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => handleUploadMethodChange('url')}
+                    className={`px-3 py-1.5 text-sm rounded-md flex items-center ${
+                      uploadMethod === 'url' 
+                        ? 'bg-green-100 text-green-800 border border-green-200' 
+                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    <LinkIcon className="w-4 h-4 mr-1" />
+                    URL
+                  </button>
                   <button
                     type="button"
                     onClick={() => handleUploadMethodChange('upload')}
@@ -1051,7 +1147,7 @@ const PartnersPage = () => {
                 <button
                   type="button"
                   onClick={handleDeletePartner}
-                  className="px-4 py-2 bg-red text-white rounded-md"
+                  className="px-4 py-2 bg-red-600 text-white bg-red rounded-md"
                 >
                   Delete
                 </button>
@@ -1080,9 +1176,13 @@ const PartnersPage = () => {
                       src={currentPartner.logo} 
                       alt={currentPartner.name} 
                       className="h-full w-full object-contain"
+                      onLoad={() => console.log(`Successfully loaded image in view modal: ${currentPartner.logo}`)}
                       onError={(e) => {
+                        console.error(`Failed to load image in view modal: ${currentPartner.logo}`);
                         e.target.onerror = null;
-                        e.target.src = '/api/placeholder/80/80';
+                        // Create fallback with initial letter
+                        const fallbackText = currentPartner.name?.charAt(0)?.toUpperCase() || 'P';
+                        handleImageError(e, fallbackText);
                       }}
                     />
                   ) : (

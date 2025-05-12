@@ -54,7 +54,7 @@ const promises = [
     number: "02",
     title: "A community of like-minded people",
     description: "Welcome fellows into a network of value-driven young Africans committed to leading Africa's transformation",
-    color: "bg-yellow-400"
+    color: "text-primary-orange"
   },
   {
     number: "03",
@@ -83,10 +83,10 @@ export default function FellowshipPage() {
         <div className="container mx-auto relative z-10 px-6">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Empowering <span className="text-yellow-400">Tomorrow's,</span><br />
+              Empowering <span className="text-primary-orange">Tomorrow's,</span><br />
               Leaders
             </h1>
-            <h2 className="text-5xl md:text-7xl font-bold text-yellow-400 mt-4">
+            <h2 className="text-5xl md:text-7xl font-bold text-primary-orange mt-4">
               FELLOWSHIP
             </h2>
           </div>
@@ -94,7 +94,7 @@ export default function FellowshipPage() {
       </section>
 
       {/* Topics Banner */}
-      <div className="bg-yellow-400 py-3">
+      <div className="text-primary-orange py-3">
         <div className="container mx-auto px-6">
           <div className="flex flex-wrap items-center justify-center md:justify-start space-x-6 overflow-x-auto scrollbar-none">
             <div className="flex items-center space-x-2 whitespace-nowrap">
@@ -141,7 +141,7 @@ export default function FellowshipPage() {
               <p className="text-gray-600 mb-6">
                 Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
               </p>
-              <Button variant="outline" className="bg-yellow-400 hover:bg-yellow-500 text-black">
+              <Button variant="outline" className="text-primary-orange hover:bg-yellow-500 text-black">
                 Meet the Fellows
               </Button>
             </div>
@@ -162,7 +162,7 @@ export default function FellowshipPage() {
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <button 
-                  className="w-16 h-16 rounded-full bg-yellow-400 flex items-center justify-center"
+                  className="w-16 h-16 rounded-full text-primary-orange flex items-center justify-center"
                   title="Play video"
                 >
                   <Play className="w-8 h-8 text-white ml-1" />
@@ -177,7 +177,7 @@ export default function FellowshipPage() {
               <p className="text-gray-600 mb-6">
                 With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals to deliver innovative solutions.
               </p>
-              <Button variant="outline" className="bg-yellow-400 hover:bg-yellow-500 text-black">
+              <Button variant="outline" className="text-primary-orange hover:bg-yellow-500 text-black">
                 How to Apply
               </Button>
             </div>
@@ -281,7 +281,7 @@ export default function FellowshipPage() {
             <div className="flex justify-center space-x-4">
               <button
                 onClick={prevTestimonial}
-                className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center"
+                className="w-12 h-12 rounded-full text-primary-orange flex items-center justify-center"
                 title="Previous testimonial"
               >
                 <ArrowLeft className="text-white" />

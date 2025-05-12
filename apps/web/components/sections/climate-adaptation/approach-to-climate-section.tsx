@@ -43,14 +43,14 @@ const ApproachToClimateSection = () => {
       title: "Community-Centered Adaptation",
       description:
         "Through local consultation and traditional knowledge integration, we incorporate indigenous farming practices into climate policies while ensuring that farmers, cooperatives, and local leaders are actively engaged in decision-making.",
-      color: "bg-yellow-400",
+      color: "text-primary-orange",
     },
     {
       number: "03",
       title: "Practical Learning & Innovation",
       description:
         "GanzAfrica promotes environmental sustainability by training youth in climate resilience, sustainable land and water management, and ecosystem restoration to build a greener, more resilient Africa.",
-      color: "bg-yellow-400",
+      color: "text-primary-orange",
     },
     {
       number: "04",

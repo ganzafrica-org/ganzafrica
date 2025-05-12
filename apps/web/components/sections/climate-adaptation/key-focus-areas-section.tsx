@@ -142,7 +142,7 @@ const KeyFocusAreasSection = () => {
                     </div>
                     <div className="ml-4">
                       <motion.div
-                        className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-full text-primary-orange flex items-center justify-center cursor-pointer"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                       >
@@ -209,7 +209,7 @@ const KeyFocusAreasSection = () => {
                     </div>
                     <div className="ml-4">
                       <motion.div
-                        className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-full text-primary-orange flex items-center justify-center cursor-pointer"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}
                       >

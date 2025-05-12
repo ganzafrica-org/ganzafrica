@@ -112,6 +112,32 @@ const AddTeamPage = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setError(`File size exceeds maximum limit of ${formatFileSize(maxSize)}`);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        return;
+      }
+      
+      // Validate file type
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      
+      if (!validImageTypes.includes(file.type)) {
+        setError('File type not supported. Please upload images (JPEG, PNG, GIF, WEBP)');
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        return;
+      }
+      
+      // Clear previous error if any
+      setError('');
+      
       // Revoke previous blob URL if exists
       if (formData.photo_url && formData.photo_url.startsWith('blob:')) {
         URL.revokeObjectURL(formData.photo_url);
@@ -197,39 +223,68 @@ const AddTeamPage = () => {
     }));
   };
 
-  // Upload file to server (similar to AddProjectPage)
-  const uploadFile = async (file) => {
+  // Upload file to the backend server
+  const uploadFileToServer = async (file) => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    
     try {
-      setIsUploading(true);
-      setUploadProgress(0);
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('file', file);
       
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(interval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
+      // Make the upload request to the backend
+      const response = await apiClient.post('/uploads/file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
       
-      // Create a local URL for the file
-      const localUrl = URL.createObjectURL(file);
-      
-      // Clear the interval and finish
-      setTimeout(() => {
-        clearInterval(interval);
+      // Check if upload was successful
+      if (response.data && response.data.success) {
+        console.log('File uploaded successfully:', response.data.file);
         setUploadProgress(100);
         setIsUploading(false);
-      }, 1500);
-      
-      return localUrl; // This URL will work in the browser session
+        return response.data.file.url;
+      } else {
+        throw new Error('Upload failed: Server returned unsuccessful response');
+      }
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error('Error uploading file to server:', error);
       setIsUploading(false);
-      return null;
+      throw error; // Re-throw to handle in the calling function
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  // Image error handling function - Using the same approach as partners page
+  const handleImageError = (e, fallbackText) => {
+    console.error(`Failed to load image: ${e.target.src}`);
+    // Create a canvas element for the fallback
+    const canvas = document.createElement('canvas');
+    canvas.width = 40;
+    canvas.height = 40;
+    const ctx = canvas.getContext('2d');
+    
+    // Fill background
+    ctx.fillStyle = '#f3f4f6';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add text
+    ctx.fillStyle = '#6b7280';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fallbackText || 'T', canvas.width/2, canvas.height/2);
+    
+    // Replace image with canvas data
+    e.target.onerror = null; // Prevent infinite error loop
+    e.target.src = canvas.toDataURL('image/png');
   };
 
   // Handle form submission
@@ -251,11 +306,17 @@ const AddTeamPage = () => {
       let finalPhotoUrl = formData.photo_url;
       
       if (photoFile && !usePhotoUrl) {
-        // Upload the photo file and get a URL back
-        finalPhotoUrl = await uploadFile(photoFile);
-        
-        if (!finalPhotoUrl) {
-          setError('Failed to process the photo. Please try again.');
+        try {
+          // Upload the photo file to the backend server
+          finalPhotoUrl = await uploadFileToServer(photoFile);
+          
+          if (!finalPhotoUrl) {
+            setError('Failed to upload the photo. Please try again.');
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          setError('Failed to upload the photo. Please try again.');
           setLoading(false);
           return;
         }
@@ -634,10 +695,14 @@ const AddTeamPage = () => {
                             src={formData.photo_url} 
                             alt="Profile preview" 
                             className="w-full h-auto max-h-60 object-contain"
+                            onLoad={() => console.log(`Successfully loaded image: ${formData.photo_url}`)}
                             onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = "/api/placeholder/400/400";
-                              e.target.alt = "Failed to load image";
+                              console.error(`Failed to load image: ${formData.photo_url}`);
+                              e.target.onerror = null; // Prevent infinite error loops
+                              
+                              // Create fallback with initial letter
+                              const fallbackText = formData.name?.charAt(0)?.toUpperCase() || 'T';
+                              handleImageError(e, fallbackText);
                             }}
                           />
                         </div>
@@ -655,15 +720,63 @@ const AddTeamPage = () => {
                   // File upload option
                   <>
                     {/* Upload area */}
-                    <div className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6">
-                      <label onClick={triggerFileInput} className="cursor-pointer">
+                    <div 
+                      className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6 cursor-pointer"
+                      onClick={!photoFile ? triggerFileInput : undefined}
+                    >
+                      {!photoFile ? (
                         <div className="flex flex-col items-center justify-center">
                           <Upload className="h-12 w-12 text-gray-400 mb-3" />
                           <p className="text-gray-700 font-medium mb-1">Drag and drop an image here</p>
                           <p className="text-gray-500 text-sm mb-3">or click to browse</p>
                           <p className="text-xs text-gray-400">Supports JPG, PNG, GIF (max 5MB)</p>
                         </div>
-                      </label>
+                      ) : (
+                        <div className="p-4 bg-gray-50 rounded-md">
+                          <div className="flex items-center mb-3">
+                            <Image className="w-6 h-6 mr-2 text-blue-500" />
+                            <span className="text-sm font-medium">
+                              {photoFile ? photoFile.name : 'Profile photo'}
+                            </span>
+                          </div>
+                          
+                          {photoFile && (
+                            <div className="text-xs text-gray-500 mb-4">
+                              Type: {photoFile.type.split('/')[1].toUpperCase()} | 
+                              Size: {formatFileSize(photoFile.size)}
+                            </div>
+                          )}
+                          
+                          {/* Image preview */}
+                          <div className="mb-4 border rounded overflow-hidden">
+                            <img 
+                              src={formData.photo_url} 
+                              alt="Profile preview" 
+                              className="w-full h-auto max-h-60 object-contain"
+                              onLoad={() => console.log(`Successfully loaded image preview: ${formData.photo_url}`)}
+                              onError={(e) => {
+                                console.error(`Failed to load image preview: ${formData.photo_url}`);
+                                e.target.onerror = null; // Prevent infinite error loops
+                                
+                                // Create fallback with initial letter
+                                const fallbackText = formData.name?.charAt(0)?.toUpperCase() || 'T';
+                                handleImageError(e, fallbackText);
+                              }}
+                            />
+                          </div>
+                          
+                          {isUploading && (
+                            <div className="mb-4">
+                              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1 text-center">
+                                Uploading: {uploadProgress}%
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <input
                         type="file"
                         ref={fileInputRef}
@@ -672,70 +785,38 @@ const AddTeamPage = () => {
                         accept="image/*"
                       />
                     </div>
-                  </>
-                )}
-                
-                {/* Photo preview (for file upload) */}
-                {!usePhotoUrl && formData.photo_url && formData.photo_url.startsWith('blob:') && (
-                  <div className="p-4 bg-gray-50 rounded-md mb-6">
-                    <div className="flex items-center mb-3">
-                      <Image className="w-6 h-6 mr-2 text-blue-500" />
-                      <span className="text-sm font-medium">
-                        {photoFile ? photoFile.name : 'Profile photo'}
-                      </span>
-                    </div>
                     
                     {photoFile && (
-                      <div className="text-xs text-gray-500 mb-4">
-                        Type: {photoFile.type.split('/')[1].toUpperCase()} | 
-                        Size: {formatFileSize(photoFile.size)}
+                      <div className="flex justify-between">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (formData.photo_url && formData.photo_url.startsWith('blob:')) {
+                              URL.revokeObjectURL(formData.photo_url);
+                            }
+                            setFormData(prev => ({...prev, photo_url: ''}));
+                            setPhotoFile(null);
+                            
+                            // Reset file input
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = '';
+                            }
+                          }}
+                          className="text-sm text-red-500 hover:text-red-700 flex items-center"
+                        >
+                          <X className="w-4 h-4 mr-1" /> Remove Image
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={triggerFileInput}
+                          className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
+                        >
+                          <Upload className="w-4 h-4 mr-1" /> Change Image
+                        </button>
                       </div>
                     )}
-                    
-                    {/* Image preview */}
-                    <div className="mb-4 border rounded overflow-hidden">
-                      <img 
-                        src={formData.photo_url} 
-                        alt="Profile preview" 
-                        className="w-full h-auto max-h-60 object-contain" 
-                      />
-                    </div>
-                    
-                    {isUploading && (
-                      <div className="mb-4">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1 text-center">
-                          Uploading: {uploadProgress}%
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="mt-2 flex justify-between">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (formData.photo_url && formData.photo_url.startsWith('blob:')) {
-                            URL.revokeObjectURL(formData.photo_url);
-                          }
-                          setFormData(prev => ({...prev, photo_url: ''}));
-                          setPhotoFile(null);
-                        }}
-                        className="text-sm text-red-500 hover:text-red-700 flex items-center"
-                      >
-                        <X className="w-4 h-4 mr-1" /> Remove Image
-                      </button>
-                      
-                      <button
-                        type="button"
-                        onClick={triggerFileInput}
-                        className="text-sm text-blue-500 hover:text-blue-700 flex items-center"
-                      >
-                        <Upload className="w-4 h-4 mr-1" /> Change Image
-                      </button>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>

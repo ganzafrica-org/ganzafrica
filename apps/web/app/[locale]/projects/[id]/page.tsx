@@ -800,7 +800,7 @@ const ProjectDetailsPage = () => {
                     {galleryMedia[activeImageIndex]?.type === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <button 
-                          className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 hover:scale-110 transform hover:shadow-xl"
+                          className="w-20 h-20 text-primary-orange rounded-full flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 hover:scale-110 transform hover:shadow-xl"
                           aria-label="Play video"
                           title="Play video"
                         >
@@ -856,7 +856,7 @@ const ProjectDetailsPage = () => {
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
                         {item.type === 'video' && (
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                            <div className="w-8 h-8 text-primary-orange rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
                               <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent ml-1"></div>
                             </div>
                           </div>
@@ -875,7 +875,7 @@ const ProjectDetailsPage = () => {
                     <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 flex justify-between pointer-events-none">
                       <button
                         onClick={handlePrevImage}
-                        className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
+                        className="w-12 h-12 rounded-full text-primary-orange flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0"
                         aria-label="Previous image"
                         title="View previous image"
                       >
@@ -885,7 +885,7 @@ const ProjectDetailsPage = () => {
                       </button>
                       <button
                         onClick={handleNextImage}
-                        className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
+                        className="w-12 h-12 rounded-full text-primary-orange flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 transform hover:scale-110 hover:shadow-lg pointer-events-auto opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0"
                         aria-label="Next image"
                         title="View next image"
                       >
@@ -905,7 +905,7 @@ const ProjectDetailsPage = () => {
                           onClick={() => setActiveImageIndex(index)}
                           className={`w-2 h-2 rounded-full transition-all duration-300 ${
                             index === activeImageIndex 
-                              ? 'w-8 bg-yellow-400' 
+                              ? 'w-8 text-primary-orange' 
                               : 'bg-white/50 hover:bg-white/80'
                           }`}
                           aria-label={`Go to image ${index + 1}`}
