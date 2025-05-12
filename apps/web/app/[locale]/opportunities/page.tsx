@@ -334,22 +334,23 @@ if (selectedType !== "all") {
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <motion.h2
-            className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-          >
-            Be part of a <span className="text-yellow-400 font-bold">dynamic team</span> driving transformation
-          </motion.h2>
-          <motion.h1
-            className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6"
+        <motion.h1
+            className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
             OPPORTUNITIES
           </motion.h1>
+          <motion.h2
+            className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+          >
+            Be part of a <span className=" font-normal">dynamic team</span> driving transformation
+          </motion.h2>
+          
         </div>
       </section>
 

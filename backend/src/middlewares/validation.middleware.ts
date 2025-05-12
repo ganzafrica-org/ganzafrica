@@ -17,7 +17,7 @@ export const validate = (schema: AnyZodObject) => {
         query: req.query,
         params: req.params,
       };
-      
+
       // Add files to the validation payload if they exist
       if (req.files) {
         validationPayload.files = req.files;
@@ -27,13 +27,20 @@ export const validate = (schema: AnyZodObject) => {
 
       // Parse and validate request data with Zod schema
       await schema.parseAsync(validationPayload);
-      
+
       // Handle JSON fields in multipart/form-data requests
-      if (req.is('multipart/form-data') && req.body) {
-        const jsonFields = ['goals', 'outcomes', 'media', 'other_information', 'members', 'partners'];
-        
+      if (req.is("multipart/form-data") && req.body) {
+        const jsonFields = [
+          "goals",
+          "outcomes",
+          "media",
+          "other_information",
+          "members",
+          "partners",
+        ];
+
         for (const field of jsonFields) {
-          if (req.body[field] && typeof req.body[field] === 'string') {
+          if (req.body[field] && typeof req.body[field] === "string") {
             try {
               req.body[field] = JSON.parse(req.body[field]);
             } catch (error) {
@@ -63,50 +70,5 @@ export const validate = (schema: AnyZodObject) => {
 
       return next(error);
     }
-  };
-};
-
-/**
- * Rate limiting middleware factory
- * Creates middleware that limits requests based on IP address
- */
-export const makeRateLimiter = (windowMs: number, maxRequests: number) => {
-  const requests = new Map<string, { count: number; startTime: number }>();
-
-  return (req: Request, res: Response, next: NextFunction) => {
-    const ip = req.ip || "unknown";
-    const now = Date.now();
-
-    // Clean up expired records
-    for (const [key, data] of requests.entries()) {
-      if (now - data.startTime > windowMs) {
-        requests.delete(key);
-      }
-    }
-
-    // Check and update rate limit for this IP
-    if (!requests.has(ip)) {
-      requests.set(ip, { count: 1, startTime: now });
-    } else {
-      const data = requests.get(ip)!;
-
-      // Reset if window has passed
-      if (now - data.startTime > windowMs) {
-        data.count = 1;
-        data.startTime = now;
-      } else if (data.count >= maxRequests) {
-        // Rate limit exceeded
-        return res.status(429).json({
-          error: "Too Many Requests",
-          message: "Too many requests, please try again later",
-          retryAfter: Math.ceil((data.startTime + windowMs - now) / 1000),
-        });
-      } else {
-        // Increment count
-        data.count += 1;
-      }
-    }
-
-    next();
   };
 };

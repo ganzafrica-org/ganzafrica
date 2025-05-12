@@ -61,7 +61,7 @@ export default function TestimonialViewPage({ params }: { params: { id: string }
           {Array.from({ length: 5 }).map((_, index) => (
               <Star
                   key={index}
-                  className={`h-5 w-5 ${index < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                  className={`h-5 w-5 ${index < rating ? 'text-primary-orange fill-yellow-400' : 'text-gray-300'}`}
               />
           ))}
           <span className="ml-2 text-gray-700">{rating} of 5</span>
