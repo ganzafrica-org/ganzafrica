@@ -22,7 +22,7 @@ interface NewsItem {
   category_id: number;
   category_name: string;
   tags: string[];
-  published_at: string;
+  publish_date: string;
   created_at: string;
   updated_at: string;
 }
@@ -59,6 +59,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
 
   // Fetch news from API
   useEffect(() => {
+    console.log("useEffect triggered");
     const fetchNews = async () => {
       try {
         setLoading(true);
@@ -66,10 +67,12 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
           params: {
             status: 'published',
             limit: 3, // Show only 3 latest news
-            sortBy: 'published_at',
+            sortBy: 'publish_date',
             sortDir: 'desc'
           }
         });
+        console.log(response.data.news);
+
         setNewsItems(response.data.news);
         setError(null);
       } catch (err) {
@@ -89,7 +92,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
             category_id: 1,
             category_name: 'Events',
             tags: ['farming', 'workshop', 'sustainability'],
-            published_at: '2025-04-15T09:00:00.000Z',
+            publish_date: '2025-04-15T09:00:00.000Z',
             created_at: '2025-04-10T09:00:00.000Z',
             updated_at: '2025-04-10T09:00:00.000Z'
           },
@@ -105,7 +108,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
             category_id: 2,
             category_name: 'Announcements',
             tags: ['partnership', 'sustainability'],
-            published_at: '2025-04-12T14:30:00.000Z',
+            publish_date: '2025-04-12T14:30:00.000Z',
             created_at: '2025-04-11T10:15:00.000Z',
             updated_at: '2025-04-11T10:15:00.000Z'
           }
@@ -119,6 +122,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
   }, []);
 
   // Helper function to format date
+// Helper function to format date using string manipulation
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -127,6 +131,8 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
       day: 'numeric'
     });
   };
+
+
 
   // Helper function to truncate text
   const truncateText = (text: string, maxLength = 120) => {
@@ -251,7 +257,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                   {/* Date */}
                   <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
                     <CalendarDays className="w-4 h-4" />
-                    <span>{formatDate(newsItem.published_at)}</span>
+                    <span>{formatDate(newsItem.publish_date)}</span>
                   </div>
 
                   {/* Title */}
