@@ -174,12 +174,43 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
     };
 
     // Helper function to truncate description
-    const truncateDescription = (description: string, maxLength = 150) => {
+    const truncateTitle = (title: string, maxLength = 40) => {
+        if (!title) return '';
+        if (title.length <= maxLength) return title;
+        return title.substring(0, maxLength) + '...';
+    };
+
+    const truncateDescription = (description: string, maxLength = 120) => {
         if (!description) return '';
         if (description.length <= maxLength) return description;
         return description.substring(0, maxLength) + '...';
     };
 
+
+// Additionally, you can create different truncation lengths based on slide position
+    const getTitleMaxLength = (slidePosition: string) => {
+        switch (slidePosition) {
+            case 'position-3': // center slide (main focus)
+                return 50;
+            case 'position-2': // left middle
+            case 'position-4': // right middle
+                return 30;
+            default: // far positions
+                return 20;
+        }
+    };
+
+    const getDescriptionMaxLength = (slidePosition: string) => {
+        switch (slidePosition) {
+            case 'position-3': // center slide (main focus)
+                return 150;
+            case 'position-2': // left middle
+            case 'position-4': // right middle
+                return 80;
+            default: // far positions
+                return 60;
+        }
+    };
     // Project URL builder
     const getProjectUrl = (projectId: number) => {
         return `/${locale}/projects/${projectId}`;
@@ -258,7 +289,7 @@ export default function ProjectsSection({ locale, dict }: ProjectsSectionProps) 
                                         )}
 
                                         <div className="absolute bottom-6 right-6 max-w-[80%] bg-primary-green/90 backdrop-blur-sm rounded-lg p-4">
-                                            <h3 className="text-lg md:text-xl font-bold text-white mb-2">{project.name}</h3>
+                                            <h3 className="text-lg md:text-xl font-bold text-white mb-2">{truncateTitle(project.name)}</h3>
                                             <p className="text-sm text-white line-clamp-2">{truncateDescription(project.description)}</p>
                                         </div>
                                     </div>

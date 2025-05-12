@@ -10,9 +10,15 @@ interface FellowsSectionProps {
   dict: any;
 }
 
+type ImageItem = {
+  id: number;
+  src: string;
+  alt: string;
+};
+
 export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
 
-  const [images, setImages] = useState([
+  const [images, setImages] = useState<ImageItem[]>([
     {
       id: 1,
       src: "/images/ganzafrica-fellows.jpg",
@@ -20,22 +26,22 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
     },
     {
       id: 2,
-      src: "/images/fellow-2.jpg",
+      src: "/images/happy_fellows.jpg",
       alt: "GanzAfrica fellows 2",
     },
     {
       id: 3,
-      src: "/images/fellow-3.jpg",
+      src: "/images/jeannine_presenting.jpg",
       alt: "GanzAfrica fellows 3",
     },
     {
       id: 4,
-      src: "/images/fellow-4.jpg",
+      src: "/images/serge_presenting.jpg",
       alt: "GanzAfrica fellows 4",
     },
     {
       id: 5,
-      src: "/images/fellow-5.jpg",
+      src: "/images/fellows_in_field.jpeg",
       alt: "GanzAfrica fellows 5",
     },
   ]);
@@ -46,7 +52,7 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
   const animationRef = useRef<number>();
 
   const ROTATION_SPEED = 0.2; // degrees per frame
-  const ORBIT_RADIUS = 150; // pixels
+  const ORBIT_RADIUS = 200; // pixels
 
   // Setup animation
   useEffect(() => {
@@ -68,7 +74,7 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       setMainImageIndex(prev => (prev + 1) % images.length);
-    }, 5000);
+    }, 8000);
 
     return () => clearInterval(interval);
   }, [images.length]);
@@ -113,10 +119,6 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
             <DecoratedHeading
                 firstText={dict.home?.fellow_section?.heading_first || "Empower Youth to"}
                 secondText={dict.home?.fellow_section?.heading_second || "Transform Africa's Food Systems"}
-                firstTextColor="text-black"
-                secondTextColor="text-primary-green"
-                borderColor="border-primary-green"
-                cornerColor="bg-primary-orange"
                 className="mx-auto"
             />
           </div>
@@ -136,11 +138,11 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.5 }}
-                      className="absolute w-64 h-64 rounded-full overflow-hidden border-4 border-primary-green shadow-lg z-10"
+                      className="absolute w-96 h-96 rounded-full overflow-hidden border-4 border-primary-green shadow-lg z-10"
                   >
                     <Image
-                        src={images[mainImageIndex].src}
-                        alt={images[mainImageIndex].alt}
+                        src={images[mainImageIndex]?.src || ""}
+                        alt={images[mainImageIndex]?.alt || ""}
                         fill
                         priority
                         className="object-cover"
@@ -151,8 +153,8 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
                 {/* Orbiting images */}
                 {getOrbitingImages().map(({ image, position, index }) => (
                     <motion.div
-                        key={`orbit-${image.id}`}
-                        className="absolute w-20 h-20 rounded-full overflow-hidden border-2 border-primary-orange shadow-md cursor-pointer z-20"
+                        key={`orbit-${image?.id}`}
+                        className="absolute w-24 h-24 rounded-full overflow-hidden border-2 border-primary-orange shadow-md cursor-pointer z-20"
                         style={{
                           left: "50%",
                           top: "50%",
@@ -165,8 +167,8 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
                         whileHover={{ scale: 1.1 }}
                     >
                       <Image
-                          src={image.src}
-                          alt={image.alt}
+                          src={image?.src || ""}
+                          alt={image?.alt || ""}
                           fill
                           className="object-cover"
                       />
