@@ -1,6 +1,5 @@
 import { Rubik } from "next/font/google";
 import { getDictionary } from "@/lib/get-dictionary";
-import { CloudflareAnalytics } from "@/components/analytics/cloudflare-analytics";
 import ClientLayout from "@/components/layout/client-layout";
 
 import "@workspace/ui/globals.css";
@@ -76,9 +75,6 @@ export default async function RootLayout(
         <ClientLayout locale={locale} dict={dict}>
           {children}
         </ClientLayout>
-        <CloudflareAnalytics
-          token={process.env.NEXT_PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN}
-        />
       </body>
     </html>
   );
