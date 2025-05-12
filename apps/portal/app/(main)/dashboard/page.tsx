@@ -50,14 +50,45 @@ export default function DashboardPage() {
   const [totalProjects, setTotalProjects] = useState(0);
   const [totalOpportunities, setTotalOpportunities] = useState(0);
   const [totalNews, setTotalNews] = useState(0);
-  const [projectStatsData, setProjectStatsData] = useState([]);
+  interface ProjectStats {
+    month: string;
+    completed: number;
+    pending: number;
+    active: number;
+    total: number;
+  }
+  
+  const [projectStatsData, setProjectStatsData] = useState<ProjectStats[]>([]);
   const [trendData, setTrendData] = useState({
     completedTrend: 0,
-    pendingTrend: 0
+    pendingTrend: 0,
+    activeTrend: 0,
+    completedTotal: 0,
+    pendingTotal: 0,
+    activeTotal: 0
   });
   const [userEngagementData, setUserEngagementData] = useState([]);
-  const [recentActivities, setRecentActivities] = useState([]);
-  const [activeProjects, setActiveProjects] = useState([]);
+  interface Activity {
+    user: {
+      name: string;
+      avatar: string;
+    };
+    action: string;
+    timeAgo: {
+      text: string;
+      isRecent: boolean;
+    };
+  }
+  
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+  interface ActiveProject {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+  }
+  
+  const [activeProjects, setActiveProjects] = useState<ActiveProject[]>([]);
   const [projectDetails, setProjectDetails] = useState({});
 
   // Fetch data from APIs
@@ -83,10 +114,17 @@ export default function DashboardPage() {
         console.log('Projects data:', projectsArray);
         
         // Extract active projects for the sidebar
-        const active = projectsArray
-          .filter(project => project.status === 'active' || project.status === 'in-progress')
+        interface ActiveProject {
+          id: string;
+          name: string;
+          description: string;
+          icon: string;
+        }
+
+        const active: ActiveProject[] = projectsArray
+          .filter((project: { status: string }) => project.status === 'active' || project.status === 'in-progress')
           .slice(0, 3)
-          .map(project => ({
+          .map((project: { id: string; name: string; description: string; icon?: string }) => ({
             id: project.id,
             name: project.name,
             description: project.description,
@@ -109,69 +147,98 @@ export default function DashboardPage() {
           }
         });
         
-        // Process project data for chart - modified to track completed and pending projects by month
-        const projectsByMonth = {};
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        // Process project data for chart based on project start_date and end_date
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const projectsByMonth: Record<string, { month: string; completed: number; pending: number; active: number; total: number }> = {};
         
         // Initialize months with zero counts
-        months.forEach(month => {
-          projectsByMonth[month] = { month, completed: 0, pending: 0, total: 0 };
+        monthNames.forEach(month => {
+          projectsByMonth[month] = { month, completed: 0, pending: 0, active: 0, total: 0 };
         });
         
-        // Count projects by month and status
+        // Current month and year
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        
+        // Process all projects regardless of year - to match the total count in the card
         if (Array.isArray(projectsArray)) {
           projectsArray.forEach(project => {
-            if (project && project.createdAt) {
-              try {
-                const createdDate = new Date(project.createdAt);
-                if (!isNaN(createdDate.getTime())) {
-                  const month = months[createdDate.getMonth()];
-                  
-                  if (month && projectsByMonth[month]) {
-                    projectsByMonth[month].total += 1;
-                    
-                    if (project.status === 'completed') {
-                      projectsByMonth[month].completed += 1;
-                    } else if (project.status === 'planned' || project.status === 'pending') {
-                      projectsByMonth[month].pending += 1;
-                    }
-                  }
-                }
-              } catch (e) {
-                console.error('Error processing project date:', e);
+            if (!project) return;
+            
+            try {
+              // Get the project date to use for categorization (prefer start_date)
+              let projectDate = null;
+              if (project.start_date) {
+                projectDate = new Date(project.start_date);
+              } else if (project.created_at) {
+                projectDate = new Date(project.created_at);
+              } else {
+                // If no date is available, assign to current month to ensure it's counted
+                projectDate = new Date();
               }
+              
+              // Assign to the appropriate month
+              const month = monthNames[projectDate.getMonth()];
+              
+              // Update counts based on status
+              if (month && projectsByMonth[month]) {
+                projectsByMonth[month].total += 1;
+                
+                if (project.status === 'completed') {
+                  projectsByMonth[month].completed += 1;
+                } else if (project.status === 'planned' || project.status === 'pending') {
+                  projectsByMonth[month].pending += 1;
+                } else if (project.status === 'active' || project.status === 'in-progress') {
+                  projectsByMonth[month].active += 1;
+                }
+              }
+            } catch (e) {
+              console.error('Error processing project date:', e);
             }
           });
         }
         
-        // Get current month index safely
-        const now = new Date();
-        const currentMonthIndex = !isNaN(now.getMonth()) ? now.getMonth() : 0;
-        
         // Get relevant months (last 6 months including current)
-        const startIndex = currentMonthIndex - 5;
         const relevantMonths = [];
-        
-        for (let i = 0; i < 6; i++) {
-          let idx = (startIndex + i) % 12;
-          if (idx < 0) idx += 12; // Handle negative indices
-          relevantMonths.push(months[idx]);
+        for (let i = 5; i >= 0; i--) {
+          const monthIndex = (currentMonth - i + 12) % 12; // Ensure positive index
+          relevantMonths.push(monthNames[monthIndex]);
         }
         
         // Create chart data from relevant months
-        const chartData = relevantMonths.map(month => projectsByMonth[month] || { month, completed: 0, pending: 0, total: 0 });
+        const chartData = relevantMonths.map(month => projectsByMonth[month] || { 
+          month, 
+          completed: 0, 
+          pending: 0, 
+          active: 0,
+          total: 0 
+        });
         
-        // Calculate trends (percentage change from first to last month)
-        // Make sure chartData has elements before calculating trends
+        // Calculate the total across all displayed months for verification
+        const chartTotal = chartData.reduce((sum, item) => sum + item.total, 0);
+        console.log('Total projects in chart:', chartTotal);
+        console.log('Total projects from API:', projectsArray.length);
+        
+        // Add totals by status for the cards
+        const completedTotal: number = projectsArray.filter((p: { status: string } | null) => p && p.status === 'completed').length;
+        const pendingTotal: number = projectsArray.filter((p: { status: string } | null) => p && (p.status === 'planned' || p.status === 'pending')).length;
+        const activeTotal: number = projectsArray.filter((p: { status: string } | null) => p && (p.status === 'active' || p.status === 'in-progress')).length;
+        
+        // Add a summary card below the chart that shows overall totals
+        setProjectStatsData(chartData);
+        
+        // Set trend data for the cards
         if (chartData && chartData.length >= 2) {
-          const firstMonth = chartData[0] || { completed: 0, pending: 0 };
-          const lastMonth = chartData[chartData.length - 1] || { completed: 0, pending: 0 };
+          const firstMonth = chartData[0] || { completed: 0, pending: 0, active: 0 };
+          const lastMonth = chartData[chartData.length - 1] || { completed: 0, pending: 0, active: 0 };
           
           // Safely access properties with fallbacks to 0
           const firstCompleted = firstMonth.completed || 0;
           const lastCompleted = lastMonth.completed || 0;
           const firstPending = firstMonth.pending || 0;
           const lastPending = lastMonth.pending || 0;
+          const firstActive = firstMonth.active || 0;
+          const lastActive = lastMonth.active || 0;
           
           // Avoid division by zero
           const completedTrend = firstCompleted > 0 
@@ -182,15 +249,27 @@ export default function DashboardPage() {
             ? ((lastPending - firstPending) / firstPending) * 100 
             : 0;
             
+          const activeTrend = firstActive > 0 
+            ? ((lastActive - firstActive) / firstActive) * 100 
+            : 0;
+            
           setTrendData({
             completedTrend: Math.round(completedTrend * 10) / 10,
-            pendingTrend: Math.round(pendingTrend * 10) / 10
+            pendingTrend: Math.round(pendingTrend * 10) / 10,
+            activeTrend: Math.round(activeTrend * 10) / 10,
+            completedTotal: completedTotal,
+            pendingTotal: pendingTotal,
+            activeTotal: activeTotal
           });
         } else {
           // Set default trends if there's not enough data
           setTrendData({
             completedTrend: 0,
-            pendingTrend: 0
+            pendingTrend: 0,
+            activeTrend: 0,
+            completedTotal: completedTotal,
+            pendingTotal: pendingTotal,
+            activeTotal: activeTotal
           });
         }
         
@@ -220,33 +299,51 @@ export default function DashboardPage() {
       })
       .catch(error => console.error('Error fetching news:', error));
       
-    // For user engagement data, we'll simulate weekly data based on user activity
-    // In a real app, you would have an API endpoint for this
+    // For user engagement data, we'll process user activity based on is_active flag
     apiClient.get('/users')
       .then(response => {
         const data = response.data;
         // Ensure data is an array
         const userData = Array.isArray(data) ? data : (data.users || []);
         
-        // Simulate weekly user activity based on user creation/login dates
+        // Create weekly data structure
         const weeklyData = [
-          { week: "Week 1", activity: 0 },
-          { week: "Week 2", activity: 0 },
-          { week: "Week 3", activity: 0 },
-          { week: "Week 4", activity: 0 },
+          { week: "Week 1", active: 0, inactive: 0, total: 0 },
+          { week: "Week 2", active: 0, inactive: 0, total: 0 },
+          { week: "Week 3", active: 0, inactive: 0, total: 0 },
+          { week: "Week 4", active: 0, inactive: 0, total: 0 },
         ];
         
-        // Calculate activity based on user creation dates
+        // Current date for calculating weeks
+        const now = new Date();
+        
+        // Calculate activity based on user data
         userData.forEach(user => {
-          if (user.createdAt || user.lastLoginAt) {
-            const date = new Date(user.createdAt || user.lastLoginAt);
-            const currentDate = new Date();
-            const daysDiff = Math.floor((currentDate - date) / (1000 * 60 * 60 * 24));
+          // Determine which week bucket this user falls into
+          let weekIndex = 0;
+          
+          if (user.createdAt || user.created_at) {
+            const createdDate = new Date(user.createdAt || user.created_at);
+            const daysDiff = Math.floor(((now.getTime() || 0) - (createdDate.getTime() || 0)) / (1000 * 60 * 60 * 24));
             
-            if (daysDiff <= 7) weeklyData[0].activity += 1;
-            else if (daysDiff <= 14) weeklyData[1].activity += 1;
-            else if (daysDiff <= 21) weeklyData[2].activity += 1;
-            else if (daysDiff <= 28) weeklyData[3].activity += 1;
+            if (daysDiff <= 7) weekIndex = 0;
+            else if (daysDiff <= 14) weekIndex = 1;
+            else if (daysDiff <= 21) weekIndex = 2;
+            else if (daysDiff <= 28) weekIndex = 3;
+            else return; // Skip users created more than 28 days ago
+            
+            // Increment total for this week
+            weeklyData[weekIndex].total += 1;
+            
+            // Use the is_active flag from the backend to determine active status
+            const isActive = user.is_active === true;
+            
+            // Increment the appropriate counter based on the is_active flag
+            if (isActive) {
+              weeklyData[weekIndex].active += 1;
+            } else {
+              weeklyData[weekIndex].inactive += 1;
+            }
           }
         });
         
@@ -269,8 +366,8 @@ export default function DashboardPage() {
         if (sortedProjects.length > 0) {
           // Sort by date (newest first)
           sortedProjects.sort((a, b) => {
-            const dateA = new Date(a.updatedAt || a.createdAt || 0);
-            const dateB = new Date(b.updatedAt || b.createdAt || 0);
+            const dateA = new Date(a.updated_at || a.created_at || 0);
+            const dateB = new Date(b.updated_at || b.created_at || 0);
             return dateB - dateA;
           });
         }
@@ -279,18 +376,26 @@ export default function DashboardPage() {
         const activities = sortedProjects
           .slice(0, 4)
           .map(project => {
-            const isUpdated = project.updatedAt && project.updatedAt !== project.createdAt;
-            const timeAgo = getTimeAgo(new Date(project.updatedAt || project.createdAt || new Date()));
+            // Check if project has been updated after creation
+            const isUpdated = project.updated_at && project.created_at && 
+                             (project.updated_at !== project.created_at);
+            
+            // Get the appropriate timestamp (use updated_at if available and different, otherwise created_at)
+            const activityDate = isUpdated ? 
+                               new Date(project.updated_at) : 
+                               new Date(project.created_at || new Date());
+            
+            const timeAgoInfo = getTimeAgo(activityDate);
             
             return {
               user: {
-                name: project.createdBy?.name || 'User',
-                avatar: project.createdBy?.avatar || '/avatars/default.jpg'
+                name: project.createdBy?.name || project.creator?.name || 'User',
+                avatar: project.createdBy?.avatar || project.creator?.avatar || '/avatars/default.jpg'
               },
               action: isUpdated 
                 ? `updated key milestone achievements for the ${project.name}`
                 : `submitted a new ${project.name} project proposal for review`,
-              time: timeAgo
+              timeAgo: timeAgoInfo
             };
           });
           
@@ -303,15 +408,29 @@ export default function DashboardPage() {
   function getTimeAgo(date) {
     const now = new Date();
     const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
     
-    if (diffHrs < 1) return 'Just now';
-    if (diffHrs === 1) return '1 hour ago';
-    if (diffHrs < 24) return `${diffHrs} hours ago`;
+    // Check if it's very recent (within 20 minutes)
+    if (diffMins < 20) {
+      return { text: 'Just now', isRecent: true };
+    }
+    
+    if (diffHrs < 1) {
+      return { text: `${diffMins} minutes ago`, isRecent: false };
+    }
+    if (diffHrs === 1) {
+      return { text: '1 hour ago', isRecent: false };
+    }
+    if (diffHrs < 24) {
+      return { text: `${diffHrs} hours ago`, isRecent: false };
+    }
     
     const diffDays = Math.floor(diffHrs / 24);
-    if (diffDays === 1) return '1 day ago';
-    return `${diffDays} days ago`;
+    if (diffDays === 1) {
+      return { text: '1 day ago', isRecent: false };
+    }
+    return { text: `${diffDays} days ago`, isRecent: false };
   }
 
   // Chart config for project statistics - updated to show completed and pending
@@ -324,6 +443,10 @@ export default function DashboardPage() {
       label: "Pending",
       color: "#FF9500", // orange for pending
     },
+    active: {
+      label: "Active",
+      color: "#2F88E1", // blue for active
+    },
     total: {
       label: "Total",
       color: "#CCCCCC", // light gray for total
@@ -332,10 +455,18 @@ export default function DashboardPage() {
 
   // Chart config for user engagement
   const engagementChartConfig = {
-    activity: {
-      label: "Application track",
-      color: "#2F88E1", // blue
+    active: {
+      label: "Active Users",
+      color: "#2F88E1", // blue for active
     },
+    inactive: {
+      label: "Inactive Users",
+      color: "#FF9500", // orange for inactive
+    },
+    total: {
+      label: "Total Users",
+      color: "#CCCCCC", // gray for total
+    }
   } satisfies ChartConfig;
 
   // Calculate the max value for Y-axis domain in project chart
@@ -508,6 +639,14 @@ export default function DashboardPage() {
                     dot={{ fill: "var(--color-pending)", r: 4 }}
                     activeDot={{ r: 6 }}
                   />
+                  <Line 
+                    type="monotone"
+                    dataKey="active" 
+                    stroke="var(--color-active)" 
+                    strokeWidth={2}
+                    dot={{ fill: "var(--color-active)", r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
                   
                   {/* Add a reference line to highlight the trend */}
                   {projectStatsData.length >= 2 && (
@@ -541,6 +680,10 @@ export default function DashboardPage() {
                 <span className="text-xs md:text-sm dark:text-gray-300">Pending</span>
               </div>
               <div className="flex items-center space-x-2">
+                <div className="h-3 w-3 rounded-sm bg-[#2F88E1]"></div>
+                <span className="text-xs md:text-sm dark:text-gray-300">Active</span>
+              </div>
+              <div className="flex items-center space-x-2">
                 <div className="h-3 w-3 rounded-sm bg-[#CCCCCC]"></div>
                 <span className="text-xs md:text-sm dark:text-gray-300">Total</span>
               </div>
@@ -551,7 +694,12 @@ export default function DashboardPage() {
         {/* User Engagement */}
         <Card className="shadow-sm dark:bg-gray-800">
           <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-4">
-            <CardTitle className="text-base md:text-lg font-semibold dark:text-white">User Engagement</CardTitle>
+            <div>
+              <CardTitle className="text-base md:text-lg font-semibold dark:text-white">User Engagement</CardTitle>
+              <CardDescription className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Active vs. Inactive Users by Week
+              </CardDescription>
+            </div>
             <button className="flex items-center text-xs md:text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
               2024 <ChevronDown className="w-3 h-3 md:w-4 md:h-4 ml-1" />
             </button>
@@ -580,22 +728,48 @@ export default function DashboardPage() {
                   <YAxis
                     tickLine={false}
                     axisLine={false}
-                    ticks={[0, 40, 80, 120, 160]}
-                    domain={[0, 180]}
+                    domain={[0, 'dataMax + 5']}
                     tick={{ fontSize: 11 }}
                     label={{ value: 'Number of Users', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fontSize: 12 }, dx: -10 }}
                   />
                   <ChartTooltip
                     cursor={{ strokeDasharray: '3 3' }}
-                    content={<ChartTooltipContent hideLabel />}
+                    content={<ChartTooltipContent />}
                   />
                   <Line
-                    dataKey="activity"
+                    dataKey="total"
                     type="monotone"
-                    stroke="var(--color-activity)"
+                    stroke="var(--color-total)"
+                    strokeWidth={1}
+                    strokeDasharray="3 3"
+                    dot={{
+                      fill: "var(--color-total)",
+                      r: 3
+                    }}
+                    activeDot={{
+                      r: 5,
+                    }}
+                  />
+                  <Line
+                    dataKey="active"
+                    type="monotone"
+                    stroke="var(--color-active)"
                     strokeWidth={2}
                     dot={{
-                      fill: "var(--color-activity)",
+                      fill: "var(--color-active)",
+                      r: 4
+                    }}
+                    activeDot={{
+                      r: 6,
+                    }}
+                  />
+                  <Line
+                    dataKey="inactive"
+                    type="monotone"
+                    stroke="var(--color-inactive)"
+                    strokeWidth={2}
+                    dot={{
+                      fill: "var(--color-inactive)",
                       r: 4
                     }}
                     activeDot={{
@@ -607,9 +781,19 @@ export default function DashboardPage() {
             </ChartContainer>
           </CardContent>
           <CardFooter className="flex justify-center items-center pt-0 pb-4 px-4">
-            <div className="flex items-center space-x-2">
-              <div className="h-3 w-3 rounded-sm bg-[#2F88E1]"></div>
-              <span className="text-xs md:text-sm dark:text-gray-300">Application track</span>
+            <div className="flex items-center space-x-4 md:space-x-8">
+              <div className="flex items-center space-x-2">
+                <div className="h-3 w-3 rounded-sm bg-[#2F88E1]"></div>
+                <span className="text-xs md:text-sm dark:text-gray-300">Active Users</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="h-3 w-3 rounded-sm bg-[#FF9500]"></div>
+                <span className="text-xs md:text-sm dark:text-gray-300">Inactive Users</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="h-3 w-3 rounded-sm bg-[#CCCCCC]"></div>
+                <span className="text-xs md:text-sm dark:text-gray-300">Total</span>
+              </div>
             </div>
           </CardFooter>
         </Card>
@@ -634,7 +818,16 @@ export default function DashboardPage() {
                     <span className="font-medium dark:text-white">{activity.user.name}</span>{' '}
                     {activity.action}
                   </p>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</span>
+                  <div className="flex items-center mt-1">
+                    {activity.timeAgo.isRecent ? (
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{activity.timeAgo.text}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{activity.timeAgo.text}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))
@@ -662,20 +855,6 @@ export default function DashboardPage() {
                 <div className={`pb-3 md:pb-4 ${index < activeProjects.length - 1 ? "border-b dark:border-gray-700 w-full" : "w-full"}`}>
                   <h4 className="text-sm md:text-base font-medium dark:text-white line-clamp-1">{project.name}</h4>
                   <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{project.description}</p>
-                  {projectDetails[project.id] && (
-                    <div className="mt-2">
-                      <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mt-1">
-                        <div 
-                          className="bg-primary-green rounded-full h-1.5" 
-                          style={{ width: `${projectDetails[project.id].progress || 0}%` }}
-                        ></div>
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Progress</span>
-                        <span className="text-xs font-medium dark:text-white">{projectDetails[project.id].progress || 0}%</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             ))

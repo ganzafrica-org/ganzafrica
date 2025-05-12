@@ -6,6 +6,12 @@ import { db } from "../db/client";
 import { project_categories } from "../db/schema";
 import { eq } from "drizzle-orm";
 
+// Import Express and Multer types
+import { Multer } from 'multer';
+
+// No need to extend Express.Request as it already has the files property
+// in @types/express-serve-static-core and @types/multer
+
 const logger = new Logger("ProjectController");
 
 /**
