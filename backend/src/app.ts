@@ -60,7 +60,7 @@ app.use(
         limit: env.RATE_LIMIT_MAX, // 100 requests per window
         standardHeaders: true,
         legacyHeaders: false,
-        message: { error: constants.ERROR_MESSAGES.TOO_MANY_REQUESTS },
+        message: { error: "Too many requests, please try again later." },
         skip: (req) => req.ip === "127.0.0.1" && env.NODE_ENV === "development",
     }),
 );
