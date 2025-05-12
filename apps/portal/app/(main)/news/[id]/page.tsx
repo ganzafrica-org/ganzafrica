@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Edit,
   Share2,
-  ImageIcon,
+  Image as ImageIcon,
   FileVideo
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -195,6 +195,33 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
     setShowSidebar(!showSidebar);
   };
 
+  // Image error handling function - Using the same approach as partners page
+  const handleImageError = (e: any, fallbackText: string | undefined) => {
+    console.error(`Failed to load image: ${e.target.src}`);
+    // Create a canvas element for the fallback
+    const canvas = document.createElement('canvas');
+    canvas.width = 40;
+    canvas.height = 40;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) { // Add null check for TypeScript
+      // Fill background
+      ctx.fillStyle = '#f3f4f6';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Add text
+      ctx.fillStyle = '#6b7280';
+      ctx.font = 'bold 16px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fallbackText || 'N', canvas.width/2, canvas.height/2);
+    }
+    
+    // Replace image with canvas data
+    e.target.onerror = null; // Prevent infinite error loop
+    e.target.src = canvas.toDataURL('image/png');
+  };
+
   if (loading) {
     return (
       <div className="p-4 md:p-6 max-w-full mx-auto container flex items-center justify-center min-h-[80vh]">
@@ -362,6 +389,15 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                     src={getCoverImage() || ''} 
                     alt={news.title}
                     className="w-full h-48 md:h-64 object-cover rounded-lg"
+                    onLoad={() => console.log(`Successfully loaded cover image: ${getCoverImage()}`)}
+                    onError={(e) => {
+                      console.error(`Failed to load cover image: ${getCoverImage()}`);
+                      e.target.onerror = null; // Prevent infinite error loops
+                      
+                      // Create fallback with initial letter
+                      const fallbackText = news.title?.charAt(0)?.toUpperCase() || 'N';
+                      handleImageError(e, fallbackText);
+                    }}
                   />
                 </div>
               )}
@@ -539,6 +575,15 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                             src={media.url} 
                             alt={media.title || 'Image'} 
                             className="w-full h-full object-cover"
+                            onLoad={() => console.log(`Successfully loaded image: ${media.url}`)}
+                            onError={(e) => {
+                              console.error(`Failed to load image: ${media.url}`);
+                              e.target.onerror = null; // Prevent infinite error loops
+                              
+                              // Create fallback with initial letter
+                              const fallbackText = media.title?.charAt(0)?.toUpperCase() || 'I';
+                              handleImageError(e, fallbackText);
+                            }}
                           />
                         </div>
                       ) : media.type === 'video' ? (
@@ -549,6 +594,15 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                                 src={media.thumbnailUrl} 
                                 alt={media.title || 'Video thumbnail'} 
                                 className="w-full h-full object-cover absolute inset-0"
+                                onLoad={() => console.log(`Successfully loaded video thumbnail: ${media.thumbnailUrl}`)}
+                                onError={(e) => {
+                                  console.error(`Failed to load video thumbnail: ${media.thumbnailUrl}`);
+                                  e.target.onerror = null; // Prevent infinite error loops
+                                  
+                                  // Create fallback with initial letter
+                                  const fallbackText = media.title?.charAt(0)?.toUpperCase() || 'V';
+                                  handleImageError(e, fallbackText);
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full bg-gray-800 flex items-center justify-center text-white">

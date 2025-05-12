@@ -8,7 +8,7 @@ import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select';
-import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Upload, X, Image as ImageIcon, Loader } from 'lucide-react';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@workspace/ui/components/avatar';
@@ -42,6 +42,9 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
   const [isFetching, setIsFetching] = useState(true);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     // Fetch the testimonial data
@@ -101,18 +104,62 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
   };
 
   const handleImageUpload = (file: File) => {
+    // Store the file for later server upload
+    setImageFile(file);
+    
+    // Create a preview
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
       setImagePreview(result);
-      setFormData(prev => ({ ...prev, image: result }));
     };
     reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
     setImagePreview(null);
+    setImageFile(null);
     setFormData(prev => ({ ...prev, image: '' }));
+    setUploadProgress(0);
+    setUploadStatus('idle');
+  };
+
+  // Upload the image to the server and get a URL back
+  const uploadImageToServer = async (file: File): Promise<string> => {
+    try {
+      setUploadProgress(0);
+      setUploadStatus('uploading');
+      
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Make the upload request
+      const response = await apiClient.post('/uploads/file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+      
+      // Check if upload was successful
+      if (response.data && response.data.success) {
+        console.log('File uploaded successfully:', response.data.file);
+        setUploadStatus('success');
+        return response.data.file.url;
+      } else {
+        setUploadStatus('error');
+        throw new Error('File upload failed: Server returned unsuccessful response');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setUploadStatus('error');
+      toast.error('Failed to upload image. Please try again.');
+      throw error;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -127,7 +174,21 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
     setIsLoading(true);
 
     try {
-      await apiClient.put(`/testimonials/${params.id}`, formData);
+      let testimonialData = { ...formData };
+      
+      // If we have a file, upload it first
+      if (imageFile) {
+        try {
+          const imageUrl = await uploadImageToServer(imageFile);
+          testimonialData.image = imageUrl;
+        } catch (error) {
+          setIsLoading(false);
+          return; // Exit early if image upload fails
+        }
+      }
+      
+      // Then update the testimonial with the image URL
+      await apiClient.put(`/testimonials/${params.id}`, testimonialData);
       toast.success('Testimonial updated successfully');
       router.push('/testimonials');
     } catch (error: any) {
@@ -135,6 +196,34 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
       toast.error(error.response?.data?.message || 'Failed to update testimonial');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Function to get upload status text
+  const getUploadStatusText = () => {
+    switch (uploadStatus) {
+      case 'uploading':
+        return `Uploading: ${uploadProgress}%`;
+      case 'success':
+        return 'Upload complete!';
+      case 'error':
+        return 'Upload failed. Please try again.';
+      default:
+        return '';
+    }
+  };
+
+  // Function to get upload status color
+  const getUploadStatusColor = () => {
+    switch (uploadStatus) {
+      case 'uploading':
+        return 'bg-blue-600';
+      case 'success':
+        return 'bg-green-600';
+      case 'error':
+        return 'bg-red-600';
+      default:
+        return 'bg-gray-600';
     }
   };
 
@@ -241,7 +330,7 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
                   {imagePreview ? (
                       <div className="relative">
                         <Avatar className="w-32 h-32 mx-auto">
-                          <AvatarImage src={imagePreview} alt="Preview" />
+                          <AvatarImage src={imagePreview} alt="Preview" onError={() => console.error(`Failed to load image preview: ${imagePreview}`)} />
                           <AvatarFallback>
                             <ImageIcon className="w-16 h-16 text-gray-400" />
                           </AvatarFallback>
@@ -273,6 +362,25 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
                       </>
                   )}
                 </div>
+                
+                {/* Upload Progress Indicator */}
+                {uploadStatus !== 'idle' && (
+                  <div className="mt-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        className={`${getUploadStatusColor()} h-2.5 rounded-full transition-all duration-300`} 
+                        style={{ width: uploadStatus === 'uploading' ? `${uploadProgress}%` : '100%' }}
+                      ></div>
+                    </div>
+                    <p className={`text-xs mt-1 text-center ${
+                      uploadStatus === 'error' ? 'text-red-500' : 
+                      uploadStatus === 'success' ? 'text-green-500' : 
+                      'text-gray-500'
+                    }`}>
+                      {getUploadStatusText()}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -388,9 +496,16 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
                 <Button
                     type="submit"
                     className="bg-primary-green hover:bg-green-700"
-                    disabled={isLoading}
+                    disabled={isLoading || uploadStatus === 'uploading'}
                 >
-                  {isLoading ? 'Updating...' : 'Update Testimonial'}
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      Updating...
+                    </div>
+                  ) : (
+                    'Update Testimonial'
+                  )}
                 </Button>
               </div>
             </form>
