@@ -272,7 +272,9 @@ if (typeof document !== 'undefined') {
 
 // Function to normalize team type names for case-insensitive comparison
 const normalizeTeamTypeName = (name: string): string => {
-  return name?.trim().toLowerCase() || '';
+  // Check if name is undefined or null before calling trim() and toLowerCase()
+  if (!name) return '';
+  return name.trim().toLowerCase() || '';
 };
 
 const TeamPage: React.FC = () => {
@@ -344,8 +346,36 @@ const TeamPage: React.FC = () => {
 
   // Filter team members based on selected category
   const filteredMembers = teamMembers.filter(member => {
-    const teamTypeName = member.team_type?.name || '';
-    return normalizeTeamTypeName(teamTypeName) === normalizeTeamTypeName(activeFilter);
+    if (!member.team_type?.name) return false;
+    
+    const teamTypeName = member.team_type.name.trim().toLowerCase();
+    const filterName = activeFilter.trim().toLowerCase();
+    
+    // Handle common variations
+    if ((teamTypeName.includes('advisor') || teamTypeName.includes('board')) && 
+        (filterName.includes('advisor') || filterName.includes('board'))) {
+      return true;
+    }
+    
+    if (teamTypeName.includes('team') && filterName.includes('team')) {
+      return true;
+    }
+    
+    if (teamTypeName.includes('mentor') && filterName.includes('mentor')) {
+      return true;
+    }
+    
+    if (teamTypeName.includes('fellow') && filterName.includes('fellow')) {
+      return true;
+    }
+    
+    if ((teamTypeName.includes('alumni') || teamTypeName.includes('alum')) && 
+        (filterName.includes('alumni') || filterName.includes('alum'))) {
+      return true;
+    }
+    
+    // Exact match fallback
+    return teamTypeName === filterName;
   });
 
   // Convert team types to filter buttons
@@ -354,6 +384,46 @@ const TeamPage: React.FC = () => {
     return typeName.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     ).join(' ');
+  };
+  
+  // Get appropriate subtitle based on filter
+  const getSubtitle = (filter: string): string => {
+    const normalizedFilter = normalizeTeamTypeName(filter);
+    
+    switch(normalizedFilter) {
+      case 'advisory board':
+        return 'Our <span class="font-normal">Advisory</span> <span class="font-normal">Board</span>';
+      case 'our team':
+        return 'Our <span class="font-normal">Core</span> <span class="font-normal">Team</span>';
+      case 'mentors':
+        return 'Our <span class="font-normal">Program</span> <span class="font-normal">Mentors</span>';
+      case 'fellows':
+        return 'Our <span class="font-normal">Innovation</span> <span class="font-normal">Fellows</span>';
+      case 'alumni':
+        return 'Our <span class="font-normal">Program</span> <span class="font-normal">Alumni</span>';
+      default:
+        return 'Our <span class="font-normal">Team</span> & <span class="font-normal">Advisory Board</span>';
+    }
+  };
+
+  // Helper function to generate dynamic header text based on active filter
+  const getDynamicHeaderText = (filter: string): string => {
+    const normalizedFilter = normalizeTeamTypeName(filter);
+    
+    switch(normalizedFilter) {
+      case 'advisory board':
+        return 'MEET OUR ADVISORS';
+      case 'our team':
+        return 'MEET OUR TEAM';
+      case 'mentors':
+        return 'MEET OUR MENTORS';
+      case 'fellows':
+        return 'MEET OUR FELLOWS';
+      case 'alumni':
+        return 'MEET OUR ALUMNI';
+      default:
+        return 'MEET THE EXPERTS';
+    }
   };
 
   return (
@@ -386,9 +456,9 @@ const TeamPage: React.FC = () => {
         {/* Hero Content */}
         <div className="relative z-10 flex items-center justify-center h-full text-center mt-[-50px]">
           <div className="space-y-8">
-            <div className="text-6xl font-bold text-primary-orange">MEMBERS</div>
-            <h1 className="text-3xl md:text-5xl text-white">
-              Our <span className="font-normal">Team</span> & <span className='font-normal'>Advisory Board</span>
+            <div className="text-6xl font-bold text-primary-orange">{getDynamicHeaderText(activeFilter)}</div>
+            <h1 className="text-3xl md:text-5xl text-white" 
+                dangerouslySetInnerHTML={{ __html: getSubtitle(activeFilter) }}>
             </h1>
           </div>
         </div>
