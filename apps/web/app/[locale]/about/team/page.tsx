@@ -490,8 +490,6 @@ const TeamPage: React.FC = () => {
                       label={getFilterButtonLabel(type.name)}
                       active={normalizeTeamTypeName(activeFilter) === normalizeTeamTypeName(type.name)}
                       onClick={() => setActiveFilter(type.name)}
-                      active={normalizeTeamTypeName(activeFilter) === normalizeTeamTypeName(type.name)}
-                      onClick={() => setActiveFilter(type.name)}
                     />
                   ))}
                 </div>
@@ -500,36 +498,6 @@ const TeamPage: React.FC = () => {
 
             {/* Team Members Content Area */}
             <div className="flex-1">
-              {isLoading ? (
-                // Loading skeletons
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                  {Array.from({ length: 6 }).map((_, index) => (
-                    <div key={index} className="animate-pulse">
-                      <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                // Team Members Grid
-                <div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                    {filteredMembers.map((member) => (
-                      <TeamMemberCard 
-                        key={member.id} 
-                        member={member}
-                        onOpenModal={() => setSelectedMember(member)}
-                      />
-                    ))}
-                  </div>
-                  
-                  {/* Empty State */}
-                  {filteredMembers.length === 0 && (
-                    <div className="text-center py-12">
-                      <p className="text-gray-500 text-lg">No team members found in this category.</p>
-                    </div>
-                  )}
-                </div>
-              )}
               {isLoading ? (
                 // Loading skeletons
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
