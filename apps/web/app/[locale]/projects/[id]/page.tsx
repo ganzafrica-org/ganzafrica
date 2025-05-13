@@ -548,7 +548,7 @@ const ProjectDetailsPage = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 overflow-x-hidden">
       {/* Hero Section */}
-      <div className="relative h-[50vh] sm:h-[70vh] md:h-[80vh] lg:h-[90vh] w-full overflow-hidden">
+      <div className="relative h-[50vh] sm:h-[70vh] md:h-[80vh] lg:h-[90vh] w-full overflow-hidden mt-16">
         {featuredMedia ? (
           <div className="relative w-full h-full">
             <img

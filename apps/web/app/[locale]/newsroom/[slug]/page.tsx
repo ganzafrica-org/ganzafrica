@@ -396,7 +396,7 @@ const NewsDetailsPage = () => {
                   <img
                       src={imageUrl}
                       alt={item.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain bg-gray-100"
                   />
               ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -484,7 +484,7 @@ const NewsDetailsPage = () => {
                 <img
                     src={selectedMedia.url}
                     alt="Media preview"
-                    className="max-h-[85vh] max-w-full object-contain mx-auto"
+                    className="max-h-[85vh] max-w-full object-cover mx-auto"
                 />
             ) : selectedMedia.type === 'video' ? (
                 <video
@@ -539,14 +539,14 @@ const NewsDetailsPage = () => {
   return (
       <main className="bg-gray-50 min-h-screen">
         {/* Hero Section with Image */}
-        <section className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden">
+        <section className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden pt-8">
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
             {mainImageUrl ? (
                 <img
                     src={mainImageUrl}
                     alt={article.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain bg-gray-100"
                 />
             ) : (
                 <div className="w-full h-full bg-gradient-to-r from-[#004D40] to-[#00A651]"></div>

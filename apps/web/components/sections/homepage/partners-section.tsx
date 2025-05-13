@@ -97,12 +97,12 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                     <div className="slider-items-right flex items-center whitespace-nowrap">
                         {/* Double the items to ensure smooth looping */}
                         {[...partnerRow1, ...partnerRow1].map((partner, index) => (
-                            <div key={`row1-${index}`} className="inline-block px-6">
-                                <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
+                            <div key={`row1-${index}`} className="inline-block px-3">
+                                <div className="bg-white rounded-lg shadow-md p-3 w-40 h-24 flex items-center justify-center">
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow1.length + 1}`}
-                                        className="object-contain max-w-full max-h-28"
+                                        className="object-contain max-w-full max-h-16"
                                     />
                                 </div>
                             </div>
@@ -117,12 +117,12 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                     <div className="slider-items-left flex items-center whitespace-nowrap">
                         {/* Double the items to ensure smooth looping */}
                         {[...partnerRow2, ...partnerRow2].map((partner, index) => (
-                            <div key={`row2-${index}`} className="inline-block px-6">
-                                <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
+                            <div key={`row2-${index}`} className="inline-block px-3">
+                                <div className="bg-white rounded-lg shadow-md p-3 w-40 h-24 flex items-center justify-center">
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow2.length + 1}`}
-                                        className="object-contain max-w-full max-h-28"
+                                        className="object-contain max-w-full max-h-16"
                                     />
                                 </div>
                             </div>

@@ -97,11 +97,11 @@ const ProjectCard: React.FC<{
 
             {/* Image section with overlay - adjusted aspect ratio */}
             <div className="relative aspect-[5/3] w-full overflow-hidden">
-              <div className="absolute inset-0 w-full h-full">
+              <div className="absolute inset-0 w-full h-full bg-gray-100 flex items-center justify-center">
                 <img
                   src={getFeatureImage(project)}
                   alt={project.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                 />
               </div>
               
