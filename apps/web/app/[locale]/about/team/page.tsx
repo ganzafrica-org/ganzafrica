@@ -412,17 +412,17 @@ const TeamPage: React.FC = () => {
     
     switch(normalizedFilter) {
       case 'advisory board':
-        return 'MEET OUR ADVISORS';
+        return 'Meet Our Advisors';
       case 'our team':
-        return 'MEET OUR TEAM';
+        return 'Meet Our Team';
       case 'mentors':
-        return 'MEET OUR MENTORS';
+        return 'Meet Our Mentors';
       case 'fellows':
-        return 'MEET OUR FELLOWS';
+        return 'Meet Our Fellows';
       case 'alumni':
-        return 'MEET OUR ALUMNI';
+        return 'Meet Our Alumni';
       default:
-        return 'MEET THE EXPERTS';
+        return 'Meet Our Experts';
     }
   };
 
