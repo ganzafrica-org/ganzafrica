@@ -397,11 +397,6 @@ export default function FellowshipPage() {
                     How to Apply
                   </Button>
                 </Link>
-                <Link href={`/${locale}/programs/fellowship/${featuredOpportunity?.id}/apply`}>
-                  <Button className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white font-semibold px-6 py-4 text-base">
-                    Apply now
-                  </Button>
-                </Link>
               </motion.div>
             </div>
           </div>
@@ -409,59 +404,6 @@ export default function FellowshipPage() {
         <div className="flex justify-center">
           <HeaderBelt />
         </div>
-
-        <motion.section
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="py-16 md:py-20 bg-white"
-        >
-          <div className="container mx-auto px-6 md:px-12 lg:px-20">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <motion.div
-                  initial={{ opacity: 0, x: -50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2, duration: 0.8 }}
-                  className="order-2 md:order-1"
-              >
-                <img
-                    src="/images/SHIR5142-Enhanced-NR.jpg"
-                    alt="Food System"
-                    className="rounded-lg w-full h-[500px] object-cover"
-                />
-              </motion.div>
-              <motion.div
-                  initial={{ opacity: 0, x: 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.4, duration: 0.8 }}
-                  className="order-1 md:order-2"
-              >
-                <DecoratedHeading
-                  firstText="Discover tomorrow's"
-                  secondText="leaders today"
-                />
-                <p className="text-gray-600 text-sm md:text-base mb-6">
-                  A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders.
-                </p>
-                <p className="text-gray-600 text-sm md:text-base mb-8">
-                  Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
-                </p>
-                <Link href={`/${locale}/about/team`}>
-                  <motion.button
-                    className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Meet the Fellows
-                  </motion.button>
-                </Link>
-              </motion.div>
-            </div>
-          </div>
-        </motion.section>
 
         <motion.section
             initial={{ opacity: 0 }}
@@ -557,6 +499,59 @@ export default function FellowshipPage() {
                     whileTap={{ scale: 0.95 }}
                   >
                     How to Apply
+                  </motion.button>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+        </motion.section>
+
+        <motion.section
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="py-16 md:py-20 bg-white"
+        >
+          <div className="container mx-auto px-6 md:px-12 lg:px-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+              <motion.div
+                  initial={{ opacity: 0, x: -50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2, duration: 0.8 }}
+                  className="order-2 md:order-1"
+              >
+                <img
+                    src="/images/SHIR5142-Enhanced-NR.jpg"
+                    alt="Food System"
+                    className="rounded-lg w-full h-[500px] object-cover"
+                />
+              </motion.div>
+              <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4, duration: 0.8 }}
+                  className="order-1 md:order-2"
+              >
+                <DecoratedHeading
+                  firstText="Discover tomorrow's"
+                  secondText="leaders today"
+                />
+                <p className="text-gray-600 text-sm md:text-base mb-6">
+                  A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders.
+                </p>
+                <p className="text-gray-600 text-sm md:text-base mb-8">
+                  Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
+                </p>
+                <Link href={`/${locale}/about/team`}>
+                  <motion.button
+                    className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Meet the Fellows
                   </motion.button>
                 </Link>
               </motion.div>

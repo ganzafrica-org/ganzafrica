@@ -270,14 +270,10 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(styleSheet);
 }
 
-// Define the order of team types for "All Members" view
-const TEAM_TYPE_ORDER = [
-  'Advisory Board',
-  'Team',
-  'Fellow',
-  'Mentor',
-  'Alumni'
-];
+// Function to normalize team type names for case-insensitive comparison
+const normalizeTeamTypeName = (name: string): string => {
+  return name?.trim().toLowerCase() || '';
+};
 
 const TeamPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('advisory board'); // Changed default to 'advisory board'
@@ -348,104 +344,16 @@ const TeamPage: React.FC = () => {
 
   // Filter team members based on selected category
   const filteredMembers = teamMembers.filter(member => {
-    if (activeFilter === 'all') return true;
-    
-    const teamTypeName = member.team_type?.name;
-    return teamTypeName?.toLowerCase() === activeFilter.toLowerCase();
+    const teamTypeName = member.team_type?.name || '';
+    return normalizeTeamTypeName(teamTypeName) === normalizeTeamTypeName(activeFilter);
   });
-
-  // Group members by team type for "All Members" view
-  const groupedMembers = teamMembers.reduce((acc: Record<string, TeamMember[]>, member) => {
-    const teamTypeName = member.team_type?.name || 'unknown';
-    if (!acc[teamTypeName]) {
-      acc[teamTypeName] = [];
-    }
-    acc[teamTypeName].push(member);
-    return acc;
-  }, {});
 
   // Convert team types to filter buttons
   const getFilterButtonLabel = (typeName: string): string => {
-    // Format the team type name for display
-    if (typeName === 'all') return 'All Members';
-    
     // Capitalize the first letter of each word
     return typeName.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     ).join(' ');
-  };
-
-  // Render team members content based on the active filter
-  const renderTeamMembersContent = () => {
-    if (isLoading) {
-      // Loading skeletons
-      return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="animate-pulse">
-              <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (activeFilter === 'all') {
-      // "All Members" view with categorized sections
-      return (
-        <div className="space-y-16">
-          {TEAM_TYPE_ORDER.map(teamType => {
-            const members = groupedMembers[teamType] || [];
-            if (members.length === 0) return null;
-            
-            const displayName = getFilterButtonLabel(teamType);
-            
-            return (
-              <div key={teamType}>
-                {/* Section Title with Line */}
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-primary-green">{displayName}</h2>
-                  <div className="h-1 bg-primary-orange mt-2"></div>
-                </div>
-                
-                {/* Team Members Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                  {members.map(member => (
-                    <TeamMemberCard
-                      key={member.id}
-                      member={member}
-                      onOpenModal={() => setSelectedMember(member)}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      );
-    } else {
-      // Filtered view for a specific category
-      return (
-        <div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredMembers.map((member) => (
-              <TeamMemberCard 
-                key={member.id} 
-                member={member}
-                onOpenModal={() => setSelectedMember(member)}
-              />
-            ))}
-          </div>
-          
-          {/* Empty State */}
-          {filteredMembers.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No team members found in this category.</p>
-            </div>
-          )}
-        </div>
-      );
-    }
   };
 
   return (
@@ -505,20 +413,13 @@ const TeamPage: React.FC = () => {
               <div className="lg:sticky lg:top-24">
                 <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                  {/* All Members filter always appears first */}
-                  <FilterButton
-                    label="All Members"
-                    active={activeFilter === 'all'}
-                    onClick={() => setActiveFilter('all')}
-                  />
-                  
                   {/* Dynamic filters based on team types from API */}
                   {Array.isArray(teamTypes) && teamTypes.map((type) => (
                     <FilterButton
                       key={type.id}
                       label={getFilterButtonLabel(type.name)}
-                      active={activeFilter === type.name.toLowerCase()}
-                      onClick={() => setActiveFilter(type.name.toLowerCase())}
+                      active={normalizeTeamTypeName(activeFilter) === normalizeTeamTypeName(type.name)}
+                      onClick={() => setActiveFilter(type.name)}
                     />
                   ))}
                 </div>
@@ -527,7 +428,36 @@ const TeamPage: React.FC = () => {
 
             {/* Team Members Content Area */}
             <div className="flex-1">
-              {renderTeamMembersContent()}
+              {isLoading ? (
+                // Loading skeletons
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="animate-pulse">
+                      <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // Team Members Grid
+                <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {filteredMembers.map((member) => (
+                      <TeamMemberCard 
+                        key={member.id} 
+                        member={member}
+                        onOpenModal={() => setSelectedMember(member)}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Empty State */}
+                  {filteredMembers.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500 text-lg">No team members found in this category.</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </Container>
