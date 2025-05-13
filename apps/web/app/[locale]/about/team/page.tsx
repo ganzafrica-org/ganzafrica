@@ -573,7 +573,7 @@ const TeamPage: React.FC = () => {
           onClose={() => setSelectedMember(null)}
         />
       )}
-
+{/* chnged */}
       <style jsx global>{`
         @keyframes marquee {
           0% {
