@@ -348,12 +348,95 @@ const TeamPage: React.FC = () => {
     return normalizeTeamTypeName(teamTypeName) === normalizeTeamTypeName(activeFilter);
   });
 
+  // Group members by team type for "All Members" view
+  const groupedMembers = teamMembers.reduce((acc: Record<string, TeamMember[]>, member) => {
+    const teamTypeName = member.team_type?.name || 'unknown';
+    if (!acc[teamTypeName]) {
+      acc[teamTypeName] = [];
+    }
+    acc[teamTypeName].push(member);
+    return acc;
+  }, {});
+
   // Convert team types to filter buttons
   const getFilterButtonLabel = (typeName: string): string => {
     // Capitalize the first letter of each word
     return typeName.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
     ).join(' ');
+  };
+
+  // Render team members content based on the active filter
+  const renderTeamMembersContent = () => {
+    if (isLoading) {
+      // Loading skeletons
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="animate-pulse">
+              <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (activeFilter === 'all') {
+      // "All Members" view with categorized sections
+      return (
+        <div className="space-y-16">
+          {TEAM_TYPE_ORDER.map(teamType => {
+            const members = groupedMembers[teamType] || [];
+            if (members.length === 0) return null;
+            
+            const displayName = getFilterButtonLabel(teamType);
+            
+            return (
+              <div key={teamType}>
+                {/* Section Title with Line */}
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-primary-green">{displayName}</h2>
+                  <div className="h-1 bg-primary-orange mt-2"></div>
+                </div>
+                
+                {/* Team Members Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {members.map(member => (
+                    <TeamMemberCard
+                      key={member.id}
+                      member={member}
+                      onOpenModal={() => setSelectedMember(member)}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    } else {
+      // Filtered view for a specific category
+      return (
+        <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+            {filteredMembers.map((member) => (
+              <TeamMemberCard 
+                key={member.id} 
+                member={member}
+                onOpenModal={() => setSelectedMember(member)}
+              />
+            ))}
+          </div>
+          
+          {/* Empty State */}
+          {filteredMembers.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg">No team members found in this category.</p>
+            </div>
+          )}
+        </div>
+      );
+    }
   };
 
   return (
@@ -385,6 +468,13 @@ const TeamPage: React.FC = () => {
 
         {/* Hero Content */}
         <div className="relative z-10 flex items-center justify-center h-full text-center mt-[-50px]">
+          <div className="space-y-8">
+            <div className="text-6xl font-bold text-primary-orange">MEMBERS</div>
+            <h1 className="text-3xl md:text-5xl text-white">
+              Our <span className="font-normal">Team</span> & <span className='font-normal'>Advisory Board</span>
+            </h1>
+          </div>
+        </div>
           <div className="space-y-8">
             <div className="text-6xl font-bold text-primary-orange">MEMBERS</div>
             <h1 className="text-3xl md:text-5xl text-white">
@@ -426,6 +516,7 @@ const TeamPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Team Members Content Area */}
             {/* Team Members Content Area */}
             <div className="flex-1">
               {isLoading ? (
