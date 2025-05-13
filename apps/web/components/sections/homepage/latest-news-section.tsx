@@ -5,6 +5,8 @@ import { DecoratedHeading } from '@/components/layout/headertext';
 import { CalendarDays, ArrowRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 // Interface for the news data from the API
 interface NewsItem {
@@ -59,7 +61,6 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
 
   // Fetch news from API
   useEffect(() => {
-    console.log("useEffect triggered");
     const fetchNews = async () => {
       try {
         setLoading(true);
@@ -70,50 +71,30 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
             sortBy: 'publish_date',
             sortDir: 'desc'
           }
+        }).catch(error => {
+          console.warn('API error, using fallback data', error.message);
+          // Use fallback news instead of empty array
+          setNewsItems(getFallbackNews());
+          setLoading(false);
+          return null;
         });
-        console.log(response.data.news);
-
-        setNewsItems(response.data.news);
-        setError(null);
+        
+        if (response) {
+          if (response.data.news && response.data.news.length > 0) {
+            setNewsItems(response.data.news);
+            setError(null);
+          } else {
+            // If API returns empty array, use fallback news
+            console.info('No news from API, using fallback data');
+            setNewsItems(getFallbackNews());
+          }
+          setLoading(false);
+        }
       } catch (err) {
         console.error('Error fetching news:', err);
-        setError('Failed to load news');
+        setError('Unable to load news');
         // Set fallback news in case of error
-        setNewsItems([
-          {
-            id: 1,
-            title: 'Sustainable Agriculture Workshop',
-            content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-            summary: 'Join us for a hands-on workshop on sustainable farming techniques.',
-            image_url: '/images/news-1.jpg',
-            status: 'published',
-            author_id: 1,
-            author_name: 'John Doe',
-            category_id: 1,
-            category_name: 'Events',
-            tags: ['farming', 'workshop', 'sustainability'],
-            publish_date: '2025-04-15T09:00:00.000Z',
-            created_at: '2025-04-10T09:00:00.000Z',
-            updated_at: '2025-04-10T09:00:00.000Z'
-          },
-          {
-            id: 2,
-            title: 'New Partnership Announcement',
-            content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-            summary: 'We are excited to announce our new partnership with Sustainable Futures.',
-            image_url: '/images/news-2.jpg',
-            status: 'published',
-            author_id: 2,
-            author_name: 'Jane Smith',
-            category_id: 2,
-            category_name: 'Announcements',
-            tags: ['partnership', 'sustainability'],
-            publish_date: '2025-04-12T14:30:00.000Z',
-            created_at: '2025-04-11T10:15:00.000Z',
-            updated_at: '2025-04-11T10:15:00.000Z'
-          }
-        ]);
-      } finally {
+        setNewsItems(getFallbackNews());
         setLoading(false);
       }
     };
@@ -121,8 +102,61 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
     fetchNews();
   }, []);
 
+  // Fallback news
+  const getFallbackNews = () => {
+    return [
+      {
+        id: 1,
+        title: 'Sustainable Agriculture Workshop',
+        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        summary: 'Join us for a hands-on workshop on sustainable farming techniques.',
+        image_url: '/images/ganzafrica-fellows.jpg',
+        status: 'published',
+        author_id: 1,
+        author_name: 'John Doe',
+        category_id: 1,
+        category_name: 'Events',
+        tags: ['farming', 'workshop', 'sustainability'],
+        publish_date: '2025-04-15T09:00:00.000Z',
+        created_at: '2025-04-10T09:00:00.000Z',
+        updated_at: '2025-04-10T09:00:00.000Z'
+      },
+      {
+        id: 2,
+        title: 'New Partnership Announcement',
+        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        summary: 'We are excited to announce our new partnership with Sustainable Futures.',
+        image_url: '/images/ganzafrica-fellows.jpg',
+        status: 'published',
+        author_id: 2,
+        author_name: 'Jane Smith',
+        category_id: 2,
+        category_name: 'Announcements',
+        tags: ['partnership', 'sustainability'],
+        publish_date: '2025-04-12T14:30:00.000Z',
+        created_at: '2025-04-11T10:15:00.000Z',
+        updated_at: '2025-04-11T10:15:00.000Z'
+      },
+      {
+        id: 3,
+        title: 'Community Outreach Program Success',
+        content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        summary: 'Our recent community outreach program exceeded all expectations.',
+        image_url: '/images/ganzafrica-fellows.jpg',
+        status: 'published',
+        author_id: 3,
+        author_name: 'David Johnson',
+        category_id: 3,
+        category_name: 'Success Stories',
+        tags: ['community', 'outreach', 'impact'],
+        publish_date: '2025-04-08T11:00:00.000Z',
+        created_at: '2025-04-07T16:30:00.000Z',
+        updated_at: '2025-04-07T16:30:00.000Z'
+      }
+    ];
+  };
+
   // Helper function to format date
-// Helper function to format date using string manipulation
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -132,10 +166,8 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
     });
   };
 
-
-
   // Helper function to truncate text
-  const truncateText = (text: string, maxLength = 120) => {
+  const truncateText = (text: string, maxLength = 100) => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -179,17 +211,17 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
   };
 
   // Show loading skeleton
-  if (loading && newsItems.length === 0) {
+  if (loading) {
     return (
       <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center mb-16">
             <div className="h-12 w-72 bg-gray-200 animate-pulse rounded-md mx-auto"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[1, 2, 3].map((item) => (
-              <div key={item} className="bg-white rounded-xl shadow-md overflow-hidden">
-                <div className="h-48 bg-gray-200 animate-pulse"></div>
+              <div key={item} className="bg-white rounded-3xl overflow-hidden shadow-lg animate-pulse perspective-wrapper">
+                <div className="h-48 bg-gray-200 perspective-element"></div>
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-4 h-4 bg-gray-200 animate-pulse rounded-full"></div>
@@ -209,9 +241,39 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
     );
   }
 
+  // Show no news available message
+  if (!loading && newsItems.length === 0) {
+    return (
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center mb-16">
+            <DecoratedHeading
+              firstText={dict?.news?.heading_first ?? "Latest"}
+              secondText={dict?.news?.heading_second ?? "News"}
+              className="mx-auto"
+            />
+          </div>
+          
+          {/* No News Message */}
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gray-100">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No News Available</h3>
+            <p className="text-gray-600 max-w-md mx-auto">
+              We don't have any news articles at the moment. Please check back later for updates.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 md:py-24 bg-white">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-16">
           <DecoratedHeading
             firstText={dict?.news?.heading_first ?? "Latest"}
@@ -222,38 +284,37 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
 
         {/* Error message */}
         {error && (
-          <div className="text-center text-red-500 mb-8">{error}</div>
+          <div className="text-center text-red-500 mb-8" role="alert">{error}</div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {newsItems.map((newsItem) => {
             const slug = generateSlug(newsItem.title);
             return (
-              <div key={newsItem.id} className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 group">
-                <div className="relative h-48">
-                  {/* Image with enhanced image finding logic */}
-                  <div className="w-full h-full">
-                    <img
-                      src={getImageUrl(newsItem)}
-                      alt={newsItem.title}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      onError={(e) => {
-                        // Fallback if image fails to load
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null; // Prevent infinite loop
-                        target.src = '/images/default-news.jpg';
-                      }}
-                    />
+              <motion.div 
+                key={newsItem.id} 
+                className="news-card perspective-wrapper"
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              >
+                {/* Image with perspective effect */}
+                <div className="perspective-element">
+                  <div 
+                    className="perspective-image" 
+                    style={{ 
+                      backgroundImage: `url(${getImageUrl(newsItem)})`,
+                      backgroundColor: '#117B34', // Backup color if image fails
+                    }}
+                  >
+                    {/* Category badge */}
+                    {newsItem.category_name && (
+                      <span className="absolute top-3 left-3 bg-primary-green text-white text-xs font-semibold px-2.5 py-1 rounded-full z-10">
+                        {newsItem.category_name}
+                      </span>
+                    )}
                   </div>
-                  
-                  {/* Category badge */}
-                  {newsItem.category_name && (
-                    <span className="absolute top-3 left-3 bg-primary-green text-white text-xs font-medium px-2.5 py-1 rounded z-10">
-                      {newsItem.category_name}
-                    </span>
-                  )}
                 </div>
-                <div className="p-6">
+                
+                <div className="p-5 bg-white">
                   {/* Date */}
                   <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
                     <CalendarDays className="w-4 h-4" />
@@ -261,25 +322,24 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-bold mb-3 text-gray-800 line-clamp-2">
+                  <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2">
                     {newsItem.title}
                   </h3>
 
                   {/* Summary or truncated content */}
-                  <p className="text-gray-600 mb-4 line-clamp-3">
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                     {newsItem.summary || truncateText(newsItem.content)}
                   </p>
 
-                  {/* Read more button - Now using Link and slug */}
+                  {/* Read more button - styled like project cards */}
                   <Link
                     href={`/${locale}/newsroom/${slug}`}
-                    className="inline-flex items-center gap-2 text-primary-orange font-medium rounded-full px-4 py-2 border border-primary-orange hover:bg-primary-orange hover:text-white transition-colors"
+                    className="view-news-button"
                   >
-                    <span>{dict?.news?.read_more ?? "Read More"}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    {dict?.news?.read_more ?? "Read More"}
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
@@ -289,14 +349,99 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
           <div className="text-center mt-12">
             <Link
               href={`/${locale}/newsroom`}
-              className="inline-flex items-center gap-2 bg-primary-green text-white font-medium rounded-full px-6 py-3 hover:bg-primary-green/90 transition-colors"
+              className={cn(
+                "inline-flex items-center gap-2",
+                "bg-primary-green hover:bg-primary-green/90",
+                "text-white py-2.5 px-6 rounded-lg",
+                "transition-all duration-300 hover:shadow-lg",
+                "text-sm font-medium"
+              )}
             >
               <span>{dict?.news?.view_all ?? "View All News"}</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight size={16} />
             </Link>
           </div>
         )}
       </div>
+
+      {/* Custom CSS for the perspective effect and button styling */}
+      <style jsx global>{`
+        .news-card {
+          position: relative;
+          border-radius: 24px;
+          background: white;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+          overflow: hidden;
+          transition: all 0.3s ease;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .news-card:hover {
+          box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        }
+        
+        .perspective-wrapper {
+          perspective: 1000px;
+        }
+        
+        .perspective-element {
+          position: relative;
+          height: 180px;
+          width: 100%;
+          overflow: hidden;
+          transform-style: preserve-3d;
+          border-radius: 24px 24px 0 0;
+        }
+        
+        .perspective-image {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-size: cover;
+          background-position: center;
+          border-radius: 24px 24px 0 0;
+          transform: translateZ(0) rotateY(-5deg) scale(1.05);
+          transform-origin: right center;
+          box-shadow: -8px 5px 10px rgba(0,0,0,0.1);
+          transition: all 0.5s ease;
+        }
+        
+        .news-card:hover .perspective-image {
+          transform: translateZ(10px) rotateY(-8deg) scale(1.08);
+        }
+        
+        /* View news button styling */
+        .view-news-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background-color: white;
+          color: #117B34; /* primary-green color */
+          font-weight: 600;
+          font-size: 14px;
+          padding: 8px 16px;
+          border-radius: 9999px; /* fully rounded */
+          border: 1px solid #E5E7EB;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+          transition: all 0.2s ease;
+        }
+        
+        .view-news-button:hover {
+          background-color: #F9FAFB;
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+          .news-card {
+            max-width: 320px;
+            margin: 0 auto;
+          }
+        }
+      `}</style>
     </section>
   );
 }

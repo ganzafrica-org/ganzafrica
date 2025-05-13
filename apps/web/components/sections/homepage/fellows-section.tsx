@@ -115,13 +115,7 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
   return (
       <section className="pt-16 md:pt-24 bg-white relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <DecoratedHeading
-                firstText={dict.home?.fellow_section?.heading_first || "Empower Youth to"}
-                secondText={dict.home?.fellow_section?.heading_second || "Transform Africa's Food Systems"}
-                className="mx-auto"
-            />
-          </div>
+        
 
           <div className="relative mx-auto px-4">
             <div className="flex flex-col-reverse lg:flex-row items-center gap-8">
@@ -178,6 +172,13 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
 
               {/* Content section - on the right */}
               <div className="w-full lg:w-1/2">
+              <div className="text-center mb-12">
+            <DecoratedHeading
+                firstText={dict.home?.fellow_section?.heading_first || "Empower Youth to"}
+                secondText={dict.home?.fellow_section?.heading_second || "Transform Africa's Food Systems"}
+                className="mx-auto"
+            />
+          </div>
                 <p className="text-gray-700 text-base mb-6">
                   {dict.home?.fellow_section?.description ||
                       `GanzAfrica empowers Africa's youth with the skills, knowledge, and
