@@ -539,47 +539,29 @@ const NewsDetailsPage = () => {
   return (
       <main className="bg-gray-50 min-h-screen">
         {/* Hero Section with Image */}
-        <section className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden pt-8">
+        <section className="relative h-[50vh] sm:h-[70vh] md:h-[80vh] lg:h-[90vh] w-full overflow-hidden">
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
             {mainImageUrl ? (
                 <img
                     src={mainImageUrl}
                     alt={article.title}
-                    className="w-full h-full object-contain bg-gray-100"
+                    className="object-cover w-full h-full"
                 />
             ) : (
                 <div className="w-full h-full bg-gradient-to-r from-[#004D40] to-[#00A651]"></div>
             )}
           </div>
-
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-black/50 z-10"></div>
-
-          {/* Content */}
-          <div className="relative container mx-auto px-4 h-full flex flex-col justify-end pb-10 z-20">
-            {/* Category tags */}
-            <div className="flex flex-wrap gap-2 mb-4">
-              {article.tags && article.tags.map(tag => (
-                  <span
-                      key={tag.id}
-                      className="px-4 py-1 bg-[#FFB800] text-white rounded-full text-sm font-medium"
-                  >
-                {tag.name}
-              </span>
-              ))}
-            </div>
-
-            {/* Title */}
-            <h1 className="text-white text-3xl md:text-4xl lg:text-5xl font-bold max-w-4xl">
-              {article.title}
-            </h1>
-
-            {/* Date */}
-            <div className="flex items-center mt-4 text-white/80">
+          {/* Dark gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent z-10"></div>
+          {/* Content overlay, left-aligned */}
+          <div className="relative z-20 flex flex-col justify-end h-full px-4 pb-12 max-w-5xl">
+            <h1 className="text-white text-4xl sm:text-5xl font-bold mb-4">{article.title}</h1>
+            <div className="flex items-center text-white/80">
               <Calendar className="h-5 w-5 mr-2" />
               {formatDate(article.publish_date)}
             </div>
+            {/* ...other content as needed... */}
           </div>
         </section>
 

@@ -1,3 +1,5 @@
+'use client';
+
 import { getDictionary } from "@/lib/get-dictionary";
 import Image from "next/image";
 import { DecoratedHeading } from "@/components/layout/headertext";
@@ -13,7 +15,8 @@ import {
   LucideIcon 
 } from 'lucide-react';
 
-import { FC } from "react";
+import { FC, useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 // Types for props
 interface MissionCardProps {
@@ -198,99 +201,125 @@ const PromiseCard: FC<PromiseCardProps> = ({
   );
 };
 
-export default async function AboutPage(props: PageProps) {
-  const params = await props.params;
+export default function AboutPage(props: PageProps) {
+  const [dict, setDict] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [tags, setTags] = useState<any[]>([]);
 
-  const {
-    locale
-  } = params;
+  // Get locale from props.params
+  const locale = props.params?.locale;
 
-  const dict = await getDictionary(locale);
-  
-  // Tag data with translations
-  const tags = [
-    // Yellow
-    {
-      text: dict?.about?.tags?.youth_empowerment || "Youth Empowerment",
-      color: "bg-primary-orange",
-      position: "left-56 bottom-10",
-      rotate: "-5deg",
-    },
-    {
-      text: dict?.about?.tags?.land_management || "Land Management",
-      color: "bg-primary-orange",
-      position: "left-64 bottom-20",
-      rotate: "0deg",
-    },
-    {
-      text: dict?.about?.tags?.peer_learning || "Peer to peer learning",
-      color: "bg-primary-orange",
-      position: "left-1/3 top-20",
-      rotate: "8deg",
-    },
-    {
-      text: dict?.about?.tags?.food_systems || "Food systems",
-      color: "bg-primary-orange",
-      position: "right-32 bottom-16",
-      rotate: "0deg",
-    },
-    {
-      text: dict?.about?.tags?.stewardship || "Stewardship",
-      color: "bg-primary-orange",
-      position: "left-1/2 bottom-20",
-      rotate: "5deg",
-    },
+  useEffect(() => {
+    async function fetchDict() {
+      setLoading(true);
+      const d = await getDictionary(locale);
+      setDict(d);
+      setLoading(false);
+    }
+    fetchDict();
+  }, [locale]);
 
-    // Green
-    {
-      text: dict?.about?.tags?.system_thinking || "System Thinking",
-      color: "bg-primary-green",
-      position: "left-36 top-24",
-      rotate: "-8deg",
-    },
-    {
-      text: dict?.about?.tags?.data_literacy || "Data Literacy",
-      color: "bg-primary-green",
-      position: "left-1/4 bottom-10",
-      rotate: "0deg",
-    },
-    {
-      text: dict?.about?.tags?.land_rights || "Land Rights",
-      color: "bg-green-800",
-      position: "right-48 top-16",
-      rotate: "0deg",
-    },
-    {
-      text: dict?.about?.tags?.networking || "Networking",
-      color: "bg-primary-green",
-      position: "left-1/3 bottom-10",
-      rotate: "3deg",
-    },
-    {
-      text: dict?.about?.tags?.evidence_based || "Evidence-based",
-      color: "bg-primary-green",
-      position: "left-1/2 bottom-10",
-      rotate: "0deg",
-    },
-    {
-      text: dict?.about?.tags?.co_creation || "Co-creation",
-      color: "bg-primary-green",
-      position: "right-1/3 bottom-20",
-      rotate: "0deg",
-    },
-    {
-      text: dict?.about?.tags?.agriculture || "Agriculture",
-      color: "bg-primary-green",
-      position: "right-20 top-24",
-      rotate: "-4deg",
-    },
-    {
-      text: dict?.about?.tags?.mentorship || "Mentorship",
-      color: "bg-primary-green",
-      position: "right-1/4 bottom-10",
-      rotate: "0deg",
-    },
-  ];
+  useEffect(() => {
+    if (!dict) return;
+    setTags([
+      {
+        id: 'youth_empowerment',
+        text: dict?.about?.tags?.youth_empowerment || "Youth Empowerment",
+        color: "bg-primary-orange",
+        position: "left-56 bottom-10",
+        rotate: "-5deg",
+      },
+      {
+        id: 'land_management',
+        text: dict?.about?.tags?.land_management || "Land Management",
+        color: "bg-primary-orange",
+        position: "left-64 bottom-20",
+        rotate: "0deg",
+      },
+      {
+        id: 'peer_learning',
+        text: dict?.about?.tags?.peer_learning || "Peer to peer learning",
+        color: "bg-primary-orange",
+        position: "left-1/3 top-20",
+        rotate: "8deg",
+      },
+      {
+        id: 'food_systems',
+        text: dict?.about?.tags?.food_systems || "Food systems",
+        color: "bg-primary-orange",
+        position: "right-32 bottom-16",
+        rotate: "0deg",
+      },
+      {
+        id: 'stewardship',
+        text: dict?.about?.tags?.stewardship || "Stewardship",
+        color: "bg-primary-orange",
+        position: "left-1/2 bottom-20",
+        rotate: "5deg",
+      },
+      // Green
+      {
+        id: 'system_thinking',
+        text: dict?.about?.tags?.system_thinking || "System Thinking",
+        color: "bg-primary-green",
+        position: "left-36 top-24",
+        rotate: "-8deg",
+      },
+      {
+        id: 'data_literacy',
+        text: dict?.about?.tags?.data_literacy || "Data Literacy",
+        color: "bg-primary-green",
+        position: "left-1/4 bottom-10",
+        rotate: "0deg",
+      },
+      {
+        id: 'land_rights',
+        text: dict?.about?.tags?.land_rights || "Land Rights",
+        color: "bg-green-800",
+        position: "right-48 top-16",
+        rotate: "0deg",
+      },
+      {
+        id: 'networking',
+        text: dict?.about?.tags?.networking || "Networking",
+        color: "bg-primary-green",
+        position: "left-1/3 bottom-10",
+        rotate: "3deg",
+      },
+      {
+        id: 'evidence_based',
+        text: dict?.about?.tags?.evidence_based || "Evidence-based",
+        color: "bg-primary-green",
+        position: "left-1/2 bottom-10",
+        rotate: "0deg",
+      },
+      {
+        id: 'co_creation',
+        text: dict?.about?.tags?.co_creation || "Co-creation",
+        color: "bg-primary-green",
+        position: "right-1/3 bottom-20",
+        rotate: "0deg",
+      },
+      {
+        id: 'agriculture',
+        text: dict?.about?.tags?.agriculture || "Agriculture",
+        color: "bg-primary-green",
+        position: "right-20 top-24",
+        rotate: "-4deg",
+      },
+      {
+        id: 'mentorship',
+        text: dict?.about?.tags?.mentorship || "Mentorship",
+        color: "bg-primary-green",
+        position: "right-1/4 bottom-10",
+        rotate: "0deg",
+      },
+    ]);
+  }, [dict]);
+
+  if (loading || !dict) {
+    return <div className="flex justify-center items-center min-h-screen text-xl">Loading...</div>;
+  }
 
   // Categories for the banner with translations
   const categories = [
@@ -300,6 +329,25 @@ export default async function AboutPage(props: PageProps) {
     dict?.about?.categories?.food_system || "Food system",
     dict?.about?.categories?.climate || "Climate",
   ];
+
+  // Drag-and-drop handler
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const items = Array.from(tags);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    setTags(items);
+  };
+
+  // Handler to reorder tags based on new order of IDs from Matter.js
+  const onFloatingBadgeReorder = (newOrder) => {
+    setTags(prevTags => {
+      // Create a map for quick lookup
+      const tagMap = Object.fromEntries(prevTags.map(tag => [tag.id, tag]));
+      // Reorder tags according to newOrder
+      return newOrder.map(id => tagMap[id]).filter(Boolean);
+    });
+  };
 
   return (
     <main className="flex flex-col min-h-screen">
@@ -601,6 +649,8 @@ export default async function AboutPage(props: PageProps) {
         dict={dict?.about}
         categories={categories}
         tags={tags}
+        onDragEnd={onDragEnd}
+        onFloatingBadgeReorder={onFloatingBadgeReorder}
       />
     </main>
   );

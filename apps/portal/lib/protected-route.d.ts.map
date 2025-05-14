@@ -1,0 +1,1 @@
+{"version":3,"file":"protected-route.d.ts","sourceRoot":"","sources":["protected-route.tsx"],"names":[],"mappings":"AAQA,UAAU,mBAAmB;IAC3B,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;IAC1B,WAAW,CAAC,EAAE,MAAM,CAAC;IACrB,KAAK,CAAC,EAAE,MAAM,EAAE,CAAC;CAClB;AAED,wBAAgB,cAAc,CAAC,EACI,QAAQ,EACR,WAAsB,EACtB,KAAU,GACb,EAAE,mBAAmB,sCAgDpD;AAED,eAAe,cAAc,CAAC"}

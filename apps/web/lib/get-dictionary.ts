@@ -1,8 +1,5 @@
 // @ts-nocheck
 
-
-import "server-only";
-
 // Define supported locales
 const supportedLocales = ["en", "fr"];
 

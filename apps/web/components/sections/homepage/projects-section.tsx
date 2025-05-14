@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { ChevronLeft, ChevronRight, Eye, ArrowRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';

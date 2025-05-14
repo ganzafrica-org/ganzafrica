@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const contact_1 = require("../controllers/contact");
+const middlewares_1 = require("../middlewares");
+const contact_2 = require("../validations/contact");
+const router = (0, express_1.Router)();
+router.post("/subscribe", (0, middlewares_1.validate)(contact_2.contactValidation.newsletterSubscribeSchema), contact_1.contactController.subscribeNewsletter);
+router.post("/unsubscribe/:id", (0, middlewares_1.validate)(contact_2.contactValidation.newsletterUnsubscribeSchema), contact_1.contactController.unsubscribeNewsletter);
+router.get("/subscribers", (0, middlewares_1.validate)(contact_2.contactValidation.listNewsletterSubscribersSchema), contact_1.contactController.listNewsletterSubscribers);
+exports.default = router;

@@ -1,0 +1,26 @@
+export declare const mediaTypeEnum: import("drizzle-orm/pg-core").PgEnum<["image", "video"]>;
+export declare const twoFactorMethodEnum: import("drizzle-orm/pg-core").PgEnum<["authenticator", "sms", "email"]>;
+export declare const newsStatusEnum: import("drizzle-orm/pg-core").PgEnum<["published", "not_published"]>;
+export declare const newsCategoryEnum: import("drizzle-orm/pg-core").PgEnum<["all", "news", "blogs", "reports", "publications"]>;
+export declare const projectStatusEnum: import("drizzle-orm/pg-core").PgEnum<["planned", "active", "completed", "cancelled", "on_hold"]>;
+export declare const mediaTagEnum: import("drizzle-orm/pg-core").PgEnum<["feature", "description", "others"]>;
+export declare const projectMemberRoleEnum: import("drizzle-orm/pg-core").PgEnum<["lead", "member", "supervisor", "contributor"]>;
+export declare const jobTypeEnum: import("drizzle-orm/pg-core").PgEnum<["fellowship", "employment"]>;
+export declare const jobPostingTypeEnum: import("drizzle-orm/pg-core").PgEnum<["internal", "external", "partner"]>;
+export declare const postingStatusEnum: import("drizzle-orm/pg-core").PgEnum<["draft", "published", "closed"]>;
+export declare const documentTypeEnum: import("drizzle-orm/pg-core").PgEnum<["cv", "cover_letter", "certificate", "other"]>;
+export declare const contentStatusEnum: import("drizzle-orm/pg-core").PgEnum<["draft", "published", "archived"]>;
+export declare const resourceTypeEnum: import("drizzle-orm/pg-core").PgEnum<["document", "video", "guide", "research"]>;
+export declare const resourceAccessEnum: import("drizzle-orm/pg-core").PgEnum<["public", "fellow", "employee", "alumni"]>;
+export declare const eventTypeEnum: import("drizzle-orm/pg-core").PgEnum<["public", "internal", "training"]>;
+export declare const attendeeStatusEnum: import("drizzle-orm/pg-core").PgEnum<["registered", "attended", "cancelled"]>;
+export declare const mentorshipTypeEnum: import("drizzle-orm/pg-core").PgEnum<["fellow_mentor", "peer_mentor", "alumni_mentor"]>;
+export declare const mentorshipStatusEnum: import("drizzle-orm/pg-core").PgEnum<["active", "completed", "paused"]>;
+export declare const opportunityStatusEnum: import("drizzle-orm/pg-core").PgEnum<["draft", "published", "closed", "cancelled"]>;
+export declare const opportunityTypeEnum: import("drizzle-orm/pg-core").PgEnum<["fellowship", "employment"]>;
+export declare const applicationStatusEnum: import("drizzle-orm/pg-core").PgEnum<["submitted", "under_review", "shortlisted", "interviewed", "accepted", "rejected", "waitlisted", "withdrawn"]>;
+export declare const genderEnum: import("drizzle-orm/pg-core").PgEnum<["male", "female", "non_binary", "prefer_not_to_say", "other"]>;
+export declare const educationLevelEnum: import("drizzle-orm/pg-core").PgEnum<["high_school", "associate_degree", "bachelors_degree", "masters_degree", "doctorate", "professional_certification", "other"]>;
+export declare const verificationTypeEnum: import("drizzle-orm/pg-core").PgEnum<["email", "phone"]>;
+export declare const contextTypeEnum: import("drizzle-orm/pg-core").PgEnum<["project", "department", "personal_development", "other"]>;
+//# sourceMappingURL=enums.d.ts.map

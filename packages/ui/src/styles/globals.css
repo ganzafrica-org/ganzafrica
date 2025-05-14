@@ -141,3 +141,26 @@
 
 .border-primary-green { border-color: var(--color-primary-green); }
 .border-primary-orange { border-color: var(--color-primary-orange); }
+
+/* Enhanced scrollbar hiding */
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+  overflow: -moz-scrollbars-none !important;  /* Firefox */
+  -webkit-overflow-scrolling: touch !important;  /* iOS momentum scrolling */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;  /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  -webkit-appearance: none !important;
+}
+
+/* Additional utility class for scrollable containers */
+.scrollable-container {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scroll-behavior: smooth !important;
+}
