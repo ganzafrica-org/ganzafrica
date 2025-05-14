@@ -136,12 +136,6 @@ export default function HomeHero({
   // Navigation items for shadcn navigation
   const aboutItems: MenuItem[] = [
     {
-      title: dict.about?.who_we_are || "Who We Are",
-      href: "/about/who-we-are",
-      description:
-        "Learn about our mission, vision, and the values that drive us.",
-    },
-    {
       title: dict.about?.our_story || "Our Story",
       href: "/about/our-story",
       description:
@@ -171,12 +165,6 @@ export default function HomeHero({
   ];
   
   const newsItems: MenuItem[] = [
-    {
-      title: "News",
-      href: "/newsroom",
-      description:
-        "Stay updated with our latest initiatives, successes, and announcements.",
-    },
     {
       title: "Opportunities",
       href: "/opportunities",
@@ -363,11 +351,10 @@ export default function HomeHero({
                         href={`/${locale}/about/who-we-are`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
-                          About Us
+                          Who We Are
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
-                          Dedicated to creating a sustainable future for Africa
-                          through empowering youth and communities.
+                        Learn about our mission, vision, and the values that drive us.
                         </p>
                       </Link>
                     </NavigationMenuLink>
@@ -408,15 +395,14 @@ export default function HomeHero({
                     <NavigationMenuLink asChild>
                       <Link
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/programs/fellowship`}
+                        href={`/${locale}/projects`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
-                          Our Programs
+                          Our Projects
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
-                          Transformative programs designed to build capacity and
-                          develop leadership in sustainable agriculture.
-                        </p>
+                            Innovative initiatives driving Africa’s transformation through technology, youth empowerment, and sustainable development.
+                            </p>
                       </Link>
                     </NavigationMenuLink>
                   </li>
@@ -433,18 +419,7 @@ export default function HomeHero({
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-            
-            {/* Projects - Direct Link */}
-            <NavigationMenuItem>
-              <Link href={`/${locale}/projects`} passHref>
-                <NavigationMenuLink 
-                  className={`${textColor} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
-                >
-                  {dict.navigation?.projects || "Projects"}
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-
+        
             {/* News & Updates */}
             <NavigationMenuItem>
               <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
@@ -459,7 +434,7 @@ export default function HomeHero({
                         href={`/${locale}/newsroom`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
-                          Latest Updates
+                         News & Updates
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
                           Stay informed about our recent activities, projects,
@@ -582,16 +557,6 @@ export default function HomeHero({
               </div>
             )}
           </div>
-
-          {/* Projects - Direct Link */}
-          <Link
-            href={`/${locale}/projects`}
-            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
-            onClick={() => setIsMobileMenuOpen(false)}
-            prefetch={true}
-          >
-            {dict.navigation?.projects || "Projects"}
-          </Link>
 
           {/* News & Updates */}
           <div className="flex flex-col w-full">
