@@ -181,11 +181,11 @@ export default function FAQPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, delay: 0.2 }}
                     >
-                      Clear <span className="text-yellow-400">Answers</span> to Help You<br />
+                      Clear <span className="text-primary-orange">Answers</span> to Help You<br />
                       Get Started
                     </motion.h1>
                     <motion.h2
-                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-yellow-400 tracking-wider mt-6"
+                        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-primary-orange tracking-wider mt-6"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.7, delay: 0.4 }}
@@ -197,7 +197,7 @@ export default function FAQPage() {
         </section>
 
         {/* Yellow Belt Section */}
-        <div className="bg-yellow-400 py-4 relative overflow-hidden">
+        <div className="text-primary-orange py-4 relative overflow-hidden">
               <div className="flex justify-center items-center">
                 <div className="marquee-container overflow-hidden w-full max-w-2xl mx-auto">
                   <div className="marquee-content flex whitespace-nowrap animate-marquee">

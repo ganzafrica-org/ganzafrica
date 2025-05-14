@@ -30,6 +30,7 @@ const AddProjectPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [formSuccess, setFormSuccess] = useState('');
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState<any[]>([]);
@@ -93,9 +94,14 @@ const AddProjectPage = () => {
     file: null,
     type: 'image',
     title: '',
+    description: '',
     tag: 'feature',
     cover: false,
-    url: ''
+    url: '',
+    thumbnailUrl: null,
+    thumbnailFile: null,
+    duration: 0,
+    previewUrl: null
   });
 
   // Clean up blob URLs when component unmounts
@@ -111,9 +117,20 @@ const AddProjectPage = () => {
         if (media.url && media.url.startsWith('blob:')) {
           URL.revokeObjectURL(media.url);
         }
+        if (media.thumbnailUrl && media.thumbnailUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(media.thumbnailUrl);
+        }
       });
+      
+      // Revoke any media preview URLs
+      if (newMedia.previewUrl && newMedia.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(newMedia.previewUrl);
+      }
+      if (newMedia.thumbnailUrl && newMedia.thumbnailUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(newMedia.thumbnailUrl);
+      }
     };
-  }, [formData.media.items, videoPreviewUrl]);
+  }, [formData.media.items, videoPreviewUrl, newMedia]);
 
   // Fetch categories, users, teams, partners and roles on component mount
   useEffect(() => {
@@ -325,30 +342,29 @@ const AddProjectPage = () => {
       setIsUploading(true);
       setUploadProgress(0);
       
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(interval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('file', newDocument.file);
       
-      // Create local file URL
-      const fileUrl = URL.createObjectURL(newDocument.file);
+      // Make the upload request to the backend
+      const response = await apiClient.post('/uploads/file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
       
-      // Finish upload simulation
-      setTimeout(() => {
-        clearInterval(interval);
-        setUploadProgress(100);
-        setIsUploading(false);
+      // Check if upload was successful
+      if (response.data && response.data.success) {
+        console.log('Document uploaded successfully:', response.data.file);
         
         // Add document to form data
         const documentToAdd = {
           name: newDocument.name,
-          file_url: fileUrl,
+          file_url: response.data.file.url,
           file_size: newDocument.file.size
         };
         
@@ -362,11 +378,18 @@ const AddProjectPage = () => {
         if (documentFileInputRef.current) {
           documentFileInputRef.current.value = '';
         }
-      }, 1500);
+        
+        setFormSuccess('Document added successfully');
+        setTimeout(() => setFormSuccess(''), 3000);
+      } else {
+        throw new Error('Upload failed: Server returned unsuccessful response');
+      }
     } catch (error) {
       console.error('Error adding document:', error);
       setError('Failed to add document. Please try again.');
+    } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -378,45 +401,46 @@ const AddProjectPage = () => {
     }));
   };
 
-// Handle selecting a team member
-const handleTeamMemberSelect = (teamId) => {
-  // Check if the role is selected
-  if (!selectedRole) {
-    alert('Please select a role first');
-    return;
-  }
-  
-  // Check if team member is already a member
-  const alreadyMember = formData.members.some(
-    member => member.team_id === teamId
-  );
-  
-  if (!alreadyMember) {
-    const memberToAdd = {
-      team_id: teamId,
-      role: selectedRole // This will now be one of: 'lead', 'member', 'supervisor', 'contributor'
-    };
+  // Handle selecting a team member
+  const handleTeamMemberSelect = (teamId) => {
+    // Check if the role is selected
+    if (!selectedRole) {
+      alert('Please select a role first');
+      return;
+    }
     
-    setFormData(prev => ({
-      ...prev,
-      members: [...prev.members, memberToAdd]
-    }));
-  }
-  
-  setOpenTeamPopover(false);
-};
+    // Check if team member is already a member
+    const alreadyMember = formData.members.some(
+      member => member.team_id === teamId
+    );
+    
+    if (!alreadyMember) {
+      const memberToAdd = {
+        team_id: teamId,
+        role: selectedRole // This will now be one of: 'lead', 'member', 'supervisor', 'contributor'
+      };
+      
+      setFormData(prev => ({
+        ...prev,
+        members: [...prev.members, memberToAdd]
+      }));
+    }
+    
+    setOpenTeamPopover(false);
+  };
 
-// Get role name for display
-const getRoleNameById = (roleId) => {
-  // For the fixed role values, return the formatted display name
-  if (roleId === 'lead') return 'Lead';
-  if (roleId === 'member') return 'Member';
-  if (roleId === 'supervisor') return 'Supervisor';
-  if (roleId === 'contributor') return 'Contributor';
+  // Get role name for display
+  const getRoleNameById = (roleId) => {
+    // For the fixed role values, return the formatted display name
+    if (roleId === 'lead') return 'Lead';
+    if (roleId === 'member') return 'Member';
+    if (roleId === 'supervisor') return 'Supervisor';
+    if (roleId === 'contributor') return 'Contributor';
+    
+    // Fallback for any other role (should not happen with fixed values)
+    return roleId?.toString();
+  };
   
-  // Fallback for any other role (should not happen with fixed values)
-  return roleId?.toString();
-};
   // Handle selecting a partner
   const handlePartnerSelect = (partnerId) => {
     // Check if partner is already added
@@ -438,6 +462,45 @@ const getRoleNameById = (roleId) => {
     setOpenPartnerPopover(false);
   };
 
+  // Upload file to the backend server
+  const uploadFile = async (file) => {
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Make the upload request to the backend
+      const response = await apiClient.post('/uploads/file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+      
+      // Check if upload was successful
+      if (response.data && response.data.success) {
+        console.log('File uploaded successfully:', response.data.file);
+        setUploadProgress(100);
+        setIsUploading(false);
+        return response.data.file.url;
+      } else {
+        throw new Error('Upload failed: Server returned unsuccessful response');
+      }
+    } catch (error) {
+      console.error('Error uploading file to server:', error);
+      setIsUploading(false);
+      throw error; // Re-throw to handle in the calling function
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Handle file selection
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -450,22 +513,154 @@ const getRoleNameById = (roleId) => {
       }
       
       // Create a preview for videos
-      let previewUrl = null;
-      if (fileType === 'video') {
-        previewUrl = URL.createObjectURL(file);
-      }
+      let previewUrl = URL.createObjectURL(file);
       
-      setNewMedia(prev => ({
-        ...prev,
-        file,
-        type: fileType,
-        previewUrl: previewUrl,
-        url: '' // Clear URL when file is selected
-      }));
+      if (fileType === 'video') {
+        // Create a video element to extract metadata
+        const videoElement = document.createElement('video');
+        videoElement.preload = 'metadata';
+        videoElement.src = previewUrl;
+        
+        videoElement.onloadedmetadata = () => {
+          const duration = Math.round(videoElement.duration);
+          
+          // Generate thumbnail on load
+          if (videoElement.readyState >= 2) {
+            videoElement.currentTime = 1; // 1 second in to avoid black frames
+            
+            videoElement.onseeked = () => {
+              try {
+                // Create canvas and draw video frame for thumbnail
+                const canvas = document.createElement('canvas');
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                
+                // Get thumbnail as data URL
+                const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
+                
+                // Update media state with video metadata and thumbnail
+                setNewMedia(prev => ({
+                  ...prev,
+                  file,
+                  type: fileType,
+                  previewUrl,
+                  thumbnailUrl,
+                  duration
+                }));
+              } catch (error) {
+                console.error('Error generating thumbnail:', error);
+                setNewMedia(prev => ({
+                  ...prev,
+                  file,
+                  type: fileType,
+                  previewUrl,
+                  duration
+                }));
+              }
+            };
+          } else {
+            // If we can't generate thumbnail right away, just set basic info
+            setNewMedia(prev => ({
+              ...prev,
+              file,
+              type: fileType,
+              previewUrl,
+              duration
+            }));
+          }
+        };
+        
+        videoElement.onerror = () => {
+          console.error('Error loading video for preview');
+          setNewMedia(prev => ({
+            ...prev,
+            file,
+            type: fileType,
+            previewUrl
+          }));
+        };
+      } else {
+        // For images, just set the basic info
+        setNewMedia(prev => ({
+          ...prev,
+          file,
+          type: fileType,
+          previewUrl
+        }));
+      }
       
       // Switch to file mode
       setMediaSourceType('file');
     }
+  };
+
+  // Generate a video thumbnail
+  const generateVideoThumbnail = async (videoFile) => {
+    return new Promise((resolve) => {
+      try {
+        const videoElement = document.createElement('video');
+        videoElement.preload = 'metadata';
+        videoElement.playsInline = true;
+        videoElement.muted = true;
+        
+        // Create a URL for the video file
+        const videoURL = URL.createObjectURL(videoFile);
+        videoElement.src = videoURL;
+        
+        // Set a timeout in case the video fails to load
+        const timeoutId = setTimeout(() => {
+          console.warn('Video thumbnail generation timed out');
+          URL.revokeObjectURL(videoURL);
+          resolve(null);
+        }, 10000); // 10 second timeout
+        
+        // Once the video metadata is loaded, capture the thumbnail
+        videoElement.onloadedmetadata = () => {
+          // Set current time to the first frame
+          videoElement.currentTime = 1; // 1 second in to avoid black frames
+        };
+        
+        // When the current time updates (after seeking)
+        videoElement.onseeked = () => {
+          try {
+            clearTimeout(timeoutId);
+            
+            // Create a canvas and draw the video frame
+            const canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            
+            // Convert the canvas to a data URL (thumbnail)
+            const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
+            
+            // Clean up
+            URL.revokeObjectURL(videoURL);
+            
+            // Return the thumbnail
+            resolve(thumbnailUrl);
+          } catch (err) {
+            console.error('Error in onseeked handler:', err);
+            URL.revokeObjectURL(videoURL);
+            resolve(null);
+          }
+        };
+        
+        // Handle errors
+        videoElement.onerror = (e) => {
+          console.error('Error in video element:', e);
+          clearTimeout(timeoutId);
+          URL.revokeObjectURL(videoURL);
+          resolve(null);
+        };
+      } catch (err) {
+        console.error('Error setting up video element:', err);
+        resolve(null);
+      }
+    });
   };
 
   // Handle media source type change
@@ -578,135 +773,6 @@ const getRoleNameById = (roleId) => {
     documentFileInputRef.current?.click();
   };
 
-  // Upload file to server (modified to use local URLs)
-  const uploadFile = async (file) => {
-    try {
-      setIsUploading(true);
-      setUploadProgress(0);
-      
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(interval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
-      
-      // Create a local URL for the file
-      const localUrl = URL.createObjectURL(file);
-      
-      // Clear the interval and finish
-      setTimeout(() => {
-        clearInterval(interval);
-        setUploadProgress(100);
-        setIsUploading(false);
-      }, 1500);
-      
-      return localUrl; // This URL will work in the browser session
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      setIsUploading(false);
-      return null;
-    }
-  };
-
-  // Generate a video thumbnail (as a placeholder)
-  const generateVideoThumbnail = async (videoFile) => {
-    return new Promise((resolve) => {
-      const videoElement = document.createElement('video');
-      videoElement.preload = 'metadata';
-      videoElement.playsInline = true;
-      videoElement.muted = true;
-      
-      // Create a URL for the video file
-      const videoURL = URL.createObjectURL(videoFile);
-      videoElement.src = videoURL;
-      
-      // Once the video metadata is loaded, capture the thumbnail
-      videoElement.onloadedmetadata = () => {
-        // Set current time to the first frame
-        videoElement.currentTime = 1; // 1 second in to avoid black frames
-      };
-      
-      // When the current time updates (after seeking)
-      videoElement.onseeked = () => {
-        // Create a canvas and draw the video frame
-        const canvas = document.createElement('canvas');
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-        
-        // Convert the canvas to a data URL (thumbnail)
-        const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
-        
-        // Clean up
-        URL.revokeObjectURL(videoURL);
-        
-        // Return the thumbnail
-        resolve(thumbnailUrl);
-      };
-      
-      // Handle errors
-      videoElement.onerror = () => {
-        URL.revokeObjectURL(videoURL);
-        console.error('Error generating video thumbnail');
-        resolve(null);
-      };
-    });
-  };
-
-  // Add goal to goals list
-  const addGoal = () => {
-    if (!newGoal.title || !newGoal.description) return;
-    
-    const goalId = `goal-${Date.now()}`;
-    const goalToAdd = {
-      id: goalId,
-      title: newGoal.title,
-      description: newGoal.description,
-      completed: newGoal.completed,
-      order: formData.goals.items.length + 1
-    };
-    
-    setFormData(prev => ({
-      ...prev,
-      goals: {
-        items: [...prev.goals.items, goalToAdd]
-      }
-    }));
-    
-    // Reset new goal form
-    setNewGoal({ title: '', description: '', completed: false });
-  };
-
-  // Add outcome to outcomes list
-  const addOutcome = () => {
-    if (!newOutcome.title || !newOutcome.description) return;
-    
-    const outcomeId = `outcome-${Date.now()}`;
-    const outcomeToAdd = {
-      id: outcomeId,
-      title: newOutcome.title,
-      description: newOutcome.description,
-      status: newOutcome.status,
-      order: formData.outcomes.items.length + 1
-    };
-    
-    setFormData(prev => ({
-      ...prev,
-      outcomes: {
-        items: [...prev.outcomes.items, outcomeToAdd]
-      }
-    }));
-    
-    // Reset new outcome form
-    setNewOutcome({ title: '', description: '', status: 'pending' });
-  };
-
   // Add media to media list
   const addMedia = async () => {
     try {
@@ -732,28 +798,52 @@ const getRoleNameById = (roleId) => {
       let mediaSize = 0;
       
       if (mediaSourceType === 'file') {
-        // Get local URL for the file
+        // Upload file to the server and get the URL
         fileUrl = await uploadFile(newMedia.file);
         mediaSize = newMedia.file.size;
         
         if (!fileUrl) {
-          setError('Failed to create file URL. Please try again.');
+          setError('Failed to upload file. Please try again.');
           return;
         }
         
-        // For videos, try to generate a thumbnail
+        // For videos, we may already have a thumbnail in the state
         if (newMedia.type === 'video') {
-          try {
-            thumbnailUrl = await generateVideoThumbnail(newMedia.file);
-          } catch (error) {
-            console.error('Error generating thumbnail:', error);
-            // If thumbnail generation fails, use the video itself as thumbnail
-            thumbnailUrl = fileUrl;
+          if (newMedia.thumbnailUrl) {
+            // If the thumbnail is a data URL, we need to convert it to a file and upload
+            try {
+              const thumbnailFile = await dataURLtoFile(newMedia.thumbnailUrl, 'thumbnail.jpg');
+              thumbnailUrl = await uploadFile(thumbnailFile);
+            } catch (error) {
+              console.error('Error processing thumbnail:', error);
+              // Fallback to generating a thumbnail
+              try {
+                thumbnailUrl = await generateVideoThumbnail(newMedia.file);
+                if (thumbnailUrl) {
+                  const thumbnailFile = await dataURLtoFile(thumbnailUrl, 'thumbnail.jpg');
+                  thumbnailUrl = await uploadFile(thumbnailFile);
+                }
+              } catch (innerError) {
+                console.error('Error generating thumbnail:', innerError);
+                // If all fails, we can still continue without a thumbnail
+              }
+            }
+          } else {
+            // Generate and upload a thumbnail
+            try {
+              const generatedThumbnail = await generateVideoThumbnail(newMedia.file);
+              if (generatedThumbnail) {
+                const thumbnailFile = await dataURLtoFile(generatedThumbnail, 'thumbnail.jpg');
+                thumbnailUrl = await uploadFile(thumbnailFile);
+              }
+            } catch (error) {
+              console.error('Error generating/uploading thumbnail:', error);
+              // Continue without thumbnail
+            }
           }
         }
       } else {
-        // For URL-based media, use the URL directly
-        // Validate URL
+        // For URL-based media, validate URL
         const urlValidation = validateUrl(newMedia.url);
         if (!urlValidation.valid) {
           setError('Invalid URL. Please check and try again.');
@@ -761,13 +851,9 @@ const getRoleNameById = (roleId) => {
         }
         
         fileUrl = newMedia.url;
-        mediaSize = 0; // We don't know the size for URL-based media
         
-        // For URL-based videos, we can't generate a thumbnail here
-        // Could use a placeholder or service like OpenGraph for this
-        if (newMedia.type === 'video') {
-          thumbnailUrl = null;
-        }
+        // For URL-based videos, we don't have a thumbnail
+        // Could potentially fetch thumbnail from YouTube/Vimeo API
       }
       
       const mediaId = `media-${Date.now()}`;
@@ -777,7 +863,7 @@ const getRoleNameById = (roleId) => {
         type: newMedia.type,
         url: fileUrl,
         title: newMedia.title,
-        description: '',
+        description: newMedia.description || '',
         tag: newMedia.tag,
         cover: newMedia.cover,
         order: formData.media.items.length + 1,
@@ -785,7 +871,7 @@ const getRoleNameById = (roleId) => {
         isExternalUrl: mediaSourceType === 'url',
         // For videos, add duration and thumbnail
         ...(newMedia.type === 'video' && {
-          duration: 0, // We could calculate actual duration with more complex code
+          duration: newMedia.duration || 0,
           thumbnailUrl: thumbnailUrl
         })
       };
@@ -797,30 +883,46 @@ const getRoleNameById = (roleId) => {
         }
       }));
       
-      // Clear any preview URL from new media
-      if (newMedia.previewUrl) {
+      // Cleanup preview URLs if any
+      if (newMedia.previewUrl && newMedia.previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(newMedia.previewUrl);
       }
       
       // Reset new media form
-      setNewMedia({ 
+      setNewMedia({
         file: null,
         type: 'image',
         title: '',
+        description: '',
         tag: 'feature',
         cover: false,
-        previewUrl: null,
-        url: ''
+        url: '',
+        thumbnailUrl: null,
+        thumbnailFile: null,
+        duration: 0,
+        previewUrl: null
       });
       
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      
+      // Show success feedback
+      setFormSuccess('Media added successfully');
+      setTimeout(() => setFormSuccess(''), 3000);
+      
     } catch (error) {
       console.error('Error adding media:', error);
       setError('Failed to add media. Please try again.');
     }
+  };
+  
+  // Convert data URL to file for upload
+  const dataURLtoFile = async (dataUrl, filename) => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type });
   };
 
   // Open video in a larger modal/preview
@@ -877,6 +979,54 @@ const getRoleNameById = (roleId) => {
     if (selectedMedia && selectedMedia.id === mediaId) {
       setSelectedMedia(prev => ({ ...prev, cover: true }));
     }
+  };
+
+  // Add goal to goals list
+  const addGoal = () => {
+    if (!newGoal.title || !newGoal.description) return;
+    
+    const goalId = `goal-${Date.now()}`;
+    const goalToAdd = {
+      id: goalId,
+      title: newGoal.title,
+      description: newGoal.description,
+      completed: newGoal.completed,
+      order: formData.goals.items.length + 1
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      goals: {
+        items: [...prev.goals.items, goalToAdd]
+      }
+    }));
+    
+    // Reset new goal form
+    setNewGoal({ title: '', description: '', completed: false });
+  };
+
+  // Add outcome to outcomes list
+  const addOutcome = () => {
+    if (!newOutcome.title || !newOutcome.description) return;
+    
+    const outcomeId = `outcome-${Date.now()}`;
+    const outcomeToAdd = {
+      id: outcomeId,
+      title: newOutcome.title,
+      description: newOutcome.description,
+      status: newOutcome.status,
+      order: formData.outcomes.items.length + 1
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      outcomes: {
+        items: [...prev.outcomes.items, outcomeToAdd]
+      }
+    }));
+    
+    // Reset new outcome form
+    setNewOutcome({ title: '', description: '', status: 'pending' });
   };
 
   // Add member to members list
@@ -1022,6 +1172,11 @@ const getRoleNameById = (roleId) => {
               src={media.thumbnailUrl} 
               alt={media.title}
               className="object-cover w-full h-full" 
+              onError={(e) => {
+                // Replace with placeholder on error
+                e.target.src = 'https://via.placeholder.com/400x300?text=Video+Preview';
+                e.target.onerror = null; // Prevent infinite error loop
+              }}
             />
           ) : (
             <div className="bg-gray-200 w-full h-full flex items-center justify-center">
@@ -1052,6 +1207,27 @@ const getRoleNameById = (roleId) => {
     
     // Check if URL is external (not blob)
     const isExternalUrl = !videoPreviewUrl.startsWith('blob:');
+    const isYouTube = videoPreviewUrl.includes('youtube.com') || videoPreviewUrl.includes('youtu.be');
+    const isVimeo = videoPreviewUrl.includes('vimeo.com');
+    
+    // Create embed URL from YouTube or Vimeo URL
+    let embedUrl = videoPreviewUrl;
+    if (isYouTube) {
+      // Convert YouTube URL to embed format
+      if (videoPreviewUrl.includes('watch?v=')) {
+        const videoId = new URL(videoPreviewUrl).searchParams.get('v');
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      } else if (videoPreviewUrl.includes('youtu.be/')) {
+        const videoId = videoPreviewUrl.split('youtu.be/')[1].split('?')[0];
+        embedUrl = `https://www.youtube.com/embed/${videoId}`;
+      }
+    } else if (isVimeo) {
+      // Convert Vimeo URL to embed format
+      const vimeoId = videoPreviewUrl.match(/vimeo\.com\/(\d+)/)?.[1];
+      if (vimeoId) {
+        embedUrl = `https://player.vimeo.com/video/${vimeoId}`;
+      }
+    }
     
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
@@ -1064,31 +1240,26 @@ const getRoleNameById = (roleId) => {
           </button>
           
           <div className="bg-black rounded-lg overflow-hidden">
-            {isExternalUrl ? (
-              // For external URLs, create an iframe for YouTube/Vimeo or show the video directly
-              videoPreviewUrl.includes('youtube.com') || videoPreviewUrl.includes('youtu.be') ? (
-                <iframe 
-                  src={videoPreviewUrl.replace('watch?v=', 'embed/')} 
-                  className="w-full h-[80vh]"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              ) : (
-                <video 
-                  src={videoPreviewUrl} 
-                  controls 
-                  autoPlay 
-                  className="w-full h-auto max-h-[80vh]"
-                />
-              )
+            {isExternalUrl && (isYouTube || isVimeo) ? (
+              // For YouTube or Vimeo URLs, use iframe embed
+              <iframe 
+                src={embedUrl} 
+                className="w-full h-[80vh]"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
             ) : (
-              // For blob URLs, show the video directly
+              // For other URLs or blob URLs, use video element
               <video 
                 src={videoPreviewUrl} 
                 controls 
                 autoPlay 
                 className="w-full h-auto max-h-[80vh]"
+                onError={(e) => {
+                  console.error('Error playing video:', e);
+                  // Could show an error message
+                }}
               />
             )}
           </div>
@@ -1120,8 +1291,6 @@ const getRoleNameById = (roleId) => {
     const partner: Partner | undefined = partners.find((p: Partner) => p.id === partnerId);
     return partner ? partner.name : `Partner ${partnerId}`;
   };
-
-  // Removed duplicate declaration of getRoleNameById
 
   // Format file size display
   const formatFileSize = (bytes) => {
@@ -1255,6 +1424,16 @@ const getRoleNameById = (roleId) => {
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
           <span className="block sm:inline">Project created successfully! Redirecting...</span>
+        </div>
+      )}
+      
+      {/* Form success message */}
+      {formSuccess && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+          <div className="flex items-center">
+            <Check className="w-5 h-5 mr-2" />
+            <span>{formSuccess}</span>
+          </div>
         </div>
       )}
       
@@ -1411,6 +1590,8 @@ const getRoleNameById = (roleId) => {
         </div>
         {/* Horizontal line divider */}
         <hr className="border-t border-gray-200" />
+        
+        
 
         {/* Project goals & outcomes */}
         <div className="mb-8 p-6">

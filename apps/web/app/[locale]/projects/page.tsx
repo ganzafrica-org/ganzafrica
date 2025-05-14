@@ -90,7 +90,7 @@ const ProjectCard: React.FC<{
             
             {/* Yellow circle with arrow icon in top right */}
             <div className="absolute top-3 right-3 z-10">
-              <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center transition-all duration-500 shadow-lg transform group-hover:rotate-90">
+              <div className="w-8 h-8 rounded-full text-primary-orange flex items-center justify-center transition-all duration-500 shadow-lg transform group-hover:rotate-90">
                 <ArrowRight className="w-4 h-4 text-white" />
               </div>
             </div>
@@ -220,7 +220,7 @@ interface Project {
   created_at: string;
   category_id: string | number;
   media?: {
-    items?: { tag: string; url: string }[];
+    items?: { tag: string; url: string; cover?: boolean }[];
   };
   contact_person?: string;
 }
@@ -424,6 +424,7 @@ const ProjectsPage = () => {
   interface MediaItem {
     tag: string;
     url: string;
+    cover?: boolean;
   }
 
   interface ProjectMedia {
@@ -437,20 +438,41 @@ const ProjectsPage = () => {
 
   const getFeatureImage = (project: ProjectWithMedia): string => {
     if (project.media && project.media.items && project.media.items.length > 0) {
-      const featureImage = project.media.items.find((item: MediaItem) => item.tag === 'feature');
-      if (featureImage) {
-        // Make sure the URL is from an allowed domain or is a local path
-        if (featureImage.url.startsWith('/')) {
-          return featureImage.url; // Local image path
-        } else {
-          // For external URLs, return a fallback image
-          return `/images/news/team-members-${(project.id % 3) + 1}.jpg`;
-        }
+      // First try to get an item with tag 'feature' or cover=true
+      const featureImage = project.media.items.find((item: MediaItem) => 
+        item.tag === 'feature' || item.cover === true
+      );
+      
+      if (featureImage && featureImage.url) {
+        return featureImage.url;
+      }
+      
+      // If no feature, try description
+      const descriptionImage = project.media.items.find((item: MediaItem) => 
+        item.tag === 'description'
+      );
+      
+      if (descriptionImage && descriptionImage.url) {
+        return descriptionImage.url;
+      }
+      
+      // If no description, try others tag or any other available image
+      const otherImage = project.media.items.find((item: MediaItem) => 
+        item.tag === 'others' || item.tag === 'other'
+      );
+      
+      if (otherImage && otherImage.url) {
+        return otherImage.url;
+      }
+      
+      // If still no image, take the first available image regardless of tag
+      if (project.media.items[0] && project.media.items[0].url) {
+        return project.media.items[0].url;
       }
     }
-    // Return placeholder images in a pattern based on project ID
-    const imageIndex = (project.id % 3) + 1;
-    return `/images/news/team-members-${imageIndex}.jpg`;
+    
+    // Only as a last resort, use a placeholder
+    return '/api/placeholder/400/250?text=No+Image';
   };
   
   // Get category name from category_id
@@ -562,13 +584,13 @@ const ProjectsPage = () => {
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-            <span>Turning</span> <span className="text-yellow-400 font-bold">Ideas</span> <span>Into</span> <br />
-            <span>Action</span>
-          </h1>
-          <h2 className="text-yellow-400 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6">
+        <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
             PROJECTS
           </h2>
+          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
+            <span>Turning Ideas Into Action</span> 
+          </h1>
+        
         </div>
       </section>
       

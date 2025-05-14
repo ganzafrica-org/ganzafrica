@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@workspace/ui/components/button';
 import { Card } from '@workspace/ui/components/card';
-import { Grid2X2, List, Trash2, Edit2, Eye, Quote, Search, Filter, ArrowUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowRight } from 'lucide-react';
+import { Grid2X2, List, Trash2, Edit2, Eye, Quote, Search, Filter, ArrowUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowRight, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@workspace/ui/components/badge';
 import Image from 'next/image';
-import { Avatar, AvatarFallback } from '@workspace/ui/components/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar';
 import { Skeleton } from '@workspace/ui/components/skeleton';
 import apiClient from '@/lib/api-client';
 import {
@@ -46,6 +46,7 @@ export default function TestimonialsPage() {
   const [activeCategory, setActiveCategory] = useState<string>('All Testimonials');
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const categories = [
     'All Testimonials',
@@ -145,21 +146,78 @@ export default function TestimonialsPage() {
     });
   };
 
-  const renderMediaPreview = (imageUrl: string) => {
-    if (!imageUrl || imageUrl === 'string') return null;
+  // Improved image error handling
+  const handleImageError = (imageUrl: string) => {
+    console.error(`Failed to load image: ${imageUrl}`);
+    setImageErrors(prev => ({ ...prev, [imageUrl]: true }));
+  };
 
-    return (
+  // Create initials from author name
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('');
+  };
+
+  // Improved media preview with fallback for image errors
+  const renderMediaPreview = (imageUrl: string, authorName: string) => {
+    if (!imageUrl || imageUrl === 'string' || imageErrors[imageUrl]) {
+      return null;
+    }
+
+    // For localhost URLs, use a regular img tag
+    if (imageUrl.includes('localhost')) {
+      return (
         <div className="grid grid-cols-1 gap-2 mt-4">
           <div className="relative aspect-video rounded-lg overflow-hidden">
-            <Image
-                src={imageUrl}
-                alt="Media"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            <img
+              src={imageUrl}
+              alt={`Photo of ${authorName}`}
+              className="object-cover w-full h-full"
+              onError={() => handleImageError(imageUrl)}
             />
           </div>
         </div>
+      );
+    }
+
+    // For other URLs, use a regular img tag until next.config.js is updated
+    return (
+      <div className="grid grid-cols-1 gap-2 mt-4">
+        <div className="relative aspect-video rounded-lg overflow-hidden">
+          <img
+            src={imageUrl}
+            alt={`Photo of ${authorName}`}
+            className="object-cover w-full h-full"
+            onError={() => handleImageError(imageUrl)}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Improved avatar with proper image handling
+  const renderAvatar = (testimonial: Testimonial) => {
+    const hasValidImage = testimonial.image && testimonial.image !== 'string' && !imageErrors[testimonial.image];
+    const initials = getInitials(testimonial.author_name);
+
+    return (
+      <Avatar className="h-16 w-16 ring-2 ring-offset-2 ring-primary-green">
+        {hasValidImage ? (
+          <>
+            <AvatarImage 
+              src={testimonial.image}
+              alt={testimonial.author_name}
+              onError={() => handleImageError(testimonial.image)}
+            />
+            <AvatarFallback className="bg-primary-green text-white">
+              {initials}
+            </AvatarFallback>
+          </>
+        ) : (
+          <AvatarFallback className="bg-primary-green text-white">
+            {initials}
+          </AvatarFallback>
+        )}
+      </Avatar>
     );
   };
 
@@ -197,11 +255,7 @@ export default function TestimonialsPage() {
                     <Quote size={24} />
                   </div>
                   <div className="flex items-center gap-4 mb-4">
-                    <Avatar className="h-16 w-16 ring-2 ring-offset-2 ring-primary-green">
-                      <AvatarFallback className="bg-primary-green text-white">
-                        {testimonial.author_name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
+                    {renderAvatar(testimonial)}
                     <div>
                       <h3 className="font-semibold">{testimonial.author_name}</h3>
                       <p className="text-sm text-gray-600">
@@ -218,7 +272,7 @@ export default function TestimonialsPage() {
                   <blockquote className="text-gray-700 mb-4 flex-grow italic relative pl-4 border-l-2 border-primary-green">
                     "{testimonial.description}"
                   </blockquote>
-                  {renderMediaPreview(testimonial.image)}
+                  {renderMediaPreview(testimonial.image, testimonial.author_name)}
                   <div className="flex items-center justify-end mt-4 border-t pt-4">
                     <div className="flex gap-2">
                       <Button
@@ -297,11 +351,7 @@ export default function TestimonialsPage() {
                     <Quote size={24} />
                   </div>
                   <div className="flex items-start gap-6">
-                    <Avatar className="h-16 w-16 ring-2 ring-offset-2 ring-primary-green">
-                      <AvatarFallback className="bg-primary-green text-white">
-                        {testimonial.author_name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
+                    {renderAvatar(testimonial)}
                     <div className="flex-grow">
                       <div className="flex items-center justify-between mb-2">
                         <div>
@@ -320,7 +370,7 @@ export default function TestimonialsPage() {
                       <blockquote className="text-gray-700 mb-4 italic relative pl-4 border-l-2 border-primary-green">
                         "{testimonial.description}"
                       </blockquote>
-                      {renderMediaPreview(testimonial.image)}
+                      {renderMediaPreview(testimonial.image, testimonial.author_name)}
                       <div className="flex items-center justify-end mt-4 border-t pt-4">
                         <div className="flex gap-2">
                           <Button
@@ -480,7 +530,7 @@ export default function TestimonialsPage() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                   onClick={handleDeleteConfirm}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="bg-red hover:bg-red-700 text-white"
               >
                 Delete
               </AlertDialogAction>

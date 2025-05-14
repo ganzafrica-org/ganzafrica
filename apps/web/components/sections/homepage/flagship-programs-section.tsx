@@ -65,7 +65,7 @@ export default function FlagshipProgramsSection({
       description:
           dict?.programs?.alumni?.description ||
           "Building a network of skilled professionals driving Africa's transformation in land, agriculture, and environment. Our alumni continue to innovate, lead, and create positive change across the continent.",
-      image: "/images/ganzafrica-fellows.jpg",
+      image: "/images/alumni_program.jpg",
       link: `/${locale}/programs/alumni`,
       date: "Year-round",
       iconColor: "#F8B712", // primary-orange equivalent

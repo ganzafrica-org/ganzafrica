@@ -126,8 +126,6 @@ const TeamMemberModal = ({
                 </div>
               )}
               
-         
-              
               {/* Always show Email icon - conditionally active */}
               {member.email ? (
                 <a 
@@ -272,6 +270,11 @@ if (typeof document !== 'undefined') {
   document.head.appendChild(styleSheet);
 }
 
+// Function to normalize team type names for case-insensitive comparison
+const normalizeTeamTypeName = (name: string): string => {
+  return name?.trim().toLowerCase() || '';
+};
+
 const TeamPage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('advisory board'); // Changed default to 'advisory board'
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
@@ -341,17 +344,12 @@ const TeamPage: React.FC = () => {
 
   // Filter team members based on selected category
   const filteredMembers = teamMembers.filter(member => {
-    if (activeFilter === 'all') return true;
-    
-    const teamTypeName = member.team_type?.name?.toLowerCase();
-    return teamTypeName === activeFilter.toLowerCase();
+    const teamTypeName = member.team_type?.name || '';
+    return normalizeTeamTypeName(teamTypeName) === normalizeTeamTypeName(activeFilter);
   });
 
   // Convert team types to filter buttons
   const getFilterButtonLabel = (typeName: string): string => {
-    // Format the team type name for display
-    if (typeName === 'all') return 'All Members';
-    
     // Capitalize the first letter of each word
     return typeName.split(' ').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
@@ -386,13 +384,12 @@ const TeamPage: React.FC = () => {
         </header>
 
         {/* Hero Content */}
-        <div className="relative z-10 flex items-center justify-center h-full text-center">
-          <div className="space-y-4">
+        <div className="relative z-10 flex items-center justify-center h-full text-center mt-[-50px]">
+          <div className="space-y-8">
+            <div className="text-6xl font-bold text-primary-orange">MEMBERS</div>
             <h1 className="text-3xl md:text-5xl text-white">
-              Our <span className="text-yellow-400 font-bold">Team</span> & <span className='text-yellow-400 font-bold'>Advisory</span><br />
-              Board
+              Our <span className="font-normal">Team</span> & <span className='font-normal'>Advisory Board</span>
             </h1>
-            <div className="text-6xl font-bold text-yellow-400">Members</div>
           </div>
         </div>
       </div>
@@ -416,51 +413,49 @@ const TeamPage: React.FC = () => {
               <div className="lg:sticky lg:top-24">
                 <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-                  {/* All Members filter always appears first */}
-                  <FilterButton
-                    label="All Members"
-                    active={activeFilter === 'all'}
-                    onClick={() => setActiveFilter('all')}
-                  />
-                  
                   {/* Dynamic filters based on team types from API */}
                   {Array.isArray(teamTypes) && teamTypes.map((type) => (
                     <FilterButton
                       key={type.id}
                       label={getFilterButtonLabel(type.name)}
-                      active={activeFilter === type.name.toLowerCase()}
-                      onClick={() => setActiveFilter(type.name.toLowerCase())}
+                      active={normalizeTeamTypeName(activeFilter) === normalizeTeamTypeName(type.name)}
+                      onClick={() => setActiveFilter(type.name)}
                     />
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Team Members Grid */}
+            {/* Team Members Content Area */}
             <div className="flex-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-                {isLoading ? (
-                  // Loading skeletons
-                  Array.from({ length: 6 }).map((_, index) => (
+              {isLoading ? (
+                // Loading skeletons
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {Array.from({ length: 6 }).map((_, index) => (
                     <div key={index} className="animate-pulse">
                       <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
                     </div>
-                  ))
-                ) : (
-                  filteredMembers.map((member) => (
-                    <TeamMemberCard 
-                      key={member.id} 
-                      member={member}
-                      onOpenModal={() => setSelectedMember(member)}
-                    />
-                  ))
-                )}
-              </div>
-              
-              {/* Empty State */}
-              {!isLoading && filteredMembers.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 text-lg">No team members found in this category.</p>
+                  ))}
+                </div>
+              ) : (
+                // Team Members Grid
+                <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                    {filteredMembers.map((member) => (
+                      <TeamMemberCard 
+                        key={member.id} 
+                        member={member}
+                        onOpenModal={() => setSelectedMember(member)}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Empty State */}
+                  {filteredMembers.length === 0 && (
+                    <div className="text-center py-12">
+                      <p className="text-gray-500 text-lg">No team members found in this category.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -14,6 +14,8 @@ import opportunityRoutes from "./opportunity";
 import applicationRoutes from "./application";
 import contactRoutes from "./contact";
 import  newsletterRouter  from "./newsletter";
+import uploadRoutes from "./upload";
+
 
 
 const router: Router = Router();
@@ -34,6 +36,7 @@ router.use("/applications", applicationRoutes);
 router.use("/applications", opportunityRoutes);
 router.use("/contacts", contactRoutes);
 router.use("/newsletter", newsletterRouter);
+router.use("/uploads", uploadRoutes);
 
 
 

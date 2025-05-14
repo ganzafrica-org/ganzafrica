@@ -648,7 +648,7 @@ export default function HomeHero({
         <div className="container min-w-full py-0">
           <div className="flex h-20 items-stretch justify-between relative">
             {/* Logo */}
-            <div className="bg-white rounded-tr-none rounded-br-2xl shadow-sm min-h-full w-32 md:w-52 flex items-center p-8">
+            <div className="bg-white rounded-tr-none rounded-br-2xl  min-h-full w-32 md:w-52 flex items-center p-8">
               <Link
                 href={`/${locale}`}
                 className="relative z-50 flex items-center gap-2"

@@ -6,7 +6,7 @@ import {
   setDbContextMiddleware,
 } from "./auth.middleware";
 import { errorHandler, notFoundHandler, AppError } from "./error.middleware";
-import { validate, makeRateLimiter } from "./validation.middleware";
+import { validate } from "./validation.middleware";
 
 export {
   authenticate,
@@ -18,5 +18,4 @@ export {
   notFoundHandler,
   AppError,
   validate,
-  makeRateLimiter,
 };

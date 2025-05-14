@@ -62,12 +62,6 @@ interface NavigationProps {
 // Menu items with descriptions for rich dropdowns
 const aboutItems: MenuItem[] = [
   {
-    title: "Who We Are",
-    href: "/about/who-we-are",
-    description:
-      "Learn about our mission, vision, and the values that drive us.",
-  },
-  {
     title: "Our Story",
     href: "/about/our-story",
     description:
@@ -97,12 +91,6 @@ const programsItems: MenuItem[] = [
 ];
 
 const newsItems: MenuItem[] = [
-  {
-    title: "News",
-    href: "/newsroom",
-    description:
-      "Stay updated with our latest initiatives, successes, and announcements.",
-  },
   {
     title: "Opportunities",
     href: "/opportunities",
@@ -294,16 +282,6 @@ export default function Navigation({
             )}
           </div>
 
-          {/* Projects - Direct Link */}
-          <Link
-            href={`/${locale}/projects`}
-            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
-            onClick={() => setIsMobileMenuOpen(false)}
-            prefetch={true}
-          >
-            {dict?.navigation?.projects || "Projects"}
-          </Link>
-
           {/* News & Updates */}
           <div className="flex flex-col w-full">
             <button
@@ -390,11 +368,10 @@ export default function Navigation({
                             href={`/${locale}/about/who-we-are`}
                           >
                             <div className="mb-2 mt-4 text-lg font-medium">
-                              About Us
+                              Who We Are
                             </div>
                             <p className="text-sm leading-tight text-muted-foreground">
-                              Dedicated to creating a sustainable future for
-                              Africa through empowering youth and communities.
+                            Learn about our mission, vision, and the values that drive us.
                             </p>
                           </a>
                         </NavigationMenuLink>
@@ -438,15 +415,15 @@ export default function Navigation({
                         <NavigationMenuLink asChild>
                           <a
                             className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/programs/fellowship`}
+                            href={`/${locale}/projects`}
                           >
                             <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Programs
-                            </div>
+                             Our Projects
+                           </div>
                             <p className="text-sm leading-tight text-muted-foreground">
-                              Transformative programs designed to build capacity
-                              and develop leadership in sustainable agriculture.
+                            Innovative initiatives driving Africa’s transformation through technology, youth empowerment, and sustainable development.
                             </p>
+
                           </a>
                         </NavigationMenuLink>
                       </li>
@@ -461,18 +438,7 @@ export default function Navigation({
                       ))}
                     </ul>
                   </NavigationMenuContent>
-                </NavigationMenuItem>
-
-                {/* Projects - Direct Link */}
-                <NavigationMenuItem>
-                  <Link href={`/${locale}/projects`} passHref>
-                    <NavigationMenuLink 
-                      className={`${getNavItemColor()} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
-                    >
-                      {dict?.navigation?.projects || "Projects"}
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
+                </NavigationMenuItem>              
 
                 {/* News & Updates Dropdown */}
                 <NavigationMenuItem>
@@ -488,7 +454,7 @@ export default function Navigation({
                             href={`/${locale}/newsroom`}
                           >
                             <div className="mb-2 mt-4 text-lg font-medium">
-                              Latest Updates
+                              News & Updates
                             </div>
                             <p className="text-sm leading-tight text-muted-foreground">
                               Stay informed about our recent activities,

@@ -170,23 +170,149 @@ export default function FellowshipPage() {
   const dict = {};
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [currentTestimonial, setCurrentTestimonial] = useState<number>(0);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [visibleTopics, setVisibleTopics] = useState<string[]>([]);
   const topicsRef = useRef<HTMLDivElement>(null);
   const [featuredOpportunity, setFeaturedOpportunity] = useState<Opportunity | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState(true);
 
+  const [currentTestimonial, setCurrentTestimonial] = useState<number>(0);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(fallbackTestimonials); // Initialize with fallback
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false); // Track animation state
+
+// Navigation functions with animation handling
   const nextTestimonial = () => {
+    if (isAnimating) return; // Prevent rapid clicks during animation
+
+    setIsAnimating(true); // Start animation
+
+    // Execute the navigation
     setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+
+    // Allow new animations after a short delay
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 500); // Match this with your animation duration
+
+    // Handle auto-cycling
+    handleManualNavigation();
   };
 
   const prevTestimonial = () => {
+    if (isAnimating) return; // Prevent rapid clicks during animation
+
+    setIsAnimating(true); // Start animation
+
+    // Execute the navigation
     setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+
+    // Allow new animations after a short delay
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 500); // Match this with your animation duration
+
+    // Handle auto-cycling
+    handleManualNavigation();
   };
+
+// Handle manual navigation - simpler version that just manages auto-cycling
+  const handleManualNavigation = () => {
+    // Stop auto cycling
+    setIsAutoPlaying(false);
+
+    // Clear existing interval
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+      autoPlayRef.current = null;
+    }
+
+    // Resume auto cycling after 10 seconds of inactivity
+    setTimeout(() => {
+      setIsAutoPlaying(true);
+    }, 10000);
+  };
+
+// Direct selection of testimonial
+  const handleTestimonialChange = (index: number) => {
+    if (isAnimating || index === currentTestimonial) return; // Skip if animating or already on this testimonial
+
+    setIsAnimating(true);
+
+    // Update the current testimonial
+    setCurrentTestimonial(index);
+
+    // Reset animation state after animation completes
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 500);
+
+    // Handle auto-cycling
+    handleManualNavigation();
+  };
+
+// Fetch testimonials from API with guaranteed fallback display
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setLoading(true);
+        // Always start with fallback data
+        setTestimonials(fallbackTestimonials);
+
+        const response = await apiClient.get<TestimonialsResponse>('/testimonials');
+
+        // Only update if we got valid data
+        if (response.data.testimonials && response.data.testimonials.length > 0) {
+          setTestimonials(response.data.testimonials);
+        }
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching testimonials:', err);
+        setError('Failed to load testimonials');
+        // Already using fallback testimonials
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
+// Set up auto cycling for testimonials
+  useEffect(() => {
+    // Clear any existing interval
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+      autoPlayRef.current = null;
+    }
+
+    // Only create a new interval if auto-playing is enabled and not currently animating
+    if (isAutoPlaying && !isAnimating && testimonials.length > 1) {
+      autoPlayRef.current = setInterval(() => {
+        // Only advance if not in the middle of a manual animation
+        if (!isAnimating) {
+          setIsAnimating(true);
+          setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+
+          // Reset animation state after animation completes
+          setTimeout(() => {
+            setIsAnimating(false);
+          }, 500);
+        }
+      }, 5000);
+    }
+
+    // Clean up interval on unmount or when dependencies change
+    return () => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+        autoPlayRef.current = null;
+      }
+    };
+  }, [isAutoPlaying, testimonials.length, isAnimating]);
 
   useEffect(() => {
     const extendedTopics = [...topics, ...topics];
@@ -205,41 +331,7 @@ export default function FellowshipPage() {
     return () => clearInterval(scrollAnimation);
   }, []);
 
-  useEffect(() => {
-    const fetchTestimonials = async () => {
-      try {
-        setLoading(true);
-        const response = await apiClient.get<TestimonialsResponse>('/testimonials');
-        setTestimonials(response.data.testimonials);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching testimonials:', err);
-        setError('Failed to load testimonials');
-        // Set fallback testimonials in case of error
-        setTestimonials(fallbackTestimonials);
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchTestimonials();
-  }, []);
-
-  useEffect(() => {
-    // Auto slide testimonials every 5 seconds
-    const slideInterval = setInterval(() => {
-      nextTestimonial();
-    }, 5000);
-
-    return () => clearInterval(slideInterval);
-  }, []);
-
-  const handleTestimonialChange = (index: number) => {
-    setCurrentTestimonial(index);
-
-    // Don't clear the interval, just let it continue
-    // This ensures the auto-slide never stops
-  };
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -305,11 +397,6 @@ export default function FellowshipPage() {
                     How to Apply
                   </Button>
                 </Link>
-                <Link href={`/${locale}/programs/fellowship/${featuredOpportunity?.id}/apply`}>
-                  <Button className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white font-semibold px-6 py-4 text-base">
-                    Apply now
-                  </Button>
-                </Link>
               </motion.div>
             </div>
           </div>
@@ -317,59 +404,6 @@ export default function FellowshipPage() {
         <div className="flex justify-center">
           <HeaderBelt />
         </div>
-
-        <motion.section
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="py-16 md:py-20 bg-white"
-        >
-          <div className="container mx-auto px-6 md:px-12 lg:px-20">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <motion.div
-                  initial={{ opacity: 0, x: -50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2, duration: 0.8 }}
-                  className="order-2 md:order-1"
-              >
-                <img
-                    src="/images/SHIR5142-Enhanced-NR.jpg"
-                    alt="Food System"
-                    className="rounded-lg w-full h-[500px] object-cover"
-                />
-              </motion.div>
-              <motion.div
-                  initial={{ opacity: 0, x: 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.4, duration: 0.8 }}
-                  className="order-1 md:order-2"
-              >
-                <DecoratedHeading
-                  firstText="Discover tomorrow's"
-                  secondText="leaders today"
-                />
-                <p className="text-gray-600 text-sm md:text-base mb-6">
-                  A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders.
-                </p>
-                <p className="text-gray-600 text-sm md:text-base mb-8">
-                  Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
-                </p>
-                <Link href={`/${locale}/about/team`}>
-                  <motion.button
-                    className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Meet the Fellows
-                  </motion.button>
-                </Link>
-              </motion.div>
-            </div>
-          </div>
-        </motion.section>
 
         <motion.section
             initial={{ opacity: 0 }}
@@ -471,6 +505,59 @@ export default function FellowshipPage() {
             </div>
           </div>
         </motion.section>
+
+        <motion.section
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="py-16 md:py-20 bg-white"
+        >
+          <div className="container mx-auto px-6 md:px-12 lg:px-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+              <motion.div
+                  initial={{ opacity: 0, x: -50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2, duration: 0.8 }}
+                  className="order-2 md:order-1"
+              >
+                <img
+                    src="/images/SHIR5142-Enhanced-NR.jpg"
+                    alt="Food System"
+                    className="rounded-lg w-full h-[500px] object-cover"
+                />
+              </motion.div>
+              <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4, duration: 0.8 }}
+                  className="order-1 md:order-2"
+              >
+                <DecoratedHeading
+                  firstText="Discover tomorrow's"
+                  secondText="leaders today"
+                />
+                <p className="text-gray-600 text-sm md:text-base mb-6">
+                  A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders.
+                </p>
+                <p className="text-gray-600 text-sm md:text-base mb-8">
+                  Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
+                </p>
+                <Link href={`/${locale}/about/team`}>
+                  <motion.button
+                    className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Meet the Fellows
+                  </motion.button>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+        </motion.section>
         <motion.section
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -509,7 +596,7 @@ export default function FellowshipPage() {
                     >
                       <div className="p-3">
                         <div className="rounded-xl overflow-hidden relative">
-                          <Image
+                          <img
                               src={benefit.image}
                               alt={benefit.title}
                               width={600}
@@ -621,10 +708,9 @@ export default function FellowshipPage() {
         </motion.section>
 
         <motion.section
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
             className="py-12 md:py-16 bg-gray-50"
         >
           <Container>
@@ -633,7 +719,7 @@ export default function FellowshipPage() {
               <h3 className="text-2xl md:text-3xl font-bold text-[#045F3C] mb-6 md:mb-8">Say about Our Fellowship</h3>
             </div>
 
-            {loading ? (
+            {loading && testimonials.length === 0 ? (
                 <div className="max-w-5xl mx-auto px-4 md:px-12">
                   {/* Loading skeleton */}
                   <div className="flex justify-center items-center gap-4 md:gap-6 mb-6 md:mb-8">
@@ -646,8 +732,6 @@ export default function FellowshipPage() {
                     <div className="h-5 md:h-6 w-28 md:w-40 bg-gray-200 animate-pulse rounded mx-auto" />
                   </div>
                 </div>
-            ) : error ? (
-                <div className="text-center text-red-500">{error}</div>
             ) : (
                 <div className="max-w-5xl mx-auto px-4 md:px-12">
                   {/* Profile Images Row */}
@@ -660,21 +744,23 @@ export default function FellowshipPage() {
                       return (
                           <div
                               key={testimonial.id}
-                              className={`transition-all duration-500 transform cursor-pointer ${
-                                  isActive ? 'w-14 md:w-20 h-14 md:h-20 z-20 scale-110' :
-                                      isPrevious || isNext ? 'w-10 md:w-16 h-10 md:h-16 z-10 opacity-50 scale-90' :
-                                          'w-8 md:w-12 h-8 md:h-12 opacity-30 scale-75'
+                              className={`cursor-pointer transition-all duration-300 transform ${
+                                  isActive
+                                      ? 'w-14 md:w-20 h-14 md:h-20 z-20 scale-110'
+                                      : isPrevious || isNext
+                                          ? 'w-10 md:w-16 h-10 md:h-16 z-10 opacity-70 scale-90'
+                                          : 'w-8 md:w-12 h-8 md:h-12 opacity-50 scale-75'
                               }`}
                               onClick={() => handleTestimonialChange(index)}
                           >
-                            <div className={`rounded-full overflow-hidden transition-all duration-500 h-full w-full ${
-                                isActive ? 'ring-2 md:ring-4 ring-yellow-400' : ''
+                            <div className={`rounded-full overflow-hidden h-full w-full transition-all duration-300 ${
+                                isActive ? 'ring-2 md:ring-4 ring-yellow-400' : 'ring-1 ring-gray-200'
                             }`}>
-                              <Image
+                              <img
                                   src={testimonial.image}
                                   alt={testimonial.author_name}
-                                  width={isActive ? 80 : 64}
-                                  height={isActive ? 80 : 64}
+                                  width={80}
+                                  height={80}
                                   className="w-full h-full object-cover"
                               />
                             </div>
@@ -685,54 +771,53 @@ export default function FellowshipPage() {
 
                   {/* Testimonial Content */}
                   <div className="relative">
-                    <div className="text-center px-2 md:px-16">
-                      <div className="min-h-[120px] md:min-h-[150px] relative mb-4 md:mb-6">
-                        {testimonials.map((testimonial, index) => (
-                            <div
-                                key={testimonial.id}
-                                className={`absolute w-full transition-all duration-500 ${
-                                    index === currentTestimonial
-                                        ? 'opacity-100 translate-y-0 z-10'
-                                        : 'opacity-0 translate-y-4 pointer-events-none z-0'
-                                }`}
-                            >
-                              <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl mx-auto line-clamp-4 md:line-clamp-none">
-                                {testimonial.description}
-                              </p>
-                            </div>
-                        ))}
-                      </div>
-                      <div className="min-h-[50px] md:min-h-[60px] relative">
-                        {testimonials.map((testimonial, index) => (
-                            <div
-                                key={`name-${testimonial.id}`}
-                                className={`absolute w-full transition-all duration-500 ${
-                                    index === currentTestimonial
-                                        ? 'opacity-100 translate-y-0 z-10'
-                                        : 'opacity-0 translate-y-4 pointer-events-none z-0'
-                                }`}
-                            >
-                              <h4 className="text-lg md:text-xl font-bold mb-1 md:mb-2 text-[#045F3C]">{testimonial.author_name}</h4>
-                              <p className="text-gray-600 text-xs md:text-sm">{testimonial.position}</p>
-                            </div>
-                        ))}
+                    <div className="bg-white p-6 md:p-8 rounded-lg shadow-sm min-h-[250px] flex flex-col justify-center">
+                      <div className="text-center px-2 md:px-16">
+                        <motion.div
+                            key={currentTestimonial}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.5 }}
+                            className="min-h-[120px] md:min-h-[150px] flex items-center justify-center mb-4 md:mb-6"
+                        >
+                          <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
+                            {testimonials[currentTestimonial]?.description || testimonials[0]?.description}
+                          </p>
+                        </motion.div>
+
+                        <motion.div
+                            key={`name-${currentTestimonial}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.5, delay: 0.1 }}
+                            className="min-h-[50px] md:min-h-[60px]"
+                        >
+                          <h4 className="text-lg md:text-xl font-bold mb-1 md:mb-2 text-[#045F3C]">
+                            {testimonials[currentTestimonial]?.author_name || testimonials[0]?.author_name}
+                          </h4>
+                          <p className="text-gray-600 text-xs md:text-sm">
+                            {testimonials[currentTestimonial]?.position || testimonials[0]?.position}
+                          </p>
+                        </motion.div>
                       </div>
                     </div>
 
-                    {/* Navigation Arrows */}
+                    {/* Navigation Arrows - Positioned on sides */}
                     <button
-                        onClick={() => handleTestimonialChange((currentTestimonial - 1 + testimonials.length) % testimonials.length)}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-7 md:w-10 h-7 md:h-10 rounded-full bg-yellow-400 flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-1/2 md:-translate-x-full"
+                        onClick={prevTestimonial}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full text-primary-orange flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-1/2 md:-translate-x-5"
                         aria-label="Previous testimonial"
                     >
-                      <ArrowLeft className="w-3.5 md:w-5 h-3.5 md:h-5 text-white" />
+                      <ArrowLeft className="w-5 h-5 text-white" />
                     </button>
                     <button
-                        onClick={() => handleTestimonialChange((currentTestimonial + 1) % testimonials.length)}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 w-7 md:w-10 h-7 md:h-10 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-1/2 md:translate-x-full"
+                        onClick={nextTestimonial}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-1/2 md:translate-x-5"
                         aria-label="Next testimonial"
                     >
-                      <ArrowRight className="w-3.5 md:w-5 h-3.5 md:h-5 text-white" />
+                      <ArrowRight className="w-5 h-5 text-white" />
                     </button>
                   </div>
                 </div>

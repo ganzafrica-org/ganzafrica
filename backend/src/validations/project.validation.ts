@@ -65,7 +65,42 @@ const projectDocumentSchema = z.object({
   file_size: z.number().optional(),
 });
 
-// Create project validation
+// File validation schema for middleware
+export const fileValidationSchema = z.object({
+  fieldname: z.string(),
+  originalname: z.string().min(1, "Original filename is required"),
+  encoding: z.string(),
+  mimetype: z.string().refine(
+    (mime) => 
+      // List of allowed mime types
+      [
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/svg+xml',
+        'text/plain',
+        'text/csv'
+      ].includes(mime),
+    {
+      message: "Unsupported file type. Only PDF, Word, Excel, PowerPoint, images, and text files are allowed."
+    }
+  ),
+  size: z.number().max(10 * 1024 * 1024, "File size must be less than 10MB"),
+  buffer: z.instanceof(Buffer).optional(),
+  stream: z.any().optional(),
+  destination: z.string().optional(),
+  filename: z.string().optional(),
+  path: z.string().optional(),
+});
+
+// Create project validation - updated to handle files
 export const createProjectSchema = z.object({
   body: z.object({
     name: z.string().min(1, "Project name is required"),
@@ -81,28 +116,85 @@ export const createProjectSchema = z.object({
     location: z.string().optional(),
     impacted_people: z.number().int().optional(),
     
-    // New fields
-    goals: z.object({
-      items: z.array(goalItemSchema)
-    }).optional(),
+    // These fields might be strings in multipart/form-data
+    goals: z.union([
+      z.object({
+        items: z.array(goalItemSchema)
+      }),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for goals");
+        }
+      })
+    ]).optional(),
     
-    outcomes: z.object({
-      items: z.array(outcomeItemSchema)
-    }).optional(),
+    outcomes: z.union([
+      z.object({
+        items: z.array(outcomeItemSchema)
+      }),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for outcomes");
+        }
+      })
+    ]).optional(),
     
-    media: z.object({
-      items: z.array(mediaItemSchema)
-    }).optional(),
+    media: z.union([
+      z.object({
+        items: z.array(mediaItemSchema)
+      }),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for media");
+        }
+      })
+    ]).optional(),
     
-    other_information: z.record(z.any()).optional(),
+    other_information: z.union([
+      z.record(z.any()),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for other_information");
+        }
+      })
+    ]).optional(),
     
-    members: z.array(projectMemberSchema).optional(),
-    partners: z.array(projectPartnerSchema).optional(),
+    members: z.union([
+      z.array(projectMemberSchema),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for members");
+        }
+      })
+    ]).optional(),
+    
+    partners: z.union([
+      z.array(projectPartnerSchema),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for partners");
+        }
+      })
+    ]).optional(),
+    
     documents: z.array(projectDocumentSchema).optional(),
   }),
+  files: z.array(fileValidationSchema).optional(),
 });
 
-// Update project validation
+// Update project validation - updated to handle files
 export const updateProjectSchema = z.object({
   params: z.object({
     id: z.string().min(1, "Project ID is required"),
@@ -125,38 +217,73 @@ export const updateProjectSchema = z.object({
     location: z.string().optional(),
     impacted_people: z.number().int().optional(),
     
-    // New fields
-    goals: z.object({
-      items: z.array(goalItemSchema)
-    }).optional(),
+    // These fields might be strings in multipart/form-data
+    goals: z.union([
+      z.object({
+        items: z.array(goalItemSchema)
+      }),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for goals");
+        }
+      })
+    ]).optional(),
     
-    outcomes: z.object({
-      items: z.array(outcomeItemSchema)
-    }).optional(),
+    outcomes: z.union([
+      z.object({
+        items: z.array(outcomeItemSchema)
+      }),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for outcomes");
+        }
+      })
+    ]).optional(),
     
-    media: z.object({
-      items: z.array(mediaItemSchema)
-    }).optional(),
+    media: z.union([
+      z.object({
+        items: z.array(mediaItemSchema)
+      }),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for media");
+        }
+      })
+    ]).optional(),
     
-    other_information: z.record(z.any()).optional(),
+    other_information: z.union([
+      z.record(z.any()),
+      z.string().transform(val => {
+        try {
+          return JSON.parse(val);
+        } catch (e) {
+          throw new Error("Invalid JSON for other_information");
+        }
+      })
+    ]).optional(),
   }),
+  files: z.array(fileValidationSchema).optional(),
 });
 
-// Get project by ID validation
+// Rest of the validation schemas remain the same
 export const getProjectSchema = z.object({
   params: z.object({
     id: z.string().min(1, "Project ID is required"),
   }),
 });
 
-// Delete project validation
 export const deleteProjectSchema = z.object({
   params: z.object({
     id: z.string().min(1, "Project ID is required"),
   }),
 });
 
-// List projects validation
 export const listProjectsSchema = z.object({
   query: z.object({
     page: z

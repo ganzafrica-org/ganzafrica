@@ -8,7 +8,7 @@ import { Input } from '@workspace/ui/components/input';
 import { Label } from '@workspace/ui/components/label';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select';
-import { ArrowLeft, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Upload, X, Image as ImageIcon, Loader } from 'lucide-react';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@workspace/ui/components/avatar';
 import { cn } from '@workspace/ui/lib/utils';
@@ -42,6 +42,9 @@ export default function AddTestimonialPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
 
   const handleInputChange = (
       e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -67,18 +70,62 @@ export default function AddTestimonialPage() {
   };
 
   const handleImageUpload = (file: File) => {
+    // Store the file for later server upload
+    setImageFile(file);
+    
+    // Create a preview
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
       setImagePreview(result);
-      setFormData(prev => ({ ...prev, image: result }));
     };
     reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
     setImagePreview(null);
+    setImageFile(null);
     setFormData(prev => ({ ...prev, image: '' }));
+    setUploadProgress(0);
+    setUploadStatus('idle');
+  };
+
+  // Upload the image to the server and get a URL back
+  const uploadImageToServer = async (file: File): Promise<string> => {
+    try {
+      setUploadProgress(0);
+      setUploadStatus('uploading');
+      
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Make the upload request
+      const response = await apiClient.post('/uploads/file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+      
+      // Check if upload was successful
+      if (response.data && response.data.success) {
+        console.log('File uploaded successfully:', response.data.file);
+        setUploadStatus('success');
+        return response.data.file.url;
+      } else {
+        setUploadStatus('error');
+        throw new Error('File upload failed: Server returned unsuccessful response');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setUploadStatus('error');
+      toast.error('Failed to upload image. Please try again.');
+      throw error;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,14 +140,61 @@ export default function AddTestimonialPage() {
     setIsLoading(true);
 
     try {
-      await apiClient.post('/testimonials', formData);
-      toast.success('Testimonial added successfully');
-      router.push('/testimonials');
+      let testimonialData = { ...formData };
+      
+      // If we have a file, upload it first
+      if (imageFile) {
+        try {
+          const imageUrl = await uploadImageToServer(imageFile);
+          testimonialData.image = imageUrl;
+        } catch (error) {
+          setIsLoading(false);
+          return; // Exit early if image upload fails
+        }
+      }
+      
+      // Then submit the testimonial with the image URL
+      const response = await apiClient.post('/testimonials', testimonialData);
+      
+      if (response.data) {
+        toast.success('Testimonial added successfully');
+        router.push('/testimonials');
+      } else {
+        throw new Error('Failed to add testimonial: No response data');
+      }
     } catch (error: any) {
       console.error('Error adding testimonial:', error);
-      toast.error(error.response?.data?.message || 'Failed to add testimonial');
+      toast.error(error.response?.data?.message || 'Failed to add testimonial. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Function to get upload status text
+  const getUploadStatusText = () => {
+    switch (uploadStatus) {
+      case 'uploading':
+        return `Uploading: ${uploadProgress}%`;
+      case 'success':
+        return 'Upload complete!';
+      case 'error':
+        return 'Upload failed. Please try again.';
+      default:
+        return '';
+    }
+  };
+
+  // Function to get upload status color
+  const getUploadStatusColor = () => {
+    switch (uploadStatus) {
+      case 'uploading':
+        return 'bg-blue-600';
+      case 'success':
+        return 'bg-green-600';
+      case 'error':
+        return 'bg-red-600';
+      default:
+        return 'bg-gray-600';
     }
   };
 
@@ -187,6 +281,25 @@ export default function AddTestimonialPage() {
                       </>
                   )}
                 </div>
+                
+                {/* Upload Progress Indicator */}
+                {uploadStatus !== 'idle' && (
+                  <div className="mt-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        className={`${getUploadStatusColor()} h-2.5 rounded-full transition-all duration-300`} 
+                        style={{ width: uploadStatus === 'uploading' ? `${uploadProgress}%` : '100%' }}
+                      ></div>
+                    </div>
+                    <p className={`text-xs mt-1 text-center ${
+                      uploadStatus === 'error' ? 'text-red-500' : 
+                      uploadStatus === 'success' ? 'text-green-500' : 
+                      'text-gray-500'
+                    }`}>
+                      {getUploadStatusText()}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -302,9 +415,16 @@ export default function AddTestimonialPage() {
                 <Button
                     type="submit"
                     className="bg-primary-green hover:bg-green-700"
-                    disabled={isLoading}
+                    disabled={isLoading || uploadStatus === 'uploading'}
                 >
-                  {isLoading ? 'Adding...' : 'Add Testimonial'}
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <Loader className="w-4 h-4 mr-2 animate-spin" />
+                      Adding...
+                    </div>
+                  ) : (
+                    'Add Testimonial'
+                  )}
                 </Button>
               </div>
             </form>

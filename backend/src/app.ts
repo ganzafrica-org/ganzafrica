@@ -10,8 +10,9 @@ import swaggerSpecs from "./swagger/specs";
 import { env, Logger, constants } from "./config";
 import { checkDatabaseConnection } from "./db/client";
 import { errorHandler, notFoundHandler } from "./middlewares";
+import path from "path"; 
 
-// Import routes
+// Import routes - corrected to match your existing import
 import apiRoutes from "./routes";
 
 // Setup logger
@@ -25,10 +26,13 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser(env.SESSION_SECRET)); // For parsing cookies
 
+// IMPORTANT: Serve static files from uploads directory - MUST come before other middleware
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 app.use((req, res, next) => {
     res.setHeader(
         "Content-Security-Policy",
-        "default-src 'self'; connect-src 'self' https://*.onrender.com:* https://*.onrender.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
+        "default-src 'self'; connect-src 'self' https://*.onrender.com:* https://*.onrender.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; object-src 'self'; font-src 'self' data:;"
     );
     next();
 });
@@ -56,7 +60,7 @@ app.use(
         limit: env.RATE_LIMIT_MAX, // 100 requests per window
         standardHeaders: true,
         legacyHeaders: false,
-        message: { error: constants.ERROR_MESSAGES.TOO_MANY_REQUESTS },
+        message: { error: "Too many requests, please try again later." },
         skip: (req) => req.ip === "127.0.0.1" && env.NODE_ENV === "development",
     }),
 );
@@ -83,5 +87,8 @@ app.use(notFoundHandler);
 
 // Global error handler
 app.use(errorHandler);
+
+// Log uploads directory path for debugging
+logger.info(`Serving static files from: ${path.join(__dirname, '../uploads')}`);
 
 export default app;
