@@ -125,12 +125,13 @@ const WhereWeWorkSection = () => {
             {/* Environment */}
             <motion.div variants={itemVariants} className="flex">
               <div className="mr-6">
-                <div className="relative w-12 h-12 rounded-full bg-primary-green flex items-center justify-center">
+                <div className="relative w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#073392' }}>
                   <span className="text-white font-bold">03</span>
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-primary-green mb-3">
+              
+                <h3 className="text-xl font-bold mb-3" style={{ color: ' #005c3d' }}>
                   Environment
                 </h3>
                 <p className="text-gray-600 text-justify">

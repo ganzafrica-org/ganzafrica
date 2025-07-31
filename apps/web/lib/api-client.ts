@@ -14,9 +14,15 @@ apiClient.interceptors.response.use(
         return response;
     },
     (error: AxiosError) => {
-        console.error('API request failed:', error.message);
+        console.error("API request failed (details):", { status: error.response?.status, data: error.response?.data, message: error.message });
         return Promise.reject(error);
     }
 );
+
+// Insert a request interceptor (for example, after the axios.create block) as follows:
+apiClient.interceptors.request.use((config) => {
+  console.log("Outgoing request (details):", { url: config.url, payload: config.data, headers: config.headers });
+  return config;
+}, (error) => { return Promise.reject(error); });
 
 export default apiClient;

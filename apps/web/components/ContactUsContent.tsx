@@ -48,13 +48,10 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
         
         try {
             // Update location based on active tab
-            const contactData = {
-                ...formState,
-                location: activeTab, // Set location based on the active tab
-            };
+            const contactData = { name: formState.name, email: formState.email, phone: formState.phone, message: formState.message, location: activeTab };
             
             // Send to the API endpoint
-            const response = await apiClient.post('/contacts', contactData);
+            const response = await apiClient.post('/contacts', contactData, { timeout: 10000 });
             
             // Show success message and reset form
             setFormSuccess(true);

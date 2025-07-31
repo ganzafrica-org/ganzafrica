@@ -8,38 +8,10 @@ import Link from 'next/link';
 import { Button } from '@workspace/ui/components/button';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { jwtDecode } from 'jwt-decode';
-
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  time: string;
-  isRead: boolean;
-  type: string;
-  priority: 'normal' | 'high';
-}
-
-// Add mock notifications (we'll move this to a proper state management later)
-const mockNotifications: Notification[] = [
-  {
-    id: 1,
-    title: "New Article Published",
-    message: "Your article 'Getting Started with React' has been published",
-    time: "2 hours ago",
-    isRead: false,
-    type: "article",
-    priority: "normal"
-  },
-  {
-    id: 2,
-    title: "System Maintenance",
-    message: "Scheduled maintenance will occur on Saturday at 2 AM",
-    time: "1 day ago",
-    isRead: false,
-    type: "system",
-    priority: "high"
-  }
-];
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notificationService, type Notification } from '@/services/notifications';
+import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -49,7 +21,8 @@ interface NavbarProps {
 const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
@@ -76,6 +49,80 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
     }
   }, [user]);
 
+  // Fetch notifications
+  const { data: notificationsData, isLoading: isLoadingNotifications } = useQuery({
+    queryKey: ['notifications', page],
+    queryFn: () => notificationService.getNotifications(page, 5),
+    enabled: isNotificationsOpen,
+  });
+
+  // Fetch unread count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: notificationService.getUnreadCount,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // Mark as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: notificationService.markAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to mark notification as read');
+      console.error('Error marking notification as read:', error);
+    },
+  });
+
+  // Delete notification mutation
+  const deleteNotificationMutation = useMutation({
+    mutationFn: notificationService.deleteNotification,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to delete notification');
+      console.error('Error deleting notification:', error);
+    },
+  });
+
+  // Mark all as read mutation
+  const markAllAsReadMutation = useMutation({
+    mutationFn: notificationService.markAllAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+      toast.success('All notifications marked as read');
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to mark all notifications as read');
+      console.error('Error marking all notifications as read:', error);
+    },
+  });
+
+  // Update WebSocket subscription with proper type
+  useEffect(() => {
+    if (user) {
+      notificationService.initializeWebSocket();
+      
+      const unsubscribe = notificationService.subscribe((notification: Notification) => {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+        toast(notification.message, {
+          description: notification.title,
+          duration: 5000,
+        });
+      });
+
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [user, queryClient]);
+
   // Generate initials from the user's full name
   const getInitials = () => {
     if (!user?.name) {
@@ -91,7 +138,7 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
 
     if (nameParts.length === 1) {
       // If single name, take first two letters
-      return (nameParts[0]?.substring(0, 2) ?? "").toUpperCase();
+      return (nameParts[0]?.[0] || "") + (nameParts[nameParts.length - 1]?.[0] || "").toUpperCase();
     }
 
     // Take first letter of first name and first letter of last name
@@ -100,22 +147,16 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
     ).toUpperCase();
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  const markAsRead = (id: number) => {
-    setNotifications(prev =>
-        prev.map(notif =>
-            notif.id === id ? { ...notif, isRead: true } : notif
-        )
-    );
+  const handleMarkAsRead = async (id: number) => {
+    markAsReadMutation.mutate(id);
   };
 
-  const deleteNotification = (id: number) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  const handleDeleteNotification = async (id: number) => {
+    deleteNotificationMutation.mutate(id);
   };
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
+  const handleMarkAllAsRead = async () => {
+    markAllAsReadMutation.mutate();
   };
 
   // Handle clicks outside dropdowns
@@ -195,81 +236,115 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
                 <div className="absolute right-0 mt-2 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-100 dark:border-gray-700">
                   <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <h3 className="font-semibold dark:text-white">Notifications</h3>
-                    <Link
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllAsRead}
+                          className="text-sm text-primary-green hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                      <Link
                         href="/notifications"
                         className="text-sm text-primary-green hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-                    >
-                      View All
-                    </Link>
+                      >
+                        View All
+                      </Link>
+                    </div>
                   </div>
 
                   <div className="max-h-[400px] overflow-y-auto">
-                    {notifications.length === 0 ? (
-                        <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                          <Bell className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                          <p>No notifications</p>
+                    {isLoadingNotifications ? (
+                      <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <div className="animate-pulse space-y-3">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded-lg" />
+                          ))}
                         </div>
+                      </div>
+                    ) : notificationsData?.notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <Bell className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p>No notifications</p>
+                      </div>
                     ) : (
-                        notifications.slice(0, 5).map((notification) => (
-                            <div
-                                key={notification.id}
-                                className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-start justify-between ${
-                                    !notification.isRead ? 'bg-green-50/50 dark:bg-green-900/10' : ''
-                                }`}
-                            >
-                              <div className="flex-1 mr-4">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-sm font-medium dark:text-white">{notification.title}</h4>
-                                  {!notification.isRead && (
-                                      <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full dark:bg-green-900/50 dark:text-green-400">
-                              New
-                            </span>
-                                  )}
-                                  {notification.priority === 'high' && (
-                                      <span className="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded-full dark:bg-red-900/50 dark:text-red-400">
-                              High Priority
-                            </span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
-                                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block">{notification.time}</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
+                      <>
+                        {notificationsData?.notifications.map((notification: Notification) => (
+                          <div
+                            key={notification.id}
+                            className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-start justify-between ${
+                              !notification.isRead ? 'bg-green-50/50 dark:bg-green-900/10' : ''
+                            }`}
+                          >
+                            <div className="flex-1 mr-4">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-medium dark:text-white">{notification.title}</h4>
                                 {!notification.isRead && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => markAsRead(notification.id)}
-                                        className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/50 p-1"
-                                        title="Mark as read"
-                                    >
-                                      <Check className="w-4 h-4" />
-                                    </Button>
+                                  <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full dark:bg-green-900/50 dark:text-green-400">
+                                    New
+                                  </span>
                                 )}
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => deleteNotification(notification.id)}
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50 p-1"
-                                    title="Delete notification"
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
+                                {notification.priority === 'high' && (
+                                  <span className="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded-full dark:bg-red-900/50 dark:text-red-400">
+                                    High Priority
+                                  </span>
+                                )}
                               </div>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 block">
+                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                              </span>
                             </div>
-                        ))
+                            <div className="flex items-center space-x-1">
+                              {!notification.isRead && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleMarkAsRead(notification.id)}
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/50 p-1"
+                                  title="Mark as read"
+                                  disabled={markAsReadMutation.isPending}
+                                >
+                                  <Check className="w-4 h-4" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteNotification(notification.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50 p-1"
+                                title="Delete notification"
+                                disabled={deleteNotificationMutation.isPending}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        {notificationsData?.hasMore && (
+                          <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
+                            <button
+                              onClick={() => setPage(p => p + 1)}
+                              className="text-sm text-center block w-full text-primary-green hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                            >
+                              Load more
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
-                  {notifications.length > 0 && (
-                      <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
-                        <Link
-                            href="/notifications"
-                            className="text-sm text-center block w-full text-primary-green hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-                        >
-                          See all notifications
-                        </Link>
-                      </div>
+                  {notificationsData?.notifications?.length > 0 && (
+                    <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
+                      <Link
+                        href="/notifications"
+                        className="text-sm text-center block w-full text-primary-green hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                      >
+                        See all notifications
+                      </Link>
+                    </div>
                   )}
                 </div>
             )}
@@ -286,7 +361,7 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
               <div className="relative" ref={dropdownRef}>
                 <div
                     className="flex items-center space-x-3 cursor-pointer p-1.5 pl-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                    onClick={toggleDropdown}
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                   <div className="relative w-8 h-8 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center">
                     <span className="text-sm font-medium">{getInitials()}</span>

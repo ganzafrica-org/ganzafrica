@@ -14,7 +14,7 @@ import {
   TreePine,
   Cloud,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
@@ -23,6 +23,8 @@ import { default as HeaderBelt } from "@/components/layout/headerBelt";
 
 export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [animateFirst, setAnimateFirst] = useState(false);
+  const [animateSecond, setAnimateSecond] = useState(false);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -45,6 +47,22 @@ export default function Home() {
     return () => {
       // Cleanup if needed
     };
+  }, []);
+
+  // Quote animation effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimateFirst(true);
+      setTimeout(() => {
+        setAnimateSecond(true);
+        setTimeout(() => {
+          setAnimateFirst(false);
+          setAnimateSecond(false);
+        }, 300);
+      }, 300);
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -139,42 +157,42 @@ export default function Home() {
         </section>
 
         {/* Stats Section */}
-        <section className="py-8 bg-[#F5F5F5]/90 backdrop-blur-sm -mx-4 sm:-mx-6 lg:-mx-8">
+        <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <AlumniCard className="bg-gradient-to-br from-[#045f3c] to-[#034028] text-white p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-br-none shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#056d45] rounded-full -translate-y-12 translate-x-12 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-[#056d45] rounded-full translate-y-8 -translate-x-8 opacity-30"></div>
+              <AlumniCard className="bg-gradient-to-br from-[#073392] to-[#052a6b] text-white p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-28 h-28 bg-[#0849a8] rounded-full -translate-y-14 translate-x-14 opacity-50"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#0849a8] rounded-full translate-y-12 -translate-x-12 opacity-60"></div>
                 <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-white/10 p-4 rounded-full mb-4">
-                    <Users className="w-12 h-12" />
+                  <div className="bg-white/10 p-2 rounded-full mb-2">
+                    <Users className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl mb-4 font-medium">Transitioned Fellows</h3>
-                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">27</p>
+                  <h3 className="text-base mb-2 font-medium">Transitioned Fellows</h3>
+                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">27</p>
                 </div>
               </AlumniCard>
 
-              <AlumniCard className="bg-[#FFF8E1] p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-tl-none rounded-br-none shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#F8B712] rounded-full -translate-y-16 translate-x-16 opacity-10"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F8B712] rounded-full translate-y-12 -translate-x-12 opacity-10"></div>
+              <AlumniCard className="bg-gradient-to-br from-[#005c3d] to-[#004532] text-white p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#006b47] rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#00a15d] rounded-full translate-y-12 -translate-x-12 opacity-40"></div>
                 <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-[#045f3c]/10 p-4 rounded-full mb-4">
-                    <Briefcase className="w-12 h-12 text-[#045f3c]" />
+                  <div className="bg-white/10 p-2 rounded-full mb-2">
+                    <Briefcase className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl mb-4 font-medium text-[#045f3c]">Alumni Projects</h3>
-                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-[#F8B712] to-[#d49a0f]">12+</p>
+                  <h3 className="text-base mb-2 font-medium">Alumni Projects</h3>
+                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">12+</p>
                 </div>
               </AlumniCard>
 
-              <AlumniCard className="bg-gradient-to-bl from-[#045f3c] to-[#034028] text-white p-8 transform hover:scale-105 transition-transform duration-300 rounded-[2rem] rounded-tl-none shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-[#056d45] rounded-full -translate-y-10 translate-x-10 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-28 h-28 bg-[#056d45] rounded-full translate-y-14 -translate-x-14 opacity-30"></div>
+              <AlumniCard className="bg-gradient-to-bl from-[#f8b712] to-[#d49a0f] text-black p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-28 h-28 bg-[#fcc332] rounded-full -translate-y-14 translate-x-14 opacity-50"></div>
+                <div className="absolute bottom-0 left-0 w-28 h-28 bg-[#ffdb4d] rounded-full translate-y-14 -translate-x-14 opacity-40"></div>
                 <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-white/10 p-4 rounded-full mb-4">
-                    <Calendar className="w-12 h-12" />
+                  <div className="bg-black/10 p-2 rounded-full mb-2">
+                    <Calendar className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl mb-4 font-medium">Events</h3>
-                  <p className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">5+</p>
+                  <h3 className="text-base mb-2 font-medium">Events</h3>
+                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-black to-black/80">5+</p>
                 </div>
               </AlumniCard>
             </div>
@@ -185,10 +203,12 @@ export default function Home() {
         <section className="py-8 relative">
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="relative">
-              <div className="absolute -top-6 right-6 bg-[#F8B712] text-black p-5 rounded-lg shadow-lg transform -rotate-2 z-20">
+              <div className="absolute -top-8 right-8 bg-gradient-to-br from-[#F8B712] to-[#E6A610] text-black px-6 py-4 rounded-xl shadow-2xl transform -rotate-1 z-20 border-2 border-white/20">
                 <div className="relative">
-                  <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-[#F8B712] rotate-45"></div>
-                  <p className="text-xl font-bold relative z-10">"Once a GanzAfrica, Always a Changemaker!"</p>
+                  <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent border-t-[#F8B712]"></div>
+                  <p className="text-lg font-semibold relative z-10 whitespace-nowrap leading-tight">
+                    "<span className={`transition-all duration-500 ${animateFirst ? 'scale-105 text-blue-700 font-bold' : 'scale-100'}`}>Once a GanzAfrica's Fellow!</span> <span className={`transition-all duration-500 ${animateSecond ? 'scale-105 text-green-700 font-bold' : 'scale-100'}`}>Always a Changemaker...</span>"
+                  </p>
                 </div>
               </div>
               <img
@@ -249,48 +269,97 @@ export default function Home() {
         </section>
 
         {/* Projects Section */}
-        <section className="py-8 relative z-10">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold">
-              <span className="text-black">Alumni </span>
-              <span className="text-[#045f3c]">Projects</span>
+        <section className="py-20 relative">
+          {/* Simple, elegant header */}
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-light mb-6">
+              <span className="text-gray-800">Alumni </span>
+              <span className="text-[#045f3c] font-medium">Impact</span>
             </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-[#073392] via-[#005c3d] to-[#f8b712] mx-auto rounded-full"></div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                tag: "Land Governance",
-                description: "We support the development of equitable and effective land administration systems that strengthen tenure security while promoting sustainable land use",
-                icon: <TreePine className="w-6 h-6" />
-              },
-              {
-                tag: "Sustainable Agriculture",
-                description: "Our work promotes agricultural policies that balance productivity goals with environmental stewardship and social inclusion",
-                icon: <Sprout className="w-6 h-6" />
-              },
-              {
-                tag: "Climate Adaptation",
-                description: "Our expertise supports the creation of climate resilience strategies that help communities adapt to changing environmental conditions",
-                icon: <Cloud className="w-6 h-6" />
-              }
-            ].map((project, index) => (
-              <AlumniCard key={index} className="bg-[#045f3c] text-white p-8 rounded-xl transform hover:scale-105 transition-transform group">
-                <div className="flex items-center gap-2 mb-4">
-                  {project.icon}
-                  <Badge className="text-primary-orange text-black text-base px-3 py-1 group-hover:bg-[#045f3c] group-hover:text-white transition-colors">{project.tag}</Badge>
+
+          {/* Creative card layout */}
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {[
+                {
+                  title: "Land Governance",
+                  description: "Equitable land administration systems that strengthen tenure security and promote sustainable use",
+                  icon: <TreePine className="w-12 h-12" />,
+                  color: "#073392",
+                  lightColor: "#e8f0ff"
+                },
+                {
+                  title: "Sustainable Agriculture",
+                  description: "Agricultural policies balancing productivity with environmental stewardship and social inclusion",
+                  icon: <Sprout className="w-12 h-12" />,
+                  color: "#005c3d",
+                  lightColor: "#e8f5f0"
+                },
+                {
+                  title: "Climate Adaptation",
+                  description: "Climate resilience strategies helping communities adapt to changing environmental conditions",
+                  icon: <Cloud className="w-12 h-12" />,
+                  color: "#f8b712",
+                  lightColor: "#fff8e1"
+                }
+              ].map((project, index) => (
+                <div key={index} className="group cursor-pointer">
+                  {/* Minimalist card design */}
+                  <div className="bg-white rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
+                    {/* Icon and title on same line */}
+                    <div className="flex items-center gap-4 mb-6">
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+                        style={{ backgroundColor: project.lightColor }}
+                      >
+                        <div style={{ color: project.color }}>
+                          <div className="w-6 h-6">
+                            {React.cloneElement(project.icon, { className: 'w-6 h-6' })}
+                          </div>
+                        </div>
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-800 group-hover:text-gray-900 transition-colors">
+                        {project.title}
+                      </h3>
+                    </div>
+                    
+                    {/* Creative accent line */}
+                    <div 
+                      className="h-1 w-12 rounded-full transition-all duration-300 group-hover:w-full mb-4"
+                      style={{ backgroundColor: project.color }}
+                    ></div>
+                    
+                    <p className="text-gray-600 leading-relaxed mb-6 group-hover:text-gray-700 transition-colors">
+                      {project.description}
+                    </p>
+
+                    {/* Subtle call-to-action */}
+                    <div className="flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                      <span style={{ color: project.color }}>Explore Projects</span>
+                      <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" style={{ color: project.color }} />
+                    </div>
+                  </div>
+
+                  {/* Creative connecting element */}
+                  {index < 2 && (
+                    <div className="hidden lg:block absolute left-full top-1/2 transform -translate-y-1/2 translate-x-4 w-8 h-px bg-gradient-to-r from-gray-300 to-transparent"></div>
+                  )}
                 </div>
-                <p className="text-base leading-relaxed group-hover:text-white/90">{project.description}</p>
-                {index < 2 && (
-                  <div className="absolute left-1/2 -bottom-8 transform -translate-x-1/2 border-l-2 border-dotted border-[#045f3c] opacity-20 h-8"></div>
-                )}
-              </AlumniCard>
-            ))}
+              ))}
+            </div>
           </div>
-          <div className="flex justify-end mt-8">
-            <Button className="bg-[#045f3c] text-white hover:bg-[#F8B712] hover:text-black transition-colors duration-300 flex items-center gap-2 group">
-              See More Projects
+
+          {/* Compact CTA button on right */}
+          <div className="flex justify-end mt-12">
+            <button className="group relative inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#045f3c] text-[#045f3c] rounded-full hover:bg-[#045f3c] hover:text-white transition-all duration-300 font-medium text-sm shadow-md hover:shadow-lg">
+              <span>View All Projects</span>
               <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-            </Button>
+              
+              {/* Creative hover effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#073392] via-[#005c3d] to-[#f8b712] opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+            </button>
           </div>
         </section>
 
