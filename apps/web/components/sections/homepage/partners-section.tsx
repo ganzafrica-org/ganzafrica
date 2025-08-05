@@ -102,7 +102,7 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow1.length + 1}`}
-                                        className="object-contain max-w-full max-h-28"
+                                        className="object-contain max-w-full max-h-16"
                                     />
                                 </div>
                             </div>
@@ -122,7 +122,7 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow2.length + 1}`}
-                                        className="object-contain max-w-full max-h-28"
+                                        className="object-contain max-w-full max-h-16"
                                     />
                                 </div>
                             </div>

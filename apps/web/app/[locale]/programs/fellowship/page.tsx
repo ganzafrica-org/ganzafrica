@@ -145,7 +145,7 @@ const promises = [
     number: "03",
     title: "Hands-On Experience",
     description: "Deliver work secondments with one of our partners to apply skills learned",
-    color: "bg-[#00A15D]"
+    color: "bg-[#073392]"
   }
 ];
 
