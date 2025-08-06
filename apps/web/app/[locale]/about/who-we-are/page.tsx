@@ -144,9 +144,9 @@ const PromiseCard: FC<PromiseCardProps> = ({
   content,
   hasCurvedCorner = false,
 }) => {
-  const bgColor = type === "partners" ? "bg-yellow-50" : "bg-green-800";
+  const bgColor = type === "partners" ? "bg-[#073392]" : "bg-green-800";
   const labelColor = type === "partners" ? "bg-primary-orange" : "bg-green-500";
-  const textColor = type === "partners" ? "text-gray-800" : "text-white";
+  const textColor = type === "partners" ? "text-white" : "text-white";
   const label = `Promise to ${type}`;
   const iconBg = type === "partners" ? "bg-primary-orange" : "bg-green-600";
 
@@ -441,13 +441,13 @@ export default async function AboutPage(props: PageProps) {
             </div>
             {/* Right side - Mission Cards */}
             <div className="w-full md:w-1/2 flex flex-col space-y-6 sm:space-y-8">
-              <div className="bg-yellow-50 rounded-3xl p-6 sm:p-8 relative">
+              <div className="bg-[#073392] rounded-3xl p-6 sm:p-8 relative">
                 <div className="flex items-center mb-4">
                   <div className="bg-primary-orange text-white font-bold md:text-xl  rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
                     <span className="mr-2"></span> Our Vision
                   </div>
                 </div>
-                <p className="text-base md:text-x  text-gray-900">
+                <p className="text-base md:text-x  text-white">
                   {dict?.about?.aspirations?.mission_1 ||
                     "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"}
                 </p>

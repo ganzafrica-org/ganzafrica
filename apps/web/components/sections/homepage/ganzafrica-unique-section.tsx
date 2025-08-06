@@ -68,7 +68,7 @@ export default function GanzAfricaUniqueSection({
           dict?.unique?.elements?.implementation?.description ||
           "We go beyond ideas, cultivating a generation of young african leaders with the skills and resources to translate their vision into reality, implementing solutions to improve community livelihoods in Africa.",
       icon: <ImplementationIcon />, // Custom SVG icon
-      color: "primary-green",
+      color: "#009758",
     },
     {
       title:
@@ -94,12 +94,12 @@ export default function GanzAfricaUniqueSection({
   };
 
   return (
-      <section className="py-16 md:py-24 bg-[#e3f1ed]">
+      <section className="py-16 md:py-24 bg-[#005c3d]">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left column with title and video */}
             <div>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary-green leading-tight mb-8">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#fef597] leading-tight mb-8">
                 {sectionTitle}
               </h2>
 
@@ -139,7 +139,8 @@ export default function GanzAfricaUniqueSection({
                   >
                     {/* Colored sidebar */}
                     <div
-                        className={`w-full md:w-2 h-2 md:h-auto bg-${element.color}`}
+                        className={`w-full md:w-2 h-2 md:h-auto ${element.color.startsWith('#') ? '' : `bg-${element.color}`}`}
+                        style={element.color.startsWith('#') ? { backgroundColor: element.color } : {}}
                     ></div>
 
                     {/* Content */}
