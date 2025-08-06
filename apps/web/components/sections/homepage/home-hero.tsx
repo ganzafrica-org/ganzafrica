@@ -725,7 +725,7 @@ export default function HomeHero({
           </h1>
           <p className="text-xl md:text-2xl max-w-3xl mx-auto">
             {dict?.home?.hero?.subtitle ||
-              "Empowering youth through sustainable land management"}
+              "Empowering youth to address agri-food systems challenges in Africa"}
           </p>
         </div>
       </div>

@@ -98,11 +98,11 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                         {/* Double the items to ensure smooth looping */}
                         {[...partnerRow1, ...partnerRow1].map((partner, index) => (
                             <div key={`row1-${index}`} className="inline-block px-6">
-                                <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
+                                <div className="bg-white rounded-lg shadow-md p-4 w-48 h-32 flex items-center justify-center">
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow1.length + 1}`}
-                                        className="object-contain max-w-full max-h-16"
+                                        className="object-contain max-w-full max-h-12"
                                     />
                                 </div>
                             </div>
@@ -118,11 +118,11 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                         {/* Double the items to ensure smooth looping */}
                         {[...partnerRow2, ...partnerRow2].map((partner, index) => (
                             <div key={`row2-${index}`} className="inline-block px-6">
-                                <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
+                                <div className="bg-white rounded-lg shadow-md p-4 w-48 h-32 flex items-center justify-center">
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow2.length + 1}`}
-                                        className="object-contain max-w-full max-h-16"
+                                        className="object-contain max-w-full max-h-12"
                                     />
                                 </div>
                             </div>
