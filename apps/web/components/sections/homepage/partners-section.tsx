@@ -95,10 +95,9 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
             <div className="slider-container mb-8 overflow-hidden w-full">
                 <div className="slider w-full flex items-center overflow-hidden">
                     <div className="slider-items-right flex items-center whitespace-nowrap">
-                        {/* Double the items to ensure smooth looping */}
                         {[...partnerRow1, ...partnerRow1].map((partner, index) => (
                             <div key={`row1-${index}`} className="inline-block px-6">
-                                <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
+                                <div className="bg-white rounded-lg shadow-md p-4 w-48 h-32 flex items-center justify-center">
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow1.length + 1}`}
@@ -115,10 +114,9 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
             <div className="slider-container overflow-hidden w-full">
                 <div className="slider w-full flex items-center overflow-hidden">
                     <div className="slider-items-left flex items-center whitespace-nowrap">
-                        {/* Double the items to ensure smooth looping */}
                         {[...partnerRow2, ...partnerRow2].map((partner, index) => (
                             <div key={`row2-${index}`} className="inline-block px-6">
-                                <div className="bg-white rounded-lg shadow-md p-6 w-64 h-40 flex items-center justify-center">
+                                <div className="bg-white rounded-lg shadow-md p-4 w-48 h-32 flex items-center justify-center">
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow2.length + 1}`}
@@ -133,37 +131,37 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
 
             {/* Styled JSX for animations */}
             <style jsx>{`
-        .slider-items-right {
-          animation: scrollRight 30s linear infinite;
-        }
+                .slider-items-right {
+                    animation: scrollRight 30s linear infinite;
+                }
 
-        .slider-items-left {
-          animation: scrollLeft 30s linear infinite;
-        }
+                .slider-items-left {
+                    animation: scrollLeft 30s linear infinite;
+                }
 
-        @keyframes scrollRight {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
+                @keyframes scrollRight {
+                    0% {
+                        transform: translateX(0);
+                    }
+                    100% {
+                        transform: translateX(-50%);
+                    }
+                }
 
-        @keyframes scrollLeft {
-          0% {
-            transform: translateX(-50%);
-          }
-          100% {
-            transform: translateX(0);
-          }
-        }
+                @keyframes scrollLeft {
+                    0% {
+                        transform: translateX(-50%);
+                    }
+                    100% {
+                        transform: translateX(0);
+                    }
+                }
 
-        .slider-items-right:hover,
-        .slider-items-left:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
+                .slider-items-right:hover,
+                .slider-items-left:hover {
+                    animation-play-state: paused;
+                }
+            `}</style>
         </section>
     );
 }

@@ -25,7 +25,7 @@ export default function GanzAfricaUniqueSection({
 
   // Get section content from dictionary with fallbacks
   const sectionTitle =
-      dict?.unique?.title || "Three Key Elements that make GanzAfrica Unique";
+      dict?.unique?.title || "3 Key Elements that make GanzAfrica Unique";
 
   // Define custom SVG icons for each element
   const DataIcon = () => (
@@ -104,13 +104,19 @@ export default function GanzAfricaUniqueSection({
               </h2>
 
               {/* Video with play button overlay */}
-              <div className="relative rounded-2xl overflow-hidden aspect-video bg-black/10">
+              <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200">
                 <video
                     ref={videoRef}
-                    src="/videos/farmers-in-field.mp4" // Your video file path
-                    poster="/images/famer-feild.png" // Optional: keep the thumbnail as a poster
-                    className="w-full h-full object-cover"
+                    src="/videos/farmers-in-field.mp4"
+                    poster="/images/famer-feild.png" // Using existing image with typo in filename
+                    className="w-full h-full object-cover brightness-105"
                     onEnded={() => setVideoPlaying(false)}
+                    onPlay={() => setVideoPlaying(true)}
+                    onPause={() => setVideoPlaying(false)}
+                    preload="auto"
+                    playsInline
+                    loop
+                    muted
                 />
 
                 {/* Play/Pause button overlay */}

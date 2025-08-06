@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "@workspace/ui/components/button";
 import Header from "@/components/layout/header";
 import { Container } from "@/components/container";
-import {Users, Blocks, Briefcase, Users2 } from 'lucide-react';
+import { Users, Blocks, Briefcase, Users2, ArrowRight } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import Link from 'next/link';
@@ -59,93 +59,188 @@ const eligibilityCriteria = [
   }
 ];
 
-const FellowshipJourney = () => {
+const FloatingApplyButton = () => {
+  const params = useParams<{ locale: string }>();
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout>();
+  const footerSectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const findFooterSection = () => {
+      // Look for the section containing "Connect With Us" heading
+      const headings = Array.from(document.querySelectorAll('h2, h3, h4, h5, h6'));
+      console.log('All headings:', headings.map(h => h.textContent?.trim()));
+      
+      const connectSection = headings.find(el => 
+        el.textContent?.trim().toLowerCase().includes('connect with us')
+      );
+      
+      console.log('Found Connect With Us section:', connectSection);
+      
+      // If we found the section, go up to find a suitable parent
+      if (connectSection) {
+        const parentSection = connectSection.closest('section, footer, [class*="footer"], [class*="Footer"]') as HTMLElement;
+        console.log('Parent section found:', parentSection);
+        return parentSection || document.querySelector('footer') as HTMLElement;
+      }
+      
+      // Fallback to any footer element
+      return document.querySelector('footer, [class*="footer"], [class*="Footer"]') as HTMLElement;
+    };
+
+    const handleScroll = () => {
+      if (!buttonRef.current) return;
+      
+      // Find the footer section if not already found
+      if (!footerSectionRef.current) {
+        footerSectionRef.current = findFooterSection();
+        if (!footerSectionRef.current) {
+          console.log('No footer section found yet');
+          return;
+        }
+      }
+      
+      // Get positions
+      const footerRect = footerSectionRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const scrollPosition = window.scrollY;
+      
+      // Calculate the position where we want to start hiding the button
+      // We'll start hiding when we're 1.5x the viewport height from the footer
+      const viewportHeight = window.innerHeight;
+      const hideThreshold = viewportHeight * 1.5; // Hide when 1.5 viewports away
+      const distanceToFooter = footerRect.top - viewportHeight;
+      
+      console.log('Distance to footer:', distanceToFooter, 'Hide threshold:', hideThreshold);
+      
+      // Toggle visibility based on scroll position
+      const shouldBeVisible = distanceToFooter > hideThreshold || distanceToFooter < 0;
+      
+      console.log('Button should be visible:', shouldBeVisible);
+      
+      // Only update state if it's different to prevent unnecessary re-renders
+      if (shouldBeVisible !== isVisible) {
+        console.log('Updating button visibility to:', shouldBeVisible);
+        setIsVisible(shouldBeVisible);
+      }
+    };
+
+    // Initial check with a slight delay to ensure DOM is ready
+    const initTimer = setTimeout(() => {
+      footerSectionRef.current = findFooterSection();
+      handleScroll();
+    }, 300); // Increased delay to ensure all content is loaded
+    
+    // Throttle the scroll event for better performance
+    const throttledScroll = () => {
+      if (scrollTimeout.current) {
+        cancelAnimationFrame(scrollTimeout.current);
+      }
+      scrollTimeout.current = requestAnimationFrame(handleScroll);
+    };
+    
+    // Add event listeners with passive for better performance
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    window.addEventListener('resize', throttledScroll, { passive: true });
+    
+    // Add intersection observer as a fallback
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setIsVisible(false);
+          } else if (window.scrollY + window.innerHeight < entry.boundingClientRect.top + window.scrollY - 200) {
+            setIsVisible(true);
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+      }
+    );
+    
+    // Start observing the footer section
+    if (footerSectionRef.current) {
+      observer.observe(footerSectionRef.current);
+    } else {
+      // If footer not found initially, try again after a delay
+      const retryTimer = setTimeout(() => {
+        const footer = findFooterSection();
+        if (footer) {
+          footerSectionRef.current = footer;
+          observer.observe(footer);
+        }
+      }, 1000);
+      
+      return () => clearTimeout(retryTimer);
+    }
+    
+    // Clean up
+    return () => {
+      clearTimeout(initTimer);
+      window.removeEventListener('scroll', throttledScroll);
+      window.removeEventListener('resize', throttledScroll);
+      if (scrollTimeout.current) {
+        cancelAnimationFrame(scrollTimeout.current);
+      }
+      if (footerSectionRef.current) {
+        observer.unobserve(footerSectionRef.current);
+      }
+      observer.disconnect();
+    };
+  }, [isVisible]);
+  
   return (
-      <div className="w-full bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center mb-20">
-            GanzAfrica's Promise <span className="text-[#00A15D]">to</span>
-            <br />
-            <span className="text-[#FDB022]">Fellows:</span>
-          </h2>
-          <div className="relative">
-            {/* Journey Steps */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-              {/* Step 1 */}
-              <div className="flex flex-col items-center text-center relative">
-                <p className="text-gray-800 text-lg max-w-[250px] mb-6">
-                  High-achieving young professionals are recruited as GanzAfrica fellows
-                </p>
-                <div className="w-[88px] h-[88px] bg-[#00A15D] rounded-full flex items-center justify-center relative z-10">
-                  <span className="text-2xl font-bold text-white">1</span>
-                </div>
-              </div>
-
-              {/* Step 2 */}
-              <div className="flex flex-col items-center text-center relative">
-                <div className="w-[88px] h-[88px] bg-[#FDB022] rounded-full flex items-center justify-center mb-6 relative z-10">
-                  <span className="text-2xl font-bold text-white">2</span>
-                </div>
-                <p className="text-gray-800 text-lg max-w-[250px]">
-                  GanzAfrica Academy provides capacity building on data-led approaches and leadership
-                </p>
-              </div>
-
-              {/* Step 3 */}
-              <div className="flex flex-col items-center text-center relative">
-                <p className="text-gray-800 text-lg max-w-[250px] mb-6">
-                  Fellows are placed in public institutions and empowered to shape policy approaches
-                </p>
-                <div className="w-[88px] h-[88px] bg-[#00A15D] rounded-full flex items-center justify-center relative z-10">
-                  <span className="text-2xl font-bold text-white">3</span>
-                </div>
-              </div>
-
-              {/* Step 4 */}
-              <div className="flex flex-col items-center text-center relative">
-                <div className="w-[88px] h-[88px] bg-[#FDB022] rounded-full flex items-center justify-center mb-6 relative z-10">
-                  <span className="text-2xl font-bold text-white">4</span>
-                </div>
-                <p className="text-gray-800 text-lg max-w-[250px]">
-                  Fellows receive mentorship from experts, advancing their careers, leadership skills, and providing ongoing support
-                </p>
-              </div>
-
-              {/* Connecting Lines with Curves */}
-              <div className="absolute top-[44%] left-[15%] right-[15%] hidden lg:block">
-                {/* Main connecting line */}
-                <div className="absolute w-full h-0.5 bg-[#00A15D]" />
-
-                {/* Curved connectors using SVG */}
-                <svg className="absolute left-[20%] -top-4 w-32 h-8" viewBox="0 0 128 32" fill="none">
-                  <path d="M0 16 C32 16, 96 16, 128 16" stroke="#00A15D" strokeWidth="2" strokeDasharray="4 4" />
-                </svg>
-
-                <svg className="absolute left-[45%] -top-4 w-32 h-8" viewBox="0 0 128 32" fill="none">
-                  <path d="M0 16 C32 16, 96 16, 128 16" stroke="#00A15D" strokeWidth="2" strokeDasharray="4 4" />
-                </svg>
-
-                <svg className="absolute left-[70%] -top-4 w-32 h-8" viewBox="0 0 128 32" fill="none">
-                  <path d="M0 16 C32 16, 96 16, 128 16" stroke="#00A15D" strokeWidth="2" strokeDasharray="4 4" />
-                </svg>
-              </div>
-
-              {/* Vertical connectors for mobile */}
-              <div className="lg:hidden absolute left-1/2 top-[88px] bottom-0 w-0.5 bg-[#00A15D] -translate-x-1/2">
-                <div className="absolute top-0 left-1/2 w-4 h-4 -translate-x-1/2 -translate-y-1/2 rotate-45 border-t-2 border-r-2 border-[#00A15D]" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div 
+          ref={buttonRef}
+          className="fixed bottom-8 right-8 z-50"
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ 
+            opacity: 1, 
+            x: 0,
+            y: [0, -15, 0],
+          }}
+          exit={{ opacity: 0, x: 100 }}
+          transition={{
+            y: {
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "reverse" as const,
+              ease: "easeInOut"
+            },
+            x: { duration: 0.3 },
+            opacity: { duration: 0.15 } // Faster fade out
+          }}
+        >
+          <Link href={`/${params.locale}/programs/fellowship/apply`}>
+            <Button 
+              className="bg-primary-orange hover:bg-primary-orange/90 text-white font-semibold px-6 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+              style={{
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+              }}
+            >
+              Apply Now
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </Link>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
+
+
 
 export default function HowToApplyPage() {
   // Get locale from URL params
   const params = useParams<{ locale: string }>();
   const locale = params.locale as string;
-  const bannerRef = useRef(null);
+  const bannerRef = useRef<HTMLDivElement>(null);
   type Opportunity = {
     id: string;
     title: string;
@@ -159,46 +254,36 @@ export default function HowToApplyPage() {
   // const dict = useDictionary(locale);
 
   return (
-      <div className="min-h-screen bg-white">
-        <Header locale={locale} dict={{}} /> {/* Pass empty object for dict or implement dict fetching */}
+    <div className="min-h-screen bg-white">
+      <Header locale={locale} dict={{}} />
+      <FloatingApplyButton />
 
-        {/* Hero Section */}
-        <section className="relative h-[500px] bg-[url('/images/Welcoming.jpg')] bg-cover bg-center">
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40" />
-          <div className="relative z-10 h-full flex items-center justify-center">
-            <div className="container mx-auto px-4 text-center">
-              <motion.h1
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8 }}
-                  className="text-4xl md:text-6xl font-bold text-white mb-6"
-              >
-                Apply by completing our
-                <br />
-                <span className="text-primary-orange">online application</span>
-              </motion.h1>
-              <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="text-xl text-white/90 max-w-2xl mx-auto mb-8"
-              >
-                Join our fellowship program and become part of Africa's next generation of leaders in sustainable development
-              </motion.p>
-              <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.4 }}
-              >
-                <Link href={`/${locale}/programs/fellowship/${featuredOpportunity?.id}/apply`}>
-                <Button className="bg-primary-orange hover:bg-primary-orange/90 text-white font-semibold px-6 py-4 text-base">
-                    Apply now
-                  </Button>
-                </Link>
-              </motion.div>
-            </div>
+      {/* Hero Section */}
+      <section className="relative h-[500px] bg-[url('/images/Welcoming.jpg')] bg-cover bg-center">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40" />
+        <div className="relative z-10 h-full flex items-center justify-center">
+          <div className="container mx-auto px-4 text-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-4xl md:text-6xl font-bold text-white mb-6"
+            >
+              Apply by completing our
+              <br />
+              <span className="text-primary-orange">online application</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-xl text-white/90 max-w-2xl mx-auto mb-8"
+            >
+              Join our fellowship program and become part of Africa's next generation of leaders in sustainable development
+            </motion.p>
           </div>
-        </section>
+        </div>
+      </section>
 
         <div ref={bannerRef} className="w-full overflow-hidden">
         <div className="flex justify-center">
@@ -288,7 +373,7 @@ export default function HowToApplyPage() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="mb-12">
               <h2 className="text-5xl font-bold text-[#045F3C] relative inline-block tracking-tight">
-                FELLOW JOURNEY
+                FELLOWSHIP JOURNEY
                 <div className="absolute -bottom-4 left-0 w-[90%] h-1.5 bg-[#FDB022]"></div>
               </h2>
             </div>
@@ -402,6 +487,42 @@ export default function HowToApplyPage() {
             </div>
           </div>
         </div>
-      </div>
+
+      {/* Floating Apply Now Button */}
+      <AnimatePresence>
+        <motion.div 
+          className="fixed bottom-8 right-8 z-50"
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ 
+            opacity: 1, 
+            x: 0,
+            y: [0, -15, 0],
+          }}
+          exit={{ opacity: 0, x: 100 }}
+          transition={{
+            y: {
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "reverse" as const,
+              ease: "easeInOut"
+            },
+            x: { duration: 0.5 },
+            opacity: { duration: 0.5 }
+          }}
+        >
+          <Link href={`/${params.locale}/programs/fellowship/apply`}>
+            <Button 
+              className="bg-primary-orange hover:bg-primary-orange/90 text-white font-semibold px-6 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+              style={{
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+              }}
+            >
+              Apply Now
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </Link>
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
-}
+};
