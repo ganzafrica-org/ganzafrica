@@ -284,9 +284,9 @@ const getProjectUrl = useCallback((projectId: number): string => {
 // Add No Projects Available message - only show if both API and fallbacks fail
 if (!loading && projects.length === 0) {
     return (
-        <section className="bg-[#f2faf6] relative overflow-hidden py-16">
+        <section className="bg-[#f2faf6] relative overflow-hidden py-8">
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
-                <div className="text-center mb-16">
+                <div className="text-center mb-8">
                     <DecoratedHeading
                         firstText={dict?.projects?.heading_first ?? "Featured"}
                         secondText={dict?.projects?.heading_second ?? "Properties"}
@@ -295,7 +295,7 @@ if (!loading && projects.length === 0) {
                 </div>
                 
                 {/* No Projects Message */}
-                <div className="text-center py-16">
+                <div className="text-center py-8">
                     <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gray-100">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -337,7 +337,7 @@ const currentProjects = limitedProjects.slice(
 );
 
 return (
-    <section className="relative overflow-hidden py-12 md:py-16">
+    <section className="relative overflow-hidden py-8 md:py-10 bg-secondary-green/5">
         {/* Subtle dot pattern */}
         <div className="absolute inset-0 opacity-20" style={{
             backgroundImage: 'radial-gradient(circle, #4a5568 1px, transparent 1px)',
@@ -348,7 +348,7 @@ return (
         }} />
         
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
-            <div className="text-center mb-16">
+            <div className="text-center mb-8">
                 <motion.div 
                     className="space-y-2"
                     initial={{ opacity: 0, y: 20 }}
@@ -468,7 +468,7 @@ return (
 
             {/* Call to action */}
             <motion.div 
-                className="text-center mt-16"
+                className="text-center mt-8"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -478,10 +478,10 @@ return (
                     href={`/${locale}/projects`}
                     className={cn(
                         "group relative inline-flex items-center justify-center",
-                        "bg-black text-white py-4 px-8 rounded-none",
+                        "bg-primary-green text-white py-4 px-8 rounded-lg",
                         "text-sm font-medium tracking-wider uppercase",
                         "overflow-hidden transition-all duration-300",
-                        "hover:bg-opacity-90 hover:pl-10 hover:pr-6"
+                        "hover:bg-opacity-90 hover:pl-10 hover:pr-6 "
                     )}
                 >
                     <span className="relative z-10">

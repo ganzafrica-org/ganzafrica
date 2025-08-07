@@ -124,9 +124,9 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
     // Show skeleton loading state that resembles the actual content
     if (loading && testimonials.length === 0) {
         return (
-            <section className="py-16 md:py-24 bg-secondary-green/5 relative overflow-hidden">
+            <section className="py-8 md:py-12 bg-secondary-green/5 relative overflow-hidden">
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-16">
+                    <div className="text-center mb-8">
                         {/* Skeleton for heading */}
                         <div className="flex justify-center">
                             <div className="h-12 w-72 bg-gray-200 animate-pulse rounded-md"></div>
@@ -156,14 +156,14 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                             {/* Skeleton for center content */}
                             <div className="flex flex-col items-center justify-center text-center px-4 md:px-20">
                                 {/* Skeleton for avatar */}
-                                <div className="relative h-56 w-full max-w-xs mb-8">
-                                    <div className="w-40 h-40 rounded-full bg-gray-200 animate-pulse mx-auto"></div>
+                                <div className="relative h-48 w-full max-w-xs mb-6">
+                                    <div className="w-32 h-32 rounded-full bg-gray-200 animate-pulse mx-auto"></div>
                                     <div className="h-6 w-48 bg-gray-200 animate-pulse mx-auto mt-4 rounded"></div>
                                     <div className="h-4 w-32 bg-gray-200 animate-pulse mx-auto mt-2 rounded"></div>
                                 </div>
 
                                 {/* Skeleton for quote text */}
-                                <div className="relative min-h-[180px] md:min-h-[150px] w-full">
+                                <div className="relative min-h-[140px] md:min-h-[120px] w-full">
                                     <div className="w-10 h-10 bg-gray-100 mb-4 mx-auto rounded"></div>
                                     <div className="h-4 w-full max-w-lg bg-gray-200 animate-pulse mx-auto rounded mb-2"></div>
                                     <div className="h-4 w-full max-w-md bg-gray-200 animate-pulse mx-auto rounded mb-2"></div>
@@ -191,7 +191,7 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                         </div>
 
                         {/* Mobile skeleton indicators */}
-                        <div className="md:hidden flex justify-center mt-8 gap-3">
+                        <div className="md:hidden flex justify-center mt-6 gap-3">
                             {[1, 2, 3, 4].map((_, index) => (
                                 <div key={`skeleton-nav-${index}`} className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
                             ))}
@@ -203,14 +203,15 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
     }
 
     return (
-        <section className="py-16 md:py-24 bg-secondary-green/5 relative overflow-hidden">
+        <section className="py-8 md:py-12 bg-primary-green relative overflow-hidden ">
             <div className="container mx-auto px-4">
-                <div className="text-center mb-16">
-                    <DecoratedHeading
-                        firstText={dict?.testimonials?.heading_first || "Our"}
-                        secondText={dict?.testimonials?.heading_second || "Testimonials"}
-                        className="mx-auto"
-                    />
+                <div className="text-center mb-8">
+                    <div className="mx-auto">
+    <h2 className="text-3xl md:text-4xl font-bold text-center">
+        <span className="text-primary-orange">{dict?.testimonials?.heading_first || "Our"}</span>{" "}
+        <span className="text-white">{dict?.testimonials?.heading_second || "Testimonials"}</span>
+    </h2>
+</div>
                 </div>
 
                 {/* Error message */}
@@ -243,7 +244,7 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                                 animation: `floating ${8 + index}s linear infinite`,
                                                 top: `${index * (100 / Math.max(getLeftSideTestimonials().length, 1))}%`,
                                                 left: `${Math.sin(angle * Math.PI / 180) * radius + 50}%`,
-                                                borderRadius: "50%", // Ensure ring follows avatar shape
+                                                borderRadius: "50%", 
                                                 transformOrigin: "center center",
                                                 transition: "all 0.3s ease-in-out"
                                             }}
@@ -251,7 +252,7 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                         >
                                             <Avatar className={cn(
                                                 "border-2 border-white shadow-md",
-                                                isActive ? "w-20 h-20" : "w-16 h-16" // Increased sizes
+                                                isActive ? "w-20 h-20" : "w-16 h-16"
                                             )}>
                                                 <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
                                                 <AvatarFallback className="text-lg">{testimonial.author_name.charAt(0)}</AvatarFallback>
@@ -264,8 +265,8 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
 
                         {/* Center content - Photo and Quote - with better spacing */}
                         <div className="flex flex-col items-center justify-center text-center px-4 md:px-20">
-                            {/* Avatar Images - increased size */}
-                            <div className="relative h-56 w-full max-w-xs mb-8 perspective-container">
+                            {/* Avatar Images - reduced size */}
+                            <div className="relative h-48 w-full max-w-xs mb-6 perspective-container">
                                 {testimonials.map((testimonial, index) => (
                                     <div
                                         key={`center-${testimonial.id}`}
@@ -275,18 +276,18 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                                 index < activeIndex ? "opacity-0 -translate-y-full rotate-x-70" : "opacity-0 translate-y-full rotate-x-negative-70"
                                         )}
                                     >
-                                        <Avatar className="w-40 h-40 mx-auto border-4 border-white shadow-lg">
+                                        <Avatar className="w-32 h-32 mx-auto border-4 border-white shadow-lg">
                                             <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
-                                            <AvatarFallback className="text-4xl">{testimonial.author_name.charAt(0)}</AvatarFallback>
+                                            <AvatarFallback className="text-3xl">{testimonial.author_name.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <h3 className="mt-4 text-2xl font-bold text-primary-green">{testimonial.author_name}</h3>
-                                        <p className="text-md text-gray-600">{testimonial.position} {testimonial.company && `at ${testimonial.company}`}</p>
+                                        <h3 className="mt-3 text-xl font-bold text-primary-orange">{testimonial.author_name}</h3>
+                                        <p className="text-sm text-gray-600 text-white">{testimonial.position} {testimonial.company && `at ${testimonial.company}`}</p>
                                     </div>
                                 ))}
                             </div>
 
-                            {/* Quote Text - improved with better wrapping and height */}
-                            <div className="relative min-h-[180px] md:min-h-[150px] w-full perspective-container">
+                            {/* Quote Text - reduced height */}
+                            <div className="relative min-h-[140px] md:min-h-[120px] w-full perspective-container">
                                 {testimonials.map((testimonial, index) => (
                                     <div
                                         key={`quote-${testimonial.id}`}
@@ -297,10 +298,10 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                                         )}
                                     >
                                         <div className="relative">
-                                            <svg className="w-10 h-10 text-primary-green/20 mb-4 mx-auto" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                            <svg className="w-8 h-8 text-primary-green/20 mb-3 mx-auto" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                                                 <path d="M10 8C4.477 8 0 12.477 0 18v14h12V18h-8c0-3.866 3.134-7 7-7h1V8h-2zm20 0c-5.523 0-10 4.477-10 10v14h12V18h-8c0-3.866 3.134-7 7-7h1V8h-2z"></path>
                                             </svg>
-                                            <p className="text-gray-700 italic text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
+                                            <p className="text-gray-700 italic text-base md:text-lg max-w-3xl mx-auto leading-relaxed text-white">
                                                 {testimonial.description}
                                             </p>
                                         </div>
@@ -353,7 +354,7 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                     </div>
 
                     {/* Mobile testimonial navigation - improved with avatar indicators */}
-                    <div className="md:hidden flex justify-center mt-8 gap-3">
+                    <div className="md:hidden flex justify-center mt-6 gap-3">
                         {testimonials.map((testimonial, index) => (
                             <button
                                 key={`nav-${index}`}

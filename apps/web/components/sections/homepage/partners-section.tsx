@@ -80,9 +80,9 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
     }, []);
 
     return (
-        <section className="py-16 md:py-24 bg-yellow-50 overflow-hidden">
-            <div className="container mx-auto px-4 mb-8">
-                <div className="text-center mb-16">
+        <section className="py-10 md:py-14 bg-white overflow-hidden">
+            <div className="container mx-auto px-4 mb-7">
+                <div className="text-center mb-10">
                     <DecoratedHeading
                         firstText={dict?.partners?.heading_first ?? dict?.about?.partners?.heading_first ?? "Our"}
                         secondText={dict?.partners?.heading_second ?? dict?.about?.partners?.heading_second ?? "Partners"}
@@ -91,17 +91,17 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                 </div>
             </div>
 
-            {/* First row - Right to Left */}
-            <div className="slider-container mb-8 overflow-hidden w-full">
+            {/* First row */}
+            <div className="slider-container mb-6 overflow-hidden w-full">
                 <div className="slider w-full flex items-center overflow-hidden">
                     <div className="slider-items-right flex items-center whitespace-nowrap">
                         {[...partnerRow1, ...partnerRow1].map((partner, index) => (
-                            <div key={`row1-${index}`} className="inline-block px-6">
-                                <div className="bg-white rounded-lg shadow-md p-4 w-48 h-32 flex items-center justify-center">
+                            <div key={`row1-${index}`} className="inline-block px-4">
+                                <div className="bg-white rounded-lg shadow-md p-4 w-48 h-28 flex items-center justify-center">
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow1.length + 1}`}
-                                        className="object-contain max-w-full max-h-16"
+                                        className="object-contain max-w-full max-h-12"
                                     />
                                 </div>
                             </div>
@@ -110,17 +110,17 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
                 </div>
             </div>
 
-            {/* Second row - Left to Right */}
+            {/* Second row - Right to Left */}
             <div className="slider-container overflow-hidden w-full">
                 <div className="slider w-full flex items-center overflow-hidden">
                     <div className="slider-items-left flex items-center whitespace-nowrap">
                         {[...partnerRow2, ...partnerRow2].map((partner, index) => (
-                            <div key={`row2-${index}`} className="inline-block px-6">
-                                <div className="bg-white rounded-lg shadow-md p-4 w-48 h-32 flex items-center justify-center">
+                            <div key={`row2-${index}`} className="inline-block px-4">
+                                <div className="bg-white rounded-lg shadow-md p-4 w-48 h-28 flex items-center justify-center">
                                     <img
                                         src={partner}
                                         alt={`Partner ${index % partnerRow2.length + 1}`}
-                                        className="object-contain max-w-full max-h-16"
+                                        className="object-contain max-w-full max-h-12"
                                     />
                                 </div>
                             </div>
@@ -131,31 +131,31 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
 
             {/* Styled JSX for animations */}
             <style jsx>{`
-                .slider-items-right {
-                    animation: scrollRight 30s linear infinite;
-                }
+        .slider-items-right {
+          animation: scrollRight 25s linear infinite;
+        }
 
-                .slider-items-left {
-                    animation: scrollLeft 30s linear infinite;
-                }
+        .slider-items-left {
+          animation: scrollLeft 25s linear infinite;
+        }
 
-                @keyframes scrollRight {
-                    0% {
-                        transform: translateX(0);
-                    }
-                    100% {
-                        transform: translateX(-50%);
-                    }
-                }
+        @keyframes scrollRight {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
 
-                @keyframes scrollLeft {
-                    0% {
-                        transform: translateX(-50%);
-                    }
-                    100% {
-                        transform: translateX(0);
-                    }
-                }
+        @keyframes scrollLeft {
+          0% {
+            transform: translateX(100%);
+          }
+          100% {
+            transform: translateX(-100%);
+          }
+        }
 
                 .slider-items-right:hover,
                 .slider-items-left:hover {

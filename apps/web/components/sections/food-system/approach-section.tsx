@@ -67,7 +67,7 @@ const ApproachSection = () => {
             </p>
             <Link href={`/${"locale"}/projects`}>
               <motion.button
-                className="bg-primary-orange hover:bg-yellow-500 text-white px-6 py-3 rounded-md font-medium transition-colors"
+                className="bg-primary-green hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >

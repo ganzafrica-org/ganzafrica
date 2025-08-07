@@ -123,7 +123,7 @@ export default function GanzAfricaUniqueSection({
   };
 
   return (
-      <section className="py-16 md:py-24 bg-[#E5EAF6] overflow-hidden relative">
+      <section className="py-8 md:py-12 bg-[#E5EAF6] overflow-hidden relative">
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-50" style={{
           backgroundImage: 'radial-gradient(circle, #4a5568 0.5px, transparent 0.5px)',
@@ -143,7 +143,7 @@ export default function GanzAfricaUniqueSection({
             {/* Left column with title and video */}
             <div>
               <motion.div 
-                className="space-y-8"
+                className="space-y-6"
                 variants={item}
               >
                 <motion.div 
@@ -153,12 +153,15 @@ export default function GanzAfricaUniqueSection({
                   viewport={{ once: true }}
                   transition={{ duration: 0.6 }}
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold text-black">
-                    {dict.home?.unique?.title_first || "3 Key Elements that make"}
-                  </h2>
-                  <h2 className="text-3xl md:text-4xl font-bold text-primary-green">
-                    {dict.home?.unique?.title_second || "GanzAfrica Unique"}
-                  </h2>
+                  <h2 className="text-3xl md:text-4xl font-bold">
+  <span className="text-black">
+    {dict.home?.unique?.title_first || "3 Key Elements that make"}{" "}
+  </span>
+  <span className="text-primary-green">
+    {dict.home?.unique?.title_second || "GanzAfrica Unique"}
+  </span>
+</h2>
+
                 </motion.div>
                 <motion.div 
                   className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"
@@ -180,29 +183,6 @@ export default function GanzAfricaUniqueSection({
                     Your browser does not support the video tag.
                   </video>
                   <motion.button
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#fef597] leading-tight mb-8">
-                {sectionTitle}
-              </h2>
-
-              {/* Video with play button overlay */}
-              <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200">
-                <video
-                    ref={videoRef}
-                    src="/videos/farmers-in-field.mp4"
-                    poster="/images/famer-feild.png" // Using existing image with typo in filename
-                    className="w-full h-full object-cover brightness-105"
-                    onEnded={() => setVideoPlaying(false)}
-                    onPlay={() => setVideoPlaying(true)}
-                    onPause={() => setVideoPlaying(false)}
-                    preload="auto"
-                    playsInline
-                    loop
-                    muted
-                />
-
-                {/* Play/Pause button overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <button
                       onClick={handleVideoPlayback}
                       className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-30 transition-all duration-300 hover:bg-opacity-20 focus:outline-none"
                       aria-label={videoPlaying ? 'Pause video' : 'Play video'}
@@ -238,18 +218,18 @@ export default function GanzAfricaUniqueSection({
             </div>
 
             {/* Right column with key elements */}
-            <div className="space-y-8">
+            <div className="space-y-6">
               <motion.div 
-                className="space-y-6 relative"
+                className="space-y-4 relative"
                 variants={item}
               >
                 <div className="absolute -left-6 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-[#E5EAF6] z-10 pointer-events-none"></div>
-                <div className="relative space-y-6 pl-2 pr-1 py-4 overflow-visible">
+                <div className="relative space-y-4 pl-2 pr-1 py-4 overflow-visible">
                   <div className="absolute -right-6 top-0 bottom-0 w-6 bg-gradient-to-l from-[#E5EAF6] to-transparent z-10 pointer-events-none"></div>
                   {keyElements.map((element, index) => (
                       <motion.div
                           key={index}
-                          className={`p-6 rounded-lg bg-white bg-opacity-90 backdrop-blur-sm border-l-4`}
+                          className={`p-5 rounded-lg bg-white bg-opacity-90 backdrop-blur-sm border-l-4`}
                           style={{ borderLeftColor: element.color }}
                           variants={item}
                           whileHover={{ 

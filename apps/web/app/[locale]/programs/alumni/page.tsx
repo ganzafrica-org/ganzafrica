@@ -113,19 +113,19 @@ export default function Home() {
              </div>
 
       {/* Content with standard page margins */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mt-">
         {/* Mission Section */}
         <section className="py-8 relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="rounded-full overflow-hidden aspect-square border-8 border-[#F8B712] shadow-xl bg-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0 items-center">
+            <div className="relative ml-8 -mr-24">
+              <div className="rounded-full overflow-hidden w-[340px] h-[340px] mx-auto border-4 border-primary-green shadow-xl bg-white">
                 <img
                   src="/images/launch event.jpg"
                   alt="Mission"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <div className="absolute -bottom-8 -left-4 w-52 h-52 rounded-full overflow-hidden border-8 border-[#F8B712] shadow-lg bg-white">
+              <div className="absolute -bottom-8 left-24 w-44 h-44 rounded-full overflow-hidden border-4 border-[#F8B712] shadow-lg bg-white">
                 <img
                   src="/images/Happy fellows.jpg"
                   alt="Mission Detail"
@@ -157,7 +157,7 @@ export default function Home() {
         </section>
 
         {/* Stats Section */}
-        <section className="py-8">
+        <section className="py-12 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <AlumniCard className="bg-gradient-to-br from-[#073392] to-[#052a6b] text-white p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
@@ -180,11 +180,11 @@ export default function Home() {
                     <Briefcase className="w-6 h-6" />
                   </div>
                   <h3 className="text-base mb-2 font-medium">Alumni Projects</h3>
-                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">12+</p>
+                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">0</p>
                 </div>
               </AlumniCard>
 
-              <AlumniCard className="bg-gradient-to-bl from-[#f8b712] to-[#d49a0f] text-black p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
+              <AlumniCard className="bg-gradient-to-bl from-[#f8b712] to-[#d49a0f] text-white p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-28 h-28 bg-[#fcc332] rounded-full -translate-y-14 translate-x-14 opacity-50"></div>
                 <div className="absolute bottom-0 left-0 w-28 h-28 bg-[#ffdb4d] rounded-full translate-y-14 -translate-x-14 opacity-40"></div>
                 <div className="flex flex-col items-center relative z-10">
@@ -192,7 +192,7 @@ export default function Home() {
                     <Calendar className="w-6 h-6" />
                   </div>
                   <h3 className="text-base mb-2 font-medium">Events</h3>
-                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-black to-black/80">5+</p>
+                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">5+</p>
                 </div>
               </AlumniCard>
             </div>
@@ -375,10 +375,10 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
-                  id: "official-launch",
+                  id: "fficial-launch",
                   date: "April 4, 2025",
                   type: "Events",
-                  title: "Official Launch of GA Alumni Network",
+                  title: "Lead Intentionally: Creating Impact in All Spaces",
                   image: "/images/launch event.jpg"
                 },
                 {
@@ -398,10 +398,10 @@ export default function Home() {
               ].map((event, index) => (
                 <Link 
                   key={index} 
-                  href={`/programs/one-event/${event.id}`} 
+                  href={``} 
                   className="block transform hover:scale-105 transition-transform duration-300"
                 >
-                  <AlumniCard className="overflow-hidden border-2 border-[#045f3c] group cursor-pointer h-full">
+                  <AlumniCard className="overflow-hidden border-2  group cursor-pointer h-full">
                     <div className="relative h-48">
                       <img
                         src={event.image}
@@ -409,8 +409,8 @@ export default function Home() {
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute bottom-3 left-3 flex items-center gap-3">
-                        <Badge className="bg-white text-black text-base px-3 py-1 group-hover:bg-[#F8B712] transition-colors duration-300">{event.date}</Badge>
-                        <Badge className="bg-[#045f3c] text-white text-base px-3 py-1 group-hover:bg-[#F8B712] group-hover:text-black transition-colors duration-300">{event.type}</Badge>
+                        <Badge className="bg-white text-black text-base px-3 py-1  transition-colors duration-300">{event.date}</Badge>
+                        <Badge className="bg-[#045f3c] text-white text-base px-3 py-1   transition-colors duration-300">{event.type}</Badge>
                       </div>
                       <Button 
                         size="icon" 
@@ -419,8 +419,8 @@ export default function Home() {
                         <ArrowRight className="w-5 h-5" />
                       </Button>
                     </div>
-                    <div className="p-5 group-hover:bg-[#045f3c] transition-colors duration-300">
-                      <h3 className="font-bold text-lg mb-2 group-hover:text-white transition-colors duration-300 line-clamp-2">{event.title}</h3>
+                    <div className="p-5 bg-white group-hover:bg-[#045f3c] transition-colors duration-300">
+                      <h3 className="font-bold text-lg mb-2 text-black group-hover:text-white transition-colors duration-300 line-clamp-2">{event.title}</h3>
                       <p className="text-gray-600 text-sm group-hover:text-white/80 transition-colors duration-300">
                         Young professionals are at the forefront of accelerating CAADP implementation...
                       </p>

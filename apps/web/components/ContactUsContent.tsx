@@ -22,7 +22,6 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
         location: "rwanda", 
     });
 
-    const [activeTab, setActiveTab] = useState('rwanda');
     const [showPointer, setShowPointer] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [formSuccess, setFormSuccess] = useState(false);
@@ -47,11 +46,8 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
         setFormError(null);
         
         try {
-            // Update location based on active tab
-            const contactData = { name: formState.name, email: formState.email, phone: formState.phone, message: formState.message, location: activeTab };
-            
             // Send to the API endpoint
-            const response = await apiClient.post('/contacts', contactData, { timeout: 10000 });
+            const response = await apiClient.post('/contacts', formState, { timeout: 10000 });
             
             // Show success message and reset form
             setFormSuccess(true);
@@ -60,7 +56,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                 email: "",
                 phone: "",
                 message: "",
-                location: activeTab,
+                location: "rwanda",
             });
             
             // Reset success message after 5 seconds
@@ -117,20 +113,6 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
     const handlePointerClick = () => {
         setShowPointer(false);
     };
-
-    const handleTabChange = (tabId: string) => {
-        setActiveTab(tabId);
-        // Update location in form state when tab changes
-        setFormState(prev => ({
-            ...prev,
-            location: tabId
-        }));
-    };
-
-    const tabs = [
-        { id: 'rwanda', label: 'Rwanda Office', icon: Building2 },
-        { id: 'burkina', label: 'Burkina Faso Office', icon: Building2 },
-    ];
 
     const fadeInUp = {
         hidden: { opacity: 0, y: 20 },
@@ -191,27 +173,6 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                         >
                             Have questions or want to learn more about our programs? We're here to help.
                         </motion.p>
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.4 }}
-                            className="flex items-center justify-center gap-6 text-white/90"
-                        >
-                            <div className="flex items-center">
-                                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
-                                <span>24/7 Support</span>
-                            </div>
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
-                            <div className="flex items-center">
-                                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
-                                <span>Quick Response</span>
-                            </div>
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
-                            <div className="flex items-center">
-                                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
-                                <span>Expert Team</span>
-                            </div>
-                        </motion.div>
                     </div>
                 </div>
             </motion.section>
@@ -357,7 +318,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                             </motion.form>
                         </motion.div>
 
-                        {/* Contact Information with Tabs */}
+                        {/* Contact Information */}
                         <motion.div 
                             className="space-y-8"
                             variants={fadeInUp}
@@ -416,110 +377,58 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 </form>
                             </motion.div>
 
-                            {/* Office Information Tabs */}
+                            {/* Rwanda Office Information */}
                             <motion.div 
                                 className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden"
                                 variants={itemFadeIn}
                             >
-                                {/* Tab Navigation */}
-                                <div className="flex border-b border-gray-200">
-                                    {tabs.map((tab) => (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => handleTabChange(tab.id)}
-                                            className={`flex-1 px-6 py-4 text-sm font-medium flex items-center justify-center gap-2 transition-all duration-300 ${
-                                                activeTab === tab.id
-                                                    ? 'bg-[#005c3d] text-white'
-                                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                            }`}
-                                        >
-                                            <tab.icon className="h-5 w-5" />
-                                            {tab.label}
-                                        </button>
-                                    ))}
+                                {/* Header */}
+                                <div className="bg-[#005c3d] px-6 py-4">
+                                    <div className="flex items-center gap-2 text-white">
+                                        <Building2 className="h-5 w-5" />
+                                        <span className="text-sm font-medium">Rwanda Office</span>
+                                    </div>
                                 </div>
 
-                                {/* Tab Content */}
+                                {/* Content */}
                                 <div className="p-6">
-                                    {activeTab === 'rwanda' && (
-                                        <div className="space-y-4">
-                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
-                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                            <Phone className="h-5 w-5 text-[#005c3d]" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-600">(250) 799 390 199</p>
-                                                            <p className="text-xs text-gray-500">Mon-Fri, 8:00 AM - 5:00 PM</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center space-x-3 pl-4">
-                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                            <Mail className="h-5 w-5 text-[#005c3d]" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-600">info@ganzafrica.org</p>
-                                                            <p className="text-xs text-gray-500">Response within 24 hours</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                                <div className="flex items-center space-x-3">
+                                    <div className="space-y-4">
+                                        <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
                                                     <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                        <MapPin className="h-5 w-5 text-[#005c3d]" />
+                                                        <Phone className="h-5 w-5 text-[#005c3d]" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-gray-600">27 House, KG 594 St</p>
-                                                        <p className="text-gray-600">Kigali, Rwanda</p>
-                                                        <p className="text-xs text-gray-500">East Africa Regional Hub</p>
+                                                        <p className="text-gray-600">(250) 799 390 199</p>
+                                                        <p className="text-xs text-gray-500">Mon-Fri, 8:00 AM - 5:00 PM</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center space-x-3 pl-4">
+                                                    <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
+                                                        <Mail className="h-5 w-5 text-[#005c3d]" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-600">info@ganzafrica.org</p>
+                                                        <p className="text-xs text-gray-500">Response within 24 hours</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
 
-                                    {activeTab === 'burkina' && (
-                                        <div className="space-y-4">
-                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
-                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                            <Phone className="h-5 w-5 text-[#005c3d]" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-600">Coming Soon</p>
-                                                            <p className="text-xs text-gray-500">Mon-Fri, 8:00 AM - 5:00 PM</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center space-x-3 pl-4">
-                                                        <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                            <Mail className="h-5 w-5 text-[#005c3d]" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-600">info@ganzafrica.org</p>
-                                                            <p className="text-xs text-gray-500">Response within 24 hours</p>
-                                                        </div>
-                                                    </div>
+                                        <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
+                                                    <MapPin className="h-5 w-5 text-[#005c3d]" />
                                                 </div>
-                                            </div>
-
-                                            <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                        <MapPin className="h-5 w-5 text-[#005c3d]" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-gray-600">Ouagadougou</p>
-                                                        <p className="text-gray-600">Burkina Faso</p>
-                                                        <p className="text-xs text-gray-500">West Africa Regional Hub</p>
-                                                    </div>
+                                                <div>
+                                                    <p className="text-gray-600">27 House, KG 594 St</p>
+                                                    <p className="text-gray-600">Kigali, Rwanda</p>
+                                                    <p className="text-xs text-gray-500">East Africa Regional Hub</p>
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </motion.div>
                         </motion.div>
@@ -539,17 +448,14 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                         transition={{ duration: 0.3 }}
                     >
                         <iframe
-                            src={activeTab === 'rwanda' 
-                                ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5391413519837!2d30.086420174725987!3d-1.9367383980456767!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7bf79ceaa49e0e1%3A0xdf3900088362ba30!2sGanzAfrica!5e0!3m2!1sen!2sus!4v1745400915436!5m2!1sen!2sus"
-                                : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d124958.73162347189!2d-1.786902!3d12.368446!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xe391a7ba14962e7%3A0xf4dacb6c506517ed!2sOuagadougou%2C%20Burkina%20Faso!5e0!3m2!1sen!2sus!4v1647881234567!5m2!1sen!2sus"
-                            }
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5391413519837!2d30.086420174725987!3d-1.9367383980456767!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7bf79ceaa49e0e1%3A0xdf3900088362ba30!2sGanzAfrica!5e0!3m2!1sen!2sus!4v1745400915436!5m2!1sen!2sus"
                             width="100%"
                             height="100%"
                             style={{ border: 0 }}
                             allowFullScreen
                             loading="lazy"
                             referrerPolicy="no-referrer-when-downgrade"
-                            title={activeTab === 'rwanda' ? "GanzAfrica Rwanda Location" : "GanzAfrica Burkina Faso Location"}
+                            title="GanzAfrica Rwanda Location"
                         ></iframe>
                         {showPointer && (
                             <motion.div 
@@ -574,7 +480,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                             />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-sm font-medium text-[#005c3d]">{activeTab === 'rwanda' ? 'Rwanda Office' : 'Burkina Faso Office'}</p>
+                                            <p className="text-sm font-medium text-[#005c3d]">Rwanda Office</p>
                                         </div>
                                     </div>
                                 </motion.div>
