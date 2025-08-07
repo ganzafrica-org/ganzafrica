@@ -315,7 +315,7 @@ export default function Navigation({
             <Link href={`/${locale}/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
               <Button
                 size="lg"
-                className="w-full bg-primary-green hover:bg-primary-green/90 text-white"
+                className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"
               >
                 {dict?.cta?.sign_in || "Sign In"}
               </Button>

@@ -53,10 +53,10 @@ export default function FlagshipProgramsSection({
       description:
           dict?.programs?.fellowship?.description ||
           "Our fellowship program provides young leaders with the skills and opportunities to drive sustainable change in their communities across Africa. This immersive experience helps develop essential leadership qualities and technical expertise.",
-      image: "/images/ganzafrica-fellows.jpg",
+      image: "/images/amiteam.jpg",
       link: `/${locale}/programs/fellowship`,
       date: "Year-round",
-      iconColor: "#005C30", // primary-green equivalent
+      iconColor: "#073392", // primary-blue
       icon: <FellowshipIcon />
     },
     {
@@ -188,7 +188,7 @@ export default function FlagshipProgramsSection({
                           transition: '0.5s cubic-bezier(.17,.67,.5,1.03) 0.25s',
                           textDecoration: 'none'
                         }}
-                        className="card-details text-primary-green" // For hover target
+                        className="card-details text-[#073392]" 
                     >
                       {dict?.cta?.learn_more || "Learn More"}
                     </Link>

@@ -20,8 +20,8 @@ const ColoredCheckCircle = ({
   return (
     <div className={`relative ${className}`}>
       <div
-        className={`absolute inset-0 rounded-full ${color}`}
-        style={{ zIndex: 1 }}
+        className="absolute inset-0 rounded-full"
+        style={{ backgroundColor: color, zIndex: 1 }}
       ></div>
       <CircleCheck className="relative z-10 text-white" />
     </div>
@@ -88,28 +88,8 @@ export default function WhyGanzAfricaSection({
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-          {/* Left side - Enhanced Image */}
-          <div className="w-full lg:w-1/2 mb-8 lg:mb-0">
-            <div className="relative group">
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary-green/20 to-primary-orange/20 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[350px] sm:h-[450px] lg:h-[550px] transform transition-transform duration-500 group-hover:scale-[1.02]">
-                <Image
-                  src="/images/2-fellows.jpg"
-                  alt={
-                    dict.about?.fellows_photo_alt ||
-                    "GanzAfrica fellows collaborating"
-                  }
-                  fill
-                  priority
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right side - Enhanced Content Card */}
-          <div className="w-full lg:w-1/2 lg:-ml-12 relative z-20">
+          {/* Left side - Enhanced Content Card */}
+          <div className="w-full lg:w-1/2 lg:-mr-12 relative z-20">
             <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-3 sm:p-4 md:p-5 lg:p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 h-[350px] sm:h-[450px] lg:h-[550px] flex flex-col">
               {/* Enhanced Heading */}
               <div className="mb-2 sm:mb-3 lg:mb-4">
@@ -135,14 +115,22 @@ export default function WhyGanzAfricaSection({
                   className="group flex items-start gap-1.5 sm:gap-2 lg:gap-3 p-0.5 sm:p-1 lg:p-2 rounded-lg hover:bg-gray-50/50 transition-all duration-300"
                 >
                   <div className="mt-0.5 relative flex-shrink-0">
-                    <div className="absolute -inset-1 bg-primary-green/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div 
+                      className="absolute -inset-1 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: "rgba(255, 140, 0, 0.2)" }}
+                    ></div>
                     <ColoredCheckCircle
-                      color="bg-primary-green"
+                      color="  #f8b712"
                       className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 group-hover:text-primary-green transition-colors duration-300 leading-tight">
+                    <h4 
+                      className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 transition-colors duration-300 leading-tight"
+                      style={{ color: "gray-900" }}
+                      onMouseEnter={(e) => e.target.style.color = "  #f8b712"}
+                      onMouseLeave={(e) => e.target.style.color = "#111827"}
+                    >
                       {dict.home?.why_section?.point1_title ||
                         "We train and inspire future leaders"}
                     </h4>
@@ -162,14 +150,22 @@ export default function WhyGanzAfricaSection({
                   className="group flex items-start gap-1.5 sm:gap-2 lg:gap-3 p-0.5 sm:p-1 lg:p-2 rounded-lg hover:bg-gray-50/50 transition-all duration-300"
                 >
                   <div className="mt-0.5 relative flex-shrink-0">
-                    <div className="absolute -inset-1 bg-secondary-green/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div 
+                      className="absolute -inset-1 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: "rgba(7, 51, 146, 0.2)" }}
+                    ></div>
                     <ColoredCheckCircle
-                      color="bg-secondary-green"
+                      color="#073392"
                       className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 group-hover:text-secondary-green transition-colors duration-300 leading-tight">
+                    <h4 
+                      className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 transition-colors duration-300 leading-tight"
+                      style={{ color: "gray-900" }}
+                      onMouseEnter={(e) => e.target.style.color = "#073392"}
+                      onMouseLeave={(e) => e.target.style.color = "#111827"}
+                    >
                       {dict.home?.why_section?.point2_title ||
                         "We drive continental collaboration"}
                     </h4>
@@ -189,14 +185,22 @@ export default function WhyGanzAfricaSection({
                   className="group flex items-start gap-1.5 sm:gap-2 lg:gap-3 p-0.5 sm:p-1 lg:p-2 rounded-lg hover:bg-gray-50/50 transition-all duration-300"
                 >
                   <div className="mt-0.5 relative flex-shrink-0">
-                    <div className="absolute -inset-1 bg-lighter-green-100/30 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div 
+                      className="absolute -inset-1 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: "rgba(255, 215, 0, 0.3)" }}
+                    ></div>
                     <ColoredCheckCircle
-                      color="bg-lighter-green-100"
+                      color="#FFD700"
                       className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 group-hover:text-lighter-green-100 transition-colors duration-300 leading-tight">
+                    <h4 
+                      className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 transition-colors duration-300 leading-tight"
+                      style={{ color: "gray-900" }}
+                      onMouseEnter={(e) => e.target.style.color = "#FFD700"}
+                      onMouseLeave={(e) => e.target.style.color = "#111827"}
+                    >
                       {dict.home?.why_section?.point3_title ||
                         "We create intergenerational links"}
                     </h4>
@@ -216,14 +220,22 @@ export default function WhyGanzAfricaSection({
                   className="group flex items-start gap-1.5 sm:gap-2 lg:gap-3 p-0.5 sm:p-1 lg:p-2 rounded-lg hover:bg-gray-50/50 transition-all duration-300"
                 >
                   <div className="mt-0.5 relative flex-shrink-0">
-                    <div className="absolute -inset-1 bg-primary-orange/20 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div 
+                      className="absolute -inset-1 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: "rgba(7, 51, 146, 0.2)" }}
+                    ></div>
                     <ColoredCheckCircle
-                      color="bg-primary-orange"
+                      color="#073392"
                       className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 group-hover:text-primary-orange transition-colors duration-300 leading-tight">
+                    <h4 
+                      className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 transition-colors duration-300 leading-tight"
+                      style={{ color: "gray-900" }}
+                      onMouseEnter={(e) => e.target.style.color = "#073392"}
+                      onMouseLeave={(e) => e.target.style.color = "#111827"}
+                    >
                       {dict.home?.why_section?.point4_title ||
                         "We promote innovative solutions"}
                     </h4>
@@ -233,6 +245,26 @@ export default function WhyGanzAfricaSection({
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right side - Enhanced Image */}
+          <div className="w-full lg:w-1/2 mb-8 lg:mb-0">
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary-green/20 to-primary-orange/20 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[350px] sm:h-[450px] lg:h-[550px] transform transition-transform duration-500 group-hover:scale-[1.02]">
+                <Image
+                  src="/images/2-fellows.jpg"
+                  alt={
+                    dict.about?.fellows_photo_alt ||
+                    "GanzAfrica fellows collaborating"
+                  }
+                  fill
+                  priority
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
               </div>
             </div>
           </div>
