@@ -114,7 +114,6 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
             <div className="slider-container overflow-hidden w-full">
                 <div className="slider w-full flex items-center overflow-hidden">
                     <div className="slider-items-left flex items-center whitespace-nowrap">
-                        {/* Double the items to ensure smooth looping */}
                         {[...partnerRow2, ...partnerRow2].map((partner, index) => (
                             <div key={`row2-${index}`} className="inline-block px-4">
                                 <div className="bg-white rounded-lg shadow-md p-4 w-48 h-28 flex items-center justify-center">
@@ -158,11 +157,11 @@ export default function PartnersSection({ locale, dict }: PartnersSectionProps) 
           }
         }
 
-        .slider-items-right:hover,
-        .slider-items-left:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
+                .slider-items-right:hover,
+                .slider-items-left:hover {
+                    animation-play-state: paused;
+                }
+            `}</style>
         </section>
     );
 }

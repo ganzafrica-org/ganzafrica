@@ -362,11 +362,10 @@ export default function FellowshipPage() {
                 loop
                 muted
                 playsInline
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover brightness-105"
             >
               <source src="/videos/hero-video.mp4" type="video/mp4" />
             </video>
-            <div className="absolute inset-0 bg-black/60" />
           </div>
           <div className="relative z-10 h-full flex items-center justify-center">
             <div className="container mx-auto px-4 text-center">
