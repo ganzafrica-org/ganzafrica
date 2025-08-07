@@ -63,6 +63,7 @@ const FloatingApplyButton = () => {
   const params = useParams<{ locale: string }>();
   const buttonRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(true);
+  const scrollTimeout = useRef<number | null>(null);
   const scrollTimeout = useRef<NodeJS.Timeout>();
   const footerSectionRef = useRef<HTMLElement | null>(null);
 
@@ -175,12 +176,30 @@ const FloatingApplyButton = () => {
         }
       }, 1000);
       
+      return () => {
+        clearTimeout(initTimer);
+        if (scrollTimeout.current !== null) {
+          cancelAnimationFrame(scrollTimeout.current);
+          scrollTimeout.current = null;
+        }
+        window.removeEventListener('scroll', throttledScroll);
+        window.removeEventListener('resize', throttledScroll);
+        if (observer) {
+          observer.disconnect();
+        }
+      };
       return () => clearTimeout(retryTimer);
     }
     
     // Clean up
     return () => {
       clearTimeout(initTimer);
+      if (scrollTimeout.current !== null) {
+        cancelAnimationFrame(scrollTimeout.current);
+        scrollTimeout.current = null;
+      }
+      window.removeEventListener('scroll', throttledScroll);
+      window.removeEventListener('resize', throttledScroll);
       window.removeEventListener('scroll', throttledScroll);
       window.removeEventListener('resize', throttledScroll);
       if (scrollTimeout.current) {
