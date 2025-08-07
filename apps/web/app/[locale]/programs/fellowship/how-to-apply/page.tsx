@@ -63,7 +63,7 @@ const FloatingApplyButton = () => {
   const params = useParams<{ locale: string }>();
   const buttonRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(true);
-  const scrollTimeout = useRef<NodeJS.Timeout>();
+  const scrollTimeout = useRef<number>();
   const footerSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {

@@ -39,7 +39,7 @@ const FoodSystemPage = ({}) => {
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
+        <div className="absolute inset-0 bg-black/40 z-10"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
@@ -49,7 +49,7 @@ const FoodSystemPage = ({}) => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
-            OUR APPROACH TO FOOD SYSTEM
+            OUR APPROACH TO FOOD SYSTEMS
           </motion.h2>
           <motion.h1
             className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
@@ -57,8 +57,7 @@ const FoodSystemPage = ({}) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <span>The </span>
-            <span className="font-normal">Journey from Farm Fork </span>
+            <span className="font-normal">From Farm to Fork — and Far Beyond </span>
         
           </motion.h1>
 

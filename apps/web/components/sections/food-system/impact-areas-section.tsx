@@ -866,12 +866,12 @@ const ClimateInitiativesMapSection = () => {
               </p>
               <p className="text-sm text-gray-600">Projects</p>
             </motion.div>
-            <motion.div className="text-center" variants={statItemVariants}>
+            {/* <motion.div className="text-center" variants={statItemVariants}>
               <p className="text-3xl font-bold text-green-700">
                 {isLoading ? '...' : statsData.communities}
               </p>
               <p className="text-sm text-gray-600">Districts </p>
-            </motion.div>
+            </motion.div> */}
             <motion.div className="text-center" variants={statItemVariants}>
               <p className="text-3xl font-bold text-green-700">
                 {isLoading ? '...' : statsData.countries}
@@ -906,7 +906,7 @@ const ClimateInitiativesMapSection = () => {
         </svg>
       </div>
     </motion.div>
-    <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors">
+    <button className="bg-primary-green hover:bg-green-700 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors">
         Highlights of our work
       </button>
   </div>

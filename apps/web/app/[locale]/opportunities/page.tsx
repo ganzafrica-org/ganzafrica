@@ -439,8 +439,8 @@ if (selectedType !== "all") {
               </div>
             ) : filteredOpportunities.length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm p-8 text-center border border-gray-200">
-                <div className="text-gray-500 text-lg">No opportunities found</div>
-                <p className="text-gray-400 mt-2">Try adjusting your search criteria or check back later</p>
+                <div className="text-gray-500 text-lg">No current openings, please check back later</div>
+                <p className="text-gray-400 mt-2">We also list opportunities on our social media platforms.</p>
               </div>
             ) : (
               <div className="space-y-16">
