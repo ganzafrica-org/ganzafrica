@@ -57,6 +57,19 @@ const PROJECTS_PER_PAGE = 3;
 const MAX_PROJECTS = 6;
 const AUTO_SLIDE_INTERVAL = 5000; // 5 seconds
 
+// Define color scheme for project cards
+const CARD_COLORS = ['#f8b712', '#009758', '#073392'];
+const CARD_CATEGORIES = ['Land', 'Agriculture', 'Environment'];
+
+// Helper function to get project category and color
+const getProjectCategory = (index: number) => {
+  const colorIndex = index % CARD_COLORS.length;
+  return {
+    color: CARD_COLORS[colorIndex],
+    category: CARD_CATEGORIES[colorIndex] || 'Project'
+  };
+};
+
 export default function ProjectsSection({ locale, dict }: ProjectsSectionProps): JSX.Element {
 const [projects, setProjects] = useState<Project[]>([]);
 const [loading, setLoading] = useState(true);
@@ -181,7 +194,26 @@ useEffect(() => {
             
             if (response) {
                 if (response.data.projects && response.data.projects.length > 0) {
-                    setProjects(response.data.projects);
+                    // Ensure each project has the required fields and media
+                    const formattedProjects = response.data.projects.map(project => ({
+                        ...project,
+                        // Ensure media items have required fields
+                        media: {
+                            items: project.media?.items?.map((item, idx) => ({
+                                id: item.id || `media-${idx}`,
+                                tag: item.tag || 'feature',
+                                url: item.url || '/images/placeholder.png',
+                                size: item.size || 0,
+                                type: item.type || 'image',
+                                cover: item.cover || false,
+                                order: item.order || idx,
+                                title: item.title || project.name,
+                                description: item.description || ''
+                            })) || []
+                        }
+                    }));
+                    
+                    setProjects(formattedProjects);
                     setError(null);
                     setNoProjects(false);
                 } else {
@@ -252,9 +284,9 @@ const getProjectUrl = useCallback((projectId: number): string => {
 // Add No Projects Available message - only show if both API and fallbacks fail
 if (!loading && projects.length === 0) {
     return (
-        <section className="bg-[#f2faf6] relative overflow-hidden py-16">
+        <section className="bg-[#f2faf6] relative overflow-hidden py-8">
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
-                <div className="text-center mb-16">
+                <div className="text-center mb-8">
                     <DecoratedHeading
                         firstText={dict?.projects?.heading_first ?? "Featured"}
                         secondText={dict?.projects?.heading_second ?? "Properties"}
@@ -263,7 +295,7 @@ if (!loading && projects.length === 0) {
                 </div>
                 
                 {/* No Projects Message */}
-                <div className="text-center py-16">
+                <div className="text-center py-8">
                     <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gray-100">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -305,14 +337,29 @@ const currentProjects = limitedProjects.slice(
 );
 
 return (
-    <section className="bg-[#f2faf6] relative overflow-hidden py-16">
-        <div className="container mx-auto px-4 max-w-6xl relative z-10">
-            <div className="text-center mb-16">
-                <DecoratedHeading
-                    firstText={dict?.projects?.heading_first ?? "Featured"}
-                    secondText={dict?.projects?.heading_second ?? "Properties"}
-                    className="mx-auto"
-                />
+    <section className="relative overflow-hidden py-8 md:py-10 bg-secondary-green/5">
+        {/* Subtle dot pattern */}
+        <div className="absolute inset-0 opacity-20" style={{
+            backgroundImage: 'radial-gradient(circle, #4a5568 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'repeat',
+            pointerEvents: 'none'
+        }} />
+        
+        <div className="container mx-auto px-4 max-w-7xl relative z-10">
+            <div className="text-center mb-8">
+                <motion.div 
+                    className="space-y-2"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                >
+                    <h2 className="text-3xl md:text-4xl font-bold">
+                        {dict?.projects?.heading_first || "Featured"} <span className="text-primary-green">{dict?.projects?.heading_second || "Projects"}</span>
+                    </h2>
+                </motion.div>
             </div>
 
             {/* Error message */}
@@ -323,70 +370,130 @@ return (
             )}
 
             {/* Projects grid with animation */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 overflow-hidden">
-                {currentProjects.map((project) => (
-                    <motion.div 
-                        key={project.id} 
-                        className="property-card perspective-wrapper"
-                        initial={{ x: direction * 50, opacity: 0.5 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: -direction * 50, opacity: 0.5 }}
-                        transition={{ duration: 0.4, ease: "easeInOut" }}
-                        whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                    >
-                        {/* Featured image with fallback */}
-                        <div className="perspective-element">
-                            <div 
-                                className="perspective-image" 
-                                style={{ 
-                                    backgroundImage: `url(${getFeatureImageUrl(project)})`,
-                                    backgroundColor: '#117B34', // Backup color if image fails
-                                }}
-                                aria-label={`Image of ${project.name}`}
-                            ></div>
-                        </div>
-                        
-                        {/* Property information */}
-                        <div className="p-5 bg-white">                                
-                            {/* Property Name */}
-                            <h3 className="text-base font-bold text-gray-900 mb-2">
-                                {project.name}
-                            </h3>
-
-                            {/* Description */}
-                            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                                {truncateDescription(project.description)}
-                            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {currentProjects.map((project, index) => {
+                    // Get color and category based on index
+                    const { color, category } = getProjectCategory(index);
+                    
+                    return (
+                        <motion.div 
+                            key={project.id}
+                            className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.4, delay: index * 0.1 }}
+                            whileHover={{ y: -5 }}
+                        >
+                            {/* Image container */}
+                            <div className="relative h-48 overflow-hidden">
+                                <Image
+                                    src={getFeatureImageUrl(project)}
+                                    alt={project.name}
+                                    fill
+                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                                    <span className="text-white font-medium text-lg">{project.name}</span>
+                                </div>
+                            </div>
                             
-                            {/* View Project button */}
-                            <Link
-                                href={getProjectUrl(project.id)}
-                                className="view-project-button"
-                                aria-label={`View details for ${project.name}`}
-                            >
-                                View Project
-                            </Link>
-                        </div>
-                    </motion.div>
-                ))}
+                            {/* Content */}
+                            <div className="p-6">
+                                <div className="relative h-10 mb-4 overflow-hidden">
+                                    {/* Title - always visible */}
+                                    <div className="absolute inset-0 transition-all duration-300 group-hover:opacity-0">
+                                        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                                            {project.name}
+                                        </h3>
+                                    </div>
+                                    
+                                    {/* Category - visible on hover */}
+                                    <div className="absolute inset-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                        <div className="flex items-center">
+                                            <div 
+                                                className="w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0"
+                                                style={{ backgroundColor: `${color}20` }}
+                                            >
+                                                <div className="w-6 h-6" style={{ color }}>
+                                                    {index % 3 === 0 ? (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                                        </svg>
+                                                    ) : index % 3 === 1 ? (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span 
+                                                className="text-xs font-medium uppercase tracking-wider opacity-90"
+                                                style={{ color }}
+                                            >
+                                                {category}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <p className="text-gray-600 mb-4 line-clamp-3">
+                                    {truncateDescription(project.description, 120)}
+                                </p>
+                                
+                                <Link
+                                    href={getProjectUrl(project.id)}
+                                    className="inline-flex items-center text-sm font-medium group"
+                                    style={{ color }}
+                                >
+                                    <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
+                                        Learn more
+                                    </span>
+                                    <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                    </svg>
+                                </Link>
+                            </div>
+                            
+                            {/* Accent border */}
+                            <div className="h-1 w-full" style={{ backgroundColor: color }}></div>
+                        </motion.div>
+                    );
+                })}
             </div>
 
             {/* Call to action */}
-            <div className="text-center mt-12">
+            <motion.div 
+                className="text-center mt-8"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+            >
                 <Link
                     href={`/${locale}/projects`}
                     className={cn(
-                        "inline-flex items-center gap-2",
-                        "bg-primary-green hover:bg-primary-green/90",
-                        "text-white py-2.5 px-6 rounded-lg",
-                        "transition-all duration-300 hover:shadow-lg",
-                        "text-sm font-medium"
+                        "group relative inline-flex items-center justify-center",
+                        "bg-primary-green text-white py-4 px-8 rounded-lg",
+                        "text-sm font-medium tracking-wider uppercase",
+                        "overflow-hidden transition-all duration-300",
+                        "hover:bg-opacity-90 hover:pl-10 hover:pr-6 "
                     )}
                 >
-                    <span>{dict?.cta?.view_all_projects || "View All Projects"}</span>
-                    <ArrowRight size={16} />
+                    <span className="relative z-10">
+                        {dict?.cta?.view_all_projects || "View All Projects"}
+                    </span>
+                    <ArrowRight 
+                        size={16} 
+                        className="ml-2 transition-all duration-300 transform group-hover:translate-x-1" 
+                    />
+                    <span className="absolute left-0 top-0 w-0 h-full bg-primary-green transition-all duration-300 group-hover:w-full -z-1"></span>
                 </Link>
-            </div>
+            </motion.div>
             
             {/* Pagination Dots - only show if there are multiple pages */}
             {totalPages > 1 && (

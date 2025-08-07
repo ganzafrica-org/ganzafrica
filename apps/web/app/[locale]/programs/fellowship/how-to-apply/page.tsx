@@ -63,7 +63,7 @@ const FloatingApplyButton = () => {
   const params = useParams<{ locale: string }>();
   const buttonRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(true);
-  const scrollTimeout = useRef<number>();
+  const scrollTimeout = useRef<number | null>(null);
   const footerSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -175,17 +175,29 @@ const FloatingApplyButton = () => {
         }
       }, 1000);
       
-      return () => clearTimeout(retryTimer);
+      return () => {
+        clearTimeout(initTimer);
+        if (scrollTimeout.current !== null) {
+          cancelAnimationFrame(scrollTimeout.current);
+          scrollTimeout.current = null;
+        }
+        window.removeEventListener('scroll', throttledScroll);
+        window.removeEventListener('resize', throttledScroll);
+        if (observer) {
+          observer.disconnect();
+        }
+      };
     }
     
     // Clean up
     return () => {
       clearTimeout(initTimer);
+      if (scrollTimeout.current !== null) {
+        cancelAnimationFrame(scrollTimeout.current);
+        scrollTimeout.current = null;
+      }
       window.removeEventListener('scroll', throttledScroll);
       window.removeEventListener('resize', throttledScroll);
-      if (scrollTimeout.current) {
-        cancelAnimationFrame(scrollTimeout.current);
-      }
       if (footerSectionRef.current) {
         observer.unobserve(footerSectionRef.current);
       }
