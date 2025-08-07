@@ -180,6 +180,29 @@ export default function GanzAfricaUniqueSection({
                     Your browser does not support the video tag.
                   </video>
                   <motion.button
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#fef597] leading-tight mb-8">
+                {sectionTitle}
+              </h2>
+
+              {/* Video with play button overlay */}
+              <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200">
+                <video
+                    ref={videoRef}
+                    src="/videos/farmers-in-field.mp4"
+                    poster="/images/famer-feild.png" // Using existing image with typo in filename
+                    className="w-full h-full object-cover brightness-105"
+                    onEnded={() => setVideoPlaying(false)}
+                    onPlay={() => setVideoPlaying(true)}
+                    onPause={() => setVideoPlaying(false)}
+                    preload="auto"
+                    playsInline
+                    loop
+                    muted
+                />
+
+                {/* Play/Pause button overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <button
                       onClick={handleVideoPlayback}
                       className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-30 transition-all duration-300 hover:bg-opacity-20 focus:outline-none"
                       aria-label={videoPlaying ? 'Pause video' : 'Play video'}
