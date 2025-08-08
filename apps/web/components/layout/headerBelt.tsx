@@ -84,4 +84,5 @@ const SimpleWaves = () => {
   );
 };
 
-export default SimpleWaves;
+export default HeaderBelt;
+
