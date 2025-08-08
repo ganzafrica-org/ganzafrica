@@ -25,7 +25,7 @@ const FoodSystemPage = ({}) => {
   return (
     <main className="bg-white">
       {/* Hero Section */}
-      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
+      <section className="relative w-full h-[350px] sm:h-[500px] overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -39,7 +39,7 @@ const FoodSystemPage = ({}) => {
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/40 z-10"></div>
+        <div className="absolute inset-0 bg-black/60 z-10"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">

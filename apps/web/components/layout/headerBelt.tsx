@@ -1,6 +1,8 @@
 "use client";
 
 
+
+
 import React from "react";
 
 const HeaderBelt = () => {
@@ -85,4 +87,5 @@ const HeaderBelt = () => {
 };
 
 export default HeaderBelt;
+
 
