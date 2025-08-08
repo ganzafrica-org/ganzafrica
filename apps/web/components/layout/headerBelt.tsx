@@ -3,7 +3,7 @@
 
 import React from "react";
 
-const HeaderBelt = () => {
+const SimpleWaves = () => {
   return (
     <div 
       className="w-full relative overflow-hidden -mt-12" 
@@ -85,3 +85,4 @@ const HeaderBelt = () => {
 };
 
 export default HeaderBelt;
+
