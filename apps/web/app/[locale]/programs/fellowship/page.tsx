@@ -355,7 +355,7 @@ export default function FellowshipPage() {
         <Header locale={locale} dict={dict} />
 
         {/* Hero Section */}
-        <section className="relative h-[400px] md:h-[500px]">
+       <section className="relative h-[400px] md:h-[500px]">
           <div className="absolute inset-0">
             <video
                 autoPlay
@@ -366,6 +366,7 @@ export default function FellowshipPage() {
             >
               <source src="/videos/hero-video.mp4" type="video/mp4" />
             </video>
+            <div className="absolute inset-0 bg-black/40"></div>
           </div>
           <div className="relative z-10 h-full flex items-center justify-center">
             <div className="container mx-auto px-4 text-center">
