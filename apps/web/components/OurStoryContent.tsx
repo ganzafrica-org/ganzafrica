@@ -75,7 +75,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
             </section>
             <HeaderBelt />
 
-            <div className="pt-12 px-4 max-w-7xl mx-auto">
+            <div className="pt-12 px-4 md:px-12 lg:px-20 xl:px-4 max-w-7xl mx-auto">
                 {/* Section01 */}
                 <SectionWithScrollAnimation
                     number="01"
@@ -133,9 +133,9 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
 
                {/* Section 4 - Fellow Success Stories */}
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden">
-    {/* Video - Left side on desktop */}
-    <div className="h-full w-full md:order-1 relative">
-        <div className="w-full h-full relative hidden md:block">
+    {/* Video - First on mobile and desktop */}
+    <div className="h-full w-full order-1 relative">
+        <div className="w-full h-full relative">
             <video 
                 ref={videoRef}
                 className="w-full h-full object-cover rounded-sm"
@@ -147,7 +147,6 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
             />
             
             {/* Video Controls */}
-          {/* Video Controls */}
 <div className="absolute bottom-4 right-4 flex space-x-3">
     <button 
         onClick={toggleMute}
@@ -168,8 +167,8 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
         </div>
     </div>
     
-    {/* Text content - Right side on desktop */}
-    <div className="p-10 bg-[#FFFDEB] min-h-full lg:h-[510px] w-full rounded-sm md:order-2">
+    {/* Text content - Second on mobile and desktop */}
+    <div className="p-6 md:p-10 bg-[#FFFDEB] min-h-full lg:h-[510px] w-full rounded-sm order-2">
         <div className="flex flex-col h-full w-full">
             <div className="bg-primary-orange text-white w-16 h-16 flex items-center justify-center text-2xl rounded-md font-bold mb-2">
                 04
