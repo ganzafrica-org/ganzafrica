@@ -422,7 +422,7 @@ const OpportunitiesPage = () => {
           {loading ? (
             <div className="text-center py-4">Loading opportunities...</div>
           ) : opportunities.length === 0 ? (
-            <div className="text-center py-4">No opportunities found</div>
+            <div className="text-center py-4">No opportunities foun</div>
           ) : (
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
