@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "pnpm install && pnpm build && next dev",
+    "dev": "next dev",
     "build": "cross-env NEXT_DISABLE_TYPE_CHECKING=true TSC_COMPILE_ON_ERROR=true next build --no-lint",
     "start": "next start --port 3000",
     "lint": "next lint"
@@ -13,7 +13,7 @@
     "@formatjs/intl-localematcher": "^0.6.0",
     "@radix-ui/react-slot": "^1.2.0",
     "@trpc/client": "^10.45.2",
-    "@workspace/ui": "workspace:*",
+    "@workspace/ui": "1.0.0",
     "axios": "^1.8.4",
     "clsx": "^2.1.1",
     "cross-env": "^7.0.3",
@@ -40,8 +40,8 @@
     "@types/node": "^20",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@workspace/eslint-config": "workspace:*",
-    "@workspace/typescript-config": "workspace:*",
+    "@workspace/eslint-config": "1.0.0",
+    "@workspace/typescript-config": "1.0.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
