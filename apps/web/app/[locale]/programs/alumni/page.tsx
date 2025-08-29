@@ -25,6 +25,9 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [animateFirst, setAnimateFirst] = useState(false);
   const [animateSecond, setAnimateSecond] = useState(false);
+  const [counters, setCounters] = useState({ fellows: 0, projects: 0, events: 0 });
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [hasCompletedAnimation, setHasCompletedAnimation] = useState(false);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -65,8 +68,70 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // Counter animation effect
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isAnimating && !hasCompletedAnimation) {
+            setIsAnimating(true);
+            
+            // Reset counters to 0
+            setCounters({ fellows: 0, projects: 0, events: 0 });
+            
+            // Start animation after small delay
+            setTimeout(() => {
+              // Animate fellows counter
+              let fellowsCount = 0;
+              const fellowsInterval = setInterval(() => {
+                fellowsCount += 1;
+                setCounters(prev => ({ ...prev, fellows: fellowsCount }));
+                if (fellowsCount >= 27) {
+                  clearInterval(fellowsInterval);
+                }
+              }, 60);
+
+              // Animate events counter
+              setTimeout(() => {
+                let eventsCount = 0;
+                const eventsInterval = setInterval(() => {
+                  eventsCount += 1;
+                  setCounters(prev => ({ ...prev, events: eventsCount }));
+                  if (eventsCount >= 5) {
+                    clearInterval(eventsInterval);
+                    // Mark animation as completed
+                    setIsAnimating(false);
+                    setHasCompletedAnimation(true);
+                  }
+                }, 200);
+              }, 300);
+            }, 100);
+          } else if (!entry.isIntersecting && hasCompletedAnimation) {
+            // Reset when section leaves view - ready for next animation
+            setHasCompletedAnimation(false);
+          }
+        });
+      },
+      { 
+        threshold: 0.2,
+        rootMargin: '0px 0px -100px 0px'
+      }
+    );
+
+    const statsSection = document.getElementById('stats-section');
+    if (statsSection) {
+      observer.observe(statsSection);
+    }
+
+    return () => {
+      if (statsSection) {
+        observer.unobserve(statsSection);
+      }
+    };
+  }, [isAnimating, hasCompletedAnimation]);
+
   return (
-    <main className="min-h-screen bg-white font-rubik">
+    <main className="min-h-screen  font-rubik">
       {/* Background Pattern */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <img
@@ -141,142 +206,112 @@ export default function Home() {
               <p className="text-base text-gray-700 mb-6">
                 Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa.
               </p>
-              <p className="italic text-lg text-black font-medium mb-6 border-l-4 border-[#045f3c] pl-4">
+              <p className="italic text-lg text-black font-normal mb-6 border-l-4 border-[#045f3c] pl-4">
                 "To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact."
               </p>
               <div className="flex gap-8">
-                {["Knowledge Sharing", "Mentorship", "Collaboration and Networking"].map((principle, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full text-primary-orange" />
-                    <span className="text-base text-black font-medium">{principle}</span>
-                  </div>
-                ))}
-              </div>
+  {["Knowledge Sharing", "Mentorship", "Collaboration and Networking"].map((principle, index) => (
+    <div key={index} className="flex items-center gap-2">
+      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#f8b712" }} />
+      <span className="text-base text-black font-normal">{principle}</span>
+    </div>
+  ))}
+</div>
+
+
+
             </div>
           </div>
         </section>
+      </div>
 
-        {/* Stats Section */}
-        <section className="py-12 mt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <AlumniCard className="bg-gradient-to-br from-[#073392] to-[#052a6b] text-white p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-28 h-28 bg-[#0849a8] rounded-full -translate-y-14 translate-x-14 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#0849a8] rounded-full translate-y-12 -translate-x-12 opacity-60"></div>
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-white/10 p-2 rounded-full mb-2">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-base mb-2 font-medium">Transitioned Fellows</h3>
-                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">27</p>
-                </div>
-              </AlumniCard>
+      {/*  Purpose Cards */}
+      <section className="py-12 bg-neutral-100 relative overflow-hidden">
+        <div className="absolute inset-0 bg-neutral-100">
+          <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-10"></div>
+        </div>
 
-              <AlumniCard className="bg-gradient-to-br from-[#005c3d] to-[#004532] text-white p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#006b47] rounded-full -translate-y-16 translate-x-16 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#00a15d] rounded-full translate-y-12 -translate-x-12 opacity-40"></div>
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-white/10 p-2 rounded-full mb-2">
-                    <Briefcase className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-base mb-2 font-medium">Alumni Projects</h3>
-                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">0</p>
-                </div>
-              </AlumniCard>
+        {/* Left Leaf */}
+        <div className="absolute left-0 top-1/4 -translate-x-1/4 opacity-20 hidden sm:block">
+          <img
+            src="/images/leaf.png"
+            alt="Decorative leaf"
+            className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 transform -rotate-12"
+          />
+        </div>
 
-              <AlumniCard className="bg-gradient-to-bl from-[#f8b712] to-[#d49a0f] text-white p-4 transform hover:scale-105 transition-transform duration-300 rounded-lg shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-28 h-28 bg-[#fcc332] rounded-full -translate-y-14 translate-x-14 opacity-50"></div>
-                <div className="absolute bottom-0 left-0 w-28 h-28 bg-[#ffdb4d] rounded-full translate-y-14 -translate-x-14 opacity-40"></div>
-                <div className="flex flex-col items-center relative z-10">
-                  <div className="bg-black/10 p-2 rounded-full mb-2">
-                    <Calendar className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-base mb-2 font-medium">Events</h3>
-                  <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">5+</p>
-                </div>
-              </AlumniCard>
-            </div>
+        {/* Right Leaf */}
+        <div className="absolute right-0 bottom-1/4 translate-x-1/4 opacity-20 hidden sm:block">
+          <img
+            src="/images/leaf.png"
+            alt="Decorative leaf"
+            className="w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 transform rotate-12"
+          />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">
+              <span className="text-black">Purpose of the </span>
+              <span className="text-[#045f3c]">Alumni Network</span>
+            </h2>
           </div>
-        </section>
-
-        {/* Purpose Section */}
-        <section className="py-8 relative">
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="absolute -top-8 right-8 bg-gradient-to-br from-[#F8B712] to-[#E6A610] text-black px-6 py-4 rounded-xl shadow-2xl transform -rotate-1 z-20 border-2 border-white/20">
-                <div className="relative">
-                  <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent border-t-[#F8B712]"></div>
-                  <p className="text-lg font-semibold relative z-10 whitespace-nowrap leading-tight">
-                    "<span className={`transition-all duration-500 ${animateFirst ? 'scale-105 text-blue-700 font-bold' : 'scale-100'}`}>Once a GanzAfrica's Fellow!</span> <span className={`transition-all duration-500 ${animateSecond ? 'scale-105 text-green-700 font-bold' : 'scale-100'}`}>Always a Changemaker...</span>"
-                  </p>
-                </div>
-              </div>
-              <img
-                src="/images/form.jpg"
-                alt="Purpose"
-                className="rounded-lg shadow-xl relative z-10"
-              />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold mb-8">
-                <span className="text-black">Purpose of the </span>
-                <span className="text-[#045f3c]">Alumni Network</span>
-              </h2>
-              <div className="space-y-8">
-                {[
-                  {
-                    title: "Networking and Professional Development",
-                    description: "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
-                    color: "#045f3c"
-                  },
-                  {
-                    title: "Knowledge Sharing",
-                    description: "Serve as a platform for sharing diverse experiences, skills and expertise among analysts in their different sectors and workstreams.",
-                    color: "#009758"
-                  },
-                  {
-                    title: "Investing Back into the Fellowship Program",
-                    description: "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
-                    color: "#7EED42"
-                  },
-                  {
-                    title: "Co-creating and Co-implementing Solutions",
-                    description: "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
-                    color: "#F8B712"
-                  },
-                  {
-                    title: "Championing Data and Evidence Use",
-                    description: "Shaping and ingraining a collective vision and agenda to drive a culture of data and evidence use in policy and decision-making to accelerate inclusive agri-food systems transformation.",
-                    color: "#D8D413"
-                  }
-                ].map((item, index, arr) => (
-                  <div key={index} className="relative">
-                    <div className="flex gap-3">
-                      <CheckCircle2 className="w-6 h-6 flex-shrink-0" style={{ color: item.color }} />
-                      <div>
-                        <h3 className="text-lg font-bold text-[#045f3c] mb-1">{item.title}</h3>
-                        <p className="text-gray-600 text-base">{item.description}</p>
-                      </div>
-                    </div>
-                    {index < arr.length - 1 && (
-                      <div className="absolute left-3 top-8 bottom-0 border-l-2 border-dotted border-black opacity-20 h-12"></div>
-                    )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                title: "Networking and Professional Development",
+                description: "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
+                color: "#073392",
+                icon: <Users className="w-8 h-8" />
+              },
+              {
+                title: "Knowledge Sharing & Data and Evidence Use",
+                description: "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
+                color: "#045f3c",
+                icon: <CheckCircle2 className="w-8 h-8" />
+              },
+              {
+                title: "Investing Back into the Fellowship Program",
+                description: "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
+                color: "#F8B712",
+                icon: <Briefcase className="w-8 h-8" />
+              },
+              {
+                title: "Co-creating and Co-implementing Solutions",
+                description: "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
+                color: "#F97316",
+                icon: <ArrowRight className="w-8 h-8" />
+              }
+            ].map((item, index) => (
+              <div key={index} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                <div 
+                  className="w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto"
+                  style={{ backgroundColor: item.color }}
+                >
+                  <div className="text-white">
+                    {item.icon}
                   </div>
-                ))}
+                </div>
+                <h3 className="text-lg font-bold text-gray-800 mb-3 text-center">{item.title}</h3>
+                <p className="text-gray-600 text-sm text-center leading-relaxed">{item.description}</p>
               </div>
-            </div>
+            ))}
           </div>
-        </section>
+        </div>
+      </section>
 
+      
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Projects Section */}
         <section className="py-20 relative">
           {/* Simple, elegant header */}
           <div className="text-center mb-20">
-            <h2 className="text-5xl font-light mb-6">
-              <span className="text-gray-800">Alumni </span>
-              <span className="text-[#045f3c] font-medium">Impact</span>
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#073392] via-[#005c3d] to-[#f8b712] mx-auto rounded-full"></div>
+          <h2 className="text-3xl font-bold mb-6">
+                <span className="text-black">Alumni </span>
+                <span className="text-[#045f3c]">Impact</span>
+              </h2>
           </div>
 
           {/* Creative card layout */}
@@ -333,13 +368,7 @@ export default function Home() {
                     
                     <p className="text-gray-600 leading-relaxed mb-6 group-hover:text-gray-700 transition-colors">
                       {project.description}
-                    </p>
-
-                    {/* Subtle call-to-action */}
-                    <div className="flex items-center text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                      <span style={{ color: project.color }}>Explore Projects</span>
-                      <ArrowRight className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" style={{ color: project.color }} />
-                    </div>
+                    </p>                 
                   </div>
 
                   {/* Creative connecting element */}
@@ -362,76 +391,167 @@ export default function Home() {
             </button>
           </div>
         </section>
+      </div>
 
-        {/* Events Section */}
-        <section className="py-8 bg-gray-50 -mx-4 sm:-mx-6 lg:-mx-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold">
-                <span className="text-black">Alumni </span>
-                <span className="text-[#045f3c]">Events</span>
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  id: "fficial-launch",
-                  date: "April 4, 2025",
-                  type: "Events",
-                  title: "Lead Intentionally: Creating Impact in All Spaces",
-                  image: "/images/launch event.jpg"
-                },
-                {
-                  id: "lead-intentionally",
-                  date: "July 12, 2025",
-                  type: "Workshop",
-                  title: "Lead Intentionally: Creating Impact in All Spaces",
-                  image: "/images/Sustainable Agriculture Fellows(1).jpg"
-                },
-                {
-                  id: "power-of-networks",
-                  date: "May 12, 2025",
-                  type: "Webinar",
-                  title: "The Power of Networks: Turning Connections",
-                  image: "/images/Sustainable Land Use Fellows.jpg"
-                }
-              ].map((event, index) => (
-                <Link 
-                  key={index} 
-                  href={``} 
-                  className="block transform hover:scale-105 transition-transform duration-300"
+      {/* Events Section */}
+      <section className="py-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold">
+              <span className="text-black">Alumni </span>
+              <span className="text-[#045f3c]">Events</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                id: "official-launch",
+                date: "April 4, 2025",
+                type: "Event",
+                title: "Lead Intentionally: Creating Impact in All Spaces",
+                image: "/images/launch event.jpg"
+              },
+              {
+                id: "lead-intentionally",
+                date: "July 12, 2025",
+                type: "Workshop",
+                title: "Lead Intentionally: Creating Impact in All Spaces",
+                image: "/images/Sustainable Agriculture Fellows(1).jpg"
+              },
+              {
+                id: "power-of-networks",
+                date: "May 12, 2025",
+                type: "Webinar",
+                title: "The Power of Networks: Turning Connections",
+                image: "/images/Sustainable Land Use Fellows.jpg"
+              }
+            ].map((eventItem) => (
+              <Link 
+                key={eventItem.id} 
+                href={``}
+              >
+                <motion.div 
+                  className="news-card perspective-wrapper group"
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 >
-                  <AlumniCard className="overflow-hidden border-2  group cursor-pointer h-full">
-                    <div className="relative h-48">
+                  {/* Image with perspective effect */}
+                  <div className="perspective-element">
+                    <div className="perspective-image">
                       <img
-                        src={event.image}
-                        alt={event.title}
+                        src={eventItem.image}
+                        alt={eventItem.title}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute bottom-3 left-3 flex items-center gap-3">
-                        <Badge className="bg-white text-black text-base px-3 py-1  transition-colors duration-300">{event.date}</Badge>
-                        <Badge className="bg-[#045f3c] text-white text-base px-3 py-1   transition-colors duration-300">{event.type}</Badge>
-                      </div>
-                      <Button 
-                        size="icon" 
-                        className="absolute bottom-3 right-3 rounded-full bg-[#F8B712] hover:bg-[#045f3c] hover:text-white w-10 h-10 transition-colors duration-300"
+                      {/* Badges moved to content area */}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5 bg-white">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="bg-white text-black text-xs font-semibold px-2.5 py-1 ">
+                        {eventItem.date}
+                      </span>
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                          eventItem.type === 'Event'
+                            ? 'bg-primary-green text-white'
+                            : eventItem.type === 'Workshop'
+                            ? 'bg-[#073392] text-white'
+                            : eventItem.type === 'Webinar'
+                            ? 'bg-primary-orange text-white'
+                            : 'bg-primary-green text-white'
+                        }`}
                       >
-                        <ArrowRight className="w-5 h-5" />
-                      </Button>
+                        {eventItem.type}
+                      </span>
                     </div>
-                    <div className="p-5 bg-white group-hover:bg-[#045f3c] transition-colors duration-300">
-                      <h3 className="font-bold text-lg mb-2 text-black group-hover:text-white transition-colors duration-300 line-clamp-2">{event.title}</h3>
-                      <p className="text-gray-600 text-sm group-hover:text-white/80 transition-colors duration-300">
-                        Young professionals are at the forefront of accelerating CAADP implementation...
-                      </p>
-                    </div>
-                  </AlumniCard>
-                </Link>
-              ))}
-            </div>
+                    <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2">
+                      {eventItem.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                      Young professionals are at the forefront of accelerating CAADP implementation...
+                    </p>
+                    <span
+                      className="inline-flex items-center text-sm font-medium transition-all duration-200 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
+                      style={{ color: (
+                        eventItem.type === 'Event' ? '#005C30' :
+                        eventItem.type === 'Workshop' ? '#073392' :
+                        eventItem.type === 'Webinar' ? '#F8B712' : '#005C30'
+                      ) }}
+                    >
+                      <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
+                        View Event
+                      </span>
+                      <ArrowRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </div>
+                </motion.div>
+              </Link>
+            ))}
           </div>
-        </section>
-      </div>
+        </div>
+
+        {/* Card styles aligned with Latest News */}
+        <style jsx global>{`
+          .news-card {
+            position: relative;
+            border-radius: 24px;
+            background: white;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+          }
+          .news-card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
+          .perspective-wrapper { perspective: 1000px; }
+          .perspective-element {
+            position: relative;
+            height: 180px;
+            width: 100%;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            border-radius: 24px 24px 0 0;
+          }
+          .perspective-image {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            border-radius: 24px 24px 0 0;
+            transform: translateZ(0) rotateY(-5deg) scale(1.05);
+            transform-origin: right center;
+            box-shadow: -8px 5px 10px rgba(0,0,0,0.1);
+            transition: all 0.5s ease;
+          }
+          .news-card:hover .perspective-image {
+            transform: translateZ(10px) rotateY(-8deg) scale(1.08);
+          }
+          .view-news-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            color: #117B34;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+          }
+          .view-news-button:hover {
+            background-color: #F9FAFB;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+          }
+          @media (max-width: 768px) {
+            .news-card { max-width: 320px; margin: 0 auto; }
+          }
+        `}</style>
+      </section>
     </main>
   );
 }
