@@ -200,8 +200,8 @@ export default function Home() {
             </div>
             <div>
               <h2 className="text-3xl font-bold mb-6">
-                <span className="text-black">Mission </span>
-                <span className="text-[#045f3c]">Statement</span>
+                <span className="text-black"> Alumni Network </span>
+                <span className="text-[#045f3c]"> Mission Statement</span>
               </h2>
               <p className="text-base text-gray-700 mb-6">
                 Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa.

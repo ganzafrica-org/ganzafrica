@@ -29,7 +29,7 @@ const FoodSystemPage = ({}) => {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/harvest3.png"
+            src="/images/cabbages.png"
             alt="Food System"
             fill
             sizes="100vw"

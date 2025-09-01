@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { DecoratedHeading } from '@/components/layout/headertext';
+
 
 interface NewsletterSectionProps {
   locale: string;
@@ -94,10 +96,13 @@ export default function NewsletterSection({
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            <span className="text-black">Subscribe to</span>{" "}
-            <span className="text-primary-green">Our Newsletter</span>
-          </h2>
+        <div className="text-center mb-16">
+            <DecoratedHeading
+                firstText={dict?.programs?.heading_first || "Subscribe to"}
+                secondText={dict?.programs?.heading_second || "Our Newsletter"}
+                className="mx-auto"
+            />
+          </div>
 
           <p className="text-gray-600 mb-8">
             Receive timely updates on GanzAfrica's programs, success stories,

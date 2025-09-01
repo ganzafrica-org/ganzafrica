@@ -64,7 +64,7 @@ const TeamMemberModal = ({
         {/* Header Section with Image and Info */}
         <div className="p-6 flex items-start gap-6">
           {/* Profile Image */}
-          <div className="w-[160px] h-[160px] rounded-xl overflow-hidden flex-shrink-0 shadow-lg relative group">
+          <div className="w-[130px] h-[130px] rounded-xl overflow-hidden flex-shrink-0 shadow-lg relative group">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <img 
               src={member.photo_url} 
@@ -75,10 +75,10 @@ const TeamMemberModal = ({
 
           {/* User Info */}
           <div className="flex-1 pt-2">
-            <h2 className="text-[28px] font-bold text-[#111827] leading-tight mb-2">
+            <h2 className="text-[24px] font-bold text-[#111827] leading-tight mb-2">
               {member.name}
             </h2>
-            <p className="text-[17px] text-[#6B7280] tracking-wide">
+            <p className="text-[15px] text-[#6B7280] tracking-wide">
               {member.position}
             </p>
           </div>
@@ -156,7 +156,7 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
   const [imageLoading, setImageLoading] = useState(true);
   
   return (
-      <div className="group h-full">
+      <div className="group h-full px-1.5">
         <div className="relative rounded-xl overflow-hidden transition-all duration-300 ease-out h-full shadow-sm hover:shadow-md">
           {/* Main Card */}
           <div className="relative bg-gray-100 overflow-hidden h-full">
@@ -165,8 +165,8 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
                 <div className="absolute inset-0 bg-gray-200 animate-pulse z-[1]" />
             )}
 
-            {/* Image Container */}
-            <div className="relative aspect-[3/4] w-full">
+            {/* Image Container - Slightly narrower than square */}
+            <div className="relative aspect-[9/10] w-full">
               <img
                   src={member.photo_url}
                   alt={member.name}
@@ -187,17 +187,17 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
                 <button
                     onClick={onOpenModal}
                     aria-label="View team member details"
-                    className="w-8 h-8 bg-primary-orange rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:bg-primary-green"
+                    className="w-7 h-7 bg-primary-orange rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:bg-primary-green"
                 >
-                  <ArrowUpRight className="w-4 h-4 text-white transform transition-transform group-hover:rotate-45" strokeWidth={2} />
+                  <ArrowUpRight className="w-3.5 h-3.5 text-white transform transition-transform group-hover:rotate-45" strokeWidth={2} />
                 </button>
               </div>
             </div>
 
             {/* Name and Role section with top-right rounded corner */}
             <div className="absolute left-0 bottom-0 z-10">
-              <div className="bg-white pt-3 pb-3 pl-4 pr-8 rounded-tr-xl">
-                <h3 className="text-primary-green text-lg font-bold leading-tight">
+              <div className="bg-white pt-2.5 pb-2.5 pl-3.5 pr-7 rounded-tr-xl">
+                <h3 className="text-primary-green text-base font-bold leading-tight">
                   {member.name}
                 </h3>
                 <p className="text-gray-600 text-sm mt-0.5">
@@ -500,17 +500,16 @@ const TeamPage: React.FC = () => {
             <div className="flex-1">
               {isLoading ? (
                 // Loading skeletons
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-5 gap-y-7">
                   {Array.from({ length: 6 }).map((_, index) => (
-                    <div key={index} className="animate-pulse">
-                      <div className="bg-gray-200 rounded-[24px] aspect-[3/4]" />
+                    <div key={index} className="animate-pulse mx-1">
+                      <div className="bg-gray-200 rounded-[24px] aspect-[9/10]" />
                     </div>
                   ))}
                 </div>
               ) : (
-                // Team Members Grid
                 <div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                     {filteredMembers.map((member) => (
                       <TeamMemberCard 
                         key={member.id} 
@@ -541,7 +540,7 @@ const TeamPage: React.FC = () => {
           onClose={() => setSelectedMember(null)}
         />
       )}
-{/* chnged */}
+
       <style jsx global>{`
         @keyframes marquee {
           0% {
