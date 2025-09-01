@@ -51,8 +51,6 @@ const envSchema = z.object({
 
   // Security
   CORS_ORIGINS: z.string().transform((val) => val.split(",")),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000), // 15 minutes
-  RATE_LIMIT_MAX: z.coerce.number().default(100), // 100 requests per window
 });
 
 // Parse and validate environment variables

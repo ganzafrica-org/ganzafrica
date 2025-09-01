@@ -2,7 +2,6 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import { rateLimit } from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import "express-async-errors";
 import swaggerUi from "swagger-ui-express";
@@ -53,17 +52,17 @@ app.use(helmet());
 // Request logging
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 
-// Rate limiting
-app.use(
-    rateLimit({
-        windowMs: env.RATE_LIMIT_WINDOW_MS, // 15 minutes
-        limit: env.RATE_LIMIT_MAX, // 100 requests per window
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: { error: "Too many requests, please try again later." },
-        skip: (req) => req.ip === "127.0.0.1" && env.NODE_ENV === "development",
-    }),
-);
+// Rate limiting - DISABLED to allow unlimited requests
+// app.use(
+//     rateLimit({
+//         windowMs: env.RATE_LIMIT_WINDOW_MS, // 15 minutes
+//         limit: env.RATE_LIMIT_MAX, // 100 requests per window
+//         standardHeaders: true,
+//         legacyHeaders: false,
+//         message: { error: "Too many requests, please try again later." },
+//         skip: (req) => req.ip === "127.0.0.1" && env.NODE_ENV === "development",
+//     }),
+// );
 
 // API health check route
 app.get("/api/health", async (req: Request, res: Response) => {

@@ -53,4 +53,10 @@ router.post(
   opportunityController.submitApplicationReview
 );
 
+router.delete(
+  "/:id",
+  validate(opportunityValidation.getOpportunitySchema),
+  opportunityController.deleteApplication
+);
+
 export default router;

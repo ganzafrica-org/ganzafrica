@@ -124,7 +124,7 @@ export const employment_details = pgTable('employment_details', {
 export const applications = pgTable('applications', {
   id: serial('id').primaryKey(),
   opportunity_id: integer('opportunity_id')
-    .references(() => opportunities.id),
+    .references(() => opportunities.id, { onDelete: 'cascade' }),
   
   // Personal Information
   first_name: varchar('first_name', { length: 100 }).notNull(),

@@ -714,6 +714,50 @@ export const submitApplicationReview = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * @swagger
+ * /applications/{id}:
+ *   delete:
+ *     summary: Delete an application
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Application deleted successfully
+ *       404:
+ *         description: Application not found
+ *       500:
+ *         description: Server error
+ */
+export const deleteApplication = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+
+        await opportunityService.deleteApplication(id);
+
+        res.status(200).json({
+            message: 'Application deleted successfully'
+        });
+    } catch (error) {
+        logger.error(`Delete application error: ${req.params.id}`, error);
+        if (error instanceof AppError) {
+            return res.status(error.statusCode).json({
+                error: 'Application Deletion Error',
+                message: error.message
+            });
+        }
+        res.status(500).json({
+            error: 'Application Deletion Error',
+            message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+        });
+    }
+};
+
 
 // Create object to export all controller functions together
 export const opportunityController = {
@@ -731,6 +775,7 @@ export const opportunityController = {
     updateApplicationStatus,
     submitApplicationReview,
     listAllApplications,
+    deleteApplication,
 };
 
 // Default export for the controller object

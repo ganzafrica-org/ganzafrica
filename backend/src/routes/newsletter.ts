@@ -22,4 +22,10 @@ router.get(
     contactController.listNewsletterSubscribers
   );
 
+router.delete(
+    "/subscribers/:id",
+    validate(contactValidation.newsletterUnsubscribeSchema),
+    contactController.deleteNewsletterSubscriber
+  );
+
 export default router;

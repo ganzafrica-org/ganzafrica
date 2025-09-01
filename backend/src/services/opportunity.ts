@@ -401,17 +401,72 @@ export async function deleteOpportunity(id: number): Promise<boolean> {
             throw new AppError('Opportunity not found', 404);
         }
 
-        // Delete the opportunity (cascade will handle dependent records)
-        await db.delete(opportunities)
-            .where(eq(opportunities.id, id));
+        // Start a transaction to ensure all deletions succeed or fail together
+        await db.transaction(async (tx) => {
+            try {
+                logger.info(`Starting deletion of opportunity ${id} and related records...`);
+                
+                // First, delete all applications for this opportunity
+                logger.info(`Deleting applications for opportunity ${id}...`);
+                await tx.delete(applications)
+                    .where(eq(applications.opportunity_id, id));
 
+                // Delete fellowship details if they exist
+                logger.info(`Deleting fellowship details for opportunity ${id}...`);
+                await tx.delete(fellowship_details)
+                    .where(eq(fellowship_details.opportunity_id, id));
+
+                // Delete employment details if they exist
+                logger.info(`Deleting employment details for opportunity ${id}...`);
+                await tx.delete(employment_details)
+                    .where(eq(employment_details.opportunity_id, id));
+
+                // Finally, delete the opportunity itself
+                logger.info(`Deleting opportunity ${id}...`);
+                await tx.delete(opportunities)
+                    .where(eq(opportunities.id, id));
+                
+                logger.info(`Successfully deleted opportunity ${id} and all related records`);
+            } catch (txError) {
+                logger.error(`Transaction error while deleting opportunity ${id}:`, txError);
+                const errorMessage = txError instanceof Error ? txError.message : 'Unknown transaction error';
+                throw new AppError(`Failed to delete opportunity and related records: ${errorMessage}`, 500);
+            }
+        });
+
+        logger.info(`Opportunity ${id} and all related records deleted successfully`);
         return true;
     } catch (error) {
         logger.error(`Error deleting opportunity: ${id}`, error);
+        
+        // Check for specific database errors
         if (error instanceof AppError) {
             throw error;
         }
-        throw new AppError('Failed to delete opportunity', 500);
+        
+        // Check for database constraint violations
+        if (error && typeof error === 'object' && 'code' in error) {
+            if (error.code === '23503') { // Foreign key violation
+                logger.error(`Foreign key constraint violation while deleting opportunity ${id}:`, error);
+                throw new AppError('Cannot delete opportunity: It has related records that cannot be removed', 400);
+            }
+            
+            if (error.code === '23505') { // Unique constraint violation
+                logger.error(`Unique constraint violation while deleting opportunity ${id}:`, error);
+                throw new AppError('Cannot delete opportunity: Constraint violation occurred', 400);
+            }
+        }
+        
+        // Log the full error for debugging
+        logger.error(`Full error details for opportunity ${id}:`, {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            code: error && typeof error === 'object' && 'code' in error ? (error as any).code : 'Unknown',
+            detail: error && typeof error === 'object' && 'detail' in error ? (error as any).detail : 'Unknown',
+            hint: error && typeof error === 'object' && 'hint' in error ? (error as any).hint : 'Unknown',
+            stack: error instanceof Error ? error.stack : 'Unknown'
+        });
+        
+        throw new AppError('Failed to delete opportunity: Database error occurred', 500);
     }
 }
 
@@ -789,6 +844,35 @@ export async function submitApplicationReview(reviewData: ReviewInput): Promise<
     }
 }
 
+/**
+ * Delete an application by ID
+ */
+export async function deleteApplication(id: number): Promise<void> {
+    try {
+        // Check if application exists
+        const existingApplication = await db.select()
+            .from(applications)
+            .where(eq(applications.id, id))
+            .limit(1);
+
+        if (existingApplication.length === 0) {
+            throw new AppError('Application not found', 404);
+        }
+
+        // Delete the application
+        await db.delete(applications)
+            .where(eq(applications.id, id));
+
+        logger.info(`Application ${id} deleted successfully`);
+    } catch (error) {
+        logger.error(`Error deleting application: ${id}`, error);
+        if (error instanceof AppError) {
+            throw error;
+        }
+        throw new AppError('Failed to delete application', 500);
+    }
+}
+
 // Export the service functions
 export const opportunityService = {
     createOpportunity,
@@ -802,7 +886,8 @@ export const opportunityService = {
     listApplications,
     updateApplicationStatus,
     submitApplicationReview,
-    listAllApplications
+    listAllApplications,
+    deleteApplication
 };
 
 // Default export for the service object
