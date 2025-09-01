@@ -480,6 +480,50 @@ export const listNewsletterSubscribers = async (req: Request, res: Response) => 
   }
 };
 
+/**
+ * @swagger
+ * /newsletter/subscribers/{id}:
+ *   delete:
+ *     summary: Delete a newsletter subscriber
+ *     tags: [Newsletter]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Subscriber deleted successfully
+ *       404:
+ *         description: Subscriber not found
+ *       500:
+ *         description: Server error
+ */
+export const deleteNewsletterSubscriber = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+
+    await contactService.deleteNewsletterSubscriber(id);
+
+    res.status(200).json({
+      message: "Newsletter subscriber deleted successfully",
+    });
+  } catch (error) {
+    logger.error(`Delete newsletter subscriber error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Subscriber Deletion Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Subscriber Deletion Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
 // Create object to export all controller functions together
 export const contactController = {
   createContact,
@@ -489,7 +533,8 @@ export const contactController = {
   deleteContact,
   subscribeNewsletter,
   unsubscribeNewsletter,
-  listNewsletterSubscribers
+  listNewsletterSubscribers,
+  deleteNewsletterSubscriber
 };
 
 // Default export for the controller object

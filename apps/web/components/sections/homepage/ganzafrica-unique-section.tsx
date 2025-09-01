@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { PlayCircle, PauseCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { DecoratedHeading } from '@/components/layout/headertext';
+
 
 interface KeyElement {
   title: string;
@@ -123,16 +125,31 @@ export default function GanzAfricaUniqueSection({
   };
 
   return (
-      <section className="py-8 md:py-12 bg-[#E5EAF6] overflow-hidden relative">
-        {/* Subtle pattern overlay */}
-        <div className="absolute inset-0 opacity-50" style={{
-          backgroundImage: 'radial-gradient(circle, #4a5568 0.5px, transparent 0.5px)',
-          backgroundSize: '12px 12px',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'repeat',
-          pointerEvents: 'none'
-        }} />
-        <div className="container mx-auto px-4">
+      <section className="py-8 md:py-12 bg-neutral-100 relative overflow-hidden">
+        {/* Background Pattern and Decorative Elements */}
+        <div className="absolute inset-0 bg-neutral-100">
+          <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-10"></div>
+        </div>
+
+        {/* Left Leaf */}
+        <div className="absolute left-0 top-1/4 -translate-x-1/4 opacity-20 hidden sm:block">
+          <img
+            src="/images/leaf.png"
+            alt="Decorative leaf"
+            className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 transform -rotate-12"
+          />
+        </div>
+
+        {/* Right Leaf */}
+        <div className="absolute right-0 bottom-1/4 translate-x-1/4 opacity-20 hidden sm:block">
+          <img
+            src="/images/leaf.png"
+            alt="Decorative leaf"
+            className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 transform rotate-12"
+          />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <motion.div 
             className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center"
             initial="hidden"
@@ -153,15 +170,10 @@ export default function GanzAfricaUniqueSection({
                   viewport={{ once: true }}
                   transition={{ duration: 0.6 }}
                 >
-                  <h2 className="text-3xl md:text-4xl font-bold">
-  <span className="text-black">
-    {dict.home?.unique?.title_first || "3 Key Elements that make"}{" "}
-  </span>
-  <span className="text-primary-green">
-    {dict.home?.unique?.title_second || "GanzAfrica Unique"}
-  </span>
-</h2>
-
+                <DecoratedHeading
+                firstText={dict.home?.unique?.title_first || "3 Key Elements that make"}
+                secondText={dict.home?.unique?.title_second || "GanzAfrica Unique"}
+              />
                 </motion.div>
                 <motion.div 
                   className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"
@@ -223,9 +235,9 @@ export default function GanzAfricaUniqueSection({
                 className="space-y-4 relative"
                 variants={item}
               >
-                <div className="absolute -left-6 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-[#E5EAF6] z-10 pointer-events-none"></div>
+                <div className="absolute -left-6 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-neutral-100 z-10 pointer-events-none"></div>
                 <div className="relative space-y-4 pl-2 pr-1 py-4 overflow-visible">
-                  <div className="absolute -right-6 top-0 bottom-0 w-6 bg-gradient-to-l from-[#E5EAF6] to-transparent z-10 pointer-events-none"></div>
+                  <div className="absolute -right-6 top-0 bottom-0 w-6 bg-gradient-to-l from-neutral-100 to-transparent z-10 pointer-events-none"></div>
                   {keyElements.map((element, index) => (
                       <motion.div
                           key={index}

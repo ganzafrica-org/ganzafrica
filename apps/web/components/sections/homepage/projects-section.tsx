@@ -284,7 +284,30 @@ const getProjectUrl = useCallback((projectId: number): string => {
 // Add No Projects Available message - only show if both API and fallbacks fail
 if (!loading && projects.length === 0) {
     return (
-        <section className="bg-[#f2faf6] relative overflow-hidden py-8">
+        <section className="py-4 md:py-6 bg-neutral-100 relative overflow-hidden">
+            {/* Background Pattern and Decorative Elements */}
+            <div className="absolute inset-0 bg-neutral-100">
+                <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-10"></div>
+            </div>
+
+            {/* Left Leaf */}
+            <div className="absolute left-0 top-1/4 -translate-x-1/4 opacity-20 hidden sm:block">
+                <img
+                    src="/images/leaf.png"
+                    alt="Decorative leaf"
+                    className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 transform -rotate-12"
+                />
+            </div>
+
+            {/* Right Leaf */}
+            <div className="absolute right-0 bottom-1/4 translate-x-1/4 opacity-20 hidden sm:block">
+                <img
+                    src="/images/leaf.png"
+                    alt="Decorative leaf"
+                    className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 transform rotate-12"
+                />
+            </div>
+
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 <div className="text-center mb-8">
                     <DecoratedHeading
@@ -337,30 +360,38 @@ const currentProjects = limitedProjects.slice(
 );
 
 return (
-    <section className="relative overflow-hidden py-8 md:py-10 bg-secondary-green/5">
-        {/* Subtle dot pattern */}
-        <div className="absolute inset-0 opacity-20" style={{
-            backgroundImage: 'radial-gradient(circle, #4a5568 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'repeat',
-            pointerEvents: 'none'
-        }} />
+    <section className="py-4 md:py-6 bg-neutral-100 relative overflow-hidden">
+        {/* Background Pattern and Decorative Elements */}
+        <div className="absolute inset-0 bg-neutral-100">
+            <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-10"></div>
+        </div>
+
+        {/* Left Leaf */}
+        <div className="absolute left-0 top-1/4 -translate-x-1/4 opacity-20 hidden sm:block">
+            <img
+                src="/images/leaf.png"
+                alt="Decorative leaf"
+                className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 transform -rotate-12"
+            />
+        </div>
+
+        {/* Right Leaf */}
+        <div className="absolute right-0 bottom-1/4 translate-x-1/4 opacity-20 hidden sm:block">
+            <img
+                src="/images/leaf.png"
+                alt="Decorative leaf"
+                className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 transform rotate-12"
+            />
+        </div>
         
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
-            <div className="text-center mb-8">
-                <motion.div 
-                    className="space-y-2"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6 }}
-                >
-                    <h2 className="text-3xl md:text-4xl font-bold">
-                        {dict?.projects?.heading_first || "Featured"} <span className="text-primary-green">{dict?.projects?.heading_second || "Projects"}</span>
-                    </h2>
-                </motion.div>
-            </div>
+        <div className="text-center mb-16">
+            <DecoratedHeading
+                firstText={dict?.programs?.heading_first || "Featured"}
+                secondText={dict?.programs?.heading_second || "Projects"}
+                className="mx-auto"
+            />
+          </div>
 
             {/* Error message */}
             {error && (
@@ -370,7 +401,7 @@ return (
             )}
 
             {/* Projects grid with animation */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 {currentProjects.map((project, index) => {
                     // Get color and category based on index
                     const { color, category } = getProjectCategory(index);
@@ -378,7 +409,7 @@ return (
                     return (
                         <motion.div 
                             key={project.id}
-                            className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300"
+                            className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -398,56 +429,19 @@ return (
                                 </div>
                             </div>
                             
-                            {/* Content */}
-                            <div className="p-6">
-                                <div className="relative h-10 mb-4 overflow-hidden">
-                                    {/* Title - always visible */}
-                                    <div className="absolute inset-0 transition-all duration-300 group-hover:opacity-0">
-                                        <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
-                                            {project.name}
-                                        </h3>
-                                    </div>
-                                    
-                                    {/* Category - visible on hover */}
-                                    <div className="absolute inset-0 flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                        <div className="flex items-center">
-                                            <div 
-                                                className="w-10 h-10 rounded-full flex items-center justify-center mr-3 flex-shrink-0"
-                                                style={{ backgroundColor: `${color}20` }}
-                                            >
-                                                <div className="w-6 h-6" style={{ color }}>
-                                                    {index % 3 === 0 ? (
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                                        </svg>
-                                                    ) : index % 3 === 1 ? (
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                                        </svg>
-                                                    ) : (
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                        </svg>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <span 
-                                                className="text-xs font-medium uppercase tracking-wider opacity-90"
-                                                style={{ color }}
-                                            >
-                                                {category}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                            {/* Content - flex grow to push border to bottom */}
+                            <div className="p-6 flex-grow flex flex-col">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                    {project.name}
+                                </h3>
                                 
-                                <p className="text-gray-600 mb-4 line-clamp-3">
+                                <p className="text-gray-600 mb-4 line-clamp-3 flex-grow">
                                     {truncateDescription(project.description, 120)}
                                 </p>
                                 
                                 <Link
                                     href={getProjectUrl(project.id)}
-                                    className="inline-flex items-center text-sm font-medium group"
+                                    className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
                                     style={{ color }}
                                 >
                                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
@@ -459,8 +453,8 @@ return (
                                 </Link>
                             </div>
                             
-                            {/* Accent border */}
-                            <div className="h-1 w-full" style={{ backgroundColor: color }}></div>
+                            {/* Accent border - always at bottom */}
+                            <div className="h-1 w-full mt-auto" style={{ backgroundColor: color }}></div>
                         </motion.div>
                     );
                 })}

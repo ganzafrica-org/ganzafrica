@@ -43,6 +43,14 @@ interface NewsSectionProps {
   dict: any;
 }
 
+// Define color scheme for "Read more" links (matching project cards)
+const LINK_COLORS = ['#f8b712', '#009758', '#073392'];
+
+// Helper function to get link color
+const getLinkColor = (index: number) => {
+  return LINK_COLORS[index % LINK_COLORS.length];
+};
+
 export default function NewsSection({ locale, dict }: NewsSectionProps) {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,7 +239,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                   <div className="h-4 w-full bg-gray-200 animate-pulse rounded mb-2"></div>
                   <div className="h-4 w-2/3 bg-gray-200 animate-pulse rounded mb-2"></div>
                   <div className="h-4 w-3/4 bg-gray-200 animate-pulse rounded mb-4"></div>
-                  <div className="h-10 w-36 bg-gray-200 animate-pulse rounded-full"></div>
+                  <div className="h-6 w-24 bg-gray-200 animate-pulse rounded"></div>
                 </div>
               </div>
             ))}
@@ -288,8 +296,10 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {newsItems.map((newsItem) => {
+          {newsItems.map((newsItem, index) => {
             const slug = generateSlug(newsItem.title);
+            const linkColor = getLinkColor(index);
+            
             return (
               <motion.div 
                 key={newsItem.id} 
@@ -331,12 +341,18 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                     {newsItem.summary || truncateText(newsItem.content)}
                   </p>
 
-                  {/* Read more button - styled like project cards */}
+                  {/* Read more link - styled like project cards */}
                   <Link
                     href={`/${locale}/newsroom/${slug}`}
-                    className="view-news-button"
+                    className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
+                    style={{ color: linkColor }}
                   >
-                    {dict?.news?.read_more ?? "Read More"}
+                    <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
+                      {dict?.news?.read_more ?? "Read more"}
+                    </span>
+                    <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
                   </Link>
                 </div>
               </motion.div>
@@ -412,27 +428,6 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
         
         .news-card:hover .perspective-image {
           transform: translateZ(10px) rotateY(-8deg) scale(1.08);
-        }
-        
-        /* View news button styling */
-        .view-news-button {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background-color: white;
-          color: #117B34; /* primary-green color */
-          font-weight: 600;
-          font-size: 14px;
-          padding: 8px 16px;
-          border-radius: 9999px; /* fully rounded */
-          border: 1px solid #E5E7EB;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-          transition: all 0.2s ease;
-        }
-        
-        .view-news-button:hover {
-          background-color: #F9FAFB;
-          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
         }
         
         @media (max-width: 768px) {

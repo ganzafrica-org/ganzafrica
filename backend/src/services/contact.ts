@@ -374,6 +374,35 @@ export const listNewsletterSubscribers = async (
   }
 };
 
+/**
+ * Delete a newsletter subscriber by ID
+ */
+export const deleteNewsletterSubscriber = async (id: number): Promise<void> => {
+  try {
+    // Check if subscriber exists
+    const existingSubscriber = await db.select()
+      .from(newsletter_subscribers)
+      .where(eq(newsletter_subscribers.id, id))
+      .limit(1);
+
+    if (existingSubscriber.length === 0) {
+      throw new AppError('Newsletter subscriber not found', 404);
+    }
+
+    // Delete the subscriber
+    await db.delete(newsletter_subscribers)
+      .where(eq(newsletter_subscribers.id, id));
+
+    logger.info(`Newsletter subscriber ${id} deleted successfully`);
+  } catch (error) {
+    logger.error(`Error deleting newsletter subscriber: ${id}`, error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError('Failed to delete newsletter subscriber', 500);
+  }
+};
+
 // Create contact service object for export
 export const contactService = {
   createContact,
@@ -383,7 +412,8 @@ export const contactService = {
   deleteContact,
   subscribeNewsletter,
   unsubscribeNewsletter,
-  listNewsletterSubscribers
+  listNewsletterSubscribers,
+  deleteNewsletterSubscriber
 };
 
 // Default export
