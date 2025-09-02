@@ -279,7 +279,6 @@ export async function deleteTeam(id: number): Promise<boolean> {
 
     // Remove project updates authored by this team member (if any)
     await db.delete(project_updates).where(eq(project_updates.author_id, id));
-
     // Delete the team
     await db.delete(teams).where(eq(teams.id, id));
 
