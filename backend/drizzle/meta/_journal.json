@@ -1,19 +1,12 @@
 {
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
       "version": "7",
-      "when": 1745921880921,
-      "tag": "0000_secret_rachel_grey",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1756801584402,
-      "tag": "0001_secret_nocturne",
+      "when": 1756822332651,
+      "tag": "0000_crazy_solo",
       "breakpoints": true
     }
   ]
