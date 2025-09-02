@@ -1,5 +1,6 @@
 import { db } from "../db/client";
 import { teams, team_types } from "../db/schema/teams";
+import { project_members } from "../db/schema/projects";
 import { eq, asc, desc } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
@@ -272,6 +273,9 @@ export async function deleteTeam(id: number): Promise<boolean> {
     if (!existingTeam.length) {
       throw new AppError("Team member not found", 404);
     }
+
+    // Remove project memberships referencing this team to avoid FK violations
+    await db.delete(project_members).where(eq(project_members.team_id, id));
 
     // Delete the team
     await db.delete(teams).where(eq(teams.id, id));
