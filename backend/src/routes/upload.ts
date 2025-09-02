@@ -28,6 +28,17 @@ function getFileSubdirectory(mimetype: string): string {
   return ""; // Default case, should not happen due to file filter
 }
 
+// Build public base URL using env or proxy headers as fallback
+function getPublicBaseUrl(req: Request): string {
+  if (env.API_BASE_URL) {
+    return env.API_BASE_URL.replace(/\/$/, "");
+  }
+  const forwardedProto = (req.headers["x-forwarded-proto"] as string) || req.protocol;
+  const forwardedHost = (req.headers["x-forwarded-host"] as string) || (req.headers["host"] as string) || req.get("host") || "";
+  const origin = `${forwardedProto}://${forwardedHost}`;
+  return origin.replace(/\/$/, "");
+}
+
 /**
  * @swagger
  * tags:
@@ -75,6 +86,10 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
     // Get subdirectory based on file type
     const subdir = getFileSubdirectory(mimetype);
     
+    // Build both absolute and relative URLs for robustness
+    const relativePath = `/uploads/${subdir}/${filename}`;
+    const fileUrl = `${getPublicBaseUrl(req)}${relativePath}`;
+
     // Generate file URL with subdirectory - prefer configured API_BASE_URL to ensure https
     const base = env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
     const fileUrl = `${base.replace(/\/$/, '')}/uploads/${subdir}/${filename}`;
@@ -87,6 +102,7 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
         name: originalname,
         filename,
         url: fileUrl,
+        path: relativePath,
         size,
         type: mimetype,
         category: subdir // Adding category info can be useful
@@ -141,6 +157,9 @@ router.post("/files", upload.array("files", 10), (req: Request, res: Response) =
     const files = (req.files as Express.Multer.File[]).map(file => {
       // Get subdirectory based on file type
       const subdir = getFileSubdirectory(file.mimetype);
+      const relativePath = `/uploads/${subdir}/${file.filename}`;
+      const fileUrl = `${getPublicBaseUrl(req)}${relativePath}`;
+
       const base = env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
       const fileUrl = `${base.replace(/\/$/, '')}/uploads/${subdir}/${file.filename}`;
       
@@ -148,6 +167,7 @@ router.post("/files", upload.array("files", 10), (req: Request, res: Response) =
         name: file.originalname,
         filename: file.filename,
         url: fileUrl,
+        path: relativePath,
         size: file.size,
         type: file.mimetype,
         category: subdir 
