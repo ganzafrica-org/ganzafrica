@@ -21,6 +21,8 @@ const logger = new Logger("App");
 const app: Express = express();
 
 // Configure middleware
+// Behind a reverse proxy (e.g., Nginx/DO App Platform) so protocol reflects x-forwarded-proto
+app.set('trust proxy', 1);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser(env.SESSION_SECRET)); // For parsing cookies
