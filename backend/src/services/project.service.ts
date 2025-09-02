@@ -553,7 +553,14 @@ export async function getProjectById(id: number): Promise<ProjectOutput> {
     const membersResult = await db
       .select({
         membership: project_members,
-        team: teams,
+        team: {
+          id: teams.id,
+          name: teams.name,
+          position: teams.position,
+          photo_url: teams.photo_url,
+          bio: teams.bio,
+          email: teams.email,
+        },
       })
       .from(project_members)
       .leftJoin(teams, eq(project_members.team_id, teams.id))

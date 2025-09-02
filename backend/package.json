@@ -12,6 +12,7 @@
     "dev": "tsx watch src/server.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrations/migrate.ts",
+    "db:migrate:teams": "tsx src/db/migrations/run-team-sort-migration.ts",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "swagger:generate": "tsx src/swagger/generate.ts",

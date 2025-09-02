@@ -29,9 +29,9 @@ const TeamsPage = () => {
   const [activeTab, setActiveTab] = useState('all');
   
   // States for data and UI
-  const [teams, setTeams] = useState([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [teamTypes, setTeamTypes] = useState({});
+  const [teamTypes, setTeamTypes] = useState<Record<string, string>>({});
   
   // States for pagination and filtering
   const [page, setPage] = useState(1);
@@ -41,9 +41,13 @@ const TeamsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  // Reorder mode (UI-only), local order per page
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [orderedIds, setOrderedIds] = useState<number[]>([]);
   
   // State to store team type counts
-  const [tabCounts, setTabCounts] = useState({
+  const [tabCounts, setTabCounts] = useState<Record<string, number>>({
     all: 0
   });
 
@@ -51,10 +55,10 @@ const TeamsPage = () => {
   const [tabCountsLoaded, setTabCountsLoaded] = useState(false);
 
   // State for dropdown menu
-  const [openMenuId, setOpenMenuId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   
   // Function to toggle dropdown menu
-  const toggleMenu = (id) => {
+  const toggleMenu = (id: number) => {
     if (openMenuId === id) {
       setOpenMenuId(null);
     } else {
@@ -63,7 +67,7 @@ const TeamsPage = () => {
   };
 
   // Function to handle action click
-  const handleAction = async (action, teamId) => {
+  const handleAction = async (action: 'view' | 'delete' | 'update', teamId: number) => {
     setOpenMenuId(null); // Close the menu
     
     switch(action) {
@@ -77,9 +81,9 @@ const TeamsPage = () => {
             const updatedPage = teams.length === 1 && page > 1 ? page - 1 : page;
             setPage(updatedPage);
             toast.success('Team member deleted successfully');
-          } catch (error) {
+          } catch (error: any) {
             console.error('Error deleting team:', error);
-            toast.error(error.response?.data?.message || 'Failed to delete team member');
+            toast.error(error?.response?.data?.message || 'Failed to delete team member');
           }
         }
         break;
@@ -92,21 +96,21 @@ const TeamsPage = () => {
   };
 
   // Handle pagination
-  const goToPage = (newPage) => {
+  const goToPage = (newPage: number) => {
     setPage(newPage);
   };
 
   // Calculate sequential row number based on pagination
-  const getRowNumber = (index) => {
+  const getRowNumber = (index: number) => {
     return ((page - 1) * limit) + index + 1;
   };
 
   // Add click outside listener to close dropdown
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && event.target instanceof Node && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
       }
     }
@@ -197,17 +201,17 @@ const TeamsPage = () => {
       
       if (response.data.teams && Array.isArray(response.data.teams)) {
         // Group teams by team_type.name
-        response.data.teams.forEach(team => {
+        response.data.teams.forEach((team: any) => {
           if (team.team_type && team.team_type.name) {
             const typeName = team.team_type.name.toLowerCase();
-            countsByType[typeName] = (countsByType[typeName] || 0) + 1;
+            (countsByType as any)[typeName] = ((countsByType as any)[typeName] || 0) + 1;
           }
         });
       }
       
       setTabCounts(countsByType);
       setTabCountsLoaded(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching tab counts:', error);
       // Use default values in case of error
       setTabCounts({
@@ -249,7 +253,24 @@ const TeamsPage = () => {
         console.log('API response:', response.data);
         
         if (response.data) {
-          setTeams(response.data.teams || []);
+          const fetched = response.data.teams || [];
+          setTeams(fetched);
+          // Initialize/merge local order from storage
+          try {
+            const key = getOrderStorageKey();
+            const saved = JSON.parse(localStorage.getItem(key) || '[]');
+            if (Array.isArray(saved)) {
+              // Keep only IDs present in fetched page
+              const presentIds = new Set(fetched.map((t: any) => t.id));
+              const filteredSaved = saved.filter((id: number) => presentIds.has(id));
+              const missing = fetched.map((t: any) => t.id).filter((id: number) => !filteredSaved.includes(id));
+              setOrderedIds([...filteredSaved, ...missing]);
+            } else {
+              setOrderedIds(fetched.map((t: any) => t.id));
+            }
+          } catch {
+            setOrderedIds(fetched.map((t: any) => t.id));
+          }
           
           // Extract pagination info
           const pagination = response.data.pagination || {};
@@ -266,10 +287,10 @@ const TeamsPage = () => {
         if (!tabCountsLoaded) {
           fetchTabCounts();
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching teams:', error);
         setTeams([]);
-        toast.error(error.response?.data?.message || 'Failed to load teams');
+        toast.error(error?.response?.data?.message || 'Failed to load teams');
       } finally {
         setLoading(false);
       }
@@ -278,8 +299,82 @@ const TeamsPage = () => {
     fetchTeams();
   }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
 
+  // Helpers for local ordering
+  const getOrderStorageKey = (): string => {
+    return `teamsOrder:v1:page=${page}:limit=${limit}:tab=${activeTab}:sort=${sortBy}:${sortOrder}:search=${searchTerm || ''}`;
+  };
+
+  const persistOrder = (ids: number[]) => {
+    try {
+      localStorage.setItem(getOrderStorageKey(), JSON.stringify(ids));
+    } catch {}
+  };
+
+  const displayedTeams = (() => {
+    if (!orderedIds.length) return teams;
+    const byId: { [key: number]: any } = {};
+    teams.forEach((t: any) => { byId[t.id] = t; });
+    const ordered = orderedIds.map(id => byId[id]).filter(Boolean);
+    const remaining = teams.filter((t: any) => !orderedIds.includes(t.id));
+    return [...ordered, ...remaining];
+  })();
+
+  const handleDragStart = (id: number) => setDraggingId(id);
+  const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
+    if (isReorderMode) e.preventDefault();
+  };
+  const handleDrop = (targetId: number) => {
+    if (!isReorderMode || draggingId === null || draggingId === targetId) return;
+    const ids = [...orderedIds];
+    const from = ids.indexOf(draggingId);
+    const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1) return;
+    ids.splice(from, 1);
+    ids.splice(to, 0, draggingId);
+    setOrderedIds(ids);
+    persistOrder(ids);
+    setDraggingId(null);
+  };
+
+  const moveRow = (id: number, direction: 'up' | 'down') => {
+    const ids = [...orderedIds];
+    const index = ids.indexOf(id);
+    if (index === -1) return;
+    const newIndex = direction === 'up' ? Math.max(0, index - 1) : Math.min(ids.length - 1, index + 1);
+    if (newIndex === index) return;
+    ids.splice(index, 1);
+    ids.splice(newIndex, 0, id);
+    setOrderedIds(ids);
+    persistOrder(ids);
+  };
+
+  const moveToPosition = (id: number, positionOneBased: number) => {
+    const pos = Math.max(1, Math.min(orderedIds.length, positionOneBased));
+    const ids = [...orderedIds];
+    const index = ids.indexOf(id);
+    if (index === -1) return;
+    ids.splice(index, 1);
+    ids.splice(pos - 1, 0, id);
+    setOrderedIds(ids);
+    persistOrder(ids);
+  };
+
+  // Persist order to backend (convert to 1-based sort_order)
+  const saveOrderToBackend = async () => {
+    try {
+      const orders = orderedIds.map((id, idx) => ({ id, sort_order: idx + 1 }));
+      await apiClient.post('/teams/reorder', { orders });
+      toast.success('Order saved');
+      // Also set current sort to custom for consistent viewing
+      setSortBy('sort_order');
+      setSortOrder('asc');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Failed to save order');
+    }
+  };
+
   // Format date for display
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -290,12 +385,12 @@ const TeamsPage = () => {
   };
   
   // Get team type name from team object
-  const getTeamTypeName = (team) => {
+  const getTeamTypeName = (team: any) => {
     return team.team_type?.name || 'Unknown';
   };
 
   // Get background and text color based on team type
-  const getTeamTypeStyle = (team) => {
+  const getTeamTypeStyle = (team: any) => {
     if (!team.team_type) return 'bg-gray-100 text-gray-800';
     
     const typeName = team.team_type.name?.toLowerCase() || '';
@@ -312,7 +407,7 @@ const TeamsPage = () => {
   };
 
   // Handle tab change
-  const handleTabChange = (tab) => {
+  const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setPage(1); // Reset to first page when changing tabs
   };
@@ -362,7 +457,8 @@ const TeamsPage = () => {
     const sortOptions = [
       { value: 'created_at', label: 'Creation Date' },
       { value: 'name', label: 'Name' },
-      { value: 'team_type_id', label: 'Team Type' }
+      { value: 'team_type_id', label: 'Team Type' },
+      { value: 'sort_order', label: 'Custom Order' },
     ];
 
     return (
@@ -401,6 +497,20 @@ const TeamsPage = () => {
           <p className="text-gray-500 text-sm">Team Management</p>
         </div>
         <div className="flex space-x-3">
+          <div className="flex items-center gap-2">
+            <button
+              className={`flex items-center px-4 py-2 border rounded text-sm font-medium ${isReorderMode ? 'border-green-700 text-green-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              onClick={async () => {
+                if (isReorderMode) {
+                  await saveOrderToBackend();
+                }
+                setIsReorderMode(!isReorderMode);
+              }}
+              title="Reorder team members and save to database"
+            >
+              {isReorderMode ? 'Save Order' : 'Reorder'}
+            </button>
+          </div>
           <button className="flex items-center px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50">
             <ArrowUp className="w-4 h-4 mr-2" />
             Import Team
@@ -500,8 +610,15 @@ const TeamsPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {teams.map((team, index) => (
-                  <tr key={team.id} className="hover:bg-gray-50">
+                {displayedTeams.map((team, index) => (
+                  <tr
+                    key={team.id}
+                    className={`hover:bg-gray-50 ${isReorderMode ? 'cursor-move' : ''}`}
+                    draggable={isReorderMode}
+                    onDragStart={() => handleDragStart(team.id)}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(team.id)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {getRowNumber(index)}
                     </td>
@@ -529,7 +646,37 @@ const TeamsPage = () => {
                       {formatDate(team.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="relative">
+                      <div className="relative flex items-center justify-end gap-2">
+                        {isReorderMode && (
+                          <div className="flex items-center gap-1 mr-2">
+                            <button
+                              className="p-1 border rounded hover:bg-gray-50"
+                              onClick={() => moveRow(team.id, 'up')}
+                              title="Move up"
+                            >
+                              <ArrowUp className="w-3 h-3" />
+                            </button>
+                            <button
+                              className="p-1 border rounded hover:bg-gray-50"
+                              onClick={() => moveRow(team.id, 'down')}
+                              title="Move down"
+                            >
+                              <ArrowDown className="w-3 h-3" />
+                            </button>
+                            <input
+                              type="number"
+                              min={1}
+                              max={displayedTeams.length}
+                              className="w-14 p-1 border rounded text-sm"
+                              defaultValue={index + 1}
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (!isNaN(val)) moveToPosition(team.id, val);
+                              }}
+                              title="Move to position"
+                            />
+                          </div>
+                        )}
                         <button 
                           className="text-gray-400 hover:text-gray-500 focus:outline-none"
                           onClick={() => toggleMenu(team.id)}

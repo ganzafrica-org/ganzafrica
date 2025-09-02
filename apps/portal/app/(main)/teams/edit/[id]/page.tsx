@@ -24,14 +24,26 @@ import Link from 'next/link';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
 
-const EditTeamPage = ({ params }) => {
+interface TeamType { id: number; name: string }
+interface TeamFormData {
+  name: string;
+  position: string;
+  photo_url: string;
+  bio: string;
+  email: string;
+  profile_link: string;
+  skills: string[];
+  team_type_id: string;
+}
+
+const EditTeamPage = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
   const teamId = params?.id;
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [teamTypes, setTeamTypes] = useState([]);
+  const [teamTypes, setTeamTypes] = useState<TeamType[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [usePhotoUrl, setUsePhotoUrl] = useState(false);
@@ -39,7 +51,7 @@ const EditTeamPage = ({ params }) => {
   const [originalTeamData, setOriginalTeamData] = useState(null);
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TeamFormData>({
     name: '',
     position: '',
     photo_url: '',
@@ -52,7 +64,7 @@ const EditTeamPage = ({ params }) => {
 
   // Temporary state for skills input
   const [newSkill, setNewSkill] = useState('');
-  const [photoFile, setPhotoFile] = useState(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [initialPhotoUrl, setInitialPhotoUrl] = useState('');
 
   // Clean up blob URLs when component unmounts
@@ -100,7 +112,7 @@ const EditTeamPage = ({ params }) => {
                 skillsArray = JSON.parse(team.skills);
               } catch (e) {
                 // If not valid JSON, split by comma
-                skillsArray = team.skills.split(',').map(s => s.trim());
+                skillsArray = team.skills.split(',').map((s: string) => s.trim());
               }
             } else if (Array.isArray(team.skills)) {
               skillsArray = team.skills;
@@ -168,8 +180,8 @@ const EditTeamPage = ({ params }) => {
   }, []);
 
   // Handle input change
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -177,7 +189,7 @@ const EditTeamPage = ({ params }) => {
   };
 
   // Handle file selection
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
@@ -198,7 +210,7 @@ const EditTeamPage = ({ params }) => {
   };
 
   // Handle photo URL input
-  const handlePhotoUrlChange = (e) => {
+  const handlePhotoUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value;
     setFormData(prev => ({
       ...prev,
@@ -251,7 +263,7 @@ const EditTeamPage = ({ params }) => {
   };
 
   // Handle new skill key press (add on Enter)
-  const handleSkillKeyPress = (e) => {
+  const handleSkillKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       addSkill();
@@ -259,50 +271,48 @@ const EditTeamPage = ({ params }) => {
   };
 
   // Remove skill from list
-  const removeSkill = (skillToRemove) => {
+  const removeSkill = (skillToRemove: string) => {
     setFormData(prev => ({
       ...prev,
       skills: prev.skills.filter(skill => skill !== skillToRemove)
     }));
   };
 
-  // Upload file to server
-  const uploadFile = async (file) => {
+  // Upload file to backend and return a persistent URL
+  const uploadFileToServer = async (file: File) => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(interval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
-      
-      // Create a local URL for the file
-      const localUrl = URL.createObjectURL(file);
-      
-      // Clear the interval and finish
-      setTimeout(() => {
-        clearInterval(interval);
-        setUploadProgress(100);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await apiClient.post('/uploads/file', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) return;
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+
+      if (response.data && response.data.success && response.data.file?.url) {
         setIsUploading(false);
-      }, 1500);
-      
-      return localUrl; // This URL will work in the browser session
+        setUploadProgress(100);
+        return response.data.file.url;
+      }
+
+      throw new Error('Upload failed');
     } catch (error) {
       console.error('Error uploading file:', error);
       setIsUploading(false);
+      toast.error('Failed to upload image. Please try again.');
       return null;
     }
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -321,7 +331,7 @@ const EditTeamPage = ({ params }) => {
       
       if (photoFile && !usePhotoUrl) {
         // Upload the photo file and get a URL back
-        finalPhotoUrl = await uploadFile(photoFile);
+        finalPhotoUrl = await uploadFileToServer(photoFile);
         
         if (!finalPhotoUrl) {
           setError('Failed to process the photo. Please try again.');
@@ -330,20 +340,29 @@ const EditTeamPage = ({ params }) => {
         }
       }
       
-      // Create the update payload while explicitly preserving the created_at timestamp
-      // This is crucial to maintain the team member's position in sorted lists
-      const teamData = {
+      // Build update payload matching backend validation
+      const teamData: {
+        name: string;
+        position: string;
+        email: string;
+        bio: string | null;
+        profile_link: string | null;
+        skills: string[];
+        team_type_id: number;
+        photo_url?: string;
+      } = {
         name: formData.name,
         position: formData.position,
         email: formData.email,
-        bio: formData.bio,
-        photo_url: finalPhotoUrl,
-        profile_link: formData.profile_link,
-        skills: formData.skills,
-        team_type_id: parseInt(formData.team_type_id),
-        // IMPORTANT: Preserve the original creation timestamp to maintain sorting order
-        created_at: originalTeamData.created_at
+        bio: formData.bio || null,
+        profile_link: formData.profile_link || null,
+        skills: Array.isArray(formData.skills) ? formData.skills : [],
+        team_type_id: parseInt(formData.team_type_id)
       };
+      // Only include photo_url if we have a valid string (backend validates URL)
+      if (finalPhotoUrl || (usePhotoUrl && formData.photo_url)) {
+        teamData.photo_url = finalPhotoUrl || formData.photo_url;
+      }
       
       console.log('Updating team data:', teamData);
       
@@ -363,7 +382,7 @@ const EditTeamPage = ({ params }) => {
         router.push('/teams');
       }, 2000);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating team member:', error);
       
       // Check if error is related to data size
@@ -381,7 +400,7 @@ const EditTeamPage = ({ params }) => {
   };
 
   // Format file size display
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -727,9 +746,10 @@ const EditTeamPage = ({ params }) => {
                             alt="Profile preview" 
                             className="w-full h-auto max-h-60 object-contain"
                             onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = "/api/placeholder/400/400";
-                              e.target.alt = "Failed to load image";
+                              const img = e.target as HTMLImageElement;
+                              img.onerror = null;
+                              img.src = "/api/placeholder/400/400";
+                              img.alt = "Failed to load image";
                             }}
                           />
                         </div>
@@ -779,7 +799,7 @@ const EditTeamPage = ({ params }) => {
                     
                     {photoFile && (
                       <div className="text-xs text-gray-500 mb-4">
-                        Type: {photoFile.type.split('/')[1].toUpperCase()} | 
+                        Type: {photoFile.type?.split('/')[1]?.toUpperCase() || 'N/A'} | 
                         Size: {formatFileSize(photoFile.size)}
                       </div>
                     )}
