@@ -388,7 +388,7 @@ const EditProjectPage = () => {
     }));
   };
 
-  // Add document
+  // Add document (upload to server for persistent URL)
   const addDocument = async () => {
     if (!newDocument.file && !newDocument.file_url) {
       setError('Please select a file or provide a URL and provide a name');
@@ -403,49 +403,41 @@ const EditProjectPage = () => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(interval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
-      
+
       let fileUrl = newDocument.file_url;
-      
-      // If there's a new file selected, create local file URL
+      let fileSize = newDocument.file_size || 0;
+
+      // If there's a new file selected, upload it to server
       if (newDocument.file) {
-        fileUrl = URL.createObjectURL(newDocument.file);
-      }
-      
-      // Finish upload simulation
-      setTimeout(() => {
-        clearInterval(interval);
-        setUploadProgress(100);
-        setIsUploading(false);
-        
-        // Add document to form data
-        const documentToAdd = {
-          name: newDocument.name,
-          file_url: fileUrl,
-          file_size: newDocument.file ? newDocument.file.size : newDocument.file_size || 0
-        };
-        
-        setFormData(prev => ({
-          ...prev,
-          documents: [...prev.documents, documentToAdd]
-        }));
-        
-        // Reset document form
-        setNewDocument({ name: '', file: null, file_url: '', file_size: 0 });
-        if (documentFileInputRef.current) {
-          documentFileInputRef.current.value = '';
+        const uploadedUrl = await uploadFile(newDocument.file);
+        if (!uploadedUrl) {
+          setError('Failed to upload document. Please try again.');
+          setIsUploading(false);
+          return;
         }
-      }, 1500);
+        fileUrl = uploadedUrl;
+        fileSize = newDocument.file.size;
+      }
+
+      setIsUploading(false);
+
+      // Add document to form data
+      const documentToAdd = {
+        name: newDocument.name,
+        file_url: fileUrl,
+        file_size: fileSize
+      };
+
+      setFormData(prev => ({
+        ...prev,
+        documents: [...prev.documents, documentToAdd]
+      }));
+
+      // Reset document form
+      setNewDocument({ name: '', file: null, file_url: '', file_size: 0 });
+      if (documentFileInputRef.current) {
+        documentFileInputRef.current.value = '';
+      }
     } catch (error) {
       console.error('Error adding document:', error);
       setError('Failed to add document. Please try again.');
@@ -662,34 +654,31 @@ const EditProjectPage = () => {
     documentFileInputRef.current?.click();
   };
 
-  // Upload file to server (modified to use local URLs)
+  // Upload file to backend and return persistent URL
   const uploadFile = async (file) => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 95) {
-            clearInterval(interval);
-            return prev;
-          }
-          return prev + 5;
-        });
-      }, 100);
-      
-      // Create a local URL for the file
-      const localUrl = URL.createObjectURL(file);
-      
-      // Clear the interval and finish
-      setTimeout(() => {
-        clearInterval(interval);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await apiClient.post('/uploads/file', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (!progressEvent.total) return;
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      });
+
+      if (response.data && response.data.success && response.data.file?.url) {
         setUploadProgress(100);
         setIsUploading(false);
-      }, 1500);
-      
-      return localUrl; // This URL will work in the browser session
+        return response.data.file.url;
+      }
+
+      throw new Error('Upload failed');
     } catch (error) {
       console.error('Error uploading file:', error);
       setIsUploading(false);
@@ -816,7 +805,7 @@ const EditProjectPage = () => {
       let mediaSize = 0;
       
       if (mediaSourceType === 'file') {
-        // Get local URL for the file
+        // Upload to server and get persistent URL
         fileUrl = await uploadFile(newMedia.file);
         mediaSize = newMedia.file.size;
         

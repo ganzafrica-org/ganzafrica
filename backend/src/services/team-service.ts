@@ -15,6 +15,7 @@ export type CreateTeamInput = {
   email?: string;
   profile_link?: string;
   skills?: string[];
+  sort_order?: number;
   team_type_id: number;
 };
 
@@ -26,6 +27,7 @@ export type UpdateTeamInput = {
   email?: string;
   profile_link?: string;
   skills?: string[];
+  sort_order?: number;
   team_type_id?: number;
 };
 
@@ -91,6 +93,7 @@ export async function createTeam(
         email: teamData.email || null,
         profile_link: teamData.profile_link || null,
         skills: teamData.skills || null,
+        sort_order: teamData.sort_order ?? null,
         team_type_id: teamData.team_type_id,
         created_at: new Date(),
         updated_at: new Date(),
@@ -230,6 +233,10 @@ export async function updateTeam(
           teamData.skills !== undefined
             ? teamData.skills
             : existingTeam[0].skills,
+        sort_order:
+          teamData.sort_order !== undefined
+            ? teamData.sort_order
+            : existingTeam[0].sort_order,
         team_type_id: teamData.team_type_id || existingTeam[0].team_type_id,
         updated_at: new Date(),
       })
@@ -295,6 +302,11 @@ export async function listTeams(
     
     // Handle sorting based on the column
     switch (sortBy) {
+      case 'sort_order':
+        orderByConditions = sortOrder.toLowerCase() === 'asc'
+          ? [asc(teams.sort_order), desc(teams.created_at)]
+          : [desc(teams.sort_order), desc(teams.created_at)];
+        break;
       case 'name':
         orderByConditions = sortOrder.toLowerCase() === 'asc' 
           ? [asc(teams.name), desc(teams.created_at)]
@@ -318,12 +330,28 @@ export async function listTeams(
         break;
     }
     
-    // Execute the query in a single call to avoid chaining issues
-    const teamsResult = await db
-      .select()
-      .from(teams)
-      .where(whereConditions.length > 0 ? whereConditions[0] : undefined)
-      .orderBy(...orderByConditions);
+    // Execute the query; if sort_order column is missing (migration not applied yet),
+    // gracefully fall back to created_at ordering to avoid 500s.
+    let teamsResult: any[] = [];
+    try {
+      teamsResult = await db
+        .select()
+        .from(teams)
+        .where(whereConditions.length > 0 ? whereConditions[0] : undefined)
+        .orderBy(...orderByConditions);
+    } catch (err: any) {
+      const isMissingColumn = err?.code === '42703' || /sort_order/i.test(String(err?.message));
+      if (isMissingColumn) {
+        const fallbackOrder = sortOrder.toLowerCase() === 'asc' ? [asc(teams.created_at)] : [desc(teams.created_at)];
+        teamsResult = await db
+          .select()
+          .from(teams)
+          .where(whereConditions.length > 0 ? whereConditions[0] : undefined)
+          .orderBy(...fallbackOrder);
+      } else {
+        throw err;
+      }
+    }
 
     // Get all team types
     const teamTypesResult = await db.select().from(team_types);
@@ -343,6 +371,19 @@ export async function listTeams(
   } catch (error) {
     logger.error("Error listing teams", error);
     throw new AppError("Failed to list team members", 500);
+  }
+}
+
+// Bulk reorder teams by updating sort_order for given ids
+export async function bulkReorder(orders: Array<{ id: number; sort_order: number }>): Promise<void> {
+  try {
+    for (const item of orders) {
+      if (typeof item?.id !== 'number' || typeof item?.sort_order !== 'number') continue;
+      await db.update(teams).set({ sort_order: item.sort_order, updated_at: new Date() }).where(eq(teams.id, item.id));
+    }
+  } catch (error) {
+    logger.error('Error bulk reordering teams', error);
+    throw new AppError('Failed to reorder teams', 500);
   }
 }
 // Helper function to map database team to TeamOutput type
@@ -375,6 +416,7 @@ export const teamService = {
   updateTeam,
   deleteTeam,
   listTeams,
+  bulkReorder,
 };
 
 // Default export for the service object

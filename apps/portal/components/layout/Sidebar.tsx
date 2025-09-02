@@ -391,15 +391,49 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                     )}
                   </div>
 
-                    <Link
-                        href="/news"
-                        className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                            pathname === '/news' || pathname.startsWith('/news/') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                    {/* News & Tags Dropdown */}
+                    <div>
+                      <div
+                        className={`flex items-center justify-between cursor-pointer ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
+                          (pathname === '/news' || pathname.startsWith('/news/'))
+                            ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
                         }`}
-                    >
-                      <FileText className="w-5 h-5 flex-shrink-0" />
-                      {!isCollapsed && <span className="ml-3 font-medium">News & Updates</span>}
-                    </Link>
+                        onClick={() => !isCollapsed && setProjectsOpen(false)}
+                      >
+                        <div className="flex items-center">
+                          <FileText className="w-5 h-5 flex-shrink-0" />
+                          {!isCollapsed && <span className="ml-3 font-medium">News</span>}
+                        </div>
+                        {!isCollapsed && (
+                          // Reuse chevron visual by checking if on a news route to show open state
+                          (pathname === '/news' || pathname.startsWith('/news/'))
+                            ? <ChevronDown className="w-4 h-4" />
+                            : <ChevronRight className="w-4 h-4" />
+                        )}
+                      </div>
+                      {!isCollapsed && (
+                        <>
+                          <Link
+                            href="/news"
+                            className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
+                              pathname === '/news' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                            }`}
+                          >
+                            <FileText className="w-4 h-4 flex-shrink-0" />
+                            <span className="ml-3 font-medium text-sm">All News</span>
+                          </Link>
+                          <Link
+                            href="/news/tags"
+                            className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
+                              pathname === '/news/tags' || pathname.startsWith('/news/tags') ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                            }`}
+                          >
+                            <Tag className="w-4 h-4 flex-shrink-0" />
+                            <span className="ml-3 font-medium text-sm">Tags</span>
+                          </Link>
+                        </>
+                      )}
+                    </div>
                     <Link
                       href="/partners"
                       className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${

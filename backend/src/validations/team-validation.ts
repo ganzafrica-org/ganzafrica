@@ -61,6 +61,7 @@ export const createTeamSchema = z.object({
     email: z.string().email("Email must be a valid email address").optional(),
     profile_link: z.string().url("Profile link must be a valid URL").optional(),
     skills: z.array(z.string()).optional(),
+    sort_order: z.number().optional(),
     team_type_id: z.number({
       required_error: "Team type ID is required",
       invalid_type_error: "Team type ID must be a number",
@@ -104,6 +105,7 @@ export const updateTeamSchema = z.object({
         .optional()
         .nullable(),
       skills: z.array(z.string()).optional().nullable(),
+      sort_order: z.number().optional().nullable(),
       team_type_id: z
         .number({
           invalid_type_error: "Team type ID must be a number",

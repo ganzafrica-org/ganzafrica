@@ -62,6 +62,7 @@ export const createTeam = async (req: Request, res: Response) => {
       email: req.body.email,
       profile_link: req.body.profile_link,
       skills: req.body.skills,
+      sort_order: req.body.sort_order,
       team_type_id: req.body.team_type_id,
     };
 
@@ -259,6 +260,7 @@ export const updateTeam = async (req: Request, res: Response) => {
       email: req.body.email,
       profile_link: req.body.profile_link,
       skills: req.body.skills,
+      sort_order: req.body.sort_order,
       team_type_id: req.body.team_type_id,
     };
 
@@ -280,6 +282,17 @@ export const updateTeam = async (req: Request, res: Response) => {
       error: "Team Update Error",
       message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
+  }
+};
+
+// Bulk reorder handler: expects { orders: [{ id: number, sort_order: number }] }
+export const reorderTeams = async (req: Request, res: Response) => {
+  try {
+    const orders = Array.isArray(req.body.orders) ? req.body.orders : [];
+    await teamService.bulkReorder(orders);
+    res.status(200).json({ message: "Teams reordered" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to reorder teams" });
   }
 };
 
@@ -339,6 +352,7 @@ export const teamController = {
   getTeamById,
   updateTeam,
   deleteTeam,
+  reorderTeams,
 };
 
 // Default export for the controller object
