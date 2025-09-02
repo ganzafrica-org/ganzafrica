@@ -89,6 +89,10 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
     // Build both absolute and relative URLs for robustness
     const relativePath = `/uploads/${subdir}/${filename}`;
     const fileUrl = `${getPublicBaseUrl(req)}${relativePath}`;
+
+    // Generate file URL with subdirectory - prefer configured API_BASE_URL to ensure https
+    const base = env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const fileUrl = `${base.replace(/\/$/, '')}/uploads/${subdir}/${filename}`;
     
     // Return success response
     return res.status(200).json({
@@ -155,6 +159,9 @@ router.post("/files", upload.array("files", 10), (req: Request, res: Response) =
       const subdir = getFileSubdirectory(file.mimetype);
       const relativePath = `/uploads/${subdir}/${file.filename}`;
       const fileUrl = `${getPublicBaseUrl(req)}${relativePath}`;
+
+      const base = env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
+      const fileUrl = `${base.replace(/\/$/, '')}/uploads/${subdir}/${file.filename}`;
       
       return {
         name: file.originalname,
