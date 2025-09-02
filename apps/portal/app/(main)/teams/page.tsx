@@ -95,17 +95,14 @@ const TeamsPage = () => {
     }
   };
 
-  // Handle pagination
   const goToPage = (newPage: number) => {
     setPage(newPage);
   };
 
-  // Calculate sequential row number based on pagination
   const getRowNumber = (index: number) => {
     return ((page - 1) * limit) + index + 1;
   };
 
-  // Add click outside listener to close dropdown
   const menuRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {

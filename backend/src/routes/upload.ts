@@ -1,6 +1,7 @@
 // src/routes/upload.ts
 import { Router, Request, Response } from "express";
 import upload from "../middlewares/upload";
+import env from "../config/env";
 
 const router: Router = Router();
 
@@ -74,8 +75,9 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
     // Get subdirectory based on file type
     const subdir = getFileSubdirectory(mimetype);
     
-    // Generate file URL with subdirectory
-    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${subdir}/${filename}`;
+    // Generate file URL with subdirectory - prefer configured API_BASE_URL to ensure https
+    const base = env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
+    const fileUrl = `${base.replace(/\/$/, '')}/uploads/${subdir}/${filename}`;
     
     // Return success response
     return res.status(200).json({
@@ -139,9 +141,8 @@ router.post("/files", upload.array("files", 10), (req: Request, res: Response) =
     const files = (req.files as Express.Multer.File[]).map(file => {
       // Get subdirectory based on file type
       const subdir = getFileSubdirectory(file.mimetype);
-      
-      // Generate file URL with subdirectory
-      const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${subdir}/${file.filename}`;
+      const base = env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
+      const fileUrl = `${base.replace(/\/$/, '')}/uploads/${subdir}/${file.filename}`;
       
       return {
         name: file.originalname,
