@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '@/lib/api-client';
 import Link from 'next/link';
 import { 
   ArrowLeft,
@@ -22,6 +22,26 @@ const TeamDetailsPage = ({ params }) => {
   const [teamTypes, setTeamTypes] = useState({});
   const [activeTab, setActiveTab] = useState('profile');
 
+  // Normalize image URL for hosted environments (replace localhost with API base if needed)
+  const getImageUrl = (url) => {
+    if (!url) return "/api/placeholder/400/400";
+    try {
+      const base = (apiClient.defaults?.baseURL || '').replace(/\/$/, '');
+      if (!base) return url;
+      const apiOrigin = new URL(base).origin;
+      // If the url is relative, prefix with API origin
+      if (url.startsWith('/')) return `${apiOrigin}${url}`;
+      // Replace localhost base with API origin
+      if (/^https?:\/\/localhost[:/]/i.test(url)) {
+        const u = new URL(url);
+        return `${apiOrigin}${u.pathname}${u.search}${u.hash}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  };
+
   // Fetch the team data
   useEffect(() => {
     const fetchTeamData = async () => {
@@ -30,7 +50,7 @@ const TeamDetailsPage = ({ params }) => {
         
         // Try to fetch team details from API
         try {
-          const response = await axios.get(`http://localhost:3002/api/teams/${params.id}`);
+          const response = await apiClient.get(`/teams/${params.id}`);
           console.log("API Response:", response.data);
           
           // Check if the response has a nested team object
@@ -58,7 +78,7 @@ const TeamDetailsPage = ({ params }) => {
 
         // Try to fetch team types from API (optional)
         try {
-          const teamTypesResponse = await axios.get('http://localhost:3002/api/team-types');
+          const teamTypesResponse = await apiClient.get('/team-types');
           if (teamTypesResponse.data && teamTypesResponse.data.length > 0) {
             const typesMap = {};
             teamTypesResponse.data.forEach((type) => {
@@ -167,7 +187,7 @@ const TeamDetailsPage = ({ params }) => {
           <p className="text-gray-500 text-sm">Teams / View</p>
         </div>
         <Link 
-          href={`/teams/edit-team/${team.id}`} 
+          href={`/teams/edit/${team.id}`} 
           className="px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
         >
           Edit Team Member
@@ -235,7 +255,7 @@ const TeamDetailsPage = ({ params }) => {
                 <div className="w-full md:w-1/3">
                   <div className="aspect-square rounded-lg overflow-hidden mb-4">
                     <img 
-                      src={team.photo_url || "/api/placeholder/400/400"} 
+                      src={getImageUrl(team.photo_url)} 
                       alt={team.name}
                       className="w-full h-full object-cover"
                     />

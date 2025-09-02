@@ -56,6 +56,24 @@ const TeamsPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+  // Normalize image URL so it works on host even if saved with localhost
+  const getImageUrl = (url?: string) => {
+    if (!url) return "/api/placeholder/100/100";
+    try {
+      const base = (apiClient.defaults?.baseURL || '').replace(/\/$/, '');
+      if (!base) return url;
+      const apiOrigin = new URL(base).origin;
+      if (url.startsWith('/')) return `${apiOrigin}${url}`;
+      if (/^https?:\/\/localhost[:/]/i.test(url)) {
+        const u = new URL(url);
+        return `${apiOrigin}${u.pathname}${u.search}${u.hash}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  };
   
   // Function to toggle dropdown menu
   const toggleMenu = (id: number) => {
@@ -622,7 +640,7 @@ const TeamsPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="h-10 w-10 rounded-full overflow-hidden">
                         <img 
-                          src={team.photo_url || "/api/placeholder/100/100"} 
+                          src={getImageUrl(team.photo_url)} 
                           alt={team.name}
                           className="h-full w-full object-cover"
                         />
