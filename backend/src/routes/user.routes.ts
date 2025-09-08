@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { userController } from "../controllers";
-import { validate, authenticate, authorize } from "@/middlewares";
+import { validate, authenticate, authorize, handleOptionalUpload, parseFormData } from "@/middlewares";
 import { userValidation } from "../validations";
 import { constants } from "../config";
 
@@ -20,6 +20,7 @@ router.use(authenticate);
 router.post(
   "/",
   authorize([constants.ROLES.ADMIN]),
+  handleOptionalUpload('avatar'),
   validate(userValidation.createUserSchema),
   userController.createUser,
 );
@@ -44,6 +45,7 @@ router.get(
 );
 router.put(
   "/:id",
+  handleOptionalUpload('avatar'),
   validate(userValidation.updateUserSchema),
   userController.updateUser,
 );

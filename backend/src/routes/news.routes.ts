@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { newsController } from "../controllers/news.controller";
-import { validate, authenticate, authorize } from "../middlewares";
+import { validate, authenticate, authorize, handleOptionalUpload, parseFormData } from "../middlewares";
 import { newsValidation } from "../validations/news.validation";
 
 const router: Router = Router();
@@ -33,6 +33,8 @@ router.delete(
 // News routes
 router.post(
   "/",
+  handleOptionalUpload('featured_image'),
+  parseFormData(['tags', 'media']),
   validate(newsValidation.createNewsSchema),
   newsController.createNews,
 );
@@ -51,6 +53,8 @@ router.get(
 
 router.put(
   "/:id",
+  handleOptionalUpload('featured_image'),
+  parseFormData(['tags', 'media']),
   validate(newsValidation.updateNewsSchema),
   newsController.updateNews,
 );

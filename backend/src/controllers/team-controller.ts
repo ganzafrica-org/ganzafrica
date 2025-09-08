@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { teamService } from "../services/team-service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
+import { uploadToSpaces } from "../services/upload.service";
 
 const logger = new Logger("TeamController");
 
@@ -54,10 +55,17 @@ const logger = new Logger("TeamController");
  */
 export const createTeam = async (req: Request, res: Response) => {
   try {
+    let photo_url = req.body.photo_url;
+    
+    // If a file was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      photo_url = await uploadToSpaces(req.file, 'team-photos');
+    }
+
     const teamData = {
       name: req.body.name,
       position: req.body.position,
-      photo_url: req.body.photo_url,
+      photo_url: photo_url,
       bio: req.body.bio,
       email: req.body.email,
       profile_link: req.body.profile_link,
@@ -235,10 +243,17 @@ export const getTeamById = async (req: Request, res: Response) => {
 export const updateTeam = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    let photo_url = req.body.photo_url;
+    
+    // If a file was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      photo_url = await uploadToSpaces(req.file, 'team-photos');
+    }
+
     const teamData = {
       name: req.body.name,
       position: req.body.position,
-      photo_url: req.body.photo_url,
+      photo_url: photo_url,
       bio: req.body.bio,
       email: req.body.email,
       profile_link: req.body.profile_link,

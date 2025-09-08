@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { userService } from "../services";
 import { roleService } from "../services/roles.service";
+import { uploadToSpaces } from "../services/upload.service";
 
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
@@ -61,7 +62,12 @@ const logger = new Logger("UserController");
  */
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const userData = req.body;
+    let userData = req.body;
+    
+    // If an avatar file was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      userData.avatar_url = await uploadToSpaces(req.file, 'user-avatars');
+    }
 
     const user = await userService.createUser(userData);
 
@@ -192,7 +198,12 @@ export const getUserById = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const userData = req.body;
+    let userData = req.body;
+    
+    // If an avatar file was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      userData.avatar_url = await uploadToSpaces(req.file, 'user-avatars');
+    }
 
     // Need to check if the current user is updating their own profile
     // or if they're an admin (who can update any profile)

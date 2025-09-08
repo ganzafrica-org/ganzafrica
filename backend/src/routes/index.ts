@@ -11,6 +11,7 @@ import testimonialRoutes from "./testimonial.routes";
 import faqRoutes from "./faqs";
 import newsRourtes from "./news.routes";
 import opportunity from "./opportunity";
+import uploadRoutes from "./upload.routes";
 
 const router: Router = Router();
 
@@ -26,5 +27,6 @@ router.use("/testimonials", testimonialRoutes);
 router.use("/faqs", faqRoutes);
 router.use("/news", newsRourtes);
 router.use("/opportunities", opportunity);
+router.use("/upload", uploadRoutes);
 
 export default router;

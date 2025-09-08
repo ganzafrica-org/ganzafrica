@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { projectController } from "../controllers/project";
-import { validate, authenticate, authorize } from "../middlewares";
+import { validate, authenticate, authorize, handleOptionalUpload, parseFormData } from "../middlewares";
 import { projectValidation } from "../validations";
 import { constants } from "../config";
 
@@ -19,6 +19,8 @@ router.use(authenticate);
 // Project routes
 router.post(
   "/",
+  handleOptionalUpload('featured_image'),
+  parseFormData(['goals', 'outcomes', 'media', 'members', 'skills']),
   validate(projectValidation.createProjectSchema),
   projectController.createProject,
 );
@@ -37,6 +39,8 @@ router.get(
 
 router.put(
   "/:id",
+  handleOptionalUpload('featured_image'),
+  parseFormData(['goals', 'outcomes', 'media', 'members', 'skills']),
   validate(projectValidation.updateProjectSchema),
   projectController.updateProject,
 );

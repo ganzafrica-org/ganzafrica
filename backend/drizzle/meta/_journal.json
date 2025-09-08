@@ -2,5 +2,12 @@
   "version": "5",
   "dialect": "pg",
   "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1757281387294,
+      "tag": "0000_optimal_reavers",
+      "breakpoints": true
+    }
   ]
 }

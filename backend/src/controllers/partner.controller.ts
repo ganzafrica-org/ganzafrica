@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { partnerService } from "../services/partner.service";
+import { uploadToSpaces } from "../services/upload.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -43,9 +44,16 @@ const logger = new Logger("PartnerController");
  */
 export const createPartner = async (req: Request, res: Response) => {
   try {
+    let logo = req.body.logo;
+    
+    // If a logo file was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      logo = await uploadToSpaces(req.file, 'partner-logos');
+    }
+    
     const partnerData = {
       name: req.body.name,
-      logo: req.body.logo,
+      logo: logo,
       website_url: req.body.website_url,
       location: req.body.location,
     };
@@ -202,9 +210,16 @@ export const getPartnerById = async (req: Request, res: Response) => {
 export const updatePartner = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    let logo = req.body.logo;
+    
+    // If a logo file was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      logo = await uploadToSpaces(req.file, 'partner-logos');
+    }
+    
     const partnerData = {
       name: req.body.name,
-      logo: req.body.logo,
+      logo: logo,
       website_url: req.body.website_url,
       location: req.body.location,
     };

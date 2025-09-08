@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { opportunityService } from '../services/opportunity';
+import { uploadToSpaces } from '../services/upload.service';
 import { AppError } from '../middlewares';
 import { constants, Logger } from '../config';
 
@@ -39,10 +40,15 @@ export const createOpportunity = async (req: Request, res: Response) => {
             throw new AppError('Unauthorized', 401);
         }
 
-        const opportunityData = {
+        let opportunityData = {
             ...req.body,
             created_by: userId
         };
+        
+        // If an image was uploaded, upload to Digital Ocean Spaces
+        if (req.file) {
+            opportunityData.image = await uploadToSpaces(req.file, 'opportunities');
+        }
 
         const opportunity = await opportunityService.createOpportunity(opportunityData);
 
@@ -211,7 +217,12 @@ export const getOpportunityById = async (req: Request, res: Response) => {
 export const updateOpportunity = async (req: Request, res: Response) => {
     try {
         const id = Number(req.params.id);
-        const opportunityData = req.body;
+        let opportunityData = req.body;
+        
+        // If an image was uploaded, upload to Digital Ocean Spaces
+        if (req.file) {
+            opportunityData.image = await uploadToSpaces(req.file, 'opportunities');
+        }
 
         const opportunity = await opportunityService.updateOpportunity(id, opportunityData);
 

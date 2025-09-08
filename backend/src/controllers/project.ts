@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { projectService } from "../services";
+import { uploadToSpaces } from "../services/upload.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 import { db } from "../db/client";
@@ -179,9 +180,16 @@ export const createProject = async (req: Request, res: Response) => {
       });
     }
 
+    // Handle file upload if present
+    let featured_image = req.body.featured_image;
+    if (req.file) {
+      featured_image = await uploadToSpaces(req.file, 'project-images');
+    }
+
     // Parse dates from strings to Date objects and ensure IDs are numbers
     const projectData = {
       ...req.body,
+      featured_image,
       created_by: Number(req.user!.id),
       start_date: new Date(req.body.start_date),
       end_date: req.body.end_date ? new Date(req.body.end_date) : undefined,
@@ -403,9 +411,16 @@ export const updateProject = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
 
+    // Handle file upload if present
+    let featured_image = req.body.featured_image;
+    if (req.file) {
+      featured_image = await uploadToSpaces(req.file, 'project-images');
+    }
+
     // Parse dates from strings to Date objects
     const projectData = {
       ...req.body,
+      featured_image,
       start_date: req.body.start_date
         ? new Date(req.body.start_date)
         : undefined,

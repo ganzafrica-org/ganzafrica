@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { teamController } from "../controllers/team-controller";
-import { validate, authenticate, authorize } from "../middlewares";
+import { validate, authenticate, handleOptionalUpload, parseFormData } from "../middlewares";
 import { teamValidation } from "../validations/team-validation";
 
 const router: Router = Router();
@@ -15,9 +15,11 @@ const router: Router = Router();
 // All routes require authentication
 router.use(authenticate);
 
-// Team routes
+// Team routes - support both JSON and multipart/form-data
 router.post(
   "/",
+  handleOptionalUpload('photo'), // Handle optional photo upload
+  parseFormData(['skills']), // Parse JSON fields in form data
   validate(teamValidation.createTeamSchema),
   teamController.createTeam,
 );
@@ -36,6 +38,8 @@ router.get(
 
 router.put(
   "/:id",
+  handleOptionalUpload('photo'), // Handle optional photo upload
+  parseFormData(['skills']), // Parse JSON fields in form data
   validate(teamValidation.updateTeamSchema),
   teamController.updateTeam,
 );
@@ -45,5 +49,6 @@ router.delete(
   validate(teamValidation.deleteTeamSchema),
   teamController.deleteTeam,
 );
+
 
 export default router;

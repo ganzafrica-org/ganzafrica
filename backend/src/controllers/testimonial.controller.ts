@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { testimonialService } from "../services/testimonial.service";
+import { uploadToSpaces } from "../services/upload.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -55,10 +56,17 @@ const logger = new Logger("TestimonialController");
  */
 export const createTestimonial = async (req: Request, res: Response) => {
   try {
+    let image = req.body.image;
+    
+    // If an image file was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      image = await uploadToSpaces(req.file, 'testimonial-images');
+    }
+    
     const testimonialData = {
       author_name: req.body.author_name,
       position: req.body.position,
-      image: req.body.image,
+      image: image,
       description: req.body.description,
       company: req.body.company,
       occupation: req.body.occupation,
@@ -228,10 +236,17 @@ export const getTestimonialById = async (req: Request, res: Response) => {
 export const updateTestimonial = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    let image = req.body.image;
+    
+    // If an image file was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      image = await uploadToSpaces(req.file, 'testimonial-images');
+    }
+    
     const testimonialData = {
       author_name: req.body.author_name,
       position: req.body.position,
-      image: req.body.image,
+      image: image,
       description: req.body.description,
       company: req.body.company,
       occupation: req.body.occupation,

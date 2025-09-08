@@ -18,11 +18,10 @@
     "lint": "eslint --ext .ts src",
     "test": "jest"
   },
-  "_moduleAliases": {
-    "@": "dist"
-  },
   "dependencies": {
+    "@types/multer": "^2.0.0",
     "argon2": "^0.41.1",
+    "aws-sdk": "^2.1692.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -35,6 +34,7 @@
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
     "nodemailer": "^6.10.0",
     "otpauth": "^9.3.6",
     "papaparse": "^5.5.2",

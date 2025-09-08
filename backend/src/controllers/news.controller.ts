@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { newsService } from "../services/news.service";
+import { uploadToSpaces } from "../services/upload.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -77,6 +78,28 @@ export const createNews = async (req: Request, res: Response) => {
       logger.info(`Creating news with user ID: ${userId}`);
     }
 
+    let media = req.body.media;
+    
+    // If a featured image was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      const imageUrl = await uploadToSpaces(req.file, 'news-images');
+      
+      // Add uploaded image to media array
+      const uploadedImage = {
+        id: `uploaded-${Date.now()}`,
+        type: "image" as const,
+        url: imageUrl,
+        cover: true, // Mark uploaded image as cover
+        order: 0
+      };
+      
+      if (media && media.items) {
+        media.items.unshift(uploadedImage); // Add to beginning
+      } else {
+        media = { items: [uploadedImage] };
+      }
+    }
+
     const newsData = {
       title: req.body.title,
       content: req.body.content,
@@ -86,7 +109,7 @@ export const createNews = async (req: Request, res: Response) => {
         : undefined,
       category: req.body.category,
       key_lessons: req.body.key_lessons,
-      media: req.body.media,
+      media: media,
       tags: req.body.tags,
       created_by: userId,
     };
@@ -318,6 +341,30 @@ export const getNewsById = async (req: Request, res: Response) => {
 export const updateNews = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    let media = req.body.media;
+    
+    // If a featured image was uploaded, upload to Digital Ocean Spaces
+    if (req.file) {
+      const imageUrl = await uploadToSpaces(req.file, 'news-images');
+      
+      // Add uploaded image to media array
+      const uploadedImage = {
+        id: `uploaded-${Date.now()}`,
+        type: "image" as const,
+        url: imageUrl,
+        cover: true, // Mark uploaded image as cover
+        order: 0
+      };
+      
+      if (media && media.items) {
+        // Remove existing cover images and add new one
+        media.items = media.items.filter((item: any) => !item.cover);
+        media.items.unshift(uploadedImage);
+      } else {
+        media = { items: [uploadedImage] };
+      }
+    }
+
     const newsData = {
       title: req.body.title,
       content: req.body.content,
@@ -327,7 +374,7 @@ export const updateNews = async (req: Request, res: Response) => {
         : undefined,
       category: req.body.category,
       key_lessons: req.body.key_lessons,
-      media: req.body.media,
+      media: media,
       tags: req.body.tags,
     };
 

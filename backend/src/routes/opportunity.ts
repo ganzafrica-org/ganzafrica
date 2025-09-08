@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { opportunityController } from '../controllers/opportunity';
-import { validate, authenticate, authorize } from '../middlewares';
+import { validate, authenticate, authorize, handleOptionalUpload, parseFormData } from '../middlewares';
 import { opportunityValidation } from '../validations/opportunity';
 import { z } from 'zod';
 
@@ -45,6 +45,8 @@ router.get(
 router.post(
     '/',
     authenticate,
+    handleOptionalUpload('image'),
+    parseFormData(['requirements', 'responsibilities', 'benefits', 'skills_required']),
     (req, res, next) => {
         // Dynamically choose validation schema based on opportunity type
         const validationSchema = req.body.type === 'fellowship' 
@@ -94,6 +96,8 @@ router.get(
 router.put(
     '/:id',
     authenticate,
+    handleOptionalUpload('image'),
+    parseFormData(['requirements', 'responsibilities', 'benefits', 'skills_required']),
     (req, res, next) => {
         // Get the opportunity type from the request or fetch it
         const validationSchema = req.body.type === 'fellowship' 

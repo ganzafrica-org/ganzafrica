@@ -25,14 +25,11 @@ A modern web platform built to support GanzAfrica's mission in land management, 
 
 - **Framework:** Next.js 15
 - **Database:** PostgreSQL with DrizzleORM
-- **Authentication:** Custom PASETO-based auth system
-- **API:** tRPC with end-to-end type safety
+- **Authentication:** jwt auth system
 - **Styling:** Tailwind CSS + shadcn/ui
-- **State Management:** Zustand & React Query
 - **Deployment:**
-  - Frontend: Cloudflare Pages
-  - Backend: Cloudflare Workers
-  - Storage: Cloudflare R2
+  - Frontend & Baceknd: digital ocean
+  - Storage: Digital Spaces
   - Database: DigitalOcean
 
 ## Prerequisites
@@ -48,14 +45,8 @@ ganzafrica/
 ├── apps/
 │   ├── web/              # Public website
 │   └── portal/           # Admin portal
+├── backend/
 ├── packages/
-│   ├── api/              # Shared backend API
-│   │   ├── src/
-│   │   │   ├── config/   # Configuration
-│   │   │   ├── db/       # Database schema & client
-│   │   │   ├── modules/  # Business logic
-│   │   │   └── index/     # API router
-│   │   └── drizzle/      # Migration files
 │   ├── ui/               # Shared UI components
 │   ├── eslint-config/    # ESLint configurations
 │   └── typescript-config/# TypeScript configurations
@@ -83,14 +74,12 @@ pnpm install
 # Create a PostgreSQL database
 createdb ganzafrica
 
-# Configure environment variables in packages/api/.env
+# Configure environment variables in packages/backend/.env
 DATABASE_URL=postgres://username:password@localhost:5432/ganzafrica
-RESEND_API_KEY=your_resend_api_key
 SESSION_SECRET=your_secure_random_string_at_least_32_chars
-PASETO_SECRET=your_secure_random_string_at_least_32_chars
 
 # Generate and run migrations
-cd packages/api
+cd packages/backend
 pnpm drizzle-kit generate
 pnpm db:migrate
 ```
@@ -112,14 +101,15 @@ pnpm --filter portal dev
 For the backend API (if testing independently):
 
 ```bash
-pnpm --filter api dev
+cd  backend
+pnpm run dev
 ```
 
 Access the applications at:
 
 - Website: http://localhost:3000
 - Portal: http://localhost:3001
-- API: http://localhost:3001/api/trpc
+- API: http://localhost:3002
 
 ## Development Commands
 
@@ -130,10 +120,10 @@ Access the applications at:
 
 ### Database Commands
 
-- `pnpm --filter api db:generate` - Generate new migrations
-- `pnpm --filter api db:migrate` - Apply migrations to the database
-- `pnpm --filter api db:studio` - Launch Drizzle Studio (database UI)
-- `pnpm --filter api db:push` - Push schema changes directly (development only)
+- `pnpm --filter backend db:generate` - Generate new migrations
+- `pnpm --filter backend db:migrate` - Apply migrations to the database
+- `pnpm --filter backend db:studio` - Launch Drizzle Studio (database UI)
+- `pnpm --filter backend db:push` - Push schema changes directly (development only)
 
 ## Contributing
 

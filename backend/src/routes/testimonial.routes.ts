@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { testimonialController } from "../controllers/testimonial.controller";
-import { validate, authenticate, authorize } from "../middlewares";
+import { validate, authenticate, authorize, handleOptionalUpload, parseFormData } from "../middlewares";
 import { testimonialValidation } from "../validations/testimonials.validation";
 
 const router: Router = Router();
@@ -18,6 +18,7 @@ router.use(authenticate);
 // Testimonial routes
 router.post(
   "/",
+  handleOptionalUpload('image'),
   validate(testimonialValidation.createTestimonialSchema),
   testimonialController.createTestimonial,
 );
@@ -32,6 +33,7 @@ router.get(
 
 router.put(
   "/:id",
+  handleOptionalUpload('image'),
   validate(testimonialValidation.updateTestimonialSchema),
   testimonialController.updateTestimonial,
 );

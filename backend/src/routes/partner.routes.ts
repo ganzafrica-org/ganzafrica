@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { partnerController } from "../controllers/partner.controller";
-import { validate, authenticate, authorize } from "../middlewares";
+import { validate, authenticate, authorize, handleOptionalUpload, parseFormData } from "../middlewares";
 import { partnerValidation } from "../validations/partners.validation";
 
 const router: Router = Router();
@@ -18,6 +18,7 @@ router.use(authenticate);
 // Partner routes
 router.post(
   "/",
+  handleOptionalUpload('logo'),
   validate(partnerValidation.createPartnerSchema),
   partnerController.createPartner,
 );
@@ -32,6 +33,7 @@ router.get(
 
 router.put(
   "/:id",
+  handleOptionalUpload('logo'),
   validate(partnerValidation.updatePartnerSchema),
   partnerController.updatePartner,
 );
