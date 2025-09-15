@@ -1,42 +1,20 @@
 // src/routes/upload.ts
 import { Router, Request, Response } from "express";
-import upload from "../middlewares/upload";
+import upload, { getFileSubdirectory } from "../middlewares/upload";
 import env from "../config/env";
 
 const router: Router = Router();
 
 /**
- * Helper function to determine subdirectory based on mimetype
+ * Helper function to get the public URL for uploaded files
+ * Uses CDN URL if available, otherwise falls back to Spaces direct URL
  */
-function getFileSubdirectory(mimetype: string): string {
-  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
-  const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-  const allowedDocumentTypes = [
-    'application/pdf',                                                      
-    'application/msword',                                                   
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ];
-  
-  if (allowedImageTypes.includes(mimetype)) {
-    return "image";
-  } else if (allowedVideoTypes.includes(mimetype)) {
-    return "video";
-  } else if (allowedDocumentTypes.includes(mimetype)) {
-    return "document";
+function getFileUrl(location: string): string {
+  if (env.DO_SPACES_CDN_URL) {
+    const spacesBaseUrl = `${env.DO_SPACES_ENDPOINT}/${env.DO_SPACES_BUCKET}`;
+    return location.replace(spacesBaseUrl, env.DO_SPACES_CDN_URL.replace(/\/$/, ""));
   }
-  
-  return ""; // Default case, should not happen due to file filter
-}
-
-// Build public base URL using env or proxy headers as fallback
-function getPublicBaseUrl(req: Request): string {
-  if (env.API_BASE_URL) {
-    return env.API_BASE_URL.replace(/\/$/, "");
-  }
-  const forwardedProto = (req.headers["x-forwarded-proto"] as string) || req.protocol;
-  const forwardedHost = (req.headers["x-forwarded-host"] as string) || (req.headers["host"] as string) || req.get("host") || "";
-  const origin = `${forwardedProto}://${forwardedHost}`;
-  return origin.replace(/\/$/, "");
+  return location;
 }
 
 /**
@@ -80,20 +58,19 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
       });
     }
 
-    // Get file details
-    const { filename, originalname, size, mimetype } = req.file;
+    // Get file details - multer-s3 provides different properties
+    const file = req.file as any; // multer-s3 extends the standard multer file object
+    const { key, originalname, size, mimetype, location } = file;
     
     // Get subdirectory based on file type
     const subdir = getFileSubdirectory(mimetype);
     
-    // Build both absolute and relative URLs for robustness
-    const relativePath = `/uploads/${subdir}/${filename}`;
-    const fileUrl = `${getPublicBaseUrl(req)}${relativePath}`;
-
-    // Generate file URL with subdirectory - prefer configured API_BASE_URL to ensure https
-    const base = env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
-    const fileUrl = `${base.replace(/\/$/, '')}/uploads/${subdir}/${filename}`;
+    // Extract filename from the key (removes the uploads/subdir/ prefix)
+    const filename = key.split('/').pop();
     
+    // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
+    const fileUrl = getFileUrl(location);
+
     // Return success response
     return res.status(200).json({
       success: true,
@@ -102,10 +79,10 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
         name: originalname,
         filename,
         url: fileUrl,
-        path: relativePath,
+        path: key, // S3 key acts as the path
         size,
         type: mimetype,
-        category: subdir // Adding category info can be useful
+        category: subdir
       }
     });
   } catch (error) {
@@ -153,24 +130,27 @@ router.post("/files", upload.array("files", 10), (req: Request, res: Response) =
       });
     }
 
-    // Process uploaded files
-    const files = (req.files as Express.Multer.File[]).map(file => {
-      // Get subdirectory based on file type
-      const subdir = getFileSubdirectory(file.mimetype);
-      const relativePath = `/uploads/${subdir}/${file.filename}`;
-      const fileUrl = `${getPublicBaseUrl(req)}${relativePath}`;
-
-      const base = env.API_BASE_URL || `${req.protocol}://${req.get("host")}`;
-      const fileUrl = `${base.replace(/\/$/, '')}/uploads/${subdir}/${file.filename}`;
+    // Process uploaded files - multer-s3 provides different properties
+    const files = (req.files as any[]).map(file => {
+      const { key, originalname, size, mimetype, location } = file;
       
+      // Get subdirectory based on file type
+      const subdir = getFileSubdirectory(mimetype);
+      
+      // Extract filename from the key
+      const filename = key.split('/').pop();
+      
+      // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
+      const fileUrl = getFileUrl(location);
+
       return {
-        name: file.originalname,
-        filename: file.filename,
+        name: originalname,
+        filename,
         url: fileUrl,
-        path: relativePath,
-        size: file.size,
-        type: file.mimetype,
-        category: subdir 
+        path: key, // S3 key acts as the path
+        size,
+        type: mimetype,
+        category: subdir
       };
     });
     

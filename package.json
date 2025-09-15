@@ -2,7 +2,10 @@
   "name": "ganzafrica",
   "version": "0.0.1",
   "private": true,
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
@@ -33,5 +36,13 @@
     "drizzle-orm": "^0.39.3",
     "next": "15.2.4",
     "zod": "^3.24.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@scarf/scarf",
+      "argon2",
+      "esbuild",
+      "sharp"
+    ]
   }
 }

@@ -51,6 +51,14 @@ const envSchema = z.object({
 
   // Security
   CORS_ORIGINS: z.string().transform((val) => val.split(",")),
+
+  // Digital Ocean Spaces
+  DO_SPACES_ENDPOINT: z.string().url(),
+  DO_SPACES_REGION: z.string(),
+  DO_SPACES_ACCESS_KEY: z.string(),
+  DO_SPACES_SECRET_KEY: z.string(),
+  DO_SPACES_BUCKET: z.string(),
+  DO_SPACES_CDN_URL: z.string().url().optional(),
 });
 
 // Parse and validate environment variables
