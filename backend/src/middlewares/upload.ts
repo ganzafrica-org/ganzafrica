@@ -1,27 +1,18 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import multerS3 from "multer-s3";
+import { S3Client } from "@aws-sdk/client-s3";
+import env from "../config/env";
 
-// Ensure main uploads directory exists
-const uploadDir = path.join(__dirname, "../../uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Ensure subdirectories exist
-const documentDir = path.join(uploadDir, "document");
-const imageDir = path.join(uploadDir, "image");
-const videoDir = path.join(uploadDir, "video");
-
-if (!fs.existsSync(documentDir)) {
-  fs.mkdirSync(documentDir, { recursive: true });
-}
-if (!fs.existsSync(imageDir)) {
-  fs.mkdirSync(imageDir, { recursive: true });
-}
-if (!fs.existsSync(videoDir)) {
-  fs.mkdirSync(videoDir, { recursive: true });
-}
+// Create S3 client for Digital Ocean Spaces
+const s3Client = new S3Client({
+  endpoint: env.DO_SPACES_ENDPOINT,
+  region: env.DO_SPACES_REGION,
+  credentials: {
+    accessKeyId: env.DO_SPACES_ACCESS_KEY,
+    secretAccessKey: env.DO_SPACES_SECRET_KEY,
+  },
+  forcePathStyle: false, // Digital Ocean Spaces uses virtual-hosted-style URLs
+});
 
 // Define allowed file types
 const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
@@ -33,23 +24,41 @@ const allowedDocumentTypes = [
 ];
 const allowedFileTypes = [...allowedImageTypes, ...allowedVideoTypes, ...allowedDocumentTypes];
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+/**
+ * Helper function to determine subdirectory based on mimetype
+ */
+export function getFileSubdirectory(mimetype: string): string {
+  if (allowedImageTypes.includes(mimetype)) {
+    return "image";
+  } else if (allowedVideoTypes.includes(mimetype)) {
+    return "video";
+  } else if (allowedDocumentTypes.includes(mimetype)) {
+    return "document";
+  }
+  return ""; // Default case, should not happen due to file filter
+}
+
+const spacesStorage = multerS3({
+  s3: s3Client,
+  bucket: env.DO_SPACES_BUCKET,
+  acl: 'public-read', // Make files publicly accessible
+  key: function (req, file, cb) {
     // Determine the appropriate directory based on file type
-    if (allowedImageTypes.includes(file.mimetype)) {
-      cb(null, path.join("uploads", "image"));
-    } else if (allowedVideoTypes.includes(file.mimetype)) {
-      cb(null, path.join("uploads", "video"));
-    } else if (allowedDocumentTypes.includes(file.mimetype)) {
-      cb(null, path.join("uploads", "document"));
-    } else {
-      cb(null, "uploads/"); // Fallback, though file filter should prevent this
-    }
-  },
-  filename: function (req, file, cb) {
+    const subdir = getFileSubdirectory(file.mimetype);
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-    cb(null, uniqueSuffix + "-" + originalName);
+    const filename = uniqueSuffix + "-" + originalName;
+    
+    // Create key with subdirectory
+    const key = `uploads/${subdir}/${filename}`;
+    cb(null, key);
+  },
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  metadata: function (req, file, cb) {
+    cb(null, { 
+      originalName: file.originalname,
+      uploadedAt: new Date().toISOString(),
+    });
   },
 });
 
@@ -69,7 +78,7 @@ const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterC
 };
 
 const upload = multer({ 
-  storage: storage,
+  storage: spacesStorage,
   fileFilter: fileFilter,
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB limit

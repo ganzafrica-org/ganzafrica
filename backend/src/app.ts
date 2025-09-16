@@ -27,8 +27,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser(env.SESSION_SECRET)); // For parsing cookies
 
-// IMPORTANT: Serve static files from uploads directory - MUST come before other middleware
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Note: Static files are served from Digital Ocean Spaces
 
 app.use((req, res, next) => {
     res.setHeader(
@@ -89,7 +88,7 @@ app.use(notFoundHandler);
 // Global error handler
 app.use(errorHandler);
 
-// Log uploads directory path for debugging
-logger.info(`Serving static files from: ${path.join(__dirname, '../uploads')}`);
+// Files are now served from Digital Ocean Spaces
+logger.info("File uploads configured to use Digital Ocean Spaces");
 
 export default app;
