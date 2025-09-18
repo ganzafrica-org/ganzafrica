@@ -5,12 +5,13 @@ import SectionWithScrollAnimation from "@/components/layout/SectionWithScroll";
 import React, { useState, useRef } from "react";
 import {getDictionary} from "@/lib/get-dictionary";
 import HeaderBelt from "@/components/layout/headerBelt";
-import { 
-    PersonIcon, 
+import {
+    PersonIcon,
     AudioMutedIcon,
     AudioUnmutedIcon,
     FullscreenIcon
 } from "@/components/ui/icons";
+import { trackVideoEvent, trackEvent } from "@/components/analytics/google-analytics";
 
 type Props = {
     dict: Awaited<ReturnType<typeof getDictionary>>;
@@ -26,6 +27,13 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
         if (videoRef.current) {
             videoRef.current.muted = !videoRef.current.muted;
             setIsMuted(!isMuted);
+
+            // Track mute/unmute action
+            trackEvent('video_mute_toggle', {
+                video_title: 'Our Story - Fellow Success Video',
+                action: isMuted ? 'unmute' : 'mute',
+                page: 'our_story'
+            });
         }
     };
     
@@ -33,8 +41,18 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
         if (videoRef.current) {
             if (document.fullscreenElement) {
                 document.exitFullscreen();
+                trackEvent('video_fullscreen_toggle', {
+                    video_title: 'Our Story - Fellow Success Video',
+                    action: 'exit_fullscreen',
+                    page: 'our_story'
+                });
             } else {
                 videoRef.current.requestFullscreen();
+                trackEvent('video_fullscreen_toggle', {
+                    video_title: 'Our Story - Fellow Success Video',
+                    action: 'enter_fullscreen',
+                    page: 'our_story'
+                });
             }
         }
     };
@@ -136,7 +154,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
     {/* Video - First on mobile and desktop */}
     <div className="h-full w-full order-1 relative">
         <div className="w-full h-full relative">
-            <video 
+            <video
                 ref={videoRef}
                 className="w-full h-full object-cover rounded-sm"
                 src="/videos/lysa.mp4"
@@ -144,6 +162,20 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
                 muted
                 loop
                 playsInline
+                onPlay={() => trackVideoEvent('play', 'Our Story - Fellow Success Video')}
+                onPause={() => trackVideoEvent('pause', 'Our Story - Fellow Success Video')}
+                onEnded={() => trackVideoEvent('complete', 'Our Story - Fellow Success Video')}
+                onTimeUpdate={(e) => {
+                    const video = e.target as HTMLVideoElement;
+                    const progress = (video.currentTime / video.duration) * 100;
+                    if (progress >= 25 && progress < 26) {
+                        trackVideoEvent('play', 'Our Story - Fellow Success Video', 25);
+                    } else if (progress >= 50 && progress < 51) {
+                        trackVideoEvent('play', 'Our Story - Fellow Success Video', 50);
+                    } else if (progress >= 75 && progress < 76) {
+                        trackVideoEvent('play', 'Our Story - Fellow Success Video', 75);
+                    }
+                }}
             />
             
             {/* Video Controls */}

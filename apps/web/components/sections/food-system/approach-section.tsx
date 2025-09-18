@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Container from "@/components/layout/container";
 import Link from "next/link";
+import { trackEvent } from "@/components/analytics/google-analytics";
 
 // Animation variants
 const fadeIn = {
@@ -65,7 +66,10 @@ const ApproachSection = () => {
               <br />
               We work collaboratively with local communities, governments, and private sector partners to transform fragmented value chains into integrated, resilient systems that benefit all stakeholders — especially smallholder farmers and rural communities who are often left behind.
             </p>
-            <Link href={`/${"locale"}/projects`}>
+            <Link href={`/${"locale"}/projects`} onClick={() => trackEvent('projects_cta_click', {
+              source_page: 'our_approach',
+              section: 'approach_section'
+            })}>
               <motion.button
                 className="bg-primary-green hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
                 whileHover={{ scale: 1.05 }}

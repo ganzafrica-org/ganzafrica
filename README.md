@@ -46,6 +46,7 @@ A modern web platform built to support GanzAfrica's mission in land management, 
 ```
 ganzafrica/
 ├── apps/
+│   ├── internal/              # internal platform: hr, crm, hiring etc...
 │   ├── web/              # Public website
 │   └── portal/           # Admin portal
 ├── backend/
@@ -111,6 +112,7 @@ Access the applications at:
 
 - Website: http://localhost:3000
 - Portal: http://localhost:3001
+- Internal: http://localhost:3003
 - API: http://localhost:3002
 
 ## Development Commands

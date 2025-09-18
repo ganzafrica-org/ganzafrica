@@ -14,6 +14,7 @@ import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { useParams } from 'next/navigation';
 import { AudioMutedIcon, AudioUnmutedIcon, FullscreenIcon } from "@/components/ui/icons";
 import apiClient from '@/lib/api-client';
+import { trackEvent, trackVideoEvent } from '@/components/analytics/google-analytics';
 
 // Define the type for opportunities
 type Opportunity = {
@@ -224,6 +225,12 @@ export default function FellowshipPage() {
     // Stop auto cycling
     setIsAutoPlaying(false);
 
+    // Track testimonial navigation
+    trackEvent('testimonial_navigation', {
+      page: 'fellowship',
+      navigation_type: 'manual'
+    });
+
     // Clear existing interval
     if (autoPlayRef.current) {
       clearInterval(autoPlayRef.current);
@@ -337,6 +344,12 @@ export default function FellowshipPage() {
     if (videoRef.current) {
       videoRef.current.muted = !videoRef.current.muted;
       setIsMuted(!isMuted);
+
+      trackEvent('video_mute_toggle', {
+        video_title: 'Fellowship About Video',
+        action: isMuted ? 'unmute' : 'mute',
+        page: 'fellowship'
+      });
     }
   };
   
@@ -344,8 +357,18 @@ export default function FellowshipPage() {
     if (videoRef.current) {
       if (document.fullscreenElement) {
         document.exitFullscreen();
+        trackEvent('video_fullscreen_toggle', {
+          video_title: 'Fellowship About Video',
+          action: 'exit_fullscreen',
+          page: 'fellowship'
+        });
       } else {
         videoRef.current.requestFullscreen();
+        trackEvent('video_fullscreen_toggle', {
+          video_title: 'Fellowship About Video',
+          action: 'enter_fullscreen',
+          page: 'fellowship'
+        });
       }
     }
   };
@@ -363,6 +386,9 @@ export default function FellowshipPage() {
                 muted
                 playsInline
                 className="w-full h-full object-cover brightness-105"
+                onPlay={() => trackVideoEvent('play', 'Fellowship Hero Video')}
+                onPause={() => trackVideoEvent('pause', 'Fellowship Hero Video')}
+                onEnded={() => trackVideoEvent('complete', 'Fellowship Hero Video')}
             >
               <source src="/videos/hero-video.mp4" type="video/mp4" />
             </video>
@@ -392,7 +418,10 @@ export default function FellowshipPage() {
                   transition={{ duration: 0.8, delay: 0.4 }}
                   className="flex items-center justify-center gap-4"
               >
-                <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
+                <Link href={`/${locale}/programs/fellowship/how-to-apply`} onClick={() => trackEvent('how_to_apply_click', {
+                  source_page: 'fellowship',
+                  location: 'hero_section'
+                })}>
                   <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
                     How to Apply
                   </Button>
@@ -454,6 +483,9 @@ export default function FellowshipPage() {
                       muted
                       loop
                       playsInline
+                      onPlay={() => trackVideoEvent('play', 'Fellowship About Video')}
+                      onPause={() => trackVideoEvent('pause', 'Fellowship About Video')}
+                      onEnded={() => trackVideoEvent('complete', 'Fellowship About Video')}
                     />
                     {/* Video Controls */}
                     <div className="absolute bottom-4 right-4 flex space-x-3">
@@ -492,7 +524,10 @@ export default function FellowshipPage() {
                   Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.
                 </p>
                 
-                <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
+                <Link href={`/${locale}/programs/fellowship/how-to-apply`} onClick={() => trackEvent('how_to_apply_click', {
+                  source_page: 'fellowship',
+                  location: 'about_section'
+                })}>
                   <motion.button
                     className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white px-6 py-3 rounded-md font-medium transition-colors"
                     whileHover={{ scale: 1.05 }}
@@ -545,7 +580,10 @@ export default function FellowshipPage() {
                 <p className="text-gray-600 text-sm md:text-base mb-8">
                   Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
                 </p>
-                <Link href={`/${locale}/about/team`}>
+                <Link href={`/${locale}/about/team`} onClick={() => trackEvent('meet_fellows_click', {
+                  source_page: 'fellowship',
+                  location: 'leaders_section'
+                })}>
                   <motion.button
                     className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
                     whileHover={{ scale: 1.05 }}
@@ -751,7 +789,14 @@ export default function FellowshipPage() {
                                           ? 'w-10 md:w-16 h-10 md:h-16 z-10 opacity-70 scale-90'
                                           : 'w-8 md:w-12 h-8 md:h-12 opacity-50 scale-75'
                               }`}
-                              onClick={() => handleTestimonialChange(index)}
+                              onClick={() => {
+                                handleTestimonialChange(index);
+                                trackEvent('testimonial_click', {
+                                  testimonial_author: testimonial.author_name,
+                                  testimonial_position: testimonial.position,
+                                  page: 'fellowship'
+                                });
+                              }}
                           >
                             <div className={`rounded-full overflow-hidden h-full w-full transition-all duration-300 ${
                                 isActive ? 'ring-2 md:ring-4 ring-yellow-400' : 'ring-1 ring-gray-200'

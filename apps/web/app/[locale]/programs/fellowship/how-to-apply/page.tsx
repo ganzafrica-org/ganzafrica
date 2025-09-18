@@ -9,6 +9,7 @@ import { Users, Blocks, Briefcase, Users2, ArrowRight } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import Link from 'next/link';
+import { trackEvent, trackPageView } from '@/components/analytics/google-analytics';
 
 
 const applicationSteps = [
@@ -229,7 +230,11 @@ const FloatingApplyButton = () => {
             opacity: { duration: 0.15 } // Faster fade out
           }}
         >
-          <Link href={`/${params.locale}/programs/fellowship/apply`}>
+          <Link href={`/${params.locale}/programs/fellowship/apply`} onClick={() => trackEvent('apply_now_click', {
+            source_page: 'how_to_apply',
+            location: 'button',
+            application_type: 'fellowship'
+          })}>
             <Button 
               className="bg-primary-orange hover:bg-primary-orange/90 text-white font-semibold px-6 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
               style={{
@@ -260,7 +265,11 @@ export default function HowToApplyPage() {
   };
 
   const [featuredOpportunity, setFeaturedOpportunity] = useState<Opportunity | null>(null);
-  
+
+  // Track page view
+  useEffect(() => {
+    trackPageView('/programs/fellowship/how-to-apply', 'Fellowship How to Apply');
+  }, []);
 
   // Example of how you might get dictionary data if needed
   // const dict = useDictionary(locale);
@@ -522,7 +531,11 @@ export default function HowToApplyPage() {
             opacity: { duration: 0.5 }
           }}
         >
-          <Link href={`/${params.locale}/programs/fellowship/apply`}>
+          <Link href={`/${params.locale}/programs/fellowship/apply`} onClick={() => trackEvent('apply_now_click', {
+            source_page: 'how_to_apply',
+            location: 'button',
+            application_type: 'fellowship'
+          })}>
             <Button 
               className="bg-primary-orange hover:bg-primary-orange/90 text-white font-semibold px-6 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
               style={{

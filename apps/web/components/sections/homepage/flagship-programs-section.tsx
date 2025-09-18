@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { DecoratedHeading } from "@/components/layout/headertext";
+import { trackEvent } from "@/components/analytics/google-analytics";
 
 interface Program {
   id: string;
@@ -188,7 +189,12 @@ export default function FlagshipProgramsSection({
                           transition: '0.5s cubic-bezier(.17,.67,.5,1.03) 0.25s',
                           textDecoration: 'none'
                         }}
-                        className="card-details text-[#073392]" 
+                        className="card-details text-[#073392]"
+                        onClick={() => trackEvent('program_link_click', {
+                          program_name: program.title,
+                          program_id: program.id,
+                          source_page: 'homepage'
+                        })}
                     >
                       {dict?.cta?.learn_more || "Learn More"}
                     </Link>

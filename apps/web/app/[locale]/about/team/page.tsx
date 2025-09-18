@@ -6,6 +6,7 @@ import { DecoratedHeading } from "@/components/layout/headertext";
 import { ArrowUpRight, X, Linkedin, Mail, Leaf } from 'lucide-react';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import apiClient from '@/lib/api-client';
+import { trackEvent } from '@/components/analytics/google-analytics';
 
 type TeamMember = {
   id: number;
@@ -110,11 +111,17 @@ const TeamMemberModal = ({
             <div className="flex items-center gap-4">
               {/* Always show LinkedIn icon - conditionally active */}
               {member.profile_link ? (
-                <a 
+                <a
                   href={member.profile_link}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group"
+                  onClick={() => trackEvent('team_member_social_click', {
+                    member_name: member.name,
+                    member_position: member.position,
+                    member_team: member.team_type.name,
+                    social_platform: 'linkedin'
+                  })}
                 >
                   <div className="w-10 h-10 rounded-full bg-primary-orange flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
                     <Linkedin className="w-5 h-5 text-white" />
@@ -128,9 +135,15 @@ const TeamMemberModal = ({
               
               {/* Always show Email icon - conditionally active */}
               {member.email ? (
-                <a 
+                <a
                   href={`mailto:${member.email}`}
                   className="group"
+                  onClick={() => trackEvent('team_member_social_click', {
+                    member_name: member.name,
+                    member_position: member.position,
+                    member_team: member.team_type.name,
+                    social_platform: 'email'
+                  })}
                 >
                   <div className="w-10 h-10 rounded-full bg-primary-green flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-primary-green/25 group-hover:-translate-y-0.5">
                     <Mail className="w-5 h-5 text-white" />
@@ -185,7 +198,14 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
             <div className="absolute top-0 right-0 z-10">
               <div className="bg-white p-2 rounded-bl-xl relative">
                 <button
-                    onClick={onOpenModal}
+                    onClick={() => {
+                      onOpenModal();
+                      trackEvent('team_member_view_details', {
+                        member_name: member.name,
+                        member_position: member.position,
+                        member_team: member.team_type.name
+                      });
+                    }}
                     aria-label="View team member details"
                     className="w-7 h-7 bg-primary-orange rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:bg-primary-green"
                 >
@@ -221,10 +241,16 @@ const FilterButton = ({
   onClick: () => void;
 }) => (
   <button
-    onClick={onClick}
+    onClick={() => {
+      onClick();
+      trackEvent('team_filter_change', {
+        filter_category: label,
+        page: 'team'
+      });
+    }}
     className={`px-5 py-2 rounded-full border text-sm font-medium transition-all duration-300 ${
-      active 
-        ? 'border-primary-green bg-[#E8F5E9] text-primary-green' 
+      active
+        ? 'border-primary-green bg-[#E8F5E9] text-primary-green'
         : 'border-primary-green text-primary-green hover:bg-[#E8F5E9]'
     }`}
   >

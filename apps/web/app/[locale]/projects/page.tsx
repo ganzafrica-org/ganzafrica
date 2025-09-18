@@ -25,6 +25,7 @@ import Header from "@/components/layout/header";
 import apiClient from '@/lib/api-client';
 import { motion } from "framer-motion";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
+import { trackEvent } from '@/components/analytics/google-analytics';
 
 // Register ScrollTrigger plugin for animations
 if (typeof window !== 'undefined') {
@@ -78,7 +79,13 @@ const ProjectCard: React.FC<{
   };
 
   return (
-    <Link href={`projects/${project.id}`} className="block group">
+    <Link href={`projects/${project.id}`} className="block group" onClick={() => trackEvent('project_click', {
+      project_id: project.id,
+      project_name: project.name,
+      project_status: project.status,
+      project_category: getCategoryName(project.category_id),
+      page: 'projects_listing'
+    })}>
       <div className="relative bg-white shadow-sm hover:shadow-xl transition-all duration-500 rounded-lg overflow-hidden cursor-pointer h-full transform hover:-translate-y-2">
         <div className="relative w-full overflow-hidden">
           {/* Main content container */}

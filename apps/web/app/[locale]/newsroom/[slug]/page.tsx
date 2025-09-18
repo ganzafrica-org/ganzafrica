@@ -7,6 +7,7 @@ import Container from "@/components/layout/container";
 import axios from 'axios';
 import apiClient from "@/lib/api-client";
 import { useParams, useSearchParams } from "next/navigation";
+import { trackNewsArticleView, trackVideoEvent } from "@/components/analytics/google-analytics";
 
 // Define the MediaItem type
 interface MediaItem {
@@ -243,6 +244,9 @@ const NewsDetailsPage = () => {
 
           if (foundArticle) {
             setArticle(foundArticle);
+
+            // Track article view
+            trackNewsArticleView(foundArticle.title, foundArticle.tags?.[0]?.name);
 
             // Get related articles (same tag)
             if (foundArticle.tags && foundArticle.tags.length > 0) {
@@ -492,6 +496,9 @@ const NewsDetailsPage = () => {
                     controls
                     className="max-h-[85vh] max-w-full mx-auto bg-black"
                     poster={selectedMedia.thumbnailUrl}
+                    onPlay={() => trackVideoEvent('play', article?.title || 'Unknown Video')}
+                    onPause={() => trackVideoEvent('pause', article?.title || 'Unknown Video')}
+                    onEnded={() => trackVideoEvent('complete', article?.title || 'Unknown Video')}
                 />
             ) : (
                 <div className="bg-gray-200 p-10 rounded-lg text-center">

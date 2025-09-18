@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { trackEvent } from '@/components/analytics/google-analytics';
 
 // Type definitions
 type ProjectMedia = {
@@ -477,6 +478,9 @@ return (
                         "overflow-hidden transition-all duration-300",
                         "hover:bg-opacity-90 hover:pl-10 hover:pr-6 "
                     )}
+                    onClick={() => trackEvent('view_all_projects_click', {
+                        source_page: 'homepage'
+                    })}
                 >
                     <span className="relative z-10">
                         {dict?.cta?.view_all_projects || "View All Projects"}
