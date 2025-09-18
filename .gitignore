@@ -38,3 +38,6 @@ yarn-error.log*
 wrangler.toml
 .qodo
 drizzle/
+
+.xml
+.iml

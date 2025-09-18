@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import HeaderBelt from "@/components/layout/headerBelt";
 import WhereWeWorkSection from "@/components/sections/food-system/where-we-work-section";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
 import ApproachSection from "@/components/sections/food-system/approach-section";
+import { trackEvent, trackPageView } from "@/components/analytics/google-analytics";
 
 // Animation variants
 const fadeIn = {
@@ -22,6 +23,11 @@ const fadeIn = {
 };
 
 const FoodSystemPage = ({}) => {
+  useEffect(() => {
+    // Track page view for Our Approach page
+    trackPageView('/our-approach', 'Our Approach to Food Systems');
+  }, []);
+
   return (
     <main className="bg-white">
       {/* Hero Section */}

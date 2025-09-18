@@ -7,6 +7,7 @@ import apiClient from '@/lib/api-client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { trackEvent } from '@/components/analytics/google-analytics';
 
 // Interface for the news data from the API
 interface NewsItem {
@@ -346,6 +347,12 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                     href={`/${locale}/newsroom/${slug}`}
                     className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
                     style={{ color: linkColor }}
+                    onClick={() => trackEvent('news_link_click', {
+                      news_title: newsItem.title,
+                      news_category: newsItem.category_name,
+                      source_page: 'homepage',
+                      link_position: index + 1
+                    })}
                   >
                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
                       {dict?.news?.read_more ?? "Read more"}
@@ -372,6 +379,9 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                 "transition-all duration-300 hover:shadow-lg",
                 "text-sm font-medium"
               )}
+              onClick={() => trackEvent('view_all_news_click', {
+                source_page: 'homepage'
+              })}
             >
               <span>{dict?.news?.view_all ?? "View All News"}</span>
               <ArrowRight size={16} />

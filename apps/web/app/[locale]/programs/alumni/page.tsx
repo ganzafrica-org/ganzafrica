@@ -18,6 +18,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
+import { trackEvent, trackVideoEvent, trackPageView } from "@/components/analytics/google-analytics";
 
 
 
@@ -28,6 +29,11 @@ export default function Home() {
   const [counters, setCounters] = useState({ fellows: 0, projects: 0, events: 0 });
   const [isAnimating, setIsAnimating] = useState(false);
   const [hasCompletedAnimation, setHasCompletedAnimation] = useState(false);
+
+  // Track page view
+  useEffect(() => {
+    trackPageView('/programs/alumni', 'Alumni Network');
+  }, []);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -144,12 +150,15 @@ export default function Home() {
       {/* Hero Section - Full width */}
       <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
         <div className="absolute inset-0 bg-black/70">
-          <video 
-            autoPlay 
-            muted 
-            loop 
+          <video
+            autoPlay
+            muted
+            loop
             playsInline
             className="w-full h-full object-cover mix-blend-overlay"
+            onPlay={() => trackVideoEvent('play', 'Alumni Hero Video')}
+            onPause={() => trackVideoEvent('pause', 'Alumni Hero Video')}
+            onEnded={() => trackVideoEvent('complete', 'Alumni Hero Video')}
           >
             <source src="/videos/hero-video.mp4" type="video/mp4" />
           </video>
@@ -426,9 +435,16 @@ export default function Home() {
                 image: "/images/Sustainable Land Use Fellows.jpg"
               }
             ].map((eventItem) => (
-              <Link 
-                key={eventItem.id} 
+              <Link
+                key={eventItem.id}
                 href={``}
+                onClick={() => trackEvent('alumni_event_click', {
+                  event_id: eventItem.id,
+                  event_title: eventItem.title,
+                  event_type: eventItem.type,
+                  event_date: eventItem.date,
+                  page: 'alumni'
+                })}
               >
                 <motion.div 
                   className="news-card perspective-wrapper group"
