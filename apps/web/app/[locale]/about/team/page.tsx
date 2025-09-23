@@ -350,7 +350,7 @@ const TeamPage: React.FC = () => {
     const fetchTeams = async () => {
       try {
         setIsLoading(true);
-        const response = await apiClient.get('/teams');
+        const response = await apiClient.get('/teams', { params: { sort_by: 'sort_order', sort_order: 'asc' } });
         
         if (response.data && response.data.teams) {
           setTeamMembers(response.data.teams);
