@@ -14,6 +14,16 @@ interface ContactUsContentProps {
     dict: any;
 }
 
+// Normalize lucide icon component types across React versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const CheckCircle2Icon = CheckCircle2 as unknown as SvgIconComponent;
+const AlertCircleIcon = AlertCircle as unknown as SvgIconComponent;
+const SendIcon = Send as unknown as SvgIconComponent;
+const Building2Icon = Building2 as unknown as SvgIconComponent;
+const PhoneIcon = Phone as unknown as SvgIconComponent;
+const MailIcon = Mail as unknown as SvgIconComponent;
+const MapPinIcon = MapPin as unknown as SvgIconComponent;
+
 const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
     const [formState, setFormState] = useState({
         name: "",
@@ -221,7 +231,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                             {/* Success Message */}
                             {formSuccess && (
                                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start">
-                                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
+                                    <CheckCircle2Icon className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
                                     <div>
                                         <p className="font-medium">Message sent successfully!</p>
                                         <p className="text-sm">Thank you for contacting us. We'll get back to you as soon as possible.</p>
@@ -232,7 +242,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                             {/* Error Message */}
                             {formError && (
                                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
-                                    <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
+                                    <AlertCircleIcon className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
                                     <div>
                                         <p className="font-medium">Submission failed</p>
                                         <p className="text-sm">{formError}</p>
@@ -329,7 +339,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                     ) : (
                                         <>
                                             Send Message
-                                            <Send className="h-4 w-4" />
+                                            <SendIcon className="h-4 w-4" />
                                         </>
                                     )}
                                 </Button>
@@ -358,7 +368,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 {/* Newsletter Success Message */}
                                 {newsletterSuccess && (
                                     <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start mb-4">
-                                        <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
+                                        <CheckCircle2Icon className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
                                         <div>
                                             <p className="font-medium">Subscribed successfully!</p>
                                             <p className="text-sm">Thank you for subscribing to our newsletter.</p>
@@ -369,7 +379,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 {/* Newsletter Error Message */}
                                 {newsletterError && (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start mb-4">
-                                        <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
+                                        <AlertCircleIcon className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
                                         <div>
                                             <p className="font-medium">Subscription failed</p>
                                             <p className="text-sm">{newsletterError}</p>
@@ -403,7 +413,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 {/* Header */}
                                 <div className="bg-[#005c3d] px-6 py-4">
                                     <div className="flex items-center gap-2 text-white">
-                                        <Building2 className="h-5 w-5" />
+                                        <Building2Icon className="h-5 w-5" />
                                         <span className="text-sm font-medium">Rwanda Office</span>
                                     </div>
                                 </div>
@@ -415,7 +425,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
                                                     <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                        <Phone className="h-5 w-5 text-[#005c3d]" />
+                                                        <PhoneIcon className="h-5 w-5 text-[#005c3d]" />
                                                     </div>
                                                     <div>
                                                         <p className="text-gray-600">(250) 799 390 199</p>
@@ -424,7 +434,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                                 </div>
                                                 <div className="flex items-center space-x-3 pl-4">
                                                     <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                        <Mail className="h-5 w-5 text-[#005c3d]" />
+                                                        <MailIcon className="h-5 w-5 text-[#005c3d]" />
                                                     </div>
                                                     <div>
                                                         <p className="text-gray-600">info@ganzafrica.org</p>
@@ -437,7 +447,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                         <div className="bg-[#005c3d]/5 rounded-lg p-4">
                                             <div className="flex items-center space-x-3">
                                                 <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
-                                                    <MapPin className="h-5 w-5 text-[#005c3d]" />
+                                                    <MapPinIcon className="h-5 w-5 text-[#005c3d]" />
                                                 </div>
                                                 <div>
                                                     <p className="text-gray-600">27 House, KG 594 St</p>

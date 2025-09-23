@@ -53,7 +53,7 @@ interface PromiseCardProps {
 }
 
 interface PageProps {
-  params:Promise<{ locale: string }>;
+  params: { locale: string };
 }
 
 
@@ -198,12 +198,11 @@ const PromiseCard: FC<PromiseCardProps> = ({
   );
 };
 
-export default async function AboutPage(props: PageProps) {
-  const params = await props.params;
+export default async function AboutPage(
+  { params }: PageProps
+): Promise<JSX.Element> {
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   const dict = await getDictionary(locale);
   

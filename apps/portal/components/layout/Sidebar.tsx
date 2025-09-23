@@ -34,6 +34,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const [usersOpen, setUsersOpen] = useState(false);
   const [teamsOpen, setTeamsOpen] = useState(false);
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
+  const [newsOpen, setNewsOpen] = useState(false);
   const [helpFAQsOpen, setHelpFAQsOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showTopArrow, setShowTopArrow] = useState(false);
@@ -48,6 +49,12 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const toggleTeams = () => {
     if (!isCollapsed) {
       setTeamsOpen(!teamsOpen);
+    }
+  };
+
+  const toggleNews = () => {
+    if (!isCollapsed) {
+      setNewsOpen(!newsOpen);
     }
   };
 
@@ -66,6 +73,9 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
     if (pathname === '/users' || pathname.startsWith('/users/') ||
         pathname === '/roles' || pathname.startsWith('/roles/')) {
       setUsersOpen(true);
+    }
+    if (pathname === '/news' || pathname.startsWith('/news/')) {
+      setNewsOpen(true);
     }
     if (pathname === '/faqs' || pathname.startsWith('/faqs/') ||
         pathname === '/contact' || pathname.startsWith('/contact/') ||
@@ -391,27 +401,23 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                     )}
                   </div>
 
-                    {/* News & Tags Dropdown */}
+                    {/* News & Tags Dropdown - FIXED */}
                     <div>
                       <div
-                        className={`flex items-center justify-between cursor-pointer ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                          (pathname === '/news' || pathname.startsWith('/news/'))
-                            ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
-                        }`}
-                        onClick={() => !isCollapsed && setProjectsOpen(false)}
+                        className={`flex items-center justify-between cursor-pointer ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors text-white/80 hover:bg-white/5 hover:text-white`}
+                        onClick={toggleNews}
                       >
                         <div className="flex items-center">
                           <FileText className="w-5 h-5 flex-shrink-0" />
                           {!isCollapsed && <span className="ml-3 font-medium">News</span>}
                         </div>
                         {!isCollapsed && (
-                          // Reuse chevron visual by checking if on a news route to show open state
-                          (pathname === '/news' || pathname.startsWith('/news/'))
+                          newsOpen
                             ? <ChevronDown className="w-4 h-4" />
                             : <ChevronRight className="w-4 h-4" />
                         )}
                       </div>
-                      {!isCollapsed && (
+                      {!isCollapsed && newsOpen && (
                         <>
                           <Link
                             href="/news"

@@ -9,6 +9,16 @@ import apiClient from "@/lib/api-client";
 import { useParams, useSearchParams } from "next/navigation";
 import { trackNewsArticleView, trackVideoEvent } from "@/components/analytics/google-analytics";
 
+// Normalize Next.js Link typing across React type versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+
+// Normalize lucide icon component types across React type versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const CalendarIcon = Calendar as unknown as SvgIconComponent;
+const ArrowLeftIcon = ArrowLeft as unknown as SvgIconComponent;
+const XIcon = X as unknown as SvgIconComponent;
+
 // Define the MediaItem type
 interface MediaItem {
   id: string;
@@ -392,7 +402,7 @@ const NewsDetailsPage = () => {
     const imageUrl = getCoverImage(item);
 
     return (
-        <Link href={`/${locale}/newsroom/${itemSlug}`} className="block group">
+        <SafeLink href={`/${locale}/newsroom/${itemSlug}`} className="block group">
           <div className="relative bg-white rounded-lg overflow-hidden shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             {/* Image Container */}
             <div className="relative aspect-[16/10]">
@@ -419,7 +429,7 @@ const NewsDetailsPage = () => {
             {/* Content */}
             <div className="p-4">
               <div className="flex items-center text-xs text-gray-500 mb-2">
-                <Calendar className="h-3 w-3 mr-1" />
+                <CalendarIcon className="h-3 w-3 mr-1" />
                 {formatDate(item.publish_date)}
               </div>
               <h3 className="text-base font-semibold text-gray-900 mb-1 line-clamp-2">
@@ -427,7 +437,7 @@ const NewsDetailsPage = () => {
               </h3>
             </div>
           </div>
-        </Link>
+        </SafeLink>
     );
   };
 
@@ -481,7 +491,7 @@ const NewsDetailsPage = () => {
                 className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition-colors"
                 onClick={closeGallery}
             >
-              <X className="w-6 h-6 text-white" />
+              <XIcon className="w-6 h-6 text-white" />
             </button>
 
             {selectedMedia.type === 'image' ? (
@@ -527,10 +537,10 @@ const NewsDetailsPage = () => {
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Article Not Found</h2>
               <p className="text-gray-600 mb-8">The article you're looking for may have been removed or doesn't exist.</p>
-              <Link href={`/${locale}/newsroom`} className="inline-flex items-center px-6 py-3 bg-[#00A651] text-white rounded-md hover:bg-[#008f46] transition-colors">
-                <ArrowLeft className="mr-2 h-5 w-5" />
+              <SafeLink href={`/${locale}/newsroom`} className="inline-flex items-center px-6 py-3 bg-[#00A651] text-white rounded-md hover:bg-[#008f46] transition-colors">
+                <ArrowLeftIcon className="mr-2 h-5 w-5" />
                 Back to Newsroom
-              </Link>
+              </SafeLink>
             </div>
           </Container>
         </main>
@@ -584,7 +594,7 @@ const NewsDetailsPage = () => {
 
             {/* Date */}
             <div className="flex items-center mt-4 text-white/80">
-              <Calendar className="h-5 w-5 mr-2" />
+              <CalendarIcon className="h-5 w-5 mr-2" />
               {formatDate(article.publish_date)}
             </div>
           </div>
@@ -596,13 +606,13 @@ const NewsDetailsPage = () => {
             {/* Main Content Column */}
             <div className="w-full lg:w-2/3">
               {/* Back to newsroom link */}
-              <Link
+              <SafeLink
                   href={`/${locale}/newsroom`}
                   className="inline-flex items-center text-[#00A651] hover:text-[#008f46] mb-6 transition-colors"
               >
-                <ArrowLeft className="mr-2 h-5 w-5" />
+                <ArrowLeftIcon className="mr-2 h-5 w-5" />
                 Back to Newsroom
-              </Link>
+              </SafeLink>
 
               {/* Article content */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:p-8">
@@ -668,12 +678,12 @@ const NewsDetailsPage = () => {
                     </div>
 
                     <div className="mt-6 text-center">
-                      <Link
+                      <SafeLink
                           href={`/${locale}/newsroom`}
                           className="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-[#00A651] border border-[#00A651] rounded-md hover:bg-[#00A651] hover:text-white transition-colors"
                       >
                         View All News
-                      </Link>
+                      </SafeLink>
                     </div>
                   </div>
               )}

@@ -6,6 +6,16 @@ import Image from "next/image";
 import { Leaf, Plus, Minus } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 
+// Normalize lucide icon component types across React type versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const LeafIcon = Leaf as unknown as SvgIconComponent;
+const PlusIcon = Plus as unknown as SvgIconComponent;
+const MinusIcon = Minus as unknown as SvgIconComponent;
+
+// Normalize Next.js Image typing across React type versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeImage = Image as unknown as React.ComponentType<any>;
+
 // Animation variants
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
@@ -78,9 +88,9 @@ const FAQAccordionItem = ({ question, answer }: { question: string; answer?: str
               transition={{ duration: 0.3 }}
           >
             {isOpen ? (
-                <Minus className="w-4 h-4 text-emerald-600" />
+                <MinusIcon className="w-4 h-4 text-emerald-600" />
             ) : (
-                <Plus className="w-4 h-4 text-emerald-600" />
+                <PlusIcon className="w-4 h-4 text-emerald-600" />
             )}
           </motion.span>
         </button>
@@ -144,7 +154,7 @@ export default function FAQPage() {
         <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
-                  <Image
+                  <SafeImage
                       src="/images/food-system.jpeg"
                       alt="FAQ Hero Background"
                       fill
@@ -164,7 +174,7 @@ export default function FAQPage() {
                       {/* Logo section with white background cut-out */}
                       <div className="relative bg-white p-4 -ml-4 rounded-br-3xl">
                         <div className="flex items-center">
-                          <Leaf className="h-8 w-8 text-emerald-600" />
+                          <LeafIcon className="h-8 w-8 text-emerald-600" />
                           <span className="ml-2 text-xl font-bold text-emerald-600">GanzAfrica</span>
                         </div>
                       </div>
@@ -286,19 +296,7 @@ export default function FAQPage() {
           </div>
         </motion.div>
 
-        <style jsx global>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-marquee {
-          animation: marquee 15s linear infinite;
-        }
-      `}</style>
+        
       </div>
   );
 }

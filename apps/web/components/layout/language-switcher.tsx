@@ -11,13 +11,20 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { Button } from "@workspace/ui/components/button";
 
+// Language interface
+interface Language {
+  code: string;
+  name: string;
+  flag: string;
+}
+
 // Supported languages configuration with display names and flags
-const languages = [
+const languages: Language[] = [
   { code: "en", name: "English", flag: "/images/flags/en.svg" },
   { code: "fr", name: "Français", flag: "/images/flags/fr.svg" },
 ];
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher(): JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -29,7 +36,7 @@ export default function LanguageSwitcher() {
     languages.find((lang) => lang.code === currentLocale) ?? languages[0]!;
 
   // Handle language change
-  const handleLanguageChange = (locale: string) => {
+  const handleLanguageChange = (locale: string): void => {
     // Extract the path without the locale prefix
     const segments = pathname.split("/");
     // Remove first segment (empty string before first slash) and the locale
