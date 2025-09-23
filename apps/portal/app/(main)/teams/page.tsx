@@ -31,7 +31,7 @@ const TeamsPage = () => {
   // States for data and UI
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [teamTypes, setTeamTypes] = useState<Record<string, string>>({});
+  const [teamTypes, setTeamTypes] = useState<Array<{ id: number; name: string }>>([]);
   
   // States for pagination and filtering
   const [page, setPage] = useState(1);
@@ -39,8 +39,8 @@ const TeamsPage = () => {
   const [totalTeams, setTotalTeams] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortBy, setSortBy] = useState('sort_order');
+  const [sortOrder, setSortOrder] = useState('asc');
   // Reorder mode (UI-only), local order per page
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [draggingId, setDraggingId] = useState<number | null>(null);
@@ -136,13 +136,18 @@ const TeamsPage = () => {
     };
   }, [menuRef]);
 
-  // Set default team types
+  // Load team types from backend for dynamic tabs
   useEffect(() => {
-    setTeamTypes({
-      1: 'Leadership',
-      2: 'Technical',
-      3: 'Support'
-    });
+    const fetchTypes = async () => {
+      try {
+        const res = await apiClient.get('/team-types');
+        const types: Array<{ id: number; name: string }> = res.data?.teamTypes || [];
+        setTeamTypes(types);
+      } catch (error: any) {
+        // If this fails, tabs will show only 'All'
+      }
+    };
+    fetchTypes();
   }, []);
 
   // Handle search input change with debounce
@@ -187,15 +192,8 @@ const TeamsPage = () => {
   // Get team type ID from tab name
   const getTeamTypeIdFromTab = (tabName: string): number | undefined => {
     if (tabName === 'all') return undefined;
-    
-    // Map tab names to team type IDs
-    const tabToTypeId: {[key: string]: number} = {
-      'leadership': 1,
-      'technical': 2,
-      'support': 3
-    };
-    
-    return tabToTypeId[tabName.toLowerCase()];
+    const parsed = parseInt(tabName, 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
   };
 
   // Fetch tab counts
@@ -210,16 +208,17 @@ const TeamsPage = () => {
       const allCount = parseInt(response.data.pagination?.total) || 0;
       
       // Prepare counts object
-      const countsByType = {
+      const countsByType: Record<string, number> = {
         all: allCount
       };
       
       if (response.data.teams && Array.isArray(response.data.teams)) {
-        // Group teams by team_type.name
+        // Group teams by team_type.id
         response.data.teams.forEach((team: any) => {
-          if (team.team_type && team.team_type.name) {
-            const typeName = team.team_type.name.toLowerCase();
-            (countsByType as any)[typeName] = ((countsByType as any)[typeName] || 0) + 1;
+          const typeId = team.team_type?.id;
+          if (typeId) {
+            const key = String(typeId);
+            countsByType[key] = (countsByType[key] || 0) + 1;
           }
         });
       }
@@ -429,20 +428,15 @@ const TeamsPage = () => {
 
   // Generate tabs based on team types found in the data
   const renderTabs = () => {
-    const tabs = [
+    const tabs: Array<{ id: string; label: string }> = [
       { id: 'all', label: 'All' }
     ];
-    
-    // Add tabs for each team type found in tabCounts
-    Object.keys(tabCounts).forEach(key => {
-      if (key !== 'all') {
-        tabs.push({
-          id: key.toLowerCase(),
-          label: key.charAt(0).toUpperCase() + key.slice(1)
-        });
-      }
+
+    // Dynamic tabs based on fetched team types (IDs as tab ids, like news page does)
+    teamTypes.forEach((t) => {
+      tabs.push({ id: String(t.id), label: t.name });
     });
-    
+
     return tabs.map(tab => (
       <button
         key={tab.id}
@@ -455,11 +449,7 @@ const TeamsPage = () => {
       >
         {tab.label}
         <span className={`ml-2 ${
-          tab.id === 'all' ? 'bg-gray-200 text-gray-800' :
-          tab.id.includes('leadership') ? 'bg-blue-100 text-blue-800' :
-          tab.id.includes('technical') ? 'bg-green-100 text-green-800' :
-          tab.id.includes('support') ? 'bg-purple-100 text-purple-800' :
-          'bg-gray-200 text-gray-800'
+          tab.id === 'all' ? 'bg-gray-200 text-gray-800' : 'bg-green-50 text-green-700'
         } px-2 py-0.5 rounded text-xs font-medium`}>
           {tabCounts[tab.id] || 0}
         </span>
@@ -545,7 +535,9 @@ const TeamsPage = () => {
 
         {/* Team list title */}
         <h2 className="text-lg font-bold mb-4">
-          {activeTab === 'all' ? 'All Team Members' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Team`}
+          {activeTab === 'all'
+            ? 'All Team Members'
+            : `${teamTypes.find(t => String(t.id) === activeTab)?.name || 'Team'} Team`}
         </h2>
 
         {/* Search and filter */}
