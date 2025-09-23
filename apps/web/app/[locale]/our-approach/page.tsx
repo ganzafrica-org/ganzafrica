@@ -22,7 +22,11 @@ const fadeIn = {
   },
 };
 
-const FoodSystemPage = ({}) => {
+// Normalize Next.js Image typing across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeImage = Image as unknown as React.ComponentType<any>;
+
+const FoodSystemPage = (): JSX.Element => {
   useEffect(() => {
     // Track page view for Our Approach page
     trackPageView('/our-approach', 'Our Approach to Food Systems');
@@ -34,7 +38,7 @@ const FoodSystemPage = ({}) => {
       <section className="relative w-full h-[350px] sm:h-[500px] overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <Image
+          <SafeImage
             src="/images/cabbages.png"
             alt="Food System"
             fill
@@ -49,7 +53,7 @@ const FoodSystemPage = ({}) => {
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-        <motion.h2
+          <motion.h2
             className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-5xl font-extrabold tracking-wider mt-6 mb-8"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -63,10 +67,8 @@ const FoodSystemPage = ({}) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <span className="font-normal">From Farm to Fork — and Far Beyond </span>
-        
+            <span className="font-normal">From Farm to Fork — and Far Beyond</span>
           </motion.h1>
-
         </div>
       </section>
 

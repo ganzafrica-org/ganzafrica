@@ -5,7 +5,7 @@ interface FAQAccordionItemProps {
   answer: string;
 }
 
-export const FAQAccordionItem = ({ question, answer }: FAQAccordionItemProps) => {
+export const FAQAccordionItem = ({ question, answer }: FAQAccordionItemProps): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

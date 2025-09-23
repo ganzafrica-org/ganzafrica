@@ -8,6 +8,14 @@ import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import apiClient from '@/lib/api-client';
 import { trackEvent } from '@/components/analytics/google-analytics';
 
+// Normalize lucide icon component types across React type versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const XIcon = X as unknown as SvgIconComponent;
+const LinkedinIcon = Linkedin as unknown as SvgIconComponent;
+const MailIcon = Mail as unknown as SvgIconComponent;
+const ArrowUpRightIcon = ArrowUpRight as unknown as SvgIconComponent;
+const LeafIcon = Leaf as unknown as SvgIconComponent;
+
 type TeamMember = {
   id: number;
   name: string;
@@ -59,7 +67,7 @@ const TeamMemberModal = ({
           aria-label="Close modal"
           className="absolute top-5 right-5 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 ease-in-out z-10 group"
         >
-          <X className="w-6 h-6 text-gray-500 transition-transform duration-200 ease-out group-hover:rotate-90" />
+          <XIcon className="w-6 h-6 text-gray-500 transition-transform duration-200 ease-out group-hover:rotate-90" />
         </button>
 
         {/* Header Section with Image and Info */}
@@ -123,13 +131,13 @@ const TeamMemberModal = ({
                     social_platform: 'linkedin'
                   })}
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary-orange flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
-                    <Linkedin className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full bg-primary-orange flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
+            <LinkedinIcon className="w-5 h-5 text-white" />
                   </div>
                 </a>
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                  <Linkedin className="w-5 h-5 text-gray-400" />
+                  <LinkedinIcon className="w-5 h-5 text-gray-400" />
                 </div>
               )}
               
@@ -145,13 +153,13 @@ const TeamMemberModal = ({
                     social_platform: 'email'
                   })}
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary-green flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-primary-green/25 group-hover:-translate-y-0.5">
-                    <Mail className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full bg-primary-green flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-primary-green/25 group-hover:-translate-y-0.5">
+            <MailIcon className="w-5 h-5 text-white" />
                   </div>
                 </a>
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-gray-400" />
+                  <MailIcon className="w-5 h-5 text-gray-400" />
                 </div>
               )}
             </div>
@@ -209,7 +217,7 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
                     aria-label="View team member details"
                     className="w-7 h-7 bg-primary-orange rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:bg-primary-green"
                 >
-                  <ArrowUpRight className="w-3.5 h-3.5 text-white transform transition-transform group-hover:rotate-45" strokeWidth={2} />
+                  <ArrowUpRightIcon className="w-3.5 h-3.5 text-white transform transition-transform group-hover:rotate-45" strokeWidth={2} />
                 </button>
               </div>
             </div>
@@ -303,7 +311,7 @@ const normalizeTeamTypeName = (name: string): string => {
   return name.trim().toLowerCase() || '';
 };
 
-const TeamPage: React.FC = () => {
+const TeamPage = (): JSX.Element => {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('advisory board'); // Changed default to 'advisory board'
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -471,7 +479,7 @@ const TeamPage: React.FC = () => {
               {/* Logo section with white background cut-out */}
               <div className="relative bg-white p-4 -ml-4 rounded-br-3xl">
                 <div className="flex items-center">
-                  <Leaf className="h-8 w-8 text-emerald-600" />
+                  <LeafIcon className="h-8 w-8 text-emerald-600" />
                   <span className="ml-2 text-xl font-bold text-emerald-600">GanzAfrica</span>
                 </div>
               </div>
@@ -567,19 +575,7 @@ const TeamPage: React.FC = () => {
         />
       )}
 
-      <style jsx global>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-marquee {
-          animation: marquee 15s linear infinite;
-        }
-      `}</style>
+      
     </main>
   );
 };

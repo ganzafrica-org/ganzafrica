@@ -10,6 +10,15 @@ import { Textarea } from '@workspace/ui/components/textarea';
 import { useRouter } from 'next/navigation';
 import apiClient from "@/lib/api-client";
 
+// Normalize lucide icon component types across React versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const CheckCircle2Icon = CheckCircle2 as unknown as SvgIconComponent;
+const ChevronDownIcon = ChevronDown as unknown as SvgIconComponent;
+const UploadIcon = Upload as unknown as SvgIconComponent;
+const FileTextIcon = FileText as unknown as SvgIconComponent;
+const ChevronLeftIcon = ChevronLeft as unknown as SvgIconComponent;
+const ChevronRightIcon = ChevronRight as unknown as SvgIconComponent;
+
 // Country type and data
 type Country = {
   code: string;
@@ -383,7 +392,7 @@ export default function FellowshipApplyPage() {
               }`}
             >
               {index < currentStep ? (
-                <CheckCircle2 className="w-6 h-6" />
+                <CheckCircle2Icon className="w-6 h-6" />
               ) : (
                 index + 1
               )}
@@ -448,17 +457,17 @@ export default function FellowshipApplyPage() {
               className="flex items-center justify-center gap-6 text-white/90"
             >
               <div className="flex items-center">
-                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                <CheckCircle2Icon className="w-5 h-5 mr-2 text-[#FDB022]" />
                 <span>6-month program</span>
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
               <div className="flex items-center">
-                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                <CheckCircle2Icon className="w-5 h-5 mr-2 text-[#FDB022]" />
                 <span>Expert mentorship</span>
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-[#FDB022]"></div>
               <div className="flex items-center">
-                <CheckCircle2 className="w-5 h-5 mr-2 text-[#FDB022]" />
+                <CheckCircle2Icon className="w-5 h-5 mr-2 text-[#FDB022]" />
                 <span>Project-based learning</span>
               </div>
             </motion.div>
@@ -550,7 +559,7 @@ export default function FellowshipApplyPage() {
                           className="absolute inset-y-0 left-0 flex items-center pl-3 pr-2 border-r border-gray-300"
                         >
                           <span className="text-lg mr-1">{formData.selectedCountry.flag}</span>
-                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                          <ChevronDownIcon className="w-4 h-4 text-gray-500" />
                         </button>
                         <input
                           type="tel"
@@ -711,12 +720,12 @@ export default function FellowshipApplyPage() {
                           htmlFor="cv"
                           className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
                         >
-                         <Upload className="w-5 h-5 mr-2 text-gray-500" />
+                         <UploadIcon className="w-5 h-5 mr-2 text-gray-500" />
                           <span className="text-sm text-gray-700">Choose CV</span>
                         </label>
                         {formData.cv && (
                           <div className="flex items-center text-sm text-green-600">
-                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            <CheckCircle2Icon className="w-4 h-4 mr-1" />
                             <span>CV uploaded</span>
                           </div>
                         )}
@@ -741,12 +750,12 @@ export default function FellowshipApplyPage() {
                           htmlFor="supportingDocs"
                           className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
                         >
-                          <FileText className="w-5 h-5 mr-2 text-gray-500" />
+                          <FileTextIcon className="w-5 h-5 mr-2 text-gray-500" />
                           <span className="text-sm text-gray-700">Choose Documents</span>
                         </label>
                         {formData.supportingDocs && (
                           <div className="flex items-center text-sm text-green-600">
-                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            <CheckCircle2Icon className="w-4 h-4 mr-1" />
                             <span>Documents uploaded</span>
                           </div>
                         )}
@@ -915,7 +924,7 @@ export default function FellowshipApplyPage() {
                 }`}
                 disabled={currentStep === 0}
               >
-                <ChevronLeft className="w-5 h-5 mr-2" />
+                <ChevronLeftIcon className="w-5 h-5 mr-2" />
                 Previous
               </button>
 
@@ -943,7 +952,7 @@ export default function FellowshipApplyPage() {
                   className="flex items-center px-8 py-3 text-sm font-medium rounded-full bg-[#005c3d] text-[#fef597] hover:bg-[#009758] transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
                 >
                   Next
-                  <ChevronRight className="w-5 h-5 ml-2" />
+                  <ChevronRightIcon className="w-5 h-5 ml-2" />
                 </button>
               )}
             </div>

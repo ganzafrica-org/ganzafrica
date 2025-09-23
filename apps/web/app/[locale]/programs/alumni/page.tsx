@@ -20,9 +20,22 @@ import { motion } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { trackEvent, trackVideoEvent, trackPageView } from "@/components/analytics/google-analytics";
 
+// Normalize Next.js Link typing across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+
+// Normalize lucide icon component types across React versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const UsersIcon = Users as unknown as SvgIconComponent;
+const CheckCircle2Icon = CheckCircle2 as unknown as SvgIconComponent;
+const BriefcaseIcon = Briefcase as unknown as SvgIconComponent;
+const ArrowRightIcon = ArrowRight as unknown as SvgIconComponent;
+const TreePineIcon = TreePine as unknown as SvgIconComponent;
+const SproutIcon = Sprout as unknown as SvgIconComponent;
+const CloudIcon = Cloud as unknown as SvgIconComponent;
 
 
-export default function Home() {
+export default function Home(): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [animateFirst, setAnimateFirst] = useState(false);
   const [animateSecond, setAnimateSecond] = useState(false);
@@ -272,25 +285,25 @@ export default function Home() {
                 title: "Networking and Professional Development",
                 description: "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
                 color: "#073392",
-                icon: <Users className="w-8 h-8" />
+                icon: <UsersIcon className="w-8 h-8" />
               },
               {
                 title: "Knowledge Sharing & Data and Evidence Use",
                 description: "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
                 color: "#045f3c",
-                icon: <CheckCircle2 className="w-8 h-8" />
+                icon: <CheckCircle2Icon className="w-8 h-8" />
               },
               {
                 title: "Investing Back into the Fellowship Program",
                 description: "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
                 color: "#F8B712",
-                icon: <Briefcase className="w-8 h-8" />
+                icon: <BriefcaseIcon className="w-8 h-8" />
               },
               {
                 title: "Co-creating and Co-implementing Solutions",
                 description: "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
                 color: "#F97316",
-                icon: <ArrowRight className="w-8 h-8" />
+                icon: <ArrowRightIcon className="w-8 h-8" />
               }
             ].map((item, index) => (
               <div key={index} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
@@ -330,21 +343,21 @@ export default function Home() {
                 {
                   title: "Land Governance",
                   description: "Equitable land administration systems that strengthen tenure security and promote sustainable use",
-                  icon: <TreePine className="w-12 h-12" />,
+                  icon: <TreePineIcon className="w-12 h-12" />,
                   color: "#073392",
                   lightColor: "#e8f0ff"
                 },
                 {
                   title: "Sustainable Agriculture",
                   description: "Agricultural policies balancing productivity with environmental stewardship and social inclusion",
-                  icon: <Sprout className="w-12 h-12" />,
+                  icon: <SproutIcon className="w-12 h-12" />,
                   color: "#005c3d",
                   lightColor: "#e8f5f0"
                 },
                 {
                   title: "Climate Adaptation",
                   description: "Climate resilience strategies helping communities adapt to changing environmental conditions",
-                  icon: <Cloud className="w-12 h-12" />,
+                  icon: <CloudIcon className="w-12 h-12" />,
                   color: "#f8b712",
                   lightColor: "#fff8e1"
                 }
@@ -393,7 +406,7 @@ export default function Home() {
           <div className="flex justify-end mt-12">
             <button className="group relative inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#045f3c] text-[#045f3c] rounded-full hover:bg-[#045f3c] hover:text-white transition-all duration-300 font-medium text-sm shadow-md hover:shadow-lg">
               <span>View All Projects</span>
-              <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+              <ArrowRightIcon className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               
               {/* Creative hover effect */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#073392] via-[#005c3d] to-[#f8b712] opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -435,7 +448,7 @@ export default function Home() {
                 image: "/images/Sustainable Land Use Fellows.jpg"
               }
             ].map((eventItem) => (
-              <Link
+              <SafeLink
                 key={eventItem.id}
                 href={``}
                 onClick={() => trackEvent('alumni_event_click', {
@@ -499,17 +512,17 @@ export default function Home() {
                       <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
                         View Event
                       </span>
-                      <ArrowRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+                      <ArrowRightIcon className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
                 </motion.div>
-              </Link>
+              </SafeLink>
             ))}
           </div>
         </div>
 
         {/* Card styles aligned with Latest News */}
-        <style jsx global>{`
+        <style>{`
           .news-card {
             position: relative;
             border-radius: 24px;

@@ -24,6 +24,10 @@ import {
 import { useParams } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 
+// Normalize Next.js Link typing across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+
 // Define TypeScript interfaces for our data structures
 interface Media {
   id: string;
@@ -123,7 +127,23 @@ interface User {
   last_name?: string;
 }
 
-const ProjectDetailsPage = () => {
+// Normalize lucide icon component types across React versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const AwardIcon = Award as unknown as SvgIconComponent;
+const CheckCircleIcon = CheckCircle as unknown as SvgIconComponent;
+const ClockIcon = Clock as unknown as SvgIconComponent;
+const AlertCircleIcon = AlertCircle as unknown as SvgIconComponent;
+const ArrowLeftIcon = ArrowLeft as unknown as SvgIconComponent;
+const ImageIconIcon = ImageIcon as unknown as SvgIconComponent;
+const CalendarIcon = Calendar as unknown as SvgIconComponent;
+const MapPinIcon = MapPin as unknown as SvgIconComponent;
+const TagIcon = Tag as unknown as SvgIconComponent;
+const TargetIcon = Target as unknown as SvgIconComponent;
+const FilmIcon = Film as unknown as SvgIconComponent;
+const FileTextIcon = FileText as unknown as SvgIconComponent;
+const BuildingIcon = Building as unknown as SvgIconComponent;
+
+const ProjectDetailsPage = (): JSX.Element => {
   const params = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -356,21 +376,21 @@ const ProjectDetailsPage = () => {
       case 'completed':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
-            <Award className="w-3 h-3 mr-1 flex-shrink-0" />
+            <AwardIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Completed</span>
           </span>
         );
       case 'planned':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap">
-            <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+            <ClockIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Planned</span>
           </span>
         );
       case 'active':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
-            <CheckCircle className="w-3 h-3 mr-1 flex-shrink-0" />
+            <CheckCircleIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Active</span>
           </span>
         );
@@ -498,13 +518,13 @@ const ProjectDetailsPage = () => {
       <div className="p-6 max-w-full">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
           <div className="flex">
-            <AlertCircle className="h-5 w-5 mr-2" />
+            <AlertCircleIcon className="h-5 w-5 mr-2" />
             <span>{error}</span>
           </div>
           <div className="mt-4">
-            <Link href="/projects" className="text-red-700 font-medium hover:underline flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Projects
-            </Link>
+            <SafeLink href="/projects" className="text-red-700 font-medium hover:underline flex items-center">
+              <ArrowLeftIcon className="w-4 h-4 mr-1" /> Back to Projects
+            </SafeLink>
           </div>
         </div>
       </div>
@@ -522,13 +542,13 @@ const ProjectDetailsPage = () => {
       <div className="p-6 max-w-full">
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative" role="alert">
           <div className="flex">
-            <AlertCircle className="h-5 w-5 mr-2" />
+            <AlertCircleIcon className="h-5 w-5 mr-2" />
             <span>Project not found</span>
           </div>
           <div className="mt-4">
-            <Link href="/projects" className="text-yellow-700 font-medium hover:underline flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Projects
-            </Link>
+            <SafeLink href="/projects" className="text-yellow-700 font-medium hover:underline flex items-center">
+              <ArrowLeftIcon className="w-4 h-4 mr-1" /> Back to Projects
+            </SafeLink>
           </div>
         </div>
       </div>
@@ -565,7 +585,7 @@ const ProjectDetailsPage = () => {
           <div className="w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
             <div className="text-center">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-800 flex items-center justify-center">
-                <ImageIcon className="w-12 h-12 text-gray-600" />
+                <ImageIconIcon className="w-12 h-12 text-gray-600" />
               </div>
               <p className="text-gray-400 text-lg">No featured image available</p>
             </div>
@@ -576,15 +596,15 @@ const ProjectDetailsPage = () => {
         <div className="absolute inset-0 flex items-end">
           <div className="container mx-auto px-4 pb-20">
             <div className="max-w-4xl">
-              <Link
+              <SafeLink
                 href="/projects"
                 className="inline-flex items-center text-white/80 hover:text-white transition-all duration-300 mb-12 group"
               >
-                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                <ArrowLeftIcon className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                 <span className="relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
                   Back to Projects
                 </span>
-              </Link>
+              </SafeLink>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight break-words">
                 {project.name}
@@ -593,19 +613,19 @@ const ProjectDetailsPage = () => {
               <div className="flex flex-wrap gap-4 text-white/90 mb-12 overflow-hidden max-w-full">
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                     <span className="truncate">{formatDate(project.start_date)} - {formatDate(project.end_date)}</span>
                   </span>
                 </div>
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <MapPinIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                     <span className="truncate">{project.location || 'Not specified'}</span>
                   </span>
                 </div>
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <TagIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                     <span className="truncate">{getCategoryName(project.category_id)}</span>
                   </span>
                 </div>
@@ -654,11 +674,11 @@ const ProjectDetailsPage = () => {
                       <div className="flex items-center gap-4 mb-4">
                         {goal.completed ? (
                           <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                            <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
                           </div>
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <Target className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                            <TargetIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                           </div>
                         )}
                         <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{goal.title}</h3>
@@ -697,7 +717,7 @@ const ProjectDetailsPage = () => {
                             ? 'bg-[#FDB022]/10 dark:bg-[#FDB022]/20'
                             : 'bg-[#045F3C]/10 dark:bg-[#045F3C]/20'
                         }`}>
-                          <Award className={`w-8 h-8 ${
+                          <AwardIcon className={`w-8 h-8 ${
                             outcome.status === 'achieved' 
                               ? 'text-[#045F3C] dark:text-[#045F3C]/80' 
                               : outcome.status === 'in_progress' || outcome.status === 'in-progress'
@@ -794,10 +814,10 @@ const ProjectDetailsPage = () => {
                       </div>
                     ) : (
                       <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <ImageIcon className="w-16 h-16 text-gray-400" />
+                        <ImageIconIcon className="w-16 h-16 text-gray-400" />
                       </div>
                     )}
-                    {galleryMedia[activeImageIndex]?.type === 'video' && (
+                    {galleryMedia.length > 0 && activeImageIndex >= 0 && activeImageIndex < galleryMedia.length && galleryMedia[activeImageIndex] && galleryMedia[activeImageIndex]!.type === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <button 
                           className="w-20 h-20 text-primary-orange rounded-full flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 hover:scale-110 transform hover:shadow-xl"
@@ -808,9 +828,9 @@ const ProjectDetailsPage = () => {
                         </button>
                       </div>
                     )}
-                    {galleryMedia[activeImageIndex]?.caption && (
+                    {galleryMedia.length > 0 && activeImageIndex >= 0 && activeImageIndex < galleryMedia.length && galleryMedia[activeImageIndex] && galleryMedia[activeImageIndex]!.caption && (
                       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent translate-y-4 transition-transform duration-300 group-hover:translate-y-0">
-                        <p className="text-white text-lg">{galleryMedia[activeImageIndex].caption}</p>
+                        <p className="text-white text-lg">{galleryMedia[activeImageIndex]!.caption}</p>
                       </div>
                     )}
                   </div>
@@ -845,12 +865,12 @@ const ProjectDetailsPage = () => {
                         ) : item.type === 'video' ? (
                           <div className="relative w-full h-full bg-gray-200 dark:bg-gray-700">
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <Film className="w-10 h-10 text-gray-400" />
+                              <FilmIcon className="w-10 h-10 text-gray-400" />
                             </div>
                           </div>
                         ) : (
                           <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <FileText className="w-8 h-8 text-gray-400" />
+                              <FileTextIcon className="w-8 h-8 text-gray-400" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
@@ -1021,7 +1041,7 @@ const ProjectDetailsPage = () => {
                                 }}
                               />
                             ) : (
-                              <Building className="w-10 h-10 text-gray-400" />
+                              <BuildingIcon className="w-10 h-10 text-gray-400" />
                             )}
                           </div>
                           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{partnerName}</p>

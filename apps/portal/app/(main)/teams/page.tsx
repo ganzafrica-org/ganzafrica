@@ -199,21 +199,27 @@ const TeamsPage = () => {
   // Fetch tab counts
   const fetchTabCounts = async () => {
     try {
-      // Fetch all teams with limit=0 just to get count
+      // Fetch all teams to get accurate counts - use a high limit to get all teams
       const response = await apiClient.get('/teams', { 
-        params: { limit: 0 } 
+        params: { limit: 1000, page: 1 } // Get up to 1000 teams to count properly
       });
       
-      // Get the total count from the response
+      // Get the total count from the response pagination
       const allCount = parseInt(response.data.pagination?.total) || 0;
       
-      // Prepare counts object
+      // Prepare counts object starting with the total count for 'all'
       const countsByType: Record<string, number> = {
         all: allCount
       };
       
+      // If we have teams data, count by team type
       if (response.data.teams && Array.isArray(response.data.teams)) {
-        // Group teams by team_type.id
+        // Initialize counts for all team types to 0
+        teamTypes.forEach(type => {
+          countsByType[String(type.id)] = 0;
+        });
+        
+        // Count teams by team_type.id
         response.data.teams.forEach((team: any) => {
           const typeId = team.team_type?.id;
           if (typeId) {
@@ -291,13 +297,17 @@ const TeamsPage = () => {
           setTotalTeams(parseInt(pagination.total) || 0);
           setTotalPages(pagination.pages || 1);
           
-          // If we're not already tracking tab counts, also use this response to update counts
-          if (!tabCountsLoaded && response.data.teams) {
-            fetchTabCounts();
+          // Update tab counts with the total from this response
+          if (!tabCountsLoaded) {
+            // Update the 'all' count with the current total
+            setTabCounts(prev => ({
+              ...prev,
+              all: parseInt(pagination.total) || 0
+            }));
           }
         }
         
-        // If we're not already tracking tab counts, use this response to update counts
+        // Fetch detailed tab counts if not already loaded
         if (!tabCountsLoaded) {
           fetchTabCounts();
         }
@@ -311,7 +321,7 @@ const TeamsPage = () => {
     };
     
     fetchTeams();
-  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, teamTypes]);
 
   // Helpers for local ordering
   const getOrderStorageKey = (): string => {

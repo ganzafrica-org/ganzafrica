@@ -11,6 +11,18 @@ import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import Link from 'next/link';
 import { trackEvent, trackPageView } from '@/components/analytics/google-analytics';
 
+// Normalize Next.js Link typing across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+
+// Normalize lucide icon component types across React versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const ArrowRightIcon = ArrowRight as unknown as SvgIconComponent;
+const Users2Icon = Users2 as unknown as SvgIconComponent;
+const BlocksIcon = Blocks as unknown as SvgIconComponent;
+const BriefcaseIcon = Briefcase as unknown as SvgIconComponent;
+const UsersIcon = Users as unknown as SvgIconComponent;
+
 
 const applicationSteps = [
   {
@@ -230,7 +242,7 @@ const FloatingApplyButton = () => {
             opacity: { duration: 0.15 } // Faster fade out
           }}
         >
-          <Link href={`/${params.locale}/programs/fellowship/apply`} onClick={() => trackEvent('apply_now_click', {
+          <SafeLink href={`/${params.locale}/programs/fellowship/apply`} onClick={() => trackEvent('apply_now_click', {
             source_page: 'how_to_apply',
             location: 'button',
             application_type: 'fellowship'
@@ -242,9 +254,9 @@ const FloatingApplyButton = () => {
               }}
             >
               Apply Now
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRightIcon className="w-5 h-5" />
             </Button>
-          </Link>
+          </SafeLink>
         </motion.div>
       )}
     </AnimatePresence>
@@ -423,7 +435,7 @@ export default function HowToApplyPage() {
                       whileInView={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.4 }}
                   >
-                    <Users2 className="w-14 h-14 text-white" />
+                    <Users2Icon className="w-14 h-14 text-white" />
                   </motion.div>
                 </motion.div>
 
@@ -448,7 +460,7 @@ export default function HowToApplyPage() {
                       whileInView={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.7 }}
                   >
-                    <Blocks className="w-14 h-14 text-white" />
+                    <BlocksIcon className="w-14 h-14 text-white" />
                   </motion.div>
                 </motion.div>
 
@@ -473,7 +485,7 @@ export default function HowToApplyPage() {
                       whileInView={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20, delay: 1 }}
                   >
-                    <Briefcase className="w-14 h-14 text-white" />
+                    <BriefcaseIcon className="w-14 h-14 text-white" />
                   </motion.div>
                 </motion.div>
 
@@ -498,7 +510,7 @@ export default function HowToApplyPage() {
                       whileInView={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20, delay: 1.3 }}
                   >
-                    <Users className="w-14 h-14 text-white" />
+                    <UsersIcon className="w-14 h-14 text-white" />
                   </motion.div>
                 </motion.div>
 
@@ -531,7 +543,7 @@ export default function HowToApplyPage() {
             opacity: { duration: 0.5 }
           }}
         >
-          <Link href={`/${params.locale}/programs/fellowship/apply`} onClick={() => trackEvent('apply_now_click', {
+          <SafeLink href={`/${params.locale}/programs/fellowship/apply`} onClick={() => trackEvent('apply_now_click', {
             source_page: 'how_to_apply',
             location: 'button',
             application_type: 'fellowship'
@@ -543,9 +555,9 @@ export default function HowToApplyPage() {
               }}
             >
               Apply Now
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRightIcon className="w-5 h-5" />
             </Button>
-          </Link>
+          </SafeLink>
         </motion.div>
       </AnimatePresence>
     </div>

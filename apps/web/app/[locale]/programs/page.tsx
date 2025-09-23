@@ -1,15 +1,9 @@
 import { getDictionary } from "@/lib/get-dictionary";
 
 export default async function ProgramsPage(
-  props: {
-    params: Promise<{ locale: string }>;
-  }
-) {
-  const params = await props.params;
-
-  const {
-    locale
-  } = params;
+  { params }: { params: { locale: string } }
+): Promise<JSX.Element> {
+  const locale = params.locale;
 
   const dict = await getDictionary(locale);
 

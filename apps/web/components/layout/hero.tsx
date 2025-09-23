@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+
 import Image from "next/image";
 
 interface HeroProps {
@@ -6,7 +7,7 @@ interface HeroProps {
   imageAlt: string;
 }
 
-const Hero: React.FC<HeroProps> = ({ imageSrc, imageAlt }) => {
+export default function Hero({ imageSrc, imageAlt }: HeroProps): JSX.Element {
   return (
     <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
       {/* Background Image */}
@@ -38,6 +39,4 @@ const Hero: React.FC<HeroProps> = ({ imageSrc, imageAlt }) => {
       </div>
     </section>
   );
-};
-
-export default Hero;
+}

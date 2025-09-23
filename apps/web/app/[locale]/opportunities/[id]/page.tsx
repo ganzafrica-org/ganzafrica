@@ -26,6 +26,32 @@ import {
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 
+// Normalize Next.js Link typing across React type versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+
+// Normalize lucide icon component types across React type versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const ArrowLeftIcon = ArrowLeft as unknown as SvgIconComponent;
+const CalendarIcon = Calendar as unknown as SvgIconComponent;
+const MapPinIcon = MapPin as unknown as SvgIconComponent;
+const UserIcon = User as unknown as SvgIconComponent;
+const TagIcon = Tag as unknown as SvgIconComponent;
+const ClockIcon = Clock as unknown as SvgIconComponent;
+const GraduationCapIcon = GraduationCap as unknown as SvgIconComponent;
+const GlobeIcon = Globe as unknown as SvgIconComponent;
+const BriefcaseIcon = Briefcase as unknown as SvgIconComponent;
+const CodeIcon = Code as unknown as SvgIconComponent;
+const ListChecksIcon = ListChecks as unknown as SvgIconComponent;
+const AlertCircleIcon = AlertCircle as unknown as SvgIconComponent;
+const FileTextIcon = FileText as unknown as SvgIconComponent;
+const CheckCircleIcon = CheckCircle as unknown as SvgIconComponent;
+const BookIcon = Book as unknown as SvgIconComponent;
+const UsersIcon = Users as unknown as SvgIconComponent;
+const LaptopIcon = Laptop as unknown as SvgIconComponent;
+const AwardIcon = Award as unknown as SvgIconComponent;
+const TargetIcon = Target as unknown as SvgIconComponent;
+
 const OpportunityDetailsPage = () => {
   const params = useParams();
 
@@ -164,28 +190,28 @@ const OpportunityDetailsPage = () => {
       case 'published':
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
-            <CheckCircle className="w-3 h-3 mr-1 flex-shrink-0" />
+            <CheckCircleIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Published</span>
           </span>
         );
       case 'draft':
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
-            <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+            <ClockIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Draft</span>
           </span>
         );
       case 'archived':
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
-            <Book className="w-3 h-3 mr-1 flex-shrink-0" />
+            <BookIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Archived</span>
           </span>
         );
       case 'closed':
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 whitespace-nowrap">
-            <Award className="w-3 h-3 mr-1 flex-shrink-0" />
+            <AwardIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Closed</span>
           </span>
         );
@@ -210,13 +236,13 @@ const OpportunityDetailsPage = () => {
       <div className="p-6 max-w-full">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
           <div className="flex">
-            <AlertCircle className="h-5 w-5 mr-2" />
+            <AlertCircleIcon className="h-5 w-5 mr-2" />
             <span>{error}</span>
           </div>
           <div className="mt-4">
-            <Link href="/opportunities" className="text-red-700 font-medium hover:underline flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Opportunities
-            </Link>
+            <SafeLink href="/opportunities" className="text-red-700 font-medium hover:underline flex items-center">
+              <ArrowLeftIcon className="w-4 h-4 mr-1" /> Back to Opportunities
+            </SafeLink>
           </div>
         </div>
       </div>
@@ -231,13 +257,13 @@ const OpportunityDetailsPage = () => {
       <div className="p-6 max-w-full">
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative" role="alert">
           <div className="flex">
-            <AlertCircle className="h-5 w-5 mr-2" />
+            <AlertCircleIcon className="h-5 w-5 mr-2" />
             <span>Opportunity not found</span>
           </div>
           <div className="mt-4">
-            <Link href="/opportunities" className="text-yellow-700 font-medium hover:underline flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Opportunities
-            </Link>
+            <SafeLink href="/opportunities" className="text-yellow-700 font-medium hover:underline flex items-center">
+              <ArrowLeftIcon className="w-4 h-4 mr-1" /> Back to Opportunities
+            </SafeLink>
           </div>
         </div>
       </div>
@@ -251,14 +277,14 @@ const OpportunityDetailsPage = () => {
         <div className="w-full h-full bg-gradient-to-br from-green-900 via-green-800 to-green-900 flex items-center justify-center">
           <div className="text-center">
             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-800 flex items-center justify-center">
-              {opportunity.type === 'fellowship' && <GraduationCap className="w-10 h-10 text-green-200" />}
-              {opportunity.type === 'scholarship' && <Book className="w-10 h-10 text-green-200" />}
-              {opportunity.type === 'grant' && <Award className="w-10 h-10 text-green-200" />}
-              {opportunity.type === 'internship' && <Briefcase className="w-10 h-10 text-green-200" />}
-              {opportunity.type === 'program' && <Users className="w-10 h-10 text-green-200" />}
-              {opportunity.type === 'workshop' && <Target className="w-10 h-10 text-green-200" />}
-              {opportunity.type === 'competition' && <Award className="w-10 h-10 text-green-200" />}
-              {(!opportunity.type || !(opportunity.type in opportunityTypes)) && <FileText className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'fellowship' && <GraduationCapIcon className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'scholarship' && <BookIcon className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'grant' && <AwardIcon className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'internship' && <BriefcaseIcon className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'program' && <UsersIcon className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'workshop' && <TargetIcon className="w-10 h-10 text-green-200" />}
+              {opportunity.type === 'competition' && <AwardIcon className="w-10 h-10 text-green-200" />}
+              {(!opportunity.type || !(opportunity.type in opportunityTypes)) && <FileTextIcon className="w-10 h-10 text-green-200" />}
             </div>
           </div>
         </div>
@@ -267,15 +293,15 @@ const OpportunityDetailsPage = () => {
         <div className="absolute inset-0 flex items-end">
           <div className="container mx-auto px-4 pb-12">
             <div className="max-w-4xl">
-              <Link
+              <SafeLink
                 href="/opportunities"
                 className="inline-flex items-center text-white/80 hover:text-white transition-all duration-300 mb-6 group"
               >
-                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                <ArrowLeftIcon className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                 <span className="relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
                   Back to Opportunities
                 </span>
-              </Link>
+              </SafeLink>
               
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 leading-tight break-words">
                 {opportunity.title}
@@ -284,21 +310,21 @@ const OpportunityDetailsPage = () => {
               <div className="flex flex-wrap gap-4 text-white/90 mb-8 overflow-hidden max-w-full">
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
                     <span className="truncate">Deadline: {formatDate(opportunity.application_deadline)}</span>
                   </span>
                 </div>
                 {opportunity.location && (
                   <div className="overflow-x-auto">
                     <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                      <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <MapPinIcon className="w-4 h-4 mr-2 flex-shrink-0" />
                       <span className="truncate">{opportunity.location}</span>
                     </span>
                   </div>
                 )}
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <Tag className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <TagIcon className="w-4 h-4 mr-2 flex-shrink-0" />
                     <span className="truncate">{opportunityTypes[opportunity.type] || opportunity.type}</span>
                   </span>
                 </div>
@@ -342,7 +368,7 @@ const OpportunityDetailsPage = () => {
                   {/* Education level */}
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-3">
-                      <GraduationCap className="w-5 h-5 text-green-700 mr-2" />
+                      <GraduationCapIcon className="w-5 h-5 text-green-700 mr-2" />
                       <h3 className="font-medium">Minimum Education Required</h3>
                     </div>
                     <p className="ml-7">{opportunity.eligibility_criteria.min_education_level || 'No specific education requirements'}</p>
@@ -351,7 +377,7 @@ const OpportunityDetailsPage = () => {
                   {/* Experience */}
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-3">
-                      <Briefcase className="w-5 h-5 text-green-700 mr-2" />
+                      <BriefcaseIcon className="w-5 h-5 text-green-700 mr-2" />
                       <h3 className="font-medium">Experience Required</h3>
                     </div>
                     <p className="ml-7">
@@ -365,7 +391,7 @@ const OpportunityDetailsPage = () => {
                   {opportunity.eligibility_criteria.countries && opportunity.eligibility_criteria.countries.length > 0 && (
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-3">
-                        <Globe className="w-5 h-5 text-green-700 mr-2" />
+                        <GlobeIcon className="w-5 h-5 text-green-700 mr-2" />
                         <h3 className="font-medium">Eligible Countries</h3>
                       </div>
                       <div className="ml-7">
@@ -384,7 +410,7 @@ const OpportunityDetailsPage = () => {
                   {opportunity.eligibility_criteria.skills_required && opportunity.eligibility_criteria.skills_required.length > 0 && (
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-3">
-                        <Code className="w-5 h-5 text-green-700 mr-2" />
+                        <CodeIcon className="w-5 h-5 text-green-700 mr-2" />
                         <h3 className="font-medium">Required Skills</h3>
                       </div>
                       <div className="ml-7">
@@ -403,7 +429,7 @@ const OpportunityDetailsPage = () => {
                   {opportunity.eligibility_criteria.other_requirements && opportunity.eligibility_criteria.other_requirements.length > 0 && (
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-3">
-                        <ListChecks className="w-5 h-5 text-green-700 mr-2" />
+                        <ListChecksIcon className="w-5 h-5 text-green-700 mr-2" />
                         <h3 className="font-medium">Other Requirements</h3>
                       </div>
                       <ul className="ml-7 list-disc pl-5 space-y-1">
@@ -471,7 +497,7 @@ const OpportunityDetailsPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {opportunity.fellowship_details.program_structure.activities.map((activity, index) => (
                             <div key={index} className="flex items-center">
-                              <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                              <CheckCircleIcon className="w-5 h-5 text-green-600 mr-2" />
                               <span>{activity}</span>
                             </div>
                           ))}
@@ -541,12 +567,12 @@ const OpportunityDetailsPage = () => {
             {/* Action Button */}
             <div className="sticky top-4">
               <div className="bg-white p-6 rounded-lg border border-gray-200 mb-8">
-              <Link 
+              <SafeLink 
   href={`${opportunity.id}/apply`} 
   className="w-full block text-center px-4 py-3 bg-green-700 rounded-lg text-sm font-medium text-white hover:bg-green-800 transition-colors"
 >
   Apply to Opportunity
-</Link>
+</SafeLink>
               </div>
 
               {/* Basic Information */}
@@ -558,7 +584,7 @@ const OpportunityDetailsPage = () => {
                 <div className="space-y-4 w-full overflow-hidden bg-white rounded-lg border border-gray-200 p-6">
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
-                      <Tag className="w-4 h-4 text-gray-500 mr-2" />
+                      <TagIcon className="w-4 h-4 text-gray-500 mr-2" />
                       <span className="text-sm text-gray-500">Type</span>
                     </div>
                     <p className="font-medium capitalize">{opportunityTypes[opportunity.type] || opportunity.type}</p>
@@ -566,7 +592,7 @@ const OpportunityDetailsPage = () => {
                   
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
-                      <Tag className="w-4 h-4 text-gray-500 mr-2" />
+                      <TagIcon className="w-4 h-4 text-gray-500 mr-2" />
                       <span className="text-sm text-gray-500">Category</span>
                     </div>
                     <p className="font-medium">{getCategoryName(opportunity.category_id)}</p>
@@ -574,7 +600,7 @@ const OpportunityDetailsPage = () => {
                   
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
-                      <MapPin className="w-4 h-4 text-gray-500 mr-2" />
+                      <MapPinIcon className="w-4 h-4 text-gray-500 mr-2" />
                       <span className="text-sm text-gray-500">Location</span>
                     </div>
                     <p className="font-medium">{opportunity.location || 'Not specified'}</p>
@@ -582,7 +608,7 @@ const OpportunityDetailsPage = () => {
                   
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
-                      <Laptop className="w-4 h-4 text-gray-500 mr-2" />
+                      <LaptopIcon className="w-4 h-4 text-gray-500 mr-2" />
                       <span className="text-sm text-gray-500">Location Type</span>
                     </div>
                     <p className="font-medium capitalize">{opportunity.location_type || 'Not specified'}</p>
@@ -590,7 +616,7 @@ const OpportunityDetailsPage = () => {
                   
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
-                      <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                      <CalendarIcon className="w-4 h-4 text-gray-500 mr-2" />
                       <span className="text-sm text-gray-500">Application Deadline</span>
                     </div>
                     <p className="font-medium">{formatDate(opportunity.application_deadline)}</p>
@@ -598,7 +624,7 @@ const OpportunityDetailsPage = () => {
                   
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
-                      <Clock className="w-4 h-4 text-gray-500 mr-2" />
+                      <ClockIcon className="w-4 h-4 text-gray-500 mr-2" />
                       <span className="text-sm text-gray-500">Status</span>
                     </div>
                     <p className="font-medium capitalize">{opportunity.status || 'Draft'}</p>
@@ -616,7 +642,7 @@ const OpportunityDetailsPage = () => {
                   <div className="space-y-4 w-full overflow-hidden bg-white rounded-lg border border-gray-200 p-6">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-2">
-                        <GraduationCap className="w-4 h-4 text-gray-500 mr-2" />
+                        <GraduationCapIcon className="w-4 h-4 text-gray-500 mr-2" />
                         <span className="text-sm text-gray-500">Program Name</span>
                       </div>
                       <p className="font-medium">{opportunity.fellowship_details.program_name || 'Not specified'}</p>
@@ -624,7 +650,7 @@ const OpportunityDetailsPage = () => {
                     
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-2">
-                        <Users className="w-4 h-4 text-gray-500 mr-2" />
+                        <UsersIcon className="w-4 h-4 text-gray-500 mr-2" />
                         <span className="text-sm text-gray-500">Cohort</span>
                       </div>
                       <p className="font-medium">{opportunity.fellowship_details.cohort || 'Not specified'}</p>
@@ -632,7 +658,7 @@ const OpportunityDetailsPage = () => {
                     
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-2">
-                        <Book className="w-4 h-4 text-gray-500 mr-2" />
+                        <BookIcon className="w-4 h-4 text-gray-500 mr-2" />
                         <span className="text-sm text-gray-500">Fellowship Type</span>
                       </div>
                       <p className="font-medium capitalize">{opportunity.fellowship_details.fellowship_type || 'Not specified'}</p>
@@ -641,7 +667,7 @@ const OpportunityDetailsPage = () => {
                     {opportunity.fellowship_details.duration && (
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center mb-2">
-                          <Clock className="w-4 h-4 text-gray-500 mr-2" />
+                          <ClockIcon className="w-4 h-4 text-gray-500 mr-2" />
                           <span className="text-sm text-gray-500">Duration</span>
                         </div>
                         <p className="font-medium">{opportunity.fellowship_details.duration || 'Not specified'}</p>
@@ -651,7 +677,7 @@ const OpportunityDetailsPage = () => {
                     {opportunity.fellowship_details.start_date && (
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center mb-2">
-                          <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                          <CalendarIcon className="w-4 h-4 text-gray-500 mr-2" />
                           <span className="text-sm text-gray-500">Start Date</span>
                         </div>
                         <p className="font-medium">{formatDate(opportunity.fellowship_details.start_date)}</p>

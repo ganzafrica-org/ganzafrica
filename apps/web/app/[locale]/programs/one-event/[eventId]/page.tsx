@@ -128,7 +128,11 @@ const eventData = {
   }
 };
 
-export default function EventPage() {
+// Normalize Next.js Link typing across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+
+export default function EventPage(): JSX.Element {
   const params = useParams();
   const eventId = params.eventId as string;
   const event = eventData[eventId as keyof typeof eventData];
@@ -138,9 +142,9 @@ export default function EventPage() {
       <main className="min-h-screen bg-white font-rubik">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-4xl font-bold text-[#045f3c]">Event not found</h1>
-          <Link href="/programs/alumni" className="text-[#F8B712] hover:underline">
+          <SafeLink href="/programs/alumni" className="text-[#F8B712] hover:underline">
             Return to events
-          </Link>
+          </SafeLink>
         </div>
       </main>
     );
@@ -160,10 +164,10 @@ export default function EventPage() {
         </div>
         <div className="absolute inset-0 flex items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <Link href="/programs/alumni" className="inline-flex items-center text-white mb-6 hover:text-[#F8B712] transition-colors">
+            <SafeLink href="/programs/alumni" className="inline-flex items-center text-white mb-6 hover:text-[#F8B712] transition-colors">
               <ChevronLeft className="w-5 h-5 mr-2" />
               Back to Events
-            </Link>
+            </SafeLink>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
               {event.title}
             </h1>

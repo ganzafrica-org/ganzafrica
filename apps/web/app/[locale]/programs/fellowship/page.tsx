@@ -16,6 +16,17 @@ import { AudioMutedIcon, AudioUnmutedIcon, FullscreenIcon } from "@/components/u
 import apiClient from '@/lib/api-client';
 import { trackEvent, trackVideoEvent } from '@/components/analytics/google-analytics';
 
+// Normalize Next.js components across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeImage = Image as unknown as React.ComponentType<any>;
+
+// Normalize lucide icons
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const ArrowLeftIcon = ArrowLeft as unknown as SvgIconComponent;
+const ArrowRightIcon = ArrowRight as unknown as SvgIconComponent;
+
 // Define the type for opportunities
 type Opportunity = {
   id: string;
@@ -418,14 +429,14 @@ export default function FellowshipPage() {
                   transition={{ duration: 0.8, delay: 0.4 }}
                   className="flex items-center justify-center gap-4"
               >
-                <Link href={`/${locale}/programs/fellowship/how-to-apply`} onClick={() => trackEvent('how_to_apply_click', {
+                <SafeLink href={`/${locale}/programs/fellowship/how-to-apply`} onClick={() => trackEvent('how_to_apply_click', {
                   source_page: 'fellowship',
                   location: 'hero_section'
                 })}>
                   <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
                     How to Apply
                   </Button>
-                </Link>
+                </SafeLink>
               </motion.div>
             </div>
           </div>
@@ -524,7 +535,7 @@ export default function FellowshipPage() {
                   Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.
                 </p>
                 
-                <Link href={`/${locale}/programs/fellowship/how-to-apply`} onClick={() => trackEvent('how_to_apply_click', {
+                <SafeLink href={`/${locale}/programs/fellowship/how-to-apply`} onClick={() => trackEvent('how_to_apply_click', {
                   source_page: 'fellowship',
                   location: 'about_section'
                 })}>
@@ -535,7 +546,7 @@ export default function FellowshipPage() {
                   >
                     How to Apply
                   </motion.button>
-                </Link>
+                </SafeLink>
               </motion.div>
             </div>
           </div>
@@ -580,7 +591,7 @@ export default function FellowshipPage() {
                 <p className="text-gray-600 text-sm md:text-base mb-8">
                   Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
                 </p>
-                <Link href={`/${locale}/about/team`} onClick={() => trackEvent('meet_fellows_click', {
+                <SafeLink href={`/${locale}/about/team`} onClick={() => trackEvent('meet_fellows_click', {
                   source_page: 'fellowship',
                   location: 'leaders_section'
                 })}>
@@ -591,7 +602,7 @@ export default function FellowshipPage() {
                   >
                     Meet the Fellows
                   </motion.button>
-                </Link>
+                </SafeLink>
               </motion.div>
             </div>
           </div>
@@ -662,7 +673,7 @@ export default function FellowshipPage() {
               >
                 <div className="p-3">
                   <div className="rounded-xl overflow-hidden relative h-[600px]">
-                    <Image
+                    <SafeImage
                         src="/images/ganzafrica-fellows.jpg"
                         alt="Develop Your Skills"
                         width={800}
@@ -855,14 +866,14 @@ export default function FellowshipPage() {
                         className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full text-primary-orange flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-1/2 md:-translate-x-5"
                         aria-label="Previous testimonial"
                     >
-                      <ArrowLeft className="w-5 h-5 text-white" />
+                      <ArrowLeftIcon className="w-5 h-5 text-white" />
                     </button>
                     <button
                         onClick={nextTestimonial}
                         className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830] transition-colors translate-x-1/2 md:translate-x-5"
                         aria-label="Next testimonial"
                     >
-                      <ArrowRight className="w-5 h-5 text-white" />
+                      <ArrowRightIcon className="w-5 h-5 text-white" />
                     </button>
                   </div>
                 </div>

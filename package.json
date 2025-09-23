@@ -43,6 +43,10 @@
       "argon2",
       "esbuild",
       "sharp"
+    ],
+    "ignoredBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "unrs-resolver"
     ]
   }
 }

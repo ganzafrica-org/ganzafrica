@@ -11,7 +11,7 @@ export default function ClientLayout({
     children: React.ReactNode;
     locale: string;
     dict: any;
-}) {
+}): JSX.Element {
     return (
         <NextThemesProvider
             attribute="class"

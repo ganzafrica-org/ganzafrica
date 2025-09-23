@@ -9,7 +9,7 @@ interface GoogleAnalyticsComponentProps {
   gaId: string
 }
 
-export function GoogleAnalyticsComponent({ gaId }: GoogleAnalyticsComponentProps) {
+export function GoogleAnalyticsComponent({ gaId }: GoogleAnalyticsComponentProps): JSX.Element {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [cookieAccepted, setCookieAccepted] = useState(false)

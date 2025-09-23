@@ -481,8 +481,11 @@ const PartnersPage = () => {
   };
 
   // Image error handling function
-  const handleImageError = (e, fallbackText) => {
-    console.error(`Failed to load image: ${e.target.src}`);
+  const handleImageError = (
+    e: React.SyntheticEvent<HTMLImageElement>,
+    fallbackText: string
+  ) => {
+    console.error(`Failed to load image: ${e.currentTarget.src}`);
     // Create a canvas element for the fallback
     const canvas = document.createElement('canvas');
     canvas.width = 40;
@@ -501,8 +504,8 @@ const PartnersPage = () => {
     ctx.fillText(fallbackText || 'P', canvas.width/2, canvas.height/2);
     
     // Replace image with canvas data
-    e.target.onerror = null; // Prevent infinite error loop
-    e.target.src = canvas.toDataURL('image/png');
+    e.currentTarget.onerror = null; // Prevent infinite error loop
+    e.currentTarget.src = canvas.toDataURL('image/png');
   };
 
   return (
@@ -609,9 +612,9 @@ const PartnersPage = () => {
                             alt={partner.name} 
                             className="h-full w-full object-contain"
                             onLoad={() => console.log(`Successfully loaded image: ${partner.logo}`)}
-                            onError={(e) => {
+                            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                               console.error(`Failed to load image: ${partner.logo}`);
-                              e.target.onerror = null; // Prevent infinite error loops
+                              e.currentTarget.onerror = null; // Prevent infinite error loops
                               
                               // Create fallback with initial letter
                               const fallbackText = partner.name?.charAt(0)?.toUpperCase() || 'P';
