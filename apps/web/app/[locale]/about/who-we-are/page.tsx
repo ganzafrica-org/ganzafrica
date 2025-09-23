@@ -449,7 +449,7 @@ export default async function AboutPage(props: PageProps) {
                 </div>
                 <p className="text-base md:text-x  text-white">
                   {dict?.about?.aspirations?.mission_1 ||
-                    "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"}
+                    "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions."}
                 </p>
                 <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
                 <div className="absolute -top-4 -right-4 bg-primary-orange rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
