@@ -1,0 +1,191 @@
+import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
+
+// Interface for token payload
+interface TokenPayload {
+  exp?: number;
+  id?: string;
+  email?: string;
+}
+
+const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Helper to check if token is expired
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const decoded = jwtDecode<TokenPayload>(token);
+    const currentTime = Date.now() / 1000;
+    return decoded.exp ? decoded.exp < currentTime : true;
+  } catch {
+    return true;
+  }
+};
+
+// Request interceptor for adding tokens
+apiClient.interceptors.request.use(
+  async (config) => {
+    let token = localStorage.getItem('accessToken');
+    
+    if (token) {
+      // If token exists but is expired, try to refresh it first
+      if (isTokenExpired(token)) {
+        console.log('Token expired, attempting to refresh...');
+        // For now, we'll just clear the token and let the user re-login
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        token = null;
+      }
+    }
+    
+    // Add token to headers if it exists
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor for handling authentication errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Handle 401 errors (unauthorized)
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // Clear tokens and redirect to login if not a login request
+      if (!originalRequest.url?.endsWith('/login')) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        
+        // Redirect to login page if in browser environment
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+// Task API functions
+export const taskApi = {
+  // Get tasks for a specific project
+  getTasksByProject: async (projectId: number) => {
+    const response = await apiClient.get(`/tasks/project/${projectId}`);
+    return response.data;
+  },
+
+  // Get all tasks assigned to the current user
+  getTasksByUser: async () => {
+    const response = await apiClient.get('/tasks/user/assigned');
+    return response.data;
+  },
+
+  // Get all tasks (no permission checks)
+  getAllTasks: async () => {
+    const response = await apiClient.get('/tasks/all');
+    return response.data;
+  },
+
+  // Get task team projects (for task creation)
+  getTaskTeamProjects: async () => {
+    const response = await apiClient.get('/tasks/projects');
+    return response.data;
+  },
+
+  // Get a single task by ID
+  getTaskById: async (taskId: number) => {
+    const response = await apiClient.get(`/tasks/${taskId}`);
+    return response.data;
+  },
+
+  // Create a new task
+  createTask: async (taskData: any) => {
+    const response = await apiClient.post('/tasks', taskData);
+    return response.data;
+  },
+
+  // Create a new task without permission checks (for board view)
+  createTaskUnrestricted: async (taskData: any) => {
+    const response = await apiClient.post('/tasks/unrestricted', taskData);
+    return response.data;
+  },
+
+  // Update a task
+  updateTask: async (taskId: number, taskData: any) => {
+    const response = await apiClient.put(`/tasks/${taskId}`, taskData);
+    return response.data;
+  },
+
+  // Delete a task
+  deleteTask: async (taskId: number) => {
+    const response = await apiClient.delete(`/tasks/${taskId}`);
+    return response.data;
+  },
+
+  // Add comment to a task
+  addTaskComment: async (taskId: number, content: string) => {
+    const response = await apiClient.post(`/tasks/${taskId}/comments`, { content });
+    return response.data;
+  },
+
+  // Upload attachments to a task
+  uploadTaskAttachments: async (taskId: number, files: File[]) => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    const response = await apiClient.post(`/tasks/${taskId}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+};
+
+// Portal data API functions
+export const portalDataApi = {
+  // Get teams by type
+  getTeamsByType: async (teamTypeIds: number[]) => {
+    const ids = teamTypeIds.join(',');
+    const response = await apiClient.get(`/portal-data/teams?team_type_ids=${ids}`);
+    return response.data;
+  },
+
+  // Get all projects
+  getAllProjects: async (page = 1, limit = 100, search = '') => {
+    const response = await apiClient.get(`/portal-data/projects?page=${page}&limit=${limit}&search=${search}`);
+    return response.data;
+  },
+};
+
+// Profile API functions
+export const profileApi = {
+  // Get current user's profile
+  getCurrentProfile: async () => {
+    const response = await apiClient.get('/users/profile/me');
+    return response.data;
+  },
+
+  // Update current user's profile
+  updateProfile: async (profileData: any) => {
+    const response = await apiClient.put('/users/profile/me', profileData);
+    return response.data;
+  },
+};
+
+export default apiClient;

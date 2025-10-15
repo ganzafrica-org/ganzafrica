@@ -119,4 +119,19 @@ apiClient.interceptors.response.use(
     }
 );
 
+// Profile API functions
+export const profileApi = {
+  // Get current user's profile
+  getCurrentProfile: async () => {
+    const response = await apiClient.get('/users/profile/me');
+    return response.data;
+  },
+
+  // Update current user's profile
+  updateProfile: async (profileData: any) => {
+    const response = await apiClient.put('/users/profile/me', profileData);
+    return response.data;
+  },
+};
+
 export default apiClient;

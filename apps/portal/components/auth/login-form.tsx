@@ -71,12 +71,17 @@ export function LoginForm() {
                         localStorage.setItem('refreshToken', response.data.refreshToken);
                     }
                     
+                    // Store user data from backend response
+                    if (response.data.user) {
+                        localStorage.setItem('user', JSON.stringify(response.data.user));
+                    }
+                    
                     // Refresh the user state based on the new token
                     await refreshUser();
                     
                     // Login successful
                     toast.success('Login successful');
-                    router.push('/dashboard');
+                    router.push('/platform-selection');
                 } else {
                     toast.error('Login failed: No authentication token received');
                     console.error('Missing token in response:', response.data);
@@ -108,11 +113,16 @@ export function LoginForm() {
                     localStorage.setItem('refreshToken', response.data.refreshToken);
                 }
                 
+                // Store user data from backend response
+                if (response.data.user) {
+                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                }
+                
                 // Refresh the user state based on the new token
                 await refreshUser();
                 
                 toast.success('Authentication successful');
-                router.push('/dashboard');
+                router.push('/platform-selection');
             } else {
                 toast.error('Verification failed: No authentication token received');
                 console.error('Missing token in 2FA response:', response.data);

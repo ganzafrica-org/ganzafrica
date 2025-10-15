@@ -110,3 +110,30 @@ export const importUsersSchema = z.object({
     )
     .min(1, "At least one user is required"),
 });
+
+// Update profile validation
+export const updateProfileSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, "Name is required").optional(),
+    phone_number: z.string().optional(),
+    avatar_url: z.string().url("Invalid avatar URL").optional().nullable(),
+    bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
+    address: z.string().max(200, "Address must be less than 200 characters").optional(),
+    social_links: z.object({
+      linkedin: z.string().url("Invalid LinkedIn URL").optional(),
+      twitter: z.string().url("Invalid Twitter URL").optional(),
+      github: z.string().url("Invalid GitHub URL").optional(),
+      website: z.string().url("Invalid website URL").optional(),
+    }).optional().nullable(),
+    preferences: z.object({
+      theme: z.enum(["light", "dark", "auto"]).optional(),
+      notifications: z.object({
+        email: z.boolean().optional(),
+        push: z.boolean().optional(),
+        sms: z.boolean().optional(),
+      }).optional(),
+      language: z.string().optional(),
+      timezone: z.string().optional(),
+    }).optional().nullable(),
+  }),
+});

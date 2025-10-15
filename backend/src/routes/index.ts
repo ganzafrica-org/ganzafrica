@@ -15,8 +15,9 @@ import applicationRoutes from "./application";
 import contactRoutes from "./contact";
 import  newsletterRouter  from "./newsletter";
 import uploadRoutes from "./upload";
-
-
+import taskTeamRoutes from "./task-teams.route";
+import portalDataRoutes from "./portal-data.route";
+import tasksRoutes from "./tasks.route";
 
 const router: Router = Router();
 
@@ -37,7 +38,8 @@ router.use("/applications", opportunityRoutes);
 router.use("/contacts", contactRoutes);
 router.use("/newsletter", newsletterRouter);
 router.use("/uploads", uploadRoutes);
-
-
+router.use("/task-teams", taskTeamRoutes);
+router.use("/portal-data", portalDataRoutes);
+router.use("/tasks", tasksRoutes);
 
 export default router;
