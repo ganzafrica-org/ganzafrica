@@ -5,8 +5,10 @@ import { User, Mail, Phone, MapPin, Calendar, Edit3, Save, X, Camera, Bell, Shie
 import { PageLayout } from "@/components/page-layout";
 import { Tabs } from "@/components/tabs";
 import { Button } from "@/components/button";
+import { ImageUpload } from "@/components/image-upload";
 import { initialMembers, initialTasks } from "@/lib/sample-data";
 import { profileApi } from "@/lib/api-client";
+import { useProfile } from "@/contexts/profile-context";
 
 // User data interface matching API response
 interface UserData {
@@ -44,6 +46,7 @@ interface UserData {
 }
 
 export default function ProfilePage() {
+  const { currentUserProfile, updateCurrentUserProfile } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
@@ -61,49 +64,115 @@ export default function ProfilePage() {
     newPassword: "",
     confirmPassword: ""
   });
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Load user profile data
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await profileApi.getCurrentProfile();
-        setUserData(response.profile);
-        setEditData(response.profile);
-      } catch (error) {
-        console.error('Failed to load profile:', error);
-        console.error('Failed to load profile data');
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (currentUserProfile) {
+      setUserData(currentUserProfile);
+      setEditData(currentUserProfile);
+      setLoading(false);
+    }
+  }, [currentUserProfile]);
 
-    loadProfile();
-  }, []);
+  // Upload image to server using backend API (same as portal)
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploadingImage(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Use the backend upload endpoint (same as portal app)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api'}/uploads/file`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include', // Include cookies for authentication
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        return result.file.url; // Backend returns { success: true, file: { url: "..." } }
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+      return null;
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!editData) return;
     
     try {
       setSaving(true);
+      
+      // Upload image if a new one was selected
+      let avatarUrl = editData.avatar_url;
+      if (selectedImageFile) {
+        const uploadedUrl = await uploadImage(selectedImageFile);
+        if (uploadedUrl) {
+          avatarUrl = uploadedUrl;
+        } else {
+          // If upload failed, don't save the profile
+          return;
+        }
+      }
+      
       const updateData = {
-        name: editData.name,
-        phone_number: editData.phone_number,
-        avatar_url: editData.avatar_url,
-        bio: editData.bio,
-        address: editData.address,
-        social_links: editData.social_links,
-        preferences: editData.preferences,
+        name: editData.name || '',
+        phone_number: editData.phone_number || null,
+        avatar_url: avatarUrl || null,
+        bio: editData.bio || null,
+        address: editData.address || null,
+        social_links: editData.social_links || null,
+        preferences: editData.preferences || null,
       };
       
+      // Remove undefined values to avoid validation issues
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key as keyof typeof updateData] === undefined) {
+          delete updateData[key as keyof typeof updateData];
+        }
+      });
+      
+      // Debug logging
+      console.log('Sending profile update data:', JSON.stringify(updateData, null, 2));
+      
       const response = await profileApi.updateProfile(updateData);
-      setUserData(response.profile);
-      setEditData(response.profile);
+      const updatedProfile = response.profile;
+      
+      // Update local state
+      setUserData(updatedProfile);
+      setEditData(updatedProfile);
+      setSelectedImageFile(null); // Clear selected image after successful save
       setIsEditing(false);
+      
+      // Update global profile context
+      updateCurrentUserProfile(updatedProfile);
+      
       console.log('Profile updated successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update profile:', error);
-      console.error('Failed to update profile');
+      console.error('Error response data:', error.response?.data);
+      
+      // Handle validation errors
+      if (error.response?.status === 400 && error.response?.data?.details) {
+        const validationErrors = error.response.data.details;
+        const errorMessages = validationErrors.map((err: any) => `${err.path}: ${err.message}`).join('\n');
+        alert(`Validation Error:\n${errorMessages}`);
+      } else if (error.response?.data?.message) {
+        alert(`Error: ${error.response.data.message}`);
+      } else if (error.response?.data?.error) {
+        alert(`Error: ${error.response.data.error}`);
+      } else {
+        alert('Failed to update profile. Please try again.');
+      }
     } finally {
       setSaving(false);
     }
@@ -111,6 +180,7 @@ export default function ProfilePage() {
 
   const handleCancel = () => {
     setEditData(userData);
+    setSelectedImageFile(null);
     setIsEditing(false);
   };
 
@@ -249,11 +319,6 @@ export default function ProfilePage() {
                               .toUpperCase()}
                           </div>
                         )}
-                        {isEditing && (
-                          <button className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
-                            <Camera className="w-4 h-4" />
-                          </button>
-                        )}
                       </div>
                       <div>
                         <h2 className="text-2xl font-semibold text-gray-900">{userData.name}</h2>
@@ -272,6 +337,19 @@ export default function ProfilePage() {
                       {isEditing ? 'Cancel' : 'Edit Profile'}
                     </Button>
                   </div>
+
+                  {/* Image Upload Section - Only show when editing */}
+                  {isEditing && (
+                    <div className="mb-6">
+                      <ImageUpload
+                        onImageChange={setSelectedImageFile}
+                        initialImage={userData.avatar_url}
+                        isUploading={isUploadingImage}
+                        label="Profile Picture"
+                        description="Upload a new profile picture (JPG, PNG, GIF up to 5MB)"
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Basic Information */}

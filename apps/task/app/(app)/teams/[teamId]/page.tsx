@@ -8,6 +8,7 @@ import { TeamMember } from "@/lib/types";
 import { initialMembers, initialTasks } from "@/lib/sample-data";
 import { taskTeamsApi, TaskTeam, TaskProject } from "@/lib/api/task-teams";
 import { ArrowLeft, Folder, Users, Clock, Loader2 } from "lucide-react";
+import { TruncatedText } from "@/components/truncated-text";
 
 export default function TeamDetailPage(): React.JSX.Element {
   const [members] = useState<TeamMember[]>(initialMembers);
@@ -117,7 +118,13 @@ export default function TeamDetailPage(): React.JSX.Element {
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold mb-2" style={{ color: '#1f2937' }}>{team.name}</h2>
-            <p className="text-lg mb-4" style={{ color: '#6b7280' }}>{team.description || 'No description'}</p>
+            <div className="text-lg mb-4" style={{ color: '#6b7280' }}>
+              <TruncatedText 
+                text={team.description || 'No description'} 
+                maxLength={170}
+                className=""
+              />
+            </div>
             <div className="flex items-center gap-6 text-sm">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" style={{ color: team.color || '#073392' }} />
@@ -162,7 +169,14 @@ export default function TeamDetailPage(): React.JSX.Element {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold mb-1" style={{ color: '#1f2937' }}>{project.name}</h3>
-                <p className="text-sm line-clamp-2" style={{ color: '#6b7280' }}>{project.description || 'No description'}</p>
+                <div className="text-sm" style={{ color: '#6b7280' }}>
+                  <TruncatedText 
+                    text={project.description || 'No description'} 
+                    maxLength={100}
+                    className=""
+                    showToggle={false}
+                  />
+                </div>
               </div>
             </div>
 

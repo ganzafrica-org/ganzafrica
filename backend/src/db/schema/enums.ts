@@ -28,6 +28,7 @@ export const projectStatusEnum = pgEnum("project_status", [
   "completed",
   "cancelled",
   "on_hold",
+  "overdue",
 ]);
 // Media tag enum
 export const mediaTagEnum = pgEnum("media_tag", [

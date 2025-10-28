@@ -176,6 +176,24 @@ export const taskTeamsApi = {
     return response.data;
   },
 
+  // List all projects (for team assignment)
+  async listAllProjects() {
+    const response = await apiClient.get('/task-teams/projects/all');
+    return response.data;
+  },
+
+  // Add project to team
+  async addProjectToTeam(teamId: number, projectId: number) {
+    const response = await apiClient.post(`/task-teams/${teamId}/projects/${projectId}`);
+    return response.data;
+  },
+
+  // Remove project from team
+  async removeProjectFromTeam(teamId: number, projectId: number) {
+    const response = await apiClient.delete(`/task-teams/${teamId}/projects/${projectId}`);
+    return response.data;
+  },
+
   // Projects
   async listProjects(teamId: number, filters?: {
     status?: string;

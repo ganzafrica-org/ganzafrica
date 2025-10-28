@@ -5,6 +5,7 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Task } from "@/lib/types";
 import { useAuth } from "./auth-provider";
+import { useProfile } from "@/contexts/profile-context";
 
 interface NavbarProps {
   tasks: Task[];
@@ -14,7 +15,8 @@ interface NavbarProps {
 
 export function Navbar({ tasks, onAddTask, onToggleSidebar }: NavbarProps): React.JSX.Element {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const { currentUserProfile, getUserInitials, getUserDisplayImage } = useProfile();
   const [query, setQuery] = useState("");
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMuteSubmenu, setShowMuteSubmenu] = useState(false);
@@ -27,6 +29,7 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar }: NavbarProps): Reac
     if (!q) return 0;
     return tasks.filter((t: Task) => t.title.toLowerCase().includes(q)).length;
   }, [query, tasks]);
+
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -83,9 +86,31 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar }: NavbarProps): Reac
       <div className="relative" ref={profileMenuRef}>
         <button 
           onClick={() => setShowProfileMenu(!showProfileMenu)}
-          className="h-8 w-8 rounded-full bg-gradient-to-br from-fuchsia-400 to-purple-600 text-white grid place-items-center text-xs font-semibold hover:opacity-90 transition-opacity"
+          className="h-8 w-8 rounded-full text-white grid place-items-center text-xs font-semibold hover:opacity-90 transition-opacity overflow-hidden"
+          style={{ backgroundColor: '#076297' }}
         >
-          ME
+          {currentUserProfile ? (
+            currentUserProfile.avatar_url ? (
+              <img 
+                src={currentUserProfile.avatar_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to initials if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white" style="background-color: #076297">${getUserInitials(currentUserProfile.id)}</div>`;
+                  }
+                }}
+              />
+            ) : (
+              getUserInitials(currentUserProfile.id)
+            )
+          ) : (
+            user?.initials || 'ME'
+          )}
         </button>
 
         {/* Dropdown Menu */}

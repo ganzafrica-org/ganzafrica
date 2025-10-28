@@ -1,14 +1,18 @@
 "use client";
-import { useState, useMemo } from "react";
-import { Plus, Filter, MoreHorizontal, ChevronDown, ChevronLeft, ChevronRight, X, Clock, Users } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, Filter, MoreHorizontal, ChevronDown, ChevronLeft, ChevronRight, X, Clock, Users, User as UserIcon, CalendarDays } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
 import { useSidebar } from "@/components/sidebar-provider";
 import PageLayout from "@/components/page-layout";
 import { Button } from "@/components/button";
-import { Task } from "@/lib/types";
-import { initialMembers, initialTasks } from "@/lib/sample-data";
-import { mockTeams } from "@/lib/teams-data";
+import { Task, TeamMember } from "@/lib/types";
+import { taskApi, portalDataApi } from "@/lib/api-client";
+import { usersApi, User } from "@/lib/api/users";
+import { taskTeamsApi } from "@/lib/api/task-teams";
+import { UserAvatar } from "@/components/user-avatar";
+import { Tabs } from "@/components/tabs";
+import { isCurrentUserAdminOrManager, isCurrentUserAdminOrManagerAsync, getCurrentUserRole, isCurrentUserAdmin } from "@/lib/auth-utils";
 
 interface Meeting {
   id: string;
@@ -18,114 +22,28 @@ interface Meeting {
   memberId: string;
   startTime?: string;
   endTime?: string;
+  type?: 'task' | 'meeting';
+  priority?: string;
+  status?: string;
 }
 
-interface CalendarMember {
-  id: string;
-  initial: string;
-  name: string;
-  color: string;
-  availability?: { [key: string]: { start: string; end: string }[] };
-}
 
 export default function CalendarPage(): React.JSX.Element {
-  const [tasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userHasAccess, setUserHasAccess] = useState<boolean | null>(null);
   const { collapsed: sidebarCollapsed, toggleCollapsed } = useSidebar();
-  const [calendarMembers, setCalendarMembers] = useState<CalendarMember[]>([
-    { 
-      id: '1', 
-      initial: 'J', 
-      color: '#076297', 
-      name: 'John',
-      availability: {
-        '2020-7-9': [{ start: '09:00', end: '17:00' }],
-        '2020-7-10': [{ start: '10:00', end: '18:00' }]
-      }
-    },
-    { 
-      id: '2', 
-      initial: 'M', 
-      color: '#F8B712', 
-      name: 'Mary',
-      availability: {
-        '2020-7-9': [{ start: '08:00', end: '16:00' }],
-        '2020-7-12': [{ start: '09:00', end: '17:00' }]
-      }
-    },
-    { 
-      id: '3', 
-      initial: 'T', 
-      color: '#005C30', 
-      name: 'Tom',
-      availability: {
-        '2020-7-14': [{ start: '11:00', end: '19:00' }]
-      }
-    },
-    { 
-      id: '4', 
-      initial: 'S', 
-      color: '#009758', 
-      name: 'Sarah',
-      availability: {
-        '2020-7-8': [{ start: '09:00', end: '17:00' }],
-        '2020-7-23': [{ start: '10:00', end: '18:00' }]
-      }
-    },
-    { 
-      id: '5', 
-      initial: 'D', 
-      color: '#073392', 
-      name: 'David',
-      availability: {
-        '2020-7-15': [{ start: '09:00', end: '17:00' }],
-        '2020-7-20': [{ start: '10:00', end: '18:00' }]
-      }
-    },
-    { id: '6', initial: 'E', color: '#2F88E1', name: 'Emily', availability: {} },
-    { id: '7', initial: 'R', color: '#D42B1D', name: 'Robert', availability: {} },
-    { id: '8', initial: 'L', color: '#6366f1', name: 'Lisa', availability: {} },
-    { id: '9', initial: 'K', color: '#059669', name: 'Kevin', availability: {} },
-    { id: '10', initial: 'A', color: '#7c3aed', name: 'Anna', availability: {} },
-    { id: '11', initial: 'P', color: '#dc2626', name: 'Peter', availability: {} },
-    { id: '12', initial: 'N', color: '#16a34a', name: 'Nina', availability: {} },
-    { id: '13', initial: 'B', color: '#0891b2', name: 'Brian', availability: {} },
-    { id: '14', initial: 'C', color: '#c026d3', name: 'Carol', availability: {} },
-    { id: '15', initial: 'G', color: '#ea580c', name: 'George', availability: {} },
-    { id: '16', initial: 'H', color: '#65a30d', name: 'Helen', availability: {} },
-    { id: '17', initial: 'I', color: '#0284c7', name: 'Ian', availability: {} },
-    { id: '18', initial: 'V', color: '#db2777', name: 'Victoria', availability: {} },
-    { id: '19', initial: 'W', color: '#9333ea', name: 'William', availability: {} },
-    { id: '20', initial: 'O', color: '#ca8a04', name: 'Olivia', availability: {} },
-    { id: '21', initial: 'F', color: '#15803d', name: 'Frank', availability: {} },
-    { id: '22', initial: 'Q', color: '#be123c', name: 'Quinn', availability: {} },
-    { id: '23', initial: 'U', color: '#0369a1', name: 'Uma', availability: {} },
-    { id: '24', initial: 'X', color: '#a21caf', name: 'Xavier', availability: {} }
-  ]);
 
-  const [meetings, setMeetings] = useState<Meeting[]>([
-    { id: '1', title: 'Workshop IDND', date: new Date(2020, 6, 3), color: '#076297', memberId: '1', startTime: '10:00', endTime: '12:00' },
-    { id: '2', title: 'Deadline: Haystack', date: new Date(2020, 6, 8), color: '#005C30', memberId: '4', startTime: '14:00', endTime: '15:00' },
-    { id: '3', title: 'Firewall meeting', date: new Date(2020, 6, 8), color: '#F8B712', memberId: '2', startTime: '09:00', endTime: '10:30' },
-    { id: '4', title: 'Preparation: Design', date: new Date(2020, 6, 10), color: '#009758', memberId: '3', startTime: '13:00', endTime: '14:00' },
-    { id: '5', title: 'DEV QA', date: new Date(2020, 6, 12), color: '#073392', memberId: '2', startTime: '11:00', endTime: '12:00' },
-    { id: '6', title: 'Landingpage finished', date: new Date(2020, 6, 14), color: '#2F88E1', memberId: '3', startTime: '15:00', endTime: '16:00' },
-    { id: '7', title: 'This is really long sampl...', date: new Date(2020, 6, 19), color: '#076297', memberId: '1', startTime: '10:00', endTime: '11:00' },
-    { id: '8', title: 'Important Goal achieved', date: new Date(2020, 6, 23), color: '#D42B1D', memberId: '4', startTime: '16:00', endTime: '17:00' },
-    { id: '9', title: 'This is really long sampl...', date: new Date(2020, 6, 23), color: '#F8B712', memberId: '1', startTime: '09:00', endTime: '10:00' },
-    { id: '10', title: 'Design sprint Haystack', date: new Date(2020, 6, 28), color: '#005C30', memberId: '2', startTime: '14:00', endTime: '15:30' },
-    { id: '11', title: 'This is really long sampl...', date: new Date(2020, 6, 28), color: '#009758', memberId: '3', startTime: '10:00', endTime: '11:00' },
-    { id: '12', title: 'This is really long sampl...', date: new Date(2020, 7, 1), color: '#073392', memberId: '1', startTime: '13:00', endTime: '14:00' },
-    { id: '13', title: 'Client Call', date: new Date(2020, 6, 9), color: '#6366f1', memberId: '1', startTime: '10:20', endTime: '10:30' },
-    { id: '14', title: 'Zoom Team Sync', date: new Date(2020, 6, 9), color: '#059669', memberId: '2', startTime: '15:00', endTime: '16:00' },
-    { id: '15', title: 'Project Review', date: new Date(2020, 6, 15), color: '#073392', memberId: '5', startTime: '11:00', endTime: '12:00' },
-    { id: '16', title: 'Sprint Planning', date: new Date(2020, 6, 20), color: '#2F88E1', memberId: '5', startTime: '14:00', endTime: '15:30' },
-  ]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
 
-  const [currentDate, setCurrentDate] = useState(new Date(2020, 6, 1));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [showViewDropdown, setShowViewDropdown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [focusedDay, setFocusedDay] = useState<number | null>(null);
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(calendarMembers.map(m => m.id));
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedDayDetails, setSelectedDayDetails] = useState<{ day: number; month: number; year: number } | null>(null);
   const [showCreateMeeting, setShowCreateMeeting] = useState(false);
   const [newMeetingTitle, setNewMeetingTitle] = useState('');
@@ -137,6 +55,93 @@ export default function CalendarPage(): React.JSX.Element {
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [selectedMeetingMembers, setSelectedMeetingMembers] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'individual' | 'team'>('individual');
+  const [selectedMember, setSelectedMember] = useState<string>('1'); // 'all' or member id - default to user 1
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [outlookMeetings, setOutlookMeetings] = useState<Meeting[]>([]);
+  const [isSyncingOutlook, setIsSyncingOutlook] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<any>(null);
+  const [teams, setTeams] = useState<any[]>([]);
+
+  // Sync Outlook meetings from backend
+  const syncOutlookMeetings = async () => {
+    setIsSyncingOutlook(true);
+    try {
+      // TODO: Implement real Outlook integration with Microsoft Graph API
+      // For now, this is a placeholder for future implementation
+      console.log('Outlook sync not yet implemented');
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+    } catch (error) {
+      console.error('Error syncing Outlook meetings:', error);
+    } finally {
+      setIsSyncingOutlook(false);
+    }
+  };
+
+  // Get current user ID from localStorage
+  const getCurrentUserId = (): number => {
+    try {
+      return parseInt(localStorage.getItem('task_user_id') || localStorage.getItem('user_id') || '0');
+    } catch (error) {
+      console.error('Error getting current user ID:', error);
+      return 0;
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Check user access
+        const hasAccess = await isCurrentUserAdminOrManagerAsync();
+        setUserHasAccess(hasAccess);
+        
+        // Load users
+        const usersResponse = await usersApi.listUsers();
+        setAllUsers(usersResponse.users || []);
+        
+        // Load tasks
+        const tasksResponse = await taskApi.getAllTasks();
+        setTasks(tasksResponse.tasks || []);
+        
+      // Load teams
+      const teamsResponse = await taskTeamsApi.listTeams();
+      setTeams(teamsResponse.teams || []);
+        
+        // Load members (convert users to team members format)
+        const users = usersResponse.users || [];
+        const teamMembers: TeamMember[] = users.map((user: User) => ({
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          role: user.role_name || 'member',
+          avatar_url: user.avatar_url
+        }));
+        setMembers(teamMembers);
+        
+        // Set current user to logged-in user
+        const currentUserId = getCurrentUserId();
+        if (currentUserId > 0) {
+          setCurrentUser(currentUserId.toString());
+          // Set selected member to current user by default
+          setSelectedMember(currentUserId.toString());
+        }
+        
+      } catch (error) {
+        console.error('Error loading calendar data:', error);
+        setError('Failed to load calendar data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
 
   // Filter members based on selected team
   const availableMembersForMeeting = useMemo(() => {
@@ -144,21 +149,25 @@ export default function CalendarPage(): React.JSX.Element {
       return [];
     }
     
-    const selectedTeam = mockTeams.find(t => t.id === selectedTeamId);
+    const selectedTeam = teams.find(t => t.id.toString() === selectedTeamId);
     if (!selectedTeam) {
       return [];
     }
     
-    // Map team member IDs to calendar members
-    return calendarMembers.filter(cm => {
-      // For now, map by name since calendar members use different IDs
-      // In production, you'd have a unified member ID system
-      return selectedTeam.memberIds.some(memberId => {
-        const teamMember = initialMembers.find(m => m.id === memberId);
-        return teamMember && cm.name.toLowerCase().includes(teamMember.name.toLowerCase().split(' ')[0] || '');
+    if (!selectedTeam.members) {
+      return [];
+    }
+    
+    // Map team member IDs to members
+    const filteredMembers = members.filter(member => {
+      const isTeamMember = selectedTeam.members.some((teamMember: any) => {
+        return teamMember.user_id.toString() === member.id;
       });
+      return isTeamMember;
     });
-  }, [selectedTeamId, calendarMembers]);
+    
+    return filteredMembers;
+  }, [selectedTeamId, members, teams, selectedTeam]);
 
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
@@ -186,49 +195,136 @@ export default function CalendarPage(): React.JSX.Element {
     setFocusedDay(null);
   };
 
+  // Define tabs based on user role
+  const tabs = useMemo(() => {
+    if (isCurrentUserAdmin()) {
+      // Admin sees only individual view
+      return [
+        { id: 'individual', label: 'Individual View', icon: UserIcon }
+      ];
+    } else if (isCurrentUserAdminOrManager()) {
+      // Manager sees both individual and team view
+      return [
+        { id: 'individual', label: 'Individual View', icon: UserIcon },
+        { id: 'team', label: 'Team View', icon: Users }
+      ];
+    } else {
+      // Other users see only individual view
+      return [
+        { id: 'individual', label: 'Individual View', icon: UserIcon }
+      ];
+    }
+  }, []);
+
   const getMeetingsForDay = (day: number, currentMonth: number, currentYear: number) => {
-    return meetings.filter(m => {
+    const dayMeetings = meetings.filter(m => {
       const matchesDate = m.date.getDate() === day && 
                          m.date.getMonth() === currentMonth &&
                          m.date.getFullYear() === currentYear;
-      const matchesMember = m.memberId === currentUser;
-      return matchesDate && matchesMember;
+      
+      if (viewMode === 'individual') {
+        return matchesDate && m.memberId === currentUser;
+      } else {
+        // Team view - show meetings for all team members
+        return matchesDate && (selectedMember === 'all' || m.memberId === selectedMember);
+      }
     });
-  };
 
-  const handleDragStart = (e: React.DragEvent, meetingId: string) => {
-    e.dataTransfer.setData('meetingId', meetingId);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = (e: React.DragEvent, day: number, targetMonth: number, targetYear: number) => {
-    e.preventDefault();
-    const meetingId = e.dataTransfer.getData('meetingId');
-    if (!meetingId) return;
-
-    setMeetings(prevMeetings => 
-      prevMeetings.map(meeting => {
-        if (meeting.id === meetingId) {
-          const newDate = new Date(targetYear, targetMonth, day);
-          // Preserve the time
-          if (meeting.startTime) {
-            const [hours, minutes] = meeting.startTime.split(':');
-            newDate.setHours(parseInt(hours || '0'), parseInt(minutes || '0'));
-          }
-          return { ...meeting, date: newDate };
+    // Add tasks as calendar events
+    const dayTasks = tasks.filter(task => {
+      // If task has no due date, show it on the current date or creation date
+      let taskDate;
+      if (task.dueDate) {
+        taskDate = new Date(task.dueDate);
+      } else if (task.createdAt) {
+        taskDate = new Date(task.createdAt);
+      } else {
+        // If no due date or creation date, show on today's date
+        taskDate = new Date();
+      }
+      
+      // TEMPORARY FIX: If all tasks have the same date (Oct 22, 2025), 
+      // show them on today's date for testing
+      const today = new Date();
+      if (taskDate.getFullYear() === 2025 && taskDate.getMonth() === 9 && taskDate.getDate() === 22) {
+        taskDate = today;
+      }
+      
+      const matchesDate = taskDate.getDate() === day && 
+                         taskDate.getMonth() === currentMonth &&
+                         taskDate.getFullYear() === currentYear;
+      
+      if (viewMode === 'individual') {
+        // Individual view - show tasks based on selected member
+        if (selectedMember === 'all') {
+          // Show all tasks
+          return matchesDate;
+        } else {
+          // Show tasks for selected member (default to current user if no member selected)
+          const memberToShow = selectedMember || currentUser;
+          const isAssignedToMember = task.assignees && task.assignees.some(assigneeId => 
+            assigneeId.toString() === memberToShow
+          );
+          return matchesDate && isAssignedToMember;
         }
-        return meeting;
-      })
-    );
+      } else {
+        // Team view - show tasks for selected member or all
+        if (selectedMember === 'all') {
+          // If a team is selected, only show tasks for team members
+          if (selectedTeam) {
+            const teamMemberIds = selectedTeam.members?.map((member: any) => {
+              return member.user_id.toString();
+            }) || [];
+            
+            const isAssignedToTeamMember = task.assignees && task.assignees.some(assigneeId => 
+              teamMemberIds.includes(assigneeId.toString())
+            );
+            
+            return matchesDate && isAssignedToTeamMember;
+          }
+          return matchesDate;
+        } else {
+          const isAssignedToMember = task.assignees && task.assignees.some(assigneeId => 
+            assigneeId.toString() === selectedMember
+          );
+          return matchesDate && isAssignedToMember;
+        }
+      }
+    });
+
+    // Convert tasks to meeting-like objects for display
+    const taskEvents = dayTasks.map(task => {
+      // Use due date, creation date, or current date
+      let taskDate;
+      if (task.dueDate) {
+        taskDate = new Date(task.dueDate);
+      } else if (task.createdAt) {
+        taskDate = new Date(task.createdAt);
+      } else {
+        taskDate = new Date();
+      }
+      
+      return {
+        id: `task-${task.id}`,
+        title: task.title,
+        date: taskDate,
+        color: task.priority === 'high' ? '#dc2626' : task.priority === 'medium' ? '#f59e0b' : '#10b981',
+        memberId: task.assignees?.[0]?.toString() || '0',
+        startTime: '09:00', // Default time for tasks
+        endTime: '10:00',
+        type: 'task' as const,
+        priority: task.priority,
+        status: task.status
+      };
+    });
+
+    return [...dayMeetings, ...taskEvents];
   };
+
 
   const isToday = (day: number) => {
-    return day === 9 && month === 6 && year === 2020;
+    const today = new Date();
+    return day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
   };
 
   const shouldShowDay = (day: number, isPrevMonth: boolean, isNextMonth: boolean) => {
@@ -237,16 +333,26 @@ export default function CalendarPage(): React.JSX.Element {
     
     const today = new Date();
     const targetDate = new Date(year, month, day);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
     
     switch (selectedFilter) {
       case 'today':
-        return day === 9; // Hardcoded today as July 9, 2020
+        return day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
       case 'tomorrow':
-        return day === 10;
+        return day === tomorrow.getDate() && month === tomorrow.getMonth() && year === tomorrow.getFullYear();
       case 'week':
-        return day >= 9 && day <= 15;
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        return targetDate >= weekStart && targetDate <= weekEnd;
       case '2weeks':
-        return day >= 9 && day <= 22;
+        const twoWeekStart = new Date(today);
+        twoWeekStart.setDate(today.getDate() - today.getDay());
+        const twoWeekEnd = new Date(twoWeekStart);
+        twoWeekEnd.setDate(twoWeekStart.getDate() + 13);
+        return targetDate >= twoWeekStart && targetDate <= twoWeekEnd;
       case 'month':
         return true;
       default:
@@ -258,9 +364,11 @@ export default function CalendarPage(): React.JSX.Element {
     setSelectedFilter(filter);
     setShowViewDropdown(false);
     if (filter === 'today') {
-      setFocusedDay(9);
+      setFocusedDay(new Date().getDate());
     } else if (filter === 'tomorrow') {
-      setFocusedDay(10);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setFocusedDay(tomorrow.getDate());
     } else {
       setFocusedDay(null);
     }
@@ -305,15 +413,24 @@ export default function CalendarPage(): React.JSX.Element {
   };
 
   const getAvailabilityForDay = (day: number, currentMonth: number, currentYear: number) => {
-    const dateKey = `${currentYear}-${currentMonth + 1}-${day}`;
-    const currentMember = calendarMembers.find(m => m.id === currentUser);
-    if (!currentMember) return [];
-    
-    return [{
-      member: currentMember,
-      slots: currentMember.availability?.[dateKey] || []
-    }].filter(a => a.slots.length > 0);
+    // For now, return empty array since we don't have availability data
+    // In a real implementation, this would fetch availability from the backend
+    return [];
   };
+
+  // Check if a team has tasks (is occupied)
+  const isTeamOccupied = (team: any) => {
+    if (!team || !team.members) return false;
+    
+    const teamMemberIds = team.members.map((member: any) => member.user_id.toString());
+    return tasks.some(task => 
+      task.assignees && task.assignees.some((assigneeId: string) => 
+        teamMemberIds.includes(assigneeId.toString())
+      )
+    );
+  };
+
+
 
   const calendarDays = [];
   const prevMonthDays = new Date(year, month, 0).getDate();
@@ -333,7 +450,7 @@ export default function CalendarPage(): React.JSX.Element {
 
   return (
     <PageLayout 
-      members={initialMembers} 
+      members={members} 
       tasks={tasks} 
       title="Calendar"
       headerAction={
@@ -346,36 +463,93 @@ export default function CalendarPage(): React.JSX.Element {
           >
             Create Meeting
           </Button>
-          <div className="flex items-center -space-x-2">
-            {calendarMembers.slice(0, 4).map((member) => (
-              <button
-                key={member.id}
-                onClick={() => setCurrentUser(member.id)}
-                style={{ backgroundColor: member.color }}
-                className={`w-8 h-8 rounded-full grid place-items-center text-white text-xs font-semibold ring-2 transition ${
-                  currentUser === member.id ? 'ring-gray-400 ring-4' : 'ring-white'
-                }`}
-                title={member.name}
-              >
-                {member.initial}
-              </button>
-            ))}
-            {calendarMembers.length > 4 && (
-              <button
-                onClick={() => setShowTeamModal(true)}
-                style={{ backgroundColor: '#F8B712' }}
-                className="w-8 h-8 rounded-full grid place-items-center text-white text-xs font-bold ring-2 ring-white transition hover:opacity-90"
-                title="View all team members"
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
-              >
-                +{calendarMembers.length - 4}
-              </button>
-            )}
-          </div>
         </div>
       }
     >
+      {/* Tabs Section */}
+      <div className="mb-6 bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          {/* Tabs */}
+          {tabs.length > 1 && (
+            <Tabs
+              tabs={tabs}
+              activeTab={viewMode}
+              onTabChange={(tabId) => {
+                setViewMode(tabId as 'individual' | 'team');
+                if (tabId === 'individual') {
+                  // Set to current user by default in individual view
+                  setSelectedMember(currentUser);
+                } else {
+                  // Set to 'all' by default in team view
+                  setSelectedMember('all');
+                }
+              }}
+            />
+          )}
+          
+          {/* Profile Selector */}
+          <div className="flex items-center gap-3">
+            {/* Individual View - Show member selector button */}
+            {viewMode === 'individual' && (
+              <button
+                onClick={() => setShowMemberModal(true)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors hover:bg-gray-50"
+                style={{ borderColor: '#d1d5db', color: '#374151' }}
+              >
+                <Users className="w-4 h-4" />
+                <span className="text-sm font-medium">Select Member</span>
+              </button>
+            )}
+            
+            {/* Team View - Show only team selector */}
+            {viewMode === 'team' && (
+              <>
+                {/* Team Selector Button */}
+                {!selectedTeam && (
+                  <button
+                    onClick={() => setShowTeamModal(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors hover:bg-gray-50"
+                    style={{ borderColor: '#d1d5db', color: '#374151' }}
+                  >
+                    <Users className="w-4 h-4" />
+                    <span className="text-sm font-medium">Select Team</span>
+                  </button>
+                )}
+                
+                {/* Team Profile Display - Only show when team is selected */}
+                {selectedTeam && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border" style={{ borderColor: '#e5e7eb', backgroundColor: '#f9fafb' }}>
+                    <div 
+                      className="w-6 h-6 rounded flex items-center justify-center"
+                      style={{ backgroundColor: selectedTeam.color || '#076297' }}
+                    >
+                      <Users className="w-3 h-3" style={{ color: '#ffffff' }} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium" style={{ color: '#374151' }}>{selectedTeam.name}</span>
+                      {isTeamOccupied(selectedTeam) && (
+                        <span className="px-2 py-0.5 text-xs rounded-full" style={{ backgroundColor: '#fef3c7', color: '#92400e' }}>
+                          Has Tasks
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedTeam(null);
+                        setSelectedTeamId(null);
+                      }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Month navigation and filter */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -480,8 +654,6 @@ export default function CalendarPage(): React.JSX.Element {
                     <div 
                       key={idx} 
                       onClick={() => setSelectedDayDetails({ day, month: currentMonthForDay, year })}
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, day, currentMonthForDay, year)}
                       className={`min-h-[80px] border-r border-b border-gray-100 p-2 transition cursor-pointer bg-white hover:bg-blue-50 ${
                         isToday(day) && !isPrevMonth && !isNextMonth ? 'ring-2 ring-blue-500 ring-inset' : ''
                       }`}
@@ -503,13 +675,15 @@ export default function CalendarPage(): React.JSX.Element {
                         {dayMeetings.slice(0, 2).map(meeting => (
                           <div 
                             key={meeting.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, meeting.id)}
                             onClick={(e) => e.stopPropagation()}
                             style={{ backgroundColor: meeting.color }}
-                            className="text-white text-[10px] px-2 py-0.5 rounded font-medium truncate flex items-center gap-1 cursor-move"
+                            className="text-white text-[10px] px-2 py-0.5 rounded font-medium truncate flex items-center gap-1 cursor-default"
                           >
-                            <Clock className="w-3 h-3" />
+                            {meeting.type === 'task' ? (
+                              <CalendarDays className="w-3 h-3" />
+                            ) : (
+                              <Clock className="w-3 h-3" />
+                            )}
                             {meeting.title}
                           </div>
                         ))}
@@ -605,7 +779,7 @@ export default function CalendarPage(): React.JSX.Element {
                       style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
                     >
                       <option value="">Select a team...</option>
-                      {mockTeams.map((team) => (
+                      {teams.map((team) => (
                         <option key={team.id} value={team.id}>
                           {team.name}
                         </option>
@@ -636,12 +810,11 @@ export default function CalendarPage(): React.JSX.Element {
                                 }}
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               />
-                              <div 
-                                style={{ backgroundColor: member.color }}
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                              >
-                                {member.initial}
-                              </div>
+                              <UserAvatar 
+                                userId={parseInt(member.id)} 
+                                size="sm"
+                                fallbackColor={member.color}
+                              />
                               <span className="text-sm text-gray-700">{member.name}</span>
                             </label>
                           ))
@@ -704,27 +877,24 @@ export default function CalendarPage(): React.JSX.Element {
                     {selectedDayDetails && getMeetingsForDay(selectedDayDetails.day, selectedDayDetails.month, selectedDayDetails.year).length > 0 ? (
                       <div className="space-y-2">
                         {selectedDayDetails && getMeetingsForDay(selectedDayDetails.day, selectedDayDetails.month, selectedDayDetails.year).map(meeting => {
-                          const member = calendarMembers.find(m => m.id === meeting.memberId);
+                          const member = members.find((m: TeamMember) => m.id === meeting.memberId);
                           return (
                             <div 
                               key={meeting.id} 
-                              draggable
-                              onDragStart={(e) => handleDragStart(e, meeting.id)}
-                              className="p-3 rounded-lg cursor-move transition"
+                              className="p-3 rounded-lg cursor-default transition"
                               style={{ backgroundColor: '#f0f8fc' }}
                               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6f2f9')}
                               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f0f8fc')}
                             >
                               <div className="flex items-start gap-3">
-                                <div 
-                                  style={{ backgroundColor: meeting.color }}
-                                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
-                                >
-                                  {member?.initial ?? 'U'}
-                                </div>
+                                <UserAvatar 
+                                  userId={parseInt(member?.id || '0')} 
+                                  size="sm"
+                                  fallbackColor={meeting.color}
+                                />
                                 <div className="flex-1">
                                   <div className="font-medium text-gray-800">{meeting.title}</div>
-                                  <div className="text-sm text-gray-600">{member?.name}</div>
+                                  <div className="text-sm text-gray-600">{member?.name || 'Unknown'}</div>
                                   {meeting.startTime && meeting.endTime && (
                                     <div className="text-xs text-gray-500 mt-1">{meeting.startTime} - {meeting.endTime}</div>
                                   )}
@@ -744,46 +914,21 @@ export default function CalendarPage(): React.JSX.Element {
                       <Users className="w-4 h-4" />
                       Availability
                     </h4>
-                    {selectedDayDetails && getAvailabilityForDay(selectedDayDetails.day, selectedDayDetails.month, selectedDayDetails.year).length > 0 ? (
-                      <div className="space-y-2">
-                        {selectedDayDetails && getAvailabilityForDay(selectedDayDetails.day, selectedDayDetails.month, selectedDayDetails.year).map(({ member, slots }) => (
-                          <div key={member.id} className="p-3 bg-green-50 rounded-lg">
-                            <div className="flex items-start gap-3">
-                              <div 
-                                style={{ backgroundColor: member.color }}
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
-                              >
-                                {member.initial}
-                              </div>
-                              <div className="flex-1">
-                                <div className="font-medium text-gray-800">{member.name}</div>
-                                {slots.map((slot, idx) => (
-                                  <div key={idx} className="text-sm text-gray-600">
-                                    Available: {slot.start} - {slot.end}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No availability information</p>
-                    )}
+                    <p className="text-sm text-gray-500">No availability information</p>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Team Members Modal */}
+          {/* Team Selection Modal */}
           {showTeamModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-h-[80vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-800">Team Members</h3>
-                    <p className="text-sm text-gray-500">{calendarMembers.length} members total</p>
+                    <h3 className="text-xl font-bold text-gray-800">Select Team</h3>
+                    <p className="text-sm text-gray-500">Choose a team to view their calendar</p>
                   </div>
                   <button
                     onClick={() => setShowTeamModal(false)}
@@ -793,46 +938,250 @@ export default function CalendarPage(): React.JSX.Element {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {calendarMembers.map((member) => (
+                  {teams.map((team) => (
                     <button
-                      key={member.id}
+                      key={team.id}
                       onClick={() => {
-                        setCurrentUser(member.id);
+                        setSelectedTeam(team);
+                        setSelectedTeamId(team.id.toString());
                         setShowTeamModal(false);
                       }}
                       className="w-full p-3 flex items-center gap-3 transition"
                       style={{
-                        backgroundColor: currentUser === member.id ? '#f0f8fc' : '#f9fafb',
+                        backgroundColor: selectedTeam?.id === team.id ? '#f0f8fc' : '#f9fafb',
                         borderRadius: '7px'
                       }}
                       onMouseEnter={(e) => {
-                        if (currentUser !== member.id) {
+                        if (selectedTeam?.id !== team.id) {
                           e.currentTarget.style.backgroundColor = '#f3f4f6';
                         }
                       }}
                       onMouseLeave={(e) => {
-                        if (currentUser !== member.id) {
+                        if (selectedTeam?.id !== team.id) {
                           e.currentTarget.style.backgroundColor = '#f9fafb';
                         }
                       }}
                     >
                       <div 
-                        style={{ backgroundColor: member.color }}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                        className="w-10 h-10 rounded flex items-center justify-center"
+                        style={{ backgroundColor: team.color || '#076297' }}
                       >
-                        {member.initial}
+                        <Users className="w-5 h-5" style={{ color: '#ffffff' }} />
                       </div>
                       <div className="flex-1 text-left">
-                        <div className="font-medium text-gray-800">{member.name}</div>
+                        <div className="font-medium text-gray-800">{team.name}</div>
                         <div className="text-xs text-gray-500">
-                          {Object.keys(member.availability || {}).length} days available
+                          {team.member_count || 0} members
+                          {isTeamOccupied(team) && (
+                            <span className="ml-2 px-2 py-0.5 text-xs rounded-full" style={{ backgroundColor: '#fef3c7', color: '#92400e' }}>
+                              Has Tasks
+                            </span>
+                          )}
                         </div>
                       </div>
-                      {currentUser === member.id && (
+                      {selectedTeam?.id === team.id && (
                         <div style={{ color: '#076297' }} className="font-bold">✓</div>
                       )}
                     </button>
                   ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Team Members Modal */}
+          {showMemberModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl shadow-2xl p-6 w-96 max-h-[80vh] overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">
+                      {viewMode === 'individual' ? 'All Members' : 'Team Members'}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {viewMode === 'individual' 
+                        ? `${members.length} members total - Select any member to view their tasks`
+                        : selectedTeam ? 
+                          `${members.filter(member => 
+                            selectedTeam.members?.some((teamMember: any) => teamMember.user_id.toString() === member.id)
+                          ).length} members in ${selectedTeam.name}`
+                          : 'Select a team to view members'
+                      }
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowMemberModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {/* Individual View - Show all members */}
+                  {viewMode === 'individual' && (
+                    <>
+                      {/* All Members Button */}
+                      <button
+                        onClick={() => {
+                          setSelectedMember('all');
+                          setShowMemberModal(false);
+                        }}
+                        className="w-full p-3 flex items-center gap-3 transition"
+                        style={{
+                          backgroundColor: selectedMember === 'all' ? '#f0f8fc' : '#f9fafb',
+                          borderRadius: '7px'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedMember !== 'all') {
+                            e.currentTarget.style.backgroundColor = '#f3f4f6';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedMember !== 'all') {
+                            e.currentTarget.style.backgroundColor = '#f9fafb';
+                          }
+                        }}
+                      >
+                        <div 
+                          style={{ backgroundColor: '#076297' }}
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                        >
+                          All
+                        </div>
+                        <div className="flex-1 text-left">
+                          <div className="font-medium text-gray-800">All Members</div>
+                          <div className="text-xs text-gray-500">View tasks for all members</div>
+                        </div>
+                        {selectedMember === 'all' && (
+                          <div style={{ color: '#076297' }} className="font-bold">✓</div>
+                        )}
+                      </button>
+                      
+                      {/* All Members List */}
+                      {members.map((member) => (
+                        <button
+                          key={member.id}
+                          onClick={() => {
+                            setSelectedMember(member.id);
+                            setShowMemberModal(false);
+                          }}
+                          className="w-full p-3 flex items-center gap-3 transition"
+                          style={{
+                            backgroundColor: selectedMember === member.id ? '#f0f8fc' : '#f9fafb',
+                            borderRadius: '7px'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (selectedMember !== member.id) {
+                              e.currentTarget.style.backgroundColor = '#f3f4f6';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (selectedMember !== member.id) {
+                              e.currentTarget.style.backgroundColor = '#f9fafb';
+                            }
+                          }}
+                        >
+                          <UserAvatar userId={parseInt(member.id)} size="md" />
+                          <div className="flex-1 text-left">
+                            <div className="font-medium text-gray-800">{member.name}</div>
+                            <div className="text-xs text-gray-500">{member.email || 'Member'}</div>
+                          </div>
+                          {selectedMember === member.id && (
+                            <div style={{ color: '#076297' }} className="font-bold">✓</div>
+                          )}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  
+                  {/* Team View - Show team members only when team is selected */}
+                  {viewMode === 'team' && selectedTeam && (
+                    <button
+                      onClick={() => {
+                        setSelectedMember('all');
+                        setShowMemberModal(false);
+                      }}
+                      className="w-full p-3 flex items-center gap-3 transition"
+                      style={{
+                        backgroundColor: selectedMember === 'all' ? '#f0f8fc' : '#f9fafb',
+                        borderRadius: '7px'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedMember !== 'all') {
+                          e.currentTarget.style.backgroundColor = '#f3f4f6';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedMember !== 'all') {
+                          e.currentTarget.style.backgroundColor = '#f9fafb';
+                        }
+                      }}
+                    >
+                      <div 
+                        style={{ backgroundColor: '#076297' }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                      >
+                        All
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium text-gray-800">All Team Members</div>
+                        <div className="text-xs text-gray-500">View all members in {selectedTeam.name}</div>
+                      </div>
+                      {selectedMember === 'all' && (
+                        <div style={{ color: '#076297' }} className="font-bold">✓</div>
+                      )}
+                    </button>
+                  )}
+                  {/* Team View - Show team members list or no team message */}
+                  {viewMode === 'team' && selectedTeam && (() => {
+                    const teamMembers = selectedTeam ? 
+                      members.filter(member => 
+                        selectedTeam.members?.some((teamMember: any) => teamMember.user_id.toString() === member.id)
+                      ) : [];
+                    
+                    return teamMembers.map((member) => (
+                    <button
+                      key={member.id}
+                      onClick={() => {
+                        setSelectedMember(member.id);
+                        setShowMemberModal(false);
+                      }}
+                      className="w-full p-3 flex items-center gap-3 transition"
+                      style={{
+                        backgroundColor: selectedMember === member.id ? '#f0f8fc' : '#f9fafb',
+                        borderRadius: '7px'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedMember !== member.id) {
+                          e.currentTarget.style.backgroundColor = '#f3f4f6';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedMember !== member.id) {
+                          e.currentTarget.style.backgroundColor = '#f9fafb';
+                        }
+                      }}
+                    >
+                      <UserAvatar userId={parseInt(member.id)} size="md" />
+                      <div className="flex-1 text-left">
+                        <div className="font-medium text-gray-800">{member.name}</div>
+                        <div className="text-xs text-gray-500">Member</div>
+                      </div>
+                      {selectedMember === member.id && (
+                        <div style={{ color: '#076297' }} className="font-bold">✓</div>
+                      )}
+                    </button>
+                    ));
+                  })()}
+                  
+                  {/* Show message when no team is selected in team view */}
+                  {viewMode === 'team' && !selectedTeam && (
+                    <div className="p-4 text-center text-gray-500">
+                      <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm">Select a team to view its members</p>
+                      <p className="text-xs text-gray-400 mt-1">Click "Select Team" button above to choose a team</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

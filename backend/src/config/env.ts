@@ -40,8 +40,8 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(32),
   JWT_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
-  ACCESS_TOKEN_EXPIRY: z.string().default("15m"),
-  REFRESH_TOKEN_EXPIRY: z.string().default("7d"),
+  ACCESS_TOKEN_EXPIRY: z.string().default("24h"),
+  REFRESH_TOKEN_EXPIRY: z.string().default("30d"),
 
   // Email
   EMAIL_FROM: z.string().email(),

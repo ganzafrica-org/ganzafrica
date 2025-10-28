@@ -552,6 +552,11 @@ export const updateCurrentUserProfile = async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const profileData = req.body;
 
+    // Debug logging
+    console.log('Profile update request data:', JSON.stringify(profileData, null, 2));
+    console.log('Avatar URL value:', profileData.avatar_url);
+    console.log('Avatar URL type:', typeof profileData.avatar_url);
+
     const updatedProfile = await userService.updateUserProfile(userId, profileData);
 
     res.status(200).json({

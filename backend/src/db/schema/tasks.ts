@@ -17,7 +17,7 @@ import { task_team_projects } from "./task-teams";
 import { pgEnum } from "drizzle-orm/pg-core";
 
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"]);
-export const taskStatusEnum = pgEnum("task_status", ["backlog", "todo", "inprogress", "review", "done"]);
+export const taskStatusEnum = pgEnum("task_status", ["overdue", "todo", "inprogress", "review", "done"]);
 
 // Tasks Table
 export const tasks = pgTable(
@@ -25,16 +25,15 @@ export const tasks = pgTable(
   {
     id: serial("id").primaryKey(),
     project_id: integer("project_id")
-      .notNull()
       .references(() => task_team_projects.id, { onDelete: "cascade" }),
     title: varchar("title", { length: 500 }).notNull(),
     description: text("description"), // Activities to do
     deliverables: text("deliverables"), // Expected deliverables
-    status: taskStatusEnum("status").notNull().default("backlog"),
+    status: taskStatusEnum("status").notNull().default("todo"),
     priority: taskPriorityEnum("priority").notNull().default("medium"),
     due_date: timestamp("due_date", { withTimezone: true }),
     labels: jsonb("labels").$type<Array<{ id: string; name: string; color: string }>>().default([]),
-    attachments: jsonb("attachments").$type<Array<{ id: string; filename: string; url: string }>>().default([]),
+    attachments: jsonb("attachments").$type<Array<{ id: string; filename: string; url: string; uploaded_by: number; uploaded_at: string }>>().default([]),
     created_by: integer("created_by")
       .notNull()
       .references(() => users.id),

@@ -7,6 +7,9 @@ export const initialMembers: TeamMember[] = [
   { id: "cm", name: "Comfort Mare", email: "comfort@example.com", color: "#10b981", initials: "CM" },
   { id: "sb", name: "Sarah Bamber", email: "sarah@example.com", color: "#ec4899", initials: "SB" },
   { id: "th", name: "Thierry", email: "thierry@example.com", color: "#f97316", initials: "TH" },
+  { id: "jeannine", name: "Jeannine Uwase", email: "jeannine.uwase@gmail.com", color: "#2F88E1", initials: "JU" },
+  { id: "hermione", name: "Hermione Merci", email: "murenzicharles24@gmail.com", color: "#8B5CF6", initials: "HM" },
+  { id: "gentille", name: "Gentille Uwamahoro", email: "gentilleuwamahoro28@gmail.com", color: "#10B981", initials: "GU" },
 ];
 
 const label = (name: string, color: string) => ({ id: `${name}-${color}`, name, color });
@@ -17,7 +20,7 @@ export const initialTasks: Task[] = [
     title: "Design landing hero",
     description: "1. Research competitor hero sections\n2. Create mood board\n3. Sketch wireframes\n4. Design high-fidelity mockups\n5. Get stakeholder approval",
     deliverables: "- Final hero section design in Figma\n- Mobile and desktop variants\n- Assets exported for development\n- Design documentation",
-    status: "backlog",
+    status: "overdue",
     priority: "high",
     dueDate: new Date(Date.now() + 86400000 * 3).toISOString(),
     labels: [label("design", "bg-fuchsia-200 text-fuchsia-800"), label("ui", "bg-blue-200 text-blue-800")],
@@ -113,7 +116,7 @@ export const initialTasks: Task[] = [
   {
     id: "t9",
     title: "Write docs",
-    status: "backlog",
+    status: "overdue",
     priority: "medium",
     dueDate: undefined,
     labels: [label("docs", "bg-violet-200 text-violet-900")],
@@ -135,7 +138,7 @@ export const initialTasks: Task[] = [
   {
     id: "t11",
     title: "Security audit",
-    status: "backlog",
+    status: "overdue",
     priority: "medium",
     dueDate: new Date(Date.now() + 86400000 * 20).toISOString(),
     labels: [label("security", "bg-orange-200 text-orange-800")],

@@ -121,52 +121,53 @@ export default function PlatformSelectionPage(): React.JSX.Element {
     }
 
     return (
-        <div className="min-h-screen bg-white">
-            {/* Main Container */}
-            <div className="bg-white p-8 w-full">
-                {/* Header */}
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            Welcome back, <span className="text-blue-600">{user?.name || 'User'}</span>!
-                        </h1>
-                        <p className="text-gray-600 mt-2">Choose your platform to continue</p>
-                        {user?.email && (
-                            <p className="text-sm text-gray-500 mt-1">
-                                Logged in as: <span className="font-medium">{user.email}</span>
-                                {user?.role_name && (
-                                    <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-xs">
-                                        {user.role_name}
-                                    </span>
-                                )}
-                            </p>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                        {user?.avatar_url ? (
-                            <img 
-                                src={user.avatar_url} 
-                                alt={user.name} 
-                                className="w-10 h-10 rounded-full border-2 border-gray-200"
-                            />
-                        ) : (
-                            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                            </div>
-                        )}
-                        <Button 
-                            variant="outline" 
-                            onClick={handleLogout}
-                            className="flex items-center gap-2"
-                        >
-                            <LogOut className="h-4 w-4" />
-                            Logout
-                        </Button>
-                    </div>
+        <div className="min-h-screen bg-white flex items-center justify-center">
+            {/* Main Container - Centered */}
+            <div className="bg-white p-8 w-full max-w-6xl">
+                {/* Header - Centered */}
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                        Welcome back, <span className="text-blue-600">{user?.name || 'User'}</span>
+                    </h1>
+                    <p className="text-xl text-gray-600 mb-6">Choose your platform to continue</p>
+                    {user?.email && (
+                        <p className="text-sm text-gray-500">
+                            Logged in as: <span className="font-medium">{user.email}</span>
+                            {user?.role_name && (
+                                <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-xs">
+                                    {user.role_name}
+                                </span>
+                            )}
+                        </p>
+                    )}
                 </div>
 
-                {/* Platform Cards */}
-                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                {/* User Profile and Logout - Top Right */}
+                <div className="absolute top-8 right-8 flex items-center gap-3">
+                    {user?.avatar_url ? (
+                        <img 
+                            src={user.avatar_url} 
+                            alt={user.name} 
+                            className="w-10 h-10 rounded-full border-2 border-gray-200"
+                        />
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                    )}
+                    <Button 
+                        variant="outline" 
+                        onClick={handleLogout}
+                        className="flex items-center gap-2"
+                    >
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                    </Button>
+                </div>
+
+                {/* Platform Cards - Centered */}
+                <div className="flex justify-center">
+                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl">
                     {/* Portal Platform */}
                     <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-green-200">
                         <CardHeader className="text-center pb-4">
@@ -249,6 +250,7 @@ export default function PlatformSelectionPage(): React.JSX.Element {
                             </Button>
                         </CardContent>
                     </Card>
+                    </div>
                 </div>
             </div>
         </div>

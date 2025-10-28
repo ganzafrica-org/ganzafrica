@@ -38,8 +38,8 @@ export const mockTeams: Team[] = [
     name: 'Data Team',
     description: 'Data analytics and business intelligence',
     color: '#2F88E1',
-    memberIds: ['bk', 'cm', 'sb'],
-    memberCount: 3,
+    memberIds: ['bk', 'cm', 'sb', 'jeannine', 'hermione', 'gentille'],
+    memberCount: 6,
     projectCount: 3,
     lead: 'Mike Chen',
     projects: ['Sales Dashboard', 'Customer Analytics', 'Predictive Modeling']

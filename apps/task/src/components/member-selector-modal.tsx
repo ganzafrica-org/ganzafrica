@@ -2,6 +2,7 @@
 import React from 'react';
 import { X, Users } from 'lucide-react';
 import { TeamMember } from '@/lib/types';
+import { UserAvatar } from './user-avatar';
 
 interface MemberSelectorModalProps {
   open: boolean;
@@ -144,11 +145,13 @@ export function MemberSelectorModal({
                     }
                   }}
                 >
-                  <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                    style={{ backgroundColor: member.color }}
-                  >
-                    {member.initials}
+                  <div className="w-10 h-10 rounded-full overflow-hidden" style={{ backgroundColor: member.color }}>
+                    <UserAvatar 
+                      userId={parseInt(member.id)} 
+                      size="lg"
+                      className="w-10 h-10"
+                      fallbackColor={member.color}
+                    />
                   </div>
                   <div className="flex-1 text-left">
                     <div className="font-medium text-gray-800">{member.name}</div>

@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { TeamMember } from '@/lib/types';
+import { UserAvatar } from './user-avatar';
 
 interface MemberDropdownProps {
   members: TeamMember[];
@@ -41,8 +42,8 @@ export function MemberDropdown({
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [isOpen]);
 
@@ -117,11 +118,13 @@ export function MemberDropdown({
                       }
                     }}
                   >
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                      style={{ backgroundColor: member.color }}
-                    >
-                      {member.initials}
+                    <div className="w-8 h-8 rounded-full overflow-hidden" style={{ backgroundColor: member.color }}>
+                      <UserAvatar 
+                        userId={parseInt(member.id)} 
+                        size="md"
+                        className="w-8 h-8"
+                        fallbackColor={member.color}
+                      />
                     </div>
                     <div className="flex-1">
                       <div className="font-medium text-gray-800 text-sm">{member.name}</div>

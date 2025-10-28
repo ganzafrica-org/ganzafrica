@@ -10,19 +10,29 @@ import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/button";
 import { TaskModal } from "@/components/task-modal";
 import { Tabs } from "@/components/tabs";
-import { Task, TeamMember } from "@/lib/types";
+import { Task, TeamMember, updateTaskStatusIfOverdue } from "@/lib/types";
 import { initialMembers, initialTasks } from "@/lib/sample-data";
 import { taskApi, portalDataApi } from "@/lib/api-client";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
-import { FileText, AlertCircle, CheckCircle, Clock, Users, Calendar, X, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { usersApi, User as UserType } from "@/lib/api/users";
+import { mockTeams } from "@/lib/teams-data";
+import { ErrorModal } from "@/components/error-modal";
+import { FileText, AlertCircle, CheckCircle, Clock, Users, Calendar, X, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, UserPlus } from "lucide-react";
+import { DateFilter } from "@/components/date-filter";
+import { useDateFilter } from "@/hooks/use-date-filter";
 
 export default function BoardPage(): React.JSX.Element {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
-  const [creatingTaskStatus, setCreatingTaskStatus] = useState<string>('backlog');
+  const [creatingTaskStatus, setCreatingTaskStatus] = useState<string>('todo');
   const [creatingTaskPriority, setCreatingTaskPriority] = useState<string>('medium');
   const [viewMode, setViewMode] = useState<string>('table'); // 'table' or 'board'
+  
+  // Debug view mode changes
+  useEffect(() => {
+    console.log('View mode changed to:', viewMode);
+  }, [viewMode]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,18 +40,130 @@ export default function BoardPage(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userInfoVersion, setUserInfoVersion] = useState(0);
+  const [dateFilter, setDateFilter] = useState<string>('all'); // 'all', 'week', 'month', 'custom'
+  const [customDateRange, setCustomDateRange] = useState<{start: string, end: string}>({start: '', end: ''});
+  const [isAddingMember, setIsAddingMember] = useState(false);
+  const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<number[]>([]);
+  const [allUsers, setAllUsers] = useState<UserType[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [allTeams, setAllTeams] = useState<TaskTeam[]>([]);
+  const [taskTeamProjects, setTaskTeamProjects] = useState<Array<{ id: number; team_id: number; name: string; color?: string }>>([]);
   const { collapsed: sidebarCollapsed, toggleCollapsed } = useSidebar();
+  const [taskMembers, setTaskMembers] = useState<any[]>([]);
+
+  // Get current user ID from localStorage
+  const getCurrentUserId = () => {
+    try {
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') {
+        return 1; // fallback for SSR
+      }
+      
+      const userStr = localStorage.getItem('task_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.id || 1; // fallback to 1 if no id
+      }
+    } catch (error) {
+      console.error('Error getting current user:', error);
+    }
+    return 1; // fallback
+  };
+
+  // Check if current user has manager role
+  const isCurrentUserManager = () => {
+    try {
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') {
+        return false;
+      }
+      
+      const userStr = localStorage.getItem('task_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        const roleName = user.role_name || user.roleName;
+        const roleId = user.role_id || user.roleId;
+        
+        // Consider admin, staff, and mentor roles as manager roles
+        const isManagerRole = roleName && (
+          roleName.toLowerCase().includes('admin') ||
+          roleName.toLowerCase().includes('staff') ||
+          roleName.toLowerCase().includes('mentor') ||
+          roleName.toLowerCase().includes('manager') ||
+          (roleId && roleId < 1000) // Assuming manager roles have IDs < 1000
+        );
+        
+        return isManagerRole;
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+    }
+    return false; // Default to non-manager
+  };
+
+  // Get current user info from localStorage
+  const getCurrentUser = () => {
+    try {
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') {
+        return { id: 1, name: 'Current User' }; // fallback for SSR
+      }
+      
+      const userStr = localStorage.getItem('task_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user;
+      }
+    } catch (error) {
+      console.error('Error getting current user:', error);
+    }
+    return { id: 1, name: 'Current User' }; // fallback
+  };
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
 
   const viewModes = useMemo(() => [
     { id: 'table', label: 'Table View' },
     { id: 'board', label: 'Board View' }
   ], []);
+  
+  // Ensure viewMode is always valid
+  const handleViewModeChange = (newViewMode: string) => {
+    if (newViewMode === 'table' || newViewMode === 'board') {
+      console.log('Switching to view mode:', newViewMode);
+      setViewMode(newViewMode);
+      // Reset pagination when switching views
+      setCurrentPage(1);
+    } else {
+      console.warn('Invalid view mode:', newViewMode);
+    }
+  };
 
   // Load all tasks assigned to the user (personal + project tasks)
   const loadAllUserTasks = async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('🔍 Starting loadAllUserTasks - taskTeamProjects:', taskTeamProjects.length, 'allTeams:', allTeams.length);
 
       // Load personal tasks from localStorage
       const savedPersonalTasks = localStorage.getItem('personalTasks');
@@ -51,7 +173,70 @@ export default function BoardPage(): React.JSX.Element {
       let projectTasks: any[] = [];
       try {
         const projectTasksResponse = await taskApi.getTasksByUser();
-        projectTasks = projectTasksResponse.tasks || [];
+        // Transform the backend response to match frontend format
+        projectTasks = (projectTasksResponse.tasks || []).map((task: any) => {
+          console.log('Raw task data:', task);
+          console.log('🔍 Processing project task with project_id:', task.project_id);
+          const baseTask = {
+            ...task,
+            // Transform assignees from backend format to frontend format
+            assignees: task.assignees?.map((assignee: any) => assignee.user_id.toString()) || [],
+            // Store original assignee data for user information
+            originalAssignees: task.assignees || [],
+            // Ensure comments and attachments are arrays
+            comments: task.comments || [],
+            attachments: task.attachments || [],
+            // Convert due_date to ISO string if it exists
+            dueDate: task.due_date ? new Date(task.due_date).toISOString() : undefined,
+        // Add team information from backend data using project mapping
+        ...(() => {
+          console.log('🔍 Processing task:', task.title);
+          console.log('🔍 Task project_id:', task.project_id);
+          console.log('🔍 Task team info (if exists):', task.team);
+          console.log('🔍 Available taskTeamProjects:', taskTeamProjects.length, taskTeamProjects);
+          console.log('🔍 Available teams:', allTeams.length, allTeams.map(t => ({ id: t.id, name: t.name })));
+          
+          // First, check if task already has team information (from task modal)
+          if (task.team) {
+            console.log('✅ Using existing task team info:', task.team);
+            return {
+              teamId: task.team.id,
+              team: task.team
+            };
+          }
+          
+          // If no team in task, find team by project_id using taskTeamProjects mapping
+          if (task.project_id && taskTeamProjects.length > 0) {
+            const taskTeamProject = taskTeamProjects.find(p => p.id === task.project_id);
+            console.log('🔍 Found taskTeamProject:', taskTeamProject);
+            
+            if (taskTeamProject && allTeams.length > 0) {
+              const team = allTeams.find(t => t.id === taskTeamProject.team_id);
+              console.log('🔍 Found team:', team);
+              
+              if (team) {
+                console.log('✅ Using real team from backend mapping:', team.name);
+                return {
+                  teamId: String(team.id),
+                  team: { 
+                    id: String(team.id), 
+                    name: team.name, 
+                    color: team.color || '#076297', 
+                    memberIds: [] 
+                  }
+                };
+              }
+            }
+          }
+          
+          console.log('❌ No team information available for task - no project mapping found');
+          return {};
+        })(),
+          };
+          
+          // Apply client-side overdue check as fallback
+          return updateTaskStatusIfOverdue(baseTask);
+        });
       } catch (apiError) {
         console.warn('Could not load project tasks:', apiError);
         // Continue with just personal tasks if API fails
@@ -79,6 +264,20 @@ export default function BoardPage(): React.JSX.Element {
             }
           });
         }
+
+        // Also collect users from detailed assignee data (for project tasks)
+        if (task.originalAssignees && Array.isArray(task.originalAssignees)) {
+          task.originalAssignees.forEach((assignee: any) => {
+            if (assignee.user) {
+              taskUsers.set(assignee.user.id.toString(), {
+                id: assignee.user.id.toString(),
+                name: assignee.user.name,
+                email: assignee.user.email || '',
+                avatar_url: assignee.user.avatar_url || '',
+              });
+            }
+          });
+        }
       });
       
       // Store task users globally so they can be used by modal
@@ -98,18 +297,65 @@ export default function BoardPage(): React.JSX.Element {
   };
 
   useEffect(() => {
-    loadAllUserTasks();
-    loadAllTeamsForUserInfo();
+    // Load teams and task-team projects first, then tasks
+    const loadData = async () => {
+      console.log('🔍 Starting data loading sequence...');
+      await loadAllTeamsForUserInfo();
+      console.log('🔍 Teams loaded, loading projects...');
+      await loadTaskTeamProjects();
+      console.log('🔍 Projects loaded, loading tasks...');
+      await loadAllUserTasks();
+      console.log('🔍 All data loaded');
+    };
+    
+    loadData();
     
     // Expose refresh function globally for TaskModal to use
     (window as any).refreshUserInfo = loadAllTeamsForUserInfo;
+    
+    // Set up periodic refresh to check for overdue tasks every 5 minutes
+    const interval = setInterval(() => {
+      console.log('Periodic refresh: checking for overdue tasks...');
+      loadAllUserTasks();
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
   }, []);
+
+  // Load task-team projects mapping
+  const loadTaskTeamProjects = async () => {
+    try {
+      const resp = await taskApi.getTaskTeamProjects();
+      setTaskTeamProjects(resp.projects || []);
+      console.log('🔍 Loaded task team projects:', resp.projects);
+    } catch (error) {
+      console.error('Error loading task team projects:', error);
+      setTaskTeamProjects([]);
+    }
+  };
 
   // Load all teams to populate user information for taskUsers
   const loadAllTeamsForUserInfo = async () => {
     try {
       const teamsResponse = await taskTeamsApi.listTeams();
       const allTeams = teamsResponse.teams || [];
+      
+      // If no teams from API, use dummy teams
+      const teamsToUse = allTeams.length > 0 ? allTeams : mockTeams.map(team => ({
+        id: team.id,
+        name: team.name,
+        description: team.description,
+        color: team.color,
+        member_count: team.memberCount,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        created_by: 1,
+        projects: team.projects?.map(project => ({ id: Math.random(), name: project })) || []
+      }));
+      
+      setAllTeams(teamsToUse); // Store teams in state for team information mapping
+      console.log('🔍 Loaded teams for user info:', teamsToUse);
       
       // Get existing taskUsers from window
       const taskUsers = (window as any).taskUsers as Map<string, any> || new Map();
@@ -130,13 +376,34 @@ export default function BoardPage(): React.JSX.Element {
         }
       }
       
+      // Add current user to taskUsers if not already present
+      const currentUser = getCurrentUser();
+      const currentUserId = currentUser.id.toString();
+      if (!taskUsers.has(currentUserId)) {
+        taskUsers.set(currentUserId, {
+          id: currentUserId,
+          name: currentUser.name || 'You',
+          email: currentUser.email || '',
+          avatar_url: currentUser.avatar_url || '',
+        });
+      }
+      
       // Update the global taskUsers
       (window as any).taskUsers = taskUsers;
       
+      // Build task members list from taskUsers
+      const membersArray = Array.from(taskUsers.values()).map((user: any) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        color: '#076297',
+        initials: user.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA'
+      }));
+      setTaskMembers(membersArray);
       
       // Increment version to trigger re-renders
       setUserInfoVersion(prev => prev + 1);
-      
       
     } catch (error) {
       console.error('Error loading teams for user info:', error);
@@ -144,10 +411,62 @@ export default function BoardPage(): React.JSX.Element {
   };
 
 
-  // Show all tasks (no filtering needed since team selection is in TaskModal)
-  const filteredTasks = useMemo(() => {
-    return tasks;
-  }, [tasks]);
+
+
+  // Apply date filtering to tasks
+  const filteredTasks = useDateFilter(tasks, dateFilter, customDateRange);
+
+  // Load all users for member selection
+  const loadAllUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true });
+      setAllUsers(usersResponse.users || []);
+    } catch (error: any) {
+      console.error('Error loading users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Add members to available assignees
+  const handleAddMembersToTasks = async () => {
+    if (selectedMembersToAdd.length === 0) return;
+
+    try {
+      // Add selected users to taskMembers
+      const newMembers = selectedMembersToAdd.map(userId => {
+        const user = allUsers.find(u => u.id === userId);
+        return {
+          id: userId.toString(),
+          name: user?.name || 'Unknown',
+          email: user?.email || '',
+          avatar_url: user?.avatar_url || '',
+          color: '#076297',
+          initials: user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA'
+        };
+      });
+
+      setTaskMembers(prev => [...prev, ...newMembers]);
+      setSelectedMembersToAdd([]);
+      setIsAddingMember(false);
+    } catch (error: any) {
+      console.error('Error adding members:', error);
+    }
+  };
+
+  // Remove member from available assignees
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Remove Member',
+      message: `Are you sure you want to remove "${memberName}" from available assignees?`,
+      onConfirm: () => {
+        setTaskMembers(prev => prev.filter(m => m.id !== memberId));
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+      },
+    });
+  };
 
   // Pagination logic
   const totalTasks = filteredTasks.length;
@@ -208,11 +527,11 @@ export default function BoardPage(): React.JSX.Element {
 
   const columns = useMemo(
     () => [
-      { id: "backlog", name: "Backlog", color: "", bgColor: "#f3f4f6", textColor: "#374151", borderColor: "#e5e7eb" },
       { id: "todo", name: "To Do", color: "", bgColor: "#f0f8fc", textColor: "#076297", borderColor: "#d4e9f5" },
       { id: "inprogress", name: "In Progress", color: "", bgColor: "#fef3c7", textColor: "#92400e", borderColor: "#fcd34d" },
       { id: "review", name: "Review", color: "", bgColor: "#fce7f3", textColor: "#9f1239", borderColor: "#f9a8d4" },
       { id: "done", name: "Completed", color: "", bgColor: "#d1fae5", textColor: "#065f46", borderColor: "#6ee7b7" },
+      { id: "overdue", name: "Overdue", color: "", bgColor: "#fef2f2", textColor: "#dc2626", borderColor: "#fecaca" },
     ] as const,
     []
   );
@@ -229,22 +548,38 @@ export default function BoardPage(): React.JSX.Element {
 
   return (
     <PageLayout 
-      members={[]} 
+      members={taskMembers} 
       tasks={tasks} 
       title="My Assigned Tasks"
       headerAction={null}
-        >
-
-          {/* View Mode Selector with Profile Selector */}
+    >
+      {/* View Mode Selector with Date Filter and Add Task Button */}
           <div className="bg-white rounded-xl shadow-sm p-4 mb-4" style={{ borderRadius: '7px' }}>
             <div className="flex items-center justify-between">
               <Tabs
                 tabs={viewModes}
                 activeTab={viewMode}
-                onTabChange={setViewMode}
-              />
-            </div>
+                onTabChange={handleViewModeChange}
+          />
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => setIsCreatingTask(true)}
+              variant="primary"
+              size="md"
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add a task</span>
+            </Button>
+            <DateFilter
+              dateFilter={dateFilter}
+              setDateFilter={setDateFilter}
+              customDateRange={customDateRange}
+              setCustomDateRange={setCustomDateRange}
+            />
           </div>
+        </div>
+      </div>
 
           {/* Loading State */}
           {loading && (
@@ -265,38 +600,12 @@ export default function BoardPage(): React.JSX.Element {
           )}
 
           {/* View Content */}
-          {!loading && !error && viewMode === 'table' ? (
-            /* Table View */
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ borderRadius: '7px' }}>
+          {!loading && !error && (
+            viewMode === 'table' ? (
+              /* Table View */
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ borderRadius: '7px' }}>
               {/* Table Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <div className="flex items-center gap-4">
-                  <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>
-                    Assigned Tasks ({totalTasks})
-                  </h3>
-                  {totalTasks > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>Showing {startIndex + 1}-{Math.min(endIndex, totalTasks)} of {totalTasks}</span>
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => setIsCreatingTask(true)}
-                  className="flex items-center gap-2 px-4 py-2 text-white font-medium rounded-lg transition-colors"
-                  style={{ 
-                    backgroundColor: '#076297',
-                    borderRadius: '7px'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#065a87';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#076297';
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Task
-                </button>
+          <div className="border-b border-gray-200">
               </div>
 
               {/* Table */}
@@ -307,7 +616,6 @@ export default function BoardPage(): React.JSX.Element {
                       <th className="text-left p-4 font-medium text-gray-700">Task</th>
                       <th className="text-left p-4 font-medium text-gray-700">Status</th>
                       <th className="text-left p-4 font-medium text-gray-700">Priority</th>
-                      <th className="text-left p-4 font-medium text-gray-700">Assign Team</th>
                       <th className="text-left p-4 font-medium text-gray-700">Due Date</th>
                       <th className="text-left p-4 font-medium text-gray-700">Actions</th>
                     </tr>
@@ -340,25 +648,6 @@ export default function BoardPage(): React.JSX.Element {
                             <span className="capitalize text-sm font-medium" style={{ color: getPriorityColor(task.priority).text }}>
                               {task.priority}
                             </span>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            {task.teamId ? (
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-semibold">
-                                  <Users className="w-4 h-4" />
-                                </div>
-                                <span className="text-sm text-gray-700">
-                                  {(task as any).isPersonal 
-                                    ? (task.teamId ? `Team ${task.teamId}` : 'Personal')
-                                    : (task.projectId ? `Project ${task.projectId}` : 'Project')
-                                  }
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-gray-500">No team assigned</span>
-                            )}
                           </div>
                         </td>
                         <td className="p-4">
@@ -404,7 +693,7 @@ export default function BoardPage(): React.JSX.Element {
                 </table>
                 {totalTasks === 0 && (
                   <div className="text-center py-12">
-                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <FileText className="w-12h-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
                     <p className="text-gray-500 mb-4">
                       Get started by creating your first task.
@@ -428,7 +717,6 @@ export default function BoardPage(): React.JSX.Element {
               {totalTasks > 0 && (
                 <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">Show:</span>
                     <select
                       value={pageSize}
                       onChange={(e) => {
@@ -438,12 +726,11 @@ export default function BoardPage(): React.JSX.Element {
                       className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       style={{ borderRadius: '4px' }}
                     >
-                      <option value={5}>5</option>
-                      <option value={10}>10</option>
-                      <option value={20}>20</option>
-                      <option value={50}>50</option>
+                  <option value={5}>5 per page</option>
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
                     </select>
-                    <span className="text-sm text-gray-600">per page</span>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -516,48 +803,113 @@ export default function BoardPage(): React.JSX.Element {
                   </div>
                 </div>
               )}
-            </div>
-          ) : (
-            /* Board View */
-            <KanbanBoard
-              columns={columns as any}
-              tasks={filteredTasks}
-              members={[]}
-              onTasksChange={setTasks}
-              registerOpenTask={(open) => {
-                if (typeof window !== "undefined") {
-                  window.addEventListener("taskflow:open", (e: any) => open(e.detail));
-                }
-              }}
-              onCreateTask={(status) => {
-                setIsCreatingTask(true);
-                setCreatingTaskStatus(status);
-              }}
-            />
+              </div>
+            ) : (
+              /* Board View */
+              <KanbanBoard
+                columns={columns as any}
+                tasks={tasks}
+                members={taskMembers}
+                onTasksChange={async (updatedTasks, movedTaskInfo) => {
+                  console.log('onTasksChange called with:', updatedTasks.length, 'tasks');
+                  
+                  if (movedTaskInfo) {
+                    console.log('Task moved:', movedTaskInfo.id, 'from', movedTaskInfo.oldStatus, 'to', movedTaskInfo.newStatus);
+                    
+                    // Find the moved task in the updated tasks
+                    const movedTask = updatedTasks.find(t => t.id === movedTaskInfo.id);
+                    if (!movedTask) {
+                      console.error('Moved task not found in updated tasks');
+                      return;
+                    }
+                    
+                    try {
+                      // Update task status in database
+                      const taskData = {
+                        title: movedTask.title,
+                        description: movedTask.description,
+                        deliverables: movedTask.deliverables,
+                        status: movedTask.status,
+                        priority: movedTask.priority,
+                        due_date: movedTask.dueDate ? new Date(movedTask.dueDate) : null,
+                        labels: movedTask.labels || [],
+                        attachments: movedTask.attachments || [],
+                        assignees: movedTask.assignees.map(id => parseInt(id)),
+                      };
+                      
+                      console.log('🔄 Attempting to update task:', movedTask.id, 'with data:', taskData);
+                      console.log('🔄 Is current user manager?', isCurrentUserManager());
+                      
+                      if (isCurrentUserManager()) {
+                        console.log('🔄 Using unrestricted endpoint for manager');
+                        await taskApi.updateTaskUnrestricted(parseInt(movedTask.id), taskData);
+                      } else {
+                        console.log('🔄 Using regular endpoint for user');
+                        await taskApi.updateTask(parseInt(movedTask.id), taskData);
+                      }
+                      
+                      console.log('✅ Task status updated in database');
+                    } catch (error) {
+                      console.error('❌ Error updating task status:', error);
+                      console.error('❌ Error details:', error.response?.data || error.message);
+                      setError(`Failed to update task status: ${error.response?.data?.message || error.message}`);
+                      return; // Don't update local state if API call failed
+                    }
+                  } else {
+                    console.log('No task moved detected, updating local state only');
+                  }
+                  
+                  // Update local state
+                  setTasks(updatedTasks);
+                }}
+                registerOpenTask={(open) => {
+                  if (typeof window !== "undefined") {
+                    window.addEventListener("taskflow:open", (e: any) => open(e.detail));
+                  }
+                }}
+              />
+            )
           )}
 
-          {/* Task Modal for Viewing/Editing Existing Tasks */}
-          {activeTask && (
-            <TaskModal
-              open={!!activeTask}
-              task={activeTask}
-              members={[]}
-              mode="management"
-              userInfoVersion={userInfoVersion}
-              onOpenChange={(open) => {
-                if (!open) {
-                  setActiveTask(null);
-                }
-              }}
-              onChange={async (updatedTask: Task) => {
-                try {
-                  // Check if it's a personal task
+          {/* New Task Modal */}
+          <TaskModal
+            open={!!activeTask || isCreatingTask}
+            task={activeTask || (isCreatingTask ? {
+              id: '',
+              title: '',
+              description: '',
+              deliverables: '',
+              status: viewMode === 'board' ? creatingTaskStatus as any : 'todo' as const,
+              priority: viewMode === 'table' ? 'medium' as const : creatingTaskPriority as any,
+              dueDate: undefined,
+              labels: [],
+              assignees: [],
+              teamId: undefined,
+              comments: [],
+              attachments: []
+            } : null)}
+            members={taskMembers}
+            mode={isCurrentUserManager() ? "management" : "individual"}
+            userInfoVersion={userInfoVersion}
+            onOpenChange={async (open) => {
+              if (!open) {
+                setActiveTask(null);
+                setIsCreatingTask(false);
+                // Refresh tasks to get updated team information
+                console.log('🔍 Modal closed, refreshing tasks to get updated team information');
+                await loadAllUserTasks();
+              }
+            }}
+            onChange={async (updatedTask: Task) => {
+              try {
+                if (updatedTask.id) {
+                  // Update existing task
                   const existingTask = tasks.find(t => t.id === updatedTask.id);
                   if (existingTask && (existingTask as any).isPersonal) {
                     // Update personal task locally
                     const updatedTasks = tasks.map(t => (t.id === updatedTask.id ? updatedTask : t));
                     setTasks(updatedTasks);
-                    setActiveTask(updatedTask);
+                    setActiveTask(null); // Close modal after successful update
                     
                     // Save to localStorage
                     const personalTasks = updatedTasks.filter(task => (task as any).isPersonal);
@@ -576,94 +928,75 @@ export default function BoardPage(): React.JSX.Element {
                       assignees: updatedTask.assignees.map(id => parseInt(id)),
                     };
                     
-                    const response = await taskApi.updateTask(parseInt(updatedTask.id), taskData);
+                    const response = isCurrentUserManager() 
+                      ? await taskApi.updateTaskUnrestricted(parseInt(updatedTask.id), taskData)
+                      : await taskApi.updateTask(parseInt(updatedTask.id), taskData);
                     const updatedProjectTask = {
                       ...response.task,
                       assignees: response.task.assignees?.map((a: any) => a.user_id.toString()) || [],
+                      originalAssignees: response.task.assignees || [],
+                      comments: response.task.comments || [],
+                      attachments: response.task.attachments || [],
+                      dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
+                      // Preserve team information from the updated task
+                      teamId: updatedTask.teamId,
+                      team: updatedTask.team,
                     };
                     
                     const updatedTasks = tasks.map(t => (t.id === updatedTask.id ? updatedProjectTask : t));
                     setTasks(updatedTasks);
-                    setActiveTask(updatedProjectTask);
+                    setActiveTask(null); // Close modal after successful update
+                  }
+                } else {
+                  // Create new task - Always save to database
+                  // Get the first available project that the user has access to
+                  let projectId = updatedTask.projectId;
+                  if (!projectId) {
+                    try {
+                      const projectsResponse = await taskApi.getTaskTeamProjects();
+                      const projects = projectsResponse.projects || [];
+                      if (projects.length > 0) {
+                        projectId = projects[0].id;
+                      } else {
+                        // If no projects available, create a personal task as fallback
+                        const personalTask = {
+                          id: Math.random().toString(36).slice(2),
+                          title: updatedTask.title,
+                          description: updatedTask.description,
+                          deliverables: updatedTask.deliverables,
+                          status: updatedTask.status,
+                          priority: updatedTask.priority,
+                          dueDate: updatedTask.dueDate,
+                          labels: updatedTask.labels || [],
+                          assignees: updatedTask.assignees.length > 0 
+                            ? updatedTask.assignees
+                            : [getCurrentUserId().toString()],
+                          teamId: updatedTask.teamId,
+                          team: updatedTask.team,
+                          comments: [],
+                          attachments: updatedTask.attachments || [],
+                          isPersonal: true
+                        };
+                        
+                        const updatedTasks = [personalTask, ...tasks];
+                        setTasks(updatedTasks);
+                        setIsCreatingTask(false);
+                        
+                        // Save to localStorage as fallback
+                        const personalTasks = updatedTasks.filter(task => (task as any).isPersonal);
+                        localStorage.setItem('personalTasks', JSON.stringify(personalTasks));
+                        console.log('✅ Personal task created (fallback):', personalTask.title);
+                        return;
+                      }
+                    } catch (error) {
+                      console.error('Error getting projects:', error);
+                      setError('Failed to get available projects. Please try again.');
+                      return;
+                    }
                   }
                   
-                  // Refresh user information to ensure updated assignees have real names
-                  await loadAllTeamsForUserInfo();
-                } catch (err: any) {
-                  console.error('Error updating task:', err);
-                  setError('Failed to update task');
-                }
-              }}
-              onDelete={async (id) => {
-                try {
-                  // Check if it's a personal task
-                  const existingTask = tasks.find(t => t.id === id);
-                  if (existingTask && (existingTask as any).isPersonal) {
-                    // Delete personal task locally
-                    const updatedTasks = tasks.filter(t => t.id !== id);
-                    setTasks(updatedTasks);
-                    setActiveTask(null);
-                    
-                    // Save to localStorage
-                    const personalTasks = updatedTasks.filter(task => (task as any).isPersonal);
-                    localStorage.setItem('personalTasks', JSON.stringify(personalTasks));
-                  } else {
-                    // Delete project task via API
-                    await taskApi.deleteTask(parseInt(id));
-                    const updatedTasks = tasks.filter(t => t.id !== id);
-                    setTasks(updatedTasks);
-                    setActiveTask(null);
-                  }
-                } catch (err: any) {
-                  console.error('Error deleting task:', err);
-                  setError('Failed to delete task');
-                }
-              }}
-              columns={columns as any}
-              tasks={viewMode === 'board' ? 
-                filteredTasks.reduce((acc, task) => {
-                  const status = task.status;
-                  if (!acc[status]) acc[status] = [];
-                  acc[status]?.push(task);
-                  return acc;
-                }, {} as Record<string, Task[]>) : 
-                tasksByPriority
-              }
-            />
-          )}
-
-          {/* Task Modal for Creating New Tasks */}
-          <TaskModal
-            open={isCreatingTask}
-            task={isCreatingTask ? {
-              id: '',
-              title: '',
-              description: '',
-              deliverables: '',
-              status: viewMode === 'board' ? creatingTaskStatus as any : 'backlog' as const,
-              priority: viewMode === 'table' ? 'medium' as const : creatingTaskPriority as any,
-              dueDate: undefined,
-              labels: [],
-              assignees: [], // Will be assigned in TaskModal
-              teamId: undefined, // Will be assigned in TaskModal
-              comments: [],
-              attachments: []
-            } : null}
-            members={[]}
-            mode="management"
-            userInfoVersion={userInfoVersion}
-            onOpenChange={(open) => {
-              if (!open) {
-                setIsCreatingTask(false);
-              }
-            }}
-            onChange={async (updatedTask: Task) => {
-              try {
-                // Check if task has a project_id (from team selection)
-                if (updatedTask.projectId) {
-                  // Create project task via API
                   const taskData = {
-                    project_id: updatedTask.projectId,
+                    project_id: projectId,
                     title: updatedTask.title,
                     description: updatedTask.description,
                     deliverables: updatedTask.deliverables,
@@ -672,54 +1005,74 @@ export default function BoardPage(): React.JSX.Element {
                     due_date: updatedTask.dueDate ? new Date(updatedTask.dueDate) : null,
                     labels: updatedTask.labels || [],
                     attachments: updatedTask.attachments || [],
-                    assignees: updatedTask.assignees.map(id => parseInt(id)),
-                    created_by: 1, // TODO: Get from user context
+                    assignees: updatedTask.assignees.length > 0 
+                      ? updatedTask.assignees.map(id => parseInt(id))
+                      : [getCurrentUserId()],
+                    created_by: getCurrentUserId(),
                   };
                   
                   const response = await taskApi.createTask(taskData);
                   const newTask = {
                     ...response.task,
                     assignees: response.task.assignees?.map((a: any) => a.user_id.toString()) || [],
+                    originalAssignees: response.task.assignees || [],
+                    comments: response.task.comments || [],
+                    attachments: response.task.attachments || [],
+                    dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
                   };
                   
-                  // Add to current tasks
                   const updatedTasks = [newTask, ...tasks];
                   setTasks(updatedTasks);
-                } else {
-                  // Create personal task
-                  const newTask = {
-                    ...updatedTask,
-                    id: Math.random().toString(36).slice(2),
-                    isPersonal: true,
-                    createdBy: 1, // TODO: Get from user context
-                    createdAt: new Date().toISOString(),
-                  };
-                  
-                  // Add to current tasks
-                  const updatedTasks = [newTask, ...tasks];
-                  setTasks(updatedTasks);
-                  
-                  // Save to localStorage for persistence
-                  const personalTasks = updatedTasks.filter(task => (task as any).isPersonal);
-                  localStorage.setItem('personalTasks', JSON.stringify(personalTasks));
+                  setIsCreatingTask(false);
+                  console.log('✅ Task saved to database:', newTask.title);
                 }
                 
-                // Refresh user information to ensure new assignees have real names
+                // Refresh user information
                 await loadAllTeamsForUserInfo();
-                
-              setIsCreatingTask(false);
-                
               } catch (err: any) {
-                console.error('Error creating task:', err);
-                setError('Failed to create task');
+                console.error('Error saving task:', err);
+                setError('Failed to save task');
               }
             }}
-            onDelete={() => {
-              // This shouldn't be called for new tasks, but just in case
-              setIsCreatingTask(false);
+            onDelete={async (id) => {
+              try {
+                const existingTask = tasks.find(t => t.id === id);
+                if (existingTask && (existingTask as any).isPersonal) {
+                  // Delete personal task locally
+                  const updatedTasks = tasks.filter(t => t.id !== id);
+                  setTasks(updatedTasks);
+                  setActiveTask(null);
+                  
+                  // Save to localStorage
+                  const personalTasks = updatedTasks.filter(task => (task as any).isPersonal);
+                  localStorage.setItem('personalTasks', JSON.stringify(personalTasks));
+                } else {
+                  // Delete project task via API
+                  if (isCurrentUserManager()) {
+                    await taskApi.deleteTaskUnrestricted(parseInt(id));
+                  } else {
+                    await taskApi.deleteTask(parseInt(id));
+                  }
+                  const updatedTasks = tasks.filter(t => t.id !== id);
+                  setTasks(updatedTasks);
+                  setActiveTask(null);
+                }
+              } catch (err: any) {
+                console.error('Error deleting task:', err);
+                setError('Failed to delete task');
+              }
             }}
+            columns={columns as any}
+            tasks={viewMode === 'board' ? 
+              filteredTasks.reduce((acc, task) => {
+                const status = task.status;
+                if (!acc[status]) acc[status] = [];
+                acc[status]?.push(task);
+                return acc;
+              }, {} as Record<string, Task[]>) : 
+              tasksByPriority
+            }
           />
-
 
           {/* Delete Confirmation Modal */}
           {showDeleteModal && taskToDelete && (
@@ -768,7 +1121,11 @@ export default function BoardPage(): React.JSX.Element {
                           localStorage.setItem('personalTasks', JSON.stringify(personalTasks));
                         } else {
                           // Delete project task via API
-                          await taskApi.deleteTask(parseInt(taskToDelete.id));
+                          if (isCurrentUserManager()) {
+                            await taskApi.deleteTaskUnrestricted(parseInt(taskToDelete.id));
+                          } else {
+                            await taskApi.deleteTask(parseInt(taskToDelete.id));
+                          }
                           setTasks(tasks.filter(t => t.id !== taskToDelete.id));
                         }
                         setShowDeleteModal(false);
@@ -798,9 +1155,25 @@ export default function BoardPage(): React.JSX.Element {
               </div>
             </div>
           )}
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+      />
+
+      {/* Confirmation Modal */}
+      <ErrorModal
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        confirmText="Confirm"
+        showCancel={true}
+      />
     </PageLayout>
   );
 }
-
-
-

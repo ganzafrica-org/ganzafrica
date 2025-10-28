@@ -74,12 +74,12 @@ function getFileUrl(location: string): string {
  *           schema:
  *             type: object
  *             required:
- *               - project_id
  *               - title
  *               - created_by
  *             properties:
  *               project_id:
  *                 type: integer
+ *                 description: Optional project ID. If not provided, task will be created without a project.
  *               title:
  *                 type: string
  *               description:
@@ -211,6 +211,7 @@ export const getTaskById = async (req: Request, res: Response) => {
     const taskId = parseInt(req.params.id);
     const userId = parseInt((req as any).user.id);
     
+    
     const task = await taskService.getTaskById(taskId, userId);
 
     res.status(200).json({
@@ -219,6 +220,53 @@ export const getTaskById = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error("Get task error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Get Task Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Get Task Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /tasks/{id}/unrestricted:
+ *   get:
+ *     summary: Get task by ID without permission checks (for board view)
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Task retrieved successfully
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+export const getTaskByIdUnrestricted = async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    
+    const task = await taskService.getTaskByIdUnrestricted(taskId);
+
+    res.status(200).json({
+      message: "Task retrieved successfully",
+      task,
+    });
+  } catch (error) {
+    logger.error("Get task unrestricted error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
         error: "Get Task Error",
@@ -459,6 +507,78 @@ export const updateTask = async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /tasks/{id}/unrestricted:
+ *   put:
+ *     summary: Update task without permission checks (for board view)
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               deliverables:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *               due_date:
+ *                 type: string
+ *               labels:
+ *                 type: array
+ *               attachments:
+ *                 type: array
+ *               assignees:
+ *                 type: array
+ *     responses:
+ *       200:
+ *         description: Task updated successfully
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+export const updateTaskUnrestricted = async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    
+    const task = await taskService.updateTaskUnrestricted(taskId, req.body);
+
+    res.status(200).json({
+      message: "Task updated successfully",
+      task,
+    });
+  } catch (error) {
+    logger.error("Update task unrestricted error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Update Task Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Update Task Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
  * /tasks/{id}:
  *   delete:
  *     summary: Delete task
@@ -492,6 +612,50 @@ export const deleteTask = async (req: Request, res: Response) => {
     res.status(200).json(result);
   } catch (error) {
     logger.error("Delete task error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Delete Task Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Delete Task Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /tasks/{id}/unrestricted:
+ *   delete:
+ *     summary: Delete task without permission checks (for board view)
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Task deleted successfully
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+export const deleteTaskUnrestricted = async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    
+    const result = await taskService.deleteTaskUnrestricted(taskId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error("Delete task unrestricted error", error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
         error: "Delete Task Error",
@@ -569,6 +733,67 @@ export const addTaskComment = async (req: Request, res: Response) => {
 };
 
 /**
+ * Update task comment
+ */
+export const updateTaskComment = async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    const commentId = parseInt(req.params.commentId);
+    const userId = parseInt((req as any).user.id);
+    const { content } = req.body;
+
+    const comment = await taskService.updateTaskComment(taskId, commentId, content, userId);
+
+    res.status(200).json({
+      message: "Comment updated successfully",
+      comment,
+    });
+  } catch (error) {
+    logger.error("Update task comment error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Task Comment Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Task Comment Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * Delete task comment
+ */
+export const deleteTaskComment = async (req: Request, res: Response) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    const commentId = parseInt(req.params.commentId);
+    const userId = parseInt((req as any).user.id);
+
+    await taskService.deleteTaskComment(taskId, commentId, userId);
+
+    res.status(200).json({
+      message: "Comment deleted successfully",
+      success: true,
+    });
+  } catch (error) {
+    logger.error("Delete task comment error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Task Comment Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Task Comment Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
  * @swagger
  * /tasks/{id}/upload:
  *   post:
@@ -605,6 +830,106 @@ export const addTaskComment = async (req: Request, res: Response) => {
  *       500:
  *         description: Server error
  */
+/**
+ * @swagger
+ * /tasks/project/{projectId}/files:
+ *   get:
+ *     summary: Get all files from tasks in a project with role-based filtering
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Files retrieved successfully with role-based filtering
+ *       403:
+ *         description: Forbidden
+ *       500:
+ *         description: Server error
+ */
+export const getProjectFilesWithRoleFilter = async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    const userId = parseInt((req as any).user.id);
+    
+    // Get current user's roles
+    const userRoles = (req as any).user.roles || [];
+    const isManager = userRoles.some((role: string) => 
+      role.toLowerCase().includes('admin') || 
+      role.toLowerCase().includes('manager') || 
+      role.toLowerCase().includes('staff') || 
+      role.toLowerCase().includes('mentor')
+    );
+    
+    // Get all tasks for the project
+    const tasks = await taskService.listTasksByProject(projectId, userId);
+    
+    // Extract all attachments from all tasks
+    const allFiles = [];
+    for (const task of tasks) {
+      if (task.attachments && Array.isArray(task.attachments)) {
+        for (const attachment of task.attachments) {
+          // Check if this attachment should be visible to current user
+          let shouldShow = true;
+          
+          // If attachment has uploader info, check uploader's role
+          if (attachment.uploaded_by && !isManager) {
+            // For non-managers, check if the uploader was a manager
+            // We need to check the uploader's role
+            const uploaderIsManager = await taskService.isUserManager(attachment.uploaded_by);
+            if (uploaderIsManager) {
+              shouldShow = false; // Hide manager files from non-managers
+            }
+          }
+          
+          if (shouldShow) {
+            allFiles.push({
+              id: `task-${task.id}-${attachment.id}`,
+              filename: attachment.filename,
+              original_filename: attachment.filename,
+              file_type: attachment.type?.split('/')[1] || 'unknown',
+              file_size: attachment.size || 0,
+              file_url: attachment.url,
+              created_at: attachment.uploaded_at || task.created_at,
+              metadata: {
+                description: `Attachment from task: ${task.title}`,
+                tags: ['task-attachment'],
+                task_id: task.id,
+                task_title: task.title,
+                uploaded_by: attachment.uploaded_by
+              },
+              uploader: { name: 'Unknown', email: 'unknown@example.com' }
+            });
+          }
+        }
+      }
+    }
+    
+    res.status(200).json({
+      message: "Files retrieved successfully",
+      files: allFiles,
+    });
+  } catch (error) {
+    logger.error("Get project files error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Get Files Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Get Files Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
 export const uploadTaskAttachments = async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
@@ -640,7 +965,9 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
         key, // S3 key for deletion later if needed
         size,
         type: mimetype,
-        category: subdir
+        category: subdir,
+        uploaded_by: userId, // Add uploader information
+        uploaded_at: new Date().toISOString()
       };
     });
 
@@ -675,10 +1002,15 @@ export const taskController = {
   createTask,
   createTaskUnrestricted,
   getTaskById,
+  getTaskByIdUnrestricted,
   listTasksByProject,
   updateTask,
+  updateTaskUnrestricted,
   deleteTask,
+  deleteTaskUnrestricted,
   addTaskComment,
+  updateTaskComment,
+  deleteTaskComment,
   uploadTaskAttachments,
   getTasksByUser,
   getAllTasks,

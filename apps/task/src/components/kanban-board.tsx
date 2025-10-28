@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Task, TeamMember, Status } from "@/lib/types";
 import { TaskCard } from "@/components/task-card";
 import { TaskModal } from "@/components/task-modal";
+import { useToast, ToastContainer } from "@/components/toast";
 
 type Column = { 
   id: Status; 
@@ -29,7 +30,7 @@ export function KanbanBoard({
   columns: Column[];
   tasks: Task[];
   members: TeamMember[];
-  onTasksChange: (tasks: Task[]) => void;
+  onTasksChange: (tasks: Task[], movedTask?: { id: string; oldStatus: string; newStatus: string }) => void;
   registerOpenTask?: (open: (task: Task) => void) => void;
   onCreateTask?: (status: Status) => void;
   onUpdateTask?: (task: Task) => void;
@@ -39,20 +40,56 @@ export function KanbanBoard({
 }): React.JSX.Element {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [loadingTask, setLoadingTask] = useState(false);
+  const { toasts, removeToast, showError } = useToast();
 
   const grouped = useMemo(() => {
-    const m: Record<Status, Task[]> = { backlog: [], todo: [], inprogress: [], review: [], done: [] };
-    for (const t of tasks) m[t.status].push(t);
+    const m: Record<Status, Task[]> = { todo: [], inprogress: [], review: [], done: [], overdue: [], backlog: [] };
+    for (const t of tasks) {
+      // Handle legacy "backlog" status by mapping it to "overdue"
+      const status = t.status === "backlog" ? "overdue" : t.status;
+      if (m[status]) {
+        m[status].push(t);
+      }
+    }
     return m;
   }, [tasks]);
 
   const handleDrop = (e: React.DragEvent, status: Status) => {
     e.preventDefault();
     const id = e.dataTransfer.getData("text/task-id");
-    if (!id) return;
-    onTasksChange(
-      tasks.map(t => (t.id === id ? { ...t, status } : t))
-    );
+    console.log('Drop event:', { id, status, tasksCount: tasks.length });
+    if (!id) {
+      console.log('No task ID found in drop data');
+      return;
+    }
+    
+    // Find the original task to get its old status
+    const originalTask = tasks.find(t => t.id === id);
+    if (!originalTask) {
+      console.log('Original task not found');
+      return;
+    }
+    
+    // Prevent dragging tasks to "overdue" status
+    if (status === "overdue") {
+      showError(
+        "Cannot Move to Overdue",
+        "Tasks cannot be manually moved to the Overdue status. Overdue status is automatically assigned to tasks that have passed their due date."
+      );
+      return;
+    }
+    
+    const updatedTasks = tasks.map(t => (t.id === id ? { ...t, status } : t));
+    console.log('Updating tasks:', updatedTasks.find(t => t.id === id));
+    
+    // Pass the moved task information
+    const movedTask = {
+      id,
+      oldStatus: originalTask.status,
+      newStatus: status
+    };
+    
+    onTasksChange(updatedTasks, movedTask);
   };
 
   const handleTaskClick = async (task: Task) => {
@@ -86,9 +123,26 @@ export function KanbanBoard({
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 min-w-[1000px]">
       {columns.map(col => (
         <div key={col.id}
-          onDragOver={e => e.preventDefault()}
-          onDrop={e => handleDrop(e, col.id)}
-          className="flex flex-col">
+          onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
+            e.preventDefault();
+            // Show different visual feedback for overdue column
+            if (col.id === "overdue") {
+              e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.05)';
+              e.currentTarget.style.borderColor = 'rgba(220, 38, 38, 0.2)';
+            } else {
+              e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            }
+          }}
+          onDragLeave={(e: React.DragEvent<HTMLDivElement>) => {
+            e.currentTarget.style.backgroundColor = '';
+            e.currentTarget.style.borderColor = '';
+          }}
+          onDrop={(e: React.DragEvent<HTMLDivElement>) => {
+            e.currentTarget.style.backgroundColor = '';
+            e.currentTarget.style.borderColor = '';
+            handleDrop(e, col.id);
+          }}
+          className="flex flex-col transition-colors">
           <div 
             className={`flex items-center justify-between p-2 rounded-xl shadow-sm mb-2 ${col.color || ''}`}
             style={col.bgColor ? {
@@ -106,28 +160,6 @@ export function KanbanBoard({
                 <TaskCard key={t.id} task={t} members={members} onClick={() => handleTaskClick(t)} />
               ))}
             </div>
-            {/* Add new task button */}
-            {onCreateTask && (
-              <button
-                onClick={() => onCreateTask(col.id)}
-                className="w-full py-1 px-3 border-2 border-dashed rounded-xl transition-colors flex items-center justify-center gap-2 font-medium"
-                style={{ 
-                  borderRadius: '7px',
-                  backgroundColor: '#f0f8fc',
-                  borderColor: '#d4e9f5',
-                  color: '#076297'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e6f2ff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f0f8fc';
-                }}
-              >
-                <span className="text-lg">+</span>
-                <span>Add new task</span>
-              </button>
-            )}
           </div>
         </div>
       ))}
@@ -166,6 +198,9 @@ export function KanbanBoard({
         columns={columns}
         tasks={grouped}
       />
+      
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </div>
   );
 }

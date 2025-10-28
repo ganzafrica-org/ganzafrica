@@ -31,7 +31,7 @@ export function PageLayout({
         <Navbar tasks={tasks} onToggleSidebar={toggleCollapsed} />
       </div>
       <div className={`grid min-h-screen max-w-[1600px] mx-auto transition-all duration-300 ${sidebarCollapsed ? 'grid-cols-[50px_1fr]' : 'grid-cols-[200px_1fr]'}`}>
-        <aside className="bg-white overflow-y-auto">
+        <aside className="bg-white overflow-visible">
           <Sidebar members={members} tasks={tasks} collapsed={sidebarCollapsed ?? false} />
         </aside>
         <div className={`flex flex-col min-w-0 min-h-screen ${className}`}>

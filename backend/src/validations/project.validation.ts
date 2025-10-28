@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Base project status validation
-const projectStatusEnum = z.enum(["planned", "active", "completed", "cancelled", "on_hold"]);
+const projectStatusEnum = z.enum(["planned", "active", "completed", "cancelled", "on_hold", "overdue"]);
 
 // Project member role validation
 const projectMemberRoleEnum = z.enum(["lead", "member", "supervisor", "contributor"]);

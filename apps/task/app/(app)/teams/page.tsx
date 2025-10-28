@@ -5,15 +5,44 @@ import { useRouter } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/button";
 import { ErrorModal } from "@/components/error-modal";
+import { UserAvatar } from "@/components/user-avatar";
 import { TeamMember } from "@/lib/types";
 import { initialTasks } from "@/lib/sample-data";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
 import { portalDataApi, PortalTeam, PortalProject } from "@/lib/api/portal-data";
 import { usersApi, User } from "@/lib/api/users";
-import { Users, Briefcase, X, Plus, Minus, MoreVertical, Loader2, Check } from "lucide-react";
+import { Users, Briefcase, X, Plus, Minus, MoreVertical, Loader2, Check, UserPlus } from "lucide-react";
+import { TruncatedText } from "@/components/truncated-text";
+import { isCurrentUserAdminOrManager, getCurrentUserRole } from "@/lib/auth-utils";
 
 export default function TeamsPage(): React.JSX.Element {
   const router = useRouter();
+  
+  // Check if current user can edit a specific team
+  const canEditTeam = (team: TaskTeam): boolean => {
+    // Only Admin/Manager can edit teams
+    return isCurrentUserAdminOrManager();
+  };
+
+  // Check if current user is assigned to a team
+  const isCurrentUserAssignedToTeam = (team: TaskTeam): boolean => {
+    if (!team.members) return false;
+    
+    // Admin and Manager can always manage teams
+    if (isCurrentUserAdminOrManager()) return true;
+    
+    // Get current user ID from localStorage
+    try {
+      const currentUserId = parseInt(localStorage.getItem('task_user_id') || localStorage.getItem('user_id') || '0');
+      if (currentUserId === 0) return false;
+      
+      // Check if current user is a member of this team
+      return team.members.some(member => member.user_id === currentUserId);
+    } catch (error) {
+      console.error('Error checking team assignment:', error);
+      return false;
+    }
+  };
   const [isAddTeamModalOpen, setIsAddTeamModalOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [teams, setTeams] = useState<TaskTeam[]>([]);
@@ -26,11 +55,20 @@ export default function TeamsPage(): React.JSX.Element {
   const [selectedTeamForDetails, setSelectedTeamForDetails] = useState<TaskTeam | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditingTeam, setIsEditingTeam] = useState(false);
+  const [loadingTeamDetails, setLoadingTeamDetails] = useState(false);
   const [editTeamData, setEditTeamData] = useState({
     name: '',
     description: '',
     color: '#073392',
   });
+  const [isAddingMember, setIsAddingMember] = useState(false);
+  const [isAddingProject, setIsAddingProject] = useState(false);
+  const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<number[]>([]);
+  const [selectedProjectsToAdd, setSelectedProjectsToAdd] = useState<number[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allProjects, setAllProjects] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [errorModal, setErrorModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -109,7 +147,35 @@ export default function TeamsPage(): React.JSX.Element {
     }
   };
 
+  const loadTeamDetails = async (teamId: number) => {
+    try {
+      setLoadingTeamDetails(true);
+      const response = await taskTeamsApi.getTeamById(teamId);
+      setSelectedTeamForDetails(response.team);
+      setIsDetailsModalOpen(true);
+    } catch (error: any) {
+      console.error('Error loading team details:', error);
+      setErrorModal({
+        isOpen: true,
+        title: 'Error Loading Team Details',
+        message: error.response?.data?.message || 'Failed to load team details. Please try again.',
+      });
+    } finally {
+      setLoadingTeamDetails(false);
+    }
+  };
+
   const handleCreateTeam = async () => {
+    // Check if user can create teams
+    if (!isCurrentUserAdminOrManager()) {
+      setErrorModal({
+        isOpen: true,
+        title: 'Access Denied',
+        message: 'Only administrators and managers can create teams',
+      });
+      return;
+    }
+
     if (!newTeam.name.trim()) {
       setErrorModal({
         isOpen: true,
@@ -221,6 +287,17 @@ export default function TeamsPage(): React.JSX.Element {
   };
 
   const confirmDelete = async () => {
+    // Check if user can delete teams
+    if (!isCurrentUserAdminOrManager()) {
+      setErrorModal({
+        isOpen: true,
+        title: 'Access Denied',
+        message: 'Only administrators and managers can delete teams',
+      });
+      setDeleteConfirm({ isOpen: false, teamId: 0, teamName: '' });
+      return;
+    }
+
     try {
       await taskTeamsApi.deleteTeam(deleteConfirm.teamId);
       setDeleteConfirm({ isOpen: false, teamId: 0, teamName: '' });
@@ -241,6 +318,16 @@ export default function TeamsPage(): React.JSX.Element {
         isOpen: true,
         title: 'Validation Error',
         message: 'Please enter a team name',
+      });
+      return;
+    }
+
+    // Check if user can edit this team
+    if (!isCurrentUserAdminOrManager()) {
+      setErrorModal({
+        isOpen: true,
+        title: 'Access Denied',
+        message: 'Only administrators and managers can edit teams',
       });
       return;
     }
@@ -268,10 +355,198 @@ export default function TeamsPage(): React.JSX.Element {
     }
   };
 
-  const truncateDescription = (text: string | undefined, charLimit: number = 100): string => {
-    if (!text) return '';
-    if (text.length <= charLimit) return text;
-    return text.slice(0, charLimit) + '...';
+  // Load all users for member selection
+  const loadAllUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const response = await usersApi.listUsers();
+      setAllUsers(response.users || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+      setErrorModal({
+        isOpen: true,
+        title: 'Error Loading Users',
+        message: 'Failed to load users. Please try again.',
+      });
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Load all projects for project selection
+  const loadAllProjects = async () => {
+    try {
+      setLoadingProjects(true);
+      const response = await taskTeamsApi.listAllProjects();
+      setAllProjects(response.projects || []);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+      setErrorModal({
+        isOpen: true,
+        title: 'Error Loading Projects',
+        message: 'Failed to load projects. Please try again.',
+      });
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
+  // Add members to team
+  const handleAddMembersToTeam = async () => {
+    if (selectedMembersToAdd.length === 0) {
+      setErrorModal({
+        isOpen: true,
+        title: 'No Members Selected',
+        message: 'Please select at least one member to add.',
+      });
+      return;
+    }
+
+    // Check if user can add members to this team
+    if (!selectedTeamForDetails || !isCurrentUserAssignedToTeam(selectedTeamForDetails)) {
+      setErrorModal({
+        isOpen: true,
+        title: 'Access Denied',
+        message: 'You are not assigned to this team. Only team members can add other members.',
+      });
+      return;
+    }
+
+    try {
+      setCreating(true);
+      for (const userId of selectedMembersToAdd) {
+        await taskTeamsApi.addTeamMember(selectedTeamForDetails!.id, userId, 'member');
+      }
+      
+      setIsAddingMember(false);
+      setSelectedMembersToAdd([]);
+      loadTeamDetails(selectedTeamForDetails!.id);
+      
+      setErrorModal({
+        isOpen: true,
+        title: 'Success',
+        message: `Successfully added ${selectedMembersToAdd.length} member(s) to the team.`,
+      });
+    } catch (error: any) {
+      console.error('Error adding members:', error);
+      setErrorModal({
+        isOpen: true,
+        title: 'Error Adding Members',
+        message: error.response?.data?.message || 'Failed to add members. Please try again.',
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Remove member from team
+  const handleRemoveTeamMember = async (userId: number, memberName: string) => {
+    // Check if user can remove members from this team
+    if (!selectedTeamForDetails || !isCurrentUserAssignedToTeam(selectedTeamForDetails)) {
+      setErrorModal({
+        isOpen: true,
+        title: 'Access Denied',
+        message: 'You are not assigned to this team. Only team members can remove other members.',
+      });
+      return;
+    }
+
+    try {
+      await taskTeamsApi.removeTeamMember(selectedTeamForDetails!.id, userId);
+      loadTeamDetails(selectedTeamForDetails!.id);
+      
+      setErrorModal({
+        isOpen: true,
+        title: 'Success',
+        message: `Successfully removed ${memberName} from the team.`,
+      });
+    } catch (error: any) {
+      console.error('Error removing member:', error);
+      setErrorModal({
+        isOpen: true,
+        title: 'Error Removing Member',
+        message: error.response?.data?.message || 'Failed to remove member. Please try again.',
+      });
+    }
+  };
+
+  // Add projects to team
+  const handleAddProjectsToTeam = async () => {
+    if (selectedProjectsToAdd.length === 0) {
+      setErrorModal({
+        isOpen: true,
+        title: 'No Projects Selected',
+        message: 'Please select at least one project to add.',
+      });
+      return;
+    }
+
+    // Check if user can add projects to this team
+    if (!selectedTeamForDetails || !isCurrentUserAssignedToTeam(selectedTeamForDetails)) {
+      setErrorModal({
+        isOpen: true,
+        title: 'Access Denied',
+        message: 'You are not assigned to this team. Only team members can add projects.',
+      });
+      return;
+    }
+
+    try {
+      setCreating(true);
+      for (const projectId of selectedProjectsToAdd) {
+        await taskTeamsApi.addProjectToTeam(selectedTeamForDetails!.id, projectId);
+      }
+      
+      setIsAddingProject(false);
+      setSelectedProjectsToAdd([]);
+      loadTeamDetails(selectedTeamForDetails!.id);
+      
+      setErrorModal({
+        isOpen: true,
+        title: 'Success',
+        message: `Successfully added ${selectedProjectsToAdd.length} project(s) to the team.`,
+      });
+    } catch (error: any) {
+      console.error('Error adding projects:', error);
+      setErrorModal({
+        isOpen: true,
+        title: 'Error Adding Projects',
+        message: error.response?.data?.message || 'Failed to add projects. Please try again.',
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Remove project from team
+  const handleRemoveTeamProject = async (projectId: number, projectName: string) => {
+    // Check if user can remove projects from this team
+    if (!selectedTeamForDetails || !isCurrentUserAssignedToTeam(selectedTeamForDetails)) {
+      setErrorModal({
+        isOpen: true,
+        title: 'Access Denied',
+        message: 'You are not assigned to this team. Only team members can remove projects.',
+      });
+      return;
+    }
+
+    try {
+      await taskTeamsApi.removeProjectFromTeam(selectedTeamForDetails!.id, projectId);
+      loadTeamDetails(selectedTeamForDetails!.id);
+      
+      setErrorModal({
+        isOpen: true,
+        title: 'Success',
+        message: `Successfully removed ${projectName} from the team.`,
+      });
+    } catch (error: any) {
+      console.error('Error removing project:', error);
+      setErrorModal({
+        isOpen: true,
+        title: 'Error Removing Project',
+        message: error.response?.data?.message || 'Failed to remove project. Please try again.',
+      });
+    }
   };
 
   return (
@@ -280,6 +555,7 @@ export default function TeamsPage(): React.JSX.Element {
       tasks={initialTasks} 
       title="Teams"
       headerAction={
+        isCurrentUserAdminOrManager() ? (
         <Button
           variant="primary"
           size="md"
@@ -288,6 +564,7 @@ export default function TeamsPage(): React.JSX.Element {
         >
           Add Team
         </Button>
+        ) : null
       }
     >
       {loading ? (
@@ -321,7 +598,8 @@ export default function TeamsPage(): React.JSX.Element {
               e.currentTarget.style.boxShadow = '0 1px 2px 0 rgb(0 0 0 / 0.05)';
             }}
           >
-            {/* Three Dots Menu */}
+            {/* Three Dots Menu - Only show for admin/manager users */}
+            {isCurrentUserAdminOrManager() && (
             <div className="absolute top-3 right-3">
               <button
                 onClick={(e) => {
@@ -344,14 +622,14 @@ export default function TeamsPage(): React.JSX.Element {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedTeamForDetails(team);
-                      setIsDetailsModalOpen(true);
+                      loadTeamDetails(team.id);
                       setOpenMenuId(null);
                     }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
                     style={{ color: '#374151' }}
+                    disabled={loadingTeamDetails}
                   >
-                    View Details
+                    {loadingTeamDetails ? 'Loading...' : 'View Details'}
                   </button>
                   <button
                     onClick={(e) => {
@@ -378,6 +656,7 @@ export default function TeamsPage(): React.JSX.Element {
                 </div>
               )}
             </div>
+            )}
 
             {/* Team Header */}
             <div className="flex items-start gap-3 mb-4 pr-8">
@@ -389,7 +668,14 @@ export default function TeamsPage(): React.JSX.Element {
               </div>
               <div className="flex-1">
                 <h3 className="font-bold mb-1" style={{ color: '#1f2937' }}>{team.name}</h3>
-                  <p className="text-sm line-clamp-2" style={{ color: '#6b7280' }}>{truncateDescription(team.description, 100) || 'No description'}</p>
+                <div className="text-sm" style={{ color: '#6b7280' }}>
+                  <TruncatedText 
+                    text={team.description || 'No description'} 
+                    maxLength={100}
+                    className=""
+                    showToggle={false}
+                  />
+                </div>
               </div>
             </div>
 
@@ -535,20 +821,11 @@ export default function TeamsPage(): React.JSX.Element {
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
                           <div className="flex items-center space-x-2 flex-1">
-                            {user.avatar_url ? (
-                              <img
-                                src={user.avatar_url}
-                                alt={user.name}
-                                className="w-8 h-8 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                                style={{ backgroundColor: '#076297' }}
-                              >
-                                {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                              </div>
-                            )}
+                            <UserAvatar 
+                              userId={user.id} 
+                              size="md"
+                              className="w-8 h-8"
+                            />
                             <div className="flex-1">
                               <div className="text-sm font-medium" style={{ color: '#374151' }}>{user.name}</div>
                               <div className="text-xs" style={{ color: '#6b7280' }}>{user.email}</div>
@@ -683,7 +960,7 @@ export default function TeamsPage(): React.JSX.Element {
       />
 
       {/* Team Details Modal */}
-      {isDetailsModalOpen && selectedTeamForDetails && (
+      {isDetailsModalOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           onClick={() => setIsDetailsModalOpen(false)}
@@ -698,19 +975,19 @@ export default function TeamsPage(): React.JSX.Element {
               <div className="flex items-center gap-3">
                 <div 
                   className="w-12 h-12 flex items-center justify-center"
-                  style={{ backgroundColor: isEditingTeam ? editTeamData.color : selectedTeamForDetails.color || '#073392', borderRadius: '7px' }}
+                  style={{ backgroundColor: isEditingTeam ? editTeamData.color : selectedTeamForDetails?.color || '#073392', borderRadius: '7px' }}
                 >
                   <Users className="w-6 h-6" style={{ color: '#ffffff' }} />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>
-                    {isEditingTeam ? 'Edit Team' : selectedTeamForDetails.name}
+                    {loadingTeamDetails ? 'Loading...' : (isEditingTeam ? 'Edit Team' : selectedTeamForDetails?.name || 'Team Details')}
                   </h3>
                   <p className="text-sm" style={{ color: '#6b7280' }}>Team Details</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {!isEditingTeam && (
+                {!isEditingTeam && !loadingTeamDetails && selectedTeamForDetails && isCurrentUserAdminOrManager() && (
                   <button
                     onClick={() => {
                       setEditTeamData({
@@ -741,9 +1018,16 @@ export default function TeamsPage(): React.JSX.Element {
 
             {/* Modal Body */}
             <div className="p-6 space-y-6">
-              {/* Team Information */}
-              <div>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#374151' }}>Team Information</h4>
+              {loadingTeamDetails ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#076297' }} />
+                  <span className="ml-2 text-gray-600">Loading team details...</span>
+                </div>
+              ) : selectedTeamForDetails ? (
+                <>
+                  {/* Team Information */}
+                  <div>
+                    <h4 className="text-sm font-semibold mb-3" style={{ color: '#374151' }}>Team Information</h4>
                 {isEditingTeam ? (
                   <div className="space-y-3">
                     <div>
@@ -800,7 +1084,13 @@ export default function TeamsPage(): React.JSX.Element {
                     </div>
                     <div>
                       <label className="text-xs font-medium" style={{ color: '#6b7280' }}>Description</label>
-                      <p className="text-sm" style={{ color: '#1f2937' }}>{selectedTeamForDetails.description || 'No description'}</p>
+                      <div className="text-sm" style={{ color: '#1f2937' }}>
+                        <TruncatedText 
+                          text={selectedTeamForDetails.description || 'No description'} 
+                          maxLength={170}
+                          className=""
+                        />
+                      </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div>
@@ -821,9 +1111,91 @@ export default function TeamsPage(): React.JSX.Element {
 
               {/* Team Members */}
               <div>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#374151' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold" style={{ color: '#374151' }}>
                   Team Members ({selectedTeamForDetails.member_count || 0})
                 </h4>
+                  {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
+                    <button
+                      onClick={() => {
+                        loadAllUsers();
+                        setIsAddingMember(true);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
+                      style={{ borderColor: '#d1d5db', color: '#374151', borderRadius: '7px' }}
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Add Member
+                    </button>
+                  )}
+                </div>
+                
+                {isAddingMember && (
+                  <div className="mb-4 p-4 border rounded-lg" style={{ borderColor: '#e5e7eb', backgroundColor: '#f9fafb' }}>
+                    <h5 className="text-sm font-medium mb-3" style={{ color: '#374151' }}>Add Members to Team</h5>
+                    {loadingUsers ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#076297' }} />
+                        <span className="ml-2 text-sm" style={{ color: '#6b7280' }}>Loading users...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {allUsers.filter(user => !selectedTeamForDetails.members?.some(member => member.user_id === user.id)).map((user) => (
+                          <label key={user.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedMembersToAdd.includes(user.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedMembersToAdd([...selectedMembersToAdd, user.id]);
+                                } else {
+                                  setSelectedMembersToAdd(selectedMembersToAdd.filter(id => id !== user.id));
+                                }
+                              }}
+                              className="w-4 h-4"
+                            />
+                            <div className="flex items-center gap-2 flex-1">
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                                style={{ backgroundColor: selectedTeamForDetails.color || '#073392' }}
+                              >
+                                {user.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA'}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium" style={{ color: '#374151' }}>{user.name}</p>
+                                <p className="text-xs" style={{ color: '#6b7280' }}>{user.email}</p>
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {allUsers.filter(user => !selectedTeamForDetails.members?.some(member => member.user_id === user.id)).length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">All users are already in this team</p>
+                    )}
+                    <div className="flex justify-end gap-2 mt-3">
+                      <button
+                        onClick={() => {
+                          setIsAddingMember(false);
+                          setSelectedMembersToAdd([]);
+                        }}
+                        className="px-3 py-1.5 text-sm rounded-md border transition-colors"
+                        style={{ borderColor: '#d1d5db', borderRadius: '7px', color: '#374151' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAddMembersToTeam}
+                        disabled={selectedMembersToAdd.length === 0 || creating}
+                        className="px-3 py-1.5 text-sm rounded-md text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+                      >
+                        {creating ? 'Adding...' : `Add Selected (${selectedMembersToAdd.length})`}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {selectedTeamForDetails.members && selectedTeamForDetails.members.length > 0 ? (
                   <div className="space-y-2">
                     {selectedTeamForDetails.members.map((member) => (
@@ -850,6 +1222,15 @@ export default function TeamsPage(): React.JSX.Element {
                         }}>
                           {member.role}
                         </span>
+                        {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
+                          <button
+                            onClick={() => handleRemoveTeamMember(member.user_id, member.name || 'this member')}
+                            className="p-1 hover:bg-red-50 rounded transition-colors"
+                            title="Remove from team"
+                          >
+                            <X className="w-4 h-4" style={{ color: '#dc2626' }} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -860,30 +1241,132 @@ export default function TeamsPage(): React.JSX.Element {
 
               {/* Projects */}
               <div>
-                <h4 className="text-sm font-semibold mb-3" style={{ color: '#374151' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold" style={{ color: '#374151' }}>
                   Projects ({selectedTeamForDetails.project_count || 0})
                 </h4>
+                  {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
+                    <button
+                      onClick={() => {
+                        loadAllProjects();
+                        setIsAddingProject(true);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
+                      style={{ borderColor: '#d1d5db', color: '#374151', borderRadius: '7px' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Project
+                    </button>
+                  )}
+                </div>
+
+                {isAddingProject && (
+                  <div className="mb-4 p-4 border rounded-lg" style={{ borderColor: '#e5e7eb', backgroundColor: '#f9fafb' }}>
+                    <h5 className="text-sm font-medium mb-3" style={{ color: '#374151' }}>Add Projects to Team</h5>
+                    {loadingProjects ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#076297' }} />
+                        <span className="ml-2 text-sm" style={{ color: '#6b7280' }}>Loading projects...</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {allProjects.filter(project => !selectedTeamForDetails.projects?.some(teamProject => teamProject.id === project.id)).map((project) => (
+                          <label key={project.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedProjectsToAdd.includes(project.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedProjectsToAdd([...selectedProjectsToAdd, project.id]);
+                                } else {
+                                  setSelectedProjectsToAdd(selectedProjectsToAdd.filter(id => id !== project.id));
+                                }
+                              }}
+                              className="w-4 h-4"
+                            />
+                            <div className="flex items-center gap-2 flex-1">
+                              <div
+                                className="w-8 h-8 rounded flex items-center justify-center"
+                                style={{ backgroundColor: project.color || '#073392' }}
+                              >
+                                <Briefcase className="w-4 h-4" style={{ color: '#ffffff' }} />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium" style={{ color: '#374151' }}>{project.name}</p>
+                                <p className="text-xs" style={{ color: '#6b7280' }}>{project.description || 'No description'}</p>
+                              </div>
+                              <span className="text-xs px-2 py-1 rounded capitalize" style={{ 
+                                backgroundColor: project.status === 'active' ? '#D1FAE5' : 
+                                                 project.status === 'completed' ? '#DBEAFE' : 
+                                                 project.status === 'planning' ? '#FEF3C7' : '#F3F4F6',
+                                color: project.status === 'active' ? '#065F46' : 
+                                       project.status === 'completed' ? '#1E40AF' : 
+                                       project.status === 'planning' ? '#92400E' : '#374151'
+                              }}>
+                                {project.status}
+                              </span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {allProjects.filter(project => !selectedTeamForDetails.projects?.some(teamProject => teamProject.id === project.id)).length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">All projects are already in this team</p>
+                    )}
+                    <div className="flex justify-end gap-2 mt-3">
+                      <button
+                        onClick={() => {
+                          setIsAddingProject(false);
+                          setSelectedProjectsToAdd([]);
+                        }}
+                        className="px-3 py-1.5 text-sm rounded-md border transition-colors"
+                        style={{ borderColor: '#d1d5db', borderRadius: '7px', color: '#374151' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAddProjectsToTeam}
+                        disabled={selectedProjectsToAdd.length === 0 || creating}
+                        className="px-3 py-1.5 text-sm rounded-md text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+                      >
+                        {creating ? 'Adding...' : `Add Selected (${selectedProjectsToAdd.length})`}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {selectedTeamForDetails.projects && selectedTeamForDetails.projects.length > 0 ? (
                   <div className="space-y-2">
                     {selectedTeamForDetails.projects.map((project) => (
                       <div
                         key={project.id}
-                        className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50"
+                        className="flex items-start gap-3 p-3 rounded-lg border"
                         style={{ borderColor: '#e5e7eb' }}
+                      >
+                        <div
+                          className="w-10 h-10 rounded flex items-center justify-center flex-shrink-0 cursor-pointer"
+                          style={{ backgroundColor: project.color || selectedTeamForDetails.color || '#073392' }}
                         onClick={() => {
                           router.push(`/teams/${selectedTeamForDetails.id}/projects/${project.id}`);
                           setIsDetailsModalOpen(false);
                         }}
-                      >
-                        <div
-                          className="w-10 h-10 rounded flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: project.color || selectedTeamForDetails.color || '#073392' }}
                         >
                           <Briefcase className="w-5 h-5" style={{ color: '#ffffff' }} />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 cursor-pointer" onClick={() => {
+                          router.push(`/teams/${selectedTeamForDetails.id}/projects/${project.id}`);
+                          setIsDetailsModalOpen(false);
+                        }}>
                           <p className="text-sm font-medium" style={{ color: '#1f2937' }}>{project.name}</p>
-                          <p className="text-xs" style={{ color: '#6b7280' }}>{truncateDescription(project.description, 100) || 'No description'}</p>
+                          <div className="text-xs" style={{ color: '#6b7280' }}>
+                            <TruncatedText 
+                              text={project.description || 'No description'} 
+                              maxLength={100}
+                              className=""
+                              showToggle={false}
+                            />
+                          </div>
                         </div>
                         <span className="text-xs px-2 py-1 rounded capitalize" style={{ 
                           backgroundColor: project.status === 'active' ? '#D1FAE5' : 
@@ -895,6 +1378,15 @@ export default function TeamsPage(): React.JSX.Element {
                         }}>
                           {project.status}
                         </span>
+                        {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
+                          <button
+                            onClick={() => handleRemoveTeamProject(project.id, project.name)}
+                            className="p-1 hover:bg-red-50 rounded transition-colors"
+                            title="Remove from team"
+                          >
+                            <X className="w-4 h-4" style={{ color: '#dc2626' }} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -902,11 +1394,25 @@ export default function TeamsPage(): React.JSX.Element {
                   <p className="text-sm text-gray-500 text-center py-4">No projects</p>
                 )}
               </div>
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">Failed to load team details</p>
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
             <div className="sticky bottom-0 bg-gray-50 border-t p-4 flex justify-end space-x-3" style={{ borderColor: '#e5e7eb', borderRadius: '0 0 7px 7px' }}>
-              {isEditingTeam ? (
+              {loadingTeamDetails ? (
+                <button
+                  onClick={() => setIsDetailsModalOpen(false)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                  style={{ borderRadius: '7px' }}
+                >
+                  Close
+                </button>
+              ) : isEditingTeam ? (
                 <>
                   <button
                     onClick={() => setIsEditingTeam(false)}
@@ -933,16 +1439,18 @@ export default function TeamsPage(): React.JSX.Element {
                   >
                     Close
                   </button>
-                  <button
-                    onClick={() => {
-                      setIsDetailsModalOpen(false);
-                      router.push(`/teams/${selectedTeamForDetails.id}`);
-                    }}
-                    className="px-4 py-2 text-white rounded-md transition-colors"
-                    style={{ backgroundColor: '#076297', borderRadius: '7px' }}
-                  >
-                    View Full Details
-                  </button>
+                  {selectedTeamForDetails && (
+                    <button
+                      onClick={() => {
+                        setIsDetailsModalOpen(false);
+                        router.push(`/teams/${selectedTeamForDetails!.id}`);
+                      }}
+                      className="px-4 py-2 text-white rounded-md transition-colors"
+                      style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+                    >
+                      View Full Details
+                    </button>
+                  )}
                 </>
               )}
             </div>

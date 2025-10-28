@@ -10,31 +10,41 @@ import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/button";
 import { TaskModal } from "@/components/task-modal";
 import { Tabs } from "@/components/tabs";
-import { Task, TeamMember } from "@/lib/types";
+import { UserAvatar } from "@/components/user-avatar";
+import { Task, TeamMember, updateTaskStatusIfOverdue } from "@/lib/types";
 import { initialMembers, initialTasks } from "@/lib/sample-data";
 import { taskApi, portalDataApi } from "@/lib/api-client";
-import { FileText, AlertCircle, CheckCircle, Clock, Users, Calendar, X, Filter, CalendarDays } from "lucide-react";
+import { usersApi, User } from "@/lib/api/users";
+import { taskTeamsApi } from "@/lib/api/task-teams";
+import { FileText, AlertCircle, CheckCircle, Clock, Users, Calendar, X, Filter, CalendarDays, Plus } from "lucide-react";
+import { DateFilter } from "@/components/date-filter";
+import { isCurrentUserAdminOrManager, isCurrentUserAdminOrManagerAsync, getCurrentUserRole, isCurrentUserAdmin } from "@/lib/auth-utils";
 
 export default function BoardPage(): React.JSX.Element {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [members] = useState<TeamMember[]>(initialMembers);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
-  const [creatingTaskStatus, setCreatingTaskStatus] = useState<string>('backlog');
+  const [creatingTaskStatus, setCreatingTaskStatus] = useState<string>('todo');
   const [creatingTaskPriority, setCreatingTaskPriority] = useState<string>('medium');
-  const [activeTab, setActiveTab] = useState<string>('board');
+  const [activeTab, setActiveTab] = useState<string>('');
   const [selectedMember, setSelectedMember] = useState<string>('all'); // 'all' or member id
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateFilter, setDateFilter] = useState<string>('all'); // 'all', 'week', 'month', 'custom'
   const [customDateRange, setCustomDateRange] = useState<{start: string, end: string}>({start: '', end: ''});
-  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [userHasAccess, setUserHasAccess] = useState<boolean | null>(null);
   const { collapsed: sidebarCollapsed, toggleCollapsed } = useSidebar();
 
   // Get current user ID from localStorage
   const getCurrentUserId = () => {
     try {
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') {
+        return 1; // fallback for SSR
+      }
+      
       const userStr = localStorage.getItem('task_user');
       if (userStr) {
         const user = JSON.parse(userStr);
@@ -46,10 +56,108 @@ export default function BoardPage(): React.JSX.Element {
     return 1; // fallback
   };
 
-  const tabs = useMemo(() => [
-    { id: 'board', label: 'General Team' },
-    { id: 'management', label: 'Management' }
-  ], []);
+  // Check if current user has admin or manager role (both can access everything)
+  const isCurrentUserAdminOrManagerRole = () => {
+    return isCurrentUserAdminOrManager();
+  };
+
+  // Check user access on component mount
+  useEffect(() => {
+    const checkUserAccess = async () => {
+      try {
+        const hasAccess = await isCurrentUserAdminOrManagerAsync();
+        setUserHasAccess(hasAccess);
+      } catch (error) {
+        console.error('Error checking user access:', error);
+        setUserHasAccess(false);
+      }
+    };
+    
+    checkUserAccess();
+  }, []);
+
+  // Helper function to check if a task was created by a Manager role user
+  const isTaskCreatedByManager = (task: Task): boolean => {
+    const creatorRoleName = task.creator_role_name;
+    if (!creatorRoleName) return false;
+    
+    const role = creatorRoleName.toLowerCase().trim();
+    // Include manager, admin, and other management roles
+    return role === 'manager' || role === 'admin' || role.includes('manager') || role.includes('admin');
+  };
+
+  // Load team members from API
+  const loadTeamMembers = async () => {
+    try {
+      console.log('Loading team members from API...');
+      
+      // Get all users from the API
+      const usersResponse = await usersApi.listUsers({ limit: 100 });
+      const allUsers = usersResponse.users || [];
+      
+      console.log('All users from API:', allUsers);
+      
+      // Get current user info
+      const currentUserId = getCurrentUserId();
+      const currentUser = allUsers.find((user: User) => user.id === currentUserId);
+      
+      // Transform users to TeamMember format
+      const teamMembers: TeamMember[] = allUsers.map((user: User) => {
+        // Generate initials from name
+        const initials = user.name 
+          ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+          : 'U' + user.id.toString().slice(0, 1);
+        
+        // Generate color based on user ID for consistency
+        const colors = [
+          '#8b5cf6', '#f59e0b', '#3b82f6', '#10b981', '#ec4899', 
+          '#f97316', '#6366f1', '#ef4444', '#06b6d4', '#84cc16'
+        ];
+        const color = colors[user.id % colors.length];
+        
+        return {
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          color: color,
+          initials: initials,
+        };
+      });
+      
+      // Ensure current user is first in the list
+      const sortedMembers = teamMembers.sort((a, b) => {
+        if (a.id === currentUserId.toString()) return -1;
+        if (b.id === currentUserId.toString()) return 1;
+        return 0;
+      });
+      
+      console.log('Transformed team members:', sortedMembers);
+      setMembers(sortedMembers);
+      
+    } catch (error) {
+      console.error('Error loading team members:', error);
+      // Fallback to initial members if API fails
+      setMembers(initialMembers);
+    }
+  };
+
+  const tabs = useMemo(() => {
+    const baseTabs = [];
+    
+    // Check if user is admin or manager
+    if (isCurrentUserAdminOrManagerRole()) {
+      // If user is admin, only show "Board View" (no tabs needed)
+      if (isCurrentUserAdmin()) {
+        baseTabs.push({ id: 'board', label: 'Board View' });
+      } else {
+        // If user is manager, show both tabs
+        baseTabs.push({ id: 'board', label: 'General Team' });
+        baseTabs.push({ id: 'management', label: 'Manager Tasks' });
+      }
+    }
+    
+    return baseTabs;
+  }, []);
 
   // Load all tasks from database
   const loadAllTasks = async () => {
@@ -63,22 +171,60 @@ export default function BoardPage(): React.JSX.Element {
       const allTasks = response.tasks || [];
       console.log('All Tasks:', allTasks);
       
+      // Load team/project mapping and teams to derive team info for cards
+      let projectMappings: Array<{ id: number; team_id: number }> = [];
+      let allTeams: Array<{ id: number; name: string; color?: string }> = [];
+      try {
+        const [projectsResp, teamsResp] = await Promise.all([
+          taskApi.getTaskTeamProjects(),
+          taskTeamsApi.listTeams(),
+        ]);
+        projectMappings = projectsResp.projects || [];
+        allTeams = teamsResp.teams || [];
+      } catch (e) {
+        console.warn('Failed to load team/project mappings; team badges may be missing on cards');
+      }
+
       // Transform tasks to match our Task interface
-      const transformedTasks: Task[] = allTasks.map((task: any) => ({
-        id: task.id ? task.id.toString() : Math.random().toString(36).slice(2),
-        title: task.title || 'Untitled Task',
-        description: task.description || '',
-        deliverables: task.deliverables || '',
-        status: task.status || 'backlog',
-        priority: task.priority || 'medium',
-        dueDate: task.due_date ? new Date(task.due_date).toISOString() : undefined,
-        labels: task.labels || [],
-        assignees: task.assignees?.map((a: any) => a.user_id ? a.user_id.toString() : '') || [],
-        comments: [],
-        attachments: task.attachments || [],
-        projectId: task.project_id,
-        teamId: undefined,
-      }));
+      const transformedTasks: Task[] = allTasks.map((task: any) => {
+        const baseTask = {
+          id: task.id ? task.id.toString() : Math.random().toString(36).slice(2),
+          title: task.title || 'Untitled Task',
+          description: task.description || '',
+          deliverables: task.deliverables || '',
+          status: (task.status === 'backlog' ? 'overdue' : task.status) || 'todo',
+          priority: task.priority || 'medium',
+          dueDate: task.due_date ? new Date(task.due_date).toISOString() : undefined,
+          labels: task.labels || [],
+          // Normalize assignees to string IDs
+          assignees: (task.assignees || [])
+            .map((a: any) => (a?.user_id ?? a)?.toString())
+            .filter((v: any) => v && v !== ''),
+          comments: task.comments || [],
+          attachments: task.attachments || [],
+          projectId: task.project_id,
+          // Derive team info for card badge using project mapping
+          ...( (() => {
+            const mapping = projectMappings.find((p: any) => p.id === task.project_id);
+            if (!mapping) return {};
+            const team = allTeams.find((t: any) => t.id === mapping.team_id);
+            if (!team) return { teamId: String(mapping.team_id) };
+            return {
+              teamId: String(team.id),
+              team: { id: String(team.id), name: team.name, color: team.color || '#076297', memberIds: [] as string[] },
+            };
+          })() ),
+          // Include creator information for permissions
+          created_by: task.created_by,
+          creator_role_id: task.creator_role_id,
+          creator_role_name: task.creator_role_name,
+        };
+        
+        // Apply client-side overdue check as fallback
+        return updateTaskStatusIfOverdue(baseTask);
+      });
+      
+      console.log('Transformed tasks for drag testing:', transformedTasks.slice(0, 2));
       
       console.log(`Total tasks loaded: ${transformedTasks.length}`);
 
@@ -92,60 +238,125 @@ export default function BoardPage(): React.JSX.Element {
     }
   };
 
-  // Load tasks on component mount
+  // Load tasks and team members on component mount
   useEffect(() => {
-    loadAllTasks();
+    const loadData = async () => {
+      await Promise.all([
+        loadAllTasks(),
+        loadTeamMembers()
+      ]);
+    };
+    loadData();
+    
+    // Set up periodic refresh to check for overdue tasks every 5 minutes
+    const interval = setInterval(() => {
+      console.log('Periodic refresh: checking for overdue tasks...');
+      loadAllTasks();
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
   }, []);
+
+  // Set appropriate default tab and ensure proper access control
+  useEffect(() => {
+    const availableTabs = tabs.map(tab => tab.id);
+    
+    // If no active tab is set, set the first available tab
+    if (!activeTab && availableTabs.length > 0) {
+      setActiveTab(availableTabs[0] || '');
+    }
+    
+    // If current active tab is not available, switch to first available tab
+    if (activeTab && !availableTabs.includes(activeTab)) {
+      setActiveTab(availableTabs[0] || '');
+    }
+  }, [tabs, activeTab]);
 
   // Filter tasks based on selected member and date
   const filteredTasks = useMemo(() => {
     let filtered = selectedMember === 'all' 
       ? tasks 
-      : tasks.filter(task => task.assignees.includes(selectedMember));
+      : tasks.filter(task => (task.assignees || []).some(a => a != null && a.toString() === selectedMember));
 
     // Apply date filtering based on task deadlines
     if (dateFilter === 'week') {
       const now = new Date();
+      now.setHours(0, 0, 0, 0); // Start of today
       const oneWeekFromNow = new Date();
       oneWeekFromNow.setDate(now.getDate() + 7);
+      oneWeekFromNow.setHours(23, 59, 59, 999); // End of day
       
       filtered = filtered.filter(task => {
         if (!task.dueDate) return true; // Include tasks without due dates
         const taskDueDate = new Date(task.dueDate);
+        taskDueDate.setHours(0, 0, 0, 0); // Normalize to start of day
         return taskDueDate >= now && taskDueDate <= oneWeekFromNow;
       });
     } else if (dateFilter === 'month') {
       const now = new Date();
+      now.setHours(0, 0, 0, 0); // Start of today
       const oneMonthFromNow = new Date();
       oneMonthFromNow.setMonth(now.getMonth() + 1);
+      oneMonthFromNow.setHours(23, 59, 59, 999); // End of day
       
       filtered = filtered.filter(task => {
         if (!task.dueDate) return true; // Include tasks without due dates
         const taskDueDate = new Date(task.dueDate);
+        taskDueDate.setHours(0, 0, 0, 0); // Normalize to start of day
         return taskDueDate >= now && taskDueDate <= oneMonthFromNow;
       });
     } else if (dateFilter === 'custom' && customDateRange.start && customDateRange.end) {
       const startDate = new Date(customDateRange.start);
+      startDate.setHours(0, 0, 0, 0); // Start of day
       const endDate = new Date(customDateRange.end);
-      // Set end date to end of day
-      endDate.setHours(23, 59, 59, 999);
+      endDate.setHours(23, 59, 59, 999); // End of day
       
-      filtered = filtered.filter(task => {
-        if (!task.dueDate) return true; // Include tasks without due dates
-        const taskDueDate = new Date(task.dueDate);
-        return taskDueDate >= startDate && taskDueDate <= endDate;
-      });
+      // Validate date range
+      if (startDate <= endDate) {
+        filtered = filtered.filter(task => {
+          if (!task.dueDate) return true; // Include tasks without due dates
+          const taskDueDate = new Date(task.dueDate);
+          taskDueDate.setHours(0, 0, 0, 0); // Normalize to start of day
+          return taskDueDate >= startDate && taskDueDate <= endDate;
+        });
+      }
     }
 
     return filtered;
   }, [tasks, selectedMember, dateFilter, customDateRange]);
 
-  // Group tasks by priority for management view
+  // Group tasks by priority for management view - only show tasks created by users with management roles
   const tasksByPriority = useMemo(() => {
+    // Filter tasks to only show those created by users with management roles (manager, admin, etc.)
+    const managerTasks = filteredTasks.filter(task => {
+      const isManagerRole = isTaskCreatedByManager(task);
+      
+      // Debug logging
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Task "${task.title}" - Creator Role: "${task.creator_role_name}" - Is Manager: ${isManagerRole}`);
+      }
+      
+      return isManagerRole;
+    });
+    
+    console.log(`Manager Tasks tab: ${managerTasks.length} management-created tasks out of ${filteredTasks.length} total tasks`);
+    
+    // Log all unique creator roles for debugging
+    const uniqueCreatorRoles = [...new Set(filteredTasks.map(task => task.creator_role_name).filter(Boolean))];
+    console.log('All unique creator roles in filtered tasks:', uniqueCreatorRoles);
+    
+    // Validation: Ensure only management role tasks are included
+    const nonManagementTasks = managerTasks.filter(task => !isTaskCreatedByManager(task));
+    if (nonManagementTasks.length > 0) {
+      console.error('ERROR: Found non-management tasks in Manager Tasks tab:', nonManagementTasks.map(t => ({ title: t.title, role: t.creator_role_name })));
+    } else {
+      console.log('✅ Validation passed: All tasks in Manager Tasks tab are created by management role users');
+    }
+    
     const grouped = {
-      high: filteredTasks.filter(task => task.priority === 'high'),
-      medium: filteredTasks.filter(task => task.priority === 'medium'),
-      low: filteredTasks.filter(task => task.priority === 'low')
+      high: managerTasks.filter(task => task.priority === 'high'),
+      medium: managerTasks.filter(task => task.priority === 'medium'),
+      low: managerTasks.filter(task => task.priority === 'low')
     };
     return grouped;
   }, [filteredTasks]);
@@ -185,7 +396,7 @@ export default function BoardPage(): React.JSX.Element {
      const updatedTasks = tasks.map(t => (t.id === id ? { ...t, priority } : t));
      setTasks(updatedTasks);
      
-     // Then update in database
+     // Then update in database using appropriate endpoint based on manager status
      try {
        const task = tasks.find(t => t.id === id);
        if (task) {
@@ -201,23 +412,29 @@ export default function BoardPage(): React.JSX.Element {
            assignees: task.assignees.map(id => parseInt(id)),
          };
          
-         await taskApi.updateTask(parseInt(id), taskData);
+         // Use fallback method for task updates
+         await taskApi.updateTaskWithFallback(parseInt(id), taskData, isCurrentUserAdminOrManagerRole());
          console.log('Task priority updated successfully:', id, priority);
        }
      } catch (err: any) {
        console.error('Error updating task priority:', err);
        // Revert to original tasks if API update fails
        setTasks(tasks);
+       
+       // Show user-friendly error message
+       const errorMessage = err.message || 'Failed to update task priority. Please try again.';
+       setError(errorMessage);
+       setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
      }
    };
 
   const columns = useMemo(
     () => [
-      { id: "backlog", name: "Backlog", color: "", bgColor: "#f3f4f6", textColor: "#374151", borderColor: "#e5e7eb" },
       { id: "todo", name: "To Do", color: "", bgColor: "#f0f8fc", textColor: "#076297", borderColor: "#d4e9f5" },
       { id: "inprogress", name: "In Progress", color: "", bgColor: "#fef3c7", textColor: "#92400e", borderColor: "#fcd34d" },
       { id: "review", name: "Review", color: "", bgColor: "#fce7f3", textColor: "#9f1239", borderColor: "#f9a8d4" },
       { id: "done", name: "Completed", color: "", bgColor: "#d1fae5", textColor: "#065f46", borderColor: "#6ee7b7" },
+      { id: "overdue", name: "Overdue", color: "", bgColor: "#fef2f2", textColor: "#dc2626", borderColor: "#fecaca" },
     ] as const,
     []
   );
@@ -232,133 +449,138 @@ export default function BoardPage(): React.JSX.Element {
     []
   );
 
+  // Show loading while checking user access
+  if (userHasAccess === null) {
+    return (
+      <PageLayout 
+        members={members} 
+        tasks={tasks} 
+        title="Board View"
+        headerAction={null}
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Checking access permissions...</p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  // Check if user has access to any tabs
+  if (tabs.length === 0 || !userHasAccess) {
+    return (
+      <PageLayout 
+        members={members} 
+        tasks={tasks} 
+        title="Board View"
+        headerAction={null}
+      >
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <Users className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Access Restricted</h3>
+            <p className="text-gray-600 mb-4">
+              Board View is only accessible to users with Admin or Manager roles.
+            </p>
+            <p className="text-sm text-gray-500">
+              You can access other pages like "My Tasks" or "Teams" from the sidebar.
+            </p>
+          </div>
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout 
       members={members} 
       tasks={tasks} 
-      title="Board View"
-      headerAction={null}
+      title={isCurrentUserAdmin() ? "Board View" : (activeTab === 'management' ? "Manager Tasks" : "General Team")}
+      headerAction={
+        <div className="flex items-center -space-x-2">
+          {/* All Tasks Button */}
+          <button
+            onClick={() => setSelectedMember('all')}
+            style={{ 
+              backgroundColor: selectedMember === 'all' ? '#076297' : '#6b7280',
+            }}
+            className={`w-8 h-8 rounded-full grid place-items-center text-white text-xs font-semibold ring-2 transition ${
+              selectedMember === 'all' ? 'ring-gray-400 ring-4' : 'ring-white'
+            }`}
+            title="All Members"
+          >
+            All
+          </button>
+          {/* Show first 4 members */}
+          {members.slice(0, 4).map((member) => (
+            <button
+              key={member.id}
+              onClick={() => setSelectedMember(member.id)}
+              style={{ backgroundColor: member.color }}
+              className={`w-8 h-8 rounded-full grid place-items-center text-white text-xs font-semibold ring-2 transition overflow-hidden ${
+                selectedMember === member.id ? 'ring-gray-400 ring-4' : 'ring-white'
+              }`}
+              title={member.name}
+            >
+              <UserAvatar 
+                userId={parseInt(member.id)} 
+                size="sm"
+                className="w-full h-full"
+                fallbackColor={member.color}
+              />
+            </button>
+          ))}
+          {/* Show +X button if more than 4 members */}
+          {members.length > 5 && (
+            <button
+              onClick={() => setShowMemberModal(true)}
+              style={{ backgroundColor: '#F8B712' }}
+              className="w-8 h-8 rounded-full grid place-items-center text-white text-xs font-bold ring-2 ring-white transition hover:opacity-90"
+              title="View all team members"
+            >
+              +{members.length - 5}
+            </button>
+          )}
+        </div>
+      }
         >
-          {/* Tabs with Profile Selector and Date Filter */}
+          {/* Tabs and Date Filter */}
           <div className="bg-white rounded-xl shadow-sm p-4 mb-4" style={{ borderRadius: '7px' }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <Tabs
-                  tabs={tabs}
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                />
-                
-                {/* Date Filter */}
-                <div className="relative">
-                  <button
-                    onClick={() => setShowDateFilter(!showDateFilter)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    <CalendarDays className="w-4 h-4" />
-                    <span>
-                      {dateFilter === 'all' && 'All Time'}
-                      {dateFilter === 'week' && 'This Week'}
-                      {dateFilter === 'month' && 'This Month'}
-                      {dateFilter === 'custom' && 'Custom Range'}
-                    </span>
-                    <Filter className="w-3 h-3" />
-                  </button>
-                  
-                  {/* Date Filter Dropdown */}
-                  {showDateFilter && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                      <div className="p-2 space-y-1">
-                        <button
-                          onClick={() => {
-                            setDateFilter('all');
-                            setShowDateFilter(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
-                            dateFilter === 'all' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                          }`}
-                        >
-                          All Time
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDateFilter('week');
-                            setShowDateFilter(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
-                            dateFilter === 'week' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                          }`}
-                        >
-                          This Week
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDateFilter('month');
-                            setShowDateFilter(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
-                            dateFilter === 'month' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                          }`}
-                        >
-                          This Month
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDateFilter('custom');
-                            setShowDateFilter(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
-                            dateFilter === 'custom' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                          }`}
-                        >
-                          Custom Range
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {/* Tabs on the left */}
+                {tabs.length > 1 && (
+                  <Tabs
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                  />
+                )}
               </div>
               
-              {/* Profile Selector - Show for both tabs */}
-              <div className="flex items-center -space-x-2">
-                {/* All Tasks Button */}
-                <button
-                  onClick={() => setSelectedMember('all')}
-                  style={{ 
-                    backgroundColor: selectedMember === 'all' ? '#076297' : '#6b7280',
-                  }}
-                  className={`w-8 h-8 rounded-full grid place-items-center text-white text-xs font-semibold ring-2 transition ${
-                    selectedMember === 'all' ? 'ring-gray-400 ring-4' : 'ring-white'
-                  }`}
-                  title="All Members"
+              <div className="flex items-center gap-4">
+                {/* Add a task button */}
+                <Button
+                  onClick={() => setIsCreatingTask(true)}
+                  variant="primary"
+                  size="md"
+                  className="flex items-center gap-2"
                 >
-                  All
-                </button>
-                {/* Show first 4 members */}
-                {members.slice(0, 4).map((member) => (
-                  <button
-                    key={member.id}
-                    onClick={() => setSelectedMember(member.id)}
-                    style={{ backgroundColor: member.color }}
-                    className={`w-8 h-8 rounded-full grid place-items-center text-white text-xs font-semibold ring-2 transition ${
-                      selectedMember === member.id ? 'ring-gray-400 ring-4' : 'ring-white'
-                    }`}
-                    title={member.name}
-                  >
-                    {member.initials}
-                  </button>
-                ))}
-                {/* Show +X button if more than 4 members */}
-                {members.length > 5 && (
-                  <button
-                    onClick={() => setShowMemberModal(true)}
-                    style={{ backgroundColor: '#F8B712' }}
-                    className="w-8 h-8 rounded-full grid place-items-center text-white text-xs font-bold ring-2 ring-white transition hover:opacity-90"
-                    title="View all team members"
-                  >
-                    +{members.length - 5}
-                  </button>
-                )}
+                  <Plus className="w-4 h-4" />
+                  <span>Add a task</span>
+                </Button>
+                
+                {/* Date Filter on the right */}
+                <DateFilter
+                  dateFilter={dateFilter}
+                  setDateFilter={setDateFilter}
+                  customDateRange={customDateRange}
+                  setCustomDateRange={setCustomDateRange}
+                />
               </div>
             </div>
           </div>
@@ -399,10 +621,12 @@ export default function BoardPage(): React.JSX.Element {
               tasks={filteredTasks}
               members={members}
                onTasksChange={async (updatedTasks) => {
+                 console.log('onTasksChange called with:', updatedTasks.length, 'tasks');
+                 
                  // Update tasks locally first for immediate UI feedback
                  setTasks(updatedTasks);
                  
-                 // Then update in database
+                 // Then update in database using unrestricted endpoint
                  try {
                    // Find the task that was moved (compare with previous tasks)
                    const movedTask = updatedTasks.find(task => {
@@ -411,6 +635,7 @@ export default function BoardPage(): React.JSX.Element {
                    });
                    
                    if (movedTask) {
+                     console.log('Found moved task:', movedTask.id, 'from', tasks.find(t => t.id === movedTask.id)?.status, 'to', movedTask.status);
                      const taskData = {
                        title: movedTask.title,
                        description: movedTask.description,
@@ -423,13 +648,21 @@ export default function BoardPage(): React.JSX.Element {
                        assignees: movedTask.assignees.map(id => parseInt(id)),
                      };
                      
-                     await taskApi.updateTask(parseInt(movedTask.id), taskData);
+                     // Use fallback method for task updates
+                     await taskApi.updateTaskWithFallback(parseInt(movedTask.id), taskData, isCurrentUserAdminOrManagerRole());
                      console.log('Task status updated successfully:', movedTask.id, movedTask.status);
+                   } else {
+                     console.log('No moved task found');
                    }
                  } catch (err: any) {
                    console.error('Error updating task status:', err);
                    // Revert to original tasks if API update fails
                    setTasks(tasks);
+                   
+                   // Show user-friendly error message
+                   const errorMessage = err.message || 'Failed to update task status. Please try again.';
+                   setError(errorMessage);
+                   setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
                  }
                }}
               registerOpenTask={(open) => {
@@ -445,8 +678,25 @@ export default function BoardPage(): React.JSX.Element {
             />
           ) : (
             /* Management View - Priority-based Kanban Board */
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 min-w-[900px]">
-              {priorityColumns.map(col => (
+            <div>
+              {/* Show message if no management-created tasks */}
+              {filteredTasks.filter(isTaskCreatedByManager).length === 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-center">
+                    <Users className="w-5 h-5 text-blue-600 mr-2" />
+                    <div>
+                      <h3 className="text-sm font-medium text-blue-800">No Management Tasks Found</h3>
+                      <p className="text-sm text-blue-600 mt-1">
+                        This view shows only tasks created by users with management roles (manager, admin, etc.). 
+                        Tasks created by regular users will not appear here.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 min-w-[900px]">
+                {priorityColumns.map(col => (
                 <div 
                   key={col.id} 
                   className="flex flex-col"
@@ -503,6 +753,7 @@ export default function BoardPage(): React.JSX.Element {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           )}
 
@@ -512,7 +763,7 @@ export default function BoardPage(): React.JSX.Element {
               open={!!activeTask}
               task={activeTask}
               members={members}
-              mode="management"
+              mode={isCurrentUserAdminOrManagerRole() ? "management" : "individual"}
               onOpenChange={(open) => {
                 if (!open) {
                   setActiveTask(null);
@@ -520,7 +771,7 @@ export default function BoardPage(): React.JSX.Element {
               }}
                onChange={async (updatedTask: Task) => {
                  try {
-                   // Update task via API - allow updates for all tasks in board view
+                   // Update task via API - use appropriate endpoint based on manager status
                    const taskData = {
                      title: updatedTask.title,
                      description: updatedTask.description,
@@ -533,7 +784,9 @@ export default function BoardPage(): React.JSX.Element {
                      assignees: updatedTask.assignees.map(id => parseInt(id)),
                    };
                    
-                   const response = await taskApi.updateTask(parseInt(updatedTask.id), taskData);
+                   // Use fallback method for task updates
+                   const response = await taskApi.updateTaskWithFallback(parseInt(updatedTask.id), taskData, isCurrentUserAdminOrManagerRole());
+                   
                    const updatedProjectTask = {
                      ...response.task,
                      assignees: response.task.assignees?.map((a: any) => a.user_id.toString()) || [],
@@ -548,12 +801,17 @@ export default function BoardPage(): React.JSX.Element {
                    // Fallback to local update if API fails
                    setTasks(tasks.map(t => (t.id === updatedTask.id ? updatedTask : t)));
                    setActiveTask(updatedTask);
+                   
+                   // Show user-friendly error message
+                   const errorMessage = err.message || 'Failed to update task. Please try again.';
+                   setError(errorMessage);
+                   setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
                  }
                }}
                onDelete={async (id) => {
                  try {
-                   // Delete task via API - allow deletion for all tasks in board view
-                   await taskApi.deleteTask(parseInt(id));
+                   // Use fallback method for task deletion
+                   await taskApi.deleteTaskWithFallback(parseInt(id), isCurrentUserAdminOrManagerRole());
                    setTasks(tasks.filter(t => t.id !== id));
                    setActiveTask(null);
                    console.log('Task deleted successfully:', id);
@@ -562,6 +820,11 @@ export default function BoardPage(): React.JSX.Element {
                    // Fallback to local deletion if API fails
                    setTasks(tasks.filter(t => t.id !== id));
                    setActiveTask(null);
+                   
+                   // Show user-friendly error message
+                   const errorMessage = err.message || 'Failed to delete task. Please try again.';
+                   setError(errorMessage);
+                   setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
                  }
                }}
               columns={columns as any}
@@ -585,7 +848,7 @@ export default function BoardPage(): React.JSX.Element {
               title: '',
               description: '',
               deliverables: '',
-              status: activeTab === 'board' ? creatingTaskStatus as any : 'backlog' as const,
+              status: activeTab === 'board' ? creatingTaskStatus as any : 'todo' as const,
               priority: activeTab === 'management' ? creatingTaskPriority as any : 'medium' as const,
               dueDate: undefined,
               labels: [],
@@ -611,11 +874,31 @@ export default function BoardPage(): React.JSX.Element {
                  return;
                }
                
-               // Use the first available task team project
-               const projectId = taskTeamProjects[0].id;
-               console.log('Using task team project ID for task creation:', projectId);
+               // Use the selected team's project ID if available, otherwise use the first available
+               let projectId = taskTeamProjects[0].id;
+               if (updatedTask.teamId) {
+                 const selectedTeamProject = taskTeamProjects.find((p: any) => p.team_id === parseInt(updatedTask.teamId!));
+                 if (selectedTeamProject) {
+                   projectId = selectedTeamProject.id;
+                   console.log('Using selected team project ID for task creation:', projectId, 'for team:', updatedTask.teamId);
+                 }
+               } else {
+                 console.log('No team selected, using first available project ID for task creation:', projectId);
+               }
                
                try {
+                // Get current user's role information
+                const currentUserRole = getCurrentUserRole();
+                
+                // Validate that we have role information
+                if (!currentUserRole?.role_name) {
+                  console.error('No role information found for current user');
+                  setError('Unable to determine user role. Please refresh and try again.');
+                  setIsCreatingTask(false);
+                  return;
+                }
+                
+                console.log('Creating task with creator role:', currentUserRole.role_name);
                 
                  // Create task via API
                  const taskData = {
@@ -630,6 +913,8 @@ export default function BoardPage(): React.JSX.Element {
                    attachments: updatedTask.attachments || [],
                    assignees: updatedTask.assignees.map(id => parseInt(id)),
                    created_by: getCurrentUserId(),
+                   creator_role_id: currentUserRole?.role_id,
+                   creator_role_name: currentUserRole?.role_name,
                  };
                 
                  const response = await taskApi.createTaskUnrestricted(taskData);
@@ -638,6 +923,8 @@ export default function BoardPage(): React.JSX.Element {
                    ...response.task,
                    assignees: response.task.assignees?.map((a: any) => a.user_id ? a.user_id.toString() : '') || [],
                    projectId: projectId,
+                   teamId: updatedTask.teamId,
+                   team: updatedTask.team,
                  };
                  
                  setTasks([newTask, ...tasks]);
@@ -646,10 +933,15 @@ export default function BoardPage(): React.JSX.Element {
                } catch (err: any) {
                  console.error('Error creating task:', err);
                  // Fallback to local creation if API fails
+                 const fallbackUserRole = getCurrentUserRole();
                  const newTask = {
                    ...updatedTask,
                    id: Math.random().toString(36).slice(2),
                    projectId: projectId, // Use the project ID we fetched
+                   teamId: updatedTask.teamId,
+                   team: updatedTask.team,
+                   creator_role_id: fallbackUserRole?.role_id,
+                   creator_role_name: fallbackUserRole?.role_name,
                  };
                  setTasks([newTask, ...tasks]);
                  setIsCreatingTask(false);
@@ -710,7 +1002,7 @@ export default function BoardPage(): React.JSX.Element {
                     <div className="flex-1 text-left">
                       <div className="font-medium" style={{ color: '#1f2937' }}>All Members</div>
                       <div className="text-xs" style={{ color: '#6b7280' }}>
-                        View all tasks
+                        {members.length} members • View all tasks
                       </div>
                     </div>
                     {selectedMember === 'all' && (
@@ -741,16 +1033,16 @@ export default function BoardPage(): React.JSX.Element {
                         }
                       }}
                     >
-                      <div 
-                        style={{ backgroundColor: member.color }}
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-                      >
-                        {member.initials}
-                      </div>
+                      <UserAvatar 
+                        userId={parseInt(member.id)} 
+                        size="md"
+                        className="w-8 h-8"
+                        fallbackColor={member.color}
+                      />
                       <div className="flex-1 text-left">
                         <div className="font-medium" style={{ color: '#1f2937' }}>{member.name}</div>
                         <div className="text-xs" style={{ color: '#6b7280' }}>
-                          {tasks.filter(t => t.assignees.includes(member.id)).length} tasks assigned
+                          {member.email} • {tasks.filter(t => t.assignees.includes(member.id)).length} tasks assigned
                         </div>
                       </div>
                       {selectedMember === member.id && (
@@ -763,78 +1055,6 @@ export default function BoardPage(): React.JSX.Element {
       </div>
           )}
 
-          {/* Custom Date Range Modal */}
-          {dateFilter === 'custom' && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl shadow-2xl p-6 w-96" style={{ borderRadius: '7px' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold" style={{ color: '#1f2937' }}>Custom Date Range</h3>
-                  <button
-                    onClick={() => setDateFilter('all')}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                    <input
-                      type="date"
-                      value={customDateRange.start}
-                      onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                    <input
-                      type="date"
-                      value={customDateRange.end}
-                      onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      onClick={() => setDateFilter('all')}
-                      className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (customDateRange.start && customDateRange.end) {
-                          setDateFilter('custom');
-                        }
-                      }}
-                      disabled={!customDateRange.start || !customDateRange.end}
-                      className="flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ 
-                        backgroundColor: '#076297',
-                        border: 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!e.currentTarget.disabled) {
-                          e.currentTarget.style.backgroundColor = '#065a87';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!e.currentTarget.disabled) {
-                          e.currentTarget.style.backgroundColor = '#076297';
-                        }
-                      }}
-                    >
-                      Apply Filter
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
     </PageLayout>
   );
 }

@@ -111,6 +111,12 @@ export const taskApi = {
     return response.data;
   },
 
+  // Get a single task by ID without permission checks (for board view)
+  getTaskByIdUnrestricted: async (taskId: number) => {
+    const response = await apiClient.get(`/tasks/${taskId}/unrestricted`);
+    return response.data;
+  },
+
   // Create a new task
   createTask: async (taskData: any) => {
     const response = await apiClient.post('/tasks', taskData);
@@ -120,6 +126,20 @@ export const taskApi = {
   // Create a new task without permission checks (for board view)
   createTaskUnrestricted: async (taskData: any) => {
     const response = await apiClient.post('/tasks/unrestricted', taskData);
+    return response.data;
+  },
+
+  // Comments
+  addTaskComment: async (taskId: number, content: string) => {
+    const response = await apiClient.post(`/tasks/${taskId}/comments`, { content });
+    return response.data;
+  },
+  updateTaskComment: async (taskId: number, commentId: number, content: string) => {
+    const response = await apiClient.put(`/tasks/${taskId}/comments/${commentId}`, { content });
+    return response.data;
+  },
+  deleteTaskComment: async (taskId: number, commentId: number) => {
+    const response = await apiClient.delete(`/tasks/${taskId}/comments/${commentId}`);
     return response.data;
   },
 
@@ -133,6 +153,108 @@ export const taskApi = {
   deleteTask: async (taskId: number) => {
     const response = await apiClient.delete(`/tasks/${taskId}`);
     return response.data;
+  },
+
+  // Update a task without permission checks (for board view)
+  updateTaskUnrestricted: async (taskId: number, taskData: any) => {
+    const response = await apiClient.put(`/tasks/${taskId}/unrestricted`, taskData);
+    return response.data;
+  },
+
+  // Update task with fallback (tries unrestricted first, falls back to regular)
+  updateTaskWithFallback: async (taskId: number, taskData: any, isAdminOrManager: boolean = false) => {
+    if (isAdminOrManager) {
+      try {
+        const response = await apiClient.put(`/tasks/${taskId}/unrestricted`, taskData);
+        return response.data;
+      } catch (unrestrictedError) {
+        console.error('Unrestricted endpoint failed for admin/manager user:', unrestrictedError);
+        
+        // Check if it's a 500 error (server issue) vs 403/401 (permission issue)
+        const status = unrestrictedError.response?.status;
+        if (status === 500) {
+          // Server error - try regular endpoint as fallback
+          console.warn('Server error on unrestricted endpoint, trying regular endpoint as fallback');
+          try {
+            const response = await apiClient.put(`/tasks/${taskId}`, taskData);
+            return response.data;
+          } catch (regularError) {
+            console.error('Both unrestricted and regular endpoints failed:', regularError);
+            throw new Error(`Task update failed: ${regularError.response?.data?.message || regularError.message}`);
+          }
+        } else {
+          // Permission or other client error - don't fallback
+          throw new Error(`Admin/Manager task update failed: ${unrestrictedError.response?.data?.message || unrestrictedError.message}`);
+        }
+      }
+    } else {
+      const response = await apiClient.put(`/tasks/${taskId}`, taskData);
+      return response.data;
+    }
+  },
+
+  // Delete a task
+  deleteTask: async (taskId: number) => {
+    const response = await apiClient.delete(`/tasks/${taskId}`);
+    return response.data;
+  },
+
+  // Delete a task without permission checks (for board view)
+  deleteTaskUnrestricted: async (taskId: number) => {
+    const response = await apiClient.delete(`/tasks/${taskId}/unrestricted`);
+    return response.data;
+  },
+
+  // Delete task with fallback (tries unrestricted first, falls back to regular)
+  deleteTaskWithFallback: async (taskId: number, isAdminOrManager: boolean = false) => {
+    if (isAdminOrManager) {
+      try {
+        const response = await apiClient.delete(`/tasks/${taskId}/unrestricted`);
+        return response.data;
+      } catch (unrestrictedError) {
+        console.error('Unrestricted delete endpoint failed for admin/manager user:', unrestrictedError);
+        
+        // Check if it's a 500 error (server issue) vs 403/401 (permission issue)
+        const status = unrestrictedError.response?.status;
+        if (status === 500) {
+          // Server error - try regular endpoint as fallback
+          console.warn('Server error on unrestricted delete endpoint, trying regular endpoint as fallback');
+          try {
+            const response = await apiClient.delete(`/tasks/${taskId}`);
+            return response.data;
+          } catch (regularError) {
+            console.error('Both unrestricted and regular delete endpoints failed:', regularError);
+            throw new Error(`Task deletion failed: ${regularError.response?.data?.message || regularError.message}`);
+          }
+        } else {
+          // Permission or other client error - don't fallback
+          throw new Error(`Admin/Manager task deletion failed: ${unrestrictedError.response?.data?.message || unrestrictedError.message}`);
+        }
+      }
+    } else {
+      const response = await apiClient.delete(`/tasks/${taskId}`);
+      return response.data;
+    }
+  },
+
+  // Check if backend is accessible and unrestricted endpoints are working
+  checkBackendHealth: async () => {
+    try {
+      // Try to get all tasks as a health check
+      const response = await apiClient.get('/tasks/all');
+      return { 
+        status: 'healthy', 
+        message: 'Backend is accessible',
+        hasUnrestrictedEndpoints: true // Assume true if we can reach the backend
+      };
+    } catch (error) {
+      console.error('Backend health check failed:', error);
+      return { 
+        status: 'unhealthy', 
+        message: error.response?.data?.message || 'Backend is not accessible',
+        hasUnrestrictedEndpoints: false
+      };
+    }
   },
 
   // Add comment to a task
@@ -178,6 +300,12 @@ export const profileApi = {
   // Get current user's profile
   getCurrentProfile: async () => {
     const response = await apiClient.get('/users/profile/me');
+    return response.data;
+  },
+
+  // Get user profile by ID
+  getUserProfile: async (userId: number) => {
+    const response = await apiClient.get(`/users/${userId}`);
     return response.data;
   },
 

@@ -114,26 +114,47 @@ export const importUsersSchema = z.object({
 // Update profile validation
 export const updateProfileSchema = z.object({
   body: z.object({
-    name: z.string().min(1, "Name is required").optional(),
-    phone_number: z.string().optional(),
-    avatar_url: z.string().url("Invalid avatar URL").optional().nullable(),
-    bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
-    address: z.string().max(200, "Address must be less than 200 characters").optional(),
+    name: z.string().optional().refine(
+      (val) => !val || val.length >= 1,
+      "Name must be at least 1 character if provided"
+    ),
+    phone_number: z.string().optional().nullable(),
+    avatar_url: z.string().optional().nullable().or(z.literal("")),
+    bio: z.string().optional().refine(
+      (val) => !val || val.length <= 500,
+      "Bio must be less than 500 characters"
+    ),
+    address: z.string().optional().refine(
+      (val) => !val || val.length <= 200,
+      "Address must be less than 200 characters"
+    ),
     social_links: z.object({
-      linkedin: z.string().url("Invalid LinkedIn URL").optional(),
-      twitter: z.string().url("Invalid Twitter URL").optional(),
-      github: z.string().url("Invalid GitHub URL").optional(),
-      website: z.string().url("Invalid website URL").optional(),
+      linkedin: z.string().optional().refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid LinkedIn URL"
+      ),
+      twitter: z.string().optional().refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid Twitter URL"
+      ),
+      github: z.string().optional().refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid GitHub URL"
+      ),
+      website: z.string().optional().refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid website URL"
+      ),
     }).optional().nullable(),
     preferences: z.object({
-      theme: z.enum(["light", "dark", "auto"]).optional(),
+      theme: z.enum(["light", "dark", "auto"]).optional().nullable(),
       notifications: z.object({
-        email: z.boolean().optional(),
-        push: z.boolean().optional(),
-        sms: z.boolean().optional(),
-      }).optional(),
-      language: z.string().optional(),
-      timezone: z.string().optional(),
+        email: z.boolean().optional().nullable(),
+        push: z.boolean().optional().nullable(),
+        sms: z.boolean().optional().nullable(),
+      }).optional().nullable(),
+      language: z.string().optional().nullable(),
+      timezone: z.string().optional().nullable(),
     }).optional().nullable(),
   }),
 });

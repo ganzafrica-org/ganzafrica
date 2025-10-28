@@ -1042,6 +1042,110 @@ export const removeProjectMember = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * @swagger
+ * /task-teams/projects/all:
+ *   get:
+ *     summary: List all projects across all teams
+ *     tags: [Task Teams]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [planning, active, on_hold, completed, cancelled]
+ *         description: Filter by project status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by project name or description
+ *     responses:
+ *       200:
+ *         description: Projects retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 projects:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       team_id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *                       start_date:
+ *                         type: string
+ *                         format: date-time
+ *                       end_date:
+ *                         type: string
+ *                         format: date-time
+ *                       color:
+ *                         type: string
+ *                       created_by:
+ *                         type: integer
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                       creator:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+export const listAllProjects = async (req: Request, res: Response) => {
+  try {
+    const filters = {
+      status: req.query.status as string,
+      search: req.query.search as string,
+    };
+
+    const projects = await taskTeamService.listAllProjects(filters);
+
+    res.status(200).json({
+      message: "All projects retrieved successfully",
+      projects,
+    });
+  } catch (error) {
+    logger.error("List all projects error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "List All Projects Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "List All Projects Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
 // Export all controller functions
 export const taskTeamController = {
   createTaskTeam,
@@ -1055,6 +1159,7 @@ export const taskTeamController = {
   createTaskProject,
   getTaskProjectById,
   listTaskProjects,
+  listAllProjects,
   updateTaskProject,
   deleteTaskProject,
   addProjectMember,

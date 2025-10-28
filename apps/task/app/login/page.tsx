@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import apiClient from '@/lib/api-client';
+import { isAlumni, isAdminOrManager, fetchUserProfile } from '@/lib/auth-utils';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,10 +41,31 @@ export default function LoginPage() {
         // Store user data from backend response
         if (response.data.user) {
           localStorage.setItem('user', JSON.stringify(response.data.user));
+          localStorage.setItem('task_user', JSON.stringify(response.data.user));
         }
         
-        // Login successful - redirect to board
-        router.push('/board');
+        // Fetch complete user profile from API to get role information
+        const userProfile = await fetchUserProfile();
+        
+        if (!userProfile) {
+          setError('Failed to fetch user profile. Please try again.');
+          setLoading(false);
+          return;
+        }
+        
+        // Check if user is Alumni - block access to platform
+        if (isAlumni(userProfile)) {
+          setError('Access Denied: Alumni users are not allowed to access the task management platform.');
+          setLoading(false);
+          return;
+        }
+        
+        // Redirect based on role
+        if (isAdminOrManager(userProfile)) {
+          router.push('/board');
+        } else {
+          router.push('/my-tasks');
+        }
       } else {
         setError('Login failed: No authentication token received');
         console.error('Missing token in response:', response.data);

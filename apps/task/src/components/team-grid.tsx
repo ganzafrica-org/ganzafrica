@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Task, TeamMember } from "@/lib/types";
+import { UserAvatar } from "./user-avatar";
 
 export function TeamGrid({ members, tasks, activeCounts }: { members: TeamMember[]; tasks: Task[]; activeCounts: Record<string, number> }) {
   const tasksByUser: Record<string, Task[]> = {};
@@ -17,7 +18,14 @@ export function TeamGrid({ members, tasks, activeCounts }: { members: TeamMember
         return (
           <div key={m.id} className="rounded-2xl border border-black/5 bg-white p-4">
             <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-full text-white grid place-items-center font-semibold ${m.color}`}>{m.initials}</div>
+              <div className="h-10 w-10 rounded-full overflow-hidden" style={{ backgroundColor: (m as any).color }}>
+                <UserAvatar 
+                  userId={parseInt(m.id)} 
+                  size="lg"
+                  className="h-10 w-10"
+                  fallbackColor={(m as any).color}
+                />
+              </div>
               <div>
                 <div className="font-medium leading-tight">{m.name}</div>
                 <div className="text-xs text-gray-500">{m.email}</div>

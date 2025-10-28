@@ -4,14 +4,21 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
 import { Tabs } from "@/components/tabs";
+import { Button } from "@/components/button";
 import { Task as TaskType } from "@/lib/types";
 import { taskTeamsApi, TaskTeam, TaskProject } from "@/lib/api/task-teams";
 import { usersApi, User as UserType } from "@/lib/api/users";
-import { tasksApi, Task as BackendTask } from "@/lib/api/tasks";
+import { taskApi } from "@/lib/api-client";
 import { ErrorModal } from "@/components/error-modal";
-import { ArrowLeft, Calendar, CheckCircle, Clock, User, Users, Loader2, X, UserPlus } from "lucide-react";
+import { ArrowLeft, Calendar, CheckCircle, Clock, User, Users, Loader2, X, UserPlus, Plus } from "lucide-react";
 import { KanbanBoard } from "@/components/kanban-board";
 import { TaskModal } from "@/components/task-modal";
+import { DateFilter } from "@/components/date-filter";
+import { useDateFilter } from "@/hooks/use-date-filter";
+import { TruncatedText } from "@/components/truncated-text";
+import { WorkloadAnalyticsModal } from "@/components/workload-analytics-modal";
+import { UserAvatar } from "@/components/user-avatar";
+import { isCurrentUserAdminOrManager } from "@/lib/auth-utils";
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ teamId: string; projectId: string }> }): React.JSX.Element {
   const resolvedParams = use(params);
@@ -19,7 +26,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
   const [activeTab, setActiveTab] = useState('board');
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
-  const [creatingTaskStatus, setCreatingTaskStatus] = useState<string>('backlog');
+  const [creatingTaskStatus, setCreatingTaskStatus] = useState<string>('todo');
+  const [dateFilter, setDateFilter] = useState<string>('all'); // 'all', 'week', 'month', 'custom'
+  const [showWorkloadModal, setShowWorkloadModal] = useState(false);
+  const [selectedMemberForAnalytics, setSelectedMemberForAnalytics] = useState<any>(null);
+  const [customDateRange, setCustomDateRange] = useState<{start: string, end: string}>({start: '', end: ''});
   
   const [team, setTeam] = useState<TaskTeam | null>(null);
   const [project, setProject] = useState<TaskProject | null>(null);
@@ -52,6 +63,73 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
     message: '',
   });
 
+  // Get current user ID from localStorage
+  const getCurrentUserId = () => {
+    try {
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') {
+        return 1; // fallback for SSR
+      }
+      
+      const userStr = localStorage.getItem('task_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.id || 1; // fallback to 1 if no id
+      }
+    } catch (error) {
+      console.error('Error getting current user:', error);
+    }
+    return 1; // fallback
+  };
+
+  // Check if current user has manager role
+  const isCurrentUserManager = () => {
+    try {
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') {
+        return false;
+      }
+      
+      const userStr = localStorage.getItem('task_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        const roleName = user.role_name || user.roleName;
+        const roleId = user.role_id || user.roleId;
+        
+        // Consider admin, staff, and mentor roles as manager roles
+        const isManagerRole = roleName && (
+          roleName.toLowerCase().includes('admin') ||
+          roleName.toLowerCase().includes('staff') ||
+          roleName.toLowerCase().includes('mentor') ||
+          roleName.toLowerCase().includes('manager') ||
+          (roleId && roleId < 1000) // Assuming manager roles have IDs < 1000
+        );
+        
+        return isManagerRole;
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+    }
+    return false; // Default to non-manager
+  };
+
+  // Check if current user is assigned to the team
+  const isCurrentUserAssignedToTeam = () => {
+    const currentUserId = getCurrentUserId();
+    
+    // Admin/Manager users can always create tasks
+    if (isCurrentUserAdminOrManager()) {
+      return true;
+    }
+    
+    // Check if current user is a member of the team
+    if (team && team.members && team.members.length > 0) {
+      return team.members.some(member => member.user_id === currentUserId);
+    }
+    
+    return false;
+  };
+
   useEffect(() => {
     loadProjectData();
     loadTasks();
@@ -80,7 +158,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
   const loadTasks = async () => {
     try {
       setLoadingTasks(true);
-      const response = await tasksApi.listTasksByProject(parseInt(resolvedParams.projectId));
+      const response = await taskApi.getTasksByProject(parseInt(resolvedParams.projectId));
       
       // Store all unique users from tasks (assignees and commenters) to enrich members list
       const taskUsers = new Map<string, any>();
@@ -115,12 +193,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
         }
       });
       
-      const convertedTasks: TaskType[] = response.tasks.map((backendTask: BackendTask) => ({
+      const convertedTasks: TaskType[] = response.tasks.map((backendTask: any) => ({
         id: backendTask.id.toString(),
         title: backendTask.title,
         description: backendTask.description || '',
         deliverables: backendTask.deliverables || '',
-        status: backendTask.status as any,
+        status: (backendTask.status === 'backlog' ? 'overdue' : backendTask.status) as any,
         priority: backendTask.priority as any,
         dueDate: backendTask.due_date,
         labels: backendTask.labels || [],
@@ -129,7 +207,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
               ? backendTask.assignees.map(String)
               : backendTask.assignees.map((a: any) => a.user_id.toString()))
           : [],
-        comments: backendTask.comments?.map(c => ({
+        comments: backendTask.comments?.map((c: any) => ({
           id: c.id.toString(),
           userId: c.user_id.toString(),
           message: c.content,
@@ -142,6 +220,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           sizeKB: 0,
           uploadedAt: new Date().toISOString(),
         })),
+        created_by: backendTask.created_by,
+        creator_role_id: backendTask.creator_role_id,
+        creator_role_name: backendTask.creator_role_name,
       }));
       
       setTasks(convertedTasks);
@@ -238,6 +319,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
 
   const handleCreateTask = async (task: TaskType) => {
     try {
+      // Check if user is assigned to the team
+      if (!isCurrentUserAssignedToTeam()) {
+        setErrorModal({
+          isOpen: true,
+          title: 'Access Denied',
+          message: 'You are not assigned to this team. Only team members can create tasks.',
+        });
+        return;
+      }
+
       const userData = localStorage.getItem('user');
       const user = userData ? JSON.parse(userData) : null;
       
@@ -251,7 +342,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       }
 
       // Create task WITHOUT attachments first (attachments need task ID to upload)
-      const response = await tasksApi.createTask({
+      const response = await taskApi.createTask({
         project_id: parseInt(resolvedParams.projectId),
         title: task.title,
         description: task.description,
@@ -291,7 +382,21 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
 
   const handleUpdateTask = async (task: TaskType) => {
     try {
-      await tasksApi.updateTask(parseInt(task.id), {
+      // Check if user is assigned to the team
+      if (!isCurrentUserAssignedToTeam()) {
+        setErrorModal({
+          isOpen: true,
+          title: 'Access Denied',
+          message: 'You are not assigned to this team. Only team members can update tasks.',
+        });
+        return;
+      }
+
+      const updateFunction = isCurrentUserManager() 
+        ? taskApi.updateTaskUnrestricted 
+        : taskApi.updateTask;
+      
+      await updateFunction(parseInt(task.id), {
         title: task.title,
         description: task.description,
         deliverables: task.deliverables,
@@ -319,13 +424,27 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
   };
 
   const handleDeleteTask = async (taskId: string) => {
+    // Check if user is assigned to the team
+    if (!isCurrentUserAssignedToTeam()) {
+      setErrorModal({
+        isOpen: true,
+        title: 'Access Denied',
+        message: 'You are not assigned to this team. Only team members can delete tasks.',
+      });
+      return;
+    }
+
     setConfirmDialog({
       isOpen: true,
       title: 'Delete Task',
       message: 'Are you sure you want to delete this task? This action cannot be undone.',
       onConfirm: async () => {
         try {
-          await tasksApi.deleteTask(parseInt(taskId));
+          if (isCurrentUserManager()) {
+            await taskApi.deleteTaskUnrestricted(parseInt(taskId));
+          } else {
+            await taskApi.deleteTask(parseInt(taskId));
+          }
           setConfirmDialog({ ...confirmDialog, isOpen: false });
           loadTasks(); // Reload tasks
           
@@ -347,12 +466,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
     });
   };
 
+  // Apply date filtering to tasks
+  const filteredTasks = useDateFilter(tasks, dateFilter, customDateRange);
+
   const columns = [
-    { id: 'backlog' as const, name: 'Backlog', color: '', bgColor: '#f3f4f6', textColor: '#374151', borderColor: '#e5e7eb' },
     { id: 'todo' as const, name: 'To Do', color: '', bgColor: '#dbeafe', textColor: '#1e40af', borderColor: '#93c5fd' },
     { id: 'inprogress' as const, name: 'In Progress', color: '', bgColor: '#fef3c7', textColor: '#92400e', borderColor: '#fcd34d' },
     { id: 'review' as const, name: 'Review', color: '', bgColor: '#fce7f3', textColor: '#9f1239', borderColor: '#f9a8d4' },
-    { id: 'done' as const, name: 'Done', color: '', bgColor: '#d1fae5', textColor: '#065f46', borderColor: '#6ee7b7' }
+    { id: 'done' as const, name: 'Completed', color: '', bgColor: '#d1fae5', textColor: '#065f46', borderColor: '#6ee7b7' },
+    { id: 'overdue' as const, name: 'Overdue', color: '', bgColor: '#fef2f2', textColor: '#dc2626', borderColor: '#fecaca' }
   ];
 
   if (loading) {
@@ -408,9 +530,48 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
 
   const memberWorkload = projectMembers.map(projectMember => {
     const memberId = projectMember.user_id?.toString() || '';
-    const assignedTasks = tasks.filter(task => task.assignees.includes(memberId));
+    const assignedTasks = filteredTasks.filter(task => task.assignees.includes(memberId));
     const completedTasks = assignedTasks.filter(task => task.status === 'done');
     const memberName = projectMember.name || 'Unknown';
+    
+    // Calculate weekly occupancy percentage
+    const now = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay()); // Start of current week
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6); // End of current week
+    
+    // Count days with tasks in the current week
+    // Use created_at date from backend to determine when tasks were assigned
+    const weekTasks = assignedTasks.filter(task => {
+      // Use created_at if available, otherwise use dueDate as fallback
+      const taskDate = task.createdAt ? new Date(task.createdAt) : 
+                      task.dueDate ? new Date(task.dueDate) : new Date();
+      return taskDate >= weekStart && taskDate <= weekEnd;
+    });
+    
+    // Get unique days with tasks based on actual task dates from backend
+    const occupiedDays = new Set();
+    assignedTasks.forEach((task) => {
+      // Use created_at date from backend to determine the actual day the task was assigned
+      const taskDate = task.createdAt ? new Date(task.createdAt) : 
+                      task.dueDate ? new Date(task.dueDate) : new Date();
+      
+      // Only count tasks that fall within the current week
+      if (taskDate >= weekStart && taskDate <= weekEnd) {
+        // Get the day of the week (0 = Sunday, 1 = Monday, etc.)
+        const dayOfWeek = taskDate.getDay();
+        
+        // Only count weekdays (Monday = 1 to Friday = 5)
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+          occupiedDays.add(taskDate.toDateString());
+        }
+      }
+    });
+    
+    // Calculate occupancy percentage (5 working days per week)
+    const weeklyOccupancyPercentage = Math.round((occupiedDays.size / 5) * 100);
+    
     return {
       member: {
         id: memberId,
@@ -421,13 +582,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       },
       totalTasks: assignedTasks.length,
       completedTasks: completedTasks.length,
-      progress: assignedTasks.length > 0 ? Math.round((completedTasks.length / assignedTasks.length) * 100) : 0
+      progress: assignedTasks.length > 0 ? Math.round((completedTasks.length / assignedTasks.length) * 100) : 0,
+      weeklyOccupancy: weeklyOccupancyPercentage,
+      occupiedDays: occupiedDays.size,
+      totalWeekDays: 5
     };
   });
 
   // Calculate overall progress
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(task => task.status === 'done').length;
+  const totalTasks = filteredTasks.length;
+  const completedTasks = filteredTasks.filter(task => task.status === 'done').length;
   const overallProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   return (
@@ -467,7 +631,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold mb-2" style={{ color: '#1f2937' }}>{project.name}</h2>
-            <p className="text-lg mb-4" style={{ color: '#6b7280' }}>{project.description || 'No description'}</p>
+            <div className="text-lg mb-4" style={{ color: '#6b7280' }}>
+              <TruncatedText 
+                text={project.description || 'No description'} 
+                maxLength={170}
+                className=""
+              />
+            </div>
             <div className="flex items-center gap-6 text-sm">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" style={{ color: project.color || team.color || '#073392' }} />
@@ -489,13 +659,38 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           </div>
         </div>
       </div>
-      {/* Tabs Container */}
+      {/* Tabs Container with Date Filter */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
-        <Tabs 
-          tabs={tabs} 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-        />
+        <div className="flex items-center justify-between">
+          <Tabs 
+            tabs={tabs} 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab}
+          />
+          {activeTab === 'board' && (
+            <div className="flex items-center gap-4">
+              {/* Add a task button - Only show for assigned users */}
+              {isCurrentUserAssignedToTeam() && (
+                <Button
+                  onClick={() => setIsCreatingTask(true)}
+                  variant="primary"
+                  size="md"
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add a task</span>
+                </Button>
+              )}
+              
+              <DateFilter
+                dateFilter={dateFilter}
+                setDateFilter={setDateFilter}
+                customDateRange={customDateRange}
+                setCustomDateRange={setCustomDateRange}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -510,7 +705,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
             ) : (
             <KanbanBoard 
               columns={columns}
-              tasks={tasks} 
+              tasks={filteredTasks} 
               members={members}
               projectId={parseInt(resolvedParams.projectId)}
               onTasksChange={(updatedTasks) => {
@@ -530,7 +725,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
               onTaskClick={async (taskId) => {
                 try {
                   // Fetch full task details from backend
-                  const response = await tasksApi.getTaskById(parseInt(taskId));
+                  const response = await taskApi.getTaskById(parseInt(taskId));
                   const backendTask = response.task;
                   
                   // Convert to frontend format with ALL fields
@@ -539,7 +734,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
                     title: backendTask.title,
                     description: backendTask.description || '',
                     deliverables: backendTask.deliverables || '',
-                    status: backendTask.status as any,
+                    status: (backendTask.status === 'backlog' ? 'overdue' : backendTask.status) as any,
                     priority: backendTask.priority as any,
                     dueDate: backendTask.due_date,
                     labels: backendTask.labels || [],
@@ -559,6 +754,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
                       sizeKB: 0,
                       uploadedAt: new Date().toISOString(),
                     })),
+                    created_by: backendTask.created_by,
+                    creator_role_id: backendTask.creator_role_id,
+                    creator_role_name: backendTask.creator_role_name,
                   };
                   
                   return fullTask;
@@ -566,10 +764,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
                   console.error('Error loading full task:', error);
                   return null;
                 }
-              }}
-              onCreateTask={(status) => {
-                setIsCreatingTask(true);
-                setCreatingTaskStatus(status);
               }}
             />
             )}
@@ -580,27 +774,29 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>Project Members ({projectMembers.length})</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setIsAddingMember(true)}
-                  className="px-3 py-1.5 text-sm rounded-md text-white transition-colors flex items-center gap-1"
-                  style={{ backgroundColor: '#076297', borderRadius: '7px' }}
-                >
-                  <Users className="w-4 h-4" />
-                  Add from Team
-                </button>
-                <button
-                  onClick={() => {
-                    setIsAddingExternalMember(true);
-                    loadAllUsers();
-                  }}
-                  className="px-3 py-1.5 text-sm rounded-md border transition-colors flex items-center gap-1"
-                  style={{ borderColor: '#076297', color: '#076297', borderRadius: '7px' }}
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Add External
-                </button>
-              </div>
+              {isCurrentUserAssignedToTeam() && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsAddingMember(true)}
+                    className="px-3 py-1.5 text-sm rounded-md text-white transition-colors flex items-center gap-1"
+                    style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+                  >
+                    <Users className="w-4 h-4" />
+                    Add from Team
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAddingExternalMember(true);
+                      loadAllUsers();
+                    }}
+                    className="px-3 py-1.5 text-sm rounded-md border transition-colors flex items-center gap-1"
+                    style={{ borderColor: '#076297', color: '#076297', borderRadius: '7px' }}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    Add External
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Add Members from Team Section */}
@@ -753,9 +949,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {projectMembers.map((projectMember) => {
                 const memberId = projectMember.user_id?.toString() || '';
-                const memberTasks = tasks.filter(task => task.assignees.includes(memberId));
+                const memberTasks = filteredTasks.filter(task => task.assignees.includes(memberId));
                 const completedCount = memberTasks.filter(task => task.status === 'done').length;
-                const initials = projectMember.name ? projectMember.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA';
                 
                 return (
                   <div
@@ -776,12 +971,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
                       <X className="w-4 h-4" style={{ color: '#dc2626' }} />
                     </button>
                     <div className="flex items-center gap-3 mb-3">
-                      <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
-                        style={{ backgroundColor: project.color || team.color || '#073392', color: '#ffffff' }}
-                      >
-                        {initials}
-                      </div>
+                      <UserAvatar 
+                        userId={projectMember.user_id ? parseInt(projectMember.user_id.toString()) : 0} 
+                        size="md"
+                        fallbackColor={project.color || team.color || '#073392'}
+                      />
                       <div className="flex-1 pr-6">
                         <h4 className="font-semibold" style={{ color: '#1f2937' }}>{projectMember.name || 'Unknown'}</h4>
                         {projectMember.position && (
@@ -805,9 +999,17 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
 
         {activeTab === 'workload' && (
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>Team Workload</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>Team Workload</h3>
+              <DateFilter
+                dateFilter={dateFilter}
+                setDateFilter={setDateFilter}
+                customDateRange={customDateRange}
+                setCustomDateRange={setCustomDateRange}
+              />
+            </div>
             <div className="space-y-3">
-              {memberWorkload.map(({ member, totalTasks, completedTasks, progress }) => (
+              {memberWorkload.map(({ member, totalTasks, completedTasks, progress, weeklyOccupancy, occupiedDays, totalWeekDays }) => (
                 <div
                   key={member.id}
                   className="p-4"
@@ -820,31 +1022,54 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div 
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-                        style={{ backgroundColor: member.color, color: '#ffffff' }}
-                      >
-                        {member.initials}
-                      </div>
+                      <UserAvatar 
+                        userId={parseInt(member.id)} 
+                        size="md"
+                        fallbackColor={member.color}
+                      />
                       <div>
                         <h4 className="font-semibold" style={{ color: '#1f2937' }}>{member.name}</h4>
                         <p className="text-sm" style={{ color: '#6b7280' }}>{totalTasks} tasks assigned</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium" style={{ color: '#4b5563' }}>{completedTasks}/{totalTasks} completed</p>
-                      <p className="text-xs font-bold" style={{ color: member.color }}>{progress}%</p>
+                      <p className="text-sm font-bold" style={{ 
+                        color: weeklyOccupancy === 100 ? '#ef4444' : '#005c30'
+                      }}>
+                        {weeklyOccupancy}% ({occupiedDays}/{totalWeekDays} days)
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSelectedMemberForAnalytics(member);
+                          setShowWorkloadModal(true);
+                        }}
+                        className="text-xs transition-colors duration-200 flex items-center gap-1 mt-1"
+                        style={{ color: '#076297' }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#0a7bb8'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#076297'}
+                      >
+                        View Details →
+                      </button>
                     </div>
                   </div>
-                  <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#e5e7eb' }}>
-                    <div 
-                      className="h-full transition-all duration-300"
-                      style={{ 
-                        width: `${progress}%`,
-                        backgroundColor: member.color
-                      }}
-                    />
+                  
+                  {/* Weekly Occupancy Progress Bar */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium" style={{ color: '#6b7280' }}>Weekly Occupancy</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#e5e7eb' }}>
+                      <div 
+                        className="h-full transition-all duration-300"
+                        style={{ 
+                          width: `${weeklyOccupancy}%`,
+                          backgroundColor: weeklyOccupancy === 100 ? '#ef4444' : '#005c30'
+                        }}
+                      />
+                    </div>
                   </div>
+
+
                 </div>
               ))}
               {memberWorkload.length === 0 && (
@@ -900,13 +1125,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
               <h4 className="font-semibold mb-3" style={{ color: '#1f2937' }}>Status Breakdown</h4>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                 {[
-                  { label: 'Backlog', status: 'backlog', color: '#6b7280', icon: Clock },
                   { label: 'To Do', status: 'todo', color: '#3b82f6', icon: Clock },
                   { label: 'In Progress', status: 'inprogress', color: '#f59e0b', icon: Clock },
                   { label: 'In Review', status: 'review', color: '#ec4899', icon: User },
-                  { label: 'Done', status: 'done', color: '#10b981', icon: CheckCircle }
+                  { label: 'Completed', status: 'done', color: '#10b981', icon: CheckCircle },
+                  { label: 'Overdue', status: 'overdue', color: '#dc2626', icon: Clock }
                 ].map(({ label, status, color, icon: Icon }) => {
-                  const count = tasks.filter(task => task.status === status).length;
+                  const count = filteredTasks.filter(task => task.status === status).length;
                   return (
                     <div
                       key={status}
@@ -949,7 +1174,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           attachments: []
         } : null}
         members={members}
-        mode="management"
+        mode={isCurrentUserManager() ? "management" : "individual"}
         projectId={parseInt(resolvedParams.projectId)}
         onOpenChange={(open) => {
           if (!open) {
@@ -986,6 +1211,21 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
         confirmText="Confirm"
         showCancel={true}
       />
+
+      {/* Workload Analytics Modal */}
+      {selectedMemberForAnalytics && (
+        <WorkloadAnalyticsModal
+          isOpen={showWorkloadModal}
+          onClose={() => {
+            setShowWorkloadModal(false);
+            setSelectedMemberForAnalytics(null);
+          }}
+          member={selectedMemberForAnalytics}
+          tasks={filteredTasks}
+          dateFilter={dateFilter}
+          customDateRange={customDateRange}
+        />
+      )}
     </PageLayout>
   );
 }

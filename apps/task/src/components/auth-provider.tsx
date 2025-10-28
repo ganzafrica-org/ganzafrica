@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { shouldBlockUser, fetchUserProfile } from '@/lib/auth-utils';
 
 interface User {
     id: string;
@@ -35,22 +35,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        // Check for existing session (from portal or task management)
-        const token = localStorage.getItem('task_token') || localStorage.getItem('accessToken');
-        const userData = localStorage.getItem('task_user') || localStorage.getItem('user');
-        
-        if (token && userData) {
-            try {
-                const parsedUser = JSON.parse(userData);
-                setUser(parsedUser);
-            } catch (error) {
-                console.error('Error parsing user data:', error);
-                localStorage.removeItem('task_token');
-                localStorage.removeItem('task_user');
+        // Check for existing session and fetch fresh user profile
+        const initializeAuth = async () => {
+            const token = localStorage.getItem('task_token') || localStorage.getItem('accessToken');
+            
+            if (token) {
+                try {
+                    // Fetch fresh user profile from API
+                    const userProfile = await fetchUserProfile();
+                    
+                    if (userProfile) {
+                        // Check if user should be blocked from accessing the platform
+                        if (shouldBlockUser(userProfile)) {
+                            // Clear session and redirect to login
+                            localStorage.removeItem('task_token');
+                            localStorage.removeItem('task_user');
+                            localStorage.removeItem('accessToken');
+                            localStorage.removeItem('user');
+                            router.push('/login');
+                            return;
+                        }
+                        
+                        // Get the complete user data from localStorage (updated by fetchUserProfile)
+                        const userData = localStorage.getItem('task_user');
+                        if (userData) {
+                            const parsedUser = JSON.parse(userData);
+                            setUser(parsedUser);
+                        }
+                    } else {
+                        // No valid profile found, clear session
+                        localStorage.removeItem('task_token');
+                        localStorage.removeItem('task_user');
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('user');
+                    }
+                } catch (error) {
+                    console.error('Error initializing auth:', error);
+                    localStorage.removeItem('task_token');
+                    localStorage.removeItem('task_user');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('user');
+                }
             }
-        }
+            
+            setIsLoading(false);
+        };
         
-        setIsLoading(false);
+        initializeAuth();
     }, []);
 
     const login = async (credentials: { email: string; password: string }): Promise<boolean> => {
@@ -69,6 +100,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             );
             
             if (account) {
+                // Check if user is Alumni - block access to platform
+                if (account.role === 'alumni' || account.email.toLowerCase().includes('alumni')) {
+                    console.error('Access Denied: Alumni users are not allowed to access the task management platform.');
+                    return false;
+                }
+                
                 const userData: User = {
                     id: Math.random().toString(36).substr(2, 9),
                     email: account.email,
@@ -82,15 +119,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 localStorage.setItem('task_token', 'demo_token_' + Date.now());
                 
                 setUser(userData);
-                toast.success('Login successful');
+                console.log('Login successful');
                 return true;
             } else {
-                toast.error('Invalid email or password');
+                console.error('Invalid email or password');
                 return false;
             }
         } catch (error) {
             console.error('Login error:', error);
-            toast.error('Login failed');
+            console.error('Login failed');
             return false;
         }
     };
@@ -99,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('task_token');
         localStorage.removeItem('task_user');
         setUser(null);
-        toast.success('Logged out successfully');
+        console.log('Logged out successfully');
         router.push('/login');
     };
 

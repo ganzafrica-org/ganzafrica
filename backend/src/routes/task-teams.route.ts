@@ -21,6 +21,7 @@ router.post("/:id/projects", authenticate, taskTeamController.createTaskProject)
 router.get("/:id/projects", authenticate, taskTeamController.listTaskProjects);
 
 // Task Projects Routes (standalone)
+router.get("/projects/all", authenticate, taskTeamController.listAllProjects);
 router.get("/projects/:id", authenticate, taskTeamController.getTaskProjectById);
 router.put("/projects/:id", authenticate, taskTeamController.updateTaskProject);
 router.delete("/projects/:id", authenticate, taskTeamController.deleteTaskProject);

@@ -79,6 +79,12 @@ export const tasksApi = {
     return response.data;
   },
 
+  // Get tasks assigned to current user
+  async getTasksByUser() {
+    const response = await apiClient.get('/tasks/user/assigned');
+    return response.data;
+  },
+
   // List tasks for a project
   async listTasksByProject(projectId: number) {
     const response = await apiClient.get(`/tasks/project/${projectId}`);
