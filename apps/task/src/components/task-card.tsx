@@ -2,7 +2,6 @@
 
 import { CalendarClock, MessageSquare, Paperclip, Users } from "lucide-react";
 import { Task, TeamMember } from "@/lib/types";
-import { mockTeams } from "@/lib/teams-data";
 import { UserAvatar } from "./user-avatar";
 
 const priorityColor: Record<Task["priority"], string> = {
@@ -37,7 +36,7 @@ export function TaskCard({ task, members, onClick, hidePriority }: { task: Task;
       );
     })
     .filter(Boolean) as TeamMember[];
-  const assignedTeam = task.teamId ? mockTeams.find(t => t.id === task.teamId) : null;
+  const assignedTeam = null; // Team info removed - no longer using mock data
 
   const getPriorityStyle = () => {
     if (task.priority === 'high') {

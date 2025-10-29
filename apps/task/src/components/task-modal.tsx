@@ -11,8 +11,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
 import { taskApi } from "@/lib/api-client";
 import { canEditTask } from "@/lib/auth-utils";
-import { mockTeams } from "@/lib/teams-data";
-import { initialMembers } from "@/lib/sample-data";
 
 export function TaskModal({
   open,
@@ -198,19 +196,8 @@ export function TaskModal({
       
       const loadedTeams = response.teams || [];
       
-      // If no teams from API, use dummy teams
-      const teamsToUse = loadedTeams.length > 0 ? loadedTeams : mockTeams.map((team, index) => ({
-        id: index + 1, // Use numeric IDs for dummy teams
-        name: team.name,
-        description: team.description,
-        color: team.color,
-        member_count: team.memberCount,
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        created_by: 1,
-        projects: team.projects?.map(project => ({ id: Math.random(), name: project })) || []
-      }));
+      // If no teams from API, use empty array
+      const teamsToUse = loadedTeams.length > 0 ? loadedTeams : [];
       
       setTeams(teamsToUse);
       

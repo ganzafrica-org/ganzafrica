@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
+import { logger } from './logger';
 
 // Interface for token payload
 interface TokenPayload {
@@ -35,7 +36,7 @@ apiClient.interceptors.request.use(
     if (token) {
       // If token exists but is expired, try to refresh it first
       if (isTokenExpired(token)) {
-        console.log('Token expired, attempting to refresh...');
+        logger.debug('Token expired, attempting to refresh...');
         // For now, we'll just clear the token and let the user re-login
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
@@ -63,15 +64,16 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
-      // Clear tokens and redirect to login if not a login request
-      if (!originalRequest.url?.endsWith('/login')) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        
-        // Redirect to login page if in browser environment
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+      // Clear tokens and redirect to portal login
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('task_user');
+      
+      // Redirect to portal login page if in browser environment
+      if (typeof window !== 'undefined') {
+        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
+        window.location.href = `${portalUrl}/login`;
       }
     }
     
@@ -149,12 +151,6 @@ export const taskApi = {
     return response.data;
   },
 
-  // Delete a task
-  deleteTask: async (taskId: number) => {
-    const response = await apiClient.delete(`/tasks/${taskId}`);
-    return response.data;
-  },
-
   // Update a task without permission checks (for board view)
   updateTaskUnrestricted: async (taskId: number, taskData: any) => {
     const response = await apiClient.put(`/tasks/${taskId}/unrestricted`, taskData);
@@ -167,24 +163,26 @@ export const taskApi = {
       try {
         const response = await apiClient.put(`/tasks/${taskId}/unrestricted`, taskData);
         return response.data;
-      } catch (unrestrictedError) {
-        console.error('Unrestricted endpoint failed for admin/manager user:', unrestrictedError);
+      } catch (unrestrictedError: unknown) {
+        logger.error('Unrestricted endpoint failed for admin/manager user:', unrestrictedError);
         
         // Check if it's a 500 error (server issue) vs 403/401 (permission issue)
-        const status = unrestrictedError.response?.status;
+        const status = (unrestrictedError as { response?: { status?: number } })?.response?.status;
         if (status === 500) {
           // Server error - try regular endpoint as fallback
-          console.warn('Server error on unrestricted endpoint, trying regular endpoint as fallback');
+          logger.warn('Server error on unrestricted endpoint, trying regular endpoint as fallback');
           try {
             const response = await apiClient.put(`/tasks/${taskId}`, taskData);
             return response.data;
-          } catch (regularError) {
-            console.error('Both unrestricted and regular endpoints failed:', regularError);
-            throw new Error(`Task update failed: ${regularError.response?.data?.message || regularError.message}`);
+          } catch (regularError: unknown) {
+            logger.error('Both unrestricted and regular endpoints failed:', regularError);
+            const errorMessage = logger.getErrorMessage(regularError);
+            throw new Error(`Task update failed: ${errorMessage}`);
           }
         } else {
           // Permission or other client error - don't fallback
-          throw new Error(`Admin/Manager task update failed: ${unrestrictedError.response?.data?.message || unrestrictedError.message}`);
+          const errorMessage = logger.getErrorMessage(unrestrictedError);
+          throw new Error(`Admin/Manager task update failed: ${errorMessage}`);
         }
       }
     } else {
@@ -211,24 +209,26 @@ export const taskApi = {
       try {
         const response = await apiClient.delete(`/tasks/${taskId}/unrestricted`);
         return response.data;
-      } catch (unrestrictedError) {
-        console.error('Unrestricted delete endpoint failed for admin/manager user:', unrestrictedError);
+      } catch (unrestrictedError: unknown) {
+        logger.error('Unrestricted delete endpoint failed for admin/manager user:', unrestrictedError);
         
         // Check if it's a 500 error (server issue) vs 403/401 (permission issue)
-        const status = unrestrictedError.response?.status;
+        const status = (unrestrictedError as { response?: { status?: number } })?.response?.status;
         if (status === 500) {
           // Server error - try regular endpoint as fallback
-          console.warn('Server error on unrestricted delete endpoint, trying regular endpoint as fallback');
+          logger.warn('Server error on unrestricted delete endpoint, trying regular endpoint as fallback');
           try {
             const response = await apiClient.delete(`/tasks/${taskId}`);
             return response.data;
-          } catch (regularError) {
-            console.error('Both unrestricted and regular delete endpoints failed:', regularError);
-            throw new Error(`Task deletion failed: ${regularError.response?.data?.message || regularError.message}`);
+          } catch (regularError: unknown) {
+            logger.error('Both unrestricted and regular delete endpoints failed:', regularError);
+            const errorMessage = logger.getErrorMessage(regularError);
+            throw new Error(`Task deletion failed: ${errorMessage}`);
           }
         } else {
           // Permission or other client error - don't fallback
-          throw new Error(`Admin/Manager task deletion failed: ${unrestrictedError.response?.data?.message || unrestrictedError.message}`);
+          const errorMessage = logger.getErrorMessage(unrestrictedError);
+          throw new Error(`Admin/Manager task deletion failed: ${errorMessage}`);
         }
       }
     } else {
@@ -247,20 +247,15 @@ export const taskApi = {
         message: 'Backend is accessible',
         hasUnrestrictedEndpoints: true // Assume true if we can reach the backend
       };
-    } catch (error) {
-      console.error('Backend health check failed:', error);
+    } catch (error: unknown) {
+      logger.error('Backend health check failed:', error);
+      const errorMessage = logger.getErrorMessage(error);
       return { 
         status: 'unhealthy', 
-        message: error.response?.data?.message || 'Backend is not accessible',
+        message: errorMessage,
         hasUnrestrictedEndpoints: false
       };
     }
-  },
-
-  // Add comment to a task
-  addTaskComment: async (taskId: number, content: string) => {
-    const response = await apiClient.post(`/tasks/${taskId}/comments`, { content });
-    return response.data;
   },
 
   // Upload attachments to a task

@@ -11,15 +11,14 @@ import { Button } from "@/components/button";
 import { TaskModal } from "@/components/task-modal";
 import { Tabs } from "@/components/tabs";
 import { Task, TeamMember, updateTaskStatusIfOverdue } from "@/lib/types";
-import { initialMembers, initialTasks } from "@/lib/sample-data";
 import { taskApi, portalDataApi } from "@/lib/api-client";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
 import { usersApi, User as UserType } from "@/lib/api/users";
-import { mockTeams } from "@/lib/teams-data";
 import { ErrorModal } from "@/components/error-modal";
 import { FileText, AlertCircle, CheckCircle, Clock, Users, Calendar, X, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, UserPlus } from "lucide-react";
 import { DateFilter } from "@/components/date-filter";
 import { useDateFilter } from "@/hooks/use-date-filter";
+import { logger } from "@/lib/logger";
 
 export default function BoardPage(): React.JSX.Element {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -31,7 +30,7 @@ export default function BoardPage(): React.JSX.Element {
   
   // Debug view mode changes
   useEffect(() => {
-    console.log('View mode changed to:', viewMode);
+    logger.debug('View mode changed to:', viewMode);
   }, [viewMode]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
@@ -95,8 +94,8 @@ export default function BoardPage(): React.JSX.Element {
         
         return isManagerRole;
       }
-    } catch (error) {
-      console.error('Error checking user role:', error);
+    } catch (error: unknown) {
+      logger.error('Error checking user role:', error);
     }
     return false; // Default to non-manager
   };
@@ -340,19 +339,8 @@ export default function BoardPage(): React.JSX.Element {
       const teamsResponse = await taskTeamsApi.listTeams();
       const allTeams = teamsResponse.teams || [];
       
-      // If no teams from API, use dummy teams
-      const teamsToUse = allTeams.length > 0 ? allTeams : mockTeams.map(team => ({
-        id: team.id,
-        name: team.name,
-        description: team.description,
-        color: team.color,
-        member_count: team.memberCount,
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        created_by: 1,
-        projects: team.projects?.map(project => ({ id: Math.random(), name: project })) || []
-      }));
+      // If no teams from API, use empty array
+      const teamsToUse = allTeams.length > 0 ? allTeams : [];
       
       setAllTeams(teamsToUse); // Store teams in state for team information mapping
       console.log('🔍 Loaded teams for user info:', teamsToUse);
@@ -849,10 +837,14 @@ export default function BoardPage(): React.JSX.Element {
                       }
                       
                       console.log('✅ Task status updated in database');
-                    } catch (error) {
-                      console.error('❌ Error updating task status:', error);
-                      console.error('❌ Error details:', error.response?.data || error.message);
-                      setError(`Failed to update task status: ${error.response?.data?.message || error.message}`);
+                    } catch (error: unknown) {
+                      const errorMessage = error instanceof Error 
+                        ? error.message 
+                        : typeof error === 'object' && error !== null && 'response' in error
+                        ? (error as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message || (error as { message?: string }).message || 'Unknown error'
+                        : String(error);
+                      logger.error('Error updating task status:', error);
+                      setError(`Failed to update task status: ${errorMessage}`);
                       return; // Don't update local state if API call failed
                     }
                   } else {

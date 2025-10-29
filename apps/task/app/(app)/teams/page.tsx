@@ -7,7 +7,6 @@ import { Button } from "@/components/button";
 import { ErrorModal } from "@/components/error-modal";
 import { UserAvatar } from "@/components/user-avatar";
 import { TeamMember } from "@/lib/types";
-import { initialTasks } from "@/lib/sample-data";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
 import { portalDataApi, PortalTeam, PortalProject } from "@/lib/api/portal-data";
 import { usersApi, User } from "@/lib/api/users";
@@ -552,7 +551,7 @@ export default function TeamsPage(): React.JSX.Element {
   return (
     <PageLayout 
       members={[]} 
-      tasks={initialTasks} 
+      tasks={[]} 
       title="Teams"
       headerAction={
         isCurrentUserAdminOrManager() ? (

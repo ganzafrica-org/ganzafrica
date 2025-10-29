@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true }
+  // Enable TypeScript and ESLint checking in production
+  typescript: { 
+    ignoreBuildErrors: false, // Enable strict checking
+  },
+  eslint: { 
+    ignoreDuringBuilds: false, // Enable linting
+  }
 }
 
 export default nextConfig

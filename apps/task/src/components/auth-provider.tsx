@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { shouldBlockUser, fetchUserProfile } from '@/lib/auth-utils';
+import { logger } from '@/lib/logger';
 
 interface User {
     id: string;
@@ -17,7 +18,6 @@ interface AuthContextType {
     user: User | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    login: (credentials: { email: string; password: string }) => Promise<boolean>;
     logout: () => void;
 }
 
@@ -25,7 +25,6 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     isLoading: true,
     isAuthenticated: false,
-    login: async () => false,
     logout: () => {},
 });
 
@@ -37,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         // Check for existing session and fetch fresh user profile
         const initializeAuth = async () => {
-            const token = localStorage.getItem('task_token') || localStorage.getItem('accessToken');
+            const token = localStorage.getItem('accessToken');
             
             if (token) {
                 try {
@@ -47,13 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     if (userProfile) {
                         // Check if user should be blocked from accessing the platform
                         if (shouldBlockUser(userProfile)) {
-                            // Clear session and redirect to login
-                            localStorage.removeItem('task_token');
-                            localStorage.removeItem('task_user');
-                            localStorage.removeItem('accessToken');
-                            localStorage.removeItem('user');
-                            router.push('/login');
-                            return;
+                        // Clear session and redirect to portal login
+                        localStorage.removeItem('task_token');
+                        localStorage.removeItem('task_user');
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('user');
+                        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
+                        window.location.href = `${portalUrl}/login`;
+                        return;
                         }
                         
                         // Get the complete user data from localStorage (updated by fetchUserProfile)
@@ -69,8 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         localStorage.removeItem('accessToken');
                         localStorage.removeItem('user');
                     }
-                } catch (error) {
-                    console.error('Error initializing auth:', error);
+                } catch (error: unknown) {
+                    logger.error('Error initializing auth:', error);
                     localStorage.removeItem('task_token');
                     localStorage.removeItem('task_user');
                     localStorage.removeItem('accessToken');
@@ -84,60 +84,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         initializeAuth();
     }, []);
 
-    const login = async (credentials: { email: string; password: string }): Promise<boolean> => {
-        try {
-            // Demo authentication - replace with real API call
-            const demoAccounts = [
-                { email: 'admin@ganzafrica.org', password: 'password', role: 'admin' },
-                { email: 'hr@ganzafrica.org', password: 'password', role: 'team' },
-                { email: 'employee@ganzafrica.org', password: 'password', role: 'public' },
-                { email: 'fellow@ganzafrica.org', password: 'password', role: 'public' },
-                { email: 'alumni@ganzafrica.org', password: 'password', role: 'public' },
-            ];
-            
-            const account = demoAccounts.find(acc => 
-                acc.email === credentials.email && acc.password === credentials.password
-            );
-            
-            if (account) {
-                // Check if user is Alumni - block access to platform
-                if (account.role === 'alumni' || account.email.toLowerCase().includes('alumni')) {
-                    console.error('Access Denied: Alumni users are not allowed to access the task management platform.');
-                    return false;
-                }
-                
-                const userData: User = {
-                    id: Math.random().toString(36).substr(2, 9),
-                    email: account.email,
-                    name: account.email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                    role: account.role,
-                    initials: account.email.split('@')[0].substr(0, 2).toUpperCase(),
-                    color: '#076297'
-                };
-                
-                localStorage.setItem('task_user', JSON.stringify(userData));
-                localStorage.setItem('task_token', 'demo_token_' + Date.now());
-                
-                setUser(userData);
-                console.log('Login successful');
-                return true;
-            } else {
-                console.error('Invalid email or password');
-                return false;
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            console.error('Login failed');
-            return false;
-        }
-    };
-
     const logout = () => {
         localStorage.removeItem('task_token');
         localStorage.removeItem('task_user');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
         setUser(null);
-        console.log('Logged out successfully');
-        router.push('/login');
+        logger.info('Logged out successfully');
+        // Redirect to portal login
+        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
+        window.location.href = `${portalUrl}/login`;
     };
 
     const isAuthenticated = !!user;
@@ -148,7 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 user,
                 isLoading,
                 isAuthenticated,
-                login,
                 logout,
             }}
         >

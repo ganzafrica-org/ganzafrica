@@ -7,7 +7,14 @@ import { UserAvatar } from "./user-avatar";
 export function TeamGrid({ members, tasks, activeCounts }: { members: TeamMember[]; tasks: Task[]; activeCounts: Record<string, number> }) {
   const tasksByUser: Record<string, Task[]> = {};
   for (const m of members) tasksByUser[m.id] = [];
-  for (const t of tasks) for (const uid of t.assignees) tasksByUser[uid].push(t);
+  for (const t of tasks) {
+    for (const uid of t.assignees) {
+      // Only add tasks for users that are in the members list
+      if (tasksByUser[uid]) {
+        tasksByUser[uid].push(t);
+      }
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

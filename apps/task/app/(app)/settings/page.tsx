@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Monitor, Moon, Sun, Save, RefreshCw } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/button";
-import { initialMembers, initialTasks } from "@/lib/sample-data";
+import { logger } from "@/lib/logger";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -28,14 +28,24 @@ export default function SettingsPage() {
     const keys = path.split('.');
     setSettings(prev => {
       const newSettings = { ...prev };
-      let current = newSettings;
+      let current: any = newSettings;
       
       for (let i = 0; i < keys.length - 1; i++) {
-        current[keys[i]] = { ...current[keys[i]] };
-        current = current[keys[i]];
+        const key = keys[i];
+        if (!key) continue;
+        
+        if (current[key] === undefined || current[key] === null) {
+          current[key] = {};
+        } else {
+          current[key] = { ...current[key] };
+        }
+        current = current[key];
       }
       
-      current[keys[keys.length - 1]] = value;
+      const lastKey = keys[keys.length - 1];
+      if (lastKey) {
+        current[lastKey] = value;
+      }
       return newSettings;
     });
     setHasChanges(true);
@@ -43,7 +53,7 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     // In real app, save to API/localStorage
-    console.log('Saving settings:', settings);
+    logger.info('Saving settings:', settings);
     setHasChanges(false);
   };
 
@@ -68,8 +78,8 @@ export default function SettingsPage() {
 
   return (
     <PageLayout 
-      members={initialMembers} 
-      tasks={initialTasks} 
+      members={[]} 
+      tasks={[]} 
       title="Settings"
       className="bg-gray-50"
     >

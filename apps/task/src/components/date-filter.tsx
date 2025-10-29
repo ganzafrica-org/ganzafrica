@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { CalendarDays, Filter, X } from "lucide-react";
 
 interface DateFilterProps {
   dateFilter: string;
   setDateFilter: (filter: string) => void;
   customDateRange: { start: string; end: string };
-  setCustomDateRange: (range: { start: string; end: string }) => void;
+  setCustomDateRange: Dispatch<SetStateAction<{ start: string; end: string }>>;
   className?: string;
 }
 
@@ -140,7 +140,7 @@ export function DateFilter({
                 <input
                   type="date"
                   value={customDateRange.start}
-                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  onChange={(e) => setCustomDateRange((prev: { start: string; end: string }) => ({ ...prev, start: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -150,7 +150,7 @@ export function DateFilter({
                 <input
                   type="date"
                   value={customDateRange.end}
-                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  onChange={(e) => setCustomDateRange((prev: { start: string; end: string }) => ({ ...prev, end: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>

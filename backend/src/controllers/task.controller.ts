@@ -893,8 +893,8 @@ export const getProjectFilesWithRoleFilter = async (req: Request, res: Response)
               id: `task-${task.id}-${attachment.id}`,
               filename: attachment.filename,
               original_filename: attachment.filename,
-              file_type: attachment.type?.split('/')[1] || 'unknown',
-              file_size: attachment.size || 0,
+              file_type: (attachment as any).type?.split('/')[1] || 'unknown',
+              file_size: (attachment as any).size || 0,
               file_url: attachment.url,
               created_at: attachment.uploaded_at || task.created_at,
               metadata: {

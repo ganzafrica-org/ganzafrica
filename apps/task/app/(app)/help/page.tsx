@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { HelpCircle, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
-import { initialMembers, initialTasks } from "@/lib/sample-data";
 
 export default function HelpPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,8 +63,8 @@ export default function HelpPage() {
 
   return (
     <PageLayout 
-      members={initialMembers} 
-      tasks={initialTasks} 
+      members={[]} 
+      tasks={[]} 
       title="Help Center"
       className="bg-gray-50"
     >

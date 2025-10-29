@@ -11,16 +11,17 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ 
     children, 
-    fallbackUrl = '/login' 
+    fallbackUrl 
 }: ProtectedRouteProps) {
+    const defaultPortalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
+    const finalFallbackUrl = fallbackUrl || `${defaultPortalUrl}/login`;
     const { isAuthenticated, isLoading } = useAuth();
-    const router = useRouter();
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            router.push(fallbackUrl);
+            window.location.href = finalFallbackUrl;
         }
-    }, [isAuthenticated, isLoading, router, fallbackUrl]);
+    }, [isAuthenticated, isLoading, finalFallbackUrl]);
 
     if (isLoading) {
         return (

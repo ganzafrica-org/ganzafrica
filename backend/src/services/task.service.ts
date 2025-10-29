@@ -337,7 +337,7 @@ export const getTaskById = async (taskId: number, userId: number) => {
     }
 
     // Check if user can access this task's project (if it has one)
-    const hasProjectAccess = await canAccessProject(userId, task.project_id);
+    const hasProjectAccess = await canAccessProject(userId, task.project_id || undefined);
     
     // Also check if user is assigned to this task
     const [taskAssignee] = await db
@@ -964,7 +964,7 @@ export const addTaskComment = async (taskId: number, content: string, userId: nu
     }
 
     // Check if user can access the project (if it has one)
-    const hasProjectAccess = await canAccessProject(userId, task.project_id);
+    const hasProjectAccess = await canAccessProject(userId, task.project_id || undefined);
     
     // Also check if user is assigned to this task
     const [taskAssignee] = await db

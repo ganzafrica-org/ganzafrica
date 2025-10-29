@@ -12,7 +12,6 @@ import { TaskModal } from "@/components/task-modal";
 import { Tabs } from "@/components/tabs";
 import { UserAvatar } from "@/components/user-avatar";
 import { Task, TeamMember, updateTaskStatusIfOverdue } from "@/lib/types";
-import { initialMembers, initialTasks } from "@/lib/sample-data";
 import { taskApi, portalDataApi } from "@/lib/api-client";
 import { usersApi, User } from "@/lib/api/users";
 import { taskTeamsApi } from "@/lib/api/task-teams";
@@ -136,8 +135,8 @@ export default function BoardPage(): React.JSX.Element {
       
     } catch (error) {
       console.error('Error loading team members:', error);
-      // Fallback to initial members if API fails
-      setMembers(initialMembers);
+      // Set empty members array if API fails
+      setMembers([]);
     }
   };
 

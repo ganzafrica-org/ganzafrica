@@ -5,13 +5,12 @@ import { useRouter, useParams } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/button";
 import { TeamMember } from "@/lib/types";
-import { initialMembers, initialTasks } from "@/lib/sample-data";
 import { taskTeamsApi, TaskTeam, TaskProject } from "@/lib/api/task-teams";
 import { ArrowLeft, Folder, Users, Clock, Loader2 } from "lucide-react";
 import { TruncatedText } from "@/components/truncated-text";
 
 export default function TeamDetailPage(): React.JSX.Element {
-  const [members] = useState<TeamMember[]>(initialMembers);
+  const [members] = useState<TeamMember[]>([]);
   const router = useRouter();
   const params = useParams();
   const teamId = params.teamId as string;
@@ -49,7 +48,7 @@ export default function TeamDetailPage(): React.JSX.Element {
     return (
       <PageLayout 
         members={members} 
-        tasks={initialTasks} 
+        tasks={[]} 
         title="Loading..."
       >
         <div className="flex items-center justify-center py-12">
@@ -63,7 +62,7 @@ export default function TeamDetailPage(): React.JSX.Element {
     return (
       <PageLayout 
         members={members} 
-        tasks={initialTasks} 
+        tasks={[]} 
         title="Team Not Found"
       >
         <div className="text-center py-8">
@@ -84,7 +83,7 @@ export default function TeamDetailPage(): React.JSX.Element {
   return (
     <PageLayout 
       members={members} 
-      tasks={initialTasks} 
+      tasks={[]} 
       title={team.name}
       headerAction={
         <div className="flex items-center gap-3">

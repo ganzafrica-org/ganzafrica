@@ -320,6 +320,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.3
         version: 1.2.3(@types/react@19.2.2)(react@19.1.1)
+      axios:
+        specifier: ^1.8.4
+        version: 1.8.4
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -329,6 +332,9 @@ importers:
       googleapis:
         specifier: ^164.1.0
         version: 164.1.0
+      jwt-decode:
+        specifier: ^4.0.0
+        version: 4.0.0
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.1.1)
@@ -344,6 +350,9 @@ importers:
       react-hook-form:
         specifier: ^7.65.0
         version: 7.65.0(react@19.1.1)
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -500,8 +509,8 @@ importers:
         specifier: ^3.888.0
         version: 3.888.0(@aws-sdk/client-s3@3.888.0)
       '@types/multer':
-        specifier: ^1.4.12
-        version: 1.4.12
+        specifier: ^1.4.13
+        version: 1.4.13
       argon2:
         specifier: ^0.41.1
         version: 0.41.1
@@ -542,7 +551,7 @@ importers:
         specifier: ^1.10.0
         version: 1.10.0
       multer:
-        specifier: 1.4.5-lts.2
+        specifier: ^1.4.5-lts.2
         version: 1.4.5-lts.2
       multer-s3:
         specifier: ^3.0.1
@@ -627,8 +636,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@20.17.19)
       tsx:
-        specifier: ^4.7.1
-        version: 4.19.3
+        specifier: ^4.20.6
+        version: 4.20.6
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
@@ -4054,8 +4063,8 @@ packages:
   '@types/multer-s3@3.0.3':
     resolution: {integrity: sha512-VgWygI9UwyS7loLithUUi0qAMIDWdNrERS2Sb06UuPYiLzKuIFn2NgL7satyl4v8sh/LLoU7DiPanvbQaRg9Yg==}
 
-  '@types/multer@1.4.12':
-    resolution: {integrity: sha512-pQ2hoqvXiJt2FP9WQVLPRO+AmiIm/ZYkavPlIQnx282u4ZrVdztx0pkh3jjpQt0Kz+YI0YhSG264y08UJKoUQg==}
+  '@types/multer@1.4.13':
+    resolution: {integrity: sha512-bhhdtPw7JqCiEfC9Jimx5LqX9BDIPJEh2q/fQ4bqbBPtyEZYr3cvF22NwG0DmPZNYA0CAf2CnqDB4KIGGpJcaw==}
 
   '@types/negotiator@0.6.3':
     resolution: {integrity: sha512-JkXTOdKs5MF086b/pt8C3+yVp3iDUwG635L7oCH6HvJvvr6lSUU5oe/gLXnPEfYRROHjJIPgCV6cuAg8gGkntQ==}
@@ -7577,6 +7586,11 @@ packages:
 
   tsx@4.19.3:
     resolution: {integrity: sha512-4H8vUNGNjQ4V2EOoGw005+c+dGuPSnhpPBPHBtsZdGZBk/iJb4kguGlPWaZTZ3q5nMtFOEsY0nRDlh9PJyd6SQ==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
+  tsx@4.20.6:
+    resolution: {integrity: sha512-ytQKuwgmrrkDTFP4LjR0ToE2nqgy886GpvRSpU0JAnrdBYppuY5rLkRUYPU1yCryb24SsKBTL/hlDQAEFVwtZg==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -11644,12 +11658,12 @@ snapshots:
   '@types/multer-s3@3.0.3':
     dependencies:
       '@aws-sdk/client-s3': 3.888.0
-      '@types/multer': 1.4.12
+      '@types/multer': 1.4.13
       '@types/node': 20.17.19
     transitivePeerDependencies:
       - aws-crt
 
-  '@types/multer@1.4.12':
+  '@types/multer@1.4.13':
     dependencies:
       '@types/express': 4.17.21
 
@@ -15885,6 +15899,13 @@ snapshots:
   tslib@2.8.1: {}
 
   tsx@4.19.3:
+    dependencies:
+      esbuild: 0.25.0
+      get-tsconfig: 4.10.0
+    optionalDependencies:
+      fsevents: 2.3.3
+
+  tsx@4.20.6:
     dependencies:
       esbuild: 0.25.0
       get-tsconfig: 4.10.0

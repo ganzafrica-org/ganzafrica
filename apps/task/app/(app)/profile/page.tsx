@@ -6,7 +6,6 @@ import { PageLayout } from "@/components/page-layout";
 import { Tabs } from "@/components/tabs";
 import { Button } from "@/components/button";
 import { ImageUpload } from "@/components/image-upload";
-import { initialMembers, initialTasks } from "@/lib/sample-data";
 import { profileApi } from "@/lib/api-client";
 import { useProfile } from "@/contexts/profile-context";
 
@@ -244,8 +243,8 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <PageLayout 
-        members={initialMembers} 
-        tasks={initialTasks} 
+        members={[]} 
+        tasks={[]} 
         title="My Profile"
         className="bg-gray-50"
       >
@@ -262,8 +261,8 @@ export default function ProfilePage() {
   if (!userData || !editData) {
     return (
       <PageLayout 
-        members={initialMembers} 
-        tasks={initialTasks} 
+        members={[]} 
+        tasks={[]} 
         title="My Profile"
         className="bg-gray-50"
       >
@@ -279,8 +278,8 @@ export default function ProfilePage() {
 
   return (
     <PageLayout 
-      members={initialMembers} 
-      tasks={initialTasks} 
+      members={[]} 
+      tasks={[]} 
       title="My Profile"
       className="bg-gray-50"
     >

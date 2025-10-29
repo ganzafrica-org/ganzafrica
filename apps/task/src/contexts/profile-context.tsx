@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { profileApi } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 interface UserProfile {
   id: number;
@@ -63,8 +64,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         const profile = response.profile;
         setCurrentUserProfile(profile);
         setUserProfiles(prev => new Map(prev).set(profile.id, profile));
-      } catch (error) {
-        console.error('Failed to load current user profile:', error);
+      } catch (error: unknown) {
+        logger.error('Failed to load current user profile:', error);
       } finally {
         setIsLoading(false);
       }
@@ -109,8 +110,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       // Store the profile
       setUserProfiles(prev => new Map(prev).set(userId, profile));
       return profile;
-    } catch (error) {
-      console.error('Failed to load user profile:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to load user profile:', error);
       
       // Create a fallback profile if API fails
       const fallbackProfile: UserProfile = {
@@ -119,16 +120,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         name: `User ${userId}`,
         role_id: 1,
         role_name: 'User',
-        avatar_url: null,
-        phone_number: null,
+        avatar_url: undefined,
+        phone_number: undefined,
         email_verified: false,
         phone_verified: false,
         is_active: true,
-        last_login: null,
+        last_login: undefined,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        bio: null,
-        address: null,
+        bio: undefined,
+        address: undefined,
       };
 
       // Store the fallback profile
@@ -143,8 +144,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const response = await profileApi.getCurrentProfile();
       const profile = response.profile;
       updateCurrentUserProfile(profile);
-    } catch (error) {
-      console.error('Failed to refresh current user profile:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to refresh current user profile:', error);
     }
   };
 
@@ -156,8 +157,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       if (currentUserProfile && currentUserProfile.id === userId) {
         await refreshCurrentUserProfile();
       }
-    } catch (error) {
-      console.error('Failed to refresh user profile:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to refresh user profile:', error);
     }
   };
 
