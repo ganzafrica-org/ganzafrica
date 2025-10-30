@@ -1,13 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Match portal behavior: mount the app at /task in production
+  basePath: process.env.NODE_ENV === 'production' ? '/task' : '',
   transpilePackages: ["@workspace/ui"],
-  // Enable TypeScript and ESLint checking in production
-  typescript: { 
-    ignoreBuildErrors: false, // Enable strict checking
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+        pathname: '/**',
+      },
+    ],
   },
-  eslint: { 
-    ignoreDuringBuilds: false, // Enable linting
-  }
+  // Keep strict checks enabled
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
 }
 
 export default nextConfig

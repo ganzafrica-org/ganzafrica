@@ -11615,6 +11615,10 @@ snapshots:
   '@types/hoist-non-react-statics@3.3.6':
     dependencies:
       '@types/react': 19.2.2
+<<<<<<< HEAD
+=======
+
+>>>>>>> c09b2cba6a9fd35fc3d5008b07c8614bf423b7ce
       hoist-non-react-statics: 3.3.2
 
   '@types/http-errors@2.0.4': {}
@@ -11699,7 +11703,11 @@ snapshots:
 
   '@types/react-dom@18.3.0':
     dependencies:
+<<<<<<< HEAD
       '@types/react': 19.2.2
+=======
+      '@types/react': 19.2
+>>>>>>> c09b2cba6a9fd35fc3d5008b07c8614bf423b7ce
 
   '@types/react-dom@18.3.1':
     dependencies:
