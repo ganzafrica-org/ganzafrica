@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { ArrowRight } from 'lucide-react';
+const SafeArrowRight = ArrowRight as unknown as React.ComponentType<any>;
 import apiClient from '@/lib/api-client';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -344,7 +345,7 @@ if (!loading && projects.length === 0) {
                         )}
                     >
                         <span>Contact Us</span>
-                        <ArrowRight size={16} />
+                        <SafeArrowRight size={16} />
                     </Link>
                 </div>
             </div>
@@ -485,7 +486,7 @@ return (
                     <span className="relative z-10">
                         {dict?.cta?.view_all_projects || "View All Projects"}
                     </span>
-                    <ArrowRight 
+                    <SafeArrowRight 
                         size={16} 
                         className="ml-2 transition-all duration-300 transform group-hover:translate-x-1" 
                     />
@@ -515,7 +516,7 @@ return (
         </div>
 
         {/* Custom CSS for the perspective effect and button styling */}
-        <style jsx global>{`
+        <style>{`
             .property-card {
                 position: relative;
                 border-radius: 24px;

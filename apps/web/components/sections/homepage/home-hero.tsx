@@ -113,7 +113,7 @@ export default function HomeHero({
   locale,
   dict,
   backgroundImage = "/images/hero-test.jpg",
-}: HomeHeroProps) {
+}: HomeHeroProps): JSX.Element {
   // Refs with proper types
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { CalendarDays, ArrowRight } from 'lucide-react';
+const SafeCalendarDays = CalendarDays as unknown as React.ComponentType<any>;
+const SafeArrowRight = ArrowRight as unknown as React.ComponentType<any>;
 import apiClient from '@/lib/api-client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -328,7 +330,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                 <div className="p-5 bg-white">
                   {/* Date */}
                   <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-                    <CalendarDays className="w-4 h-4" />
+                    <SafeCalendarDays className="w-4 h-4" />
                     <span>{formatDate(newsItem.publish_date)}</span>
                   </div>
 
@@ -384,14 +386,14 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
               })}
             >
               <span>{dict?.news?.view_all ?? "View All News"}</span>
-              <ArrowRight size={16} />
+              <SafeArrowRight size={16} />
             </Link>
           </div>
         )}
       </div>
 
       {/* Custom CSS for the perspective effect and button styling */}
-      <style jsx global>{`
+      <style>{`
         .news-card {
           position: relative;
           border-radius: 24px;

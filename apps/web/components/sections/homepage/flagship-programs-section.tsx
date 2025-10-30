@@ -205,7 +205,7 @@ export default function FlagshipProgramsSection({
         </div>
 
         {/* Inline styles for hover effects */}
-        <style jsx>{`
+        <style>{`
         article:hover .card-infos {
           transform: translateY(-260px);
         }

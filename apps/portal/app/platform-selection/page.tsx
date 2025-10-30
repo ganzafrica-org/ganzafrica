@@ -157,7 +157,8 @@ export default function PlatformSelectionPage(): React.JSX.Element {
             const userData = localStorage.getItem('user');
             
             // Create URL with authentication parameters
-            const taskManagementUrl = new URL('http://localhost:3003/auth-callback');
+            const taskBaseUrl = process.env.NEXT_PUBLIC_TASK_URL || 'http://localhost:3003';
+            const taskManagementUrl = new URL(`${taskBaseUrl}/auth-callback`);
             if (token) {
                 taskManagementUrl.searchParams.set('token', token);
             }
@@ -169,7 +170,7 @@ export default function PlatformSelectionPage(): React.JSX.Element {
             window.location.href = taskManagementUrl.toString();
         } else if (platform === 'website') {
             // Redirect to website
-            window.location.href = 'http://localhost:3000';
+            window.location.href = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
         }
     };
 
