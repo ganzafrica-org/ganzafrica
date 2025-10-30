@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { PlayCircle, PauseCircle } from "lucide-react";
+const SafePlayCircle = PlayCircle as unknown as React.ComponentType<any>;
+const SafePauseCircle = PauseCircle as unknown as React.ComponentType<any>;
 import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from '@/components/layout/headertext';
 
@@ -210,7 +212,7 @@ export default function GanzAfricaUniqueSection({
                             exit={{ opacity: 0, scale: 1.2 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <PauseCircle className="w-16 h-16 text-white opacity-80 hover:opacity-100 transition-opacity" />
+                            <SafePauseCircle className="w-16 h-16 text-white opacity-80 hover:opacity-100 transition-opacity" />
                           </motion.div>
                       ) : (
                           <motion.div
@@ -220,7 +222,7 @@ export default function GanzAfricaUniqueSection({
                             exit={{ opacity: 0, scale: 1.2 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <PlayCircle className="w-16 h-16 text-white opacity-80 hover:opacity-100 transition-opacity" />
+                            <SafePlayCircle className="w-16 h-16 text-white opacity-80 hover:opacity-100 transition-opacity" />
                           </motion.div>
                       )}
                     </AnimatePresence>

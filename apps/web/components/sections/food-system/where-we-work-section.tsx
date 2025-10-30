@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
 
 // Animation variants
@@ -29,7 +30,7 @@ const itemVariants = {
   },
 };
 
-const WhereWeWorkSection = () => {
+const WhereWeWorkSection = (): JSX.Element => {
   return (
     <section className="py-16 bg-white">
       <Container>
@@ -58,7 +59,7 @@ const WhereWeWorkSection = () => {
             transition={{ duration: 0.7 }}
             className="relative h-full rounded-[20px] overflow-hidden"
           >
-            <Image
+            <SafeImage
               src="/images/Fellows7.jpg"
               alt="Hands holding wheat grains"
               fill

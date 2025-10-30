@@ -385,7 +385,7 @@ export default function TestimonialsSection({ locale, dict }: TestimonialsSectio
                 </div>
             </div>
 
-            <style jsx global>{`
+            <style>{`
                 @keyframes floating {
                     0% {
                         transform: rotate(0deg) translate(-10px) rotate(0deg);

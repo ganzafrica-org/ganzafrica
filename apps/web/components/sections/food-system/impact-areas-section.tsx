@@ -4,8 +4,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import Container from "@/components/layout/container";
 import { MapPin, X, ChevronRight, Info, Search, Plus, Minus } from "lucide-react";
+const SafePlus = Plus as unknown as React.ComponentType<any>;
+const SafeMinus = Minus as unknown as React.ComponentType<any>;
+const SafeX = X as unknown as React.ComponentType<any>;
 import apiClient from "@/lib/api-client";
 import Link from 'next/link';
+const SafeLink = Link as unknown as React.ComponentType<any>;
 import { useParams } from 'next/navigation';
 
 // Define TypeScript interfaces
@@ -959,13 +963,13 @@ const ClimateInitiativesMapSection = () => {
                   className="bg-white rounded-full w-8 h-8 shadow-md flex items-center justify-center hover:bg-gray-100"
                   onClick={handleZoomIn}
                 >
-                  <Plus className="w-5 h-5 text-gray-700" />
+                  <SafePlus className="w-5 h-5 text-gray-700" />
                 </button>
                 <button 
                   className="bg-white rounded-full w-8 h-8 shadow-md flex items-center justify-center hover:bg-gray-100"
                   onClick={handleZoomOut}
                 >
-                  <Minus className="w-5 h-5 text-gray-700" />
+                  <SafeMinus className="w-5 h-5 text-gray-700" />
                 </button>
               </div>
 
@@ -1088,7 +1092,7 @@ const ClimateInitiativesMapSection = () => {
                           className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 z-30"
                           onClick={handleCloseProject}
                         >
-                          <X className="w-4 h-4 text-gray-600" />
+                          <SafeX className="w-4 h-4 text-gray-600" />
                         </button>
                         
                         {/* Card content */}
@@ -1119,12 +1123,12 @@ const ClimateInitiativesMapSection = () => {
                                 <p className="text-xs text-gray-600 mb-2 line-clamp-2">
                                   {location.description}
                                 </p>
-                                <Link
+                                <SafeLink
                                   href={`/${locale}/projects/${location.projectId}`}
                                   className="text-xs text-yellow-600 hover:text-yellow-800 font-medium"
                                 >
                                   Learn more
-                                </Link>
+                                </SafeLink>
                               </>
                           </div>
                         </div>

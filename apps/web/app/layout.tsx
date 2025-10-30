@@ -2,7 +2,7 @@ import { Rubik } from "next/font/google";
 import { getDictionary } from "@/lib/get-dictionary";
 import ClientLayout from "@/components/layout/client-layout";
 import { GoogleAnalyticsComponent } from "@/components/analytics/google-analytics";
-import React from "react";
+import React, { Suspense } from "react";
 import "@workspace/ui/globals.css";
 
 
@@ -75,7 +75,9 @@ export default async function RootLayout(
     >
       <body className="min-h-screen font-sans antialiased">
         {process.env.NEXT_PUBLIC_GA_ID && (
-          <GoogleAnalyticsComponent gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          <Suspense fallback={null}>
+            <GoogleAnalyticsComponent gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          </Suspense>
         )}
         <ClientLayout locale={locale} dict={dict}>
           {children}

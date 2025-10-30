@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 import SectionWithScrollAnimation from "@/components/layout/SectionWithScroll";
 import React, { useState, useRef } from "react";
 import {getDictionary} from "@/lib/get-dictionary";
@@ -18,7 +19,7 @@ type Props = {
     isFrench: boolean;
 };
 
-export default function OurStoryContent({ dict, isFrench }: Props) {
+export default function OurStoryContent({ dict, isFrench }: Props): JSX.Element {
     const contentClass = isFrench ? "flex-1 overflow-y-auto pr-2" : "flex-1";
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isMuted, setIsMuted] = useState(true);
@@ -63,7 +64,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
             <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
                 {/* Background Image - Modified positioning to center on faces */}
                 <div className="absolute inset-0 z-0">
-                    <Image
+                    <SafeImage
                         src="/images/SHIR5142-Enhanced-NR.jpg"
                         alt="Agricultural fields"
                         fill
