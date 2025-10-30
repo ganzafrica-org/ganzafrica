@@ -463,3 +463,117 @@ export const importUsers = async (req: Request, res: Response) => {
     });
   }
 };
+
+/**
+ * @swagger
+ * /users/profile/me:
+ *   get:
+ *     summary: Get current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+export const getCurrentUserProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    
+    const profile = await userService.getUserProfile(userId);
+
+    res.status(200).json({
+      message: "Profile retrieved successfully",
+      profile,
+    });
+  } catch (error) {
+    logger.error("Get current user profile error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Profile Retrieval Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Profile Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /users/profile/me:
+ *   put:
+ *     summary: Update current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               phone_number:
+ *                 type: string
+ *               avatar_url:
+ *                 type: string
+ *                 format: uri
+ *               bio:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               social_links:
+ *                 type: object
+ *               preferences:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+export const updateCurrentUserProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const profileData = req.body;
+
+    // Debug logging
+    console.log('Profile update request data:', JSON.stringify(profileData, null, 2));
+    console.log('Avatar URL value:', profileData.avatar_url);
+    console.log('Avatar URL type:', typeof profileData.avatar_url);
+
+    const updatedProfile = await userService.updateUserProfile(userId, profileData);
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      profile: updatedProfile,
+    });
+  } catch (error) {
+    logger.error("Update current user profile error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Profile Update Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Profile Update Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};

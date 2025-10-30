@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, X } from "lucide-react";
 import Container from "@/components/layout/container";
@@ -68,7 +68,8 @@ const throttledAxios: ThrottledAxios = {
   }
 };
 
-const NewsDetailsPage = () => {
+// Component that uses useSearchParams
+const NewsDetailsContent = () => {
   // Use hooks to get params from the URL
   const params = useParams<{ locale: string; slug: string }>();
   const searchParams = useSearchParams();
@@ -715,6 +716,17 @@ const NewsDetailsPage = () => {
         {/* Media Gallery Modal */}
         <MediaGalleryModal />
       </main>
+  );
+};
+
+// Main page component with Suspense wrapper
+const NewsDetailsPage = () => {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00A651]"></div>
+    </div>}>
+      <NewsDetailsContent />
+    </Suspense>
   );
 };
 

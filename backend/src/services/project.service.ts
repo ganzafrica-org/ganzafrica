@@ -532,6 +532,9 @@ export async function createProject(
 // Get project by ID
 export async function getProjectById(id: number): Promise<ProjectOutput> {
   try {
+    // First, update any overdue projects
+    await updateOverdueProjects();
+    
     // Add a log statement to track project retrieval attempts
     logger.info(`Attempting to retrieve project with ID: ${id}`);
     
@@ -834,6 +837,9 @@ export async function listProjects(
   params: ProjectSearchParams,
 ): Promise<{ projects: ProjectOutput[]; total: number }> {
   try {
+    // First, update any overdue projects
+    await updateOverdueProjects();
+    
     const {
       page = 1,
       limit = 10,
@@ -1012,6 +1018,55 @@ function mapToProjectOutput(project: any): ProjectOutput {
   };
 }
 
+/**
+ * Check if a project is overdue (past end date and not completed)
+ */
+export const isProjectOverdue = (project: any): boolean => {
+  if (!project.end_date || project.status === 'completed') {
+    return false;
+  }
+  
+  const endDate = new Date(project.end_date);
+  const now = new Date();
+  
+  return endDate < now;
+};
+
+/**
+ * Automatically update project status to overdue if past end date
+ */
+export const updateOverdueProjects = async (): Promise<void> => {
+  try {
+    const now = new Date();
+    
+    // Find projects that are past end date and not completed
+    const overdueProjects = await db
+      .select()
+      .from(projects)
+      .where(
+        and(
+          sql`${projects.end_date} < ${now}`,
+          sql`${projects.status} != 'completed'`
+        )
+      );
+    
+    // Update their status to overdue
+    for (const project of overdueProjects) {
+      await db
+        .update(projects)
+        .set({ 
+          status: 'overdue' as any,
+          updated_at: new Date()
+        })
+        .where(eq(projects.id, project.id));
+    }
+    
+    logger.info(`Updated ${overdueProjects.length} projects to overdue status`);
+  } catch (error) {
+    logger.error("Error updating overdue projects", error);
+  }
+};
+
 // Export all service functions in an object
 export const projectService = {
   createProject,
@@ -1019,6 +1074,8 @@ export const projectService = {
   updateProject,
   deleteProject,
   listProjects,
+  isProjectOverdue,
+  updateOverdueProjects,
 };
 
 export default projectService;

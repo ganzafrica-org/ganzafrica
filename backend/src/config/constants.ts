@@ -82,8 +82,8 @@ export const TOKEN_TYPES = {
 };
 
 export const TOKEN_EXPIRY = {
-  ACCESS: "15m",
-  REFRESH: "7d",
+  ACCESS: "24h", // Increased for development
+  REFRESH: "30d",
   VERIFICATION: "24h",
   PASSWORD_RESET: "1h",
   TWO_FACTOR: "10m",

@@ -13,7 +13,7 @@ const router: Router = Router();
  */
 
 // All routes require authentication
-// router.use(authenticate);
+router.use(authenticate);
 
 router.post(
   "/",
@@ -50,5 +50,9 @@ router.delete(
   validate(userValidation.deleteUserSchema),
   userController.deleteUser,
 );
+
+// Profile endpoints
+router.get("/profile/me", userController.getCurrentUserProfile);
+router.put("/profile/me", validate(userValidation.updateProfileSchema), userController.updateCurrentUserProfile);
 
 export default router;

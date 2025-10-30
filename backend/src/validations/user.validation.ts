@@ -110,3 +110,51 @@ export const importUsersSchema = z.object({
     )
     .min(1, "At least one user is required"),
 });
+
+// Update profile validation
+export const updateProfileSchema = z.object({
+  body: z.object({
+    name: z.string().optional().refine(
+      (val) => !val || val.length >= 1,
+      "Name must be at least 1 character if provided"
+    ),
+    phone_number: z.string().optional().nullable(),
+    avatar_url: z.string().optional().nullable().or(z.literal("")),
+    bio: z.string().optional().refine(
+      (val) => !val || val.length <= 500,
+      "Bio must be less than 500 characters"
+    ),
+    address: z.string().optional().refine(
+      (val) => !val || val.length <= 200,
+      "Address must be less than 200 characters"
+    ),
+    social_links: z.object({
+      linkedin: z.string().optional().refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid LinkedIn URL"
+      ),
+      twitter: z.string().optional().refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid Twitter URL"
+      ),
+      github: z.string().optional().refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid GitHub URL"
+      ),
+      website: z.string().optional().refine(
+        (val) => !val || val === "" || z.string().url().safeParse(val).success,
+        "Invalid website URL"
+      ),
+    }).optional().nullable(),
+    preferences: z.object({
+      theme: z.enum(["light", "dark", "auto"]).optional().nullable(),
+      notifications: z.object({
+        email: z.boolean().optional().nullable(),
+        push: z.boolean().optional().nullable(),
+        sms: z.boolean().optional().nullable(),
+      }).optional().nullable(),
+      language: z.string().optional().nullable(),
+      timezone: z.string().optional().nullable(),
+    }).optional().nullable(),
+  }),
+});
