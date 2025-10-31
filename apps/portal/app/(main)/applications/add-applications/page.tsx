@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -22,9 +22,13 @@ import {
 } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 
-const ApplyToOpportunityPage = ({ params }) => {
+// Force dynamic rendering to prevent build-time prerendering errors
+export const dynamic = 'force-dynamic';
+
+const ApplyToOpportunityPageContent = () => {
   const router = useRouter();
-  const opportunityId = params?.id;
+  const searchParams = useSearchParams();
+  const opportunityId = searchParams?.get('id') || null;
 
   // State for opportunity details
   const [opportunity, setOpportunity] = useState(null);
@@ -931,6 +935,21 @@ const ApplyToOpportunityPage = ({ params }) => {
         </>
       )}
     </div>
+  );
+};
+
+const ApplyToOpportunityPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white shadow rounded-lg p-8 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ApplyToOpportunityPageContent />
+    </Suspense>
   );
 };
 

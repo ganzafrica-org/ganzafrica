@@ -156,8 +156,9 @@ export default function PlatformSelectionPage(): React.JSX.Element {
             const token = localStorage.getItem('accessToken');
             const userData = localStorage.getItem('user');
             
-            // Create URL with authentication parameters
-            const taskManagementUrl = new URL('http://localhost:3003/auth-callback');
+            // Use environment variable for task app URL, fallback to localhost for development
+            const taskAppUrl = process.env.NEXT_PUBLIC_TASK_URL || 'http://localhost:3003';
+            const taskManagementUrl = new URL(`${taskAppUrl}/auth-callback`);
             if (token) {
                 taskManagementUrl.searchParams.set('token', token);
             }
@@ -168,8 +169,16 @@ export default function PlatformSelectionPage(): React.JSX.Element {
             // Redirect to task management app auth callback page
             window.location.href = taskManagementUrl.toString();
         } else if (platform === 'website') {
-            // Redirect to website
-            window.location.href = 'http://localhost:3000';
+            // Use environment variable for website URL, fallback to localhost for development
+            const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || 'http://localhost:3000';
+            
+            // Show a helpful message before redirecting
+            toast.info('Redirecting to website...');
+            
+            // Small delay to let user see the message
+            setTimeout(() => {
+                window.location.href = websiteUrl;
+            }, 300);
         }
     };
 
