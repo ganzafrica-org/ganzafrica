@@ -6,6 +6,9 @@ import { AlertCircle, Loader, Calendar, X, UserPlus, Plus, Trash2 } from 'lucide
 import MultipleSelector, { Option } from '@workspace/ui/components/multiple-selector';
 import apiClient from "@/lib/api-client";
 
+// Force dynamic rendering to prevent build-time prerendering errors
+export const dynamic = 'force-dynamic';
+
 // Define opportunity types and their respective schemas
 const opportunityTypes = [
   { value: 'fellowship', label: 'Fellowship Program' },
