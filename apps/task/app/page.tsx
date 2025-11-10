@@ -12,8 +12,8 @@ export default function HomePage() {
     const token = localStorage.getItem('accessToken');
     
     if (token) {
-      // User is authenticated, redirect to board
-      router.push('/board');
+      // User is authenticated, redirect to my-tasks
+      router.push('/my-tasks');
     } else {
       // User is not authenticated, redirect to login page
       router.push('/login');
