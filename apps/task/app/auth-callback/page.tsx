@@ -26,8 +26,8 @@ function AuthCallbackContent() {
 
         toast.success('Authentication successful!');
         
-        // Redirect to board
-        router.push('/board');
+        // Redirect to my-tasks
+        router.push('/my-tasks');
       } catch (error: unknown) {
         logger.error('Error processing authentication:', error);
         toast.error('Authentication failed. Please try again.');
