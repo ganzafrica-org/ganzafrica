@@ -976,9 +976,10 @@ export function TaskModal({
                               console.log('🔍 Attachment type:', typeof fileUrl);
                               if (fileUrl) {
                                 // If it's a relative URL, prepend the API base URL
+                                const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
                                 const fullUrl = fileUrl.startsWith('http') 
                                   ? fileUrl 
-                                  : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002'}${fileUrl}`;
+                                  : `${apiBaseUrl}${fileUrl}`;
                                 if (typeof window !== 'undefined') {
                                   window.open(fullUrl, '_blank');
                                 }
