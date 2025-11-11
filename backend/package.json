@@ -14,6 +14,7 @@
     "db:migrate": "tsx src/db/migrations/migrate.ts",
     "db:migrate:teams": "tsx src/db/migrations/run-team-sort-migration.ts",
     "db:cascade:teams": "tsx src/db/migrations/run-team-cascade.ts",
+    "db:set-admin": "tsx scripts/set-admin-user.ts",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "swagger:generate": "tsx src/swagger/generate.ts",
