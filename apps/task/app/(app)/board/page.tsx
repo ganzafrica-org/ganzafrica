@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { KanbanBoard } from "@/components/kanban-board";
 import { TaskCard } from "@/components/task-card";
 import { Navbar } from "@/components/navbar";
@@ -77,14 +77,14 @@ export default function BoardPage(): React.JSX.Element {
   }, []);
 
   // Helper function to check if a task was created by a Manager role user
-  const isTaskCreatedByManager = (task: Task): boolean => {
+  const isTaskCreatedByManager = useCallback((task: Task): boolean => {
     const creatorRoleName = task.creator_role_name;
     if (!creatorRoleName) return false;
     
     const role = creatorRoleName.toLowerCase().trim();
     // Include manager, admin, and other management roles
     return role === 'manager' || role === 'admin' || role.includes('manager') || role.includes('admin');
-  };
+  }, []);
 
   // Load team members from API
   const loadTeamMembers = async () => {
@@ -372,7 +372,7 @@ export default function BoardPage(): React.JSX.Element {
       low: managerTasks.filter(task => task.priority === 'low')
     };
     return grouped;
-  }, [filteredTasks]);
+  }, [filteredTasks, isTaskCreatedByManager]);
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -400,7 +400,7 @@ export default function BoardPage(): React.JSX.Element {
     }
   };
 
-   const handlePriorityDrop = async (e: React.DragEvent, priority: 'high' | 'medium' | 'low') => {
+  const handlePriorityDrop = async (e: React.DragEvent, priority: 'high' | 'medium' | 'low') => {
      e.preventDefault();
      const id = e.dataTransfer.getData("text/task-id");
      if (!id) return;
@@ -439,7 +439,7 @@ export default function BoardPage(): React.JSX.Element {
        setError(errorMessage);
        setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
      }
-   };
+  };
 
   const columns = useMemo(
     () => [
@@ -461,6 +461,14 @@ export default function BoardPage(): React.JSX.Element {
     ] as const,
     []
   );
+
+  // Determine page title based on user role and active tab
+  const pageTitle = useMemo(() => {
+    if (isCurrentUserAdmin()) {
+      return "Board View";
+    }
+    return activeTab === 'management' ? "Manager Tasks" : "General Team";
+  }, [activeTab]);
 
   // Show loading while checking user access
   if (userHasAccess === null) {
@@ -516,7 +524,7 @@ export default function BoardPage(): React.JSX.Element {
     <PageLayout 
       members={members} 
       tasks={tasks} 
-      title={isCurrentUserAdmin() ? "Board View" : (activeTab === 'management' ? "Manager Tasks" : "General Team")}
+      title={pageTitle}
       onSearchChange={setSearchQuery}
       searchQuery={searchQuery}
       headerAction={
@@ -566,7 +574,7 @@ export default function BoardPage(): React.JSX.Element {
           )}
         </div>
       }
-        >
+    >
           {/* Tabs and Date Filter */}
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 mb-3 sm:mb-4" style={{ borderRadius: '7px' }}>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
@@ -1165,11 +1173,10 @@ export default function BoardPage(): React.JSX.Element {
                       )}
                     </button>
                   ))}
-          </div>
-        </div>
-      </div>
+                </div>
+              </div>
+            </div>
           )}
-
     </PageLayout>
   );
 }
