@@ -947,6 +947,8 @@ export default function BoardPage(): React.JSX.Element {
                    try {
                      // Save each comment to the backend
                      for (const comment of updatedTask.comments) {
+                       if (comment.message) {
+                         await taskApi.addTaskComment(newTaskId, comment.message);
                        if (comment.message || comment.text) {
                          await taskApi.addTaskComment(newTaskId, comment.message || comment.text);
                        }
