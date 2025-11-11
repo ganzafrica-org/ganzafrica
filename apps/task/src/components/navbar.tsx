@@ -11,24 +11,47 @@ interface NavbarProps {
   tasks: Task[];
   onAddTask?: () => void;
   onToggleSidebar?: () => void;
+  onSearchChange?: (query: string) => void;
+  searchQuery?: string;
 }
 
-export function Navbar({ tasks, onAddTask, onToggleSidebar }: NavbarProps): React.JSX.Element {
+export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, searchQuery = "" }: NavbarProps): React.JSX.Element {
   const router = useRouter();
   const { logout, user } = useAuth();
   const { currentUserProfile, getUserInitials, getUserDisplayImage } = useProfile();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchQuery);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMuteSubmenu, setShowMuteSubmenu] = useState(false);
   const [activeMuteOption, setActiveMuteOption] = useState<string | null>(null);
   const [activeMenuItem, setActiveMenuItem] = useState<string | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
+  // Update local query when searchQuery prop changes
+  useEffect(() => {
+    setQuery(searchQuery);
+  }, [searchQuery]);
+
+  // Calculate matches for display
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return 0;
-    return tasks.filter((t: Task) => t.title.toLowerCase().includes(q)).length;
+    return tasks.filter((t: Task) => {
+      const titleMatch = t.title.toLowerCase().includes(q);
+      const descriptionMatch = t.description?.toLowerCase().includes(q);
+      const deliverablesMatch = t.deliverables?.toLowerCase().includes(q);
+      return titleMatch || descriptionMatch || deliverablesMatch;
+    }).length;
   }, [query, tasks]);
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    // Notify parent component of search change
+    if (onSearchChange) {
+      onSearchChange(newQuery);
+    }
+  };
 
 
   // Close dropdown when clicking outside
@@ -45,38 +68,53 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar }: NavbarProps): Reac
   }, []);
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 bg-white">
-      <button className="lg:hidden p-2 rounded-md hover:bg-black/5">
-        <Menu className="h-5 w-5" />
-      </button>
-      <div className="flex items-center gap-2">
-      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#076297] via-[#0a84c1] to-[#3db1ff]" />
-      <span className="font-semibold">Task Management</span>
-      </div>
+    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-white">
+      {/* Mobile menu button */}
       {onToggleSidebar && (
         <button
           onClick={onToggleSidebar}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors sidebar-toggle lg:hidden"
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
+      
+      {/* Desktop sidebar toggle */}
+      {onToggleSidebar && (
+        <button
+          onClick={onToggleSidebar}
+          className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          aria-label="Toggle sidebar"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
       )}
+
+      <div className="flex items-center gap-2">
+        <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-[#076297] via-[#0a84c1] to-[#3db1ff]" />
+        <span className="font-semibold text-sm sm:text-base">Task Management</span>
+      </div>
+      
       <div className="flex-1" />
-      <div className="relative max-w-md w-full hidden md:block">
+      
+      {/* Search - hidden on mobile, shown on tablet and up */}
+      <div className="relative max-w-md w-full hidden sm:block">
         <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={handleSearchChange}
           placeholder="Search tasks..."
-          className="w-full pl-9 pr-3 py-2 bg-white/70 backdrop-blur outline-none focus:ring-2 focus:ring-indigo-400"
+          className="w-full pl-9 pr-3 py-2 bg-white/70 backdrop-blur outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
           style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
         />
         {query && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">{matches}</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">{matches} {matches === 1 ? 'match' : 'matches'}</span>
         )}
       </div>
+      
       <button className="relative p-2 rounded-md hover:bg-black/5">
         <Bell className="h-5 w-5" />
         <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
