@@ -59,10 +59,17 @@ export function TaskModal({
 
   const loadFullTaskDetails = async (taskId: string) => {
     try {
+      // Validate taskId is a valid number
+      const numericId = parseInt(taskId);
+      if (isNaN(numericId) || numericId <= 0) {
+        console.error('Invalid task ID:', taskId);
+        return;
+      }
+      
       // Use unrestricted endpoint for management mode, regular endpoint for individual mode
       const response = mode === "management" 
-        ? await taskApi.getTaskByIdUnrestricted(parseInt(taskId))
-        : await taskApi.getTaskById(parseInt(taskId));
+        ? await taskApi.getTaskByIdUnrestricted(numericId)
+        : await taskApi.getTaskById(numericId);
         
       if (response.task) {
         // Normalize backend comments to frontend format
@@ -112,8 +119,15 @@ export function TaskModal({
 
   useEffect(() => {
     if (task && task.id && open) {
-      // If task has an ID, fetch full details to get comments and other data
-      loadFullTaskDetails(task.id);
+      // Validate that task.id is a valid number string before fetching
+      const numericId = parseInt(task.id);
+      if (!isNaN(numericId) && numericId > 0) {
+        // If task has a valid ID, fetch full details to get comments and other data
+        loadFullTaskDetails(task.id);
+      } else {
+        // For new tasks or invalid IDs, use the task as-is
+        setDraft(task);
+      }
     } else {
       // For new tasks or when modal is closed, use the task as-is
       setDraft(task);
@@ -508,11 +522,19 @@ export function TaskModal({
             project_id: draft.projectId
           };
 
+          // Validate task ID before updating
+          const numericId = parseInt(draft.id);
+          if (isNaN(numericId) || numericId <= 0) {
+            console.error('Cannot update task: Invalid task ID:', draft.id);
+            setToast({ type: 'error', message: 'Invalid task ID' });
+            return;
+          }
+
           // Use the appropriate update function based on mode
           if (mode === "management") {
-            await taskApi.updateTaskUnrestricted(parseInt(draft.id), updateData);
+            await taskApi.updateTaskUnrestricted(numericId, updateData);
           } else {
-            await taskApi.updateTask(parseInt(draft.id), updateData);
+            await taskApi.updateTask(numericId, updateData);
           }
 
           setToast({ type: 'success', message: 'Task updated successfully' });
@@ -560,14 +582,21 @@ export function TaskModal({
   const handlePostComment = async () => {
     if (!commentText.trim() || !draft.id) return;
     
+    // Validate task ID is a valid number
+    const numericId = parseInt(draft.id);
+    if (isNaN(numericId) || numericId <= 0) {
+      console.error('Cannot post comment: Invalid task ID:', draft.id);
+      return;
+    }
+    
     try {
       // Save comment to backend
-      await taskApi.addTaskComment(parseInt(draft.id), commentText.trim());
+      await taskApi.addTaskComment(numericId, commentText.trim());
       
       // Reload task to get updated comments
       const response = mode === "management" 
-        ? await taskApi.getTaskByIdUnrestricted(parseInt(draft.id))
-        : await taskApi.getTaskById(parseInt(draft.id));
+        ? await taskApi.getTaskByIdUnrestricted(numericId)
+        : await taskApi.getTaskById(numericId);
       const task = response.task;
       
       // Normalize backend comments to frontend format
@@ -664,13 +693,20 @@ export function TaskModal({
         console.log('Attachments to save (filtered for URLs):', attachmentsToSave);
         console.log('Each attachment URL:', attachmentsToSave.map(a => ({ filename: a.filename, url: a.url })));
         
+        // Validate task ID before updating
+        const numericId = parseInt(draft.id);
+        if (isNaN(numericId) || numericId <= 0) {
+          console.error('Cannot save attachments: Invalid task ID:', draft.id);
+          return;
+        }
+
         // Use appropriate update method based on mode
         if (mode === "management") {
-          await taskApi.updateTaskUnrestricted(parseInt(draft.id), {
+          await taskApi.updateTaskUnrestricted(numericId, {
             attachments: attachmentsToSave,
           });
         } else {
-          await taskApi.updateTask(parseInt(draft.id), {
+          await taskApi.updateTask(numericId, {
             attachments: attachmentsToSave,
           });
         }
@@ -679,8 +715,8 @@ export function TaskModal({
         // After saving to database, reload the task to get the updated data
         try {
           const response = mode === "management" 
-            ? await taskApi.getTaskByIdUnrestricted(parseInt(draft.id))
-            : await taskApi.getTaskById(parseInt(draft.id));
+            ? await taskApi.getTaskByIdUnrestricted(numericId)
+            : await taskApi.getTaskById(numericId);
           const updatedTask = response.task;
           
           // Update the draft with the fresh data from the database
@@ -1329,9 +1365,19 @@ export function TaskModal({
         }}
         onSubmit={async (value) => {
           if (!editCommentId || !draft?.id) return;
+          
+          // Validate task and comment IDs
+          const taskNumericId = parseInt(draft.id as string);
+          const commentNumericId = parseInt(editCommentId as string);
+          if (isNaN(taskNumericId) || taskNumericId <= 0 || isNaN(commentNumericId) || commentNumericId <= 0) {
+            console.error('Cannot update comment: Invalid IDs', { taskId: draft.id, commentId: editCommentId });
+            setToast({ type: 'error', message: 'Invalid task or comment ID' });
+            return;
+          }
+          
           try {
-            await taskApi.updateTaskComment(parseInt(draft.id as string), parseInt(editCommentId as string), value);
-            const resp = mode === 'management' ? await taskApi.getTaskByIdUnrestricted(parseInt(draft.id as string)) : await taskApi.getTaskById(parseInt(draft.id as string));
+            await taskApi.updateTaskComment(taskNumericId, commentNumericId, value);
+            const resp = mode === 'management' ? await taskApi.getTaskByIdUnrestricted(taskNumericId) : await taskApi.getTaskById(taskNumericId);
             const updated = (resp.task.comments || []).map((c: any) => ({
               id: (c.id ?? c.comment_id).toString(),
               userId: (c.user_id ?? c.user?.id).toString(),
@@ -1363,8 +1409,18 @@ export function TaskModal({
         onOpenChange={(o) => !o && setDeleteCommentId(null)}
         onConfirm={async () => {
           if (!deleteCommentId || !draft?.id) return;
+          
+          // Validate task and comment IDs
+          const taskNumericId = parseInt(draft.id as string);
+          const commentNumericId = parseInt(deleteCommentId as string);
+          if (isNaN(taskNumericId) || taskNumericId <= 0 || isNaN(commentNumericId) || commentNumericId <= 0) {
+            console.error('Cannot delete comment: Invalid IDs', { taskId: draft.id, commentId: deleteCommentId });
+            setToast({ type: 'error', message: 'Invalid task or comment ID' });
+            return;
+          }
+          
           try {
-            await taskApi.deleteTaskComment(parseInt(draft.id as string), parseInt(deleteCommentId as string));
+            await taskApi.deleteTaskComment(taskNumericId, commentNumericId);
             update({ comments: (draft.comments || []).filter(c => c.id !== deleteCommentId) });
             setToast({ type: 'success', message: 'Comment deleted' });
           } catch (e) {
@@ -1386,8 +1442,17 @@ export function TaskModal({
         onOpenChange={setShowDeleteConfirm}
         onConfirm={async () => {
           if (!draft?.id) return;
+          
+          // Validate task ID
+          const numericId = parseInt(draft.id);
+          if (isNaN(numericId) || numericId <= 0) {
+            console.error('Cannot delete task: Invalid task ID:', draft.id);
+            setToast({ type: 'error', message: 'Invalid task ID' });
+            return;
+          }
+          
           try {
-            await taskApi.deleteTask(parseInt(draft.id));
+            await taskApi.deleteTask(numericId);
             onDelete(draft.id);
             onOpenChange(false);
             setToast({ type: 'success', message: 'Task deleted successfully' });
