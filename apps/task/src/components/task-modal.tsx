@@ -1145,7 +1145,6 @@ export function TaskModal({
                           disabled={!commentText.trim() || !isValidTaskId(draft.id)}
                           variant="primary"
                           size="md"
-                          title={!isValidTaskId(draft.id) ? "Please save the task before adding comments" : ""}
                         >
                           Post Comment
                         </Button>
