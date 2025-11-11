@@ -57,14 +57,21 @@ export function TaskModal({
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  // Helper function to check if task ID is valid (numeric)
+  const isValidTaskId = (id: string | undefined): boolean => {
+    if (!id) return false;
+    const numericId = parseInt(id);
+    return !isNaN(numericId) && numericId > 0;
+  };
+
   const loadFullTaskDetails = async (taskId: string) => {
     try {
       // Validate taskId is a valid number
-      const numericId = parseInt(taskId);
-      if (isNaN(numericId) || numericId <= 0) {
-        console.error('Invalid task ID:', taskId);
+      if (!isValidTaskId(taskId)) {
+        console.error('Invalid task ID (task may not be saved yet):', taskId);
         return;
       }
+      const numericId = parseInt(taskId);
       
       // Use unrestricted endpoint for management mode, regular endpoint for individual mode
       const response = mode === "management" 
@@ -120,12 +127,12 @@ export function TaskModal({
   useEffect(() => {
     if (task && task.id && open) {
       // Validate that task.id is a valid number string before fetching
-      const numericId = parseInt(task.id);
-      if (!isNaN(numericId) && numericId > 0) {
+      if (isValidTaskId(task.id)) {
         // If task has a valid ID, fetch full details to get comments and other data
         loadFullTaskDetails(task.id);
       } else {
-        // For new tasks or invalid IDs, use the task as-is
+        // For new tasks or invalid IDs (temporary IDs), use the task as-is
+        console.log('Task has temporary ID, skipping full details fetch:', task.id);
         setDraft(task);
       }
     } else {
@@ -506,8 +513,8 @@ export function TaskModal({
         }
       }
 
-      // If this is an existing task, save changes to the database
-      if (draft.id) {
+      // If this is an existing task with a valid numeric ID, save changes to the database
+      if (draft.id && isValidTaskId(draft.id)) {
         try {
           const updateData = {
             title: draft.title,
@@ -522,13 +529,7 @@ export function TaskModal({
             project_id: draft.projectId
           };
 
-          // Validate task ID before updating
           const numericId = parseInt(draft.id);
-          if (isNaN(numericId) || numericId <= 0) {
-            console.error('Cannot update task: Invalid task ID:', draft.id);
-            setToast({ type: 'error', message: 'Invalid task ID' });
-            return;
-          }
 
           // Use the appropriate update function based on mode
           if (mode === "management") {
@@ -547,9 +548,11 @@ export function TaskModal({
           return; // Don't close modal if save failed
         }
       } else {
-        // For new tasks
+        // For new tasks (no ID or temporary ID) - let parent handle creation
+        // The parent will create the task via API and get a real ID back
         onChange(draft);
-        onOpenChange(false);
+        // Don't close modal here - let parent close it after successful creation
+        // The parent will update the task with the real ID from API response
       }
     }
   };
@@ -582,12 +585,14 @@ export function TaskModal({
   const handlePostComment = async () => {
     if (!commentText.trim() || !draft.id) return;
     
-    // Validate task ID is a valid number
-    const numericId = parseInt(draft.id);
-    if (isNaN(numericId) || numericId <= 0) {
-      console.error('Cannot post comment: Invalid task ID:', draft.id);
+    // Validate task ID is a valid number (not a temporary ID)
+    if (!isValidTaskId(draft.id)) {
+      console.error('Cannot post comment: Task must be saved first. Invalid task ID:', draft.id);
+      setToast({ type: 'error', message: 'Please save the task before adding comments' });
+      setTimeout(() => setToast(null), 3000);
       return;
     }
+    const numericId = parseInt(draft.id);
     
     try {
       // Save comment to backend
@@ -694,11 +699,13 @@ export function TaskModal({
         console.log('Each attachment URL:', attachmentsToSave.map(a => ({ filename: a.filename, url: a.url })));
         
         // Validate task ID before updating
-        const numericId = parseInt(draft.id);
-        if (isNaN(numericId) || numericId <= 0) {
-          console.error('Cannot save attachments: Invalid task ID:', draft.id);
+        if (!isValidTaskId(draft.id)) {
+          console.error('Cannot save attachments: Task must be saved first. Invalid task ID:', draft.id);
+          setToast({ type: 'error', message: 'Please save the task before uploading attachments' });
+          setTimeout(() => setToast(null), 3000);
           return;
         }
+        const numericId = parseInt(draft.id);
 
         // Use appropriate update method based on mode
         if (mode === "management") {
@@ -1135,12 +1142,18 @@ export function TaskModal({
                       <div className="mt-2">
                         <Button
                           onClick={handlePostComment}
-                          disabled={!commentText.trim()}
+                          disabled={!commentText.trim() || !isValidTaskId(draft.id)}
                           variant="primary"
                           size="md"
+                          title={!isValidTaskId(draft.id) ? "Please save the task before adding comments" : ""}
                         >
                           Post Comment
                         </Button>
+                        {draft.id && !isValidTaskId(draft.id) && (
+                          <p className="text-xs text-amber-600 mt-2">
+                            ⚠️ Please save the task first before adding comments
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1367,9 +1380,14 @@ export function TaskModal({
           if (!editCommentId || !draft?.id) return;
           
           // Validate task and comment IDs
+          if (!isValidTaskId(draft.id as string)) {
+            console.error('Cannot update comment: Task must be saved first. Invalid task ID:', draft.id);
+            setToast({ type: 'error', message: 'Invalid task ID' });
+            return;
+          }
           const taskNumericId = parseInt(draft.id as string);
           const commentNumericId = parseInt(editCommentId as string);
-          if (isNaN(taskNumericId) || taskNumericId <= 0 || isNaN(commentNumericId) || commentNumericId <= 0) {
+          if (isNaN(commentNumericId) || commentNumericId <= 0) {
             console.error('Cannot update comment: Invalid IDs', { taskId: draft.id, commentId: editCommentId });
             setToast({ type: 'error', message: 'Invalid task or comment ID' });
             return;
@@ -1411,9 +1429,14 @@ export function TaskModal({
           if (!deleteCommentId || !draft?.id) return;
           
           // Validate task and comment IDs
+          if (!isValidTaskId(draft.id as string)) {
+            console.error('Cannot delete comment: Task must be saved first. Invalid task ID:', draft.id);
+            setToast({ type: 'error', message: 'Invalid task ID' });
+            return;
+          }
           const taskNumericId = parseInt(draft.id as string);
           const commentNumericId = parseInt(deleteCommentId as string);
-          if (isNaN(taskNumericId) || taskNumericId <= 0 || isNaN(commentNumericId) || commentNumericId <= 0) {
+          if (isNaN(commentNumericId) || commentNumericId <= 0) {
             console.error('Cannot delete comment: Invalid IDs', { taskId: draft.id, commentId: deleteCommentId });
             setToast({ type: 'error', message: 'Invalid task or comment ID' });
             return;
@@ -1444,12 +1467,12 @@ export function TaskModal({
           if (!draft?.id) return;
           
           // Validate task ID
-          const numericId = parseInt(draft.id);
-          if (isNaN(numericId) || numericId <= 0) {
+          if (!isValidTaskId(draft.id)) {
             console.error('Cannot delete task: Invalid task ID:', draft.id);
             setToast({ type: 'error', message: 'Invalid task ID' });
             return;
           }
+          const numericId = parseInt(draft.id);
           
           try {
             await taskApi.deleteTask(numericId);
