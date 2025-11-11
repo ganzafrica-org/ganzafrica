@@ -119,7 +119,8 @@ const OpportunityDetailsPage: React.FC<OpportunityDetailsPageProps> = ({ params 
 
                 // Try to fetch opportunity details from API
                 try {
-                    const response = await axios.get(`http://localhost:3002/api/opportunities/${params.id}`);
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
+                    const response = await axios.get(`${apiUrl}/opportunities/${params.id}`);
                     console.log("API Response:", response.data);
 
                     // Check if the response has a nested opportunity object
