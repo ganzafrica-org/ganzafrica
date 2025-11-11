@@ -41,6 +41,7 @@ export default function BoardPage(): React.JSX.Element {
   const [userInfoVersion, setUserInfoVersion] = useState(0);
   const [dateFilter, setDateFilter] = useState<string>('all'); // 'all', 'week', 'month', 'custom'
   const [customDateRange, setCustomDateRange] = useState<{start: string, end: string}>({start: '', end: ''});
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [selectedMembersToAdd, setSelectedMembersToAdd] = useState<number[]>([]);
   const [allUsers, setAllUsers] = useState<UserType[]>([]);
@@ -345,8 +346,16 @@ export default function BoardPage(): React.JSX.Element {
       setAllTeams(teamsToUse); // Store teams in state for team information mapping
       console.log('🔍 Loaded teams for user info:', teamsToUse);
       
-      // Get existing taskUsers from window
-      const taskUsers = (window as any).taskUsers as Map<string, any> || new Map();
+      // Get existing taskUsers from window (preserve any existing data)
+      let taskUsers: Map<string, any>;
+      if (typeof window !== 'undefined') {
+        taskUsers = (window as any).taskUsers as Map<string, any>;
+        if (!taskUsers || !(taskUsers instanceof Map)) {
+          taskUsers = new Map();
+        }
+      } else {
+        taskUsers = new Map();
+      }
       
       // Populate user information from all teams
       for (const team of allTeams) {
@@ -354,11 +363,12 @@ export default function BoardPage(): React.JSX.Element {
           team.members.forEach((member: any) => {
             const userId = member.user_id.toString();
             // Always add/update user information (not just if they exist)
+            // This ensures we have user names from teams even if API doesn't return them
             taskUsers.set(userId, {
               id: userId,
               name: member.name || 'Unknown',
-              email: member.user?.email || '',
-              avatar_url: member.user?.avatar_url || '',
+              email: member.user?.email || member.email || '',
+              avatar_url: member.user?.avatar_url || member.avatar_url || '',
             });
           });
         }
@@ -376,8 +386,10 @@ export default function BoardPage(): React.JSX.Element {
         });
       }
       
-      // Update the global taskUsers
-      (window as any).taskUsers = taskUsers;
+      // Update the global taskUsers (preserving any data added from task API responses)
+      if (typeof window !== 'undefined') {
+        (window as any).taskUsers = taskUsers;
+      }
       
       // Build task members list from taskUsers
       const membersArray = Array.from(taskUsers.values()).map((user: any) => ({
@@ -402,7 +414,24 @@ export default function BoardPage(): React.JSX.Element {
 
 
   // Apply date filtering to tasks
-  const filteredTasks = useDateFilter(tasks, dateFilter, customDateRange);
+  const dateFilteredTasks = useDateFilter(tasks, dateFilter, customDateRange);
+  
+  // Apply search filtering to tasks
+  const filteredTasks = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return dateFilteredTasks;
+    }
+    
+    const q = searchQuery.trim().toLowerCase();
+    return dateFilteredTasks.filter(task => {
+      const titleMatch = task.title.toLowerCase().includes(q);
+      const descriptionMatch = task.description?.toLowerCase().includes(q);
+      const deliverablesMatch = task.deliverables?.toLowerCase().includes(q);
+      // Also search in labels
+      const labelsMatch = task.labels?.some(label => label.name.toLowerCase().includes(q));
+      return titleMatch || descriptionMatch || deliverablesMatch || labelsMatch;
+    });
+  }, [dateFilteredTasks, searchQuery]);
 
   // Load all users for member selection
   const loadAllUsers = async () => {
@@ -540,31 +569,35 @@ export default function BoardPage(): React.JSX.Element {
       tasks={tasks} 
       title="My Assigned Tasks"
       headerAction={null}
+      onSearchChange={setSearchQuery}
+      searchQuery={searchQuery}
     >
       {/* View Mode Selector with Date Filter and Add Task Button */}
-          <div className="bg-white rounded-xl shadow-sm p-4 mb-4" style={{ borderRadius: '7px' }}>
-            <div className="flex items-center justify-between">
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 mb-3 sm:mb-4" style={{ borderRadius: '7px' }}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
               <Tabs
                 tabs={viewModes}
                 activeTab={viewMode}
                 onTabChange={handleViewModeChange}
           />
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <Button
               onClick={() => setIsCreatingTask(true)}
               variant="primary"
               size="md"
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto touch-manipulation"
             >
               <Plus className="w-4 h-4" />
-              <span>Add a task</span>
+              <span className="text-sm sm:text-base">Add a task</span>
             </Button>
-            <DateFilter
-              dateFilter={dateFilter}
-              setDateFilter={setDateFilter}
-              customDateRange={customDateRange}
-              setCustomDateRange={setCustomDateRange}
-            />
+            <div className="w-full sm:w-auto">
+              <DateFilter
+                dateFilter={dateFilter}
+                setDateFilter={setDateFilter}
+                customDateRange={customDateRange}
+                setCustomDateRange={setCustomDateRange}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -597,98 +630,118 @@ export default function BoardPage(): React.JSX.Element {
               </div>
 
               {/* Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="text-left p-4 font-medium text-gray-700">Task</th>
-                      <th className="text-left p-4 font-medium text-gray-700">Status</th>
-                      <th className="text-left p-4 font-medium text-gray-700">Priority</th>
-                      <th className="text-left p-4 font-medium text-gray-700">Due Date</th>
-                      <th className="text-left p-4 font-medium text-gray-700">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {paginatedTasks.map((task) => (
-                      <tr 
-                        key={task.id} 
-                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() => setActiveTask(task)}
-                      >
-                        <td className="p-4">
-                          <div className="font-medium text-gray-900">{task.title}</div>
-                        </td>
-                        <td className="p-4">
-                          <span 
-                            className="px-3 py-1 rounded-full text-xs font-medium"
-                            style={{
-                              backgroundColor: columns.find(c => c.id === task.status)?.bgColor || '#f3f4f6',
-                              color: columns.find(c => c.id === task.status)?.textColor || '#374151',
-                              border: `1px solid ${columns.find(c => c.id === task.status)?.borderColor || '#e5e7eb'}`
-                            }}
-                          >
-                            {columns.find(c => c.id === task.status)?.name || task.status}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            {getPriorityIcon(task.priority)}
-                            <span className="capitalize text-sm font-medium" style={{ color: getPriorityColor(task.priority).text }}>
-                              {task.priority}
+              <div className="overflow-x-auto -mx-3 sm:mx-0">
+                <div className="inline-block min-w-full align-middle sm:px-0">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">Task</th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Status</th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Priority</th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap hidden lg:table-cell">Due Date</th>
+                        <th className="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {paginatedTasks.map((task) => (
+                        <tr 
+                          key={task.id} 
+                          className="hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => setActiveTask(task)}
+                        >
+                          <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap">
+                            <div className="font-medium text-sm sm:text-base text-gray-900">{task.title}</div>
+                            <div className="sm:hidden mt-1 flex flex-wrap gap-2">
+                              <span 
+                                className="px-2 py-1 rounded-full text-xs font-medium"
+                                style={{
+                                  backgroundColor: columns.find(c => c.id === task.status)?.bgColor || '#f3f4f6',
+                                  color: columns.find(c => c.id === task.status)?.textColor || '#374151',
+                                  border: `1px solid ${columns.find(c => c.id === task.status)?.borderColor || '#e5e7eb'}`
+                                }}
+                              >
+                                {columns.find(c => c.id === task.status)?.name || task.status}
+                              </span>
+                              {task.dueDate && (
+                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {new Date(task.dueDate).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap hidden sm:table-cell">
+                            <span 
+                              className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium"
+                              style={{
+                                backgroundColor: columns.find(c => c.id === task.status)?.bgColor || '#f3f4f6',
+                                color: columns.find(c => c.id === task.status)?.textColor || '#374151',
+                                border: `1px solid ${columns.find(c => c.id === task.status)?.borderColor || '#e5e7eb'}`
+                              }}
+                            >
+                              {columns.find(c => c.id === task.status)?.name || task.status}
                             </span>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          {task.dueDate ? (
-                            <div className="flex items-center gap-1 text-sm">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                              <span className="text-gray-600">
-                                {new Date(task.dueDate).toLocaleDateString()}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap hidden md:table-cell">
+                            <div className="flex items-center gap-2">
+                              {getPriorityIcon(task.priority)}
+                              <span className="capitalize text-xs sm:text-sm font-medium" style={{ color: getPriorityColor(task.priority).text }}>
+                                {task.priority}
                               </span>
                             </div>
-                          ) : (
-                            <span className="text-gray-400 text-sm">No due date</span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveTask(task);
-                              }}
-                              className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                              title="Edit task"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setTaskToDelete(task);
-                                setShowDeleteModal(true);
-                              }}
-                              className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                              title="Delete task"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap hidden lg:table-cell">
+                            {task.dueDate ? (
+                              <div className="flex items-center gap-1 text-xs sm:text-sm">
+                                <Calendar className="w-3 sm:w-4 h-3 sm:h-4 text-gray-400" />
+                                <span className="text-gray-600">
+                                  {new Date(task.dueDate).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-xs sm:text-sm">No due date</span>
+                            )}
+                          </td>
+                          <td className="px-3 sm:px-4 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center gap-1 sm:gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveTask(task);
+                                }}
+                                className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 transition-colors touch-manipulation"
+                                title="Edit task"
+                              >
+                                <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTaskToDelete(task);
+                                  setShowDeleteModal(true);
+                                }}
+                                className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 transition-colors touch-manipulation"
+                                title="Delete task"
+                              >
+                                <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 {totalTasks === 0 && (
-                  <div className="text-center py-12">
-                <FileText className="w-12h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
-                    <p className="text-gray-500 mb-4">
+                  <div className="text-center py-8 sm:py-12 px-4">
+                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No tasks found</h3>
+                    <p className="text-sm sm:text-base text-gray-500 mb-4">
                       Get started by creating your first task.
                     </p>
                     <button
                       onClick={() => setIsCreatingTask(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 text-white font-medium rounded-lg transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 text-sm sm:text-base text-white font-medium rounded-lg transition-colors touch-manipulation"
                       style={{ 
                         backgroundColor: '#076297',
                         borderRadius: '7px'
@@ -703,29 +756,32 @@ export default function BoardPage(): React.JSX.Element {
 
               {/* Pagination Controls */}
               {totalTasks > 0 && (
-                <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 border-t border-gray-200 bg-gray-50">
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
                     <select
                       value={pageSize}
                       onChange={(e) => {
                         setPageSize(Number(e.target.value));
                         setCurrentPage(1);
                       }}
-                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
                       style={{ borderRadius: '4px' }}
                     >
-                  <option value={5}>5 per page</option>
-                  <option value={10}>10 per page</option>
-                  <option value={20}>20 per page</option>
-                  <option value={50}>50 per page</option>
+                      <option value={5}>5 per page</option>
+                      <option value={10}>10 per page</option>
+                      <option value={20}>20 per page</option>
+                      <option value={50}>50 per page</option>
                     </select>
+                    <span className="text-xs sm:text-sm text-gray-600">
+                      Showing {startIndex + 1}-{Math.min(endIndex, totalTasks)} of {totalTasks}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-center">
                     <button
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="px-2 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors touch-manipulation hidden sm:block"
                       style={{ borderRadius: '4px' }}
                     >
                       First
@@ -733,7 +789,7 @@ export default function BoardPage(): React.JSX.Element {
                     <button
                       onClick={() => setCurrentPage(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="p-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      className="p-1.5 sm:p-2 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors touch-manipulation"
                       style={{ borderRadius: '4px' }}
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -756,7 +812,7 @@ export default function BoardPage(): React.JSX.Element {
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
-                            className={`px-3 py-1 text-sm border rounded transition-colors ${
+                            className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm border rounded transition-colors touch-manipulation ${
                               currentPage === pageNum
                                 ? 'text-white border-transparent'
                                 : 'border-gray-300 hover:bg-gray-100'
@@ -775,7 +831,7 @@ export default function BoardPage(): React.JSX.Element {
                     <button
                       onClick={() => setCurrentPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="p-1 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      className="p-1.5 sm:p-2 border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors touch-manipulation"
                       style={{ borderRadius: '4px' }}
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -783,7 +839,7 @@ export default function BoardPage(): React.JSX.Element {
                     <button
                       onClick={() => setCurrentPage(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="px-2 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+                      className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors touch-manipulation hidden sm:block"
                       style={{ borderRadius: '4px' }}
                     >
                       Last
@@ -887,9 +943,9 @@ export default function BoardPage(): React.JSX.Element {
               if (!open) {
                 setActiveTask(null);
                 setIsCreatingTask(false);
-                // Refresh tasks to get updated team information
-                console.log('🔍 Modal closed, refreshing tasks to get updated team information');
-                await loadAllUserTasks();
+                // Don't reload tasks here - tasks are already updated immediately after creation/update
+                // Only refresh user info in the background if needed
+                loadAllTeamsForUserInfo().catch(console.error);
               }
             }}
             onChange={async (updatedTask: Task) => {
@@ -1004,23 +1060,117 @@ export default function BoardPage(): React.JSX.Element {
                   };
                   
                   const response = await taskApi.createTask(taskData);
-                  const newTask = {
-                    ...response.task,
-                    assignees: response.task.assignees?.map((a: any) => a.user_id.toString()) || [],
-                    originalAssignees: response.task.assignees || [],
-                    comments: response.task.comments || [],
-                    attachments: response.task.attachments || [],
-                    dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
-                  };
+                  const newTaskId = response.task.id;
                   
-                  const updatedTasks = [newTask, ...tasks];
-                  setTasks(updatedTasks);
-                  setIsCreatingTask(false);
-                  console.log('✅ Task saved to database:', newTask.title);
+                  // Save comments if there are any in the updatedTask
+                  if (updatedTask.comments && updatedTask.comments.length > 0) {
+                    try {
+                      // Save each comment to the backend
+                      for (const comment of updatedTask.comments) {
+                        if (comment.message || comment.text) {
+                          await taskApi.addTaskComment(newTaskId, comment.message || comment.text);
+                        }
+                      }
+                      console.log('✅ Comments saved for new task');
+                    } catch (commentError) {
+                      console.error('Error saving comments for new task:', commentError);
+                      // Continue even if comments fail to save - task is created
+                    }
+                  }
+                  
+                  // Reload the task to get full details including comments with user info
+                  try {
+                    const fullTaskResponse = isCurrentUserManager()
+                      ? await taskApi.getTaskByIdUnrestricted(newTaskId)
+                      : await taskApi.getTaskById(newTaskId);
+                    
+                    // Extract user info from assignees and comments
+                    let taskUsers: Map<string, any>;
+                    if (typeof window !== 'undefined') {
+                      taskUsers = (window as any).taskUsers as Map<string, any> || new Map();
+                    } else {
+                      taskUsers = new Map();
+                    }
+                    
+                    // Extract user info from assignees
+                    if (fullTaskResponse.task.assignees && Array.isArray(fullTaskResponse.task.assignees)) {
+                      fullTaskResponse.task.assignees.forEach((a: any) => {
+                        if (a.user_id && a.user) {
+                          const userId = a.user_id.toString();
+                          taskUsers.set(userId, {
+                            id: userId,
+                            name: a.user.name || 'Unknown User',
+                            email: a.user.email || '',
+                            avatar_url: a.user.avatar_url || '',
+                          });
+                        }
+                      });
+                    }
+                    
+                    // Extract user info from comments
+                    if (fullTaskResponse.task.comments && Array.isArray(fullTaskResponse.task.comments)) {
+                      fullTaskResponse.task.comments.forEach((c: any) => {
+                        if (c.user_id && c.user) {
+                          const userId = c.user_id.toString();
+                          taskUsers.set(userId, {
+                            id: userId,
+                            name: c.user.name || 'Unknown User',
+                            email: c.user.email || '',
+                            avatar_url: c.user.avatar_url || '',
+                          });
+                        }
+                      });
+                    }
+                    
+                    if (typeof window !== 'undefined') {
+                      (window as any).taskUsers = taskUsers;
+                    }
+                    
+                    const newTask = {
+                      ...fullTaskResponse.task,
+                      assignees: fullTaskResponse.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
+                      originalAssignees: fullTaskResponse.task.assignees || [],
+                      comments: (fullTaskResponse.task.comments || []).map((c: any) => ({
+                        id: (c.id ?? c.comment_id ?? Math.random().toString(36).slice(2)).toString(),
+                        userId: (c.user_id ?? c.userId ?? c.user?.id)?.toString(),
+                        message: c.content ?? c.message ?? c.text ?? '',
+                        text: c.content ?? c.message ?? c.text ?? '',
+                        createdAt: c.created_at ?? c.createdAt ?? new Date().toISOString(),
+                      })),
+                      attachments: fullTaskResponse.task.attachments || [],
+                      dueDate: fullTaskResponse.task.due_date ? new Date(fullTaskResponse.task.due_date).toISOString() : undefined,
+                    };
+                    
+                    const updatedTasks = [newTask, ...tasks];
+                    setTasks(updatedTasks);
+                    setIsCreatingTask(false);
+                    setActiveTask(null); // Close modal immediately so task appears right away
+                    console.log('✅ Task saved to database with comments:', newTask.title);
+                    
+                    // Refresh user information in the background (non-blocking)
+                    loadAllTeamsForUserInfo().catch(console.error);
+                  } catch (reloadError) {
+                    console.error('Error reloading task after creation:', reloadError);
+                    // Fallback to original response if reload fails
+                    const fallbackTask = {
+                      ...response.task,
+                      assignees: response.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
+                      originalAssignees: response.task.assignees || [],
+                      comments: updatedTask.comments || [], // Use comments from updatedTask
+                      attachments: response.task.attachments || [],
+                      dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
+                    };
+                    
+                    const updatedTasks = [fallbackTask, ...tasks];
+                    setTasks(updatedTasks);
+                    setIsCreatingTask(false);
+                    setActiveTask(null); // Close modal immediately so task appears right away
+                    console.log('✅ Task saved to database (reload failed):', fallbackTask.title);
+                    
+                    // Refresh user information in the background (non-blocking)
+                    loadAllTeamsForUserInfo().catch(console.error);
+                  }
                 }
-                
-                // Refresh user information
-                await loadAllTeamsForUserInfo();
               } catch (err: any) {
                 console.error('Error saving task:', err);
                 setError('Failed to save task');

@@ -120,54 +120,60 @@ export function KanbanBoard({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 min-w-[1000px]">
-      {columns.map(col => (
-        <div key={col.id}
-          onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
-            e.preventDefault();
-            // Show different visual feedback for overdue column
-            if (col.id === "overdue") {
-              e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.05)';
-              e.currentTarget.style.borderColor = 'rgba(220, 38, 38, 0.2)';
-            } else {
-              e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-            }
-          }}
-          onDragLeave={(e: React.DragEvent<HTMLDivElement>) => {
-            e.currentTarget.style.backgroundColor = '';
-            e.currentTarget.style.borderColor = '';
-          }}
-          onDrop={(e: React.DragEvent<HTMLDivElement>) => {
-            e.currentTarget.style.backgroundColor = '';
-            e.currentTarget.style.borderColor = '';
-            handleDrop(e, col.id);
-          }}
-          className="flex flex-col transition-colors">
-          <div 
-            className={`flex items-center justify-between p-2 rounded-xl shadow-sm mb-2 ${col.color || ''}`}
-            style={col.bgColor ? {
-              backgroundColor: col.bgColor,
-              color: col.textColor,
-              border: `1px solid ${col.borderColor}`
-            } : undefined}
-          >
-            <div className="font-medium">{col.name}</div>
-            <div className="text-xs opacity-70 bg-white/50 rounded-full px-2 py-1">{grouped[col.id].length}</div>
-          </div>
-          <div className="rounded-2xl border border-black/5 bg-white/60 backdrop-blur min-h-[60vh] p-3 space-y-3 flex flex-col">
-            <div className="flex-1 space-y-3">
-              {grouped[col.id].map(t => (
-                <TaskCard key={t.id} task={t} members={members} onClick={() => handleTaskClick(t)} />
-              ))}
+    <>
+      <div className="overflow-x-auto -mx-3 sm:-mx-4 px-3 sm:px-4 pb-4">
+        <div className="inline-flex lg:grid lg:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4 min-w-[800px] lg:min-w-0">
+          {columns.map(col => (
+            <div 
+              key={col.id}
+              onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
+                e.preventDefault();
+                // Show different visual feedback for overdue column
+                if (col.id === "overdue") {
+                  e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.05)';
+                  e.currentTarget.style.borderColor = 'rgba(220, 38, 38, 0.2)';
+                } else {
+                  e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                }
+              }}
+              onDragLeave={(e: React.DragEvent<HTMLDivElement>) => {
+                e.currentTarget.style.backgroundColor = '';
+                e.currentTarget.style.borderColor = '';
+              }}
+              onDrop={(e: React.DragEvent<HTMLDivElement>) => {
+                e.currentTarget.style.backgroundColor = '';
+                e.currentTarget.style.borderColor = '';
+                handleDrop(e, col.id);
+              }}
+              className="flex flex-col transition-colors w-[280px] sm:w-[320px] lg:w-auto flex-shrink-0"
+            >
+              <div 
+                className={`flex items-center justify-between p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-sm mb-2 ${col.color || ''}`}
+                style={col.bgColor ? {
+                  backgroundColor: col.bgColor,
+                  color: col.textColor,
+                  border: `1px solid ${col.borderColor}`
+                } : undefined}
+              >
+                <div className="font-medium text-sm sm:text-base">{col.name}</div>
+                <div className="text-xs opacity-70 bg-white/50 rounded-full px-2 py-1">{grouped[col.id].length}</div>
+              </div>
+              <div className="rounded-xl sm:rounded-2xl border border-black/5 bg-white/60 backdrop-blur min-h-[50vh] sm:min-h-[60vh] p-2 sm:p-3 space-y-2 sm:space-y-3 flex flex-col">
+                <div className="flex-1 space-y-2 sm:space-y-3">
+                  {grouped[col.id].map(t => (
+                    <TaskCard key={t.id} task={t} members={members} onClick={() => handleTaskClick(t)} />
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
-      ))}
+      </div>
 
       {loadingTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg">
-            <p className="text-gray-700">Loading task details...</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-4 sm:p-6 rounded-lg max-w-sm w-full">
+            <p className="text-gray-700 text-sm sm:text-base text-center">Loading task details...</p>
           </div>
         </div>
       )}
@@ -201,6 +207,6 @@ export function KanbanBoard({
       
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-    </div>
+    </>
   );
 }

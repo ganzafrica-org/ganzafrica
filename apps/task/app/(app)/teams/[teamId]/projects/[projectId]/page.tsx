@@ -225,7 +225,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
         creator_role_name: backendTask.creator_role_name,
       }));
       
-      setTasks(convertedTasks);
+      // Merge with existing tasks to preserve any optimistic updates
+      setTasks(prevTasks => {
+        // Create a map of existing tasks by ID for quick lookup
+        const existingTasksMap = new Map(prevTasks.map(t => [t.id, t]));
+        
+        // Update or add tasks from the API response
+        convertedTasks.forEach(task => {
+          existingTasksMap.set(task.id, task);
+        });
+        
+        // Return all tasks, preserving the order (newest first if possible)
+        return Array.from(existingTasksMap.values()).sort((a, b) => {
+          // Sort by creation date if available, otherwise maintain order
+          if (a.dueDate && b.dueDate) {
+            return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+          }
+          return 0;
+        });
+      });
       
       // Store task users globally so they can be used by modal
       (window as any).taskUsers = taskUsers;
@@ -359,7 +377,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       // Note: Attachments should be uploaded AFTER task creation using the Upload button
       // The file upload in task modal only works for existing tasks
       
-      loadTasks(); // Reload tasks
+      // Transform the response task to match frontend format
+      const newTask: TaskType = {
+        ...response.task,
+        assignees: response.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
+        comments: response.task.comments || [],
+        attachments: response.task.attachments || [],
+        dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
+      };
+      
+      // Add task to the list immediately (optimistic update)
+      setTasks(prevTasks => {
+        // Check if task already exists (from background reload)
+        const existingIndex = prevTasks.findIndex(t => t.id === newTask.id);
+        if (existingIndex >= 0) {
+          // Task already exists, update it
+          const updated = [...prevTasks];
+          updated[existingIndex] = newTask;
+          return updated;
+        }
+        // Task doesn't exist, add it at the beginning
+        return [newTask, ...prevTasks];
+      });
       setIsCreatingTask(false);
       
       // Show message if user tried to add attachments to new task
@@ -370,6 +409,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           message: `Task created successfully! Please note: Attachments can only be uploaded to existing tasks. Click on the task card and use the Upload button to add files.`,
         });
       }
+      
+      // Reload tasks in the background to ensure data consistency and get full details (non-blocking)
+      // This will merge any updates but won't remove the task we just added
+      setTimeout(() => {
+        loadTasks().then(() => {
+          console.log('✅ Tasks reloaded in background after creation');
+        }).catch(console.error);
+      }, 500); // Small delay to ensure the optimistic update is rendered first
     } catch (error: any) {
       console.error('Error creating task:', error);
       setErrorModal({

@@ -34,6 +34,7 @@ export default function BoardPage(): React.JSX.Element {
   const [dateFilter, setDateFilter] = useState<string>('all'); // 'all', 'week', 'month', 'custom'
   const [customDateRange, setCustomDateRange] = useState<{start: string, end: string}>({start: '', end: ''});
   const [userHasAccess, setUserHasAccess] = useState<boolean | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const { collapsed: sidebarCollapsed, toggleCollapsed } = useSidebar();
 
   // Get current user ID from localStorage
@@ -271,11 +272,24 @@ export default function BoardPage(): React.JSX.Element {
     }
   }, [tabs, activeTab]);
 
-  // Filter tasks based on selected member and date
+  // Filter tasks based on selected member, date, and search query
   const filteredTasks = useMemo(() => {
     let filtered = selectedMember === 'all' 
       ? tasks 
       : tasks.filter(task => (task.assignees || []).some(a => a != null && a.toString() === selectedMember));
+
+    // Apply search filtering
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter(task => {
+        const titleMatch = task.title.toLowerCase().includes(q);
+        const descriptionMatch = task.description?.toLowerCase().includes(q);
+        const deliverablesMatch = task.deliverables?.toLowerCase().includes(q);
+        // Also search in labels
+        const labelsMatch = task.labels?.some(label => label.name.toLowerCase().includes(q));
+        return titleMatch || descriptionMatch || deliverablesMatch || labelsMatch;
+      });
+    }
 
     // Apply date filtering based on task deadlines
     if (dateFilter === 'week') {
@@ -322,7 +336,7 @@ export default function BoardPage(): React.JSX.Element {
     }
 
     return filtered;
-  }, [tasks, selectedMember, dateFilter, customDateRange]);
+  }, [tasks, selectedMember, dateFilter, customDateRange, searchQuery]);
 
   // Group tasks by priority for management view - only show tasks created by users with management roles
   const tasksByPriority = useMemo(() => {
@@ -456,6 +470,8 @@ export default function BoardPage(): React.JSX.Element {
         tasks={tasks} 
         title="Board View"
         headerAction={null}
+        onSearchChange={setSearchQuery}
+        searchQuery={searchQuery}
       >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -475,6 +491,8 @@ export default function BoardPage(): React.JSX.Element {
         tasks={tasks} 
         title="Board View"
         headerAction={null}
+        onSearchChange={setSearchQuery}
+        searchQuery={searchQuery}
       >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
@@ -499,29 +517,31 @@ export default function BoardPage(): React.JSX.Element {
       members={members} 
       tasks={tasks} 
       title={isCurrentUserAdmin() ? "Board View" : (activeTab === 'management' ? "Manager Tasks" : "General Team")}
+      onSearchChange={setSearchQuery}
+      searchQuery={searchQuery}
       headerAction={
-        <div className="flex items-center -space-x-2">
+        <div className="flex items-center gap-1 sm:-space-x-2 overflow-x-auto pb-1 sm:pb-0 sm:overflow-visible">
           {/* All Tasks Button */}
           <button
             onClick={() => setSelectedMember('all')}
             style={{ 
               backgroundColor: selectedMember === 'all' ? '#076297' : '#6b7280',
             }}
-            className={`w-8 h-8 rounded-full grid place-items-center text-white text-xs font-semibold ring-2 transition ${
-              selectedMember === 'all' ? 'ring-gray-400 ring-4' : 'ring-white'
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full grid place-items-center text-white text-[10px] sm:text-xs font-semibold ring-2 transition touch-manipulation flex-shrink-0 ${
+              selectedMember === 'all' ? 'ring-gray-400 ring-2 sm:ring-4' : 'ring-white'
             }`}
             title="All Members"
           >
             All
           </button>
-          {/* Show first 4 members */}
-          {members.slice(0, 4).map((member) => (
+          {/* Show members - scrollable on mobile */}
+          {members.slice(0, 6).map((member) => (
             <button
               key={member.id}
               onClick={() => setSelectedMember(member.id)}
               style={{ backgroundColor: member.color }}
-              className={`w-8 h-8 rounded-full grid place-items-center text-white text-xs font-semibold ring-2 transition overflow-hidden ${
-                selectedMember === member.id ? 'ring-gray-400 ring-4' : 'ring-white'
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full grid place-items-center text-white text-xs font-semibold ring-2 transition overflow-hidden touch-manipulation flex-shrink-0 ${
+                selectedMember === member.id ? 'ring-gray-400 ring-2 sm:ring-4' : 'ring-white'
               }`}
               title={member.name}
             >
@@ -533,24 +553,24 @@ export default function BoardPage(): React.JSX.Element {
               />
             </button>
           ))}
-          {/* Show +X button if more than 4 members */}
-          {members.length > 5 && (
+          {/* Show +X button if more than 6 members */}
+          {members.length > 6 && (
             <button
               onClick={() => setShowMemberModal(true)}
               style={{ backgroundColor: '#F8B712' }}
-              className="w-8 h-8 rounded-full grid place-items-center text-white text-xs font-bold ring-2 ring-white transition hover:opacity-90"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full grid place-items-center text-white text-[10px] sm:text-xs font-bold ring-2 ring-white transition hover:opacity-90 touch-manipulation flex-shrink-0"
               title="View all team members"
             >
-              +{members.length - 5}
+              +{members.length - 6}
             </button>
           )}
         </div>
       }
         >
           {/* Tabs and Date Filter */}
-          <div className="bg-white rounded-xl shadow-sm p-4 mb-4" style={{ borderRadius: '7px' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 mb-3 sm:mb-4" style={{ borderRadius: '7px' }}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 {/* Tabs on the left */}
                 {tabs.length > 1 && (
                   <Tabs
@@ -561,25 +581,27 @@ export default function BoardPage(): React.JSX.Element {
                 )}
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                 {/* Add a task button */}
                 <Button
                   onClick={() => setIsCreatingTask(true)}
                   variant="primary"
                   size="md"
-                  className="flex items-center gap-2"
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto touch-manipulation"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Add a task</span>
+                  <span className="text-sm sm:text-base">Add a task</span>
                 </Button>
                 
                 {/* Date Filter on the right */}
-                <DateFilter
-                  dateFilter={dateFilter}
-                  setDateFilter={setDateFilter}
-                  customDateRange={customDateRange}
-                  setCustomDateRange={setCustomDateRange}
-                />
+                <div className="w-full sm:w-auto">
+                  <DateFilter
+                    dateFilter={dateFilter}
+                    setDateFilter={setDateFilter}
+                    customDateRange={customDateRange}
+                    setCustomDateRange={setCustomDateRange}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -918,17 +940,111 @@ export default function BoardPage(): React.JSX.Element {
                 
                  const response = await taskApi.createTaskUnrestricted(taskData);
                  console.log('Task creation response:', response);
-                 const newTask = {
-                   ...response.task,
-                   assignees: response.task.assignees?.map((a: any) => a.user_id ? a.user_id.toString() : '') || [],
-                   projectId: projectId,
-                   teamId: updatedTask.teamId,
-                   team: updatedTask.team,
-                 };
+                 const newTaskId = response.task.id;
                  
-                 setTasks([newTask, ...tasks]);
-                 setIsCreatingTask(false);
-                 console.log('Task created successfully:', newTask);
+                 // Save comments if there are any in the updatedTask
+                 if (updatedTask.comments && updatedTask.comments.length > 0) {
+                   try {
+                     // Save each comment to the backend
+                     for (const comment of updatedTask.comments) {
+                       if (comment.message || comment.text) {
+                         await taskApi.addTaskComment(newTaskId, comment.message || comment.text);
+                       }
+                     }
+                     console.log('✅ Comments saved for new task');
+                   } catch (commentError) {
+                     console.error('Error saving comments for new task:', commentError);
+                     // Continue even if comments fail to save - task is created
+                   }
+                 }
+                 
+                 // Reload the task to get full details including comments with user info
+                 try {
+                   const fullTaskResponse = await taskApi.getTaskByIdUnrestricted(newTaskId);
+                   
+                   // Extract user info from assignees and comments
+                   let taskUsers: Map<string, any>;
+                   if (typeof window !== 'undefined') {
+                     taskUsers = (window as any).taskUsers as Map<string, any> || new Map();
+                   } else {
+                     taskUsers = new Map();
+                   }
+                   
+                   // Extract user info from assignees
+                   if (fullTaskResponse.task.assignees && Array.isArray(fullTaskResponse.task.assignees)) {
+                     fullTaskResponse.task.assignees.forEach((a: any) => {
+                       if (a.user_id && a.user) {
+                         const userId = a.user_id.toString();
+                         taskUsers.set(userId, {
+                           id: userId,
+                           name: a.user.name || 'Unknown User',
+                           email: a.user.email || '',
+                           avatar_url: a.user.avatar_url || '',
+                         });
+                       }
+                     });
+                   }
+                   
+                   // Extract user info from comments
+                   if (fullTaskResponse.task.comments && Array.isArray(fullTaskResponse.task.comments)) {
+                     fullTaskResponse.task.comments.forEach((c: any) => {
+                       if (c.user_id && c.user) {
+                         const userId = c.user_id.toString();
+                         taskUsers.set(userId, {
+                           id: userId,
+                           name: c.user.name || 'Unknown User',
+                           email: c.user.email || '',
+                           avatar_url: c.user.avatar_url || '',
+                         });
+                       }
+                     });
+                   }
+                   
+                   if (typeof window !== 'undefined') {
+                     (window as any).taskUsers = taskUsers;
+                   }
+                   
+                   const newTask = {
+                     ...fullTaskResponse.task,
+                     assignees: fullTaskResponse.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
+                     originalAssignees: fullTaskResponse.task.assignees || [],
+                     comments: (fullTaskResponse.task.comments || []).map((c: any) => ({
+                       id: (c.id ?? c.comment_id ?? Math.random().toString(36).slice(2)).toString(),
+                       userId: (c.user_id ?? c.userId ?? c.user?.id)?.toString(),
+                       message: c.content ?? c.message ?? c.text ?? '',
+                       text: c.content ?? c.message ?? c.text ?? '',
+                       createdAt: c.created_at ?? c.createdAt ?? new Date().toISOString(),
+                     })),
+                     attachments: fullTaskResponse.task.attachments || [],
+                     dueDate: fullTaskResponse.task.due_date ? new Date(fullTaskResponse.task.due_date).toISOString() : undefined,
+                     projectId: projectId,
+                     teamId: updatedTask.teamId,
+                     team: updatedTask.team,
+                   };
+                   
+                   setTasks([newTask, ...tasks]);
+                   setIsCreatingTask(false);
+                   setActiveTask(null); // Close modal immediately so task appears right away
+                   console.log('✅ Task created successfully with comments:', newTask);
+                 } catch (reloadError) {
+                   console.error('Error reloading task after creation:', reloadError);
+                   // Fallback to original response if reload fails
+                   const fallbackTask = {
+                     ...response.task,
+                     assignees: response.task.assignees?.map((a: any) => a.user_id ? a.user_id.toString() : '') || [],
+                     comments: updatedTask.comments || [], // Use comments from updatedTask
+                     attachments: response.task.attachments || [],
+                     dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
+                     projectId: projectId,
+                     teamId: updatedTask.teamId,
+                     team: updatedTask.team,
+                   };
+                   
+                   setTasks([fallbackTask, ...tasks]);
+                   setIsCreatingTask(false);
+                   setActiveTask(null); // Close modal immediately so task appears right away
+                   console.log('✅ Task created successfully (reload failed):', fallbackTask);
+                 }
                } catch (err: any) {
                  console.error('Error creating task:', err);
                  // Fallback to local creation if API fails

@@ -4,13 +4,17 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 interface SidebarContextType {
   collapsed: boolean;
+  mobileOpen: boolean;
   toggleCollapsed: () => void;
+  toggleMobile: () => void;
+  closeMobile: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Load collapsed state from localStorage on mount
   useEffect(() => {
@@ -18,6 +22,18 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     if (stored !== null) {
       setCollapsed(stored === "true");
     }
+  }, []);
+
+  // Close mobile sidebar when clicking outside or on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const toggleCollapsed = () => {
@@ -28,8 +44,16 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const toggleMobile = () => {
+    setMobileOpen((prev) => !prev);
+  };
+
+  const closeMobile = () => {
+    setMobileOpen(false);
+  };
+
   return (
-    <SidebarContext.Provider value={{ collapsed, toggleCollapsed }}>
+    <SidebarContext.Provider value={{ collapsed, mobileOpen, toggleCollapsed, toggleMobile, closeMobile }}>
       {children}
     </SidebarContext.Provider>
   );

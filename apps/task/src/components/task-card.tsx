@@ -67,46 +67,63 @@ export function TaskCard({ task, members, onClick, hidePriority }: { task: Task;
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onClick={onClick}
-      className="w-full text-left rounded-xl border border-black/5 bg-white p-2.5 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing">
-      <div className="flex items-center justify-between gap-2">
-        <div className="font-medium leading-snug">{task.title}</div>
+      className="w-full text-left rounded-lg sm:rounded-xl border border-black/5 bg-white p-2 sm:p-2.5 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing touch-manipulation">
+      <div className="flex items-start sm:items-center justify-between gap-2">
+        <div className="font-medium text-sm sm:text-base leading-snug flex-1 min-w-0">{task.title}</div>
         {!hidePriority && (
           <span 
-            className="px-2 py-0.5 text-xs rounded-full border"
+            className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full border flex-shrink-0"
             style={getPriorityStyle()}
           >
             {task.priority.toUpperCase()}
           </span>
         )}
       </div>
-      <div className="mt-2 flex flex-wrap gap-1">
-        {task.labels.map(l => (
-          <span key={l.id} className={`px-2 py-0.5 text-xs rounded-full ${l.color}`}>{l.name}</span>
-        ))}
-      </div>
-      <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
-        <div className="flex items-center gap-1"><CalendarClock className="h-3.5 w-3.5" /> {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due"}</div>
-        <div className="flex items-center gap-3">
+      {task.labels && task.labels.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {task.labels.map(l => (
+            <span key={l.id} className={`px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs rounded-full ${l.color}`}>{l.name}</span>
+          ))}
+        </div>
+      )}
+      <div className="mt-2 sm:mt-3 flex items-center justify-between text-[10px] sm:text-xs text-gray-500 gap-2">
+        <div className="flex items-center gap-1 min-w-0">
+          <CalendarClock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" /> 
+          <span className="truncate">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due"}</span>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {/* Show up to 2 assignees; if more, show +N */}
-          <div className="flex -space-x-2">
-            {assignees.slice(0, 2).map(a => (
-              <div key={a.id} className="h-6 w-6 rounded-full border-2 border-white overflow-hidden" style={{ backgroundColor: a.color }} title={a.name}>
-                <UserAvatar 
-                  userId={parseInt(a.id)} 
-                  size="sm"
-                  className="w-full h-full"
-                  fallbackColor={a.color}
-                />
-              </div>
-            ))}
-            {assignees.length > 2 && (
-              <div className="h-6 w-6 rounded-full border-2 border-white grid place-items-center text-[10px] font-bold" style={{ backgroundColor: '#F8B712', color: '#ffffff' }} title={`${assignees.length - 2} more`}>
-                +{assignees.length - 2}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" /> {task.comments?.length || 0}</div>
-          <div className="flex items-center gap-1"><Paperclip className="h-3.5 w-3.5" /> {task.attachments?.length || 0}</div>
+          {assignees.length > 0 && (
+            <div className="flex -space-x-1.5 sm:-space-x-2">
+              {assignees.slice(0, 2).map(a => (
+                <div key={a.id} className="h-5 w-5 sm:h-6 sm:w-6 rounded-full border-2 border-white overflow-hidden" style={{ backgroundColor: a.color }} title={a.name}>
+                  <UserAvatar 
+                    userId={parseInt(a.id)} 
+                    size="sm"
+                    className="w-full h-full"
+                    fallbackColor={a.color}
+                  />
+                </div>
+              ))}
+              {assignees.length > 2 && (
+                <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full border-2 border-white grid place-items-center text-[9px] sm:text-[10px] font-bold" style={{ backgroundColor: '#F8B712', color: '#ffffff' }} title={`${assignees.length - 2} more`}>
+                  +{assignees.length - 2}
+                </div>
+              )}
+            </div>
+          )}
+          {(task.comments?.length || 0) > 0 && (
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <MessageSquare className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> 
+              <span>{task.comments?.length || 0}</span>
+            </div>
+          )}
+          {(task.attachments?.length || 0) > 0 && (
+            <div className="flex items-center gap-0.5 sm:gap-1">
+              <Paperclip className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> 
+              <span>{task.attachments?.length || 0}</span>
+            </div>
+          )}
         </div>
       </div>
     </button>

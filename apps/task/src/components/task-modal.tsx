@@ -79,6 +79,96 @@ export function TaskModal({
         : await taskApi.getTaskById(numericId);
         
       if (response.task) {
+        // Extract user information from assignees and comments
+        // Preserve existing taskUsers data (from teams, etc.) and merge with new data
+        let taskUsers: Map<string, any>;
+        if (typeof window !== 'undefined') {
+          const existing = (window as any).taskUsers;
+          if (existing && existing instanceof Map) {
+            taskUsers = new Map(existing); // Create a copy to avoid mutations
+          } else {
+            taskUsers = new Map();
+          }
+        } else {
+          taskUsers = new Map();
+        }
+        
+        // Extract user info from assignees - merge with existing data
+        if (response.task.assignees && Array.isArray(response.task.assignees)) {
+          response.task.assignees.forEach((assignee: any) => {
+            const userId = assignee.user_id?.toString();
+            if (userId) {
+              // Check multiple possible structures for user data
+              if (assignee.user && assignee.user.id) {
+                // Update or add user info from API response (API data takes precedence)
+                const existingUser = taskUsers.get(userId);
+                taskUsers.set(userId, {
+                  id: userId,
+                  name: assignee.user.name || existingUser?.name || 'Unknown User',
+                  email: assignee.user.email || existingUser?.email || '',
+                  avatar_url: assignee.user.avatar_url || existingUser?.avatar_url || '',
+                });
+              } else if (assignee.user_name) {
+                // Fallback: direct user_name property
+                const existingUser = taskUsers.get(userId);
+                taskUsers.set(userId, {
+                  id: userId,
+                  name: assignee.user_name || existingUser?.name || 'Unknown User',
+                  email: assignee.user_email || existingUser?.email || '',
+                  avatar_url: assignee.user_avatar_url || existingUser?.avatar_url || '',
+                });
+              } else if (!taskUsers.has(userId)) {
+                // If user object is missing and we don't have it in cache, log for debugging
+                console.warn(`User object not found for assignee with user_id: ${userId}. Assignee data:`, JSON.stringify(assignee, null, 2));
+              }
+            }
+          });
+        }
+        
+        // Extract user info from comments - merge with existing data
+        if (response.task.comments && Array.isArray(response.task.comments)) {
+          response.task.comments.forEach((comment: any) => {
+            const userId = comment.user_id?.toString();
+            if (userId) {
+              // Check multiple possible structures for user data
+              if (comment.user && comment.user.id) {
+                // Update or add user info from API response (API data takes precedence)
+                const existingUser = taskUsers.get(userId);
+                taskUsers.set(userId, {
+                  id: userId,
+                  name: comment.user.name || existingUser?.name || 'Unknown User',
+                  email: comment.user.email || existingUser?.email || '',
+                  avatar_url: comment.user.avatar_url || existingUser?.avatar_url || '',
+                });
+              } else if (comment.user_name) {
+                // Fallback: direct user_name property
+                const existingUser = taskUsers.get(userId);
+                taskUsers.set(userId, {
+                  id: userId,
+                  name: comment.user_name || existingUser?.name || 'Unknown User',
+                  email: comment.user_email || existingUser?.email || '',
+                  avatar_url: comment.user_avatar_url || existingUser?.avatar_url || '',
+                });
+              } else if (!taskUsers.has(userId)) {
+                // If user object is missing and we don't have it in cache, log for debugging
+                console.warn(`User object not found for comment with user_id: ${userId}. Comment data:`, JSON.stringify(comment, null, 2));
+              }
+            }
+          });
+        }
+        
+        // Store updated taskUsers in window (merged with existing data)
+        if (typeof window !== 'undefined') {
+          (window as any).taskUsers = taskUsers;
+          console.log('✅ Updated taskUsers map with user info from task API. Total users:', taskUsers.size);
+          console.log('✅ Sample user data:', Array.from(taskUsers.entries()).slice(0, 3));
+        }
+        
+        // Trigger userInfoVersion update to refresh memberById
+        if (typeof window !== 'undefined' && (window as any).refreshUserInfo) {
+          (window as any).refreshUserInfo();
+        }
+        
         // Normalize backend comments to frontend format
         const normalizedComments = (response.task.comments || []).map((c: any) => ({
           id: (c.id ?? c.comment_id ?? Math.random().toString(36).slice(2)).toString(),
@@ -323,34 +413,43 @@ export function TaskModal({
   const memberById = useMemo(() => {
     const map = Object.fromEntries(members.map(m => [m.id, m]));
     
-    // Get task users from window if available (populated by loadTasks)
-    const taskUsers = typeof window !== 'undefined' ? (window as any).taskUsers as Map<string, any> : new Map();
+    // Also add teamMembers to the map (they may not be in the main members list)
+    teamMembers.forEach(member => {
+      if (!map[member.id]) {
+        map[member.id] = member;
+      }
+    });
     
-    
+    // Get task users from window if available (populated by loadTasks and loadFullTaskDetails)
+    const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
     
     // Add assignees from task if they're not already in members
     if (draft) {
       draft.assignees.forEach(assigneeId => {
         if (!map[assigneeId]) {
-          // Try to get from taskUsers first
-          const taskUser = taskUsers?.get(assigneeId);
-          if (taskUser) {
+          // Try to get from taskUsers first (populated from API responses with user objects)
+          if (taskUsers && taskUsers.has(assigneeId)) {
+            const taskUser = taskUsers.get(assigneeId);
             map[assigneeId] = {
               id: taskUser.id,
-              name: taskUser.name,
+              name: taskUser.name || 'Unknown User',
               email: taskUser.email || '',
               color: '#076297',
-              initials: taskUser.name ? taskUser.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA',
+              initials: taskUser.name ? taskUser.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'U' + assigneeId.toString().slice(0, 1),
             };
           } else {
-            // Create a placeholder member
-            map[assigneeId] = {
-              id: assigneeId,
-              name: `User ${assigneeId}`,
-              email: '',
-              color: '#076297',
-              initials: 'U' + assigneeId.toString().slice(0, 1),
-            };
+            // Try to get from teamMembers (already added to map above)
+            // If still not found, create a placeholder (should rarely happen)
+            if (!map[assigneeId]) {
+              console.warn(`User info not found for assignee ID: ${assigneeId}. API should include user objects.`);
+              map[assigneeId] = {
+                id: assigneeId,
+                name: `User ${assigneeId}`,
+                email: '',
+                color: '#076297',
+                initials: 'U' + assigneeId.toString().slice(0, 1),
+              };
+            }
           }
         }
       });
@@ -359,23 +458,29 @@ export function TaskModal({
       if (draft.comments && Array.isArray(draft.comments)) {
         draft.comments.forEach(comment => {
           if (comment.userId && !map[comment.userId]) {
-            const taskUser = taskUsers?.get(comment.userId);
-            if (taskUser) {
+            // Try to get from taskUsers first (populated from API responses with user objects)
+            if (taskUsers && taskUsers.has(comment.userId)) {
+              const taskUser = taskUsers.get(comment.userId);
               map[comment.userId] = {
                 id: taskUser.id,
-                name: taskUser.name,
+                name: taskUser.name || 'Unknown User',
                 email: taskUser.email || '',
                 color: '#6366f1',
-                initials: taskUser.name ? taskUser.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA',
+                initials: taskUser.name ? taskUser.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'U' + comment.userId.toString().slice(0, 1),
               };
-            } else if (comment.userId) {
-              map[comment.userId] = {
-                id: comment.userId,
-                name: `User ${comment.userId}`,
-                email: '',
-                color: '#6366f1',
-                initials: 'U' + comment.userId.toString().slice(0, 1),
-              };
+            } else {
+              // Try to get from teamMembers (already added to map above)
+              // If still not found, create a placeholder
+              if (!map[comment.userId]) {
+                console.warn(`User info not found for commenter ID: ${comment.userId}. API should include user objects.`);
+                map[comment.userId] = {
+                  id: comment.userId,
+                  name: `User ${comment.userId}`,
+                  email: '',
+                  color: '#6366f1',
+                  initials: 'U' + comment.userId.toString().slice(0, 1),
+                };
+              }
             }
           }
         });
@@ -383,7 +488,7 @@ export function TaskModal({
     }
     
     return map;
-  }, [members, draft, userInfoVersion]);
+  }, [members, draft, userInfoVersion, teamMembers]);
   
   // Filter members based on selected team
   const availableMembers = useMemo(() => {
@@ -583,51 +688,129 @@ export function TaskModal({
   };
 
   const handlePostComment = async () => {
-    if (!commentText.trim() || !draft.id) return;
+    if (!commentText.trim()) return;
     
-    // Validate task ID is a valid number (not a temporary ID)
-    if (!isValidTaskId(draft.id)) {
-      console.error('Cannot post comment: Task must be saved first. Invalid task ID:', draft.id);
-      setToast({ type: 'error', message: 'Please save the task before adding comments' });
-      setTimeout(() => setToast(null), 3000);
-      return;
-    }
-    const numericId = parseInt(draft.id);
+    const commentToPost = commentText.trim();
+    setCommentText(""); // Clear input immediately for better UX
     
-    try {
-      // Save comment to backend
-      await taskApi.addTaskComment(numericId, commentText.trim());
-      
-      // Reload task to get updated comments
-      const response = mode === "management" 
-        ? await taskApi.getTaskByIdUnrestricted(numericId)
-        : await taskApi.getTaskById(numericId);
-      const task = response.task;
-      
-      // Normalize backend comments to frontend format
-      const updatedComments = (task.comments || []).map((c: any) => ({
-        id: (c.id ?? c.comment_id ?? Math.random().toString(36).slice(2)).toString(),
-        userId: (c.user_id ?? c.userId ?? c.user?.id)?.toString(),
-        message: c.content ?? c.message ?? c.text ?? '',
-        text: c.content ?? c.message ?? c.text ?? '',
-        createdAt: c.created_at ?? c.createdAt ?? new Date().toISOString(),
-      }));
-      
-      update({ comments: updatedComments });
-      setCommentText("");
-    } catch (error) {
-      console.error('Error posting comment:', error);
-      // Fallback to local update if API fails
+    // Get current user ID
+    const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('task_user') || '{}') : {};
+    const currentUserId = currentUser?.id?.toString() || '1';
+    const currentUserName = currentUser?.name || 'You';
+    
+    // Create comment object
     const newComment = {
       id: Math.random().toString(36).slice(2),
-      userId: draft.assignees[0] || members[0]?.id || "me",
-      message: commentText.trim(),
-        text: commentText.trim(),
+      userId: currentUserId,
+      message: commentToPost,
+      text: commentToPost,
       createdAt: new Date().toISOString()
     };
     
+    // Add comment locally first (optimistic update)
     update({ comments: [...(draft.comments || []), newComment] });
-    setCommentText("");
+    
+    // If task is saved, also save comment to backend
+    if (draft.id && isValidTaskId(draft.id)) {
+      const numericId = parseInt(draft.id);
+      
+      try {
+        // Save comment to backend
+        await taskApi.addTaskComment(numericId, commentToPost);
+        
+        // Reload task to get updated comments with proper IDs and user info
+        const response = mode === "management" 
+          ? await taskApi.getTaskByIdUnrestricted(numericId)
+          : await taskApi.getTaskById(numericId);
+        const task = response.task;
+        
+        // Extract user info from comments and assignees - use the same logic as loadFullTaskDetails
+        let taskUsers: Map<string, any>;
+        if (typeof window !== 'undefined') {
+          taskUsers = (window as any).taskUsers as Map<string, any> || new Map();
+        } else {
+          taskUsers = new Map();
+        }
+        
+        // Extract user info from assignees
+        if (task.assignees && Array.isArray(task.assignees)) {
+          task.assignees.forEach((a: any) => {
+            const userId = a.user_id?.toString();
+            if (userId) {
+              // Check multiple possible structures for user data
+              if (a.user && a.user.id) {
+                taskUsers.set(userId, {
+                  id: userId,
+                  name: a.user.name || 'Unknown User',
+                  email: a.user.email || '',
+                  avatar_url: a.user.avatar_url || '',
+                });
+              } else if (a.user_name) {
+                // Fallback: direct user_name property
+                taskUsers.set(userId, {
+                  id: userId,
+                  name: a.user_name || 'Unknown User',
+                  email: a.user_email || '',
+                  avatar_url: a.user_avatar_url || '',
+                });
+              }
+            }
+          });
+        }
+        
+        // Extract user info from comments
+        if (task.comments && Array.isArray(task.comments)) {
+          task.comments.forEach((c: any) => {
+            const userId = c.user_id?.toString();
+            if (userId) {
+              // Check multiple possible structures for user data
+              if (c.user && c.user.id) {
+                taskUsers.set(userId, {
+                  id: userId,
+                  name: c.user.name || 'Unknown User',
+                  email: c.user.email || '',
+                  avatar_url: c.user.avatar_url || '',
+                });
+              } else if (c.user_name) {
+                // Fallback: direct user_name property
+                taskUsers.set(userId, {
+                  id: userId,
+                  name: c.user_name || 'Unknown User',
+                  email: c.user_email || '',
+                  avatar_url: c.user_avatar_url || '',
+                });
+              }
+            }
+          });
+        }
+        
+        if (typeof window !== 'undefined') {
+          (window as any).taskUsers = taskUsers;
+        }
+        
+        // Trigger userInfoVersion update to refresh memberById
+        if (typeof window !== 'undefined' && (window as any).refreshUserInfo) {
+          (window as any).refreshUserInfo();
+        }
+        
+        // Normalize backend comments to frontend format
+        const updatedComments = (task.comments || []).map((c: any) => ({
+          id: (c.id ?? c.comment_id ?? Math.random().toString(36).slice(2)).toString(),
+          userId: (c.user_id ?? c.userId ?? c.user?.id)?.toString(),
+          message: c.content ?? c.message ?? c.text ?? '',
+          text: c.content ?? c.message ?? c.text ?? '',
+          createdAt: c.created_at ?? c.createdAt ?? new Date().toISOString(),
+        }));
+        
+        update({ comments: updatedComments });
+      } catch (error) {
+        console.error('Error posting comment to backend:', error);
+        // Comment was already added locally, so we keep it
+        // The comment will be saved when the task is saved or can be retried
+      }
+    } else {
+      // For unsaved tasks, comment is stored locally and will be saved when task is saved
+      console.log('Task not saved yet, comment stored locally');
     }
   };
 
@@ -754,32 +937,32 @@ export function TaskModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0 sm:p-4" 
       onClick={handleCancel}
     >
       <div 
-        className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" 
+        className="bg-white rounded-none sm:rounded-xl w-full h-full sm:h-auto sm:w-full sm:max-w-4xl sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" 
         onClick={e => e.stopPropagation()}
       >
         {/* Inline toast */}
         {toast && (
-          <div className="absolute top-4 right-4 px-3 py-2 text-sm rounded-md shadow" style={{ backgroundColor: toast.type === 'success' ? '#DCFCE7' : '#FEE2E2', color: toast.type === 'success' ? '#065F46' : '#991B1B' }}>
+          <div className="absolute top-2 right-2 sm:top-4 sm:right-4 px-3 py-2 text-xs sm:text-sm rounded-md shadow z-10" style={{ backgroundColor: toast.type === 'success' ? '#DCFCE7' : '#FEE2E2', color: toast.type === 'success' ? '#065F46' : '#991B1B' }}>
             {toast.message}
           </div>
         )}
         {/* Modal Header */}
         <div 
-          className="p-6 flex items-center justify-between"
+          className="p-4 sm:p-6 flex items-center justify-between"
           style={{ 
             backgroundColor: '#f0f8fc'
           }}
         >
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <input 
               type="text" 
               value={draft?.title || ''}
               onChange={e => update({ title: e.target.value })}
-              className="text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none w-full"
+              className="text-xl sm:text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none w-full"
               placeholder="Task title..."
             />
             <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
@@ -808,10 +991,10 @@ export function TaskModal({
         </div>
 
         {/* Modal Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid grid-cols-3 gap-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Main Content - Left Side */}
-            <div className="col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               
               {/* Team Selection - Available for all users */}
               {!loadingTeams && teams.length > 0 && (
@@ -824,7 +1007,7 @@ export function TaskModal({
                   <select
                     value={selectedTeamId || ""}
                     onChange={(e) => handleTeamChange(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                    className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-sm sm:text-base touch-manipulation"
                     onFocus={(e) => e.stopPropagation()}
                   >
                     <option value="">Choose a team...</option>
@@ -901,7 +1084,15 @@ export function TaskModal({
                               className="w-8 h-8"
                             />
                             <div className="flex flex-col">
-                              <span className="text-sm text-gray-700">{member.name}</span>
+                              <span className="text-sm text-gray-700">
+                                {member?.name || (() => {
+                                  const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
+                                  if (taskUsers && taskUsers.has(assigneeId)) {
+                                    return taskUsers.get(assigneeId).name;
+                                  }
+                                  return `User ${assigneeId}`;
+                                })()}
+                              </span>
                             </div>
                             <button 
                               onClick={() => handleRemoveAssignee(assigneeId)}
@@ -926,7 +1117,7 @@ export function TaskModal({
                 <textarea 
                   value={draft.description || ""}
                   onChange={e => update({ description: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors"
+                  className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base"
                   rows={4}
                   placeholder="List the activities to be done for this task..."
                   onFocus={(e) => e.stopPropagation()}
@@ -942,7 +1133,7 @@ export function TaskModal({
                 <textarea 
                   value={draft.deliverables || ""}
                   onChange={e => update({ deliverables: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors"
+                  className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base"
                   rows={4}
                   placeholder="Describe the expected deliverables for this task..."
                   onFocus={(e) => e.stopPropagation()}
@@ -1075,7 +1266,16 @@ export function TaskModal({
                   <div className="space-y-3 mb-4" style={{ borderTop: '1px solid #e5e7eb' }}>
                     {(draft.comments || []).map(comment => {
                       const commenter = memberById[comment.userId];
-                      if (!commenter) return null;
+                      // Fallback: if commenter not found, try to get from taskUsers or use ProfileContext
+                      const displayName = commenter?.name || (() => {
+                        const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
+                        if (taskUsers && taskUsers.has(comment.userId)) {
+                          return taskUsers.get(comment.userId).name;
+                        }
+                        return `User ${comment.userId}`;
+                      })();
+                      
+                      if (!comment.userId) return null;
                       
                       return (
                         <div key={comment.id} className="flex gap-3 pt-3 group">
@@ -1086,7 +1286,7 @@ export function TaskModal({
                           />
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-semibold text-gray-900">{commenter.name}</span>
+                              <span className="text-sm font-semibold text-gray-900">{displayName}</span>
                               <span className="text-xs text-gray-500">
                                 {new Date(comment.createdAt).toLocaleDateString()} at {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
@@ -1142,17 +1342,12 @@ export function TaskModal({
                       <div className="mt-2">
                         <Button
                           onClick={handlePostComment}
-                          disabled={!commentText.trim() || !isValidTaskId(draft.id)}
+                          disabled={!commentText.trim()}
                           variant="primary"
                           size="md"
                         >
                           Post Comment
                         </Button>
-                        {draft.id && !isValidTaskId(draft.id) && (
-                          <p className="text-xs text-amber-600 mt-2">
-                            ⚠️ Please save the task first before adding comments
-                          </p>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1160,7 +1355,7 @@ export function TaskModal({
             </div>
 
             {/* Sidebar - Right Side */}
-            <div className="space-y-4">
+            <div className="lg:col-span-1 space-y-4">
               
               {/* Status Dropdown */}
               <div>
@@ -1168,7 +1363,7 @@ export function TaskModal({
                 <select 
                   value={draft.status}
                   onChange={e => update({ status: e.target.value as Status })}
-                  className="w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
+                  className="w-full p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white text-sm sm:text-base touch-manipulation"
                   style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
                 >
                   <option value="todo">To Do</option>
@@ -1185,7 +1380,7 @@ export function TaskModal({
                 <select 
                   value={draft.priority}
                   onChange={e => update({ priority: e.target.value as Priority })}
-                  className="w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
+                  className="w-full p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white text-sm sm:text-base touch-manipulation"
                   style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
                 >
                   <option value="high">🔴 High</option>
@@ -1211,7 +1406,7 @@ export function TaskModal({
                         update({ dueDate: undefined });
                       }
                     }}
-                    className="flex-1 p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation"
                     style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
                   />
                   <input 
@@ -1230,7 +1425,7 @@ export function TaskModal({
                         update({ dueDate: newDateTime.toISOString() });
                       }
                     }}
-                    className="flex-1 p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    className="flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation"
                     style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
                   />
                 </div>
@@ -1312,12 +1507,12 @@ export function TaskModal({
 
           {/* Modal Footer with Save/Cancel */}
           <div 
-            className="sticky bottom-0 bg-gray-50 px-6 py-4 flex justify-end gap-3"
+            className="sticky bottom-0 bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 border-t border-gray-200"
             style={{ borderRadius: '0 0 7px 7px' }}
           >
             <button
               onClick={handleCancel}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors font-medium"
+              className="px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium touch-manipulation order-2 sm:order-1"
               style={{ borderRadius: '7px' }}
             >
               Cancel
@@ -1325,7 +1520,7 @@ export function TaskModal({
             <button
               onClick={handleSave}
               disabled={!draft.title.trim() || !draft.dueDate}
-              className="px-4 py-2 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2.5 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation order-1 sm:order-2"
               style={{ 
                 backgroundColor: (draft.title.trim() && draft.dueDate) ? '#076297' : '#9ca3af',
                 borderRadius: '7px'
