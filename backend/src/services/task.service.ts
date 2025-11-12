@@ -666,6 +666,11 @@ export const updateTask = async (taskId: number, input: UpdateTaskInput, userId:
     // Check if user is a manager (can edit all tasks)
     const isManager = await isUserManager(userId);
     
+    // Prevent non-managers from updating overdue tasks
+    if (existingTask.status === 'overdue' && !isManager) {
+      throw new AppError("Only managers can update tasks that are in Overdue status. Please contact a manager to update this task.", 403);
+    }
+    
     // Check if user is the task creator
     const isTaskCreator = existingTask.created_by === userId;
     

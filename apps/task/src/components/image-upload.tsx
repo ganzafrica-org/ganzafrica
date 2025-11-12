@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/button';
 
@@ -20,7 +20,7 @@ export function ImageUpload({
   label = 'Profile Image',
   description = 'Upload a profile image (JPG, PNG, GIF up to 5MB)',
   isUploading = false
-}: ImageUploadProps) {
+}: ImageUploadProps): React.JSX.Element {
   const [preview, setPreview] = useState<string | null>(initialImage || null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

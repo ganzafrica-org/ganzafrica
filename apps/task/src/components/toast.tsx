@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle } from "lucide-react";
 
 export type ToastType = "success" | "error" | "warning" | "info";
@@ -49,7 +49,7 @@ const toastConfig = {
   },
 };
 
-export function Toast({ id, type, title, message, duration = 5000, onClose }: ToastProps) {
+export function Toast({ id, type, title, message, duration = 5000, onClose }: ToastProps): React.JSX.Element {
   const [isVisible, setIsVisible] = useState(false);
   const config = toastConfig[type];
   const Icon = config.icon;
@@ -124,7 +124,7 @@ interface ToastContainerProps {
   onRemoveToast: (id: string) => void;
 }
 
-export function ToastContainer({ toasts, onRemoveToast }: ToastContainerProps) {
+export function ToastContainer({ toasts, onRemoveToast }: ToastContainerProps): React.JSX.Element {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
       {toasts.map((toast) => (

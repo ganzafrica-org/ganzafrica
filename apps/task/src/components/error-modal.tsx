@@ -1,3 +1,4 @@
+import React from "react";
 import { X, AlertCircle } from "lucide-react";
 
 interface ErrorModalProps {
@@ -18,7 +19,7 @@ export function ErrorModal({
   onConfirm,
   confirmText = "OK",
   showCancel = false,
-}: ErrorModalProps) {
+}: ErrorModalProps): React.JSX.Element | null {
   if (!isOpen) return null;
 
   return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { CalendarClock, MessageSquare, Paperclip, Users } from "lucide-react";
 import { Task, TeamMember } from "@/lib/types";
 import { UserAvatar } from "./user-avatar";
@@ -11,18 +12,61 @@ const priorityColor: Record<Task["priority"], string> = {
 };
 
 
-export function TaskCard({ task, members, onClick, hidePriority }: { task: Task; members: TeamMember[]; onClick: () => void; hidePriority?: boolean }): React.JSX.Element {
+export function TaskCard({ task, members, onClick, hidePriority, isManager = false }: { task: Task; members: TeamMember[]; onClick: () => void; hidePriority?: boolean; isManager?: boolean }): React.JSX.Element {
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const justDraggedRef = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Store initial mouse position to detect if it's a drag or click
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+    justDraggedRef.current = false;
+  };
+
   const handleDragStart = (e: React.DragEvent<HTMLButtonElement>) => {
     console.log('Drag started for task:', task.id, task.title);
+    setIsDragging(true);
     e.dataTransfer.setData("text/task-id", task.id);
     e.dataTransfer.effectAllowed = "move";
     // Add visual feedback
     e.currentTarget.style.opacity = "0.5";
+    // Prevent click event from firing after drag
+    e.dataTransfer.setData("text/plain", ""); // Required for Firefox
   };
 
   const handleDragEnd = (e: React.DragEvent<HTMLButtonElement>) => {
     console.log('Drag ended for task:', task.id);
+    setIsDragging(false);
+    setDragStartPos(null);
     e.currentTarget.style.opacity = "1";
+    // Mark that we just dragged to prevent click
+    justDraggedRef.current = true;
+    // Reset after a short delay
+    setTimeout(() => {
+      justDraggedRef.current = false;
+    }, 200);
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Prevent click if we just dragged
+    if (justDraggedRef.current || isDragging) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    
+    if (dragStartPos) {
+      const deltaX = Math.abs(e.clientX - dragStartPos.x);
+      const deltaY = Math.abs(e.clientY - dragStartPos.y);
+      // If mouse moved more than 5px, consider it a drag, not a click
+      if (deltaX < 5 && deltaY < 5) {
+        onClick();
+      }
+    } else {
+      // If no drag start pos recorded, it's a normal click
+      onClick();
+    }
+    setDragStartPos(null);
   };
   // Build robust assignee list (handles number/string and filters empty ids)
   const assignees = (task.assignees || [])
@@ -61,13 +105,23 @@ export function TaskCard({ task, members, onClick, hidePriority }: { task: Task;
     return {};
   };
 
+  // Disable dragging for overdue tasks if user is not a manager
+  const isDraggable = !(task.status === 'overdue' && !isManager);
+  
   return (
     <button
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onClick={onClick}
-      className="w-full text-left rounded-lg sm:rounded-xl border border-black/5 bg-white p-2 sm:p-2.5 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing touch-manipulation">
+      draggable={isDraggable}
+      onMouseDown={handleMouseDown}
+      onDragStart={isDraggable ? handleDragStart : undefined}
+      onDragEnd={isDraggable ? handleDragEnd : undefined}
+      onClick={handleClick}
+      type="button"
+      className={`w-full text-left rounded-lg sm:rounded-xl border border-black/5 bg-white p-2 sm:p-2.5 shadow-sm hover:shadow-md transition touch-manipulation ${
+        isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-not-allowed opacity-75'
+      }`}
+      style={{ userSelect: 'none' }}
+      title={!isDraggable ? 'Only managers can update overdue tasks' : undefined}
+    >
       <div className="flex items-start sm:items-center justify-between gap-2">
         <div className="font-medium text-sm sm:text-base leading-snug flex-1 min-w-0">{task.title}</div>
         {!hidePriority && (

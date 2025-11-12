@@ -1,10 +1,11 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { Task, TeamMember } from "@/lib/types";
 import { UserAvatar } from "./user-avatar";
 
-export function TeamGrid({ members, tasks, activeCounts }: { members: TeamMember[]; tasks: Task[]; activeCounts: Record<string, number> }) {
+export function TeamGrid({ members, tasks, activeCounts }: { members: TeamMember[]; tasks: Task[]; activeCounts: Record<string, number> }): React.JSX.Element {
   const tasksByUser: Record<string, Task[]> = {};
   for (const m of members) tasksByUser[m.id] = [];
   for (const t of tasks) {

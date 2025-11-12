@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, ReactNode } from 'react';
+import React, { useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './auth-provider';
 
@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ 
     children, 
     fallbackUrl 
-}: ProtectedRouteProps) {
+}: ProtectedRouteProps): React.JSX.Element | null {
     const defaultPortalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
     const finalFallbackUrl = fallbackUrl || `${defaultPortalUrl}/login`;
     const { isAuthenticated, isLoading } = useAuth();

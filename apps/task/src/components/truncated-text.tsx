@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 interface TruncatedTextProps {
   text: string;
@@ -14,7 +14,7 @@ export function TruncatedText({
   maxLength = 170, 
   className = "", 
   showToggle = true 
-}: TruncatedTextProps) {
+}: TruncatedTextProps): React.JSX.Element {
   const [isExpanded, setIsExpanded] = useState(false);
   
   // If text is shorter than maxLength, show it all

@@ -3,11 +3,12 @@ export const metadata = {
   description: "Trello-style task management"
 }
 
+import React from "react";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
     <html lang="en">
       <body className="min-h-screen antialiased">

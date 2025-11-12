@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Calendar, Edit3, Save, X, Camera, Bell, Shield, Key, Loader2 } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { Tabs } from "@/components/tabs";
@@ -44,7 +44,7 @@ interface UserData {
   };
 }
 
-export default function ProfilePage() {
+export default function ProfilePage(): React.JSX.Element {
   const { currentUserProfile, updateCurrentUserProfile } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { UserAvatar } from './user-avatar';
 
 interface TaskAssignee {
@@ -21,7 +22,7 @@ export function TaskAssignees({
   maxDisplay = 3, 
   size = 'sm',
   className = ''
-}: TaskAssigneesProps) {
+}: TaskAssigneesProps): React.JSX.Element {
   if (!assignees || assignees.length === 0) {
     return (
       <div className={`flex items-center gap-1 ${className}`}>

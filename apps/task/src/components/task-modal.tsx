@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
-import { X, Users, Edit2, Paperclip, Upload, Trash2, MessageSquare } from "lucide-react";
+import { X, Users, Edit2, Paperclip, Upload, Trash2, MessageSquare, FileText } from "lucide-react";
 import { Task, TeamMember, Status, Priority } from "@/lib/types";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { InputDialog } from "@/components/input-dialog";
@@ -10,7 +10,7 @@ import { MemberDropdown } from "@/components/member-dropdown";
 import { UserAvatar } from "@/components/user-avatar";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
 import { taskApi } from "@/lib/api-client";
-import { canEditTask } from "@/lib/auth-utils";
+import { canEditTask, isCurrentUserAdminOrManager } from "@/lib/auth-utils";
 
 export function TaskModal({
   open,
@@ -50,6 +50,7 @@ export function TaskModal({
   const [showComments, setShowComments] = useState(false);
   const [taskTeamProjects, setTaskTeamProjects] = useState<Array<{ id: number; team_id: number; name: string; color?: string }>>([]);
   const [teamsLoaded, setTeamsLoaded] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   // Comment UX state
   const [showEditCommentDialog, setShowEditCommentDialog] = useState(false);
   const [editCommentInitial, setEditCommentInitial] = useState("");
@@ -72,6 +73,24 @@ export function TaskModal({
         return;
       }
       const numericId = parseInt(taskId);
+      
+      // Wait for teams and projects to be loaded before determining team
+      // This ensures we have the correct mapping
+      if (!teamsLoaded || teams.length === 0 || taskTeamProjects.length === 0) {
+        console.log('⏳ Waiting for teams and projects to load before loading task details...');
+        // Load teams and projects if not loaded
+        if (!teamsLoaded) {
+          await loadTeams();
+        }
+        if (taskTeamProjects.length === 0) {
+          try {
+            const resp = await taskApi.getTaskTeamProjects();
+            setTaskTeamProjects(resp.projects || []);
+          } catch (e) {
+            console.error('Error loading task team projects:', e);
+          }
+        }
+      }
       
       // Use unrestricted endpoint for management mode, regular endpoint for individual mode
       const response = mode === "management" 
@@ -161,7 +180,7 @@ export function TaskModal({
         if (typeof window !== 'undefined') {
           (window as any).taskUsers = taskUsers;
           console.log('✅ Updated taskUsers map with user info from task API. Total users:', taskUsers.size);
-          console.log('✅ Sample user data:', Array.from(taskUsers.entries()).slice(0, 3));
+          console.log('✅ User data from database:', Array.from(taskUsers.entries()).slice(0, 3));
         }
         
         // Trigger userInfoVersion update to refresh memberById
@@ -178,6 +197,76 @@ export function TaskModal({
           createdAt: c.created_at ?? c.createdAt ?? new Date().toISOString(),
         }));
 
+        // Get team information - prioritize task.team if available (for managers who selected a team)
+        // Otherwise, get from project mapping
+        let teamInfo: { id: string; name: string; color: string; memberIds: string[] } | undefined;
+        let teamIdStr: string | undefined;
+        
+        // PRIORITY 1: Use team from task object if available (preserves manager's selection)
+        const isManager = isCurrentUserAdminOrManager();
+        if (isManager && task?.team) {
+          // For managers: trust the selected team from task object
+          teamInfo = task.team;
+          teamIdStr = task.team.id;
+          console.log('✅ Manager: Using selected team from task object:', teamInfo.name);
+        } else if (task?.teamId) {
+          // If we have teamId but not full team object, try to find it in loaded teams
+          const foundTeam = teams.find(t => t.id === parseInt(task.teamId || '0'));
+          if (foundTeam) {
+            teamInfo = {
+              id: String(foundTeam.id),
+              name: foundTeam.name,
+              color: foundTeam.color || '#076297',
+              memberIds: []
+            };
+            teamIdStr = task.teamId;
+            console.log('✅ Found team from task.teamId in loaded teams:', foundTeam.name);
+          } else {
+            teamIdStr = task.teamId;
+            console.log('⚠️ Team ID from task but team not in loaded teams yet:', task.teamId);
+          }
+        }
+        
+        // PRIORITY 2: If no team info yet, get from project mapping (for non-managers or when team not selected)
+        if (!teamInfo && response.task.project_id) {
+          // Make sure we have the latest taskTeamProjects (might have been loaded async)
+          let currentProjects = taskTeamProjects.length > 0 ? taskTeamProjects : [];
+          if (currentProjects.length === 0) {
+            // Try to load projects if not loaded
+            try {
+              const resp = await taskApi.getTaskTeamProjects();
+              setTaskTeamProjects(resp.projects || []);
+              currentProjects = resp.projects || [];
+            } catch (e) {
+              console.error('Error loading task team projects in loadFullTaskDetails:', e);
+            }
+          }
+          
+          const mapped = currentProjects.find(p => p.id === response.task.project_id);
+          if (mapped) {
+            // Find the team from loaded teams - this should match the project's team_id
+            const team = teams.find(t => t.id === mapped.team_id);
+            if (team) {
+              teamInfo = {
+                id: String(team.id),
+                name: team.name,
+                color: team.color || '#076297',
+                memberIds: []
+              };
+              teamIdStr = String(team.id);
+              console.log('✅ Loaded team from database (project mapping):', team.name, 'for project_id:', response.task.project_id);
+            } else {
+              // Team not loaded yet, but we have the ID - set it and team will be loaded
+              teamIdStr = String(mapped.team_id);
+              console.log('⚠️ Team ID found from project mapping but team not loaded yet:', mapped.team_id);
+            }
+          } else {
+            console.warn('⚠️ Project not found in taskTeamProjects for project_id:', response.task.project_id);
+          }
+        } else if (!teamInfo && !response.task.project_id) {
+          console.warn('⚠️ Task has no project_id and no team info, cannot determine team');
+        }
+
         // Convert the API response to the expected format
         const fullTask: Task = {
           id: response.task.id.toString(),
@@ -189,7 +278,8 @@ export function TaskModal({
           dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
           labels: response.task.labels || [],
           assignees: response.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
-          teamId: undefined, // Will be determined from project if needed
+          teamId: teamIdStr,
+          team: teamInfo,
           projectId: response.task.project_id,
           comments: normalizedComments,
           attachments: response.task.attachments || [],
@@ -199,13 +289,23 @@ export function TaskModal({
         };
         setDraft(fullTask);
 
-        // If we already have team-project mapping, set selected team for header
-        try {
-          const mapped = taskTeamProjects.find(p => p.id === response.task.project_id);
-          if (mapped) {
-            setSelectedTeamId(mapped.team_id);
-          }
-        } catch {}
+        // Set selected team for header and member loading - preserve the team
+        if (teamIdStr) {
+          setSelectedTeamId(parseInt(teamIdStr));
+        } else if (response.task.project_id) {
+          // Fallback: try to get from project mapping
+          try {
+            const mapped = taskTeamProjects.find(p => p.id === response.task.project_id);
+            if (mapped) {
+              setSelectedTeamId(mapped.team_id);
+            }
+          } catch {}
+        }
+        
+        // Set selected project ID for managers
+        if (response.task.project_id) {
+          setSelectedProjectId(response.task.project_id);
+        }
       }
     } catch (error) {
       console.error('Error loading full task details:', error);
@@ -224,10 +324,22 @@ export function TaskModal({
         // For new tasks or invalid IDs (temporary IDs), use the task as-is
         console.log('Task has temporary ID, skipping full details fetch:', task.id);
         setDraft(task);
+        // Preserve team from task if it exists
+        if (task.team?.id) {
+          setSelectedTeamId(parseInt(task.team.id));
+        } else if (task.teamId) {
+          setSelectedTeamId(parseInt(task.teamId || '0'));
+        }
       }
     } else {
       // For new tasks or when modal is closed, use the task as-is
       setDraft(task);
+      // Preserve team from task if it exists
+      if (task?.team?.id) {
+        setSelectedTeamId(parseInt(task.team.id));
+      } else if (task?.teamId) {
+        setSelectedTeamId(parseInt(task.teamId || '0'));
+      }
     }
     
     if (open && !teamsLoaded) {
@@ -237,10 +349,23 @@ export function TaskModal({
         try {
           const resp = await taskApi.getTaskTeamProjects();
           setTaskTeamProjects(resp.projects || []);
-          // If task already has project_id, set selected team for header
-          if (task?.projectId && resp.projects?.length) {
+          
+          // Preserve team from task if it exists (priority)
+          if (task?.team?.id) {
+            setSelectedTeamId(parseInt(task.team.id));
+          } else if (task?.teamId) {
+            setSelectedTeamId(parseInt(task.teamId || '0'));
+          } else if (task?.projectId && resp.projects?.length) {
+            // If task has project_id but no team, find team from project mapping
             const mapped = resp.projects.find((p: any) => p.id === task.projectId);
-            if (mapped) setSelectedTeamId(mapped.team_id);
+            if (mapped) {
+              setSelectedTeamId(mapped.team_id);
+            }
+          }
+          
+          // Set selected project ID
+          if (task?.projectId) {
+            setSelectedProjectId(task.projectId);
           }
         } catch (e) {
           console.error('Error loading task team projects:', e);
@@ -282,48 +407,38 @@ export function TaskModal({
     try {
       setLoadingTeams(true);
       
-      // Get current user ID from localStorage
-      const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('task_user') || '{}') : {};
-      const currentUserId = currentUser?.id;
-      
-      // Try to load teams that the current user has access to
-      let response;
-      try {
-        response = await taskTeamsApi.listTeams({
-          user_id: currentUserId,
-          status: 'active' // Only load active teams
-        });
-      } catch (userFilterError) {
-        try {
-          // Fallback: load all teams if user-specific filtering fails
-          response = await taskTeamsApi.listTeams({
-            status: 'active'
-          });
-        } catch (statusFilterError) {
-          // Final fallback: load all teams without any filters
-          response = await taskTeamsApi.listTeams();
-        }
-      }
+      // Load ALL teams from the teams page - no filtering, no dummy data
+      // This allows users to select any team and assign members from that team
+      const response = await taskTeamsApi.listTeams();
       
       const loadedTeams = response.teams || [];
       
-      // If no teams from API, use empty array
-      const teamsToUse = loadedTeams.length > 0 ? loadedTeams : [];
+      // Use all teams from API (no filtering)
+      const teamsToUse = loadedTeams;
       
       setTeams(teamsToUse);
       
-      // Auto-select if only one team
-      if (teamsToUse.length === 1) {
-        const singleTeam = teamsToUse[0];
-        setSelectedTeamId(singleTeam.id);
-        setSelectedTeamIds([singleTeam.id]);
-      } else if (teamsToUse.length > 1) {
-        // If multiple teams, don't auto-select
+      // Don't auto-select any team - let user choose
+      // BUT: If task already has a team, preserve it
+      if (task?.team?.id) {
+        const teamId = parseInt(task.team.id);
+        if (teamsToUse.find((t: any) => t.id === teamId)) {
+          setSelectedTeamId(teamId);
+          console.log('✅ Preserved team from task:', task.team.name);
+        }
+      } else if (task?.teamId) {
+        const teamId = parseInt(task.teamId || '0');
+        if (teamsToUse.find((t: any) => t.id === teamId)) {
+          setSelectedTeamId(teamId);
+          console.log('✅ Preserved teamId from task:', teamId);
+        }
+      } else {
         setSelectedTeamId(null);
         setSelectedTeamIds([]);
       }
       
       setTeamsLoaded(true);
+      console.log('✅ Loaded all teams for task creation:', teamsToUse.length, 'teams');
     } catch (error) {
       console.error('Error loading teams:', error);
       setTeams([]);
@@ -402,12 +517,27 @@ export function TaskModal({
     }
   };
 
-  // Derive current selected team name/color for header display
+  // Derive current selected team name/color for header display - preserve from draft.team if available
   const currentTeamInfo = useMemo(() => {
+    // Priority: Use draft.team if available (preserves team from backend)
+    if (draft?.team) {
+      return {
+        name: draft.team.name,
+        color: draft.team.color || '#076297'
+      };
+    }
+    
+    // Fallback: Use selectedTeamId to find team from loaded teams
     const byId = selectedTeamId ? teams.find((t) => t.id === selectedTeamId) : undefined;
-    const name = byId?.name || draft?.team?.name || undefined;
-    const color = byId?.color || draft?.team?.color || '#076297';
-    return { name, color } as { name?: string; color: string };
+    if (byId) {
+      return {
+        name: byId.name,
+        color: byId.color || '#076297'
+      };
+    }
+    
+    // Default fallback
+    return { name: undefined, color: '#076297' };
   }, [selectedTeamId, teams, draft?.team]);
 
   const memberById = useMemo(() => {
@@ -439,16 +569,11 @@ export function TaskModal({
             };
           } else {
             // Try to get from teamMembers (already added to map above)
-            // If still not found, create a placeholder (should rarely happen)
+            // If still not found, try to fetch from backend (no dummy data)
             if (!map[assigneeId]) {
-              console.warn(`User info not found for assignee ID: ${assigneeId}. API should include user objects.`);
-              map[assigneeId] = {
-                id: assigneeId,
-                name: `User ${assigneeId}`,
-                email: '',
-                color: '#076297',
-                initials: 'U' + assigneeId.toString().slice(0, 1),
-              };
+              console.warn(`User info not found for assignee ID: ${assigneeId}. Attempting to fetch from backend.`);
+              // Don't create dummy data - user info should come from backend
+              // The user will be displayed with their ID until backend provides the info
             }
           }
         }
@@ -470,16 +595,10 @@ export function TaskModal({
               };
             } else {
               // Try to get from teamMembers (already added to map above)
-              // If still not found, create a placeholder
+              // If still not found, don't create dummy data - wait for backend
               if (!map[comment.userId]) {
-                console.warn(`User info not found for commenter ID: ${comment.userId}. API should include user objects.`);
-                map[comment.userId] = {
-                  id: comment.userId,
-                  name: `User ${comment.userId}`,
-                  email: '',
-                  color: '#6366f1',
-                  initials: 'U' + comment.userId.toString().slice(0, 1),
-                };
+                console.warn(`User info not found for commenter ID: ${comment.userId}. Backend should provide user objects.`);
+                // Don't create dummy data - user info should come from backend
               }
             }
           }
@@ -533,21 +652,19 @@ export function TaskModal({
     console.log('🔍 Available teams:', teams.map(t => ({ id: t.id, name: t.name })));
     
     setSelectedTeamId(numericTeamId);
+    // Clear project selection when team changes - user must select project from team's projects
+    setSelectedProjectId(null);
+    
     // Clear assignees when team changes
     const teamObj = teams.find(t => t.id === numericTeamId);
     console.log('🔍 Found team object:', teamObj);
-    
-    // Map selected team to a project_id if available
-    const mappedProject = numericTeamId
-      ? taskTeamProjects.find(p => p.team_id === numericTeamId)
-      : undefined;
-    console.log('🔍 Mapped project:', mappedProject);
     
     update({ 
       teamId: teamId || undefined, 
       team: teamObj ? { id: String(teamObj.id), name: teamObj.name, color: teamObj.color || '#076297', memberIds: [] } : undefined,
       assignees: [],
-      projectId: mappedProject ? mappedProject.id : draft?.projectId
+      // Clear project when team changes - user must select project from team's projects
+      projectId: undefined
     });
   };
 
@@ -631,7 +748,7 @@ export function TaskModal({
             labels: draft.labels,
             attachments: draft.attachments,
             assignees: draft.assignees.map(id => parseInt(id)).filter(id => !isNaN(id)),
-            project_id: draft.projectId
+            project_id: draft.projectId // Preserve project_id to maintain team association
           };
 
           const numericId = parseInt(draft.id);
@@ -996,27 +1113,60 @@ export function TaskModal({
             {/* Main Content - Left Side */}
             <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               
-              {/* Team Selection - Available for all users */}
+              {/* Team and Project Selection - On one line */}
               {!loadingTeams && teams.length > 0 && (
-                <div>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
-                    <Users className="w-4 h-4" />
-                    Select Team
-                  </label>
-                  
-                  <select
-                    value={selectedTeamId || ""}
-                    onChange={(e) => handleTeamChange(e.target.value)}
-                    className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-sm sm:text-base touch-manipulation"
-                    onFocus={(e) => e.stopPropagation()}
-                  >
-                    <option value="">Choose a team...</option>
-                    {teams.map((team) => (
-                      <option key={team.id} value={team.id}>
-                        {team.name} ({team.member_count || 0} members)
-                      </option>
-                    ))}
-                  </select>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {/* Team Selection - Available for all users */}
+                  <div className="flex-1">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                      <Users className="w-4 h-4" />
+                      Select Team
+                    </label>
+                    
+                    <select
+                      value={selectedTeamId || ""}
+                      onChange={(e) => handleTeamChange(e.target.value)}
+                      className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-sm sm:text-base touch-manipulation"
+                      onFocus={(e) => e.stopPropagation()}
+                    >
+                      <option value="">Choose a team...</option>
+                      {teams.map((team) => (
+                        <option key={team.id} value={team.id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Project Selection - Show only if team is selected, filter by selected team */}
+                  {selectedTeamId && taskTeamProjects.length > 0 && (
+                    <div className="flex-1">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                        <FileText className="w-4 h-4" />
+                        Select Project
+                      </label>
+                      
+                      <select
+                        value={selectedProjectId || draft?.projectId || ""}
+                        onChange={(e) => {
+                          const projectId = e.target.value ? parseInt(e.target.value) : null;
+                          setSelectedProjectId(projectId);
+                          update({ projectId: projectId || undefined });
+                        }}
+                        className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-sm sm:text-base touch-manipulation"
+                        onFocus={(e) => e.stopPropagation()}
+                      >
+                        <option value="">Choose a project...</option>
+                        {taskTeamProjects
+                          .filter((project) => project.team_id === selectedTeamId)
+                          .map((project) => (
+                            <option key={project.id} value={project.id}>
+                              {project.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1026,11 +1176,18 @@ export function TaskModal({
                   <div className="flex items-center justify-between mb-3">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                     <Users className="w-4 h-4" />
-                    {selectedTeamId ? (
-                      `Team Members - ${teams.find(t => t.id === selectedTeamId)?.name}`
-                    ) : (
-                      "Assignees"
-                    )}
+                    {(() => {
+                      // Use currentTeamInfo to get team name (preserves team from backend)
+                      if (currentTeamInfo.name) {
+                        return `Team Members - ${currentTeamInfo.name}`;
+                      }
+                      // Fallback to selectedTeamId if currentTeamInfo not available
+                      if (selectedTeamId) {
+                        const team = teams.find(t => t.id === selectedTeamId);
+                        return team ? `Team Members - ${team.name}` : "Assignees";
+                      }
+                      return "Assignees";
+                    })()}
                     {draft.assignees.length > 0 && (
                       <span className="text-xs font-normal text-gray-500">
                         ({draft.assignees.length} selected)
@@ -1085,12 +1242,18 @@ export function TaskModal({
                             />
                             <div className="flex flex-col">
                               <span className="text-sm text-gray-700">
-                                {member?.name || (() => {
+                                {(() => {
+                                  // Get name from member object (from backend)
+                                  if (member?.name) return member.name;
+                                  
+                                  // Try to get from taskUsers (populated from API)
                                   const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
                                   if (taskUsers && taskUsers.has(assigneeId)) {
-                                    return taskUsers.get(assigneeId).name;
+                                    return taskUsers.get(assigneeId).name || assigneeId;
                                   }
-                                  return `User ${assigneeId}`;
+                                  
+                                  // Fallback: show ID (no dummy data)
+                                  return assigneeId;
                                 })()}
                               </span>
                             </div>
@@ -1267,12 +1430,18 @@ export function TaskModal({
                     {(draft.comments || []).map(comment => {
                       const commenter = memberById[comment.userId];
                       // Fallback: if commenter not found, try to get from taskUsers or use ProfileContext
-                      const displayName = commenter?.name || (() => {
+                      const displayName = (() => {
+                        // Get name from commenter object (from backend)
+                        if (commenter?.name) return commenter.name;
+                        
+                        // Try to get from taskUsers (populated from API)
                         const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
                         if (taskUsers && taskUsers.has(comment.userId)) {
-                          return taskUsers.get(comment.userId).name;
+                          return taskUsers.get(comment.userId).name || comment.userId;
                         }
-                        return `User ${comment.userId}`;
+                        
+                        // Fallback: show ID (no dummy data)
+                        return comment.userId;
                       })();
                       
                       if (!comment.userId) return null;

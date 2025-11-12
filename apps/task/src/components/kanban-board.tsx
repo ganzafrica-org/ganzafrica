@@ -26,6 +26,7 @@ export function KanbanBoard({
   onDeleteTask,
   onTaskClick,
   projectId,
+  isManager = false,
 }: {
   columns: Column[];
   tasks: Task[];
@@ -37,6 +38,7 @@ export function KanbanBoard({
   onDeleteTask?: (taskId: string) => void;
   onTaskClick?: (taskId: string) => Promise<Task | null>;
   projectId?: number;
+  isManager?: boolean;
 }): React.JSX.Element {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [loadingTask, setLoadingTask] = useState(false);
@@ -56,17 +58,47 @@ export function KanbanBoard({
 
   const handleDrop = (e: React.DragEvent, status: Status) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     const id = e.dataTransfer.getData("text/task-id");
-    console.log('Drop event:', { id, status, tasksCount: tasks.length });
+    console.log('Drop event:', { 
+      id, 
+      status, 
+      tasksCount: tasks.length, 
+      taskIds: tasks.map(t => ({ id: t.id, type: typeof t.id, title: t.title }))
+    });
+    
     if (!id) {
       console.log('No task ID found in drop data');
       return;
     }
     
-    // Find the original task to get its old status
-    const originalTask = tasks.find(t => t.id === id);
+    if (tasks.length === 0) {
+      console.log('Tasks array is empty, cannot find task');
+      return;
+    }
+    
+    // Find the original task to get its old status - handle both string and number IDs
+    const originalTask = tasks.find(t => {
+      const taskId = String(t.id);
+      const searchId = String(id);
+      const match = taskId === searchId;
+      if (match) {
+        console.log('Found matching task:', { taskId, searchId, task: t });
+      }
+      return match;
+    });
+    
     if (!originalTask) {
-      console.log('Original task not found');
+      console.error('Original task not found', { 
+        searchedId: id, 
+        searchedIdType: typeof id,
+        availableIds: tasks.map(t => ({ id: t.id, type: typeof t.id, title: t.title }))
+      });
+      showError(
+        "Task Not Found",
+        `Could not find task with ID ${id}. Please refresh the page and try again.`
+      );
       return;
     }
     
@@ -79,8 +111,19 @@ export function KanbanBoard({
       return;
     }
     
-    const updatedTasks = tasks.map(t => (t.id === id ? { ...t, status } : t));
-    console.log('Updating tasks:', updatedTasks.find(t => t.id === id));
+    // Update tasks - handle both string and number IDs
+    const updatedTasks = tasks.map(t => {
+      const taskId = String(t.id);
+      const searchId = String(id);
+      return taskId === searchId ? { ...t, status } : t;
+    });
+    
+    const updatedTask = updatedTasks.find(t => {
+      const taskId = String(t.id);
+      const searchId = String(id);
+      return taskId === searchId;
+    });
+    console.log('Updating tasks:', updatedTask);
     
     // Pass the moved task information
     const movedTask = {
@@ -158,10 +201,27 @@ export function KanbanBoard({
                 <div className="font-medium text-sm sm:text-base">{col.name}</div>
                 <div className="text-xs opacity-70 bg-white/50 rounded-full px-2 py-1">{grouped[col.id].length}</div>
               </div>
-              <div className="rounded-xl sm:rounded-2xl border border-black/5 bg-white/60 backdrop-blur min-h-[50vh] sm:min-h-[60vh] p-2 sm:p-3 space-y-2 sm:space-y-3 flex flex-col">
+              <div 
+                className="rounded-xl sm:rounded-2xl border border-black/5 bg-white/60 backdrop-blur min-h-[50vh] sm:min-h-[60vh] p-2 sm:p-3 space-y-2 sm:space-y-3 flex flex-col"
+                onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDrop(e, col.id);
+                }}
+              >
                 <div className="flex-1 space-y-2 sm:space-y-3">
                   {grouped[col.id].map(t => (
-                    <TaskCard key={t.id} task={t} members={members} onClick={() => handleTaskClick(t)} />
+                    <TaskCard 
+                      key={t.id} 
+                      task={t} 
+                      members={members} 
+                      onClick={() => handleTaskClick(t)}
+                      isManager={isManager}
+                    />
                   ))}
                 </div>
               </div>

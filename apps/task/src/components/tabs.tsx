@@ -14,7 +14,7 @@ interface TabsProps {
   className?: string;
 }
 
-export function Tabs({ tabs, activeTab, onTabChange, className = '' }: TabsProps) {
+export function Tabs({ tabs, activeTab, onTabChange, className = '' }: TabsProps): React.JSX.Element {
   return (
     <div className={`flex flex-wrap gap-1 sm:gap-2 ${className}`}>
       {tabs.map((tab) => (

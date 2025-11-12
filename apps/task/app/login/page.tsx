@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
-export default function LoginPage() {
+export default function LoginPage(): React.JSX.Element {
   useEffect(() => {
     // Redirect to portal login page
     // After login, user will go to platform-selection and can choose task management

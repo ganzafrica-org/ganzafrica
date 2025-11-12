@@ -19,10 +19,13 @@ import {
 } from '@workspace/ui/components/form';
 
 import apiClient from '@/lib/api-client';
+import { Eye, EyeOff } from "lucide-react";
 
 export function SignupForm() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Signup form
     const form = useForm({
@@ -46,15 +49,16 @@ export function SignupForm() {
                 confirm_password: data.confirm_password
             });
 
-            // Check if the response contains user data which indicates success
-            if (response.data && response.data.user) {
-                toast.success('Account created successfully! Please log in.');
-                // Redirect to login page after a brief delay
-                setTimeout(() => {
-                    router.push('/login');
-                }, 1500);
+            // Check if registration was successful (status 200/201 or user data in response)
+            if (response.status === 200 || response.status === 201 || (response.data && (response.data.user || response.data.message))) {
+                // Show success toast
+                toast.success('Account created successfully! Redirecting to login...');
+                
+                // Redirect immediately to login page
+                router.push('/login');
             } else {
                 toast.error('Signup failed. Please try again.');
+                setIsLoading(false);
             }
         } catch (error: any) {
             console.error('Registration error:', error);
@@ -63,7 +67,6 @@ export function SignupForm() {
                 error.response?.data?.message || 
                 (error.response?.data?.error ? `Error: ${error.response.data.error}` : 'Signup failed. Please try again.');
             toast.error(errorMessage);
-        } finally {
             setIsLoading(false);
         }
     };
@@ -168,9 +171,9 @@ export function SignupForm() {
                                         </svg>
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
-                                        className="pl-10 py-2 block w-full border border-gray-200 rounded"
+                                        className="pl-10 pr-10 py-2 block w-full border border-gray-200 rounded"
                                         {...form.register('password', {
                                             required: 'Password is required',
                                             minLength: {
@@ -190,6 +193,17 @@ export function SignupForm() {
                                             }
                                         })}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
                                 </div>
                                 {form.formState.errors.password && (
                                     <p className="text-red-500 text-sm mt-1">
@@ -208,9 +222,9 @@ export function SignupForm() {
                                         </svg>
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showConfirmPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
-                                        className="pl-10 py-2 block w-full border border-gray-200 rounded"
+                                        className="pl-10 pr-10 py-2 block w-full border border-gray-200 rounded"
                                         {...form.register('confirm_password', {
                                             required: 'Please confirm your password',
                                             validate: (value) => {
@@ -218,6 +232,17 @@ export function SignupForm() {
                                             }
                                         })}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                                    >
+                                        {showConfirmPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
                                 </div>
                                 {form.formState.errors.confirm_password && (
                                     <p className="text-red-500 text-sm mt-1">
