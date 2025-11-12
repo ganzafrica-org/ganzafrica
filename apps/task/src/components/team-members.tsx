@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { UserAvatar } from './user-avatar';
 
 interface TeamMember {
@@ -24,7 +25,7 @@ export function TeamMembers({
   size = 'md',
   className = '',
   showNames = false
-}: TeamMembersProps) {
+}: TeamMembersProps): React.JSX.Element {
   if (!members || members.length === 0) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>

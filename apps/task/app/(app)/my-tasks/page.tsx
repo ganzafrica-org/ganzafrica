@@ -18,7 +18,7 @@ import { ErrorModal } from "@/components/error-modal";
 import { FileText, AlertCircle, CheckCircle, Clock, Users, Calendar, X, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, UserPlus } from "lucide-react";
 import { DateFilter } from "@/components/date-filter";
 import { useDateFilter } from "@/hooks/use-date-filter";
-import { logger } from "@/lib/logger";
+import { useToast, ToastContainer } from "@/components/toast";
 
 export default function BoardPage(): React.JSX.Element {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -26,12 +26,7 @@ export default function BoardPage(): React.JSX.Element {
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [creatingTaskStatus, setCreatingTaskStatus] = useState<string>('todo');
   const [creatingTaskPriority, setCreatingTaskPriority] = useState<string>('medium');
-  const [viewMode, setViewMode] = useState<string>('table'); // 'table' or 'board'
-  
-  // Debug view mode changes
-  useEffect(() => {
-    logger.debug('View mode changed to:', viewMode);
-  }, [viewMode]);
+  const [viewMode, setViewMode] = useState<string>('table');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,6 +45,7 @@ export default function BoardPage(): React.JSX.Element {
   const [taskTeamProjects, setTaskTeamProjects] = useState<Array<{ id: number; team_id: number; name: string; color?: string }>>([]);
   const { collapsed: sidebarCollapsed, toggleCollapsed } = useSidebar();
   const [taskMembers, setTaskMembers] = useState<any[]>([]);
+  const { toasts, removeToast, showSuccess, showError } = useToast();
 
   // Get current user ID from localStorage
   const getCurrentUserId = () => {
@@ -64,9 +60,9 @@ export default function BoardPage(): React.JSX.Element {
         const user = JSON.parse(userStr);
         return user.id || 1; // fallback to 1 if no id
       }
-    } catch (error) {
-      console.error('Error getting current user:', error);
-    }
+      } catch (error) {
+        // Error getting current user
+      }
     return 1; // fallback
   };
 
@@ -96,7 +92,7 @@ export default function BoardPage(): React.JSX.Element {
         return isManagerRole;
       }
     } catch (error: unknown) {
-      logger.error('Error checking user role:', error);
+      // Error checking user role
     }
     return false; // Default to non-manager
   };
@@ -114,9 +110,9 @@ export default function BoardPage(): React.JSX.Element {
         const user = JSON.parse(userStr);
         return user;
       }
-    } catch (error) {
-      console.error('Error getting current user:', error);
-    }
+      } catch (error) {
+        // Error getting current user
+      }
     return { id: 1, name: 'Current User' }; // fallback
   };
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -148,12 +144,9 @@ export default function BoardPage(): React.JSX.Element {
   // Ensure viewMode is always valid
   const handleViewModeChange = (newViewMode: string) => {
     if (newViewMode === 'table' || newViewMode === 'board') {
-      console.log('Switching to view mode:', newViewMode);
       setViewMode(newViewMode);
       // Reset pagination when switching views
       setCurrentPage(1);
-    } else {
-      console.warn('Invalid view mode:', newViewMode);
     }
   };
 
@@ -162,8 +155,6 @@ export default function BoardPage(): React.JSX.Element {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('🔍 Starting loadAllUserTasks - taskTeamProjects:', taskTeamProjects.length, 'allTeams:', allTeams.length);
 
       // Load personal tasks from localStorage
       const savedPersonalTasks = localStorage.getItem('personalTasks');
@@ -172,11 +163,11 @@ export default function BoardPage(): React.JSX.Element {
       // Load project tasks assigned to the user from API
       let projectTasks: any[] = [];
       try {
+        const currentUserId = getCurrentUserId();
         const projectTasksResponse = await taskApi.getTasksByUser();
+        
         // Transform the backend response to match frontend format
         projectTasks = (projectTasksResponse.tasks || []).map((task: any) => {
-          console.log('Raw task data:', task);
-          console.log('🔍 Processing project task with project_id:', task.project_id);
           const baseTask = {
             ...task,
             // Transform assignees from backend format to frontend format
@@ -190,32 +181,15 @@ export default function BoardPage(): React.JSX.Element {
             dueDate: task.due_date ? new Date(task.due_date).toISOString() : undefined,
         // Add team information from backend data using project mapping
         ...(() => {
-          console.log('🔍 Processing task:', task.title);
-          console.log('🔍 Task project_id:', task.project_id);
-          console.log('🔍 Task team info (if exists):', task.team);
-          console.log('🔍 Available taskTeamProjects:', taskTeamProjects.length, taskTeamProjects);
-          console.log('🔍 Available teams:', allTeams.length, allTeams.map(t => ({ id: t.id, name: t.name })));
-          
-          // First, check if task already has team information (from task modal)
-          if (task.team) {
-            console.log('✅ Using existing task team info:', task.team);
-            return {
-              teamId: task.team.id,
-              team: task.team
-            };
-          }
-          
-          // If no team in task, find team by project_id using taskTeamProjects mapping
+          // ALWAYS get team from database via project_id mapping - don't trust stored task.team
+          // This ensures we always have the correct team from the database, not stale/cached data
           if (task.project_id && taskTeamProjects.length > 0) {
             const taskTeamProject = taskTeamProjects.find(p => p.id === task.project_id);
-            console.log('🔍 Found taskTeamProject:', taskTeamProject);
             
             if (taskTeamProject && allTeams.length > 0) {
               const team = allTeams.find(t => t.id === taskTeamProject.team_id);
-              console.log('🔍 Found team:', team);
               
               if (team) {
-                console.log('✅ Using real team from backend mapping:', team.name);
                 return {
                   teamId: String(team.id),
                   team: { 
@@ -229,7 +203,6 @@ export default function BoardPage(): React.JSX.Element {
             }
           }
           
-          console.log('❌ No team information available for task - no project mapping found');
           return {};
         })(),
           };
@@ -238,7 +211,6 @@ export default function BoardPage(): React.JSX.Element {
           return updateTaskStatusIfOverdue(baseTask);
         });
       } catch (apiError) {
-        console.warn('Could not load project tasks:', apiError);
         // Continue with just personal tasks if API fails
       }
       
@@ -286,7 +258,6 @@ export default function BoardPage(): React.JSX.Element {
       setTasks(allTasks);
 
     } catch (err: any) {
-      console.error('Error loading user tasks:', err);
       setError('Failed to load tasks');
       
       // Start with empty data if API fails
@@ -299,13 +270,9 @@ export default function BoardPage(): React.JSX.Element {
   useEffect(() => {
     // Load teams and task-team projects first, then tasks
     const loadData = async () => {
-      console.log('🔍 Starting data loading sequence...');
       await loadAllTeamsForUserInfo();
-      console.log('🔍 Teams loaded, loading projects...');
       await loadTaskTeamProjects();
-      console.log('🔍 Projects loaded, loading tasks...');
       await loadAllUserTasks();
-      console.log('🔍 All data loaded');
     };
     
     loadData();
@@ -315,7 +282,6 @@ export default function BoardPage(): React.JSX.Element {
     
     // Set up periodic refresh to check for overdue tasks every 5 minutes
     const interval = setInterval(() => {
-      console.log('Periodic refresh: checking for overdue tasks...');
       loadAllUserTasks();
     }, 5 * 60 * 1000); // 5 minutes
     
@@ -327,9 +293,7 @@ export default function BoardPage(): React.JSX.Element {
     try {
       const resp = await taskApi.getTaskTeamProjects();
       setTaskTeamProjects(resp.projects || []);
-      console.log('🔍 Loaded task team projects:', resp.projects);
     } catch (error) {
-      console.error('Error loading task team projects:', error);
       setTaskTeamProjects([]);
     }
   };
@@ -344,7 +308,6 @@ export default function BoardPage(): React.JSX.Element {
       const teamsToUse = allTeams.length > 0 ? allTeams : [];
       
       setAllTeams(teamsToUse); // Store teams in state for team information mapping
-      console.log('🔍 Loaded teams for user info:', teamsToUse);
       
       // Get existing taskUsers from window (preserve any existing data)
       let taskUsers: Map<string, any>;
@@ -406,7 +369,7 @@ export default function BoardPage(): React.JSX.Element {
       setUserInfoVersion(prev => prev + 1);
       
     } catch (error) {
-      console.error('Error loading teams for user info:', error);
+      // Error loading teams for user info
     }
   };
 
@@ -440,7 +403,7 @@ export default function BoardPage(): React.JSX.Element {
       const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true });
       setAllUsers(usersResponse.users || []);
     } catch (error: any) {
-      console.error('Error loading users:', error);
+      // Error loading users
     } finally {
       setLoadingUsers(false);
     }
@@ -468,7 +431,7 @@ export default function BoardPage(): React.JSX.Element {
       setSelectedMembersToAdd([]);
       setIsAddingMember(false);
     } catch (error: any) {
-      console.error('Error adding members:', error);
+      // Error adding members
     }
   };
 
@@ -854,57 +817,114 @@ export default function BoardPage(): React.JSX.Element {
                 columns={columns as any}
                 tasks={tasks}
                 members={taskMembers}
+                isManager={isCurrentUserManager()}
                 onTasksChange={async (updatedTasks, movedTaskInfo) => {
-                  console.log('onTasksChange called with:', updatedTasks.length, 'tasks');
-                  
                   if (movedTaskInfo) {
-                    console.log('Task moved:', movedTaskInfo.id, 'from', movedTaskInfo.oldStatus, 'to', movedTaskInfo.newStatus);
+                    // Find the moved task in the updated tasks - handle both string and number IDs
+                    const movedTask = updatedTasks.find(t => {
+                      const taskId = String(t.id);
+                      const searchId = String(movedTaskInfo.id);
+                      return taskId === searchId;
+                    });
                     
-                    // Find the moved task in the updated tasks
-                    const movedTask = updatedTasks.find(t => t.id === movedTaskInfo.id);
                     if (!movedTask) {
-                      console.error('Moved task not found in updated tasks');
+                      showError(
+                        'Task Not Found',
+                        'Could not find the task to update. Please refresh the page and try again.'
+                      );
+                      return;
+                    }
+                    
+                    // Find the original task to get project_id if it's missing from movedTask
+                    const originalTask = tasks.find(t => {
+                      const taskId = String(t.id);
+                      const searchId = String(movedTaskInfo.id);
+                      return taskId === searchId;
+                    });
+                    
+                    // Check if task is overdue and user is not a manager
+                    if (originalTask && originalTask.status === 'overdue' && !isCurrentUserManager()) {
+                      showError(
+                        'Permission Denied',
+                        'Only managers can update tasks that are in Overdue status. Please contact a manager to update this task.'
+                      );
+                      // Revert the local state change
+                      loadAllUserTasks().catch(() => {});
                       return;
                     }
                     
                     try {
                       // Update task status in database
-                      const taskData = {
+                      // Include project_id to maintain team association
+                      const taskData: any = {
                         title: movedTask.title,
                         description: movedTask.description,
                         deliverables: movedTask.deliverables,
                         status: movedTask.status,
                         priority: movedTask.priority,
-                        due_date: movedTask.dueDate ? new Date(movedTask.dueDate) : null,
                         labels: movedTask.labels || [],
                         attachments: movedTask.attachments || [],
                         assignees: movedTask.assignees.map(id => parseInt(id)),
                       };
                       
-                      console.log('🔄 Attempting to update task:', movedTask.id, 'with data:', taskData);
-                      console.log('🔄 Is current user manager?', isCurrentUserManager());
-                      
-                      if (isCurrentUserManager()) {
-                        console.log('🔄 Using unrestricted endpoint for manager');
-                        await taskApi.updateTaskUnrestricted(parseInt(movedTask.id), taskData);
+                      // Only include due_date if it exists and is valid
+                      if (movedTask.dueDate) {
+                        const dueDate = new Date(movedTask.dueDate);
+                        // Only set due_date if it's not in the past (backend validation)
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
+                        if (dueDate >= now) {
+                          taskData.due_date = dueDate;
+                        }
                       } else {
-                        console.log('🔄 Using regular endpoint for user');
-                        await taskApi.updateTask(parseInt(movedTask.id), taskData);
+                        taskData.due_date = null;
                       }
                       
-                      console.log('✅ Task status updated in database');
+                      // Include project_id if available (from movedTask or originalTask)
+                      const projectId = movedTask.projectId || (originalTask as any)?.projectId;
+                      if (projectId) {
+                        taskData.project_id = projectId;
+                      }
+                      
+                      if (isCurrentUserManager()) {
+                        await taskApi.updateTaskUnrestricted(parseInt(movedTask.id), taskData);
+                      } else {
+                        await taskApi.updateTask(parseInt(movedTask.id), taskData);
+                      }
                     } catch (error: unknown) {
-                      const errorMessage = error instanceof Error 
-                        ? error.message 
-                        : typeof error === 'object' && error !== null && 'response' in error
-                        ? (error as { response?: { data?: { message?: string } }; message?: string }).response?.data?.message || (error as { message?: string }).message || 'Unknown error'
-                        : String(error);
-                      logger.error('Error updating task status:', error);
-                      setError(`Failed to update task status: ${errorMessage}`);
+                      let errorMessage = 'Failed to update task status';
+                      let errorTitle = 'Update Failed';
+                      
+                      if (error instanceof Error) {
+                        errorMessage = error.message;
+                      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+                        const axiosError = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
+                        const status = axiosError.response?.status;
+                        const message = axiosError.response?.data?.message || axiosError.message || 'Unknown error';
+                        
+                        if (status === 400) {
+                          errorTitle = 'Invalid Request';
+                          errorMessage = message.includes('past due date') 
+                            ? 'Cannot update task with a past due date. Please select today or a future date.'
+                            : message || 'The request was invalid. Please check the task details and try again.';
+                        } else if (status === 403) {
+                          errorTitle = 'Permission Denied';
+                          errorMessage = 'You do not have permission to update this task.';
+                        } else if (status === 404) {
+                          errorTitle = 'Task Not Found';
+                          errorMessage = 'The task could not be found. It may have been deleted.';
+                        } else {
+                          errorMessage = message || 'An error occurred while updating the task.';
+                        }
+                      }
+                      
+                      showError(errorTitle, errorMessage);
+                      
+                      // Revert the local state change since the API call failed
+                      // Reload tasks to get the correct state from the server
+                      loadAllUserTasks().catch(() => {});
                       return; // Don't update local state if API call failed
                     }
-                  } else {
-                    console.log('No task moved detected, updating local state only');
                   }
                   
                   // Update local state
@@ -945,7 +965,7 @@ export default function BoardPage(): React.JSX.Element {
                 setIsCreatingTask(false);
                 // Don't reload tasks here - tasks are already updated immediately after creation/update
                 // Only refresh user info in the background if needed
-                loadAllTeamsForUserInfo().catch(console.error);
+                loadAllTeamsForUserInfo().catch(() => {});
               }
             }}
             onChange={async (updatedTask: Task) => {
@@ -953,6 +973,16 @@ export default function BoardPage(): React.JSX.Element {
                 if (updatedTask.id) {
                   // Update existing task
                   const existingTask = tasks.find(t => t.id === updatedTask.id);
+                  
+                  // Check if task is overdue and user is not a manager
+                  if (existingTask && existingTask.status === 'overdue' && !isCurrentUserManager()) {
+                    showError(
+                      'Permission Denied',
+                      'Only managers can update tasks that are in Overdue status. Please contact a manager to update this task.'
+                    );
+                    return;
+                  }
+                  
                   if (existingTask && (existingTask as any).isPersonal) {
                     // Update personal task locally
                     const updatedTasks = tasks.map(t => (t.id === updatedTask.id ? updatedTask : t));
@@ -964,6 +994,7 @@ export default function BoardPage(): React.JSX.Element {
                     localStorage.setItem('personalTasks', JSON.stringify(personalTasks));
                   } else {
                     // Update project task via API
+                    // Preserve project_id from updatedTask to maintain team association
                     const taskData = {
                       title: updatedTask.title,
                       description: updatedTask.description,
@@ -974,11 +1005,41 @@ export default function BoardPage(): React.JSX.Element {
                       labels: updatedTask.labels || [],
                       attachments: updatedTask.attachments || [],
                       assignees: updatedTask.assignees.map(id => parseInt(id)),
+                      project_id: updatedTask.projectId, // Preserve project_id to maintain team association
                     };
                     
                     const response = isCurrentUserManager() 
                       ? await taskApi.updateTaskUnrestricted(parseInt(updatedTask.id), taskData)
                       : await taskApi.updateTask(parseInt(updatedTask.id), taskData);
+                    // Get team information - prioritize updatedTask.team (preserves manager's selection)
+                    // For managers: use the selected team from updatedTask
+                    // For regular users: get from project mapping
+                    let teamInfo = updatedTask.team;
+                    const isManager = isCurrentUserManager();
+                    
+                    if (!teamInfo) {
+                      // If no team in updatedTask, try to get from project mapping
+                      if (response.task.project_id) {
+                        const mapped = taskTeamProjects.find(p => p.id === response.task.project_id);
+                        if (mapped) {
+                          const team = allTeams.find(t => t.id === mapped.team_id);
+                          if (team) {
+                            teamInfo = {
+                              id: String(team.id),
+                              name: team.name,
+                              color: team.color || '#076297',
+                              memberIds: []
+                            };
+                          }
+                        }
+                      }
+                    }
+                    
+                    // For managers: always preserve the selected team from updatedTask
+                    // For regular users: use team from project mapping
+                    const finalTeamInfo = isManager && updatedTask.team ? updatedTask.team : (teamInfo || updatedTask.team);
+                    const finalTeamId = isManager && updatedTask.teamId ? updatedTask.teamId : (finalTeamInfo ? finalTeamInfo.id : undefined);
+                    
                     const updatedProjectTask = {
                       ...response.task,
                       assignees: response.task.assignees?.map((a: any) => a.user_id.toString()) || [],
@@ -986,9 +1047,9 @@ export default function BoardPage(): React.JSX.Element {
                       comments: response.task.comments || [],
                       attachments: response.task.attachments || [],
                       dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
-                      // Preserve team information from the updated task
-                      teamId: updatedTask.teamId,
-                      team: updatedTask.team,
+                      // Preserve team information - for managers, use selected team; for others, use from project mapping
+                      teamId: finalTeamId,
+                      team: finalTeamInfo,
                     };
                     
                     const updatedTasks = tasks.map(t => (t.id === updatedTask.id ? updatedProjectTask : t));
@@ -1003,63 +1064,128 @@ export default function BoardPage(): React.JSX.Element {
                     try {
                       const projectsResponse = await taskApi.getTaskTeamProjects();
                       const projects = projectsResponse.projects || [];
-                      if (projects.length > 0) {
-                        projectId = projects[0].id;
+                      
+                      // For managers: allow selecting any project, not restricted by team
+                      // For regular users: require team-project matching
+                      const isManager = isCurrentUserManager();
+                      
+                      if (isManager) {
+                        // Managers can use any project - use projectId from task if available
+                        if (updatedTask.projectId) {
+                          projectId = updatedTask.projectId;
+                        } else if (projects.length > 0) {
+                          // If no project selected, use first available
+                          projectId = projects[0].id;
+                        }
                       } else {
-                        // If no projects available, create a personal task as fallback
-                        const personalTask = {
-                          id: Math.random().toString(36).slice(2),
-                          title: updatedTask.title,
-                          description: updatedTask.description,
-                          deliverables: updatedTask.deliverables,
-                          status: updatedTask.status,
-                          priority: updatedTask.priority,
-                          dueDate: updatedTask.dueDate,
-                          labels: updatedTask.labels || [],
-                          assignees: updatedTask.assignees.length > 0 
-                            ? updatedTask.assignees
-                            : [getCurrentUserId().toString()],
-                          teamId: updatedTask.teamId,
-                          team: updatedTask.team,
-                          comments: [],
-                          attachments: updatedTask.attachments || [],
-                          isPersonal: true
-                        };
-                        
-                        const updatedTasks = [personalTask, ...tasks];
-                        setTasks(updatedTasks);
-                        setIsCreatingTask(false);
-                        
-                        // Save to localStorage as fallback
-                        const personalTasks = updatedTasks.filter(task => (task as any).isPersonal);
-                        localStorage.setItem('personalTasks', JSON.stringify(personalTasks));
-                        console.log('✅ Personal task created (fallback):', personalTask.title);
+                        // Regular users: require team-project matching
+                        if (updatedTask.teamId && projects.length > 0) {
+                          const teamIdNum = parseInt(updatedTask.teamId);
+                          const teamProject = projects.find((p: any) => p.team_id === teamIdNum);
+                          if (teamProject) {
+                            projectId = teamProject.id;
+                          } else {
+                            // Team selected but no project for that team
+                            setError('The selected team does not have a project. Please select a different team or create a project for this team.');
+                            return;
+                          }
+                        } else if (projects.length > 0) {
+                          // No team selected, use first available project
+                          projectId = projects[0].id;
+                        }
+                      }
+                      
+                      if (!projectId) {
+                        // No projects available - show error instead of creating personal task
+                        showError(
+                          'No Project Available',
+                          'No projects are available. Please create a project first or select a team with an existing project.'
+                        );
                         return;
                       }
                     } catch (error) {
-                      console.error('Error getting projects:', error);
-                      setError('Failed to get available projects. Please try again.');
+                      // If error getting projects, show error instead of creating personal task
+                      showError(
+                        'Failed to Load Projects',
+                        'Could not load available projects. Please refresh the page and try again.'
+                      );
                       return;
                     }
+                  }
+                  
+                  // Validate that we have a project_id before creating
+                  // Backend requires project_id (even though schema allows null, migration 18 made it nullable but we still need it)
+                  if (!projectId) {
+                    showError(
+                      'Project Required',
+                      'Please select a team and project before creating a task. Tasks must be associated with a project to be saved.'
+                    );
+                    setIsCreatingTask(false);
+                    return;
+                  }
+                  
+                  // Validate due_date is not in the past
+                  let dueDate = null;
+                  if (updatedTask.dueDate) {
+                    const dueDateObj = new Date(updatedTask.dueDate);
+                    const now = new Date();
+                    now.setHours(0, 0, 0, 0);
+                    if (dueDateObj >= now) {
+                      dueDate = dueDateObj;
+                    } else {
+                      showError(
+                        'Invalid Due Date',
+                        'Cannot create task with a past due date. Please select today or a future date.'
+                      );
+                      setIsCreatingTask(false);
+                      return;
+                    }
+                  }
+                  
+                  // Ensure current user is assigned if no assignees are selected
+                  // This ensures tasks created by the user will appear in "My Assigned Tasks"
+                  const currentUserId = getCurrentUserId();
+                  let assigneesList = updatedTask.assignees.length > 0 
+                    ? updatedTask.assignees.map(id => parseInt(id))
+                    : [];
+                  
+                  // If no assignees selected, default to current user
+                  // This way the task will appear in "My Assigned Tasks" for the creator
+                  if (assigneesList.length === 0) {
+                    assigneesList = [currentUserId];
                   }
                   
                   const taskData = {
                     project_id: projectId,
                     title: updatedTask.title,
-                    description: updatedTask.description,
-                    deliverables: updatedTask.deliverables,
-                    status: updatedTask.status,
-                    priority: updatedTask.priority,
-                    due_date: updatedTask.dueDate ? new Date(updatedTask.dueDate) : null,
+                    description: updatedTask.description || '',
+                    deliverables: updatedTask.deliverables || '',
+                    status: updatedTask.status || 'todo',
+                    priority: updatedTask.priority || 'medium',
+                    due_date: dueDate,
                     labels: updatedTask.labels || [],
                     attachments: updatedTask.attachments || [],
-                    assignees: updatedTask.assignees.length > 0 
-                      ? updatedTask.assignees.map(id => parseInt(id))
-                      : [getCurrentUserId()],
-                    created_by: getCurrentUserId(),
+                    assignees: assigneesList,
+                    created_by: currentUserId,
                   };
                   
-                  const response = await taskApi.createTask(taskData);
+                  let response;
+                  try {
+                    // Use unrestricted endpoint for managers, regular for others
+                    if (isCurrentUserManager()) {
+                      response = await taskApi.createTaskUnrestricted(taskData);
+                    } else {
+                      response = await taskApi.createTask(taskData);
+                    }
+                  } catch (createError: any) {
+                    const errorMessage = createError?.response?.data?.message || createError?.message || 'Failed to create task';
+                    showError(
+                      'Task Creation Failed',
+                      errorMessage
+                    );
+                    setIsCreatingTask(false);
+                    return; // Don't continue if creation failed
+                  }
                   const newTaskId = response.task.id;
                   
                   // Save comments if there are any in the updatedTask
@@ -1071,9 +1197,7 @@ export default function BoardPage(): React.JSX.Element {
                           await taskApi.addTaskComment(newTaskId, comment.message);
                         }
                       }
-                      console.log('✅ Comments saved for new task');
                     } catch (commentError) {
-                      console.error('Error saving comments for new task:', commentError);
                       // Continue even if comments fail to save - task is created
                     }
                   }
@@ -1126,6 +1250,35 @@ export default function BoardPage(): React.JSX.Element {
                       (window as any).taskUsers = taskUsers;
                     }
                     
+                    // Get team information - prioritize updatedTask.team (preserves manager's selection)
+                    // For managers: use the selected team from updatedTask
+                    // For regular users: get from project mapping
+                    let teamInfo = updatedTask.team;
+                    const isManager = isCurrentUserManager();
+                    
+                    if (!teamInfo) {
+                      // If no team in updatedTask, try to get from project mapping
+                      if (fullTaskResponse.task.project_id) {
+                        const mapped = taskTeamProjects.find(p => p.id === fullTaskResponse.task.project_id);
+                        if (mapped) {
+                          const team = allTeams.find(t => t.id === mapped.team_id);
+                          if (team) {
+                            teamInfo = {
+                              id: String(team.id),
+                              name: team.name,
+                              color: team.color || '#076297',
+                              memberIds: []
+                            };
+                          }
+                        }
+                      }
+                    }
+                    
+                    // For managers: always preserve the selected team from updatedTask
+                    // For regular users: use team from project mapping
+                    const finalTeamInfo = isManager && updatedTask.team ? updatedTask.team : (teamInfo || updatedTask.team);
+                    const finalTeamId = isManager && updatedTask.teamId ? updatedTask.teamId : (finalTeamInfo ? finalTeamInfo.id : undefined);
+                    
                     const newTask = {
                       ...fullTaskResponse.task,
                       assignees: fullTaskResponse.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
@@ -1139,18 +1292,40 @@ export default function BoardPage(): React.JSX.Element {
                       })),
                       attachments: fullTaskResponse.task.attachments || [],
                       dueDate: fullTaskResponse.task.due_date ? new Date(fullTaskResponse.task.due_date).toISOString() : undefined,
+                      // Preserve team information - for managers, use selected team; for others, use from project mapping
+                      teamId: finalTeamId,
+                      team: finalTeamInfo,
                     };
                     
+                    // Add the new task to the tasks list
                     const updatedTasks = [newTask, ...tasks];
                     setTasks(updatedTasks);
                     setIsCreatingTask(false);
                     setActiveTask(null); // Close modal immediately so task appears right away
-                    console.log('✅ Task saved to database with comments:', newTask.title);
+                    
+                    // Show success message
+                    showSuccess(
+                      'Task Created',
+                      `Task "${newTask.title}" has been created and saved to the database successfully.`
+                    );
+                    
+                    // Wait a brief moment to ensure database transaction is committed
+                    // Then reload tasks from database to ensure we have the latest data
+                    // This ensures the task is properly saved and will appear on refresh
+                    setTimeout(async () => {
+                      try {
+                        await loadAllUserTasks();
+                      } catch (err) {
+                        showError(
+                          'Reload Failed',
+                          'Task was created but could not reload. Please refresh the page to see your new task.'
+                        );
+                      }
+                    }, 500); // 500ms delay to ensure database commit
                     
                     // Refresh user information in the background (non-blocking)
-                    loadAllTeamsForUserInfo().catch(console.error);
+                    loadAllTeamsForUserInfo().catch(() => {});
                   } catch (reloadError) {
-                    console.error('Error reloading task after creation:', reloadError);
                     // Fallback to original response if reload fails
                     const fallbackTask = {
                       ...response.task,
@@ -1165,15 +1340,18 @@ export default function BoardPage(): React.JSX.Element {
                     setTasks(updatedTasks);
                     setIsCreatingTask(false);
                     setActiveTask(null); // Close modal immediately so task appears right away
-                    console.log('✅ Task saved to database (reload failed):', fallbackTask.title);
                     
                     // Refresh user information in the background (non-blocking)
-                    loadAllTeamsForUserInfo().catch(console.error);
+                    loadAllTeamsForUserInfo().catch(() => {});
                   }
                 }
               } catch (err: any) {
-                console.error('Error saving task:', err);
-                setError('Failed to save task');
+                const errorMessage = err?.response?.data?.message || err?.message || 'Failed to save task';
+                showError(
+                  'Task Save Failed',
+                  errorMessage
+                );
+                setIsCreatingTask(false);
               }
             }}
             onDelete={async (id) => {
@@ -1200,7 +1378,6 @@ export default function BoardPage(): React.JSX.Element {
                   setActiveTask(null);
                 }
               } catch (err: any) {
-                console.error('Error deleting task:', err);
                 setError('Failed to delete task');
               }
             }}
@@ -1273,7 +1450,6 @@ export default function BoardPage(): React.JSX.Element {
                         setShowDeleteModal(false);
                         setTaskToDelete(null);
                       } catch (err: any) {
-                        console.error('Error deleting task:', err);
                         setError('Failed to delete task');
                         setShowDeleteModal(false);
                         setTaskToDelete(null);
@@ -1316,6 +1492,9 @@ export default function BoardPage(): React.JSX.Element {
         confirmText="Confirm"
         showCancel={true}
       />
+      
+      {/* Toast Container for notifications */}
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </PageLayout>
   );
 }

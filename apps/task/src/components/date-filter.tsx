@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { CalendarDays, Filter, X } from "lucide-react";
 
 interface DateFilterProps {
@@ -17,7 +17,7 @@ export function DateFilter({
   customDateRange,
   setCustomDateRange,
   className = ""
-}: DateFilterProps) {
+}: DateFilterProps): React.JSX.Element {
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [showCustomDateModal, setShowCustomDateModal] = useState(false);
 

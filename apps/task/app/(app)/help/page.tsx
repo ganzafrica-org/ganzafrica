@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { HelpCircle, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 
-export default function HelpPage() {
+export default function HelpPage(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
 

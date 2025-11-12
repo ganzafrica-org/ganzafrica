@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Monitor, Moon, Sun, Save, RefreshCw } from "lucide-react";
 import { PageLayout } from "@/components/page-layout";
 import { Button } from "@/components/button";
 import { logger } from "@/lib/logger";
 
-export default function SettingsPage() {
+export default function SettingsPage(): React.JSX.Element {
   const [settings, setSettings] = useState({
     theme: "light",
     language: "en",

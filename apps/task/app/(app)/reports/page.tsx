@@ -7,16 +7,12 @@ import { Navbar } from '@/components/navbar';
 import { PageLayout } from '@/components/page-layout';
 import { DateFilter } from '@/components/date-filter';
 import { Task, TeamMember } from '@/lib/types';
-import { CheckCircle, FileText, Download, Eye, Calendar, User, X, Upload, FolderOpen, Users, Folder, ChevronRight, Filter, Plus, FileIcon, Archive, Loader2, Briefcase, ArrowLeft } from 'lucide-react';
+import { CheckCircle, FileText, Download, Eye, Calendar, User as UserIcon, X, Upload, FolderOpen, Users, Folder, ChevronRight, Filter, Plus, FileIcon, Archive, Loader2, Briefcase, ArrowLeft } from 'lucide-react';
 import { taskTeamsApi, TaskTeam } from '@/lib/api/task-teams';
+import { usersApi, User } from '@/lib/api/users';
 import apiClient from '@/lib/api-client';
 
-// Mock members for now - this should come from user context
-const mockMembers: TeamMember[] = [
-  { id: 'john-doe', name: 'John Doe', email: 'john@example.com', color: '#3B82F6', initials: 'JD' },
-  { id: 'jane-smith', name: 'Jane Smith', email: 'jane@example.com', color: '#10B981', initials: 'JS' },
-  { id: 'mike-wilson', name: 'Mike Wilson', email: 'mike@example.com', color: '#F59E0B', initials: 'MW' }
-];
+// Members will be loaded from database - no mock data
 
 // Utility functions
 const formatFileSize = (bytes: number): string => {
@@ -70,11 +66,13 @@ function ReportsContent() {
   const [teams, setTeams] = useState<TaskTeam[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [files, setFiles] = useState<any[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState({
     teams: false,
     projects: false,
     files: false,
-    upload: false
+    upload: false,
+    members: false
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -153,9 +151,47 @@ function ReportsContent() {
     }
   };
 
+  // Load members from database
+  const fetchMembers = async () => {
+    try {
+      setLoading(prev => ({ ...prev, members: true }));
+      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true });
+      const users = usersResponse.users || [];
+      
+      // Transform users to TeamMember format
+      const teamMembers: TeamMember[] = users.map((user: User) => {
+        const initials = user.name 
+          ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+          : 'U' + user.id.toString().slice(0, 1);
+        
+        const colors = [
+          '#8b5cf6', '#f59e0b', '#3b82f6', '#10b981', '#ec4899', 
+          '#f97316', '#6366f1', '#ef4444', '#06b6d4', '#84cc16'
+        ];
+        const color = colors[user.id % colors.length];
+        
+        return {
+          id: user.id.toString(),
+          name: user.name,
+          email: user.email,
+          color: color,
+          initials: initials,
+        };
+      });
+      
+      setMembers(teamMembers);
+    } catch (err) {
+      console.error('Error fetching members:', err);
+      setMembers([]);
+    } finally {
+      setLoading(prev => ({ ...prev, members: false }));
+    }
+  };
+
   // Load initial data
   useEffect(() => {
     fetchTeams();
+    fetchMembers();
   }, []);
 
   // Load projects when team is selected
@@ -263,7 +299,7 @@ function ReportsContent() {
 
   return (
     <PageLayout 
-      members={mockMembers} 
+      members={members} 
       tasks={[]} 
       title="Reports"
     >
@@ -946,7 +982,7 @@ function ReportsContent() {
   );
 }
 
-export default function ReportsPage() {
+export default function ReportsPage(): React.JSX.Element {
   return (
     <SidebarProvider>
       <ReportsContent />

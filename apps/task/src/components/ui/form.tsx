@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
-const Form = FormProvider
+const Form = FormProvider as React.ComponentType<React.ComponentProps<typeof FormProvider>>
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,

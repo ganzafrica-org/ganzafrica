@@ -21,7 +21,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@workspace/ui/components/
 import { Card } from '@workspace/ui/components/card';
 
 import apiClient from '@/lib/api-client';
-import { AtSign, LockKeyhole } from "lucide-react";
+import { AtSign, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { useAuth } from '@/components/auth/auth-provider'; // Update path if needed
 
 export function LoginForm() {
@@ -31,6 +31,7 @@ export function LoginForm() {
     const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
     const [twoFactorMethod, setTwoFactorMethod] = useState<'authenticator' | 'email'>('authenticator');
     const [tempToken, setTempToken] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Regular login form
     const loginForm = useForm({
@@ -268,9 +269,9 @@ export function LoginForm() {
                                         <LockKeyhole className="h-4 w-4 text-black" />
                                     </div>
                                     <input
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
-                                        className="pl-10 py-2 block w-full border border-gray-200 rounded"
+                                        className="pl-10 pr-10 py-2 block w-full border border-gray-200 rounded"
                                         {...loginForm.register('password', {
                                             required: 'Password is required',
                                             minLength: {
@@ -279,6 +280,17 @@ export function LoginForm() {
                                             }
                                         })}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
                                 </div>
                                 {loginForm.formState.errors.password && (
                                     <p className="text-red-500 text-sm mt-1">
