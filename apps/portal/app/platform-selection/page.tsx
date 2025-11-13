@@ -14,6 +14,7 @@ import {
 import { LogOut, Users, CheckSquare, ArrowRight, Shield, User, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api-client';
+import { isAdminOrManager } from '@/lib/auth-utils';
 
 export default function PlatformSelectionPage(): React.JSX.Element {
     const router = useRouter();
@@ -23,28 +24,6 @@ export default function PlatformSelectionPage(): React.JSX.Element {
     const [avatarError, setAvatarError] = useState(false);
     const [modalAvatarError, setModalAvatarError] = useState(false);
 
-    // Helper function to check if user is admin or manager
-    const isAdminOrManager = (user: any): boolean => {
-        if (!user) return false;
-        
-        const roleName = user.role_name || user.roleName || user.role;
-        const roleId = user.role_id || user.roleId;
-        
-        console.log('Checking user role:', { roleName, roleId, user }); // Debug log
-        
-        // Check for admin or manager roles by name
-        const isAdminOrManagerByName = roleName && (
-            roleName.toLowerCase().includes('admin') ||
-            roleName.toLowerCase().includes('manager') ||
-            roleName.toLowerCase().includes('staff') ||
-            roleName.toLowerCase().includes('mentor')
-        );
-        
-        // Check for admin or manager roles by ID (assuming admin/manager roles have IDs < 1000)
-        const isAdminOrManagerById = roleId && roleId < 1000;
-        
-        return !!isAdminOrManagerByName || !!isAdminOrManagerById;
-    };
 
     useEffect(() => {
         // Check if user is authenticated
@@ -150,6 +129,12 @@ export default function PlatformSelectionPage(): React.JSX.Element {
 
     const handlePlatformSelect = (platform: 'portal' | 'task' | 'website') => {
         if (platform === 'portal') {
+            // Check if user is admin or manager before allowing portal access
+            if (!isAdminOrManager(user)) {
+                toast.error("You are not authenticated to access this platform. Only administrators and managers can access the portal.");
+                router.push('/unauthorized');
+                return;
+            }
             router.push('/dashboard');
         } else if (platform === 'task') {
             // Pass authentication data to task management app

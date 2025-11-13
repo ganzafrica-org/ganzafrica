@@ -408,7 +408,9 @@ export const getAllTasks = async (req: Request, res: Response) => {
  */
 export const getTaskTeamProjects = async (req: Request, res: Response) => {
   try {
-    const projects = await taskService.getTaskTeamProjects();
+    // Get user_id from query parameter if provided (for filtering projects by user membership)
+    const userId = req.query.user_id ? parseInt(req.query.user_id as string) : undefined;
+    const projects = await taskService.getTaskTeamProjects(userId);
 
     res.status(200).json({
       message: "Task team projects retrieved successfully",

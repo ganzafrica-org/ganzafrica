@@ -234,7 +234,33 @@ export function TaskModal({
           if (currentProjects.length === 0) {
             // Try to load projects if not loaded
             try {
-              const resp = await taskApi.getTaskTeamProjects();
+              // Check if user is admin or manager - if not, filter projects
+              const isAdminOrManager = isCurrentUserAdminOrManager();
+              let resp;
+              
+              if (isAdminOrManager) {
+                resp = await taskApi.getTaskTeamProjects();
+              } else {
+                const currentUserId = typeof window !== 'undefined' ? (() => {
+                  try {
+                    const userStr = localStorage.getItem('task_user');
+                    if (userStr) {
+                      const user = JSON.parse(userStr);
+                      return user.id;
+                    }
+                  } catch (error) {
+                    console.error('Error getting current user:', error);
+                  }
+                  return null;
+                })() : null;
+                
+                if (currentUserId) {
+                  resp = await taskApi.getTaskTeamProjects(currentUserId);
+                } else {
+                  resp = { projects: [] };
+                }
+              }
+              
               setTaskTeamProjects(resp.projects || []);
               currentProjects = resp.projects || [];
             } catch (e) {
@@ -347,7 +373,36 @@ export function TaskModal({
       // Load task-team projects for team->project mapping
       (async () => {
         try {
-          const resp = await taskApi.getTaskTeamProjects();
+          // Check if user is admin or manager - if not, filter projects to only show projects they are members of
+          const isAdminOrManager = isCurrentUserAdminOrManager();
+          let resp;
+          
+          if (isAdminOrManager) {
+            // Load ALL projects for admin/management users
+            resp = await taskApi.getTaskTeamProjects();
+          } else {
+            // For non-admin/management users, only load projects they are members of
+            const currentUserId = typeof window !== 'undefined' ? (() => {
+              try {
+                const userStr = localStorage.getItem('task_user');
+                if (userStr) {
+                  const user = JSON.parse(userStr);
+                  return user.id;
+                }
+              } catch (error) {
+                console.error('Error getting current user:', error);
+              }
+              return null;
+            })() : null;
+            
+            if (currentUserId) {
+              resp = await taskApi.getTaskTeamProjects(currentUserId);
+            } else {
+              // If we can't get user ID, return empty array
+              resp = { projects: [] };
+            }
+          }
+          
           setTaskTeamProjects(resp.projects || []);
           
           // Preserve team from task if it exists (priority)
@@ -407,13 +462,39 @@ export function TaskModal({
     try {
       setLoadingTeams(true);
       
-      // Load ALL teams from the teams page - no filtering, no dummy data
-      // This allows users to select any team and assign members from that team
-      const response = await taskTeamsApi.listTeams();
+      // Check if user is admin or manager - if not, filter teams to only show teams they are members of
+      const isAdminOrManager = isCurrentUserAdminOrManager();
+      let response;
+      
+      if (isAdminOrManager) {
+        // Load ALL teams for admin/management users
+        response = await taskTeamsApi.listTeams();
+      } else {
+        // For non-admin/management users, only load teams they are members of
+        const currentUserId = typeof window !== 'undefined' ? (() => {
+          try {
+            const userStr = localStorage.getItem('task_user');
+            if (userStr) {
+              const user = JSON.parse(userStr);
+              return user.id;
+            }
+          } catch (error) {
+            console.error('Error getting current user:', error);
+          }
+          return null;
+        })() : null;
+        
+        if (currentUserId) {
+          response = await taskTeamsApi.listTeams({ user_id: currentUserId });
+        } else {
+          // If we can't get user ID, return empty array
+          response = { teams: [] };
+        }
+      }
       
       const loadedTeams = response.teams || [];
       
-      // Use all teams from API (no filtering)
+      // Use filtered teams from API
       const teamsToUse = loadedTeams;
       
       setTeams(teamsToUse);

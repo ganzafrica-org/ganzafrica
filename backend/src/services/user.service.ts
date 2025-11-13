@@ -1,8 +1,8 @@
 import { db } from "../db/client";
 import { users, user_profiles, roles } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { AppError } from "../middlewares";
-import { constants } from "../config";
+import { constants, Logger } from "../config";
 import { hashPassword } from "./auth.service";
 import { User, CreateUserInput, UpdateUserInput } from "./types";
 import {
@@ -10,6 +10,8 @@ import {
   sendWelcomeEmail,
 } from "../services/email.service";
 import { createToken } from "./auth.service";
+
+const logger = new Logger("UserService");
 
 /**
  * Create a new user
@@ -73,7 +75,7 @@ export const createUser = async (userData: CreateUserInput): Promise<User> => {
       // Optionally also send a welcome email
       await sendWelcomeEmail(newUser.email, newUser.name);
     } catch (error) {
-      console.error("Failed to send verification email:", error);
+      logger.error("Failed to send verification email:", error);
       // Don't fail the user creation if email sending fails
     }
   }
@@ -135,10 +137,27 @@ export const updateUser = async (
   return updatedUser;
 };
 /**
- * Delete user (soft delete)
+ * Activate user (sets is_active to true)
  */
-export const deleteUser = async (id: number | string): Promise<void> => {
-  // Implement as soft delete using is_active field
+export const activateUser = async (id: number | string): Promise<void> => {
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      is_active: true,
+      updated_at: new Date(),
+    })
+    .where(eq(users.id, Number(id)))
+    .returning();
+
+  if (!updatedUser) {
+    throw new AppError(constants.ERROR_MESSAGES.USER_NOT_FOUND, 404);
+  }
+};
+
+/**
+ * Deactivate user (soft delete - sets is_active to false)
+ */
+export const deactivateUser = async (id: number | string): Promise<void> => {
   const [updatedUser] = await db
     .update(users)
     .set({
@@ -150,6 +169,184 @@ export const deleteUser = async (id: number | string): Promise<void> => {
 
   if (!updatedUser) {
     throw new AppError(constants.ERROR_MESSAGES.USER_NOT_FOUND, 404);
+  }
+};
+
+/**
+ * Delete user (hard delete - completely removes from database)
+ * This function deletes all related records first to handle foreign key constraints
+ */
+export const deleteUser = async (id: number | string): Promise<void> => {
+  const userId = Number(id);
+  
+  // Validate ID
+  if (isNaN(userId) || userId <= 0) {
+    throw new AppError(constants.ERROR_MESSAGES.USER_NOT_FOUND, 404);
+  }
+
+  // First, verify the user exists
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+  });
+
+  if (!user) {
+    throw new AppError(constants.ERROR_MESSAGES.USER_NOT_FOUND, 404);
+  }
+
+  // Helper function to safely delete from a table
+  const safeDelete = async (tableName: string, query: any) => {
+    try {
+      await db.execute(query);
+    } catch (error: any) {
+      // If table doesn't exist (42P01) or column doesn't exist, just continue
+      if (error.code !== '42P01' && error.code !== '42703') {
+        // For other errors, log but continue (might be constraint issues)
+        logger.warn(`Error deleting from ${tableName}: ${error.message}`);
+      }
+    }
+  };
+  
+  // Query database for ALL foreign keys that reference users.id
+  let allFKs: any[] = [];
+  try {
+    const fkResult = await db.execute(sql`
+      SELECT 
+        tc.table_name, 
+        kcu.column_name,
+        tc.constraint_name,
+        rc.delete_rule
+      FROM information_schema.table_constraints AS tc 
+      JOIN information_schema.key_column_usage AS kcu
+        ON tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+      JOIN information_schema.constraint_column_usage AS ccu
+        ON ccu.constraint_name = tc.constraint_name
+        AND ccu.table_schema = tc.table_schema
+      JOIN information_schema.referential_constraints AS rc
+        ON rc.constraint_name = tc.constraint_name
+        AND rc.constraint_schema = tc.table_schema
+      WHERE tc.constraint_type = 'FOREIGN KEY' 
+        AND ccu.table_name = 'users'
+        AND ccu.column_name = 'id'
+    `);
+    allFKs = fkResult.rows || [];
+  } catch (fkError: any) {
+    logger.warn(`Could not query foreign keys: ${fkError.message}`);
+  }
+  
+  // Delete from known tables first
+  await safeDelete('user_profiles', sql`DELETE FROM user_profiles WHERE user_id = ${userId}`);
+  await safeDelete('password_reset_tokens', sql`DELETE FROM password_reset_tokens WHERE user_id = ${userId}`);
+  await safeDelete('verification_tokens', sql`DELETE FROM verification_tokens WHERE user_id = ${userId}`);
+  await safeDelete('sessions', sql`DELETE FROM sessions WHERE user_id = ${userId}`);
+  await safeDelete('two_factor_temp_tokens', sql`DELETE FROM two_factor_temp_tokens WHERE user_id = ${userId}`);
+  await safeDelete('two_factor_credentials', sql`DELETE FROM two_factor_credentials WHERE user_id = ${userId}`);
+  await safeDelete('task_comments', sql`DELETE FROM task_comments WHERE user_id = ${userId}`);
+  await safeDelete('task_assignees', sql`DELETE FROM task_assignees WHERE user_id = ${userId}`);
+  await safeDelete('task_team_members', sql`DELETE FROM task_team_members WHERE user_id = ${userId}`);
+  await safeDelete('task_project_members', sql`DELETE FROM task_project_members WHERE user_id = ${userId}`);
+  await safeDelete('user_roles', sql`DELETE FROM user_roles WHERE user_id = ${userId}`);
+  await safeDelete('applications', sql`DELETE FROM applications WHERE user_id = ${userId}`);
+  await safeDelete('tasks', sql`DELETE FROM tasks WHERE created_by = ${userId} OR assigned_to = ${userId}`);
+  await safeDelete('reports', sql`DELETE FROM reports WHERE created_by = ${userId} OR assigned_to = ${userId} OR reviewed_by = ${userId} OR approved_by = ${userId}`);
+  await safeDelete('opportunities', sql`DELETE FROM opportunities WHERE created_by = ${userId} OR assigned_to = ${userId} OR updated_by = ${userId}`);
+  
+  // Delete from any additional tables found via FK query (that don't have CASCADE)
+  if (allFKs.length > 0) {
+    for (const fk of allFKs) {
+      if (fk.delete_rule === 'CASCADE') {
+        continue;
+      }
+      
+      try {
+        const check = await db.execute(sql.raw(`
+          SELECT COUNT(*) as count 
+          FROM ${fk.table_name} 
+          WHERE ${fk.column_name} = ${userId}
+        `));
+        if (check.rows && check.rows[0]) {
+          const count = parseInt(String(check.rows[0].count || '0'), 10);
+          if (count > 0) {
+            await db.execute(sql.raw(`DELETE FROM ${fk.table_name} WHERE ${fk.column_name} = ${userId}`));
+          }
+        }
+      } catch (e: any) {
+        logger.warn(`Could not delete from ${fk.table_name}.${fk.column_name}: ${e.message}`);
+      }
+    }
+  }
+  
+  // Use advisory lock to prevent race conditions when dropping/recreating trigger
+  const LOCK_ID = 12345;
+  let lockAcquired = false;
+  let triggerDropped = false;
+  
+  try {
+    await db.execute(sql`SELECT pg_advisory_lock(${LOCK_ID})`);
+    lockAcquired = true;
+    
+    try {
+      await db.execute(sql`DROP TRIGGER IF EXISTS prevent_user_delete_trigger ON users`);
+      triggerDropped = true;
+    } catch (triggerError: any) {
+      logger.warn(`Could not drop trigger: ${triggerError.message}`);
+    }
+    
+    const deleteResult = await db.execute(
+      sql`DELETE FROM users WHERE id = ${userId}`
+    );
+    
+    if ((deleteResult.rowCount || 0) === 0) {
+      throw new AppError("Failed to delete user - no rows deleted", 500);
+    }
+  } catch (deleteError: any) {
+    logger.error(`Error during user deletion:`, deleteError);
+    if (deleteError.code === '23503') {
+      throw new AppError("Cannot delete user - still referenced by other records.", 409);
+    }
+    throw deleteError;
+  } finally {
+    if (triggerDropped) {
+      try {
+        const triggerCheck = await db.execute(sql`
+          SELECT COUNT(*) as count
+          FROM pg_trigger
+          WHERE tgname = 'prevent_user_delete_trigger'
+        `);
+        const triggerExists = (triggerCheck.rows?.[0] as any)?.count > 0;
+        
+        if (!triggerExists) {
+          await db.execute(sql`
+            CREATE TRIGGER prevent_user_delete_trigger
+            BEFORE DELETE ON users
+            FOR EACH ROW
+            EXECUTE FUNCTION soft_delete_trigger()
+          `);
+        }
+      } catch (triggerError: any) {
+        if (triggerError.code !== '42P07') {
+          logger.error(`CRITICAL: Could not re-create trigger: ${triggerError.message}`);
+        }
+      }
+    }
+    
+    if (lockAcquired) {
+      try {
+        await db.execute(sql`SELECT pg_advisory_unlock(${LOCK_ID})`);
+      } catch (unlockError: any) {
+        logger.warn(`Could not release advisory lock: ${unlockError.message}`);
+      }
+    }
+  }
+
+  // Final verification
+  const finalCheck = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+  });
+  
+  if (finalCheck) {
+    logger.error(`CRITICAL: User still exists after successful delete! ID: ${userId}`);
+    throw new AppError("Delete operation failed - user still exists", 500);
   }
 };
 
@@ -191,10 +388,7 @@ export const listUsers = async (params: any) => {
 
   // Count total matching users
   const countQuery = `SELECT COUNT(*) as total FROM users u ${whereClause}`;
-  console.log("Count query:", countQuery);
-
   const countResults = await db.execute(countQuery);
-  console.log("Count results:", countResults);
   const total = parseInt(String(countResults.rows?.[0]?.total || "0"), 10);
 
   // Get paginated users
@@ -208,10 +402,7 @@ export const listUsers = async (params: any) => {
     ORDER BY u.${sort_by} ${sort_order === "asc" ? "ASC" : "DESC"}
     LIMIT ${limit} OFFSET ${offset}
   `;
-  console.log("Users query:", usersQuery);
-
   const usersResults = await db.execute(usersQuery);
-  console.log("Users results structure:", Object.keys(usersResults));
 
   // Return the users and total
   return {
