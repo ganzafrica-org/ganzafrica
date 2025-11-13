@@ -92,6 +92,24 @@ export function TaskModal({
         }
       }
       
+      // Wait for teams and projects to be loaded before determining team
+      // This ensures we have the correct mapping
+      if (!teamsLoaded || teams.length === 0 || taskTeamProjects.length === 0) {
+        console.log('⏳ Waiting for teams and projects to load before loading task details...');
+        // Load teams and projects if not loaded
+        if (!teamsLoaded) {
+          await loadTeams();
+        }
+        if (taskTeamProjects.length === 0) {
+          try {
+            const resp = await taskApi.getTaskTeamProjects();
+            setTaskTeamProjects(resp.projects || []);
+          } catch (e) {
+            console.error('Error loading task team projects:', e);
+          }
+        }
+      }
+      
       // Use unrestricted endpoint for management mode, regular endpoint for individual mode
       const response = mode === "management" 
         ? await taskApi.getTaskByIdUnrestricted(numericId)
@@ -181,6 +199,7 @@ export function TaskModal({
           (window as any).taskUsers = taskUsers;
           console.log('✅ Updated taskUsers map with user info from task API. Total users:', taskUsers.size);
           console.log('✅ User data from database:', Array.from(taskUsers.entries()).slice(0, 3));
+          console.log('✅ User data from database:', Array.from(taskUsers.entries()).slice(0, 3));
         }
         
         // Trigger userInfoVersion update to refresh memberById
@@ -234,7 +253,33 @@ export function TaskModal({
           if (currentProjects.length === 0) {
             // Try to load projects if not loaded
             try {
-              const resp = await taskApi.getTaskTeamProjects();
+              // Check if user is admin or manager - if not, filter projects
+              const isAdminOrManager = isCurrentUserAdminOrManager();
+              let resp;
+              
+              if (isAdminOrManager) {
+                resp = await taskApi.getTaskTeamProjects();
+              } else {
+                const currentUserId = typeof window !== 'undefined' ? (() => {
+                  try {
+                    const userStr = localStorage.getItem('task_user');
+                    if (userStr) {
+                      const user = JSON.parse(userStr);
+                      return user.id;
+                    }
+                  } catch (error) {
+                    console.error('Error getting current user:', error);
+                  }
+                  return null;
+                })() : null;
+                
+                if (currentUserId) {
+                  resp = await taskApi.getTaskTeamProjects(currentUserId);
+                } else {
+                  resp = { projects: [] };
+                }
+              }
+              
               setTaskTeamProjects(resp.projects || []);
               currentProjects = resp.projects || [];
             } catch (e) {
@@ -306,6 +351,23 @@ export function TaskModal({
         if (response.task.project_id) {
           setSelectedProjectId(response.task.project_id);
         }
+        // Set selected team for header and member loading - preserve the team
+        if (teamIdStr) {
+          setSelectedTeamId(parseInt(teamIdStr));
+        } else if (response.task.project_id) {
+          // Fallback: try to get from project mapping
+          try {
+            const mapped = taskTeamProjects.find(p => p.id === response.task.project_id);
+            if (mapped) {
+              setSelectedTeamId(mapped.team_id);
+            }
+          } catch {}
+        }
+        
+        // Set selected project ID for managers
+        if (response.task.project_id) {
+          setSelectedProjectId(response.task.project_id);
+        }
       }
     } catch (error) {
       console.error('Error loading full task details:', error);
@@ -330,10 +392,22 @@ export function TaskModal({
         } else if (task.teamId) {
           setSelectedTeamId(parseInt(task.teamId || '0'));
         }
+        // Preserve team from task if it exists
+        if (task.team?.id) {
+          setSelectedTeamId(parseInt(task.team.id));
+        } else if (task.teamId) {
+          setSelectedTeamId(parseInt(task.teamId || '0'));
+        }
       }
     } else {
       // For new tasks or when modal is closed, use the task as-is
       setDraft(task);
+      // Preserve team from task if it exists
+      if (task?.team?.id) {
+        setSelectedTeamId(parseInt(task.team.id));
+      } else if (task?.teamId) {
+        setSelectedTeamId(parseInt(task.teamId || '0'));
+      }
       // Preserve team from task if it exists
       if (task?.team?.id) {
         setSelectedTeamId(parseInt(task.team.id));
@@ -347,7 +421,36 @@ export function TaskModal({
       // Load task-team projects for team->project mapping
       (async () => {
         try {
-          const resp = await taskApi.getTaskTeamProjects();
+          // Check if user is admin or manager - if not, filter projects to only show projects they are members of
+          const isAdminOrManager = isCurrentUserAdminOrManager();
+          let resp;
+          
+          if (isAdminOrManager) {
+            // Load ALL projects for admin/management users
+            resp = await taskApi.getTaskTeamProjects();
+          } else {
+            // For non-admin/management users, only load projects they are members of
+            const currentUserId = typeof window !== 'undefined' ? (() => {
+              try {
+                const userStr = localStorage.getItem('task_user');
+                if (userStr) {
+                  const user = JSON.parse(userStr);
+                  return user.id;
+                }
+              } catch (error) {
+                console.error('Error getting current user:', error);
+              }
+              return null;
+            })() : null;
+            
+            if (currentUserId) {
+              resp = await taskApi.getTaskTeamProjects(currentUserId);
+            } else {
+              // If we can't get user ID, return empty array
+              resp = { projects: [] };
+            }
+          }
+          
           setTaskTeamProjects(resp.projects || []);
           
           // Preserve team from task if it exists (priority)
@@ -407,13 +510,39 @@ export function TaskModal({
     try {
       setLoadingTeams(true);
       
-      // Load ALL teams from the teams page - no filtering, no dummy data
-      // This allows users to select any team and assign members from that team
-      const response = await taskTeamsApi.listTeams();
+      // Check if user is admin or manager - if not, filter teams to only show teams they are members of
+      const isAdminOrManager = isCurrentUserAdminOrManager();
+      let response;
+      
+      if (isAdminOrManager) {
+        // Load ALL teams for admin/management users
+        response = await taskTeamsApi.listTeams();
+      } else {
+        // For non-admin/management users, only load teams they are members of
+        const currentUserId = typeof window !== 'undefined' ? (() => {
+          try {
+            const userStr = localStorage.getItem('task_user');
+            if (userStr) {
+              const user = JSON.parse(userStr);
+              return user.id;
+            }
+          } catch (error) {
+            console.error('Error getting current user:', error);
+          }
+          return null;
+        })() : null;
+        
+        if (currentUserId) {
+          response = await taskTeamsApi.listTeams({ user_id: currentUserId });
+        } else {
+          // If we can't get user ID, return empty array
+          response = { teams: [] };
+        }
+      }
       
       const loadedTeams = response.teams || [];
       
-      // Use all teams from API (no filtering)
+      // Use filtered teams from API
       const teamsToUse = loadedTeams;
       
       setTeams(teamsToUse);
@@ -652,6 +781,9 @@ export function TaskModal({
     console.log('🔍 Available teams:', teams.map(t => ({ id: t.id, name: t.name })));
     
     setSelectedTeamId(numericTeamId);
+    // Clear project selection when team changes - user must select project from team's projects
+    setSelectedProjectId(null);
+    
     // Clear project selection when team changes - user must select project from team's projects
     setSelectedProjectId(null);
     
@@ -1176,6 +1308,18 @@ export function TaskModal({
                   <div className="flex items-center justify-between mb-3">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                     <Users className="w-4 h-4" />
+                    {(() => {
+                      // Use currentTeamInfo to get team name (preserves team from backend)
+                      if (currentTeamInfo.name) {
+                        return `Team Members - ${currentTeamInfo.name}`;
+                      }
+                      // Fallback to selectedTeamId if currentTeamInfo not available
+                      if (selectedTeamId) {
+                        const team = teams.find(t => t.id === selectedTeamId);
+                        return team ? `Team Members - ${team.name}` : "Assignees";
+                      }
+                      return "Assignees";
+                    })()}
                     {(() => {
                       // Use currentTeamInfo to get team name (preserves team from backend)
                       if (currentTeamInfo.name) {

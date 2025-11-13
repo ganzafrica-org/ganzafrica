@@ -14,6 +14,9 @@ import {
 import { eq, and, gte, lte, desc, asc, sql, inArray } from "drizzle-orm";
 import upload from "../middlewares/upload";
 import { getFileSubdirectory, getFileUrl } from "../middlewares/upload";
+import { Logger } from "../config";
+
+const logger = new Logger("ReportsController");
 
 // Get reports with filtering by date range, team, and project
 export const getReports = async (req: Request, res: Response) => {
@@ -116,7 +119,7 @@ export const getReports = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching reports:', error);
+    logger.error('Error fetching reports:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch reports' });
   }
 };
@@ -166,7 +169,7 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
       data: teams
     });
   } catch (error) {
-    console.error('Error fetching teams with projects:', error);
+    logger.error('Error fetching teams with projects:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch teams with projects' });
   }
 };
@@ -226,7 +229,6 @@ export const getTeamProjects = async (req: Request, res: Response) => {
 
     // Get task attachment counts for each project
     const projectIds = projects.map(p => p.id);
-    console.log('Project IDs:', projectIds);
     
     const taskAttachmentCounts = await db
       .select({
@@ -241,8 +243,6 @@ export const getTeamProjects = async (req: Request, res: Response) => {
         )
       )
       .groupBy(tasks.project_id);
-
-    console.log('Task attachment counts:', taskAttachmentCounts);
 
     // Combine file counts from report_files and task attachments
     const projectsWithTotalFiles = projects.map(project => {
@@ -260,7 +260,7 @@ export const getTeamProjects = async (req: Request, res: Response) => {
       data: projectsWithTotalFiles
     });
   } catch (error) {
-    console.error('Error fetching team projects:', error);
+    logger.error('Error fetching team projects:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch team projects' });
   }
 };
@@ -311,7 +311,6 @@ export const getProjectFiles = async (req: Request, res: Response) => {
       .where(and(...whereConditions))
       .orderBy(desc(report_files.created_at));
 
-    console.log('Report files found:', reportFiles.length);
 
     // Get files from task attachments
     const taskFiles = await db
@@ -330,7 +329,6 @@ export const getProjectFiles = async (req: Request, res: Response) => {
       .leftJoin(users, eq(tasks.created_by, users.id))
       .where(eq(tasks.project_id, Number(projectId)));
 
-    console.log('Tasks found:', taskFiles.length);
 
     // Process task attachments into individual files
     const allTaskFiles = [];
@@ -357,13 +355,11 @@ export const getProjectFiles = async (req: Request, res: Response) => {
       }
     }
 
-    console.log('Task attachment files processed:', allTaskFiles.length);
 
     // Combine and sort all files
     const allFiles = [...reportFiles, ...allTaskFiles]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    console.log('Total files:', allFiles.length);
 
     // Apply pagination
     const paginatedFiles = allFiles.slice(offset, offset + Number(limit));
@@ -381,7 +377,7 @@ export const getProjectFiles = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching project files:', error);
+    logger.error('Error fetching project files:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch project files' });
   }
 };
@@ -443,7 +439,7 @@ export const uploadProjectFile = async (req: Request, res: Response) => {
       message: 'File uploaded successfully'
     });
   } catch (error) {
-    console.error('Error uploading file:', error);
+    logger.error('Error uploading file:', error);
     res.status(500).json({ success: false, message: 'Failed to upload file' });
   }
 };
@@ -491,7 +487,7 @@ export const markAsDeliverable = async (req: Request, res: Response) => {
       message: 'File marked as final deliverable'
     });
   } catch (error) {
-    console.error('Error marking as deliverable:', error);
+    logger.error('Error marking as deliverable:', error);
     res.status(500).json({ success: false, message: 'Failed to mark as deliverable' });
   }
 };
@@ -528,7 +524,7 @@ export const getProjectDeliverables = async (req: Request, res: Response) => {
       data: deliverables
     });
   } catch (error) {
-    console.error('Error fetching deliverables:', error);
+    logger.error('Error fetching deliverables:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch deliverables' });
   }
 };
@@ -554,7 +550,7 @@ export const downloadFile = async (req: Request, res: Response) => {
     // The file URL should be used directly
     res.redirect(file[0].file_url || filePath);
   } catch (error) {
-    console.error('Error downloading file:', error);
+    logger.error('Error downloading file:', error);
     res.status(500).json({ success: false, message: 'Failed to download file' });
   }
 };
@@ -603,7 +599,7 @@ export const getReportAnalytics = async (req: Request, res: Response) => {
       data: analytics
     });
   } catch (error) {
-    console.error('Error fetching analytics:', error);
+    logger.error('Error fetching analytics:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch analytics' });
   }
 };

@@ -4,11 +4,6 @@ import { S3Client } from "@aws-sdk/client-s3";
 import env from "../config/env";
 
 // Create S3 client for Digital Ocean Spaces
-console.log('🔍 Digital Ocean Spaces Configuration:');
-console.log('Endpoint:', env.DO_SPACES_ENDPOINT);
-console.log('Region:', env.DO_SPACES_REGION);
-console.log('Bucket:', env.DO_SPACES_BUCKET);
-
 const s3Client = new S3Client({
   endpoint: env.DO_SPACES_ENDPOINT,
   region: env.DO_SPACES_REGION,

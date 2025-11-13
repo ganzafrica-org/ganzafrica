@@ -5,6 +5,7 @@ import {
   task_comments,
   task_team_projects,
   task_project_members,
+  task_team_members,
   users,
   roles,
 } from "../db/schema";
@@ -610,10 +611,12 @@ export const getAllTasks = async () => {
 
 /**
  * Get all task team projects (for task creation)
+ * If userId is provided, only returns projects the user is a member of
+ * (either directly via task_project_members or via team membership via task_team_members)
  */
-export const getTaskTeamProjects = async () => {
+export const getTaskTeamProjects = async (userId?: number) => {
   try {
-    const taskTeamProjects = await db
+    let query = db
       .select({
         id: task_team_projects.id,
         team_id: task_team_projects.team_id,
@@ -627,8 +630,48 @@ export const getTaskTeamProjects = async () => {
         created_at: task_team_projects.created_at,
         updated_at: task_team_projects.updated_at,
       })
-      .from(task_team_projects)
-      .orderBy(desc(task_team_projects.created_at));
+      .from(task_team_projects);
+
+    // If userId is provided, filter to only show projects the user has access to
+    if (userId) {
+      // Get project IDs where user is a direct member
+      const directProjectMembers = await db
+        .select({ project_id: task_project_members.project_id })
+        .from(task_project_members)
+        .where(eq(task_project_members.user_id, userId));
+
+      // Get team IDs where user is a member
+      const userTeams = await db
+        .select({ team_id: task_team_members.team_id })
+        .from(task_team_members)
+        .where(eq(task_team_members.user_id, userId));
+
+      const directProjectIds = directProjectMembers.map(p => p.project_id);
+      const userTeamIds = userTeams.map(t => t.team_id);
+
+      // Get project IDs from teams the user is a member of
+      const teamProjectIds: number[] = [];
+      if (userTeamIds.length > 0) {
+        const teamProjects = await db
+          .select({ id: task_team_projects.id })
+          .from(task_team_projects)
+          .where(inArray(task_team_projects.team_id, userTeamIds));
+        
+        teamProjectIds.push(...teamProjects.map(p => p.id));
+      }
+
+      // Combine direct project memberships and team-based project memberships
+      const allAccessibleProjectIds = [...new Set([...directProjectIds, ...teamProjectIds])];
+
+      if (allAccessibleProjectIds.length > 0) {
+        query = query.where(inArray(task_team_projects.id, allAccessibleProjectIds)) as any;
+      } else {
+        // User has no access to any projects, return empty array
+        return [];
+      }
+    }
+
+    const taskTeamProjects = await query.orderBy(desc(task_team_projects.created_at));
 
     return taskTeamProjects;
   } catch (error) {

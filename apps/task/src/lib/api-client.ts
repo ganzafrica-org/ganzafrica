@@ -102,8 +102,10 @@ export const taskApi = {
   },
 
   // Get task team projects (for task creation)
-  getTaskTeamProjects: async () => {
-    const response = await apiClient.get('/tasks/projects');
+  // If userId is provided, only returns projects the user is a member of
+  getTaskTeamProjects: async (userId?: number) => {
+    const params = userId ? { user_id: userId } : {};
+    const response = await apiClient.get('/tasks/projects', { params });
     return response.data;
   },
 

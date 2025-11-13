@@ -36,7 +36,7 @@ export default function EntryPage() {
             if (progress === 100 && !isLoading) {
                 clearInterval(timer);
                 if (isAuthenticated) {
-                    router.push('/dashboard');
+                    router.push('/platform-selection');
                 } else {
                     router.push('/login');
                 }

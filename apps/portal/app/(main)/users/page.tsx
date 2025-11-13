@@ -16,7 +16,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Download,
-  Trash2
+  Trash2,
+  UserX
 } from 'lucide-react';
 
 // Import shadcn components
@@ -198,11 +199,9 @@ const UserManagement = () => {
       } else if (Array.isArray(response.data)) {
         setRoles(response.data);
       } else {
-        console.error('Unexpected roles response format:', response.data);
         setRoles([]);
       }
     } catch (error) {
-      console.error('Error fetching roles:', error);
       setRoles([]);
     }
   };
@@ -225,11 +224,18 @@ const UserManagement = () => {
         url += `&is_active=${isActive}`;
       }
 
+      // Add cache-busting parameter to ensure fresh data
+      url += `&_t=${Date.now()}`;
+
       const response = await apiClient.get(url);
-      setUsers(response.data.users);
-      setPagination(response.data.pagination);
+      
+      // Ensure we're setting fresh data
+      if (response.data && response.data.users) {
+        setUsers(response.data.users);
+        setPagination(response.data.pagination);
+      }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      toast.error('Failed to refresh user list');
     } finally {
       setIsLoading(false);
     }
@@ -260,28 +266,112 @@ const UserManagement = () => {
     }
   };
 
+  // Handle activate/deactivate user
+  const handleToggleUserStatus = async (user) => {
+    try {
+      if (user.is_active) {
+        // Deactivate user
+        await apiClient.post(`/users/${user.id}/deactivate`);
+        
+        // Update user status in the list
+        setUsers(prevUsers => 
+          prevUsers.map(u => u.id === user.id ? { ...u, is_active: false } : u)
+        );
+        
+        toast.success(`User "${user.name}" deactivated successfully`);
+      } else {
+        // Activate user
+        await apiClient.post(`/users/${user.id}/activate`);
+        
+        // Update user status in the list
+        setUsers(prevUsers => 
+          prevUsers.map(u => u.id === user.id ? { ...u, is_active: true } : u)
+        );
+        
+        toast.success(`User "${user.name}" activated successfully`);
+      }
+      
+      fetchUsers(); // Refresh to ensure consistency
+    } catch (error) {
+      const action = user.is_active ? 'deactivate' : 'activate';
+      const errorMessage = error?.response?.data?.message || `Failed to ${action} user. Please try again.`;
+      toast.error(errorMessage);
+    }
+  };
+
   // Handle delete confirmation dialog
   const handleDeleteClick = (user) => {
     setUserToDelete(user);
     setShowDeleteDialog(true);
   };
 
-  // Handle user deletion
+  // Handle user deletion (hard delete)
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
 
     setIsDeleting(true);
-    try {
-      await apiClient.delete(`/users/${userToDelete.id}`);
-      toast.success(`User "${userToDelete.name}" deleted successfully`);
+    const deletedUserId = userToDelete.id;
+    const deletedUserName = userToDelete.name;
+    
+    // Validate user ID
+    if (!deletedUserId) {
+      toast.error('Invalid user ID');
+      setIsDeleting(false);
       setShowDeleteDialog(false);
       setUserToDelete(null);
-      fetchUsers(); // Refresh the user list
-    } catch (error) {
-      const errorMessage = error?.response?.data?.message || 'Failed to delete user. Please try again.';
-      toast.error(errorMessage);
-    } finally {
+      return;
+    }
+    
+    try {
+      // Delete the user
+      await apiClient.delete(`/users/${deletedUserId}`);
+      
+      // Show success message
+      toast.success(`User "${deletedUserName}" deleted successfully`);
+      
+      // Optimistically remove user from the list
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== deletedUserId));
+      
+      // Update pagination total count
+      setPagination(prev => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1)
+      }));
+      
+      // Close dialog and reset state immediately
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
       setIsDeleting(false);
+      
+      // Refresh in background to ensure database consistency
+      fetchUsers().catch(() => {
+        // Silently fail - user already removed from UI
+      });
+    } catch (error) {
+      // If user not found (404), they're already deleted - just remove from UI
+      if (error?.response?.status === 404) {
+        toast.info(`User "${deletedUserName}" was already deleted`);
+        
+        // Remove from list
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== deletedUserId));
+        setPagination(prev => ({
+          ...prev,
+          total: Math.max(0, prev.total - 1)
+        }));
+      } else {
+        const errorMessage = error?.response?.data?.message || error?.message || 'Failed to delete user. Please try again.';
+        toast.error(errorMessage);
+      }
+      
+      // Always close dialog and reset state, even on error
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+      setIsDeleting(false);
+      
+      // Refresh in background
+      fetchUsers().catch(() => {
+        // Silently fail - error already handled
+      });
     }
   };
 
@@ -313,8 +403,8 @@ const UserManagement = () => {
 
           setImportData(formattedData);
         },
-        error: (error) => {
-          console.error('Error parsing CSV:', error);
+        error: () => {
+          // Silently handle CSV parsing errors
         }
       });
     }
@@ -521,7 +611,7 @@ const UserManagement = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={user.is_active ? "success" : "secondary"}>
+                              <Badge variant={user.is_active ? "default" : "secondary"} className={user.is_active ? "bg-green-100 text-green-800 hover:!bg-green-100" : "hover:!bg-secondary"}>
                                 {user.is_active ? "Active" : "Inactive"}
                               </Badge>
                             </TableCell>
@@ -543,10 +633,15 @@ const UserManagement = () => {
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
+                                      onClick={() => handleToggleUserStatus(user)}
+                                      className="text-orange-600 focus:text-orange-600 focus:bg-orange-50"
+                                  >
+                                    {user.is_active ? 'Deactivate' : 'Activate'}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
                                       onClick={() => handleDeleteClick(user)}
                                       className="text-red-600 focus:text-red-600 focus:bg-red-50"
                                   >
-                                    <Trash2 className="h-4 w-4 mr-2" />
                                     Delete user
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -890,15 +985,25 @@ const UserManagement = () => {
           </Dialog>
 
         {/* Delete User Confirmation Dialog */}
-        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <Dialog open={showDeleteDialog} onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setShowDeleteDialog(false);
+            setUserToDelete(null);
+          }
+        }}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+              <DialogTitle className="flex items-center gap-2 text-red-600">
                 <AlertCircle className="h-5 w-5 text-red-600" />
                 Delete User
               </DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this user? This action cannot be undone.
+              <DialogDescription className="text-base">
+                <div className="bg-red-50 rounded-lg p-4 mt-2">
+                  <p className="font-semibold text-red-600 mb-2">⚠️ Warning: This is a dangerous action!</p>
+                  <p className="text-red-700">
+                    Are you sure you want to delete this user? This action cannot be undone and will permanently remove the user from the system.
+                  </p>
+                </div>
               </DialogDescription>
             </DialogHeader>
             {userToDelete && (
@@ -927,10 +1032,9 @@ const UserManagement = () => {
                 Cancel
               </Button>
               <Button 
-                variant="destructive" 
                 onClick={handleDeleteUser}
                 disabled={isDeleting}
-                className="bg-red-600 hover:bg-red-700"
+                variant="destructive"
               >
                 {isDeleting ? (
                   <>

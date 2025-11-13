@@ -240,9 +240,111 @@ export const updateUser = async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /users/{id}/activate:
+ *   post:
+ *     summary: Activate user (sets is_active to true)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User activated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+export const activateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await userService.activateUser(id);
+
+    res.status(200).json({
+      message: "User activated successfully",
+    });
+  } catch (error) {
+    logger.error(`Activate user error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "User Activation Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "User Activation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /users/{id}/deactivate:
+ *   post:
+ *     summary: Deactivate user (soft delete)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deactivated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+export const deactivateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await userService.deactivateUser(id);
+
+    res.status(200).json({
+      message: "User deactivated successfully",
+    });
+  } catch (error) {
+    logger.error(`Deactivate user error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "User Deactivation Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "User Deactivation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
  * /users/{id}:
  *   delete:
- *     summary: Delete user (soft delete)
+ *     summary: Delete user (hard delete - permanently removes from database)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -268,14 +370,20 @@ export const updateUser = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({
+        error: "User Deletion Error",
+        message: "User ID is required",
+      });
+    }
 
     await userService.deleteUser(id);
-
     res.status(200).json({
       message: constants.SUCCESS_MESSAGES.USER_DELETED,
     });
   } catch (error) {
-    logger.error(`Delete user error: ${req.params.id}`, error);
+    logger.error(`Delete user error for ID ${req.params.id}:`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
         error: "User Deletion Error",
@@ -360,6 +468,11 @@ export const listUsers = async (req: Request, res: Response) => {
           ? undefined
           : req.query.is_active === "true",
     };
+
+    // Add cache control headers to prevent caching
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
     const { users, total } = await userService.listUsers(params);
 
@@ -551,11 +664,6 @@ export const updateCurrentUserProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const profileData = req.body;
-
-    // Debug logging
-    console.log('Profile update request data:', JSON.stringify(profileData, null, 2));
-    console.log('Avatar URL value:', profileData.avatar_url);
-    console.log('Avatar URL type:', typeof profileData.avatar_url);
 
     const updatedProfile = await userService.updateUserProfile(userId, profileData);
 
