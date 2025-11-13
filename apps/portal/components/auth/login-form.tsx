@@ -22,6 +22,7 @@ import { Card } from '@workspace/ui/components/card';
 
 import apiClient from '@/lib/api-client';
 import { AtSign, LockKeyhole, Eye, EyeOff } from "lucide-react";
+import { AtSign, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { useAuth } from '@/components/auth/auth-provider'; // Update path if needed
 
 export function LoginForm() {
@@ -272,6 +273,7 @@ export function LoginForm() {
                                         <LockKeyhole className="h-4 w-4" />
                                     </div>
                                     <input
+                                        type={showPassword ? 'text' : 'password'}
                                         type={showPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
                                         className={`pl-10 pr-10 py-2 block w-full border-2 rounded-md focus:outline-none focus:ring-2 ${loginError ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' : 'border-gray-200 text-gray-900 focus:border-green-600 focus:ring-green-600'}`}

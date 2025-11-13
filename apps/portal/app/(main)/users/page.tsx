@@ -89,6 +89,7 @@ import * as z from "zod";
 import apiClient from '@/lib/api-client';
 import Papa from 'papaparse';
 import { toast } from 'sonner';
+import { toast } from 'sonner';
 
 // User schema for form validation
 const userSchema = z.object({
@@ -130,6 +131,9 @@ const UserManagement = () => {
   // State for dialogs
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -249,9 +253,11 @@ const UserManagement = () => {
         // Editing existing user
         await apiClient.put(`/users/${editingUser.id}`, data);
         toast.success(`User "${data.name}" updated successfully`);
+        toast.success(`User "${data.name}" updated successfully`);
       } else {
         // Adding new user
         await apiClient.post('/users', data);
+        toast.success(`User "${data.name}" created successfully`);
         toast.success(`User "${data.name}" created successfully`);
       }
 
@@ -261,9 +267,17 @@ const UserManagement = () => {
     } catch (error) {
       const errorMessage = error?.response?.data?.message || 'Failed to save user. Please try again.';
       toast.error(errorMessage);
+      const errorMessage = error?.response?.data?.message || 'Failed to save user. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle delete confirmation dialog
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setShowDeleteDialog(true);
   };
 
   // Handle activate/deactivate user
@@ -431,10 +445,13 @@ const UserManagement = () => {
     try {
       await apiClient.post('/users/import', importData);
       toast.success(`Successfully imported ${importData.length} user(s)`);
+      toast.success(`Successfully imported ${importData.length} user(s)`);
       setShowImportDialog(false);
       setImportData([]);
       fetchUsers(); // Refresh the user list
     } catch (error) {
+      const errorMessage = error?.response?.data?.message || 'Failed to import users. Please try again.';
+      toast.error(errorMessage);
       const errorMessage = error?.response?.data?.message || 'Failed to import users. Please try again.';
       toast.error(errorMessage);
     } finally {
@@ -642,6 +659,7 @@ const UserManagement = () => {
                                       onClick={() => handleDeleteClick(user)}
                                       className="text-red-600 focus:text-red-600 focus:bg-red-50"
                                   >
+                                    <Trash2 className="h-4 w-4 mr-2" />
                                     Delete user
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
