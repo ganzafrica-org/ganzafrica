@@ -22,7 +22,6 @@ import { Card } from '@workspace/ui/components/card';
 
 import apiClient from '@/lib/api-client';
 import { AtSign, LockKeyhole, Eye, EyeOff } from "lucide-react";
-import { AtSign, LockKeyhole, Eye, EyeOff } from "lucide-react";
 import { useAuth } from '@/components/auth/auth-provider'; // Update path if needed
 
 export function LoginForm() {

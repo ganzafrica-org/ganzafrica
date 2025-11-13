@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import { X, Users, Edit2, Paperclip, Upload, Trash2, MessageSquare, FileText } from "lucide-react";
-import { X, Users, Edit2, Paperclip, Upload, Trash2, MessageSquare, FileText } from "lucide-react";
 import { Task, TeamMember, Status, Priority } from "@/lib/types";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { InputDialog } from "@/components/input-dialog";
@@ -11,7 +10,6 @@ import { MemberDropdown } from "@/components/member-dropdown";
 import { UserAvatar } from "@/components/user-avatar";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
 import { taskApi } from "@/lib/api-client";
-import { canEditTask, isCurrentUserAdminOrManager } from "@/lib/auth-utils";
 import { canEditTask, isCurrentUserAdminOrManager } from "@/lib/auth-utils";
 
 export function TaskModal({
@@ -52,7 +50,6 @@ export function TaskModal({
   const [showComments, setShowComments] = useState(false);
   const [taskTeamProjects, setTaskTeamProjects] = useState<Array<{ id: number; team_id: number; name: string; color?: string }>>([]);
   const [teamsLoaded, setTeamsLoaded] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   // Comment UX state
   const [showEditCommentDialog, setShowEditCommentDialog] = useState(false);
@@ -328,8 +325,6 @@ export function TaskModal({
           assignees: response.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
           teamId: teamIdStr,
           team: teamInfo,
-          teamId: teamIdStr,
-          team: teamInfo,
           projectId: response.task.project_id,
           comments: normalizedComments,
           attachments: response.task.attachments || [],
@@ -465,23 +460,7 @@ export function TaskModal({
             setSelectedTeamId(parseInt(task.teamId || '0'));
           } else if (task?.projectId && resp.projects?.length) {
             // If task has project_id but no team, find team from project mapping
-          
-          // Preserve team from task if it exists (priority)
-          if (task?.team?.id) {
-            setSelectedTeamId(parseInt(task.team.id));
-          } else if (task?.teamId) {
-            setSelectedTeamId(parseInt(task.teamId || '0'));
-          } else if (task?.projectId && resp.projects?.length) {
-            // If task has project_id but no team, find team from project mapping
             const mapped = resp.projects.find((p: any) => p.id === task.projectId);
-            if (mapped) {
-              setSelectedTeamId(mapped.team_id);
-            }
-          }
-          
-          // Set selected project ID
-          if (task?.projectId) {
-            setSelectedProjectId(task.projectId);
             if (mapped) {
               setSelectedTeamId(mapped.team_id);
             }
@@ -583,27 +562,11 @@ export function TaskModal({
           console.log('✅ Preserved teamId from task:', teamId);
         }
       } else {
-      // Don't auto-select any team - let user choose
-      // BUT: If task already has a team, preserve it
-      if (task?.team?.id) {
-        const teamId = parseInt(task.team.id);
-        if (teamsToUse.find((t: any) => t.id === teamId)) {
-          setSelectedTeamId(teamId);
-          console.log('✅ Preserved team from task:', task.team.name);
-        }
-      } else if (task?.teamId) {
-        const teamId = parseInt(task.teamId || '0');
-        if (teamsToUse.find((t: any) => t.id === teamId)) {
-          setSelectedTeamId(teamId);
-          console.log('✅ Preserved teamId from task:', teamId);
-        }
-      } else {
         setSelectedTeamId(null);
         setSelectedTeamIds([]);
       }
       
       setTeamsLoaded(true);
-      console.log('✅ Loaded all teams for task creation:', teamsToUse.length, 'teams');
       console.log('✅ Loaded all teams for task creation:', teamsToUse.length, 'teams');
     } catch (error) {
       console.error('Error loading teams:', error);
@@ -684,7 +647,6 @@ export function TaskModal({
   };
 
   // Derive current selected team name/color for header display - preserve from draft.team if available
-  // Derive current selected team name/color for header display - preserve from draft.team if available
   const currentTeamInfo = useMemo(() => {
     // Priority: Use draft.team if available (preserves team from backend)
     if (draft?.team) {
@@ -695,25 +657,7 @@ export function TaskModal({
     }
     
     // Fallback: Use selectedTeamId to find team from loaded teams
-    // Priority: Use draft.team if available (preserves team from backend)
-    if (draft?.team) {
-      return {
-        name: draft.team.name,
-        color: draft.team.color || '#076297'
-      };
-    }
-    
-    // Fallback: Use selectedTeamId to find team from loaded teams
     const byId = selectedTeamId ? teams.find((t) => t.id === selectedTeamId) : undefined;
-    if (byId) {
-      return {
-        name: byId.name,
-        color: byId.color || '#076297'
-      };
-    }
-    
-    // Default fallback
-    return { name: undefined, color: '#076297' };
     if (byId) {
       return {
         name: byId.name,
@@ -755,11 +699,7 @@ export function TaskModal({
           } else {
             // Try to get from teamMembers (already added to map above)
             // If still not found, try to fetch from backend (no dummy data)
-            // If still not found, try to fetch from backend (no dummy data)
             if (!map[assigneeId]) {
-              console.warn(`User info not found for assignee ID: ${assigneeId}. Attempting to fetch from backend.`);
-              // Don't create dummy data - user info should come from backend
-              // The user will be displayed with their ID until backend provides the info
               console.warn(`User info not found for assignee ID: ${assigneeId}. Attempting to fetch from backend.`);
               // Don't create dummy data - user info should come from backend
               // The user will be displayed with their ID until backend provides the info
@@ -785,10 +725,7 @@ export function TaskModal({
             } else {
               // Try to get from teamMembers (already added to map above)
               // If still not found, don't create dummy data - wait for backend
-              // If still not found, don't create dummy data - wait for backend
               if (!map[comment.userId]) {
-                console.warn(`User info not found for commenter ID: ${comment.userId}. Backend should provide user objects.`);
-                // Don't create dummy data - user info should come from backend
                 console.warn(`User info not found for commenter ID: ${comment.userId}. Backend should provide user objects.`);
                 // Don't create dummy data - user info should come from backend
               }
@@ -858,8 +795,6 @@ export function TaskModal({
       teamId: teamId || undefined, 
       team: teamObj ? { id: String(teamObj.id), name: teamObj.name, color: teamObj.color || '#076297', memberIds: [] } : undefined,
       assignees: [],
-      // Clear project when team changes - user must select project from team's projects
-      projectId: undefined
       // Clear project when team changes - user must select project from team's projects
       projectId: undefined
     });
@@ -945,7 +880,6 @@ export function TaskModal({
             labels: draft.labels,
             attachments: draft.attachments,
             assignees: draft.assignees.map(id => parseInt(id)).filter(id => !isNaN(id)),
-            project_id: draft.projectId // Preserve project_id to maintain team association
             project_id: draft.projectId // Preserve project_id to maintain team association
           };
 
@@ -1312,60 +1246,7 @@ export function TaskModal({
             <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               
               {/* Team and Project Selection - On one line */}
-              {/* Team and Project Selection - On one line */}
               {!loadingTeams && teams.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Team Selection - Available for all users */}
-                  <div className="flex-1">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
-                      <Users className="w-4 h-4" />
-                      Select Team
-                    </label>
-                    
-                    <select
-                      value={selectedTeamId || ""}
-                      onChange={(e) => handleTeamChange(e.target.value)}
-                      className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-sm sm:text-base touch-manipulation"
-                      onFocus={(e) => e.stopPropagation()}
-                    >
-                      <option value="">Choose a team...</option>
-                      {teams.map((team) => (
-                        <option key={team.id} value={team.id}>
-                          {team.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Project Selection - Show only if team is selected, filter by selected team */}
-                  {selectedTeamId && taskTeamProjects.length > 0 && (
-                    <div className="flex-1">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
-                        <FileText className="w-4 h-4" />
-                        Select Project
-                      </label>
-                      
-                      <select
-                        value={selectedProjectId || draft?.projectId || ""}
-                        onChange={(e) => {
-                          const projectId = e.target.value ? parseInt(e.target.value) : null;
-                          setSelectedProjectId(projectId);
-                          update({ projectId: projectId || undefined });
-                        }}
-                        className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-sm sm:text-base touch-manipulation"
-                        onFocus={(e) => e.stopPropagation()}
-                      >
-                        <option value="">Choose a project...</option>
-                        {taskTeamProjects
-                          .filter((project) => project.team_id === selectedTeamId)
-                          .map((project) => (
-                            <option key={project.id} value={project.id}>
-                              {project.name}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-                  )}
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* Team Selection - Available for all users */}
                   <div className="flex-1">
@@ -1510,19 +1391,10 @@ export function TaskModal({
                                   if (member?.name) return member.name;
                                   
                                   // Try to get from taskUsers (populated from API)
-                                {(() => {
-                                  // Get name from member object (from backend)
-                                  if (member?.name) return member.name;
-                                  
-                                  // Try to get from taskUsers (populated from API)
                                   const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
                                   if (taskUsers && taskUsers.has(assigneeId)) {
                                     return taskUsers.get(assigneeId).name || assigneeId;
-                                    return taskUsers.get(assigneeId).name || assigneeId;
                                   }
-                                  
-                                  // Fallback: show ID (no dummy data)
-                                  return assigneeId;
                                   
                                   // Fallback: show ID (no dummy data)
                                   return assigneeId;
@@ -1707,19 +1579,10 @@ export function TaskModal({
                         if (commenter?.name) return commenter.name;
                         
                         // Try to get from taskUsers (populated from API)
-                      const displayName = (() => {
-                        // Get name from commenter object (from backend)
-                        if (commenter?.name) return commenter.name;
-                        
-                        // Try to get from taskUsers (populated from API)
                         const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
                         if (taskUsers && taskUsers.has(comment.userId)) {
                           return taskUsers.get(comment.userId).name || comment.userId;
-                          return taskUsers.get(comment.userId).name || comment.userId;
                         }
-                        
-                        // Fallback: show ID (no dummy data)
-                        return comment.userId;
                         
                         // Fallback: show ID (no dummy data)
                         return comment.userId;
