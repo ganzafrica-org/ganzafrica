@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useEffect, Suspense, useState } from 'react';
-import React, { useEffect, Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isProcessing, setIsProcessing] = useState(true);
   const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
@@ -22,36 +20,7 @@ function AuthCallbackContent() {
         const token = searchParams.get('token');
         const user = searchParams.get('user');
         const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
-    // Ensure we're on the client side
-    if (typeof window === 'undefined') {
-      return;
-    }
 
-    const processAuth = () => {
-      try {
-        const token = searchParams.get('token');
-        const user = searchParams.get('user');
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
-
-        if (token && user) {
-          try {
-            // Store the authentication tokens
-            localStorage.setItem('accessToken', token);
-            
-            // Store user data - safely parse the user data
-            let parsedUser;
-            try {
-              const decodedUser = decodeURIComponent(user);
-              parsedUser = JSON.parse(decodedUser);
-            } catch (parseError) {
-              console.error('Error parsing user data:', parseError);
-              toast.error('Invalid user data received');
-              window.location.href = `${portalUrl}/login`;
-              return;
-            }
-
-            localStorage.setItem('user', JSON.stringify(parsedUser));
-            localStorage.setItem('task_user', JSON.stringify(parsedUser));
         if (token && user) {
           try {
             // Store the authentication tokens
