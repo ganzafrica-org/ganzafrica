@@ -467,9 +467,23 @@ export const deleteTaskTeam = async (req: Request, res: Response) => {
 export const addTeamMember = async (req: Request, res: Response) => {
   try {
     const teamId = parseInt(req.params.id);
+    const { user_id, role, name, position } = req.body;
+
+    // Validate that user_id is provided
+    if (!user_id) {
+      return res.status(400).json({
+        error: "Add Team Member Error",
+        message: "user_id is required",
+      });
+    }
+
+    // Map user_id to portal_team_id (they are the same - user ID from portal)
     const member = await taskTeamService.addTeamMember({
       team_id: teamId,
-      ...req.body,
+      portal_team_id: user_id,
+      role: role || "member",
+      name: name || null,
+      position: position || null,
     });
 
     res.status(201).json({

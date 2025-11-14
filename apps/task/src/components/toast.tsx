@@ -17,35 +17,39 @@ interface ToastProps {
 const toastConfig = {
   success: {
     icon: CheckCircle,
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
+    bgColor: "bg-white",
+    borderColor: "border-gray-200",
     iconColor: "text-green-600",
-    titleColor: "text-green-800",
-    messageColor: "text-green-700",
+    titleColor: "text-black",
+    messageColor: "text-gray-600",
+    bottomBarColor: "bg-green-500",
   },
   error: {
     icon: AlertCircle,
     bgColor: "bg-white",
     borderColor: "border-gray-200",
     iconColor: "text-red-600",
-    titleColor: "text-red-600",
-    messageColor: "text-black",
+    titleColor: "text-black",
+    messageColor: "text-gray-600",
+    bottomBarColor: "bg-red-500",
   },
   warning: {
     icon: AlertTriangle,
-    bgColor: "bg-yellow-50",
-    borderColor: "border-yellow-200",
+    bgColor: "bg-white",
+    borderColor: "border-gray-200",
     iconColor: "text-yellow-600",
-    titleColor: "text-yellow-800",
-    messageColor: "text-yellow-700",
+    titleColor: "text-black",
+    messageColor: "text-gray-600",
+    bottomBarColor: "bg-yellow-500",
   },
   info: {
     icon: Info,
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
+    bgColor: "bg-white",
+    borderColor: "border-gray-200",
     iconColor: "text-blue-600",
-    titleColor: "text-blue-800",
-    messageColor: "text-blue-700",
+    titleColor: "text-black",
+    messageColor: "text-gray-600",
+    bottomBarColor: "bg-blue-500",
   },
 };
 
@@ -84,29 +88,29 @@ export function Toast({ id, type, title, message, duration = 5000, onClose }: To
     >
       <div
         className={`
-          ${config.bgColor} ${config.borderColor} border rounded-lg shadow-lg p-4 relative
+          ${config.bgColor} ${config.borderColor} border rounded-lg shadow-lg p-4 relative overflow-hidden
         `}
       >
         <div className="flex items-start gap-3">
           <Icon className={`w-5 h-5 mt-0.5 ${config.iconColor}`} />
           <div className="flex-1 min-w-0">
-            <h4 className={`text-sm font-medium ${config.titleColor}`}>
+            <h4 className={`text-base font-medium ${config.titleColor} mb-1`}>
               {title}
             </h4>
-            <p className={`text-sm ${config.messageColor} mt-1`}>
+            <p className={`text-sm ${config.messageColor}`}>
               {message}
             </p>
           </div>
           <button
             onClick={handleClose}
-            className={`p-1 hover:bg-gray-100 rounded-full transition-colors ${type === 'error' ? 'text-red-600 hover:text-red-700' : config.iconColor}`}
+            className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
         
         {/* Bottom accent line */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500 rounded-b-lg"></div>
+        <div className={`absolute bottom-0 left-0 right-0 h-1 ${config.bottomBarColor}`}></div>
       </div>
     </div>
   );

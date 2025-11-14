@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { showSuccessToast, showErrorToast } from '@/components/ui/success-toast';
 
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -61,7 +61,7 @@ export function LoginForm() {
                 setRequiresTwoFactor(true);
                 setTwoFactorMethod(response.data.twoFactorMethod);
                 setTempToken(response.data.tempToken);
-                toast.info('Two-factor authentication required');
+                // Two-factor authentication required - handled by UI state change
             } else {
                 // Store tokens from successful login
                 if (response.data.token) {
@@ -82,18 +82,40 @@ export function LoginForm() {
                     
                     // Login successful - clear error state
                     setLoginError(null);
-                    toast.success('Login successful');
+                    showSuccessToast({ message: 'Login successful' });
                     router.push('/platform-selection');
                 } else {
                     const errorMsg = 'Login failed: No authentication token received';
                     setLoginError(errorMsg);
-                    toast.error(errorMsg);
+                    showErrorToast({ message: errorMsg });
                 }
             }
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Invalid email or password';
-            setLoginError(errorMessage);
-            toast.error(errorMessage);
+            // Check if the error is due to user not found (404) or if the message indicates user doesn't exist
+            const statusCode = error.response?.status;
+            let errorMessage = error.response?.data?.message || '';
+            
+            // Replace "Invalid credentials" with "Incorrect email or password"
+            if (errorMessage.toLowerCase().includes('invalid credentials')) {
+                errorMessage = 'Incorrect email or password';
+            }
+            
+            // Set error state to show red borders on both fields
+            const errorToShow = errorMessage || 'Incorrect email or password';
+            setLoginError(errorToShow);
+            
+            // If status is 404 or message contains "not found" or "account not found", user doesn't exist
+            if (statusCode === 404 || 
+                errorMessage.toLowerCase().includes('not found') || 
+                errorMessage.toLowerCase().includes('account not found') ||
+                errorMessage.toLowerCase().includes('create an account')) {
+                showErrorToast({ 
+                    message: "You don't have an account with that email. Please create an account and try to login later." 
+                });
+            } else {
+                // For other errors (wrong password, etc.), show incorrect email or password message
+                showErrorToast({ message: errorToShow });
+            }
         } finally {
             setIsLoading(false);
         }
@@ -125,13 +147,13 @@ export function LoginForm() {
                 // Refresh the user state based on the new token
                 await refreshUser();
                 
-                toast.success('Authentication successful');
+                showSuccessToast({ message: 'Authentication successful' });
                 router.push('/platform-selection');
             } else {
-                toast.error('Verification failed: No authentication token received');
+                showErrorToast({ message: 'Verification failed: No authentication token received' });
             }
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Verification failed');
+            showErrorToast({ message: error.response?.data?.message || 'Verification failed' });
         } finally {
             setIsLoading(false);
         }
@@ -238,23 +260,44 @@ export function LoginForm() {
                     <Form {...loginForm}>
                         <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5">
                             <div className="mb-4">
-                                <label className={`block text-sm font-medium mb-1 ${loginError ? 'text-red-600' : ''}`}>Email</label>
+                                <label className={`block text-sm font-medium mb-1 ${loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? 'text-red-600' : ''}`}>Email</label>
                                 <div className="relative">
-                                    <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${loginError ? 'text-red-600' : 'text-black'}`}>
+                                    <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? 'text-red-600' : 'text-black'}`}>
                                         <AtSign className="h-4 w-4" />
                                     </div>
                                     <input
                                         type="email"
                                         placeholder="email@example.com"
-                                        className={`pl-10 py-2 block w-full border-2 rounded-md focus:outline-none focus:ring-2 ${loginError ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' : 'border-gray-200 text-gray-900 focus:border-green-600 focus:ring-green-600'}`}
-                                        style={loginError ? { color: '#dc2626' } : {}}
+                                        className={`pl-10 py-2 block w-full border-2 rounded-md focus:outline-none focus:ring-2 ${
+                                            loginError || loginForm.formState.errors.email || loginForm.formState.errors.password
+                                                ? 'placeholder-red-300 focus:ring-red-600 text-red-600' 
+                                                : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
+                                        }`}
+                                        style={loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? {
+                                            borderColor: '#dc2626',
+                                            color: '#dc2626',
+                                            backgroundColor: 'transparent !important',
+                                            WebkitTextFillColor: '#dc2626',
+                                            WebkitBoxShadow: '0 0 0px 1000px transparent inset',
+                                            boxShadow: 'inset 0 0 0px 1000px transparent',
+                                            '--tw-ring-color': '#dc2626'
+                                        } as React.CSSProperties & { '--tw-ring-color'?: string; WebkitTextFillColor?: string; WebkitBoxShadow?: string; boxShadow?: string } : {
+                                            backgroundColor: 'transparent !important',
+                                            WebkitBoxShadow: '0 0 0px 1000px transparent inset',
+                                            boxShadow: 'inset 0 0 0px 1000px transparent'
+                                        }}
                                         {...loginForm.register('email', {
                                             required: 'Email is required',
                                             pattern: {
                                                 value: /\S+@\S+\.\S+/,
                                                 message: 'Invalid email address'
                                             },
-                                            onChange: () => setLoginError(null) // Clear error when user types
+                                            onChange: () => {
+                                                // Only clear error if both fields are valid
+                                                if (!loginForm.formState.errors.email && !loginForm.formState.errors.password) {
+                                                    setLoginError(null);
+                                                }
+                                            }
                                         })}
                                     />
                                 </div>
@@ -266,30 +309,42 @@ export function LoginForm() {
                             </div>
 
                             <div className="mb-4">
-                                <label className={`block text-sm font-medium mb-1 ${loginError ? 'text-red-600' : ''}`}>Password</label>
+                                <label className={`block text-sm font-medium mb-1 ${loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? 'text-red-600' : ''}`}>Password</label>
                                 <div className="relative">
-                                    <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${loginError ? 'text-red-600' : 'text-black'}`}>
+                                    <div className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? 'text-red-600' : 'text-black'}`}>
                                         <LockKeyhole className="h-4 w-4" />
                                     </div>
                                     <input
                                         type={showPassword ? 'text' : 'password'}
-                                        type={showPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
-                                        className={`pl-10 pr-10 py-2 block w-full border-2 rounded-md focus:outline-none focus:ring-2 ${loginError ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' : 'border-gray-200 text-gray-900 focus:border-green-600 focus:ring-green-600'}`}
-                                        style={loginError ? { color: '#dc2626' } : {}}
+                                        className={`pl-10 pr-10 py-2 block w-full border-2 rounded-md focus:outline-none focus:ring-2 ${
+                                            loginError || loginForm.formState.errors.email || loginForm.formState.errors.password
+                                                ? 'bg-red-50 placeholder-red-300 focus:ring-red-600 text-red-600' 
+                                                : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
+                                        }`}
+                                        style={loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? {
+                                            borderColor: '#dc2626',
+                                            color: '#dc2626',
+                                            '--tw-ring-color': '#dc2626'
+                                        } as React.CSSProperties & { '--tw-ring-color'?: string } : {}}
                                         {...loginForm.register('password', {
                                             required: 'Password is required',
                                             minLength: {
                                                 value: 8,
                                                 message: 'Password must be at least 8 characters'
                                             },
-                                            onChange: () => setLoginError(null) // Clear error when user types
+                                            onChange: () => {
+                                                // Only clear error if both fields are valid
+                                                if (!loginForm.formState.errors.email && !loginForm.formState.errors.password) {
+                                                    setLoginError(null);
+                                                }
+                                            }
                                         })}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className={`absolute inset-y-0 right-0 pr-3 flex items-center ${loginError ? 'text-red-600 hover:text-red-700' : 'text-gray-500 hover:text-gray-700'}`}
+                                        className={`absolute inset-y-0 right-0 pr-3 flex items-center ${loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? 'text-red-600 hover:text-red-700' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         {showPassword ? (
                                             <EyeOff className="h-4 w-4" />

@@ -88,7 +88,7 @@ import * as z from "zod";
 // Import API client and utilities
 import apiClient from '@/lib/api-client';
 import Papa from 'papaparse';
-import { toast } from 'sonner';
+import { showSuccessToast, showErrorToast } from '@/components/ui/success-toast';
 
 // User schema for form validation
 const userSchema = z.object({
@@ -136,6 +136,7 @@ const UserManagement = () => {
   const [importData, setImportData] = useState([]);
   const [isImporting, setIsImporting] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   // File input ref for CSV import
   const fileInputRef = useRef(null);
@@ -235,7 +236,7 @@ const UserManagement = () => {
         setPagination(response.data.pagination);
       }
     } catch (error) {
-      toast.error('Failed to refresh user list');
+      showErrorToast({ message: 'Failed to refresh user list' });
     } finally {
       setIsLoading(false);
     }
@@ -248,11 +249,11 @@ const UserManagement = () => {
       if (editingUser) {
         // Editing existing user
         await apiClient.put(`/users/${editingUser.id}`, data);
-        toast.success(`User "${data.name}" updated successfully`);
+        showSuccessToast({ message: `User "${data.name}" updated successfully` });
       } else {
         // Adding new user
         await apiClient.post('/users', data);
-        toast.success(`User "${data.name}" created successfully`);
+        showSuccessToast({ message: `User "${data.name}" created successfully` });
       }
 
       setShowAddUserDialog(false);
@@ -260,7 +261,7 @@ const UserManagement = () => {
       fetchUsers(); // Refresh the user list
     } catch (error) {
       const errorMessage = error?.response?.data?.message || 'Failed to save user. Please try again.';
-      toast.error(errorMessage);
+      showErrorToast({ message: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -268,6 +269,7 @@ const UserManagement = () => {
 
   // Handle activate/deactivate user
   const handleToggleUserStatus = async (user) => {
+    setOpenDropdownId(null); // Close dropdown immediately
     try {
       if (user.is_active) {
         // Deactivate user
@@ -278,7 +280,7 @@ const UserManagement = () => {
           prevUsers.map(u => u.id === user.id ? { ...u, is_active: false } : u)
         );
         
-        toast.success(`User "${user.name}" deactivated successfully`);
+        showSuccessToast({ message: `User "${user.name}" deactivated successfully` });
       } else {
         // Activate user
         await apiClient.post(`/users/${user.id}/activate`);
@@ -288,19 +290,20 @@ const UserManagement = () => {
           prevUsers.map(u => u.id === user.id ? { ...u, is_active: true } : u)
         );
         
-        toast.success(`User "${user.name}" activated successfully`);
+        showSuccessToast({ message: `User "${user.name}" activated successfully` });
       }
       
       fetchUsers(); // Refresh to ensure consistency
     } catch (error) {
       const action = user.is_active ? 'deactivate' : 'activate';
       const errorMessage = error?.response?.data?.message || `Failed to ${action} user. Please try again.`;
-      toast.error(errorMessage);
+      showErrorToast({ message: errorMessage });
     }
   };
 
   // Handle delete confirmation dialog
   const handleDeleteClick = (user) => {
+    setOpenDropdownId(null); // Close dropdown immediately
     setUserToDelete(user);
     setShowDeleteDialog(true);
   };
@@ -315,7 +318,7 @@ const UserManagement = () => {
     
     // Validate user ID
     if (!deletedUserId) {
-      toast.error('Invalid user ID');
+      showErrorToast({ message: 'Invalid user ID' });
       setIsDeleting(false);
       setShowDeleteDialog(false);
       setUserToDelete(null);
@@ -327,7 +330,7 @@ const UserManagement = () => {
       await apiClient.delete(`/users/${deletedUserId}`);
       
       // Show success message
-      toast.success(`User "${deletedUserName}" deleted successfully`);
+      showSuccessToast({ message: `User "${deletedUserName}" deleted successfully` });
       
       // Optimistically remove user from the list
       setUsers(prevUsers => prevUsers.filter(user => user.id !== deletedUserId));
@@ -342,6 +345,7 @@ const UserManagement = () => {
       setShowDeleteDialog(false);
       setUserToDelete(null);
       setIsDeleting(false);
+      setOpenDropdownId(null); // Ensure dropdown is closed
       
       // Refresh in background to ensure database consistency
       fetchUsers().catch(() => {
@@ -350,7 +354,7 @@ const UserManagement = () => {
     } catch (error) {
       // If user not found (404), they're already deleted - just remove from UI
       if (error?.response?.status === 404) {
-        toast.info(`User "${deletedUserName}" was already deleted`);
+        showSuccessToast({ message: `User "${deletedUserName}" was already deleted` });
         
         // Remove from list
         setUsers(prevUsers => prevUsers.filter(user => user.id !== deletedUserId));
@@ -360,13 +364,14 @@ const UserManagement = () => {
         }));
       } else {
         const errorMessage = error?.response?.data?.message || error?.message || 'Failed to delete user. Please try again.';
-        toast.error(errorMessage);
+        showErrorToast({ message: errorMessage });
       }
       
       // Always close dialog and reset state, even on error
       setShowDeleteDialog(false);
       setUserToDelete(null);
       setIsDeleting(false);
+      setOpenDropdownId(null); // Ensure dropdown is closed
       
       // Refresh in background
       fetchUsers().catch(() => {
@@ -430,13 +435,13 @@ const UserManagement = () => {
     setIsImporting(true);
     try {
       await apiClient.post('/users/import', importData);
-      toast.success(`Successfully imported ${importData.length} user(s)`);
+      showSuccessToast({ message: `Successfully imported ${importData.length} user(s)` });
       setShowImportDialog(false);
       setImportData([]);
       fetchUsers(); // Refresh the user list
     } catch (error) {
       const errorMessage = error?.response?.data?.message || 'Failed to import users. Please try again.';
-      toast.error(errorMessage);
+      showErrorToast({ message: errorMessage });
     } finally {
       setIsImporting(false);
     }
@@ -600,7 +605,6 @@ const UserManagement = () => {
                                 </Avatar>
                                 <div>
                                   <p className="font-medium">{user.name}</p>
-                                  <p className="text-xs text-muted-foreground">ID: {user.id}</p>
                                 </div>
                               </div>
                             </TableCell>
@@ -619,7 +623,10 @@ const UserManagement = () => {
                               {new Date(user.created_at).toLocaleDateString()}
                             </TableCell>
                             <TableCell className="text-right">
-                              <DropdownMenu>
+                              <DropdownMenu 
+                                open={openDropdownId === user.id}
+                                onOpenChange={(open) => setOpenDropdownId(open ? user.id : null)}
+                              >
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                     <span className="sr-only">Open menu</span>
@@ -628,7 +635,10 @@ const UserManagement = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => setEditingUser(user)}>
+                                  <DropdownMenuItem onClick={() => {
+                                    setOpenDropdownId(null);
+                                    setEditingUser(user);
+                                  }}>
                                     Edit user
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
@@ -989,6 +999,7 @@ const UserManagement = () => {
           if (!open && !isDeleting) {
             setShowDeleteDialog(false);
             setUserToDelete(null);
+            setOpenDropdownId(null); // Ensure dropdown is closed
           }
         }}>
           <DialogContent className="sm:max-w-md">
@@ -1026,6 +1037,7 @@ const UserManagement = () => {
                 onClick={() => {
                   setShowDeleteDialog(false);
                   setUserToDelete(null);
+                  setOpenDropdownId(null); // Ensure dropdown is closed
                 }}
                 disabled={isDeleting}
               >

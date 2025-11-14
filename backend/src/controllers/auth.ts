@@ -199,6 +199,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     try {
       user = await userService.getUserByEmail(email);
     } catch (error) {
+      // Check if error is due to user not found (404)
+      if (error instanceof AppError && error.statusCode === 404) {
+        throw new AppError("User account not found with this email. Please create an account first.", 404);
+      }
       throw new AppError(constants.ERROR_MESSAGES.INVALID_CREDENTIALS, 401);
     }
 

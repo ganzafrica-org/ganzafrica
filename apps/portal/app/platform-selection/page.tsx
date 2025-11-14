@@ -37,11 +37,24 @@ export default function PlatformSelectionPage(): React.JSX.Element {
 
         // Fetch user profile from API to get complete role information
         const fetchUserProfile = async () => {
+            // First, try to get user from localStorage for faster initial load
+            const cachedUser = localStorage.getItem('user');
+            if (cachedUser) {
+                try {
+                    const parsedUser = JSON.parse(cachedUser);
+                    setUser(parsedUser);
+                    setIsLoading(false);
+                } catch (error) {
+                    console.error('Error parsing cached user:', error);
+                }
+            }
+            
+            // Then fetch fresh data from API in the background
             try {
                 const response = await apiClient.get('/users/profile/me');
                 if (response.data && response.data.profile) {
                     const profile = response.data.profile;
-                    setUser({
+                    const userData = {
                         id: profile.id,
                         name: profile.name,
                         email: profile.email,
@@ -49,14 +62,21 @@ export default function PlatformSelectionPage(): React.JSX.Element {
                         role_name: profile.role_name,
                         avatar_url: profile.avatar_url,
                         email_verified: profile.email_verified
-                    });
+                    };
+                    setUser(userData);
                     // Also update localStorage with fresh data
-                    localStorage.setItem('user', JSON.stringify(profile));
-                    setIsLoading(false);
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    if (!cachedUser) {
+                        setIsLoading(false);
+                    }
                     return;
                 }
             } catch (error) {
                 console.error('Error fetching user profile:', error);
+                // If API fails but we have cached data, keep using it
+                if (!cachedUser) {
+                    setIsLoading(false);
+                }
             }
 
             // Fallback: Get user data from localStorage (stored during login)
@@ -141,18 +161,33 @@ export default function PlatformSelectionPage(): React.JSX.Element {
             const token = localStorage.getItem('accessToken');
             const userData = localStorage.getItem('user');
             
-            // Use environment variable for task app URL, fallback to localhost for development
-            const taskAppUrl = process.env.NEXT_PUBLIC_TASK_URL || 'http://localhost:3003';
-            const taskManagementUrl = new URL(`${taskAppUrl}/auth-callback`);
-            if (token) {
-                taskManagementUrl.searchParams.set('token', token);
-            }
-            if (userData) {
-                taskManagementUrl.searchParams.set('user', encodeURIComponent(userData));
+            if (!token) {
+                toast.error('Authentication token not found. Please log in again.');
+                router.push('/login');
+                return;
             }
             
-            // Redirect to task management app auth callback page
-            window.location.href = taskManagementUrl.toString();
+            // Use environment variable for task app URL, fallback to localhost for development
+            const taskAppUrl = process.env.NEXT_PUBLIC_TASK_URL || 'http://localhost:3003';
+            
+            try {
+                const taskManagementUrl = new URL(`${taskAppUrl}/auth-callback`);
+                if (token) {
+                    taskManagementUrl.searchParams.set('token', token);
+                }
+                if (userData) {
+                    taskManagementUrl.searchParams.set('user', encodeURIComponent(userData));
+                }
+                
+                // Show loading message
+                toast.info('Redirecting to Task Management...', { duration: 2000 });
+                
+                // Redirect immediately without delay
+                window.location.href = taskManagementUrl.toString();
+            } catch (error) {
+                console.error('Error constructing redirect URL:', error);
+                toast.error('Failed to redirect. Please try again.');
+            }
         } else if (platform === 'website') {
             // Use environment variable for website URL, fallback to localhost for development
             const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || 'http://localhost:3000';
