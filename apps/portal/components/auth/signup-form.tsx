@@ -74,6 +74,23 @@ export function SignupForm() {
             }
         } catch (error: any) {
             console.error('Registration error:', error);
+            
+            // Handle timeout errors - account might have been created despite timeout
+            if (error.code === 'ECONNABORTED' || error.message?.includes('timeout') || error.response?.status === 504) {
+                // On timeout, check if account was actually created by attempting login
+                // This is safer than trying to register again
+                showErrorToast({
+                    title: 'Registration Timeout',
+                    message: 'The registration request took too long. Your account may have been created. Please try logging in. If login fails, try registering again.'
+                });
+                setIsLoading(false);
+                // Redirect to login after a delay so user can see the message
+                setTimeout(() => {
+                    router.push('/login');
+                }, 3000);
+                return;
+            }
+            
             // More detailed error message handling
             const errorMessage = 
                 error.response?.data?.message || 

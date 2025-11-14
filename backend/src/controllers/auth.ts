@@ -120,15 +120,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         return result[0];
       });
 
-      // Send welcome email after successful user creation
-      try {
-        await emailService.sendWelcomeEmail(email, name);
-        logger.info(`Welcome email sent successfully to ${email}`);
-      } catch (emailError) {
-        logger.error("Failed to send welcome email", emailError);
-        // Don't block registration if email fails
-      }
-
+      // Send response immediately after user creation
       res.status(201).json({
         message: constants.SUCCESS_MESSAGES.USER_CREATED,
         user: {
@@ -137,6 +129,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
           name: user.name,
           email_verified: user.email_verified
         }
+      });
+
+      // Send welcome email asynchronously after response is sent (fire and forget)
+      // This prevents email sending from blocking the registration response
+      emailService.sendWelcomeEmail(email, name).catch((emailError) => {
+        logger.error("Failed to send welcome email", emailError);
+        // Email failure doesn't affect registration success
       });
     } catch (dbError) {
       logger.error("Database error during user creation:", dbError);
