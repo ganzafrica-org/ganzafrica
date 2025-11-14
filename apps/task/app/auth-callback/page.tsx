@@ -41,10 +41,12 @@ function AuthCallbackContent() {
             localStorage.setItem('user', JSON.stringify(parsedUser));
             localStorage.setItem('task_user', JSON.stringify(parsedUser));
 
-            toast.success('Authentication successful!', { duration: 1500 });
+            toast.success('Authentication successful!');
             
-            // Use hard redirect for more reliable navigation
-            window.location.href = '/my-tasks';
+            // Redirect to my-tasks
+            setTimeout(() => {
+              router.push('/my-tasks');
+            }, 500);
           } catch (error: unknown) {
             console.error('Error processing authentication:', error);
             toast.error('Authentication failed. Please try again.');
