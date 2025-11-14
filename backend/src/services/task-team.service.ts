@@ -438,6 +438,11 @@ export const deleteTaskTeam = async (teamId: number) => {
  */
 export const addTeamMember = async (input: AddTeamMemberInput) => {
   try {
+    // Validate portal_team_id is provided
+    if (!input.portal_team_id) {
+      throw new AppError("user_id (portal_team_id) is required", 400);
+    }
+
     // Check if portal team member is already in this task team
     const [existing] = await db
       .select()
@@ -453,14 +458,33 @@ export const addTeamMember = async (input: AddTeamMemberInput) => {
       throw new AppError("Team member is already in this team", 400);
     }
 
+    // If name/position not provided, try to get from users table
+    let memberName: string | null = input.name || null;
+    let memberPosition: string | null = input.position || null;
+    
+    if (!memberName || !memberPosition) {
+      // Try to get from users table
+      const [user] = await db
+        .select({
+          name: users.name,
+        })
+        .from(users)
+        .where(eq(users.id, input.portal_team_id))
+        .limit(1);
+      
+      if (user) {
+        memberName = memberName || user.name;
+      }
+    }
+
     const [member] = await db
       .insert(task_team_members)
       .values({
         team_id: input.team_id,
         user_id: input.portal_team_id,
-        name: input.name || null,
+        name: memberName || null,
         role: (input.role as any) || "member",
-        position: input.position || null,
+        position: memberPosition || null,
         is_active: true,
       })
       .returning();

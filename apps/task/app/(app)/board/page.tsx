@@ -18,6 +18,7 @@ import { taskTeamsApi } from "@/lib/api/task-teams";
 import { FileText, AlertCircle, CheckCircle, Clock, Users, Calendar, X, Filter, CalendarDays, Plus } from "lucide-react";
 import { DateFilter } from "@/components/date-filter";
 import { isCurrentUserAdminOrManager, isCurrentUserAdminOrManagerAsync, getCurrentUserRole, isCurrentUserAdmin } from "@/lib/auth-utils";
+import { useToast, ToastContainer } from "@/components/toast";
 
 export default function BoardPage(): React.JSX.Element {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -36,6 +37,7 @@ export default function BoardPage(): React.JSX.Element {
   const [userHasAccess, setUserHasAccess] = useState<boolean | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const { collapsed: sidebarCollapsed, toggleCollapsed } = useSidebar();
+  const { showSuccess, showError, toasts, removeToast } = useToast();
 
   // Get current user ID from localStorage
   const getCurrentUserId = () => {
@@ -756,29 +758,6 @@ export default function BoardPage(): React.JSX.Element {
                         <TaskCard key={t.id} task={t} members={members} onClick={() => setActiveTask(t)} hidePriority={true} />
                       ))}
                     </div>
-                    {/* Add new task button */}
-                    <button
-                      onClick={() => {
-                        setIsCreatingTask(true);
-                        setCreatingTaskPriority(col.id as 'high' | 'medium' | 'low');
-                      }}
-                      className="w-full py-1 px-3 border-2 border-dashed rounded-xl transition-colors flex items-center justify-center gap-2 font-medium"
-                      style={{ 
-                        borderRadius: '7px',
-                        backgroundColor: '#f0f8fc',
-                        borderColor: '#d4e9f5',
-                        color: '#076297'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#e6f2ff';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f0f8fc';
-                      }}
-                    >
-                      <span className="text-lg">+</span>
-                      <span>Add new task</span>
-                    </button>
                   </div>
                 </div>
               ))}
@@ -1033,6 +1012,7 @@ export default function BoardPage(): React.JSX.Element {
                    setTasks([newTask, ...tasks]);
                    setIsCreatingTask(false);
                    setActiveTask(null); // Close modal immediately so task appears right away
+                   showSuccess('Success', 'Task created successfully!');
                    console.log('✅ Task created successfully with comments:', newTask);
                  } catch (reloadError) {
                    console.error('Error reloading task after creation:', reloadError);
@@ -1051,6 +1031,7 @@ export default function BoardPage(): React.JSX.Element {
                    setTasks([fallbackTask, ...tasks]);
                    setIsCreatingTask(false);
                    setActiveTask(null); // Close modal immediately so task appears right away
+                   showSuccess('Success', 'Task created successfully!');
                    console.log('✅ Task created successfully (reload failed):', fallbackTask);
                  }
                } catch (err: any) {
@@ -1177,6 +1158,7 @@ export default function BoardPage(): React.JSX.Element {
               </div>
             </div>
           )}
+          <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </PageLayout>
   );
 }

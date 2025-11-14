@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { toast } from 'sonner';
+import { showSuccessToast, showErrorToast } from '@/components/ui/success-toast';
 
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -26,6 +26,7 @@ export function SignupForm() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [apiError, setApiError] = useState<{ field?: string; message: string } | null>(null);
 
     // Signup form
     const form = useForm({
@@ -40,6 +41,7 @@ export function SignupForm() {
     // Handle signup submission
     const handleSignup = async (data: { name: string; email: string; password: string; confirm_password: string }) => {
         setIsLoading(true);
+        setApiError(null); // Clear previous API errors
         try {
             // Send only the fields the backend expects
             const response = await apiClient.post('/auth/register', {
@@ -52,12 +54,22 @@ export function SignupForm() {
             // Check if registration was successful (status 200/201 or user data in response)
             if (response.status === 200 || response.status === 201 || (response.data && (response.data.user || response.data.message))) {
                 // Show success toast
-                toast.success('Account created successfully! Redirecting to login...');
+                showSuccessToast({
+                    title: 'Success',
+                    message: 'Account created successfully! Redirecting to login...',
+                    duration: 3000
+                });
                 
-                // Redirect immediately to login page
-                router.push('/login');
+                // Wait a bit for toast to show, then redirect
+                setTimeout(() => {
+                    setIsLoading(false);
+                    router.push('/login');
+                }, 2000);
             } else {
-                toast.error('Signup failed. Please try again.');
+                showErrorToast({
+                    title: 'Error',
+                    message: 'Signup failed. Please try again.'
+                });
                 setIsLoading(false);
             }
         } catch (error: any) {
@@ -66,7 +78,19 @@ export function SignupForm() {
             const errorMessage = 
                 error.response?.data?.message || 
                 (error.response?.data?.error ? `Error: ${error.response.data.error}` : 'Signup failed. Please try again.');
-            toast.error(errorMessage);
+            
+            // Check if error is related to email (e.g., email already exists)
+            if (errorMessage.toLowerCase().includes('email') || error.response?.status === 409) {
+                setApiError({ field: 'email', message: errorMessage });
+                form.setError('email', { type: 'server', message: errorMessage });
+            } else {
+                setApiError({ message: errorMessage });
+            }
+            
+            showErrorToast({
+                title: 'Error',
+                message: errorMessage
+            });
             setIsLoading(false);
         }
     };
@@ -117,7 +141,11 @@ export function SignupForm() {
                                     <input
                                         type="text"
                                         placeholder="John Doe"
-                                        className="pl-10 py-2 block w-full border border-gray-200 rounded"
+                                        className={`pl-10 py-2 block w-full border-2 rounded ${
+                                            form.formState.errors.name 
+                                                ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' 
+                                                : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
+                                        } focus:outline-none focus:ring-2`}
                                         {...form.register('name', {
                                             required: 'Full name is required',
                                             minLength: {
@@ -145,7 +173,11 @@ export function SignupForm() {
                                     <input
                                         type="email"
                                         placeholder="email@example.com"
-                                        className="pl-10 py-2 block w-full border border-gray-200 rounded"
+                                        className={`pl-10 py-2 block w-full border-2 rounded ${
+                                            form.formState.errors.email || (apiError?.field === 'email')
+                                                ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' 
+                                                : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
+                                        } focus:outline-none focus:ring-2`}
                                         {...form.register('email', {
                                             required: 'Email is required',
                                             pattern: {
@@ -173,7 +205,11 @@ export function SignupForm() {
                                     <input
                                         type={showPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
-                                        className="pl-10 pr-10 py-2 block w-full border border-gray-200 rounded"
+                                        className={`pl-10 pr-10 py-2 block w-full border-2 rounded ${
+                                            form.formState.errors.password || (apiError?.field === 'password')
+                                                ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' 
+                                                : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
+                                        } focus:outline-none focus:ring-2`}
                                         {...form.register('password', {
                                             required: 'Password is required',
                                             minLength: {
@@ -224,7 +260,11 @@ export function SignupForm() {
                                     <input
                                         type={showConfirmPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
-                                        className="pl-10 pr-10 py-2 block w-full border border-gray-200 rounded"
+                                        className={`pl-10 pr-10 py-2 block w-full border-2 rounded ${
+                                            form.formState.errors.confirm_password 
+                                                ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' 
+                                                : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
+                                        } focus:outline-none focus:ring-2`}
                                         {...form.register('confirm_password', {
                                             required: 'Please confirm your password',
                                             validate: (value) => {
@@ -245,7 +285,7 @@ export function SignupForm() {
                                     </button>
                                 </div>
                                 {form.formState.errors.confirm_password && (
-                                    <p className="text-red-500 text-sm mt-1">
+                                    <p className="text-sm font-semibold mt-1" style={{ color: '#dc2626' }}>
                                         {form.formState.errors.confirm_password.message}
                                     </p>
                                 )}

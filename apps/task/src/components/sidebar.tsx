@@ -55,11 +55,11 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
   };
 
   return (
-    <div className="h-full p-4 flex flex-col" style={{ backgroundColor: '#076297' }}>
+    <div className="h-full p-3 sm:p-4 flex flex-col overflow-y-auto" style={{ backgroundColor: '#076297' }}>
       {/* Mobile close button */}
       {mobileOpen && (
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/20">
-          <span className="text-white font-semibold text-lg">Menu</span>
+          <span className="text-white font-semibold text-base sm:text-lg">Menu</span>
           <button
             onClick={closeMobile}
             className="p-2 rounded-md hover:bg-white/10 text-white transition-colors"
@@ -70,7 +70,7 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
         </div>
       )}
 
-      <nav className="space-y-1 flex-1">
+      <nav className="space-y-1.5 sm:space-y-2 flex-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -80,14 +80,18 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
               <Link
                 href={item.href}
                 onClick={handleLinkClick}
-                className={`flex items-center gap-3 px-3 py-2.5 sm:py-2 rounded-md transition-colors text-white ${
-                  collapsed ? 'justify-center' : ''
+                className={`flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-md transition-all duration-200 text-white ${
+                  collapsed ? 'justify-center px-2' : ''
                 } ${
-                  isActive ? 'bg-white/20' : 'hover:bg-white/10'
+                  isActive ? 'bg-white/20 shadow-sm' : 'hover:bg-white/10'
                 }`}
               >
-                <Icon className="h-5 w-5 sm:h-4 sm:w-4 flex-shrink-0" /> 
-                {!collapsed && <span className="text-sm sm:text-base">{item.label}</span>}
+                <Icon className={`${collapsed ? 'h-5 w-5' : 'h-4 w-4 sm:h-5 sm:w-5'} flex-shrink-0`} /> 
+                {!collapsed && (
+                  <span className="text-sm sm:text-base font-medium whitespace-nowrap">
+                    {item.label}
+                  </span>
+                )}
               </Link>
               
               {/* Tooltip for collapsed sidebar (desktop only) */}

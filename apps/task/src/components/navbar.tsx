@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Menu, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown } from "lucide-react";
+import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Task } from "@/lib/types";
@@ -69,30 +69,6 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-white">
-      {/* Mobile menu button */}
-      {onToggleSidebar && (
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors sidebar-toggle lg:hidden"
-          aria-label="Toggle sidebar"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      )}
-      
-      {/* Desktop sidebar toggle */}
-      {onToggleSidebar && (
-        <button
-          onClick={onToggleSidebar}
-          className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          aria-label="Toggle sidebar"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      )}
-
       <div className="flex items-center gap-2">
         <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-[#076297] via-[#0a84c1] to-[#3db1ff]" />
         <span className="font-semibold text-sm sm:text-base">Task Management</span>
@@ -102,16 +78,25 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
       
       {/* Search - hidden on mobile, shown on tablet and up */}
       <div className="relative max-w-md w-full hidden sm:block">
-        <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+          <Search 
+            className="h-5 w-5" 
+            style={{ color: '#4b5563' }}
+            strokeWidth={2}
+          />
+        </div>
         <input
+          type="text"
           value={query}
           onChange={handleSearchChange}
           placeholder="Search tasks..."
-          className="w-full pl-9 pr-3 py-2 bg-white/70 backdrop-blur outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
+          className="w-full pl-10 pr-3 py-2 bg-white outline-none focus:ring-2 focus:ring-indigo-400 text-sm transition-all relative"
           style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
         />
         {query && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">{matches} {matches === 1 ? 'match' : 'matches'}</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">
+            {matches} {matches === 1 ? 'match' : 'matches'}
+          </span>
         )}
       </div>
       
