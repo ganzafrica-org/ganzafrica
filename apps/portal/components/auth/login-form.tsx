@@ -270,15 +270,22 @@ export function LoginForm() {
                                         placeholder="email@example.com"
                                         className={`pl-10 py-2 block w-full border-2 rounded-md focus:outline-none focus:ring-2 ${
                                             loginError || loginForm.formState.errors.email || loginForm.formState.errors.password
-                                                ? 'bg-red-50 placeholder-red-300 focus:ring-red-600 text-red-600' 
+                                                ? 'placeholder-red-300 focus:ring-red-600 text-red-600' 
                                                 : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
                                         }`}
                                         style={loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? {
                                             borderColor: '#dc2626',
                                             color: '#dc2626',
+                                            backgroundColor: 'transparent !important',
                                             WebkitTextFillColor: '#dc2626',
+                                            WebkitBoxShadow: '0 0 0px 1000px transparent inset',
+                                            boxShadow: 'inset 0 0 0px 1000px transparent',
                                             '--tw-ring-color': '#dc2626'
-                                        } as React.CSSProperties & { '--tw-ring-color'?: string; WebkitTextFillColor?: string } : {}}
+                                        } as React.CSSProperties & { '--tw-ring-color'?: string; WebkitTextFillColor?: string; WebkitBoxShadow?: string; boxShadow?: string } : {
+                                            backgroundColor: 'transparent !important',
+                                            WebkitBoxShadow: '0 0 0px 1000px transparent inset',
+                                            boxShadow: 'inset 0 0 0px 1000px transparent'
+                                        }}
                                         {...loginForm.register('email', {
                                             required: 'Email is required',
                                             pattern: {

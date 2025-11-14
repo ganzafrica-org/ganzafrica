@@ -19,7 +19,7 @@ import {
 } from '@workspace/ui/components/form';
 
 import apiClient from '@/lib/api-client';
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export function SignupForm() {
     const router = useRouter();
@@ -57,14 +57,14 @@ export function SignupForm() {
                 showSuccessToast({
                     title: 'Success',
                     message: 'Account created successfully! Redirecting to login...',
-                    duration: 3000
+                    duration: 2000
                 });
                 
-                // Wait a bit for toast to show, then redirect
+                // Wait half a second for toast to show, then redirect
                 setTimeout(() => {
                     setIsLoading(false);
                     router.push('/login');
-                }, 2000);
+                }, 500);
             } else {
                 showErrorToast({
                     title: 'Error',
@@ -141,11 +141,12 @@ export function SignupForm() {
                                     <input
                                         type="text"
                                         placeholder="John Doe"
+                                        disabled={isLoading}
                                         className={`pl-10 py-2 block w-full border-2 rounded ${
                                             form.formState.errors.name 
                                                 ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' 
                                                 : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
-                                        } focus:outline-none focus:ring-2`}
+                                        } focus:outline-none focus:ring-2 ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                                         {...form.register('name', {
                                             required: 'Full name is required',
                                             minLength: {
@@ -173,11 +174,12 @@ export function SignupForm() {
                                     <input
                                         type="email"
                                         placeholder="email@example.com"
+                                        disabled={isLoading}
                                         className={`pl-10 py-2 block w-full border-2 rounded ${
                                             form.formState.errors.email || (apiError?.field === 'email')
                                                 ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' 
                                                 : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
-                                        } focus:outline-none focus:ring-2`}
+                                        } focus:outline-none focus:ring-2 ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                                         {...form.register('email', {
                                             required: 'Email is required',
                                             pattern: {
@@ -205,11 +207,12 @@ export function SignupForm() {
                                     <input
                                         type={showPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
+                                        disabled={isLoading}
                                         className={`pl-10 pr-10 py-2 block w-full border-2 rounded ${
                                             form.formState.errors.password || (apiError?.field === 'password')
                                                 ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' 
                                                 : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
-                                        } focus:outline-none focus:ring-2`}
+                                        } focus:outline-none focus:ring-2 ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                                         {...form.register('password', {
                                             required: 'Password is required',
                                             minLength: {
@@ -260,11 +263,12 @@ export function SignupForm() {
                                     <input
                                         type={showConfirmPassword ? 'text' : 'password'}
                                         placeholder="••••••••"
+                                        disabled={isLoading}
                                         className={`pl-10 pr-10 py-2 block w-full border-2 rounded ${
                                             form.formState.errors.confirm_password 
                                                 ? 'border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600' 
                                                 : 'border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green'
-                                        } focus:outline-none focus:ring-2`}
+                                        } focus:outline-none focus:ring-2 ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
                                         {...form.register('confirm_password', {
                                             required: 'Please confirm your password',
                                             validate: (value) => {
@@ -293,10 +297,17 @@ export function SignupForm() {
 
                             <Button
                                 type="submit"
-                                className="w-full py-2 rounded-md text-white bg-primary-green"
+                                className="w-full py-2 rounded-md text-white bg-primary-green flex items-center justify-center gap-2"
                                 disabled={isLoading}
                             >
-                                {isLoading ? 'Creating account...' : 'Sign Up'}
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span>Creating account...</span>
+                                    </>
+                                ) : (
+                                    'Sign Up'
+                                )}
                             </Button>
 
                             <div className="text-center mt-4">
