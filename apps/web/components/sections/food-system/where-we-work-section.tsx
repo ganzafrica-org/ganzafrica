@@ -29,7 +29,9 @@ const itemVariants = {
   },
 };
 
-const WhereWeWorkSection = () => {
+interface SectionProps { dict?: any }
+
+const WhereWeWorkSection = ({ dict }: SectionProps) => {
   return (
     <section className="py-16 bg-white">
       <Container>

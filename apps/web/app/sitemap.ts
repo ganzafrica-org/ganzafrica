@@ -23,7 +23,7 @@ const localizedRoutes = (locale: string) =>
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = [
     {
-      url: `${baseUrl}/`,
+      url: `${baseUrl}/`, 
       lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: 1,

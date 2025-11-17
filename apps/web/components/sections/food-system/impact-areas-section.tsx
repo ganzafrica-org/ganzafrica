@@ -100,7 +100,9 @@ const statItemVariants = {
   }
 };
 
-const ClimateInitiativesMapSection = () => {
+interface SectionProps { dict?: any }
+
+const ClimateInitiativesMapSection = ({ dict }: SectionProps) => {
   // Get the locale from URL params
   const params = useParams();
   const locale = params.locale || 'en';

@@ -62,6 +62,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+
 export const config = {
   // Match all pathnames except those starting with:
   // - /_next (Next.js internals)
