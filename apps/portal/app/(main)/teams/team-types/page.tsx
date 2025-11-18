@@ -16,12 +16,23 @@ import {
   Trash,
   Plus,
   X,
-  Loader
+  Loader,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
 
 const TeamTypesPage = () => {
   const router = useRouter();
@@ -41,6 +52,11 @@ const TeamTypesPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
+  
+  // State for delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [teamTypeToDelete, setTeamTypeToDelete] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // States for add team type modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -262,38 +278,8 @@ const TeamTypesPage = () => {
         openDetailsModal(teamTypeId);
         break;
       case 'delete':
-        if (window.confirm('Are you sure you want to delete this team type?')) {
-          try {
-            console.log(`Deleting team type with ID: ${teamTypeId}`);
-            // Use the specified DELETE endpoint
-            await apiClient.delete(`/team-types/${teamTypeId}`);
-            console.log('Delete successful');
-            
-            // Update the list directly without page refresh
-            const updatedTeamTypes = teamTypes.filter(teamType => teamType.id !== teamTypeId);
-            setTeamTypes(updatedTeamTypes);
-            
-            // Update the total count
-            setTotalTeamTypes(prev => prev - 1);
-            
-            // If we deleted the last item on the current page, go to previous page
-            // But only if we're not already on the first page
-            if (updatedTeamTypes.length === 0 && page > 1) {
-              setPage(page - 1);
-            } else {
-              // Recalculate total pages
-              const newTotalPages = Math.ceil((totalTeamTypes - 1) / limit);
-              setTotalPages(newTotalPages);
-            }
-            
-            // Show success message in a toast notification
-            toast.success('Team type deleted successfully');
-          } catch (error) {
-            console.error('Error deleting team type:', error);
-            console.error('Error details:', error.response || error.message || error);
-            toast.error(error.response?.data?.message || 'Failed to delete team type. Please try again.');
-          }
-        }
+        setTeamTypeToDelete(teamTypeId);
+        setIsDeleteDialogOpen(true);
         break;
       case 'update':
         // Open edit modal instead of navigating
@@ -301,6 +287,37 @@ const TeamTypesPage = () => {
         break;
       default:
         break;
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!teamTypeToDelete) return;
+
+    try {
+      console.log(`Deleting team type with ID: ${teamTypeToDelete}`);
+      await apiClient.delete(`/team-types/${teamTypeToDelete}`);
+      console.log('Delete successful');
+      
+      // Close dialog and reset state
+      setIsDeleteDialogOpen(false);
+      setTeamTypeToDelete(null);
+      
+      // Show success toast
+      toast.success('Team type deleted successfully');
+      
+      // Trigger refresh by updating refreshTrigger
+      setRefreshTrigger(prev => prev + 1);
+      
+      // Adjust page if needed (if we deleted the last item on the page)
+      if (teamTypes.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch (error: any) {
+      console.error('Error deleting team type:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete team type. Please try again.');
+      setIsDeleteDialogOpen(false);
+      setTeamTypeToDelete(null);
     }
   };
 
@@ -482,7 +499,7 @@ const TeamTypesPage = () => {
     };
     
     fetchTeamTypes();
-  }, [page, limit, searchTerm, sortBy, sortOrder]);
+  }, [page, limit, searchTerm, sortBy, sortOrder, refreshTrigger]);
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -905,6 +922,37 @@ const TeamTypesPage = () => {
           </div>
         </div>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              Delete Team Type
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this team type? This action cannot be undone and will permanently delete the team type and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteDialogOpen(false);
+              setTeamTypeToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+            >
+              Delete Team Type
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

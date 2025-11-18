@@ -593,8 +593,12 @@ const ClimateInitiativesMapSection = () => {
   useEffect(() => {
     setIsLoading(true);
     
-    // Fetch projects data
-    apiClient.get('/projects')
+    // Fetch projects data - only fetch published projects for the website
+    apiClient.get('/projects', {
+      params: {
+        is_published: true
+      }
+    })
       .then(response => {
         const data = response.data;
         // Check if data is an array or has a projects property that's an array

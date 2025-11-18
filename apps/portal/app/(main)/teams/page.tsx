@@ -17,12 +17,23 @@ import {
   Trash,
   Plus,
   Briefcase,
-  UserPlus
+  UserPlus,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
 
 const TeamsPage = () => {
   const router = useRouter();
@@ -56,6 +67,11 @@ const TeamsPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  
+  // State for delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<number | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Normalize image URL so it works on host even if saved with localhost
   const getImageUrl = (url?: string) => {
@@ -93,23 +109,43 @@ const TeamsPage = () => {
         router.push(`/teams/${teamId}`);
         break;
       case 'delete':
-        if (window.confirm('Are you sure you want to delete this team member?')) {
-          try {
-            await apiClient.delete(`/teams/${teamId}`);
-            const updatedPage = teams.length === 1 && page > 1 ? page - 1 : page;
-            setPage(updatedPage);
-            toast.success('Team member deleted successfully');
-          } catch (error: any) {
-            console.error('Error deleting team:', error);
-            toast.error(error?.response?.data?.message || 'Failed to delete team member');
-          }
-        }
+        setTeamToDelete(teamId);
+        setIsDeleteDialogOpen(true);
         break;
       case 'update':
         router.push(`/teams/edit/${teamId}`);
         break;
       default:
         break;
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!teamToDelete) return;
+
+    try {
+      await apiClient.delete(`/teams/${teamToDelete}`);
+      
+      // Close dialog and reset state
+      setIsDeleteDialogOpen(false);
+      setTeamToDelete(null);
+      
+      // Show success toast
+      toast.success('Team member deleted successfully');
+      
+      // Trigger refresh by updating refreshTrigger
+      setRefreshTrigger(prev => prev + 1);
+      
+      // Adjust page if needed (if we deleted the last item on the page)
+      if (teams.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch (error: any) {
+      console.error('Error deleting team:', error);
+      toast.error(error?.response?.data?.message || 'Failed to delete team member');
+      setIsDeleteDialogOpen(false);
+      setTeamToDelete(null);
     }
   };
 
@@ -321,7 +357,7 @@ const TeamsPage = () => {
     };
     
     fetchTeams();
-  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, teamTypes]);
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, teamTypes, refreshTrigger]);
 
   // Helpers for local ordering
   const getOrderStorageKey = (): string => {
@@ -796,6 +832,37 @@ const TeamsPage = () => {
           </div>
         )}
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              Delete Team Member
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this team member? This action cannot be undone and will permanently delete the team member and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteDialogOpen(false);
+              setTeamToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+            >
+              Delete Team Member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
