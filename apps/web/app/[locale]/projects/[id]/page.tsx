@@ -168,33 +168,47 @@ const ProjectDetailsPage = (): JSX.Element => {
         setLoading(true);
         
         // Fetch categories first, before fetching the project
+        let allCategoriesData: Category[] = [];
         try {
           const categoriesResponse = await apiClient.get('/categories');
-          console.log("Categories response:", categoriesResponse.data);
           
           // Handle different possible API response formats
+          // Keep all categories first to check project category
           if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
-            setCategories(categoriesResponse.data.categories);
+            allCategoriesData = categoriesResponse.data.categories;
           } else if (Array.isArray(categoriesResponse.data)) {
-            setCategories(categoriesResponse.data);
+            allCategoriesData = categoriesResponse.data;
           } else if (categoriesResponse.data && typeof categoriesResponse.data === 'object') {
             // Handle case where response might be an object with category IDs as keys
-            const categoryArray = Object.entries(categoriesResponse.data).map(([id, data]) => {
+            allCategoriesData = Object.entries(categoriesResponse.data).map(([id, data]) => {
               const category = data as any;
               return {
                 id: Number(id),
                 name: category.name || `Category ${id}`
               };
             });
-            setCategories(categoryArray);
           }
+          
+          // Filter out "None" and "nano" categories for display
+          const filteredCategories = allCategoriesData.filter(category => {
+            const lowerName = category.name.toLowerCase().trim();
+            return lowerName !== 'none' && lowerName !== 'nano';
+          });
+          
+          setCategories(filteredCategories);
         } catch (error) {
           console.error('Error fetching categories:', error);
           // Try alternate endpoint
           try {
             const altCategoriesResponse = await apiClient.get('/project-categories');
             if (altCategoriesResponse.data && Array.isArray(altCategoriesResponse.data)) {
-              setCategories(altCategoriesResponse.data);
+              allCategoriesData = altCategoriesResponse.data;
+              // Filter out "None" and "nano" categories for display
+              const filteredCategories = allCategoriesData.filter(category => {
+                const lowerName = category.name.toLowerCase().trim();
+                return lowerName !== 'none' && lowerName !== 'nano';
+              });
+              setCategories(filteredCategories);
             }
           } catch (altError) {
             console.error('Error fetching from alternate categories endpoint:', altError);
@@ -203,19 +217,33 @@ const ProjectDetailsPage = (): JSX.Element => {
         
         // Fetch project data
         const projectResponse = await apiClient.get(`/projects/${params.id}`);
-        console.log("API Response:", projectResponse.data);
         
         // Check if the response has a nested project object or direct data
         let projectData;
         if (projectResponse.data && projectResponse.data.project) {
-          console.log("Setting project from nested project object");
           projectData = projectResponse.data.project;
         } else if (projectResponse.data && projectResponse.data.id) {
           // Direct project object
-          console.log("Setting project from direct response");
           projectData = projectResponse.data;
         } else {
           throw new Error("Invalid project data structure");
+        }
+        
+        // Check if project is published - if not, show error
+        if (!projectData.is_published) {
+          throw new Error("Project not found or not published");
+        }
+        
+        // Check if project has category "None" or "nano" - if so, don't show it
+        if (projectData.category_id) {
+          // Find category name from all categories list (before filtering)
+          const category = allCategoriesData.find((cat: any) => cat.id === projectData.category_id);
+          if (category && category.name) {
+            const categoryName = category.name.toLowerCase().trim();
+            if (categoryName === 'none' || categoryName === 'nano') {
+              throw new Error("Project not found");
+            }
+          }
         }
         
         // Ensure members is always an array
@@ -223,7 +251,6 @@ const ProjectDetailsPage = (): JSX.Element => {
           projectData.members = [];
         } else if (!Array.isArray(projectData.members)) {
           // If members is not an array, convert it
-          console.log("Converting members to array format");
           projectData.members = Object.values(projectData.members);
         }
         
@@ -231,13 +258,8 @@ const ProjectDetailsPage = (): JSX.Element => {
         if (!projectData.partners) {
           projectData.partners = [];
         } else if (!Array.isArray(projectData.partners)) {
-          console.log("Converting partners to array format");
           projectData.partners = Object.values(projectData.partners);
         }
-        
-        // Debug the members data
-        console.log("Project members:", projectData.members);
-        console.log("Project partners:", projectData.partners);
         
         // Make sure goals, outcomes and media are properly initialized
         if (!projectData.goals) projectData.goals = { items: [] };
@@ -294,10 +316,7 @@ const ProjectDetailsPage = (): JSX.Element => {
 
   // Get category name from category_id by directly inspecting the categories array
   const getCategoryName = (categoryId: number | undefined) => {
-    if (!categoryId) return 'Not specified';
-    
-    console.log("Looking for category with ID:", categoryId);
-    console.log("Available categories:", categories);
+    if (!categoryId) return '';
     
     // Try to find the category in the array with proper type handling
     if (categories && categories.length > 0) {
@@ -306,8 +325,13 @@ const ProjectDetailsPage = (): JSX.Element => {
       );
       
       if (category) {
-        console.log("Found category:", category);
-        return category.name;
+        const categoryName = category.name;
+        // Don't display "None" or "nano" categories
+        const lowerName = categoryName.toLowerCase().trim();
+        if (lowerName === 'none' || lowerName === 'nano') {
+          return '';
+        }
+        return categoryName;
       }
     }
     
@@ -319,12 +343,11 @@ const ProjectDetailsPage = (): JSX.Element => {
     };
     
     if (categoryId in fallbackCategories) {
-      console.log("Using fallback category name");
       return fallbackCategories[categoryId];
     }
     
-    // Last resort fallback
-    return `Category ${categoryId}`;
+    // Last resort fallback - return empty string instead of showing category ID
+    return '';
   };
 
   // Get user name from user_id
@@ -531,12 +554,6 @@ const ProjectDetailsPage = (): JSX.Element => {
     );
   }
 
-  // Debug output
-  console.log("Current project state:", project);
-  console.log("Available categories:", categories);
-  console.log("Project category ID:", project?.category_id);
-  console.log("Category name display:", getCategoryName(project?.category_id));
-  
   if (!project) {
     return (
       <div className="p-6 max-w-full">
@@ -623,12 +640,14 @@ const ProjectDetailsPage = (): JSX.Element => {
                     <span className="truncate">{project.location || 'Not specified'}</span>
                   </span>
                 </div>
-                <div className="overflow-x-auto">
-                  <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <TagIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                    <span className="truncate">{getCategoryName(project.category_id)}</span>
-                  </span>
-                </div>
+                {getCategoryName(project.category_id) && (
+                  <div className="overflow-x-auto">
+                    <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
+                      <TagIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                      <span className="truncate">{getCategoryName(project.category_id)}</span>
+                    </span>
+                  </div>
+                )}
                 <div className="overflow-x-auto">
                   <div className="bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300">
                     {getStatusBadge(project.status)}

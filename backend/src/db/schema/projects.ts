@@ -77,6 +77,7 @@ export const projects = pgTable(
     }>(),
     start_date: timestamp("start_date", { withTimezone: true }).notNull(),
     end_date: timestamp("end_date", { withTimezone: true }),
+    is_published: boolean("is_published").notNull().default(false),
 
     ...timestampFields,
   },

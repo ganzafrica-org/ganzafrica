@@ -66,6 +66,7 @@ export type CreateProjectInput = {
   other_information?: {
     [key: string]: any;
   };
+  is_published?: boolean;
 };
 
 export type UpdateProjectInput = {
@@ -117,6 +118,7 @@ export type UpdateProjectInput = {
   other_information?: {
     [key: string]: any;
   };
+  is_published?: boolean;
 };
 
 export type ProjectOutput = {
@@ -131,6 +133,7 @@ export type ProjectOutput = {
   created_at: Date;
   updated_at: Date;
   location?: string | null;
+  is_published?: boolean;
   
   goals?: {
     items: Array<{
@@ -249,6 +252,7 @@ type ProjectSearchParams = {
   team_id?: number;
   category_id?: number;
   partner_id?: number;
+  is_published?: boolean;
 };
 
 // Define types for database results
@@ -347,6 +351,11 @@ export async function createProject(
 ): Promise<ProjectOutput> {
   try {
     return await withDbTransaction(async (txDb) => {
+      // Validate dates before inserting
+      if (projectData.start_date && (isNaN(projectData.start_date.getTime()) || !(projectData.start_date instanceof Date))) {
+        throw new AppError("Invalid start date: The date provided is not valid. Please use YYYY-MM-DD format.", 400);
+      }
+      
       // Check if a project with the same name already exists
       const existingProject = await txDb
         .select({ id: projects.id })
@@ -359,13 +368,15 @@ export async function createProject(
       }
 
       // Insert the project and get the auto-generated ID
+      // Status defaults to 'active' when creating a project
+      // end_date is not set during creation - it will be set automatically when status changes to 'completed'
       const insertResult = await txDb.insert(projects)
         .values({
           name: projectData.name,
           description: projectData.description || null,
-          status: projectData.status,
-          start_date: projectData.start_date,
-          end_date: projectData.end_date || null,
+          status: (projectData.status || 'active') as "planned" | "active" | "completed" | "cancelled" | "on_hold",
+          start_date: projectData.start_date || new Date(), // Default to current date if not provided
+          end_date: null, // Not set during creation
           category_id: projectData.category_id,
           partner_id: projectData.partner_id || null,
           location: projectData.location || null,
@@ -374,6 +385,7 @@ export async function createProject(
           outcomes: projectData.outcomes || null,
           media: projectData.media || null,
           other_information: projectData.other_information || null,
+          is_published: projectData.is_published ?? false,
           
           created_at: new Date(),
           updated_at: new Date(),
@@ -389,7 +401,18 @@ export async function createProject(
 
       // Add project team members if provided
       if (projectData.members && projectData.members.length > 0) {
-        for (const member of projectData.members) {
+        for (let i = 0; i < projectData.members.length; i++) {
+          const member = projectData.members[i];
+          
+          // Validate member dates
+          if (!member.start_date || isNaN(member.start_date.getTime()) || !(member.start_date instanceof Date)) {
+            throw new AppError(`Invalid member start date: The start date for team member ${i + 1} is not valid. Please use YYYY-MM-DD format.`, 400);
+          }
+          
+          if (member.end_date && (isNaN(member.end_date.getTime()) || !(member.end_date instanceof Date))) {
+            throw new AppError(`Invalid member end date: The end date for team member ${i + 1} is not valid. Please use YYYY-MM-DD format.`, 400);
+          }
+          
           await txDb.insert(project_members).values({
             project_id: projectId,
             team_id: member.team_id,
@@ -525,7 +548,16 @@ export async function createProject(
     if (error instanceof AppError) {
       throw error;
     }
-    throw new AppError("Failed to create project", 500);
+    
+    // Check for date-related errors
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      if (errorMessage.includes('invalid time value') || errorMessage.includes('rangeerror')) {
+        throw new AppError("Invalid date: One or more dates provided are invalid. Please ensure all dates are in YYYY-MM-DD format and are valid dates.", 400);
+      }
+    }
+    
+    throw new AppError("Failed to create project. Please check that all required fields are provided and dates are in the correct format (YYYY-MM-DD).", 500);
   }
 }
 
@@ -682,11 +714,25 @@ export async function updateProject(
       }
     }
 
+    // Prepare update data
+    const updateData: any = {
+      ...projectData,
+      updated_at: new Date(),
+    };
+
+    // If status is being changed to 'completed', automatically set end_date to current date
+    if (projectData.status === 'completed' && existingProject[0].status !== 'completed') {
+      // Only set end_date if it's not already set
+      if (!existingProject[0].end_date) {
+        updateData.end_date = new Date();
+      }
+    }
+
     // Update project
     await db
       .update(projects)
       .set({
-        ...projectData,
+        ...updateData,
         status: projectData.status as
           | "planned"
           | "active"
@@ -694,7 +740,6 @@ export async function updateProject(
           | "cancelled"
           | "on_hold"
           | undefined,
-        updated_at: new Date(),
       })
       .where(eq(projects.id, id));
 
@@ -850,6 +895,7 @@ export async function listProjects(
       team_id,
       category_id,
       partner_id,
+      is_published,
     } = params;
     const offset = (page - 1) * limit;
 
@@ -884,6 +930,11 @@ export async function listProjects(
 
     if (category_id) {
       whereConditions.push(eq(projects.category_id, category_id));
+    }
+
+    // Filter by published status if specified
+    if (is_published !== undefined) {
+      whereConditions.push(eq(projects.is_published, is_published));
     }
 
     // Combine base conditions
@@ -944,12 +995,16 @@ export async function listProjects(
     }
 
     // Get total count for pagination
-    const totalResult = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(projects)
-      .where(whereClause);
-
-    const total = totalResult[0]?.count || 0;
+    const [totalResult] = whereClause
+      ? await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(projects)
+          .where(whereClause)
+      : await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(projects);
+    
+    const total = totalResult?.count || 0;
 
     // Sort order
     const sortDirection = sort_order === "asc" ? asc : desc;
@@ -971,9 +1026,26 @@ export async function listProjects(
         orderBy = sortDirection(projects.created_at);
     }
 
-    // Get paginated results
+    // Get paginated results - explicitly select columns to avoid schema mismatches
     const result = await db
-      .select()
+      .select({
+        id: projects.id,
+        name: projects.name,
+        description: projects.description,
+        status: projects.status,
+        start_date: projects.start_date,
+        end_date: projects.end_date,
+        category_id: projects.category_id,
+        partner_id: projects.partner_id,
+        location: projects.location,
+        goals: projects.goals,
+        outcomes: projects.outcomes,
+        media: projects.media,
+        other_information: projects.other_information,
+        is_published: projects.is_published,
+        created_at: projects.created_at,
+        updated_at: projects.updated_at,
+      })
       .from(projects)
       .where(whereClause)
       .orderBy(orderBy)
@@ -991,7 +1063,11 @@ export async function listProjects(
     };
   } catch (error) {
     logger.error("Error listing projects", error);
-    throw new AppError("Failed to list projects", 500);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    throw new AppError(`Failed to list projects: ${errorMessage}`, 500);
   }
 }
 
@@ -1012,10 +1088,45 @@ function mapToProjectOutput(project: any): ProjectOutput {
     outcomes: project.outcomes,
     media: project.media,
     other_information: project.other_information,
+    is_published: project.is_published ?? false,
     
     created_at: project.created_at,
     updated_at: project.updated_at,
   };
+}
+
+// Publish project
+export async function publishProject(id: number): Promise<ProjectOutput> {
+  try {
+    // Check if project exists
+    const existingProject = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.id, id))
+      .limit(1);
+
+    if (!existingProject.length) {
+      throw new AppError("Project not found", 404);
+    }
+
+    // Update the is_published status
+    await db
+      .update(projects)
+      .set({
+        is_published: true,
+        updated_at: new Date(),
+      })
+      .where(eq(projects.id, id));
+
+    // Return the updated project
+    return getProjectById(id);
+  } catch (error) {
+    logger.error(`Error publishing project: ${id}`, error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Failed to publish project", 500);
+  }
 }
 
 /**
@@ -1072,6 +1183,7 @@ export const projectService = {
   createProject,
   getProjectById,
   updateProject,
+  publishProject,
   deleteProject,
   listProjects,
   isProjectOverdue,

@@ -22,6 +22,15 @@ import {
 import { Badge } from "@workspace/ui/components/badge";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { Check as CheckIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog";
+import { Button } from "@workspace/ui/components/button";
 
 const AddProjectPage = () => {
   const router = useRouter();
@@ -31,6 +40,9 @@ const AddProjectPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [formSuccess, setFormSuccess] = useState('');
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [createdProjectId, setCreatedProjectId] = useState<number | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState<any[]>([]);
@@ -65,9 +77,8 @@ const AddProjectPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    status: 'planned',
-    start_date: '',
-    end_date: '',
+    status: 'active', // Automatically set to 'active' when creating
+    // start_date is automatically set to current date when project is created
     category_id: '',
     location: '',
     goals: {
@@ -165,7 +176,6 @@ const AddProjectPage = () => {
         // Fetch partners
         try {
           const partnersResponse = await apiClient.get('/partners');
-          console.log('Partners response:', partnersResponse.data);
 
           // Extract partners array
           if (partnersResponse.data && Array.isArray(partnersResponse.data.partners)) {
@@ -184,7 +194,6 @@ const AddProjectPage = () => {
         // Fetch teams
         try {
           const teamsResponse = await apiClient.get('/teams');
-          console.log('Teams response:', teamsResponse.data);
 
           // Check the structure of the response and extract teams array
           let allTeamMembers = [];
@@ -237,11 +246,8 @@ const AddProjectPage = () => {
             return teamTypeNameLower === "team" || teamTypeNameLower === "fellow";
           });
 
-          console.log('Filtered team members:', filtered);
-
           if (filtered.length === 0) {
             // If no filtered results, include all team members as fallback
-            console.log('No filtered team members found, using all members as fallback');
             setFilteredTeamMembers(processedMembers);
             setUsers(processedMembers);
           } else {
@@ -359,8 +365,6 @@ const AddProjectPage = () => {
       
       // Check if upload was successful
       if (response.data && response.data.success) {
-        console.log('Document uploaded successfully:', response.data.file);
-        
         // Add document to form data
         const documentToAdd = {
           name: newDocument.name,
@@ -485,7 +489,6 @@ const AddProjectPage = () => {
       
       // Check if upload was successful
       if (response.data && response.data.success) {
-        console.log('File uploaded successfully:', response.data.file);
         setUploadProgress(100);
         setIsUploading(false);
         return response.data.file.url;
@@ -1306,13 +1309,39 @@ const AddProjectPage = () => {
     router.push('/partners/add');
   };
 
+  // Handle publish action
+  const handlePublish = async () => {
+    if (!createdProjectId) return;
+    
+    setIsPublishing(true);
+    try {
+      await apiClient.post(`/projects/${createdProjectId}/publish`);
+      setShowPublishDialog(false);
+      setSuccess(true);
+      setTimeout(() => {
+        router.push('/projects');
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error publishing project:', error);
+      setError(error.response?.data?.message || 'Failed to publish project. Please try again.');
+      setIsPublishing(false);
+    }
+  };
+
+  // Handle save as unpublished
+  const handleSaveAsUnpublished = () => {
+    setShowPublishDialog(false);
+    setTimeout(() => {
+      router.push('/projects');
+    }, 500);
+  };
+
   // Handle form submission
   interface ProjectData {
     name: string;
     description: string;
     status: string;
-    start_date: string;
-    end_date: string;
+    // start_date is automatically set to current date when project is created
     category_id: number;
     location: string;
     goals: {
@@ -1379,23 +1408,23 @@ const AddProjectPage = () => {
           ...(typeof member === 'object' && member !== null ? member : {}),
           team_id: typeof member.team_id === 'string' ? parseInt(member.team_id, 10) : member.team_id,
           role: member.role, 
-          start_date: formData.start_date
+          start_date: new Date().toISOString().split('T')[0] // Use current date for member start_date
         })),
         // Rest of the data...
       };
       
-      console.log('Submitting project data:', submissionData);
+      // Submit to API - always create as unpublished first
+      const response = await apiClient.post('/projects', {
+        ...submissionData,
+        is_published: false
+      });
       
-      // Submit to API
-      const response = await apiClient.post('/projects', submissionData);
-      
-      console.log('Project created successfully:', response.data);
       setSuccess(true);
       
-      // Redirect to project detail or projects list
-      setTimeout(() => {
-        router.push('/projects');
-      }, 2000);
+      // Store the created project ID and show publish dialog
+      const projectId = response.data.project?.id || response.data.id;
+      setCreatedProjectId(projectId);
+      setShowPublishDialog(true);
     } catch (error: any) {
       console.error('Error creating project:', error);
       setError(error.response?.data?.message || 'Failed to create project. Please try again.');
@@ -1408,6 +1437,44 @@ const AddProjectPage = () => {
     <div className="max-w-7xl mx-auto p-6">
       {/* Video preview modal */}
       {videoPreviewUrl && <VideoPreviewModal />}
+      
+      {/* Publish/Save Dialog */}
+      <Dialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Project Created Successfully!</DialogTitle>
+            <DialogDescription>
+              Your project has been saved. Would you like to publish it now or save it as unpublished?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveAsUnpublished}
+              disabled={isPublishing}
+              className="w-full sm:w-auto"
+            >
+              Save as Unpublished
+            </Button>
+            <Button
+              type="button"
+              onClick={handlePublish}
+              disabled={isPublishing}
+              className="w-full sm:w-auto bg-green-700 hover:bg-green-800"
+            >
+              {isPublishing ? (
+                <>
+                  <Loader className="w-4 h-4 mr-2 animate-spin" />
+                  Publishing...
+                </>
+              ) : (
+                'Publish Now'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* Header with back button */}
       <div className="mb-6">
@@ -1494,61 +1561,6 @@ const AddProjectPage = () => {
                           {category.name}
                         </option>
                       ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
-                  </div>
-                </div>
-                
-                {/* Start date */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Start Date<span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      name="start_date"
-                      value={formData.start_date}
-                      onChange={handleChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                {/* End date */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    End Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      name="end_date"
-                      value={formData.end_date}
-                      onChange={handleChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                </div>
-                
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Status
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
-                    >
-                      <option value="planned">Planned</option>
-                      <option value="active">Active</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="on_hold">On Hold</option>
                     </select>
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
@@ -1826,32 +1838,34 @@ const AddProjectPage = () => {
         </div>
       )}
       
-      {/* Role selection first - Using fixed string enum values instead of IDs */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">
-          Role<span className="text-red-500">*</span>
-        </label>
-        <div className="relative">
-          <select
-            value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
-            className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
-          >
-            <option value="">Select a role</option>
-            <option value="lead">Lead</option>
-            <option value="member">Member</option>
-            <option value="supervisor">Supervisor</option>
-            <option value="contributor">Contributor</option>
-          </select>
-          <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+      {/* Role and Team member selection on parallel line */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Role selection - Using fixed string enum values instead of IDs */}
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Role<span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
+            >
+              <option value="">Select a role</option>
+              <option value="lead">Lead</option>
+              <option value="member">Member</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="contributor">Contributor</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
+          </div>
         </div>
-      </div>
-      
-      {/* Team member selection with Popover */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium mb-1">
-          Add Team Members<span className="text-red-500">*</span>
-        </label>
+        
+        {/* Team member selection with Popover */}
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Add Team Members<span className="text-red-500">*</span>
+          </label>
         <Popover open={openTeamPopover} onOpenChange={setOpenTeamPopover}>
           <PopoverTrigger asChild>
             <button
@@ -1912,6 +1926,7 @@ const AddProjectPage = () => {
             </Command>
           </PopoverContent>
         </Popover>
+        </div>
       </div>
     </div>
   </div>
