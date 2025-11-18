@@ -1,6 +1,6 @@
 {
-  "id": "5d40fedb-f26f-414c-8d72-ce9ad161be0b",
-  "prevId": "37876c1a-5477-4d0f-835c-7427aaf96468",
+  "id": "543bf41c-50f7-4fd2-915b-555f9e9724c1",
+  "prevId": "fe6c94b2-6012-481e-8504-12d10dabd373",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1186,6 +1186,13 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "is_published": {
+          "name": "is_published",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
