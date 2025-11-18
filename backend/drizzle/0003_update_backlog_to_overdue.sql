@@ -27,9 +27,3 @@ WHERE "status" = 'backlog';
 
 
 
-
-
-
-
-
-
