@@ -5,6 +5,7 @@ import Image from "next/image";
 import { PlayCircle, PauseCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from '@/components/layout/headertext';
+import { useDict } from '@/context/dictionary';
 
 
 interface KeyElement {
@@ -16,13 +17,12 @@ interface KeyElement {
 
 interface GanzAfricaUniqueSectionProps {
   locale: string;
-  dict: any;
 }
 
 export default function GanzAfricaUniqueSection({
                                                   locale,
-                                                  dict,
                                                 }: GanzAfricaUniqueSectionProps) {
+  const dict = useDict();
   const [videoPlaying, setVideoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 

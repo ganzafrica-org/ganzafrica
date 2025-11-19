@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/av
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { cn } from '@/lib/utils';
 import apiClient from '@/lib/api-client';
+import { useDict } from '@/context/dictionary';
 
 // Interface for the testimonial data from the API
 interface Testimonial {
@@ -29,10 +30,10 @@ interface TestimonialsResponse {
 // Props for the component
 interface TestimonialsSectionProps {
     locale: string;
-    dict: any;
 }
 
-export default function TestimonialsSection({ locale, dict }: TestimonialsSectionProps) {
+export default function TestimonialsSection({ locale }: TestimonialsSectionProps) {
+    const dict = useDict();
     const [activeIndex, setActiveIndex] = useState(0);
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [loading, setLoading] = useState(true);

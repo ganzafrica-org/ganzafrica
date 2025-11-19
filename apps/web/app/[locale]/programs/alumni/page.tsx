@@ -8,5 +8,5 @@ export default async function AlumniPage({ params }: { params: Params }) {
   const { locale } = await params;
   const dict = await getDictionary(locale);
 
-  return <AlumniPageContent dict={dict} />;
+  return <AlumniPageContent />;
 }

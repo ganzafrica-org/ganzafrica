@@ -8,6 +8,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import { CircleCheck } from "lucide-react";
+import { useDict } from '@/context/dictionary';
 
 // Custom CheckCircle component with color fill
 const ColoredCheckCircle = ({
@@ -30,13 +31,12 @@ const ColoredCheckCircle = ({
 
 interface WhyGanzAfricaSectionProps {
   locale: string;
-  dict: any;
 }
 
 export default function WhyGanzAfricaSection({
   locale,
-  dict,
 }: WhyGanzAfricaSectionProps) {
+  const dict = useDict();
   const sectionRef = useRef<HTMLDivElement>(null);
   const bulletPointsRef = useRef<Array<HTMLDivElement | null>>([]);
 

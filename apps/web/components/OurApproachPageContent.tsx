@@ -6,10 +6,7 @@ import Image from "next/image";
 import HeaderBelt from "@/components/layout/headerBelt";
 import WhereWeWorkSection from "@/components/sections/food-system/where-we-work-section";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
-
-interface OurApproachProps {
-  dict?: any;
-}
+import { useDict } from '@/context/dictionary';
 
 // Animation variants
 const fadeIn = {
@@ -24,7 +21,8 @@ const fadeIn = {
   },
 };
 
-export default function OurApproachPageContent({ dict }: OurApproachProps) {
+export default function OurApproachPageContent() {
+  const dict = useDict();
   return (
     <main className="bg-white">
       {/* Hero Section */}
@@ -75,8 +73,8 @@ export default function OurApproachPageContent({ dict }: OurApproachProps) {
       
       {/* Page Content */}
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-        <WhereWeWorkSection dict={dict} />
-        <ImpactAreasSection dict={dict} />
+        <WhereWeWorkSection />
+        <ImpactAreasSection />
       </motion.div>
     </main>
   );

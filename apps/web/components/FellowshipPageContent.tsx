@@ -12,9 +12,9 @@ import { motion } from 'framer-motion';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { AudioMutedIcon, AudioUnmutedIcon, FullscreenIcon } from "@/components/ui/icons";
 import apiClient from '@/lib/api-client';
+import { useDict } from '@/context/dictionary';
 
 interface FellowshipPageContentProps {
-  dict?: any;
   locale: string;
 }
 
@@ -109,7 +109,8 @@ const fallbackTestimonials: Testimonial[] = [
   }
 ];
 
-export default function FellowshipPageContent({ dict, locale }: FellowshipPageContentProps) {
+export default function FellowshipPageContent({ locale }: FellowshipPageContentProps) {
+  const dict = useDict();
   const benefits = [
     {
       title: dict?.fellowship?.benefits?.tackle?.title || "Tackle Challenges",

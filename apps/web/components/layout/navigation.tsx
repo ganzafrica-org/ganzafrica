@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, Globe } from "lucide-react";
+import { useDict } from '@/context/dictionary';
 
 import {
   NavigationMenu,
@@ -55,7 +56,6 @@ interface DictionaryType {
 // Define Navigation props
 interface NavigationProps {
   locale: string;
-  dict: DictionaryType;
   isHomePage?: boolean;
 }
 
@@ -132,9 +132,9 @@ ListItem.displayName = "ListItem";
 
 export default function Navigation({
   locale,
-  dict,
   isHomePage = false,
 }: NavigationProps) {
+  const dict = useDict();
   const [isMobileMenuOpen, setIsMobileMenuOpen] =
     React.useState<boolean>(false);
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(
@@ -328,6 +328,13 @@ export default function Navigation({
 
   return (
     <header ref={navRef} className={getHeaderBgClass()}>
+      {/* Google Translate Widget */}
+      <div className="fixed top-4 right-4 z-40 bg-white rounded-lg shadow-lg p-2 hidden">
+        <div id="google_translate_element" className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-primary-orange" />
+        </div>
+      </div>
+
       <div className="container min-w-full py-0">
         <div className="flex h-20 items-stretch justify-between relative">
           {/* Logo */}
@@ -481,7 +488,7 @@ export default function Navigation({
 
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 border-3">
               <LanguageSwitcher />
               <Link href={`/${locale}/login`} className="hidden md:block">
                 <Button

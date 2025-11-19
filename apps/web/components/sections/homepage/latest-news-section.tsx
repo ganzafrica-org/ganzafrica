@@ -7,6 +7,7 @@ import apiClient from '@/lib/api-client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useDict } from '@/context/dictionary';
 
 // Interface for the news data from the API
 interface NewsItem {
@@ -40,7 +41,6 @@ interface NewsResponse {
 
 interface NewsSectionProps {
   locale: string;
-  dict: any;
 }
 
 // Define color scheme for "Read more" links (matching project cards)
@@ -51,7 +51,8 @@ const getLinkColor = (index: number) => {
   return LINK_COLORS[index % LINK_COLORS.length];
 };
 
-export default function NewsSection({ locale, dict }: NewsSectionProps) {
+export default function NewsSection({ locale }: NewsSectionProps) {
+  const dict = useDict();
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

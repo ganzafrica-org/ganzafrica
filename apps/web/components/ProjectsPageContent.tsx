@@ -22,6 +22,7 @@ import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import apiClient from '@/lib/api-client';
 import { motion } from "framer-motion";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
+import { useDict } from '@/context/dictionary';
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -39,12 +40,9 @@ const fadeIn = {
   }
 };
 
-interface ProjectsPageProps {
-  dict?: any;
-}
-
 // Project Card Component (localized strings used where appropriate)
-const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName, dict }) => {
+const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName }) => {
+  const dict = useDict();
   const truncateDescription = (text: string | undefined): string => {
     if (!text) return dict?.projects?.cardFallback || "A sustainable project working with local communities to improve agriculture systems.";
     const words = text.split(' ');
@@ -137,7 +135,7 @@ const CategoryButton: React.FC<any> = ({ name, icon, count, isActive, onClick })
   );
 };
 
-const Pagination: React.FC<any> = ({ currentPage, totalPages, onPageChange, dict }) => {
+const Pagination: React.FC<any> = ({ currentPage, totalPages, onPageChange }) => {
   return (
     <div className="flex justify-center items-center mt-8 space-x-2">
       <button 
@@ -187,7 +185,8 @@ interface Project {
   contact_person?: string;
 }
 
-export default function ProjectsPageContent({ dict }: ProjectsPageProps) {
+export default function ProjectsPageContent() {
+  const dict = useDict();
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [allProjects, setAllProjects] = useState<any[]>([]);
@@ -415,11 +414,11 @@ export default function ProjectsPageContent({ dict }: ProjectsPageProps) {
                   <div ref={projectsGridRef} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {projects.map((project) => (
                       <div key={project.id} className="project-card">
-                        <ProjectCard project={project} getFeatureImage={getFeatureImage} getCategoryName={getCategoryName} dict={dict} />
+                        <ProjectCard project={project} getFeatureImage={getFeatureImage} getCategoryName={getCategoryName} />
                       </div>
                     ))}
                   </div>
-                  {totalPages > 1 && (<Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} dict={dict} />)}
+                  {totalPages > 1 && (<Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />)}
                 </>
               )}
             </div>
@@ -428,7 +427,7 @@ export default function ProjectsPageContent({ dict }: ProjectsPageProps) {
       )}
       </div>
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-        <ImpactAreasSection dict={dict} />
+        <ImpactAreasSection />
       </motion.div>
     </div>
   );

@@ -18,12 +18,10 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
+import { useDict } from '@/context/dictionary';
 
-interface AlumniPageProps {
-  dict?: any;
-}
-
-export default function AlumniPageContent({ dict }: AlumniPageProps) {
+export default function AlumniPageContent() {
+  const dict = useDict();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [animateFirst, setAnimateFirst] = useState(false);
   const [animateSecond, setAnimateSecond] = useState(false);

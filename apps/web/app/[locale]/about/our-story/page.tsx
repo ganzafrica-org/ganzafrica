@@ -8,5 +8,5 @@ export default async function OurStoryPage({ params }: { params: Params }) {
     const dict = await getDictionary(locale);
     const isFrench = locale === "fr";
 
-    return <OurStoryContent dict={dict} isFrench={isFrench} />;
+    return <OurStoryContent isFrench={isFrench} />;
 }

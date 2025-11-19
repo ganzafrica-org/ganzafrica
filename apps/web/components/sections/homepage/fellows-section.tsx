@@ -4,10 +4,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from "@/components/layout/headertext";
+import { useDict } from '@/context/dictionary';
 
 interface FellowsSectionProps {
   locale: string;
-  dict: any;
 }
 
 type ImageItem = {
@@ -16,7 +16,8 @@ type ImageItem = {
   alt: string;
 };
 
-export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
+export default function FellowsSection({ locale }: FellowsSectionProps) {
+  const dict = useDict();
 
   const [images, setImages] = useState<ImageItem[]>([
     {

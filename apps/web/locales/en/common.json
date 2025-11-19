@@ -267,6 +267,62 @@
     "testimonials": {
       "heading": "Checkout What Fellows",
       "heading2": "Say about Our Fellowship"
+    },
+    "howToApply": {
+      "hero": {
+        "title": "Apply by completing our",
+        "emphasis": "online application",
+        "subtitle": "Join our fellowship program and become part of Africa's next generation of leaders in sustainable development"
+      },
+      "applicationProcessTitle": "Application",
+      "applicationProcessHighlight": "Process",
+      "steps": [
+        {
+          "title": "Fellowship Advertised",
+          "description": "GanzAfrica Fellowship opportunities are announced through our online channels and partner networks across Africa."
+        },
+        {
+          "title": "Applications Received",
+          "description": "Submit your application through our online portal. Make sure to include all required documents and information."
+        },
+        {
+          "title": "Applications Reviewed",
+          "description": "Our team carefully reviews each application, assessing qualifications, experience, and alignment with our mission."
+        },
+        {
+          "title": "Interviews Conducted",
+          "description": "Selected candidates are invited to participate in oral and written interviews to further assess their suitability."
+        },
+        {
+          "title": "Finalists Selected & Notified",
+          "description": "Successful candidates are notified and begin their journey with GanzAfrica Fellowship Program."
+        }
+      ],
+      "eligibilityTitle": "Eligibility",
+      "eligibilitySubtitle": "Requirements for the GanzAfrica Fellowship Program",
+      "eligibility": [
+        {
+          "title": "Up to 27 years old",
+          "description": "Young professionals at the start of their career journey"
+        },
+        {
+          "title": "A degree in a relevant discipline",
+          "description": "Academic background in agriculture, environmental science, data science, or related fields"
+        },
+        {
+          "title": "Commitment to leading Africa's transformation",
+          "description": "Demonstrated passion for sustainable development and positive change"
+        }
+      ],
+      "journeyTitle": "FELLOWSHIP JOURNEY",
+      "journey": [
+        "High-achieving young professionals are recruited as GanzAfrica fellows",
+        "GanzAfrica Academy provides capacity building on data-led approaches and leadership",
+        "Fellows are placed in public institutions and empowered to shape policy approaches",
+        "Fellows receive mentorship from experts, advancing their careers, leadership skills, and providing ongoing support"
+      ],
+      "applyButton": "Apply Now",
+      "connectWithUs": "Connect With Us"
     }
   },
   "projects": {

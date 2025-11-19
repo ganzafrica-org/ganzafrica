@@ -3,17 +3,18 @@ import Image from "next/image";
 import { Home, Phone, Mail } from "lucide-react";
 import { LinkedInIcon, TwitterIcon } from "@/components/ui/icons";
 import { Button } from "@workspace/ui/components/button";
+import { useDict } from '@/context/dictionary';
 
 export default function Footer({
                                  locale,
-                                 dict,
                                }: {
   locale: string;
-  dict: any;
 }) {
+  const dict = useDict();
+
   return (
-      <footer className="bg-primary-green text-white py-1">
-        <div className="pl-4 pr-3 sm:pl-6 sm:pr-4 md:pl-12 md:pr-8 lg:pl-16 lg:pr-10 xl:pl-[80px] xl:pr-[40px]">
+      <footer className="bg-primary-green text-white py-1" id="footer-translate">
+        <div className="pl-4 pr-3 sm:pl-6 sm:pr-4 md:pl-12 md:pr-8 lg:pl-16 lg:pr-10 xl:pl-[80px] xl:pr-[40px]" id="footer-translate-widget">
           {/* Top Section - Logo and Social Icons */}
           <div className="flex justify-between items-center mb-1 md:hidden">
             {/* Logo */}

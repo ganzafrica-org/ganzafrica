@@ -3,17 +3,17 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { DecoratedHeading } from '@/components/layout/headertext';
+import { useDict } from '@/context/dictionary';
 
 
 interface NewsletterSectionProps {
   locale: string;
-  dict: any;
 }
 
 export default function NewsletterSection({
   locale,
-  dict,
 }: NewsletterSectionProps) {
+  const dict = useDict();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<

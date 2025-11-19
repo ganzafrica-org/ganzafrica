@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { DecoratedHeading } from "@/components/layout/headertext";
+import { useDict } from '@/context/dictionary';
 
 interface Program {
   id: string;
@@ -18,13 +19,12 @@ interface Program {
 
 interface FlagshipProgramsSectionProps {
   locale: string;
-  dict: any;
 }
 
 export default function FlagshipProgramsSection({
                                                   locale,
-                                                  dict,
                                                 }: FlagshipProgramsSectionProps) {
+  const dict = useDict();
   // Define SVG icons for each program
   const FellowshipIcon = () => (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

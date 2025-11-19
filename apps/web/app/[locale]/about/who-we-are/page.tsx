@@ -598,7 +598,6 @@ export default async function AboutPage(props: PageProps) {
 
       {/* Building Sustainable Solutions Section */}
       <BuildingSolutionsSection
-        dict={dict?.about}
         categories={categories}
         tags={tags}
       />

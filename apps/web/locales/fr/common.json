@@ -272,6 +272,62 @@
     "testimonials": {
       "heading": "Découvrez ce que les Boursiers",
       "heading2": "Disent de Notre Bourse"
+    },
+    "howToApply": {
+      "hero": {
+        "title": "Postulez en complétant notre",
+        "emphasis": "demande en ligne",
+        "subtitle": "Rejoignez notre programme de bourses et devenez un leader de la prochaine génération d'Afrique pour le développement durable"
+      },
+      "applicationProcessTitle": "Processus de",
+      "applicationProcessHighlight": "Candidature",
+      "steps": [
+        {
+          "title": "Bourse Annoncée",
+          "description": "Les opportunités de bourse GanzAfrica sont annoncées via nos canaux en ligne et réseaux de partenaires à travers l'Afrique."
+        },
+        {
+          "title": "Candidatures Reçues",
+          "description": "Soumettez votre candidature via notre portail en ligne. Assurez-vous d'inclure tous les documents et informations requises."
+        },
+        {
+          "title": "Candidatures Examinées",
+          "description": "Notre équipe examine attentivement chaque candidature, évaluant les qualifications, l'expérience et l'alignement avec notre mission."
+        },
+        {
+          "title": "Entretiens Menés",
+          "description": "Les candidats sélectionnés sont invités à participer à des entretiens oraux et écrits pour évaluer davantage leur aptitude."
+        },
+        {
+          "title": "Finalistes Sélectionnés et Notifiés",
+          "description": "Les candidats retenus sont notifiés et commencent leur parcours avec le Programme de Bourse GanzAfrica."
+        }
+      ],
+      "eligibilityTitle": "Admissibilité",
+      "eligibilitySubtitle": "Critères d'admission au Programme de Bourse GanzAfrica",
+      "eligibility": [
+        {
+          "title": "Jusqu'à 27 ans",
+          "description": "Jeunes professionnels au début de leur parcours professionnel"
+        },
+        {
+          "title": "Un diplôme dans une discipline pertinente",
+          "description": "Formation académique en agriculture, sciences de l'environnement, sciences des données ou domaines connexes"
+        },
+        {
+          "title": "Engagement dans la transformation de l'Afrique",
+          "description": "Passion démontrée pour le développement durable et le changement positif"
+        }
+      ],
+      "journeyTitle": "PARCOURS DE BOURSE",
+      "journey": [
+        "Les jeunes professionnels exceptionnels sont recrutés en tant que boursiers GanzAfrica",
+        "L'Académie GanzAfrica assure le développement des capacités sur les approches basées sur les données et le leadership",
+        "Les boursiers sont placés dans des institutions publiques et autonomisés pour façonner les approches politiques",
+        "Les boursiers reçoivent un mentorat d'experts, avançant leur carrière, compétences en leadership et soutien continu"
+      ],
+      "applyButton": "Postuler Maintenant",
+      "connectWithUs": "Entrez en Contact"
     }
   },
   "projects": {

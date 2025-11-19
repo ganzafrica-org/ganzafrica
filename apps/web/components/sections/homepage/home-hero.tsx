@@ -9,6 +9,7 @@ import { Button } from "@workspace/ui/components/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import LanguageSwitcher from "@/components/layout/language-switcher";
+import { useDict } from '@/context/dictionary';
 
 // Import shadcn Navigation Menu components
 import {
@@ -74,7 +75,6 @@ interface DictionaryType {
 // Define HomeHero props
 interface HomeHeroProps {
   locale: string;
-  dict: DictionaryType;
   backgroundImage?: string;
 }
 
@@ -111,9 +111,9 @@ const ListItem = ({
 
 export default function HomeHero({
   locale,
-  dict,
   backgroundImage = "/images/hero-test.jpg",
 }: HomeHeroProps) {
+  const dict = useDict();
   // Refs with proper types
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);

@@ -8,6 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useDict } from '@/context/dictionary';
 
 // Type definitions
 type ProjectMedia = {
@@ -50,7 +51,6 @@ pagination: {
 
 type ProjectsSectionProps = {
 locale: string;
-dict: Record<string, any>;
 };
 
 const PROJECTS_PER_PAGE = 3;
@@ -70,7 +70,8 @@ const getProjectCategory = (index: number) => {
   };
 };
 
-export default function ProjectsSection({ locale, dict }: ProjectsSectionProps): JSX.Element {
+export default function ProjectsSection({ locale }: ProjectsSectionProps): JSX.Element {
+  const dict = useDict();
 const [projects, setProjects] = useState<Project[]>([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState<string | null>(null);

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
 import { Button } from "@workspace/ui/components/button";
@@ -8,12 +8,10 @@ import { MapPin, Phone, Mail, Leaf, Send, CheckCircle2, Building2, AlertCircle }
 import { safeAccess } from "@/lib/utils/safeAccess";
 import { motion } from "framer-motion";
 import apiClient from "@/lib/api-client";
+import { useDict } from '@/context/dictionary';
 
-interface ContactUsContentProps {
-    dict: any;
-}
-
-const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
+const ContactUsContent: React.FC = () => {
+    const dict = useDict();
     const [formState, setFormState] = useState({
         name: "",
         email: "",

@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Container from "@/components/layout/container";
+import { useDict } from '@/context/dictionary';
 
 // Animation variants
 const containerVariants = {
@@ -29,9 +30,8 @@ const itemVariants = {
   },
 };
 
-interface SectionProps { dict?: any }
-
-const WhereWeWorkSection = ({ dict }: SectionProps) => {
+const WhereWeWorkSection = () => {
+  const dict = useDict();
   return (
     <section className="py-16 bg-white">
       <Container>

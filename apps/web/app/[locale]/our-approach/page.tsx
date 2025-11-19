@@ -11,8 +11,8 @@ export default async function OurApproachPage({ params }: { params: Params }) {
 
   return (
     <>
-      <Header locale={locale} dict={dict as any} />
-      <OurApproachPageContent dict={dict} />
+      <Header locale={locale} />
+      <OurApproachPageContent />
     </>
   );
 }

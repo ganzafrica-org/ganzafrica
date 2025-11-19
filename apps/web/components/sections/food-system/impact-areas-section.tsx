@@ -7,6 +7,7 @@ import { MapPin, X, ChevronRight, Info, Search, Plus, Minus } from "lucide-react
 import apiClient from "@/lib/api-client";
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useDict } from '@/context/dictionary';
 
 // Define TypeScript interfaces
 interface Coordinates {
@@ -100,9 +101,8 @@ const statItemVariants = {
   }
 };
 
-interface SectionProps { dict?: any }
-
-const ClimateInitiativesMapSection = ({ dict }: SectionProps) => {
+const ClimateInitiativesMapSection = () => {
+  const dict = useDict();
   // Get the locale from URL params
   const params = useParams();
   const locale = params.locale || 'en';

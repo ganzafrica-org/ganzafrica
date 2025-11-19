@@ -3,7 +3,6 @@
 import Image from "next/image";
 import SectionWithScrollAnimation from "@/components/layout/SectionWithScroll";
 import React, { useState, useRef } from "react";
-import {getDictionary} from "@/lib/get-dictionary";
 import HeaderBelt from "@/components/layout/headerBelt";
 import { 
     PersonIcon, 
@@ -11,13 +10,14 @@ import {
     AudioUnmutedIcon,
     FullscreenIcon
 } from "@/components/ui/icons";
+import { useDict } from '@/context/dictionary';
 
 type Props = {
-    dict: Awaited<ReturnType<typeof getDictionary>>;
     isFrench: boolean;
 };
 
-export default function OurStoryContent({ dict, isFrench }: Props) {
+export default function OurStoryContent({ isFrench }: Props) {
+    const dict = useDict();
     const contentClass = isFrench ? "flex-1 overflow-y-auto pr-2" : "flex-1";
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isMuted, setIsMuted] = useState(true);
