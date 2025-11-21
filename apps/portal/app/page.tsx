@@ -50,7 +50,7 @@ export default function EntryPage() {
         <div className="flex items-center justify-center min-h-screen bg-white">
             <div className="text-center w-full max-w-md px-4">
                 <Image
-                    src="/logo.png"
+                    src="/images/logoLight.png"
                     alt="Ganz Africa Logo"
                     width={200}
                     height={200}
