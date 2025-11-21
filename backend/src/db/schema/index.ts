@@ -12,3 +12,4 @@ export * from "./common";
 export * from "./task-teams";
 export * from "./tasks";
 export * from "./reports";
+export * from "./alumni";

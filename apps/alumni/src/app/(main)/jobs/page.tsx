@@ -1,647 +1,776 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
-    Briefcase,
-    Search,
-    Filter,
-    MapPin,
-    Building,
-    Clock,
-    DollarSign,
-    ExternalLink,
-    BookmarkPlus,
-    Send,
-    Users,
-    TrendingUp,
-    Calendar,
-    Globe,
-    Eye,
-    Star,
-    Plus,
-    Download
-} from "lucide-react"
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Briefcase,
+  Search,
+  MapPin,
+  Building,
+  Clock,
+  DollarSign,
+  ExternalLink,
+  Send,
+  TrendingUp,
+  Globe,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
+import {
+  jobsApi,
+  type Job,
+  type JobStats,
+  type TrendingSkill,
+  type JobFilters,
+  type Pagination,
+} from "@/lib/api/alumni";
 
-// Dummy job data
-const jobData = [
-    {
-        id: 1,
-        title: "Senior Software Engineer",
-        company: "TechCorp Solutions",
-        location: "San Francisco, CA",
-        type: "Full-time",
-        remote: true,
-        salary: "$120,000 - $150,000",
-        posted: "2 days ago",
-        deadline: "2025-09-15",
-        description: "Join our engineering team to build scalable web applications using React, Node.js, and cloud technologies.",
-        requirements: ["5+ years experience", "React expertise", "Node.js knowledge", "Cloud platforms (AWS/GCP)"],
-        skills: ["React", "Node.js", "TypeScript", "AWS", "Docker"],
-        postedBy: "Internal",
-        applications: 24,
-        views: 156,
-        featured: true,
-        companyLogo: null,
-        industry: "Technology",
-        experienceLevel: "Senior"
-    },
-    {
-        id: 2,
-        title: "Product Manager",
-        company: "StartupXYZ",
-        location: "Kigali, Rwanda",
-        type: "Full-time",
-        remote: false,
-        salary: "$80,000 - $100,000",
-        posted: "5 days ago",
-        deadline: "2025-09-20",
-        description: "Lead product strategy and development for our fintech platform serving African markets.",
-        requirements: ["3+ years PM experience", "Fintech background", "African market knowledge", "Data-driven approach"],
-        skills: ["Product Strategy", "Data Analysis", "Fintech", "User Research"],
-        postedBy: "External",
-        applications: 18,
-        views: 89,
-        featured: false,
-        companyLogo: null,
-        industry: "FinTech",
-        experienceLevel: "Mid-level"
-    },
-    {
-        id: 3,
-        title: "Data Scientist",
-        company: "AI Solutions Inc",
-        location: "Remote",
-        type: "Full-time",
-        remote: true,
-        salary: "$90,000 - $120,000",
-        posted: "1 week ago",
-        deadline: "2025-09-25",
-        description: "Develop machine learning models and data pipelines to drive business insights and automation.",
-        requirements: ["PhD or Masters in related field", "Python/R proficiency", "ML frameworks", "Statistical analysis"],
-        skills: ["Python", "Machine Learning", "Statistics", "SQL", "TensorFlow"],
-        postedBy: "External",
-        applications: 31,
-        views: 203,
-        featured: true,
-        companyLogo: null,
-        industry: "Technology",
-        experienceLevel: "Senior"
-    },
-    {
-        id: 4,
-        title: "UX/UI Designer",
-        company: "Design Studio Pro",
-        location: "London, UK",
-        type: "Contract",
-        remote: true,
-        salary: "$60,000 - $80,000",
-        posted: "3 days ago",
-        deadline: "2025-09-18",
-        description: "Create beautiful and intuitive user experiences for mobile and web applications.",
-        requirements: ["3+ years UX/UI experience", "Figma proficiency", "User research skills", "Portfolio required"],
-        skills: ["Figma", "User Research", "Prototyping", "Design Systems"],
-        postedBy: "External",
-        applications: 12,
-        views: 67,
-        featured: false,
-        companyLogo: null,
-        industry: "Design",
-        experienceLevel: "Mid-level"
-    },
-    {
-        id: 5,
-        title: "DevOps Engineer",
-        company: "CloudTech Solutions",
-        location: "Berlin, Germany",
-        type: "Full-time",
-        remote: true,
-        salary: "$85,000 - $110,000",
-        posted: "4 days ago",
-        deadline: "2025-09-22",
-        description: "Build and maintain CI/CD pipelines, infrastructure automation, and cloud deployments.",
-        requirements: ["4+ years DevOps experience", "Kubernetes expertise", "Cloud platforms", "Infrastructure as Code"],
-        skills: ["Kubernetes", "Docker", "Terraform", "AWS", "Jenkins"],
-        postedBy: "External",
-        applications: 19,
-        views: 134,
-        featured: false,
-        companyLogo: null,
-        industry: "Technology",
-        experienceLevel: "Mid-level"
-    },
-    {
-        id: 6,
-        title: "Marketing Manager",
-        company: "GrowthCo",
-        location: "Toronto, Canada",
-        type: "Full-time",
-        remote: false,
-        salary: "$70,000 - $90,000",
-        posted: "6 days ago",
-        deadline: "2025-09-28",
-        description: "Lead digital marketing campaigns and growth strategies for B2B SaaS products.",
-        requirements: ["3+ years marketing experience", "B2B SaaS background", "Growth hacking skills", "Analytics expertise"],
-        skills: ["Digital Marketing", "Growth Hacking", "Analytics", "Content Marketing"],
-        postedBy: "Internal",
-        applications: 22,
-        views: 98,
-        featured: false,
-        companyLogo: null,
-        industry: "Marketing",
-        experienceLevel: "Mid-level"
-    },
-    {
-        id: 7,
-        title: "Venture Capital Analyst",
-        company: "Future Ventures",
-        location: "New York, NY",
-        type: "Full-time",
-        remote: false,
-        salary: "$100,000 - $130,000",
-        posted: "1 week ago",
-        deadline: "2025-09-30",
-        description: "Analyze investment opportunities and support portfolio companies in their growth journey.",
-        requirements: ["2+ years finance experience", "Investment analysis skills", "Startup ecosystem knowledge", "MBA preferred"],
-        skills: ["Financial Analysis", "Due Diligence", "Startup Evaluation", "Portfolio Management"],
-        postedBy: "External",
-        applications: 15,
-        views: 78,
-        featured: true,
-        companyLogo: null,
-        industry: "Finance",
-        experienceLevel: "Junior"
-    },
-    {
-        id: 8,
-        title: "Sustainability Consultant",
-        company: "EcoConsult Global",
-        location: "Nairobi, Kenya",
-        type: "Contract",
-        remote: true,
-        salary: "$65,000 - $85,000",
-        posted: "3 days ago",
-        deadline: "2025-09-20",
-        description: "Help organizations develop and implement sustainable business practices and environmental strategies.",
-        requirements: ["Environmental science background", "Consulting experience", "Sustainability expertise", "African market knowledge"],
-        skills: ["Sustainability", "Environmental Analysis", "Consulting", "Project Management"],
-        postedBy: "External",
-        applications: 8,
-        views: 45,
-        featured: false,
-        companyLogo: null,
-        industry: "Environmental",
-        experienceLevel: "Mid-level"
-    }
-]
+// Skeleton Components
+const StatsSkeleton = () => (
+  <div className="grid gap-4 md:grid-cols-3">
+    {[...Array(3)].map((_, i) => (
+      <Card key={i} className="border-0 shadow-lg">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-5 w-5 rounded" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-8 w-16 mb-2" />
+          <Skeleton className="h-3 w-20" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
 
-const getDepartmentColor = (industry: string) => {
-    switch (industry.toLowerCase()) {
-        case 'technology':
-            return 'from-emerald-500 to-green-600'
-        case 'fintech':
-            return 'from-blue-500 to-cyan-600'
-        case 'design':
-            return 'from-amber-500 to-orange-600'
-        case 'marketing':
-            return 'from-purple-500 to-indigo-600'
-        case 'finance':
-            return 'from-pink-500 to-rose-600'
-        case 'environmental':
-            return 'from-cyan-500 to-teal-600'
-        default:
-            return 'from-slate-500 to-slate-600'
-    }
-}
+const JobsListSkeleton = () => (
+  <div className="grid gap-6 lg:grid-cols-2">
+    {[...Array(6)].map((_, i) => (
+      <Card key={i} className="shadow-sm">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+              <Skeleton className="h-6 w-20 rounded-full" />
+            </div>
+            <Skeleton className="h-12 w-full" />
+            <div className="flex gap-2">
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-full" />
+              <Skeleton className="h-9 w-10" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
+
+const getSectorColor = (sector: string) => {
+  switch (sector.toLowerCase()) {
+    case "land":
+      return "from-emerald-500 to-green-600";
+    case "agriculture":
+      return "from-amber-500 to-orange-600";
+    case "environment":
+      return "from-cyan-500 to-teal-600";
+    case "communications":
+      return "from-purple-500 to-indigo-600";
+    case "ict":
+      return "from-blue-500 to-cyan-600";
+    default:
+      return "from-slate-500 to-slate-600";
+  }
+};
+
+const formatSalary = (
+  min: number | null,
+  max: number | null,
+  currency: string,
+) => {
+  if (!min && !max) return null;
+  const formatter = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency || "USD",
+    maximumFractionDigits: 0,
+  });
+  if (min && max) return `${formatter.format(min)} - ${formatter.format(max)}`;
+  if (min) return `From ${formatter.format(min)}`;
+  if (max) return `Up to ${formatter.format(max)}`;
+  return null;
+};
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return date.toLocaleDateString();
+};
+
+// Job Card Component
+const JobCard = ({ job }: { job: Job }) => {
+  const salary = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency);
+
+  return (
+    <Card className="hover:shadow-lg transition-all duration-300 border border-slate-200 h-full flex flex-col">
+      <CardContent className="p-6 flex flex-col h-full">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate">
+              {job.title}
+            </h3>
+            <p className="text-gray-600 flex items-center gap-1">
+              <Building className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{job.company}</span>
+            </p>
+            <div className="flex items-center gap-4 mt-2 text-sm text-gray-500 flex-wrap">
+              {job.location && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                  <span className="truncate">{job.location}</span>
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <Clock className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                {formatDate(job.createdAt)}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 items-end flex-shrink-0 ml-2">
+            <Badge
+              variant={job.source === "internal" ? "default" : "secondary"}
+              className={job.source === "internal" ? "bg-green-primary" : ""}
+            >
+              {job.source === "internal" ? "Internal" : "External"}
+            </Badge>
+            <div
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-br ${getSectorColor(job.sector)} text-white`}
+            >
+              {job.sector}
+            </div>
+            {job.isRemote && (
+              <Badge
+                variant="outline"
+                className="text-green-600 border-green-200"
+              >
+                Remote
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <p className="text-gray-700 text-sm mb-4 line-clamp-2 flex-grow">
+          {job.description || "No description available."}
+        </p>
+
+        <div className="space-y-3 mt-auto">
+          {salary && (
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+              <span className="text-sm font-medium text-gray-900">
+                {salary}
+              </span>
+            </div>
+          )}
+
+          {job.skills && job.skills.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {job.skills.slice(0, 4).map((skill) => (
+                <Badge key={skill} variant="outline" className="text-xs">
+                  {skill}
+                </Badge>
+              ))}
+              {job.skills.length > 4 && (
+                <Badge variant="outline" className="text-xs">
+                  +{job.skills.length - 4} more
+                </Badge>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-3 border-t">
+            <div className="flex items-center gap-4 text-xs text-gray-500">
+              <span className="flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                {job.views} views
+              </span>
+              {job.deadline && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Deadline: {new Date(job.deadline).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          <Button
+            className="flex-1 bg-green-primary hover:bg-green-600"
+            onClick={() =>
+              job.applicationUrl && window.open(job.applicationUrl, "_blank")
+            }
+            disabled={!job.applicationUrl}
+          >
+            <Send className="h-4 w-4 mr-2" />
+            Apply Now
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="border-orange-primary text-orange-primary hover:bg-orange-primary hover:text-white"
+            onClick={() =>
+              job.applicationUrl && window.open(job.applicationUrl, "_blank")
+            }
+            disabled={!job.applicationUrl}
+          >
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Stats Cards Component
+const StatsCards = ({ stats }: { stats: JobStats }) => (
+  <div className="grid gap-4 md:grid-cols-3">
+    <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-emerald-100">
+          Total Jobs
+        </CardTitle>
+        <Briefcase className="h-5 w-5 text-emerald-200" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold">{stats.totalJobs}</div>
+        <p className="text-xs text-emerald-100 flex items-center gap-1">
+          <TrendingUp className="h-3 w-3" />
+          Available opportunities
+        </p>
+      </CardContent>
+    </Card>
+
+    <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-blue-100">
+          Remote Jobs
+        </CardTitle>
+        <Globe className="h-5 w-5 text-blue-200" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold">{stats.remoteJobs}</div>
+        <p className="text-xs text-blue-100">Work from anywhere</p>
+      </CardContent>
+    </Card>
+
+    <Card className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-amber-100">
+          Internal Posts
+        </CardTitle>
+        <TrendingUp className="h-5 w-5 text-amber-200" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-3xl font-bold">{stats.internalJobs}</div>
+        <p className="text-xs text-amber-100">Posted by GanzAfrica</p>
+      </CardContent>
+    </Card>
+  </div>
+);
 
 export default function AlumniJobs() {
-    const [searchTerm, setSearchTerm] = useState("")
-    const [selectedLocation, setSelectedLocation] = useState("all")
-    const [selectedType, setSelectedType] = useState("all")
-    const [selectedIndustry, setSelectedIndustry] = useState("all")
-    const [selectedSource, setSelectedSource] = useState("all")
-    const [remoteOnly, setRemoteOnly] = useState(false)
-    const [featuredOnly, setFeaturedOnly] = useState(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-    // Filter jobs based on search and filters
-    const filteredJobs = jobData.filter(job => {
-        const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+  // Get initial values from URL
+  const initialPage = parseInt(searchParams.get("page") || "1", 10);
+  const initialLimit = parseInt(searchParams.get("limit") || "15", 10);
+  const initialSearch = searchParams.get("search") || "";
+  const initialSector = searchParams.get("sector") || "all";
+  const initialJobType = searchParams.get("job_type") || "all";
+  const initialLocation = searchParams.get("location") || "all";
+  const initialRemote = searchParams.get("remote") === "true";
+  const initialSource = searchParams.get("source") || "all";
+  const initialSort = searchParams.get("sort") || "newest";
 
-        const matchesLocation = selectedLocation === "all" || job.location.includes(selectedLocation)
-        const matchesType = selectedType === "all" || job.type === selectedType
-        const matchesIndustry = selectedIndustry === "all" || job.industry === selectedIndustry
-        const matchesSource = selectedSource === "all" || job.postedBy === selectedSource
-        const matchesRemote = !remoteOnly || job.remote
-        const matchesFeatured = !featuredOnly || job.featured
+  // State
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [selectedSector, setSelectedSector] = useState(initialSector);
+  const [selectedJobType, setSelectedJobType] = useState(initialJobType);
+  const [selectedLocation, setSelectedLocation] = useState(initialLocation);
+  const [selectedSource, setSelectedSource] = useState(initialSource);
+  const [remoteOnly, setRemoteOnly] = useState(initialRemote);
+  const [sortBy, setSortBy] = useState(initialSort);
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [pageLimit] = useState(initialLimit);
 
-        return matchesSearch && matchesLocation && matchesType && matchesIndustry && matchesSource && matchesRemote && matchesFeatured
-    })
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [stats, setStats] = useState<JobStats | null>(null);
+  const [trendingSkills, setTrendingSkills] = useState<TrendingSkill[]>([]);
+  const [filters, setFilters] = useState<JobFilters | null>(null);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
 
-    // Get unique values for filters
-    const locations = [...new Set(jobData.map(j => j.location.split(',')[1]?.trim() || j.location))].filter(Boolean).sort()
-    const types = [...new Set(jobData.map(j => j.type))].sort()
-    const industries = [...new Set(jobData.map(j => j.industry))].sort()
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(true);
 
-    const JobCard = ({job}: { job: typeof jobData[0] }) => (
-        <Card
-            className={`hover:shadow-lg transition-all duration-300 cursor-pointer hover:-translate-y-1 border border-slate-200 ${job.featured ? 'ring-2 ring-green-200 bg-green-50/30' : ''}`}>
-            {job.featured && (
-                <div
-                    className="bg-green-primary text-white text-xs font-medium px-3 py-1 rounded-t-lg flex items-center gap-1">
-                    <Star className="h-3 w-3"/>
-                    Featured
-                </div>
-            )}
-            <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                        <h3 className="font-semibold text-lg text-gray-900 mb-1">{job.title}</h3>
-                        <p className="text-gray-600 flex items-center gap-1">
-                            <Building className="h-4 w-4"/>
-                            {job.company}
-                        </p>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                            <span className="flex items-center gap-1">
-                                <MapPin className="h-4 w-4 text-orange-500"/>
-                                {job.location}
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Clock className="h-4 w-4 text-blue-500"/>
-                                {job.posted}
-                            </span>
-                        </div>
-                    </div>
+  const debouncedSearch = useDebounce(searchTerm, 300);
 
-                    <div className="flex flex-col gap-2 items-end">
-                        <Badge variant={job.postedBy === 'Internal' ? 'default' : 'secondary'}
-                               className={job.postedBy === 'Internal' ? 'bg-green-primary' : ''}>
-                            {job.postedBy}
-                        </Badge>
-                        <div
-                            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border bg-gradient-to-br ${getDepartmentColor(job.industry)} text-white`}>
-                            {job.type}
-                        </div>
-                        {job.remote && (
-                            <Badge variant="outline" className="text-green-600 border-green-200">
-                                Remote
-                            </Badge>
-                        )}
-                    </div>
-                </div>
+  // Update URL params
+  const updateUrlParams = useCallback(
+    (params: Record<string, string | number | boolean>) => {
+      const newParams = new URLSearchParams();
 
-                <p className="text-gray-700 text-sm mb-4 line-clamp-2">{job.description}</p>
+      newParams.set("page", params.page?.toString() || "1");
+      newParams.set("limit", params.limit?.toString() || "15");
 
-                <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-emerald-500"/>
-                        <span className="text-sm font-medium text-gray-900">{job.salary}</span>
-                    </div>
+      if (params.search && params.search !== "") {
+        newParams.set("search", params.search.toString());
+      }
+      if (params.sector && params.sector !== "all") {
+        newParams.set("sector", params.sector.toString());
+      }
+      if (params.job_type && params.job_type !== "all") {
+        newParams.set("job_type", params.job_type.toString());
+      }
+      if (params.location && params.location !== "all") {
+        newParams.set("location", params.location.toString());
+      }
+      if (params.remote === true) {
+        newParams.set("remote", "true");
+      }
+      if (params.source && params.source !== "all") {
+        newParams.set("source", params.source.toString());
+      }
+      if (params.sort && params.sort !== "newest") {
+        newParams.set("sort", params.sort.toString());
+      }
 
-                    <div className="flex flex-wrap gap-1">
-                        {job.skills.slice(0, 4).map((skill) => (
-                            <Badge key={skill} variant="outline" className="text-xs">
-                                {skill}
-                            </Badge>
-                        ))}
-                        {job.skills.length > 4 && (
-                            <Badge variant="outline" className="text-xs">
-                                +{job.skills.length - 4} more
-                            </Badge>
-                        )}
-                    </div>
+      router.push(`?${newParams.toString()}`, { scroll: false });
+    },
+    [router],
+  );
 
-                    <div className="flex items-center justify-between pt-3 border-t">
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                                <Eye className="h-3 w-3"/>
-                                {job.views} views
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Users className="h-3 w-3"/>
-                                {job.applications} applications
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3"/>
-                                Deadline: {new Date(job.deadline).toLocaleDateString()}
-                            </span>
-                        </div>
-                    </div>
-                </div>
+  // Fetch stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      setIsLoadingStats(true);
+      try {
+        const response = await jobsApi.getStats();
+        setStats(response.stats);
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
 
-                <div className="flex gap-2 mt-4">
-                    <Button className="flex-1 bg-green-primary hover:bg-green-600">
-                        <Send className="h-4 w-4 mr-2"/>
-                        Apply Now
-                    </Button>
-                    <Button variant="outline" size="icon"
-                            className="border-blue-secondary text-blue-secondary hover:bg-blue-secondary hover:text-white">
-                        <BookmarkPlus className="h-4 w-4"/>
-                    </Button>
-                    <Button variant="outline" size="icon"
-                            className="border-orange-primary text-orange-primary hover:bg-orange-primary hover:text-white">
-                        <ExternalLink className="h-4 w-4"/>
-                    </Button>
-                </div>
-            </CardContent>
-        </Card>
-    )
+    fetchStats();
+  }, []);
 
-    return (
-        <div className="space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold bg-blue-secondary bg-clip-text text-transparent">Job
-                        Opportunities</h1>
-                    <p className="text-gray-600">Discover {jobData.length} career opportunities tailored for our
-                        alumni</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm"
-                            className="border-blue-secondary text-blue-secondary hover:bg-blue-secondary hover:text-white">
-                        <Filter className="h-4 w-4 mr-2"/>
-                        Job Alerts
-                    </Button>
-                    <Button size="sm" className="bg-green-primary hover:bg-green-600">
-                        <Plus className="h-4 w-4 mr-2"/>
-                        Post a Job
-                    </Button>
-                </div>
+  // Fetch trending skills
+  useEffect(() => {
+    const fetchSkills = async () => {
+      setIsLoadingSkills(true);
+      try {
+        const response = await jobsApi.getTrendingSkills();
+        setTrendingSkills(response.skills);
+      } catch (error) {
+        console.error("Failed to fetch trending skills:", error);
+      } finally {
+        setIsLoadingSkills(false);
+      }
+    };
+
+    fetchSkills();
+  }, []);
+
+  // Fetch jobs
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setIsLoadingJobs(true);
+      try {
+        const response = await jobsApi.getAll({
+          page: currentPage,
+          limit: pageLimit,
+          search: debouncedSearch || undefined,
+          sector: selectedSector !== "all" ? selectedSector : undefined,
+          job_type: selectedJobType !== "all" ? selectedJobType : undefined,
+          location: selectedLocation !== "all" ? selectedLocation : undefined,
+          remote: remoteOnly || undefined,
+          source: selectedSource !== "all" ? selectedSource : undefined,
+          sort: sortBy,
+        });
+        setJobs(response.jobs);
+        setPagination(response.pagination);
+        setFilters(response.filters);
+      } catch (error) {
+        console.error("Failed to fetch jobs:", error);
+      } finally {
+        setIsLoadingJobs(false);
+      }
+    };
+
+    fetchJobs();
+  }, [
+    currentPage,
+    pageLimit,
+    debouncedSearch,
+    selectedSector,
+    selectedJobType,
+    selectedLocation,
+    remoteOnly,
+    selectedSource,
+    sortBy,
+  ]);
+
+  // Update URL when filters change
+  useEffect(() => {
+    updateUrlParams({
+      page: currentPage,
+      limit: pageLimit,
+      search: debouncedSearch,
+      sector: selectedSector,
+      job_type: selectedJobType,
+      location: selectedLocation,
+      remote: remoteOnly,
+      source: selectedSource,
+      sort: sortBy,
+    });
+  }, [
+    currentPage,
+    pageLimit,
+    debouncedSearch,
+    selectedSector,
+    selectedJobType,
+    selectedLocation,
+    remoteOnly,
+    selectedSource,
+    sortBy,
+    updateUrlParams,
+  ]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedSector("all");
+    setSelectedJobType("all");
+    setSelectedLocation("all");
+    setSelectedSource("all");
+    setRemoteOnly(false);
+    setSortBy("newest");
+    setCurrentPage(1);
+  };
+
+  return (
+    <div className="space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold bg-blue-secondary bg-clip-text text-transparent">
+          Job Opportunities
+        </h1>
+        <p className="text-gray-600">
+          Discover career opportunities in land, agriculture, environment, and
+          more
+        </p>
+      </div>
+
+      {/* Quick Stats */}
+      {isLoadingStats ? (
+        <StatsSkeleton />
+      ) : (
+        stats && <StatsCards stats={stats} />
+      )}
+
+      {/* Search and Filters */}
+      <Card className="shadow-sm">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by job title, company, or description..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400"
+              />
             </div>
 
-            {/* Quick Stats */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card
-                    className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-emerald-100">Total Jobs</CardTitle>
-                        <Briefcase className="h-5 w-5 text-emerald-200"/>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold">{jobData.length}</div>
-                        <p className="text-xs text-emerald-100 flex items-center gap-1">
-                            <TrendingUp className="h-3 w-3"/>
-                            +4 this week
-                        </p>
-                    </CardContent>
-                </Card>
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <Select
+                value={selectedSector}
+                onValueChange={(v) => {
+                  setSelectedSector(v);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="border-slate-200">
+                  <SelectValue placeholder="Sector" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sectors</SelectItem>
+                  {filters?.sectors.map((sector) => (
+                    <SelectItem key={sector} value={sector}>
+                      {sector}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                <Card
-                    className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-blue-100">Featured Jobs</CardTitle>
-                        <Star className="h-5 w-5 text-blue-200"/>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold">
-                            {jobData.filter(j => j.featured).length}
-                        </div>
-                        <p className="text-xs text-blue-100">Premium opportunities</p>
-                    </CardContent>
-                </Card>
+              <Select
+                value={selectedJobType}
+                onValueChange={(v) => {
+                  setSelectedJobType(v);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="border-slate-200">
+                  <SelectValue placeholder="Job Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {filters?.jobTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                <Card
-                    className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-amber-100">Remote Jobs</CardTitle>
-                        <Globe className="h-5 w-5 text-amber-200"/>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold">
-                            {jobData.filter(j => j.remote).length}
-                        </div>
-                        <p className="text-xs text-amber-100">Work from anywhere</p>
-                    </CardContent>
-                </Card>
+              <Select
+                value={selectedSource}
+                onValueChange={(v) => {
+                  setSelectedSource(v);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="border-slate-200">
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="internal">Internal</SelectItem>
+                  <SelectItem value="scraped">External</SelectItem>
+                </SelectContent>
+              </Select>
 
-                <Card
-                    className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-purple-100">Internal Posts</CardTitle>
-                        <TrendingUp className="h-5 w-5 text-purple-200"/>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-3xl font-bold">
-                            {jobData.filter(j => j.postedBy === 'Internal').length}
-                        </div>
-                        <p className="text-xs text-purple-100">Alumni referrals</p>
-                    </CardContent>
-                </Card>
+              <Button
+                variant={remoteOnly ? "default" : "outline"}
+                onClick={() => {
+                  setRemoteOnly(!remoteOnly);
+                  setCurrentPage(1);
+                }}
+                className={`justify-start ${
+                  remoteOnly
+                    ? "bg-blue-secondary hover:bg-blue-600"
+                    : "border-blue-secondary text-blue-secondary hover:bg-blue-secondary hover:text-white"
+                }`}
+              >
+                <Globe className="h-4 w-4 mr-2" />
+                Remote Only
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="border-slate-200"
+              >
+                Clear Filters
+              </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
 
-            {/* Search and Filters */}
-            <Card className="shadow-sm">
-                <CardContent className="p-6">
-                    <div className="space-y-4">
-                        {/* Search Bar */}
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground"/>
-                            <Input
-                                placeholder="Search by job title, company, or skills..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400"
-                            />
-                        </div>
+      {/* Results and Sort */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600">
+          {pagination
+            ? `Showing ${(currentPage - 1) * pagination.limit + 1}-${Math.min(
+                currentPage * pagination.limit,
+                pagination.totalCount,
+              )} of ${pagination.totalCount} jobs`
+            : "Loading..."}
+        </p>
 
-                        {/* Filters */}
-                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                                <SelectTrigger className="border-slate-200">
-                                    <SelectValue placeholder="Location"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Locations</SelectItem>
-                                    {locations.map((location) => (
-                                        <SelectItem key={location} value={location}>
-                                            {location}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={selectedType} onValueChange={setSelectedType}>
-                                <SelectTrigger className="border-slate-200">
-                                    <SelectValue placeholder="Job Type"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Types</SelectItem>
-                                    {types.map((type) => (
-                                        <SelectItem key={type} value={type}>
-                                            {type}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={selectedIndustry} onValueChange={setSelectedIndustry}>
-                                <SelectTrigger className="border-slate-200">
-                                    <SelectValue placeholder="Industry"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Industries</SelectItem>
-                                    {industries.map((industry) => (
-                                        <SelectItem key={industry} value={industry}>
-                                            {industry}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <Select value={selectedSource} onValueChange={setSelectedSource}>
-                                <SelectTrigger className="border-slate-200">
-                                    <SelectValue placeholder="Source"/>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Sources</SelectItem>
-                                    <SelectItem value="Internal">Internal</SelectItem>
-                                    <SelectItem value="External">External</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Button
-                                variant={remoteOnly ? "default" : "outline"}
-                                onClick={() => setRemoteOnly(!remoteOnly)}
-                                className={`justify-start ${remoteOnly ? 'bg-blue-secondary hover:bg-blue-600' : 'border-blue-secondary text-blue-secondary hover:bg-blue-secondary hover:text-white'}`}
-                            >
-                                <Globe className="h-4 w-4 mr-2"/>
-                                Remote Only
-                            </Button>
-
-                            <Button
-                                variant={featuredOnly ? "default" : "outline"}
-                                onClick={() => setFeaturedOnly(!featuredOnly)}
-                                className={`justify-start ${featuredOnly ? 'bg-green-primary hover:bg-green-600' : 'border-green-primary text-green-primary hover:bg-green-primary hover:text-white'}`}
-                            >
-                                <Star className="h-4 w-4 mr-2"/>
-                                Featured Only
-                            </Button>
-                        </div>
-
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setSearchTerm("")
-                                setSelectedLocation("all")
-                                setSelectedType("all")
-                                setSelectedIndustry("all")
-                                setSelectedSource("all")
-                                setRemoteOnly(false)
-                                setFeaturedOnly(false)
-                            }}
-                            className="w-full md:w-auto border-slate-200"
-                        >
-                            Clear All Filters
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Results */}
-            <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                    Showing {filteredJobs.length} of {jobData.length} jobs
-                </p>
-
-                <Select defaultValue="newest">
-                    <SelectTrigger className="w-48 border-slate-200">
-                        <SelectValue placeholder="Sort by"/>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="newest">Newest First</SelectItem>
-                        <SelectItem value="oldest">Oldest First</SelectItem>
-                        <SelectItem value="salary-high">Salary: High to Low</SelectItem>
-                        <SelectItem value="salary-low">Salary: Low to High</SelectItem>
-                        <SelectItem value="company">Company A-Z</SelectItem>
-                    </SelectContent>
-                </Select>
+        <div className="flex items-center gap-4">
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {pagination.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
+                }
+                disabled={!pagination.hasMore}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
+          )}
 
-            {/* Job Listings */}
-            {filteredJobs.length > 0 ? (
-                <div className="grid gap-6 lg:grid-cols-2">
-                    {filteredJobs.map((job) => (
-                        <JobCard key={job.id} job={job}/>
-                    ))}
-                </div>
-            ) : (
-                <Card className="shadow-sm">
-                    <CardContent className="p-12 text-center">
-                        <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4"/>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No jobs found</h3>
-                        <p className="text-gray-600 mb-4">
-                            Try adjusting your search criteria or clearing filters
-                        </p>
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setSearchTerm("")
-                                setSelectedLocation("all")
-                                setSelectedType("all")
-                                setSelectedIndustry("all")
-                                setSelectedSource("all")
-                                setRemoteOnly(false)
-                                setFeaturedOnly(false)
-                            }}
-                            className="border-green-primary text-green-primary hover:bg-green-primary hover:text-white"
-                        >
-                            Clear All Filters
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Job Alerts CTA */}
-            <Card className="bg-gradient-to-r from-green-primary to-green-secondary text-white shadow-lg">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-lg font-semibold mb-2">Never Miss an Opportunity</h3>
-                            <p className="text-green-100 mb-4">
-                                Set up job alerts and get notified when new positions match your criteria
-                            </p>
-                        </div>
-                        <Button variant="secondary" className="hover:shadow-md transition-all duration-300">
-                            <Filter className="h-4 w-4 mr-2"/>
-                            Create Job Alert
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Popular Skills */}
-            <Card className="shadow-sm">
-                <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-lg border-b">
-                    <CardTitle className="flex items-center gap-2 text-xl text-slate-800">
-                        <TrendingUp className="h-6 w-6 text-orange-600"/>
-                        Trending Skills
-                    </CardTitle>
-                    <CardDescription>
-                        Most in-demand skills across all job postings
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                    <div className="flex flex-wrap gap-2">
-                        {["React", "Python", "Node.js", "AWS", "Machine Learning", "Product Strategy", "Data Analysis", "Figma", "Kubernetes", "TypeScript", "SQL", "Leadership"].map((skill) => (
-                            <Badge
-                                key={skill}
-                                variant="outline"
-                                className="cursor-pointer hover:bg-green-50 hover:border-green-300 transition-all duration-200"
-                                onClick={() => setSearchTerm(skill)}
-                            >
-                                {skill}
-                            </Badge>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-48 border-slate-200">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="salary-high">Salary: High to Low</SelectItem>
+              <SelectItem value="salary-low">Salary: Low to High</SelectItem>
+              <SelectItem value="views">Most Viewed</SelectItem>
+              <SelectItem value="company">Company A-Z</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-    )
+      </div>
+
+      {/* Job Listings */}
+      {isLoadingJobs ? (
+        <JobsListSkeleton />
+      ) : jobs.length > 0 ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {jobs.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
+        </div>
+      ) : (
+        <Card className="shadow-sm">
+          <CardContent className="p-12 text-center">
+            <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No jobs found
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Try adjusting your search criteria or clearing filters
+            </p>
+            <Button
+              variant="outline"
+              onClick={clearFilters}
+              className="border-green-primary text-green-primary hover:bg-green-primary hover:text-white"
+            >
+              Clear All Filters
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bottom Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
+            }
+            disabled={!pagination.hasMore}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      )}
+
+      {/* Trending Skills */}
+      <Card className="shadow-sm">
+        <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-lg border-b">
+          <CardTitle className="flex items-center gap-2 text-xl text-slate-800">
+            <TrendingUp className="h-6 w-6 text-orange-600" />
+            Trending Skills
+          </CardTitle>
+          <CardDescription>
+            Most in-demand skills across all job postings
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          {isLoadingSkills ? (
+            <div className="flex flex-wrap gap-2">
+              {[...Array(12)].map((_, i) => (
+                <Skeleton key={i} className="h-6 w-20 rounded-full" />
+              ))}
+            </div>
+          ) : trendingSkills.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {trendingSkills.map((item) => (
+                <Badge
+                  key={item.skill}
+                  variant="outline"
+                  className="cursor-pointer hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+                  onClick={() => {
+                    setSearchTerm(item.skill);
+                    setCurrentPage(1);
+                  }}
+                >
+                  {item.skill} ({item.count})
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">
+              No trending skills data available yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import Image from 'next/image';
-import { useState, useEffect, useRef } from 'react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
 import {
   LayoutGrid,
   Users,
@@ -17,9 +17,8 @@ import {
   ChevronRight,
   ChevronUp,
   MessageSquare,
-  Settings
-} from 'lucide-react';
-import { useAuth } from '@/lib/auth/auth-provider';
+} from "lucide-react";
+import { useAuth } from "@/lib/auth/auth-provider";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -35,7 +34,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
 
   useEffect(() => {
     // Auto-open dropdowns based on active route
-    if (pathname?.startsWith('/mentorship')) {
+    if (pathname?.startsWith("/mentorship")) {
       setMentorshipOpen(true);
     }
   }, [pathname]);
@@ -52,16 +51,16 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
     checkArrows();
     const el = scrollRef.current;
     if (!el) return;
-    el.addEventListener('scroll', checkArrows);
-    window.addEventListener('resize', checkArrows);
+    el.addEventListener("scroll", checkArrows);
+    window.addEventListener("resize", checkArrows);
     return () => {
-      el.removeEventListener('scroll', checkArrows);
-      window.removeEventListener('resize', checkArrows);
+      el.removeEventListener("scroll", checkArrows);
+      window.removeEventListener("resize", checkArrows);
     };
   }, []);
 
   const scrollBy = (amount: number) => {
-    scrollRef.current?.scrollBy({ top: amount, behavior: 'smooth' });
+    scrollRef.current?.scrollBy({ top: amount, behavior: "smooth" });
   };
 
   const handleLogout = async () => {
@@ -69,25 +68,27 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
   };
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutGrid },
-    { href: '/directory', label: 'Alumni Directory', icon: Users },
-    { href: '/jobs', label: 'Job Opportunities', icon: Briefcase },
-    { href: '/events', label: 'Events', icon: Calendar },
-    { href: '/achievements', label: 'Achievements', icon: Trophy },
-    { href: '/resources', label: 'Resources', icon: BookOpen },
+    { href: "/", label: "Dashboard", icon: LayoutGrid },
+    { href: "/directory", label: "Alumni Directory", icon: Users },
+    { href: "/jobs", label: "Job Opportunities", icon: Briefcase },
+    { href: "/events", label: "Events", icon: Calendar },
+    { href: "/achievements", label: "Achievements", icon: Trophy },
+    { href: "/resources", label: "Resources", icon: BookOpen },
   ];
 
   return (
-    <div className={`fixed left-0 top-0 h-full bg-[#045F3C] text-white/90 transition-all duration-300 ${
-      isCollapsed ? 'w-20' : 'w-64'
-    }`}>
+    <div
+      className={`fixed left-0 top-0 h-full bg-[#045F3C] text-white/90 transition-all duration-300 ${
+        isCollapsed ? "w-20" : "w-64"
+      }`}
+    >
       <div className="flex flex-col h-full">
         {/* Logo Section */}
         <div className="h-16 flex-shrink-0 flex items-center px-6 border-b border-white/10">
           <div className="flex items-center">
             {!isCollapsed ? (
               <Image
-                src="/images/logoLight.png"
+                src="/images/logo-2.png"
                 alt="GanzAfrica"
                 width={130}
                 height={35}
@@ -135,29 +136,39 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
             ref={scrollRef}
             className="absolute inset-0 overflow-y-auto overflow-x-hidden no-scrollbar"
             style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              WebkitOverflowScrolling: "touch",
             }}
           >
             <div className="px-4 py-6">
               {/* Main Menu */}
               <div>
-                {!isCollapsed && <h2 className="px-4 mb-3 text-sm font-medium text-white/60 uppercase tracking-wider">Main Menu</h2>}
+                {!isCollapsed && (
+                  <h2 className="px-4 mb-3 text-sm font-medium text-white/60 uppercase tracking-wider">
+                    Main Menu
+                  </h2>
+                )}
                 <nav className="space-y-1">
                   {navItems.map((item) => {
                     const Icon = item.icon;
-                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+                    const isActive =
+                      pathname === item.href ||
+                      pathname?.startsWith(item.href + "/");
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                          isActive ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                        className={`flex items-center ${isCollapsed ? "justify-center px-3" : "px-4"} py-2.5 rounded-lg transition-colors ${
+                          isActive
+                            ? "bg-white/10 text-white"
+                            : "text-white/80 hover:bg-white/5 hover:text-white"
                         }`}
                       >
                         <Icon className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && <span className="ml-3 font-medium">{item.label}</span>}
+                        {!isCollapsed && (
+                          <span className="ml-3 font-medium">{item.label}</span>
+                        )}
                       </Link>
                     );
                   })}
@@ -165,21 +176,27 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                   {/* Mentorship Dropdown */}
                   <div>
                     <div
-                      className={`flex items-center justify-between cursor-pointer ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                        pathname?.startsWith('/mentorship')
-                          ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                      className={`flex items-center justify-between cursor-pointer ${isCollapsed ? "justify-center px-3" : "px-4"} py-2.5 rounded-lg transition-colors ${
+                        pathname?.startsWith("/mentorship")
+                          ? "bg-white/10 text-white"
+                          : "text-white/80 hover:bg-white/5 hover:text-white"
                       }`}
-                      onClick={() => !isCollapsed && setMentorshipOpen(!mentorshipOpen)}
+                      onClick={() =>
+                        !isCollapsed && setMentorshipOpen(!mentorshipOpen)
+                      }
                     >
                       <div className="flex items-center">
                         <UserPlus className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && <span className="ml-3 font-medium">Mentorship</span>}
+                        {!isCollapsed && (
+                          <span className="ml-3 font-medium">Mentorship</span>
+                        )}
                       </div>
-                      {!isCollapsed && (
-                        mentorshipOpen
-                          ? <ChevronDown className="w-4 h-4" />
-                          : <ChevronRight className="w-4 h-4" />
-                      )}
+                      {!isCollapsed &&
+                        (mentorshipOpen ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        ))}
                     </div>
 
                     {!isCollapsed && mentorshipOpen && (
@@ -187,35 +204,32 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                         <Link
                           href="/mentorship"
                           className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
-                            pathname === '/mentorship' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                            pathname === "/mentorship"
+                              ? "bg-white/10 text-white"
+                              : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
                         >
                           <Users className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">Find Mentors</span>
+                          <span className="ml-3 font-medium text-sm">
+                            Find Mentees
+                          </span>
                         </Link>
                         <Link
                           href="/mentorship/my-connections"
                           className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
-                            pathname === '/mentorship/my-connections' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
+                            pathname === "/mentorship/my-connections"
+                              ? "bg-white/10 text-white"
+                              : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
                         >
                           <MessageSquare className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">My Connections</span>
+                          <span className="ml-3 font-medium text-sm">
+                            My Connections
+                          </span>
                         </Link>
                       </>
                     )}
                   </div>
-
-                  {/* Settings */}
-                  <Link
-                    href="/settings"
-                    className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 rounded-lg transition-colors ${
-                      pathname === '/settings' ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <Settings className="w-5 h-5 flex-shrink-0" />
-                    {!isCollapsed && <span className="ml-3 font-medium">Settings</span>}
-                  </Link>
                 </nav>
               </div>
             </div>
@@ -226,7 +240,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
         <div className="flex-shrink-0 p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className={`flex items-center ${isCollapsed ? 'justify-center' : ''} w-full px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors`}
+            className={`flex items-center ${isCollapsed ? "justify-center" : ""} w-full px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors`}
             aria-label="Logout"
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
