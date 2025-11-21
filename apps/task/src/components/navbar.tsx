@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown } from "lucide-react";
+import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown, Menu } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -70,6 +70,17 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-white" style={{ overflowX: 'visible', overflowY: 'visible' }}>
+      {/* Hamburger Menu - Only visible on mobile/small screens */}
+      {onToggleSidebar && (
+        <button
+          onClick={onToggleSidebar}
+          className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors sidebar-toggle"
+          aria-label="Toggle menu"
+        >
+          <Menu className="h-6 w-6 text-gray-700" />
+        </button>
+      )}
+      
       <div className="flex items-center gap-2">
         <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-[#076297] via-[#0a84c1] to-[#3db1ff]" />
         <span className="font-semibold text-sm sm:text-base">Task Management</span>
@@ -155,40 +166,40 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
             }}
           >
             {/* Profile Option */}
-              <Link
-                href="/profile"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowProfileMenu(false);
-                }}
-                className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
-                style={{ 
-                  borderBottom: '1px solid #e5e7eb',
-                  backgroundColor: activeMenuItem === 'profile' ? '#076297' : 'transparent',
-                  textDecoration: 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeMenuItem !== 'profile') {
-                    e.currentTarget.style.backgroundColor = '#e6f2f8';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeMenuItem !== 'profile') {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
+            <Link
+              href="/profile"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileMenu(false);
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
+              style={{ 
+                borderBottom: '1px solid #e5e7eb',
+                backgroundColor: activeMenuItem === 'profile' ? '#076297' : 'transparent',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (activeMenuItem !== 'profile') {
+                  e.currentTarget.style.backgroundColor = '#e6f2f8';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeMenuItem !== 'profile') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              <User 
+                className="w-4 h-4 flex-shrink-0" 
+                style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#4b5563' }}
+              />
+              <span 
+                className="text-sm font-medium whitespace-nowrap"
+                style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#374151' }}
               >
-                <User 
-                  className="w-4 h-4 flex-shrink-0" 
-                  style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#4b5563' }}
-                />
-                <span 
-                  className="text-sm font-medium whitespace-nowrap"
-                  style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#374151' }}
-                >
-                  Profile
-                </span>
-              </Link>
+                Profile
+              </span>
+            </Link>
 
             {/* Mute Notifications */}
             <button
@@ -233,76 +244,76 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
             </button>
 
             {/* Settings */}
-              <Link
-                href="/settings"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowProfileMenu(false);
-                }}
-                className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
-                style={{ 
-                  borderBottom: '1px solid #e5e7eb',
-                  backgroundColor: activeMenuItem === 'settings' ? '#076297' : 'transparent',
-                  textDecoration: 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeMenuItem !== 'settings') {
-                    e.currentTarget.style.backgroundColor = '#e6f2f8';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeMenuItem !== 'settings') {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
+            <Link
+              href="/settings"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileMenu(false);
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
+              style={{ 
+                borderBottom: '1px solid #e5e7eb',
+                backgroundColor: activeMenuItem === 'settings' ? '#076297' : 'transparent',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (activeMenuItem !== 'settings') {
+                  e.currentTarget.style.backgroundColor = '#e6f2f8';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeMenuItem !== 'settings') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              <Settings 
+                className="w-4 h-4 flex-shrink-0" 
+                style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#4b5563' }}
+              />
+              <span 
+                className="text-sm font-medium whitespace-nowrap"
+                style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#374151' }}
               >
-                <Settings 
-                  className="w-4 h-4 flex-shrink-0" 
-                  style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#4b5563' }}
-                />
-                <span 
-                  className="text-sm font-medium whitespace-nowrap"
-                  style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#374151' }}
-                >
-                  Settings
-                </span>
-              </Link>
+                Settings
+              </span>
+            </Link>
 
             {/* Help */}
-              <Link
-                href="/help"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowProfileMenu(false);
-                }}
-                className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
-                style={{ 
-                  borderBottom: '1px solid #e5e7eb',
-                  backgroundColor: activeMenuItem === 'help' ? '#076297' : 'transparent',
-                  textDecoration: 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeMenuItem !== 'help') {
-                    e.currentTarget.style.backgroundColor = '#e6f2f8';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeMenuItem !== 'help') {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
+            <Link
+              href="/help"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileMenu(false);
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
+              style={{ 
+                borderBottom: '1px solid #e5e7eb',
+                backgroundColor: activeMenuItem === 'help' ? '#076297' : 'transparent',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (activeMenuItem !== 'help') {
+                  e.currentTarget.style.backgroundColor = '#e6f2f8';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeMenuItem !== 'help') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              <HelpCircle 
+                className="w-4 h-4 flex-shrink-0" 
+                style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#4b5563' }}
+              />
+              <span 
+                className="text-sm font-medium whitespace-nowrap"
+                style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#374151' }}
               >
-                <HelpCircle 
-                  className="w-4 h-4 flex-shrink-0" 
-                  style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#4b5563' }}
-                />
-                <span 
-                  className="text-sm font-medium whitespace-nowrap"
-                  style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#374151' }}
-                >
-                  Help
-                </span>
-              </Link>
+                Help
+              </span>
+            </Link>
 
             {/* Sign Out */}
               <button
