@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown } from "lucide-react";
+import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown, Menu } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -70,6 +70,17 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-white" style={{ overflowX: 'visible', overflowY: 'visible' }}>
+      {/* Hamburger Menu - Only visible on mobile/small screens */}
+      {onToggleSidebar && (
+        <button
+          onClick={onToggleSidebar}
+          className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors sidebar-toggle"
+          aria-label="Toggle menu"
+        >
+          <Menu className="h-6 w-6 text-gray-700" />
+        </button>
+      )}
+      
       <div className="flex items-center gap-2">
         <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-[#076297] via-[#0a84c1] to-[#3db1ff]" />
         <span className="font-semibold text-sm sm:text-base">Task Management</span>
