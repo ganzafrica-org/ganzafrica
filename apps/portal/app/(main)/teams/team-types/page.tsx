@@ -91,12 +91,7 @@ const TeamTypesPage = () => {
       setLoadingDetails(true);
       setDetailsError('');
       
-      console.log(`Fetching team type details for ID: ${id}`);
-      
       const response = await apiClient.get(`/team-types/${id}`);
-      
-      console.log('Team type details full response:', response);
-      console.log('Team type details response data:', response.data);
       
       // Create a fallback object in case we can't find valid data
       const fallbackTeamType = {
@@ -109,30 +104,23 @@ const TeamTypesPage = () => {
       if (response.data) {
         if (response.data.teamType) {
           // Case: { teamType: { ... } }
-          console.log('Found teamType in response.data.teamType');
           setSelectedTeamType(response.data.teamType);
         } else if (response.data.name !== undefined) {
           // Case: Direct team type object { name: "...", ... }
-          console.log('Response data appears to be the team type directly');
           setSelectedTeamType(response.data);
         } else if (Array.isArray(response.data) && response.data.length > 0) {
           // Case: Array with the first item being the team type
-          console.log('Response data is an array, using first item');
           setSelectedTeamType(response.data[0]);
         } else {
           // No recognizable format found
-          console.error('Could not find team type data in response:', response.data);
           setSelectedTeamType(fallbackTeamType);
           setDetailsError('Could not parse team type details');
         }
       } else {
-        console.error('No data in response');
         setSelectedTeamType(fallbackTeamType);
         setDetailsError('No details found for this team type');
       }
     } catch (error) {
-      console.error('Error fetching team type details:', error);
-      console.error('Error details:', error.response || error.message || error);
       setDetailsError('Failed to load team type details. Please try again.');
       setSelectedTeamType({
         name: 'Error loading data',
@@ -147,13 +135,11 @@ const TeamTypesPage = () => {
   // Function to open details modal
   const openDetailsModal = (id) => {
     if (!id) {
-      console.error('Attempted to open details with invalid ID:', id);
       setDetailsError('Invalid team type ID');
       setShowDetailsModal(true);
       return;
     }
     
-    console.log('Opening details modal for team type ID:', id);
     fetchTeamTypeDetails(id);
     setShowDetailsModal(true);
   };
@@ -229,20 +215,15 @@ const TeamTypesPage = () => {
       setEditSubmitting(true);
       setEditError('');
       
-      console.log(`Updating team type with ID: ${editTeamType.id}`);
-      console.log('Update payload:', { name: editTeamType.name, description: editTeamType.description });
-      
       // Make API request to update team type
-      // Using PATCH instead of PUT as it might be what the API expects
-      const response = await apiClient.patch(
+      // Backend expects PUT method
+      const response = await apiClient.put(
         `/team-types/${editTeamType.id}`, 
         {
           name: editTeamType.name,
           description: editTeamType.description
         }
       );
-      
-      console.log('Team type update response:', response.data);
       
       // Update the team type in the local state
       setTeamTypes(prevTeamTypes => 
@@ -260,9 +241,25 @@ const TeamTypesPage = () => {
       toast.success('Team type updated successfully');
       
     } catch (error) {
-      console.error('Error updating team type:', error);
-      console.error('Error details:', error.response || error.message || error);
-      setEditError(error.response?.data?.message || 'Failed to update team type. Please try again.');
+      
+      // Handle different error types
+      let errorMessage = 'Failed to update team type. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error status
+        errorMessage = error.response.data?.message || 
+                       error.response.data?.error || 
+                       `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        // Request was made but no response received (network error)
+        errorMessage = 'Network error: Could not connect to server. Please check your connection and try again.';
+      } else {
+        // Something else happened
+        errorMessage = error.message || 'An unexpected error occurred. Please try again.';
+      }
+      
+      setEditError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setEditSubmitting(false);
     }
@@ -295,9 +292,7 @@ const TeamTypesPage = () => {
     if (!teamTypeToDelete) return;
 
     try {
-      console.log(`Deleting team type with ID: ${teamTypeToDelete}`);
       await apiClient.delete(`/team-types/${teamTypeToDelete}`);
-      console.log('Delete successful');
       
       // Close dialog and reset state
       setIsDeleteDialogOpen(false);
@@ -359,7 +354,6 @@ const TeamTypesPage = () => {
         newTeamType
       );
       
-      console.log('Team type created:', response.data);
       
       // Close modal and refresh list
       closeAddModal();
@@ -460,12 +454,8 @@ const TeamTypesPage = () => {
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
         
-        console.log('Fetching team types with params:', params);
-        
         // Make API request with apiClient
         const response = await apiClient.get('/team-types', { params });
-        
-        console.log('API response:', response.data);
         
         if (response.data) {
           // Handle different response formats
@@ -608,7 +598,6 @@ const TeamTypesPage = () => {
                         <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                           <button
                             onClick={() => {
-                              console.log('View action clicked for team type:', teamType);
                               handleAction('view', teamType.id);
                             }}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

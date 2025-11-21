@@ -46,7 +46,17 @@ export function KanbanBoard({
 
   const grouped = useMemo(() => {
     const m: Record<Status, Task[]> = { todo: [], inprogress: [], review: [], done: [], overdue: [], backlog: [] };
+    // Use a Set to track seen task IDs to prevent duplicates
+    const seenIds = new Set<string>();
     for (const t of tasks) {
+      // Normalize task ID to string for comparison
+      const taskId = String(t.id);
+      // Skip if we've already seen this task ID
+      if (seenIds.has(taskId)) {
+        console.warn(`Duplicate task detected with ID ${taskId}, skipping`);
+        continue;
+      }
+      seenIds.add(taskId);
       // Handle legacy "backlog" status by mapping it to "overdue"
       const status = t.status === "backlog" ? "overdue" : t.status;
       if (m[status]) {
@@ -61,20 +71,12 @@ export function KanbanBoard({
     e.stopPropagation();
     
     const id = e.dataTransfer.getData("text/task-id");
-    console.log('Drop event:', { 
-      id, 
-      status, 
-      tasksCount: tasks.length, 
-      taskIds: tasks.map(t => ({ id: t.id, type: typeof t.id, title: t.title }))
-    });
     
     if (!id) {
-      console.log('No task ID found in drop data');
       return;
     }
     
     if (tasks.length === 0) {
-      console.log('Tasks array is empty, cannot find task');
       return;
     }
     
@@ -82,11 +84,7 @@ export function KanbanBoard({
     const originalTask = tasks.find(t => {
       const taskId = String(t.id);
       const searchId = String(id);
-      const match = taskId === searchId;
-      if (match) {
-        console.log('Found matching task:', { taskId, searchId, task: t });
-      }
-      return match;
+      return taskId === searchId;
     });
     
     if (!originalTask) {
@@ -123,7 +121,6 @@ export function KanbanBoard({
       const searchId = String(id);
       return taskId === searchId;
     });
-    console.log('Updating tasks:', updatedTask);
     
     // Pass the moved task information
     const movedTask = {
@@ -164,8 +161,8 @@ export function KanbanBoard({
 
   return (
     <>
-      <div className="overflow-x-auto -mx-3 sm:-mx-4 px-3 sm:px-4 pb-4">
-        <div className="inline-flex lg:grid lg:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4 min-w-[800px] lg:min-w-0">
+      <div className="overflow-x-auto -mx-3 sm:-mx-4 px-3 sm:px-4 pb-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="inline-flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 min-w-[600px] md:min-w-0">
           {columns.map(col => (
             <div 
               key={col.id}
@@ -188,7 +185,7 @@ export function KanbanBoard({
                 e.currentTarget.style.borderColor = '';
                 handleDrop(e, col.id);
               }}
-              className="flex flex-col transition-colors w-[280px] sm:w-[320px] lg:w-auto flex-shrink-0"
+              className="flex flex-col transition-colors w-[260px] sm:w-[280px] md:w-[300px] lg:w-auto flex-shrink-0"
             >
               <div 
                 className={`flex items-center justify-between p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-sm mb-2 ${col.color || ''}`}

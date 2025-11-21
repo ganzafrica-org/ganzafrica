@@ -793,6 +793,98 @@ export const deleteTaskProject = async (projectId: number) => {
 };
 
 /**
+ * Add existing project to team (creates a copy/clone of the project for the new team)
+ */
+export const addProjectToTeam = async (teamId: number, projectId: number, createdBy: number) => {
+  try {
+    // Get the existing project
+    const [existingProject] = await db
+      .select()
+      .from(task_team_projects)
+      .where(eq(task_team_projects.id, projectId));
+
+    if (!existingProject) {
+      throw new AppError("Project not found", 404);
+    }
+
+    // Check if project already exists in this team
+    const [existingInTeam] = await db
+      .select()
+      .from(task_team_projects)
+      .where(
+        and(
+          eq(task_team_projects.team_id, teamId),
+          eq(task_team_projects.name, existingProject.name)
+        )
+      );
+
+    if (existingInTeam) {
+      throw new AppError("Project already exists in this team", 400);
+    }
+
+    // Create a new project for this team based on the existing project
+    const [newProject] = await db
+      .insert(task_team_projects)
+      .values({
+        team_id: teamId,
+        name: existingProject.name,
+        description: existingProject.description,
+        status: existingProject.status,
+        start_date: existingProject.start_date,
+        end_date: existingProject.end_date,
+        color: existingProject.color,
+        created_by: createdBy,
+        settings: existingProject.settings,
+      } as any)
+      .returning();
+
+    return await getTaskProjectById(newProject.id);
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    logger.error("Add project to team error", error);
+    throw new AppError("Failed to add project to team", 500);
+  }
+};
+
+/**
+ * Remove project from team (verify project belongs to team before deleting)
+ */
+export const removeProjectFromTeam = async (teamId: number, projectId: number) => {
+  try {
+    // First verify the project belongs to this team
+    const [project] = await db
+      .select()
+      .from(task_team_projects)
+      .where(
+        and(
+          eq(task_team_projects.id, projectId),
+          eq(task_team_projects.team_id, teamId)
+        )
+      );
+
+    if (!project) {
+      throw new AppError("Project not found in this team", 404);
+    }
+
+    // Delete the project
+    const [deleted] = await db
+      .delete(task_team_projects)
+      .where(eq(task_team_projects.id, projectId))
+      .returning();
+
+    if (!deleted) {
+      throw new AppError("Failed to remove project from team", 500);
+    }
+
+    return { message: "Project removed from team successfully" };
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    logger.error("Remove project from team error", error);
+    throw new AppError("Failed to remove project from team", 500);
+  }
+};
+
+/**
  * Add member to task project
  */
 export const addProjectMember = async (input: AddProjectMemberInput) => {
@@ -942,11 +1034,13 @@ export const taskTeamService = {
   removeTeamMember,
   updateTeamMemberRole,
   createTaskProject,
+  addProjectToTeam,
   getTaskProjectById,
   listTaskProjects,
   listAllProjects,
   updateTaskProject,
   deleteTaskProject,
+  removeProjectFromTeam,
   addProjectMember,
   removeProjectMember,
 };

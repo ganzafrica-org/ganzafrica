@@ -113,7 +113,6 @@ export default function AddTestimonialPage() {
       
       // Check if upload was successful
       if (response.data && response.data.success) {
-        console.log('File uploaded successfully:', response.data.file);
         setUploadStatus('success');
         return response.data.file.url;
       } else {
@@ -121,7 +120,6 @@ export default function AddTestimonialPage() {
         throw new Error('File upload failed: Server returned unsuccessful response');
       }
     } catch (error) {
-      console.error('Error uploading file:', error);
       setUploadStatus('error');
       toast.error('Failed to upload image. Please try again.');
       throw error;
@@ -163,7 +161,6 @@ export default function AddTestimonialPage() {
         throw new Error('Failed to add testimonial: No response data');
       }
     } catch (error: any) {
-      console.error('Error adding testimonial:', error);
       toast.error(error.response?.data?.message || 'Failed to add testimonial. Please try again.');
     } finally {
       setIsLoading(false);
