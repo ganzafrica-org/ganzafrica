@@ -55,7 +55,16 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
   };
 
   return (
-    <div className="h-full p-3 sm:p-4 flex flex-col overflow-y-auto" style={{ backgroundColor: '#076297' }}>
+    <div 
+      className="h-full p-3 sm:p-4 flex flex-col overflow-y-auto" 
+      style={{ 
+        backgroundColor: '#076297',
+        overflowX: 'hidden',
+        touchAction: 'pan-y',
+        WebkitOverflowScrolling: 'touch',
+        width: '100%'
+      }}
+    >
       {/* Mobile close button */}
       {mobileOpen && (
         <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/20">

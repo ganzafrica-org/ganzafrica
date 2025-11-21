@@ -57,6 +57,7 @@ export function TaskModal({
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Helper function to check if task ID is valid (numeric)
   const isValidTaskId = (id: string | undefined): boolean => {
@@ -833,6 +834,12 @@ export function TaskModal({
   };
 
   const handleSave = async () => {
+    // Prevent double submissions
+    if (isSaving) {
+      console.log('Save already in progress, skipping duplicate call');
+      return;
+    }
+
     if (draft && draft.title.trim()) {
       console.log('🔍 handleSave - draft.attachments:', draft.attachments);
       console.log('🔍 handleSave - draft.id:', draft.id);
@@ -867,9 +874,11 @@ export function TaskModal({
         }
       }
 
-      // If this is an existing task with a valid numeric ID, save changes to the database
-      if (draft.id && isValidTaskId(draft.id)) {
-        try {
+      setIsSaving(true);
+
+      try {
+        // If this is an existing task with a valid numeric ID, save changes to the database
+        if (draft.id && isValidTaskId(draft.id)) {
           const updateData = {
             title: draft.title,
             description: draft.description,
@@ -895,18 +904,19 @@ export function TaskModal({
           setToast({ type: 'success', message: 'Task updated successfully' });
           onChange(draft);
           onOpenChange(false);
-        } catch (error) {
-          console.error('Error updating task:', error);
-          setToast({ type: 'error', message: 'Failed to update task' });
-          setTimeout(() => setToast(null), 2500);
-          return; // Don't close modal if save failed
+        } else {
+          // For new tasks (no ID or temporary ID) - let parent handle creation
+          // The parent will create the task via API and get a real ID back
+          onChange(draft);
+          // Don't close modal here - let parent close it after successful creation
+          // The parent will update the task with the real ID from API response
         }
-      } else {
-        // For new tasks (no ID or temporary ID) - let parent handle creation
-        // The parent will create the task via API and get a real ID back
-        onChange(draft);
-        // Don't close modal here - let parent close it after successful creation
-        // The parent will update the task with the real ID from API response
+      } catch (error) {
+        console.error('Error saving task:', error);
+        setToast({ type: 'error', message: 'Failed to save task' });
+        setTimeout(() => setToast(null), 2500);
+      } finally {
+        setIsSaving(false);
       }
     }
   };
@@ -1832,24 +1842,24 @@ export function TaskModal({
             </button>
             <button
               onClick={handleSave}
-              disabled={!draft.title.trim() || !draft.dueDate}
+              disabled={!draft.title.trim() || !draft.dueDate || isSaving}
               className="px-4 py-2.5 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation order-1 sm:order-2"
               style={{ 
-                backgroundColor: (draft.title.trim() && draft.dueDate) ? '#076297' : '#9ca3af',
+                backgroundColor: (draft.title.trim() && draft.dueDate && !isSaving) ? '#076297' : '#9ca3af',
                 borderRadius: '7px'
               }}
               onMouseEnter={(e) => {
-                if (draft.title.trim() && draft.dueDate) {
+                if (draft.title.trim() && draft.dueDate && !isSaving) {
                   e.currentTarget.style.backgroundColor = '#054a73';
                 }
               }}
               onMouseLeave={(e) => {
-                if (draft.title.trim() && draft.dueDate) {
+                if (draft.title.trim() && draft.dueDate && !isSaving) {
                   e.currentTarget.style.backgroundColor = '#076297';
                 }
               }}
             >
-              Save Task
+              {isSaving ? 'Saving...' : 'Save Task'}
             </button>
           </div>
         </div>

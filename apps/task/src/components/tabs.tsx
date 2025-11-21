@@ -16,18 +16,19 @@ interface TabsProps {
 
 export function Tabs({ tabs, activeTab, onTabChange, className = '' }: TabsProps): React.JSX.Element {
   return (
-    <div className={`flex flex-wrap gap-1 sm:gap-2 ${className}`}>
+    <div className={`flex flex-wrap gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 ${className}`} style={{ WebkitOverflowScrolling: 'touch' }}>
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition-all relative touch-manipulation ${
+          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-semibold transition-all relative touch-manipulation whitespace-nowrap flex-shrink-0 ${
             activeTab === tab.id
               ? ''
               : 'text-gray-500 hover:text-gray-700'
           }`}
           style={{
             color: activeTab === tab.id ? '#076297' : undefined,
+            minHeight: '44px', // Better touch target for mobile
           }}
         >
           {tab.label}

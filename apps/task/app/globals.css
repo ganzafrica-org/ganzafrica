@@ -32,10 +32,36 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
-  html, body, #__next { height: 100%; }
+  
+  /* Prevent horizontal scrolling and unwanted touch gestures */
+  html {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+  
   body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     background: #f1f2f2;
     color: rgb(var(--tf-ink));
+    position: relative;
+    margin: 0;
+    padding: 0;
+  }
+  
+  #__next {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -73,6 +99,78 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Cross-browser compatibility and prevent unwanted scrolling */
+@layer utilities {
+  /* Prevent horizontal scrolling globally */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Ensure fixed elements stay in place */
+  [style*="position: fixed"],
+  [style*="position:fixed"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Prevent unwanted touch gestures */
+  .no-touch-action {
+    touch-action: none;
+    -ms-touch-action: none;
+  }
+  
+  /* Prevent text selection on touch devices for better UX */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Smooth scrolling for better performance */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix for IE/Edge sticky positioning */
+  @supports not (position: sticky) {
+    .sticky-fallback {
+      position: relative;
+    }
+  }
+  
+  /* Prevent layout shift on scroll */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Ensure hamburger menu is completely hidden on desktop */
+  @media (min-width: 1024px) {
+    .sidebar-toggle {
+      display: none !important;
+    }
+  }
+  
+  /* Ensure mobile sidebar is completely hidden by default */
+  @media (max-width: 1023px) {
+    .sidebar-container.lg\\:hidden {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    
+    .sidebar-container.lg\\:hidden[style*="translate-x-0"] {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 }
 

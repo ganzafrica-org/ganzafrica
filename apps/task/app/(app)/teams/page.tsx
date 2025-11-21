@@ -507,10 +507,22 @@ export default function TeamsPage(): React.JSX.Element {
       });
     } catch (error: any) {
       console.error('Error adding projects:', error);
+      let errorMessage = 'Failed to add projects. Please try again.';
+      
+      if (error.response?.status === 404) {
+        errorMessage = error.response?.data?.message || 'Project not found. Please refresh and try again.';
+      } else if (error.response?.status === 400) {
+        errorMessage = error.response?.data?.message || 'Project already exists in this team.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       setErrorModal({
         isOpen: true,
         title: 'Error Adding Projects',
-        message: error.response?.data?.message || 'Failed to add projects. Please try again.',
+        message: errorMessage,
       });
     } finally {
       setCreating(false);
@@ -577,12 +589,13 @@ export default function TeamsPage(): React.JSX.Element {
           <p className="text-sm" style={{ color: '#9ca3af' }}>Create your first team to get started</p>
         </div>
       ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div style={{ overflowX: 'visible', overflowY: 'visible', width: '100%' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{ overflowX: 'visible', overflowY: 'visible' }}>
           {teams.map((team) => (
           <div
             key={team.id}
             onClick={() => router.push(`/teams/${team.id}`)}
-            className="p-4 cursor-pointer transition-all relative"
+            className="p-4 cursor-pointer transition-all relative overflow-visible"
             style={{ 
               backgroundColor: '#ffffff',
               borderRadius: '7px',
@@ -599,7 +612,7 @@ export default function TeamsPage(): React.JSX.Element {
           >
             {/* Three Dots Menu - Only show for admin/manager users */}
             {isCurrentUserAdminOrManager() && (
-            <div className="absolute top-3 right-3">
+            <div className="absolute top-3 right-3 z-50">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -614,8 +627,15 @@ export default function TeamsPage(): React.JSX.Element {
               {/* Dropdown Menu */}
               {openMenuId === team.id && (
                 <div
-                  className="absolute right-0 mt-1 w-40 bg-white border shadow-lg z-10"
-                  style={{ borderRadius: '7px', borderColor: '#e5e7eb' }}
+                  className="absolute right-0 mt-2 w-56 bg-white border shadow-xl z-[60] rounded-lg overflow-hidden"
+                  style={{ 
+                    borderRadius: '7px', 
+                    borderColor: '#e5e7eb',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    minWidth: '224px',
+                    right: '0',
+                    left: 'auto'
+                  }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
@@ -624,8 +644,8 @@ export default function TeamsPage(): React.JSX.Element {
                       loadTeamDetails(team.id);
                       setOpenMenuId(null);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                    style={{ color: '#374151' }}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b whitespace-nowrap"
+                    style={{ color: '#374151', borderColor: '#e5e7eb' }}
                     disabled={loadingTeamDetails}
                   >
                     {loadingTeamDetails ? 'Loading...' : 'View Details'}
@@ -633,21 +653,10 @@ export default function TeamsPage(): React.JSX.Element {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                        router.push(`/teams/${team.id}`);
+                      handleDeleteTeam(team.id, team.name);
                       setOpenMenuId(null);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-                    style={{ color: '#374151' }}
-                  >
-                    Update
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                        handleDeleteTeam(team.id, team.name);
-                      setOpenMenuId(null);
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 transition-colors"
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 transition-colors whitespace-nowrap"
                     style={{ color: '#dc2626' }}
                   >
                     Delete
@@ -691,6 +700,7 @@ export default function TeamsPage(): React.JSX.Element {
             </div>
           </div>
         ))}
+      </div>
       </div>
       )}
 
@@ -842,76 +852,35 @@ export default function TeamsPage(): React.JSX.Element {
                 <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>
                   Initial Projects
                 </label>
-                <div className="space-y-3">
-                  {/* Selected Projects List */}
-                  {newTeam.projects.length > 0 && (
-                    <div className="space-y-2">
-                      {newTeam.projects.map((projectId, index) => {
-                        const project = portalProjects.find(p => p.id.toString() === projectId);
-                        return project ? (
-                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md" style={{ borderRadius: '7px' }}>
-                            <div className="flex-1">
-                              <span className="text-sm font-medium" style={{ color: '#374151' }}>{project.name}</span>
-                              <span className="text-xs ml-2 px-2 py-0.5 rounded" style={{ 
-                                backgroundColor: project.status === 'active' ? '#D1FAE5' : 
-                                                project.status === 'completed' ? '#DBEAFE' : 
-                                                project.status === 'planned' ? '#FEF3C7' : '#F3F4F6',
-                                color: project.status === 'active' ? '#065F46' : 
-                                       project.status === 'completed' ? '#1E40AF' : 
-                                       project.status === 'planned' ? '#92400E' : '#374151'
-                              }}>
-                                {project.status}
-                              </span>
-                            </div>
-                            <button
-                              onClick={() => {
-                                const updatedProjects = newTeam.projects.filter((_, i) => i !== index);
-                                setNewTeam({ ...newTeam, projects: updatedProjects });
-                              }}
-                              className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                              style={{ borderRadius: '7px' }}
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : null;
-                      })}
+                <div className="space-y-2">
+                  {loadingData ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#076297' }} />
                     </div>
-                  )}
-
-                  {/* Project Selector */}
-                  <div className="relative">
-                    <select
-                      value=""
-                      onChange={(e) => {
-                        const projectId = e.target.value;
-                        if (projectId && !newTeam.projects.includes(projectId)) {
-                          setNewTeam({ ...newTeam, projects: [...newTeam.projects, projectId] });
-                        }
-                        e.target.value = ''; // Reset dropdown
-                      }}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      style={{ borderColor: '#d1d5db', borderRadius: '7px' }}
-                      disabled={loadingData}
-                    >
-                      <option value="">Select a project to add...</option>
-                      {portalProjects
-                        .filter(p => !newTeam.projects.includes(p.id.toString()))
-                        .map((project) => (
-                          <option key={project.id} value={project.id}>
-                            {project.name} ({project.status})
-                          </option>
-                        ))}
-                    </select>
-                    {loadingData && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#076297' }} />
-                      </div>
-                    )}
-                  </div>
-
-                  {newTeam.projects.length === 0 && !loadingData && (
-                    <p className="text-sm text-gray-500 text-center py-2">No projects selected</p>
+                  ) : portalProjects.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">No projects available</p>
+                  ) : (
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {portalProjects.map((project) => (
+                        <label key={project.id} className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded" style={{ borderRadius: '7px' }}>
+                          <input
+                            type="checkbox"
+                            checked={newTeam.projects.includes(project.id.toString())}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setNewTeam({ ...newTeam, projects: [...newTeam.projects, project.id.toString()] });
+                              } else {
+                                setNewTeam({ ...newTeam, projects: newTeam.projects.filter(id => id !== project.id.toString()) });
+                              }
+                            }}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <div className="flex-1">
+                            <div className="text-sm font-medium" style={{ color: '#374151' }}>{project.name}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
@@ -1211,16 +1180,7 @@ export default function TeamsPage(): React.JSX.Element {
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium" style={{ color: '#1f2937' }}>{member.name || 'Unknown'}</p>
-                          {member.position && (
-                            <p className="text-xs" style={{ color: '#6b7280' }}>{member.position}</p>
-                          )}
                         </div>
-                        <span className="text-xs px-2 py-1 rounded" style={{ 
-                          backgroundColor: '#E0E7FF',
-                          color: '#3730A3'
-                        }}>
-                          {member.role}
-                        </span>
                         {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
                           <button
                             onClick={() => handleRemoveTeamMember(member.user_id, member.name || 'this member')}
@@ -1284,26 +1244,9 @@ export default function TeamsPage(): React.JSX.Element {
                               className="w-4 h-4"
                             />
                             <div className="flex items-center gap-2 flex-1">
-                              <div
-                                className="w-8 h-8 rounded flex items-center justify-center"
-                                style={{ backgroundColor: project.color || '#073392' }}
-                              >
-                                <Briefcase className="w-4 h-4" style={{ color: '#ffffff' }} />
-                              </div>
                               <div className="flex-1">
                                 <p className="text-sm font-medium" style={{ color: '#374151' }}>{project.name}</p>
-                                <p className="text-xs" style={{ color: '#6b7280' }}>{project.description || 'No description'}</p>
                               </div>
-                              <span className="text-xs px-2 py-1 rounded capitalize" style={{ 
-                                backgroundColor: project.status === 'active' ? '#D1FAE5' : 
-                                                 project.status === 'completed' ? '#DBEAFE' : 
-                                                 project.status === 'planning' ? '#FEF3C7' : '#F3F4F6',
-                                color: project.status === 'active' ? '#065F46' : 
-                                       project.status === 'completed' ? '#1E40AF' : 
-                                       project.status === 'planning' ? '#92400E' : '#374151'
-                              }}>
-                                {project.status}
-                              </span>
                             </div>
                           </label>
                         ))}
@@ -1340,43 +1283,15 @@ export default function TeamsPage(): React.JSX.Element {
                     {selectedTeamForDetails.projects.map((project) => (
                       <div
                         key={project.id}
-                        className="flex items-start gap-3 p-3 rounded-lg border"
+                        className="flex items-center justify-between gap-3 p-3 rounded-lg border"
                         style={{ borderColor: '#e5e7eb' }}
                       >
-                        <div
-                          className="w-10 h-10 rounded flex items-center justify-center flex-shrink-0 cursor-pointer"
-                          style={{ backgroundColor: project.color || selectedTeamForDetails.color || '#073392' }}
-                        onClick={() => {
-                          router.push(`/teams/${selectedTeamForDetails.id}/projects/${project.id}`);
-                          setIsDetailsModalOpen(false);
-                        }}
-                        >
-                          <Briefcase className="w-5 h-5" style={{ color: '#ffffff' }} />
-                        </div>
                         <div className="flex-1 cursor-pointer" onClick={() => {
                           router.push(`/teams/${selectedTeamForDetails.id}/projects/${project.id}`);
                           setIsDetailsModalOpen(false);
                         }}>
                           <p className="text-sm font-medium" style={{ color: '#1f2937' }}>{project.name}</p>
-                          <div className="text-xs" style={{ color: '#6b7280' }}>
-                            <TruncatedText 
-                              text={project.description || 'No description'} 
-                              maxLength={100}
-                              className=""
-                              showToggle={false}
-                            />
-                          </div>
                         </div>
-                        <span className="text-xs px-2 py-1 rounded capitalize" style={{ 
-                          backgroundColor: project.status === 'active' ? '#D1FAE5' : 
-                                           project.status === 'completed' ? '#DBEAFE' : 
-                                           project.status === 'planning' ? '#FEF3C7' : '#F3F4F6',
-                          color: project.status === 'active' ? '#065F46' : 
-                                 project.status === 'completed' ? '#1E40AF' : 
-                                 project.status === 'planning' ? '#92400E' : '#374151'
-                        }}>
-                          {project.status}
-                        </span>
                         {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
                           <button
                             onClick={() => handleRemoveTeamProject(project.id, project.name)}

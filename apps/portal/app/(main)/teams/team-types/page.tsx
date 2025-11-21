@@ -233,8 +233,8 @@ const TeamTypesPage = () => {
       console.log('Update payload:', { name: editTeamType.name, description: editTeamType.description });
       
       // Make API request to update team type
-      // Using PATCH instead of PUT as it might be what the API expects
-      const response = await apiClient.patch(
+      // Backend expects PUT method
+      const response = await apiClient.put(
         `/team-types/${editTeamType.id}`, 
         {
           name: editTeamType.name,
@@ -262,7 +262,25 @@ const TeamTypesPage = () => {
     } catch (error) {
       console.error('Error updating team type:', error);
       console.error('Error details:', error.response || error.message || error);
-      setEditError(error.response?.data?.message || 'Failed to update team type. Please try again.');
+      
+      // Handle different error types
+      let errorMessage = 'Failed to update team type. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error status
+        errorMessage = error.response.data?.message || 
+                       error.response.data?.error || 
+                       `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        // Request was made but no response received (network error)
+        errorMessage = 'Network error: Could not connect to server. Please check your connection and try again.';
+      } else {
+        // Something else happened
+        errorMessage = error.message || 'An unexpected error occurred. Please try again.';
+      }
+      
+      setEditError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setEditSubmitting(false);
     }

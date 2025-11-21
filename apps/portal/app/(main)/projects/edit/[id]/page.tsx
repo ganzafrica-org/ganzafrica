@@ -275,7 +275,12 @@ const EditProjectPage = () => {
             };
           });
 
-          // Filter team members with team_type of "team" or "fellow" (case-insensitive)
+          // Debug: Log team members and their team types
+          console.log('All team members:', processedMembers);
+          console.log('Sample team_type structure:', processedMembers[0]?.team_type);
+
+          // Filter team members - ONLY show "Our Team" or "Fellow/Fellows" (case-insensitive)
+          // Strict filtering: no fallback, only show matching team types
           const filtered = processedMembers.filter(member => {
             // Handle team_type as an object or string - ensure we have a string before calling toLowerCase()
             let teamTypeName = '';
@@ -286,20 +291,32 @@ const EditProjectPage = () => {
               teamTypeName = member.team_type.name;
             }
 
-            // Safely convert to lowercase if teamTypeName is a string
-            const teamTypeNameLower = typeof teamTypeName === 'string' ? teamTypeName.toLowerCase() : '';
+            // If no team_type found, exclude this member
+            if (!teamTypeName) {
+              console.log('Member excluded - no team_type:', member.name, member.team_type);
+              return false;
+            }
 
-            return teamTypeNameLower === "team" || teamTypeNameLower === "fellow";
+            // Safely convert to lowercase if teamTypeName is a string
+            const teamTypeNameLower = typeof teamTypeName === 'string' ? teamTypeName.toLowerCase().trim() : '';
+
+            // Match "Our Team" or "Fellow/Fellows" (case-insensitive) - handle both singular and plural
+            const isMatch = teamTypeNameLower === "our team" || 
+                           teamTypeNameLower === "fellow" || 
+                           teamTypeNameLower === "fellows";
+            
+            if (!isMatch) {
+              console.log('Member excluded - team_type mismatch:', member.name, 'team_type:', teamTypeNameLower);
+            }
+            
+            return isMatch;
           });
 
-          if (filtered.length === 0) {
-            // If no filtered results, include all team members as fallback
-            setFilteredTeamMembers(processedMembers);
-            setUsers(processedMembers);
-          } else {
-            setFilteredTeamMembers(filtered);
-            setUsers(filtered);
-          }
+          console.log('Filtered team members:', filtered);
+
+          // Always use filtered results only - never show all members as fallback
+          setFilteredTeamMembers(filtered);
+          setUsers(filtered);
         } catch (error) {
           console.error('Error fetching teams:', error);
           setTeams([]);
@@ -1796,7 +1813,6 @@ const EditProjectPage = () => {
                                   )}
                                   <span>
                                     {member.name || `Team Member ${member.id}`}
-                                    {member.position && ` - ${member.position}`}
                                   </span>
                                 </div>
                               </CommandItem>
