@@ -78,7 +78,6 @@ export function TaskModal({
       // Wait for teams and projects to be loaded before determining team
       // This ensures we have the correct mapping
       if (!teamsLoaded || teams.length === 0 || taskTeamProjects.length === 0) {
-        console.log('⏳ Waiting for teams and projects to load before loading task details...');
         // Load teams and projects if not loaded
         if (!teamsLoaded) {
           await loadTeams();
@@ -88,7 +87,7 @@ export function TaskModal({
             const resp = await taskApi.getTaskTeamProjects();
             setTaskTeamProjects(resp.projects || []);
           } catch (e) {
-            console.error('Error loading task team projects:', e);
+            // Error loading task team projects
           }
         }
       }
@@ -96,7 +95,6 @@ export function TaskModal({
       // Wait for teams and projects to be loaded before determining team
       // This ensures we have the correct mapping
       if (!teamsLoaded || teams.length === 0 || taskTeamProjects.length === 0) {
-        console.log('⏳ Waiting for teams and projects to load before loading task details...');
         // Load teams and projects if not loaded
         if (!teamsLoaded) {
           await loadTeams();
@@ -198,9 +196,6 @@ export function TaskModal({
         // Store updated taskUsers in window (merged with existing data)
         if (typeof window !== 'undefined') {
           (window as any).taskUsers = taskUsers;
-          console.log('✅ Updated taskUsers map with user info from task API. Total users:', taskUsers.size);
-          console.log('✅ User data from database:', Array.from(taskUsers.entries()).slice(0, 3));
-          console.log('✅ User data from database:', Array.from(taskUsers.entries()).slice(0, 3));
         }
         
         // Trigger userInfoVersion update to refresh memberById
@@ -228,7 +223,6 @@ export function TaskModal({
           // For managers: trust the selected team from task object
           teamInfo = task.team;
           teamIdStr = task.team.id;
-          console.log('✅ Manager: Using selected team from task object:', teamInfo.name);
         } else if (task?.teamId) {
           // If we have teamId but not full team object, try to find it in loaded teams
           const foundTeam = teams.find(t => t.id === parseInt(task.teamId || '0'));
@@ -240,10 +234,8 @@ export function TaskModal({
               memberIds: []
             };
             teamIdStr = task.teamId;
-            console.log('✅ Found team from task.teamId in loaded teams:', foundTeam.name);
           } else {
             teamIdStr = task.teamId;
-            console.log('⚠️ Team ID from task but team not in loaded teams yet:', task.teamId);
           }
         }
         
@@ -300,11 +292,9 @@ export function TaskModal({
                 memberIds: []
               };
               teamIdStr = String(team.id);
-              console.log('✅ Loaded team from database (project mapping):', team.name, 'for project_id:', response.task.project_id);
             } else {
               // Team not loaded yet, but we have the ID - set it and team will be loaded
               teamIdStr = String(mapped.team_id);
-              console.log('⚠️ Team ID found from project mapping but team not loaded yet:', mapped.team_id);
             }
           } else {
             console.warn('⚠️ Project not found in taskTeamProjects for project_id:', response.task.project_id);
@@ -385,7 +375,6 @@ export function TaskModal({
         loadFullTaskDetails(task.id);
       } else {
         // For new tasks or invalid IDs (temporary IDs), use the task as-is
-        console.log('Task has temporary ID, skipping full details fetch:', task.id);
         setDraft(task);
         // Preserve team from task if it exists
         if (task.team?.id) {
@@ -487,17 +476,13 @@ export function TaskModal({
   }, [task, open, teamsLoaded]);
 
   useEffect(() => {
-    console.log('🔍 useEffect triggered - selectedTeamId:', selectedTeamId, 'selectedTeamIds:', selectedTeamIds);
     if (selectedTeamIds.length > 0) {
       // Load members from multiple teams
-      console.log('🔍 Loading members from multiple teams:', selectedTeamIds);
       loadMembersFromMultipleTeams(selectedTeamIds);
     } else if (selectedTeamId) {
       // Load members from single team
-      console.log('🔍 Loading members from single team:', selectedTeamId);
       loadTeamMembers(selectedTeamId);
     } else {
-      console.log('🔍 No team selected, clearing members');
       setTeamMembers([]);
     }
   }, [selectedTeamId, selectedTeamIds]);
@@ -554,13 +539,11 @@ export function TaskModal({
         const teamId = parseInt(task.team.id);
         if (teamsToUse.find((t: any) => t.id === teamId)) {
           setSelectedTeamId(teamId);
-          console.log('✅ Preserved team from task:', task.team.name);
         }
       } else if (task?.teamId) {
         const teamId = parseInt(task.teamId || '0');
         if (teamsToUse.find((t: any) => t.id === teamId)) {
           setSelectedTeamId(teamId);
-          console.log('✅ Preserved teamId from task:', teamId);
         }
       } else {
         setSelectedTeamId(null);
@@ -568,9 +551,7 @@ export function TaskModal({
       }
       
       setTeamsLoaded(true);
-      console.log('✅ Loaded all teams for task creation:', teamsToUse.length, 'teams');
     } catch (error) {
-      console.error('Error loading teams:', error);
       setTeams([]);
       setTeamsLoaded(true); // Set to true even on error to prevent infinite retries
     } finally {
@@ -580,11 +561,8 @@ export function TaskModal({
 
   const loadTeamMembers = async (teamId: number) => {
     try {
-      console.log('🔍 loadTeamMembers called with teamId:', teamId, 'type:', typeof teamId);
       const response = await taskTeamsApi.getTeamById(teamId);
       const teamData = response.team;
-      
-      console.log('🔍 Team data received for teamId', teamId, ':', teamData);
       
       // Convert team members to TeamMember format
       const convertedMembers: TeamMember[] = (teamData.members || []).map((m: any) => {
@@ -597,22 +575,17 @@ export function TaskModal({
           teamId: teamId,
           teamName: teamData.name
         };
-        console.log('🔍 Converting member:', m, 'to:', member);
         return member;
       });
       
-      console.log('🔍 Processed team members:', convertedMembers);
-      console.log('🔍 Setting teamMembers to:', convertedMembers);
       setTeamMembers(convertedMembers);
     } catch (error) {
-      console.error('Error loading team members:', error);
       setTeamMembers([]);
     }
   };
 
   const loadMembersFromMultipleTeams = async (teamIds: number[]) => {
     try {
-      console.log('Loading members from multiple teams:', teamIds);
       const allMembers: TeamMember[] = [];
       
       // Load members from each selected team
@@ -638,11 +611,8 @@ export function TaskModal({
         }
       }
       
-      console.log('All members loaded:', allMembers);
-      console.log('🔍 Setting teamMembers to (multiple teams):', allMembers);
       setTeamMembers(allMembers);
     } catch (error) {
-      console.error('Error loading members from multiple teams:', error);
       setTeamMembers([]);
     }
   };
@@ -741,29 +711,17 @@ export function TaskModal({
   
   // Filter members based on selected team
   const availableMembers = useMemo(() => {
-    console.log('🔍 availableMembers calculation:', {
-      mode,
-      selectedTeamId,
-      selectedTeamIds,
-      teamMembersLength: teamMembers.length,
-      membersLength: members.length
-    });
-    
     // If a team is selected, always show team members regardless of mode
     if (selectedTeamId || selectedTeamIds.length > 0) {
-      console.log('🔍 Team selected, returning teamMembers:', teamMembers);
-      console.log('🔍 Team members details:', teamMembers.map(m => ({ id: m.id, name: m.name, email: m.email })));
       return teamMembers;
     }
     
     // If no team selected, use general members (for individual mode)
     if (mode === "individual") {
-      console.log('🔍 No team selected, returning general members:', members);
       return members;
     }
     
     // No team selected and not individual mode
-    console.log('🔍 No team selected and not individual mode, returning empty array');
     return [];
   }, [mode, selectedTeamId, selectedTeamIds, teamMembers, members]);
   
@@ -776,10 +734,7 @@ export function TaskModal({
   };
 
   const handleTeamChange = (teamId: string) => {
-    console.log('🔍 handleTeamChange called with teamId:', teamId);
     const numericTeamId = teamId ? parseInt(teamId) : null;
-    console.log('🔍 Converted to numericTeamId:', numericTeamId);
-    console.log('🔍 Available teams:', teams.map(t => ({ id: t.id, name: t.name })));
     
     setSelectedTeamId(numericTeamId);
     // Clear project selection when team changes - user must select project from team's projects
@@ -790,7 +745,6 @@ export function TaskModal({
     
     // Clear assignees when team changes
     const teamObj = teams.find(t => t.id === numericTeamId);
-    console.log('🔍 Found team object:', teamObj);
     
     update({ 
       teamId: teamId || undefined, 
@@ -836,13 +790,10 @@ export function TaskModal({
   const handleSave = async () => {
     // Prevent double submissions
     if (isSaving) {
-      console.log('Save already in progress, skipping duplicate call');
       return;
     }
 
     if (draft && draft.title.trim()) {
-      console.log('🔍 handleSave - draft.attachments:', draft.attachments);
-      console.log('🔍 handleSave - draft.id:', draft.id);
       
       // Require due date for task creation
       if (!draft.dueDate) {
@@ -1069,7 +1020,6 @@ export function TaskModal({
       }
     } else {
       // For unsaved tasks, comment is stored locally and will be saved when task is saved
-      console.log('Task not saved yet, comment stored locally');
     }
   };
 
@@ -1083,7 +1033,6 @@ export function TaskModal({
       const uploadedFiles = [];
 
       for (const file of Array.from(files)) {
-        console.log('Uploading file:', file.name);
         
         const formData = new FormData();
         formData.append('file', file);
@@ -1095,10 +1044,8 @@ export function TaskModal({
           }
         });
 
-        console.log('Upload response:', response.data);
 
         if (response.data && response.data.success && response.data.file?.url) {
-          console.log('File uploaded successfully with URL:', response.data.file.url);
           uploadedFiles.push({
       id: Math.random().toString(36).slice(2),
       filename: file.name,
@@ -1112,19 +1059,14 @@ export function TaskModal({
         }
       }
 
-      console.log('All uploaded files:', uploadedFiles);
-      console.log('Current draft.attachments:', draft.attachments);
 
       // Add uploaded files to attachments
       const newAttachments = [...draft.attachments, ...uploadedFiles];
-      console.log('New attachments array (combined):', newAttachments);
       
       // Only keep attachments that have URLs (filter out old attachments without URLs)
       const attachmentsWithUrls = newAttachments.filter(a => a.url && a.url.trim() !== '');
-      console.log('Attachments with URLs (filtered):', attachmentsWithUrls);
       
       // Update local state with only attachments that have URLs
-      console.log('🔍 Updating local state with attachments:', attachmentsWithUrls);
       update({ attachments: attachmentsWithUrls });
 
       // If task exists, also save to database immediately
@@ -1137,12 +1079,8 @@ export function TaskModal({
           url: a.url,
         }));
         
-        console.log('Attachments to save (filtered for URLs):', attachmentsToSave);
-        console.log('Each attachment URL:', attachmentsToSave.map(a => ({ filename: a.filename, url: a.url })));
-        
         // Validate task ID before updating
         if (!isValidTaskId(draft.id)) {
-          console.error('Cannot save attachments: Task must be saved first. Invalid task ID:', draft.id);
           setToast({ type: 'error', message: 'Please save the task before uploading attachments' });
           setTimeout(() => setToast(null), 3000);
           return;
@@ -1159,7 +1097,6 @@ export function TaskModal({
             attachments: attachmentsToSave,
           });
         }
-        console.log('✅ Attachments saved to database');
         
         // After saving to database, reload the task to get the updated data
         try {
@@ -1178,9 +1115,7 @@ export function TaskModal({
               uploadedAt: new Date().toISOString(),
             }))
           });
-          console.log('✅ Task data reloaded from database');
         } catch (error) {
-          console.error('Error reloading task data:', error);
         }
       }
     } catch (error) {
@@ -1350,13 +1285,6 @@ export function TaskModal({
                   </label>
                     {(selectedTeamId || selectedTeamIds.length > 0) && availableMembers.length > 0 && (
                     <>
-                      {console.log('🔍 Rendering MemberDropdown with:', {
-                        selectedTeamId,
-                        selectedTeamIds,
-                        availableMembersLength: availableMembers.length,
-                        filteredMembers: availableMembers.filter(m => !draft.assignees.includes(m.id)),
-                        draftAssignees: draft.assignees
-                      })}
                       <MemberDropdown
                         members={availableMembers.filter(m => !draft.assignees.includes(m.id))}
                         onSelect={handleAddAssignee}
@@ -1522,9 +1450,6 @@ export function TaskModal({
                             onClick={() => {
                               // Get the file URL - could be relative or absolute
                               const fileUrl = (attachment as any).url;
-                              console.log('🔍 Attachment clicked:', attachment);
-                              console.log('🔍 Attachment URL:', fileUrl);
-                              console.log('🔍 Attachment type:', typeof fileUrl);
                               if (fileUrl) {
                                 // If it's a relative URL, prepend the API base URL
                                 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';

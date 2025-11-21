@@ -256,11 +256,7 @@ const NewsListPage = () => {
           params.tag_id = activeTab;
         }
 
-        console.log('Fetching news with params:', params);
-
         const response = await apiClient.get('/news', { params });
-
-        console.log('API response:', response.data);
 
         if (response.data) {
           setNews(response.data.news || []);

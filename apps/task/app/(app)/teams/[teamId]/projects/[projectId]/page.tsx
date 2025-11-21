@@ -351,7 +351,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
   const handleCreateTask = async (task: TaskType) => {
     // Prevent duplicate task creation
     if (isCreatingTaskInProgress) {
-      console.log('Task creation already in progress, skipping duplicate call');
       return;
     }
 
@@ -439,9 +438,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       // Reload tasks in the background to ensure data consistency and get full details (non-blocking)
       // This will merge any updates but won't remove the task we just added
       setTimeout(() => {
-        loadTasks().then(() => {
-          console.log('✅ Tasks reloaded in background after creation');
-        }).catch(console.error);
+        loadTasks().catch(() => {
+          // Error reloading tasks - non-critical
+        });
       }, 500); // Small delay to ensure the optimistic update is rendered first
     } catch (error: any) {
       console.error('Error creating task:', error);
@@ -539,7 +538,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
               // If it's a "not found" error, the task is already gone, so treat as success
               if (errorMsg.toLowerCase().includes('not found') || errorMsg.toLowerCase().includes('task not found')) {
                 deletionSuccessful = true;
-                console.log('Task already deleted or not found, treating as success');
               } else {
                 throw deleteError; // Re-throw if it's a different 404 error
               }

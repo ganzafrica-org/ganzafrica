@@ -547,12 +547,8 @@ const CreateOpportunityForm = () => {
         };
       }
 
-      console.log('Submitting opportunity data:', opportunityData);
-
       // Make the API call with apiClient
       const response = await apiClient.post('/opportunities', opportunityData);
-
-      console.log('Response from server:', response.data);
 
       // Success - redirect or show success message
       alert('Opportunity created successfully!');

@@ -348,7 +348,6 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
                     setShowMuteSubmenu(false);
                     setShowProfileMenu(false);
                     // Handle mute notification
-                    console.log('Mute for:', option.value);
                   }}
                   className="w-full px-3 py-2 text-left transition-colors"
                   style={{

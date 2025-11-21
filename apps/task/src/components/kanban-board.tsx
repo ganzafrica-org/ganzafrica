@@ -71,20 +71,12 @@ export function KanbanBoard({
     e.stopPropagation();
     
     const id = e.dataTransfer.getData("text/task-id");
-    console.log('Drop event:', { 
-      id, 
-      status, 
-      tasksCount: tasks.length, 
-      taskIds: tasks.map(t => ({ id: t.id, type: typeof t.id, title: t.title }))
-    });
     
     if (!id) {
-      console.log('No task ID found in drop data');
       return;
     }
     
     if (tasks.length === 0) {
-      console.log('Tasks array is empty, cannot find task');
       return;
     }
     
@@ -92,11 +84,7 @@ export function KanbanBoard({
     const originalTask = tasks.find(t => {
       const taskId = String(t.id);
       const searchId = String(id);
-      const match = taskId === searchId;
-      if (match) {
-        console.log('Found matching task:', { taskId, searchId, task: t });
-      }
-      return match;
+      return taskId === searchId;
     });
     
     if (!originalTask) {
@@ -133,7 +121,6 @@ export function KanbanBoard({
       const searchId = String(id);
       return taskId === searchId;
     });
-    console.log('Updating tasks:', updatedTask);
     
     // Pass the moved task information
     const movedTask = {

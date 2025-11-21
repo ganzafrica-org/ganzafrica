@@ -101,7 +101,6 @@ const OpportunitiesPage = () => {
         break;
       case 'status':
         // Open status change modal/form
-        console.log(`Change status for opportunity ${opportunityId}`);
         break;
       default:
         break;
@@ -297,12 +296,8 @@ const OpportunitiesPage = () => {
           params.status = activeTab;
         }
 
-        console.log('Fetching opportunities with params:', params);
-
         // Make API request with apiClient
         const response = await apiClient.get('/opportunities', { params });
-
-        console.log('API response:', response.data);
 
         if (response.data) {
           setOpportunities(response.data.opportunities || []);

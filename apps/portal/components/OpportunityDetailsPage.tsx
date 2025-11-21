@@ -121,15 +121,11 @@ const OpportunityDetailsPage: React.FC<OpportunityDetailsPageProps> = ({ params 
                 try {
                     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
                     const response = await axios.get(`${apiUrl}/opportunities/${params.id}`);
-                    console.log("API Response:", response.data);
-
                     // Check if the response has a nested opportunity object
                     if (response.data && response.data.opportunity) {
-                        console.log("Setting opportunity from nested opportunity object");
                         setOpportunity(response.data.opportunity);
                     } else if (response.data && response.data.id) {
                         // Direct opportunity object
-                        console.log("Setting opportunity from direct response");
                         setOpportunity(response.data);
                     } else {
                         throw new Error("Invalid opportunity data structure");
@@ -214,8 +210,6 @@ const OpportunityDetailsPage: React.FC<OpportunityDetailsPageProps> = ({ params 
         );
     }
 
-    // Debug output
-    console.log("Current opportunity state:", opportunity);
 
     if (!opportunity) {
         return (
