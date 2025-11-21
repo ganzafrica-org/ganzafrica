@@ -4,6 +4,7 @@ import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, Chevro
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Link from "next/link";
 import { Task } from "@/lib/types";
 import { useAuth } from "./auth-provider";
 import { useProfile } from "@/contexts/profile-context";
@@ -119,6 +120,7 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
       
       {/* Profile Menu */}
       <div className="relative" ref={profileMenuRef} style={{ overflow: 'visible', zIndex: 10000 }}>
+      <div className="relative" ref={profileMenuRef} style={{ overflow: 'visible', zIndex: 10000 }}>
         <button 
           onClick={() => setShowProfileMenu(!showProfileMenu)}
           className="h-8 w-8 rounded-full text-white grid place-items-center text-xs font-semibold hover:opacity-90 transition-opacity overflow-hidden"
@@ -164,14 +166,59 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
               width: '280px',
               minWidth: '280px'
             }}
+            className="absolute bg-white shadow-xl"
+            style={{ 
+              borderRadius: '7px', 
+              border: '1px solid #e5e7eb',
+              right: '100%',
+              marginRight: '8px',
+              marginTop: '8px',
+              zIndex: 10000,
+              position: 'absolute',
+              top: '0',
+              width: '280px',
+              minWidth: '280px'
+            }}
           >
             {/* Profile Option */}
               <Link
                 href="/profile"
                 onClick={(e) => {
                   e.stopPropagation();
+              <Link
+                href="/profile"
+                onClick={(e) => {
+                  e.stopPropagation();
                   setShowProfileMenu(false);
                 }}
+                className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
+                style={{ 
+                  borderBottom: '1px solid #e5e7eb',
+                  backgroundColor: activeMenuItem === 'profile' ? '#076297' : 'transparent',
+                  textDecoration: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeMenuItem !== 'profile') {
+                    e.currentTarget.style.backgroundColor = '#e6f2f8';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeMenuItem !== 'profile') {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <User 
+                  className="w-4 h-4 flex-shrink-0" 
+                  style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#4b5563' }}
+                />
+                <span 
+                  className="text-sm font-medium whitespace-nowrap"
+                  style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#374151' }}
+                >
+                  Profile
+                </span>
+              </Link>
                 className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
                 style={{ 
                   borderBottom: '1px solid #e5e7eb',
@@ -222,9 +269,11 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
             >
               <BellOff 
                 className="w-4 h-4 flex-shrink-0" 
+                className="w-4 h-4 flex-shrink-0" 
                 style={{ color: activeMenuItem === 'mute' ? '#ffffff' : '#4b5563' }}
               />
               <span 
+                className="text-sm font-medium flex-1 whitespace-nowrap"
                 className="text-sm font-medium flex-1 whitespace-nowrap"
                 style={{ color: activeMenuItem === 'mute' ? '#ffffff' : '#374151' }}
               >
@@ -244,6 +293,10 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
             </button>
 
             {/* Settings */}
+              <Link
+                href="/settings"
+                onClick={(e) => {
+                  e.stopPropagation();
               <Link
                 href="/settings"
                 onClick={(e) => {
@@ -278,14 +331,74 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
                   Settings
                 </span>
               </Link>
+                className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
+                style={{ 
+                  borderBottom: '1px solid #e5e7eb',
+                  backgroundColor: activeMenuItem === 'settings' ? '#076297' : 'transparent',
+                  textDecoration: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeMenuItem !== 'settings') {
+                    e.currentTarget.style.backgroundColor = '#e6f2f8';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeMenuItem !== 'settings') {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <Settings 
+                  className="w-4 h-4 flex-shrink-0" 
+                  style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#4b5563' }}
+                />
+                <span 
+                  className="text-sm font-medium whitespace-nowrap"
+                  style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#374151' }}
+                >
+                  Settings
+                </span>
+              </Link>
 
             {/* Help */}
               <Link
                 href="/help"
                 onClick={(e) => {
                   e.stopPropagation();
+              <Link
+                href="/help"
+                onClick={(e) => {
+                  e.stopPropagation();
                   setShowProfileMenu(false);
                 }}
+                className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
+                style={{ 
+                  borderBottom: '1px solid #e5e7eb',
+                  backgroundColor: activeMenuItem === 'help' ? '#076297' : 'transparent',
+                  textDecoration: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeMenuItem !== 'help') {
+                    e.currentTarget.style.backgroundColor = '#e6f2f8';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeMenuItem !== 'help') {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <HelpCircle 
+                  className="w-4 h-4 flex-shrink-0" 
+                  style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#4b5563' }}
+                />
+                <span 
+                  className="text-sm font-medium whitespace-nowrap"
+                  style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#374151' }}
+                >
+                  Help
+                </span>
+              </Link>
                 className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
                 style={{ 
                   borderBottom: '1px solid #e5e7eb',

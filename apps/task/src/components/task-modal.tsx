@@ -122,6 +122,7 @@ export function TaskModal({
             setTaskTeamProjects(resp.projects || []);
           } catch (e) {
             // Error loading task team projects
+            // Error loading task team projects
           }
         }
       }
@@ -827,6 +828,11 @@ export function TaskModal({
       return;
     }
 
+    // Prevent double submissions
+    if (isSaving) {
+      return;
+    }
+
     if (draft && draft.title.trim()) {
       
       // Require due date for task creation
@@ -864,6 +870,11 @@ export function TaskModal({
       try {
         // If this is an existing task with a valid numeric ID, save changes to the database
         if (draft.id && isValidTaskId(draft.id)) {
+      setIsSaving(true);
+
+      try {
+        // If this is an existing task with a valid numeric ID, save changes to the database
+        if (draft.id && isValidTaskId(draft.id)) {
           const updateData = {
             title: draft.title,
             description: draft.description,
@@ -889,6 +900,19 @@ export function TaskModal({
           setToast({ type: 'success', message: 'Task updated successfully' });
           onChange(draft);
           onOpenChange(false);
+        } else {
+          // For new tasks (no ID or temporary ID) - let parent handle creation
+          // The parent will create the task via API and get a real ID back
+          onChange(draft);
+          // Don't close modal here - let parent close it after successful creation
+          // The parent will update the task with the real ID from API response
+        }
+      } catch (error) {
+        console.error('Error saving task:', error);
+        setToast({ type: 'error', message: 'Failed to save task' });
+        setTimeout(() => setToast(null), 2500);
+      } finally {
+        setIsSaving(false);
         } else {
           // For new tasks (no ID or temporary ID) - let parent handle creation
           // The parent will create the task via API and get a real ID back
@@ -1973,22 +1997,27 @@ export function TaskModal({
             <button
               onClick={handleSave}
               disabled={!draft.title.trim() || !draft.dueDate || isSaving}
+              disabled={!draft.title.trim() || !draft.dueDate || isSaving}
               className="px-4 py-2.5 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation order-1 sm:order-2"
               style={{ 
+                backgroundColor: (draft.title.trim() && draft.dueDate && !isSaving) ? '#076297' : '#9ca3af',
                 backgroundColor: (draft.title.trim() && draft.dueDate && !isSaving) ? '#076297' : '#9ca3af',
                 borderRadius: '7px'
               }}
               onMouseEnter={(e) => {
+                if (draft.title.trim() && draft.dueDate && !isSaving) {
                 if (draft.title.trim() && draft.dueDate && !isSaving) {
                   e.currentTarget.style.backgroundColor = '#054a73';
                 }
               }}
               onMouseLeave={(e) => {
                 if (draft.title.trim() && draft.dueDate && !isSaving) {
+                if (draft.title.trim() && draft.dueDate && !isSaving) {
                   e.currentTarget.style.backgroundColor = '#076297';
                 }
               }}
             >
+              {isSaving ? 'Saving...' : 'Save Task'}
               {isSaving ? 'Saving...' : 'Save Task'}
             </button>
           </div>
