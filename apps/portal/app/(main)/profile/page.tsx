@@ -253,15 +253,21 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
         {/* User Profile Card - Static Left Column */}
         <Card className="p-6 shadow-sm animate-fade-in relative h-fit" style={{ animationDelay: '0.1s' }}>
           <div className="flex flex-col items-center mb-6">
-            <div className="w-32 h-32 rounded-full bg-gray-100 mb-4 overflow-hidden flex items-center justify-center relative group">
+            <div className="w-32 h-32 rounded-full bg-gray-100 mb-4 overflow-hidden flex items-center justify-center relative group" style={{ minWidth: '128px', minHeight: '128px' }}>
               {user.avatar_url ? (
                 <img 
                   alt="Profile" 
                   src={user.avatar_url} 
-                  className="w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover',
+                    objectPosition: 'center'
+                  }}
                 />
               ) : (
-                <div className="bg-purple-700 text-white w-full h-full flex items-center justify-center text-3xl font-semibold">
+                <div className="bg-purple-700 text-white w-full h-full flex items-center justify-center text-3xl font-semibold absolute inset-0">
                   {user.name
                     .split(' ')
                     .map(part => part[0])

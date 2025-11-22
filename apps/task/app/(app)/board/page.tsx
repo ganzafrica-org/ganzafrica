@@ -91,13 +91,9 @@ export default function BoardPage(): React.JSX.Element {
   // Load team members from API
   const loadTeamMembers = async () => {
     try {
-      console.log('Loading team members from API...');
-      
       // Get all users from the API
       const usersResponse = await usersApi.listUsers({ limit: 100 });
       const allUsers = usersResponse.users || [];
-      
-      console.log('All users from API:', allUsers);
       
       // Get current user info
       const currentUserId = getCurrentUserId();
@@ -133,7 +129,6 @@ export default function BoardPage(): React.JSX.Element {
         return 0;
       });
       
-      console.log('Transformed team members:', sortedMembers);
       setMembers(sortedMembers);
       
     } catch (error) {
@@ -169,9 +164,7 @@ export default function BoardPage(): React.JSX.Element {
 
       // Get all tasks directly without permission checks
       const response = await taskApi.getAllTasks();
-      console.log('API Response:', response);
       const allTasks = response.tasks || [];
-      console.log('All Tasks:', allTasks);
       
       // Load team/project mapping and teams to derive team info for cards
       let projectMappings: Array<{ id: number; team_id: number }> = [];
@@ -226,9 +219,6 @@ export default function BoardPage(): React.JSX.Element {
         return updateTaskStatusIfOverdue(baseTask);
       });
       
-      console.log('Transformed tasks for drag testing:', transformedTasks.slice(0, 2));
-      
-      console.log(`Total tasks loaded: ${transformedTasks.length}`);
 
       setTasks(transformedTasks);
     } catch (err: any) {
@@ -252,7 +242,6 @@ export default function BoardPage(): React.JSX.Element {
     
     // Set up periodic refresh to check for overdue tasks every 5 minutes
     const interval = setInterval(() => {
-      console.log('Periodic refresh: checking for overdue tasks...');
       loadAllTasks();
     }, 5 * 60 * 1000); // 5 minutes
     
@@ -348,25 +337,13 @@ export default function BoardPage(): React.JSX.Element {
       
       // Debug logging
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Task "${task.title}" - Creator Role: "${task.creator_role_name}" - Is Manager: ${isManagerRole}`);
       }
       
       return isManagerRole;
     });
     
-    console.log(`Manager Tasks tab: ${managerTasks.length} management-created tasks out of ${filteredTasks.length} total tasks`);
-    
-    // Log all unique creator roles for debugging
-    const uniqueCreatorRoles = [...new Set(filteredTasks.map(task => task.creator_role_name).filter(Boolean))];
-    console.log('All unique creator roles in filtered tasks:', uniqueCreatorRoles);
-    
     // Validation: Ensure only management role tasks are included
     const nonManagementTasks = managerTasks.filter(task => !isTaskCreatedByManager(task));
-    if (nonManagementTasks.length > 0) {
-      console.error('ERROR: Found non-management tasks in Manager Tasks tab:', nonManagementTasks.map(t => ({ title: t.title, role: t.creator_role_name })));
-    } else {
-      console.log('✅ Validation passed: All tasks in Manager Tasks tab are created by management role users');
-    }
     
     const grouped = {
       high: managerTasks.filter(task => task.priority === 'high'),
@@ -429,7 +406,6 @@ export default function BoardPage(): React.JSX.Element {
          
          // Use fallback method for task updates
          await taskApi.updateTaskWithFallback(parseInt(id), taskData, isCurrentUserAdminOrManagerRole());
-         console.log('Task priority updated successfully:', id, priority);
        }
      } catch (err: any) {
        console.error('Error updating task priority:', err);
@@ -652,8 +628,6 @@ export default function BoardPage(): React.JSX.Element {
               tasks={filteredTasks}
               members={members}
                onTasksChange={async (updatedTasks) => {
-                 console.log('onTasksChange called with:', updatedTasks.length, 'tasks');
-                 
                  // Update tasks locally first for immediate UI feedback
                  setTasks(updatedTasks);
                  
@@ -666,7 +640,6 @@ export default function BoardPage(): React.JSX.Element {
                    });
                    
                    if (movedTask) {
-                     console.log('Found moved task:', movedTask.id, 'from', tasks.find(t => t.id === movedTask.id)?.status, 'to', movedTask.status);
                      const taskData = {
                        title: movedTask.title,
                        description: movedTask.description,
@@ -681,9 +654,6 @@ export default function BoardPage(): React.JSX.Element {
                      
                      // Use fallback method for task updates
                      await taskApi.updateTaskWithFallback(parseInt(movedTask.id), taskData, isCurrentUserAdminOrManagerRole());
-                     console.log('Task status updated successfully:', movedTask.id, movedTask.status);
-                   } else {
-                     console.log('No moved task found');
                    }
                  } catch (err: any) {
                    console.error('Error updating task status:', err);
@@ -822,7 +792,6 @@ export default function BoardPage(): React.JSX.Element {
                    await taskApi.deleteTaskWithFallback(parseInt(id), isCurrentUserAdminOrManagerRole());
                    setTasks(tasks.filter(t => t.id !== id));
                    setActiveTask(null);
-                   console.log('Task deleted successfully:', id);
                  } catch (err: any) {
                    console.error('Error deleting task:', err);
                    // Fallback to local deletion if API fails
@@ -888,10 +857,7 @@ export default function BoardPage(): React.JSX.Element {
                  const selectedTeamProject = taskTeamProjects.find((p: any) => p.team_id === parseInt(updatedTask.teamId!));
                  if (selectedTeamProject) {
                    projectId = selectedTeamProject.id;
-                   console.log('Using selected team project ID for task creation:', projectId, 'for team:', updatedTask.teamId);
                  }
-               } else {
-                 console.log('No team selected, using first available project ID for task creation:', projectId);
                }
                
                try {
@@ -900,13 +866,10 @@ export default function BoardPage(): React.JSX.Element {
                 
                 // Validate that we have role information
                 if (!currentUserRole?.role_name) {
-                  console.error('No role information found for current user');
                   setError('Unable to determine user role. Please refresh and try again.');
                   setIsCreatingTask(false);
                   return;
                 }
-                
-                console.log('Creating task with creator role:', currentUserRole.role_name);
                 
                  // Create task via API
                  const taskData = {
@@ -926,7 +889,6 @@ export default function BoardPage(): React.JSX.Element {
                  };
                 
                  const response = await taskApi.createTaskUnrestricted(taskData);
-                 console.log('Task creation response:', response);
                  const newTaskId = response.task.id;
                  
                  // Save comments if there are any in the updatedTask
@@ -938,9 +900,7 @@ export default function BoardPage(): React.JSX.Element {
                          await taskApi.addTaskComment(newTaskId, comment.message);
                        }
                      }
-                     console.log('✅ Comments saved for new task');
                    } catch (commentError) {
-                     console.error('Error saving comments for new task:', commentError);
                      // Continue even if comments fail to save - task is created
                    }
                  }
@@ -1013,7 +973,6 @@ export default function BoardPage(): React.JSX.Element {
                    setIsCreatingTask(false);
                    setActiveTask(null); // Close modal immediately so task appears right away
                    showSuccess('Success', 'Task created successfully!');
-                   console.log('✅ Task created successfully with comments:', newTask);
                  } catch (reloadError) {
                    console.error('Error reloading task after creation:', reloadError);
                    // Fallback to original response if reload fails
@@ -1032,7 +991,6 @@ export default function BoardPage(): React.JSX.Element {
                    setIsCreatingTask(false);
                    setActiveTask(null); // Close modal immediately so task appears right away
                    showSuccess('Success', 'Task created successfully!');
-                   console.log('✅ Task created successfully (reload failed):', fallbackTask);
                  }
                } catch (err: any) {
                  console.error('Error creating task:', err);
@@ -1049,7 +1007,6 @@ export default function BoardPage(): React.JSX.Element {
                  };
                  setTasks([newTask, ...tasks]);
                  setIsCreatingTask(false);
-                 console.log('Task created locally (API failed):', newTask);
                }
             }}
             onDelete={() => {

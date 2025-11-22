@@ -146,7 +146,6 @@ const ProjectsPage = () => {
         break;
       case 'status':
         // Open status change modal/form
-        console.log(`Change status for project ${projectId}`);
         break;
       default:
         break;

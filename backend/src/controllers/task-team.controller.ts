@@ -709,6 +709,74 @@ export const createTaskProject = async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /task-teams/{id}/projects/{projectId}:
+ *   post:
+ *     summary: Add existing project to task team
+ *     tags: [Task Teams]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Team ID
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Project ID to add
+ *     responses:
+ *       201:
+ *         description: Project added to team successfully
+ *       400:
+ *         description: Project already exists in team
+ *       404:
+ *         description: Project not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+export const addProjectToTeam = async (req: Request, res: Response) => {
+  try {
+    const teamId = parseInt(req.params.id);
+    const projectId = parseInt(req.params.projectId);
+    const createdBy = (req as any).user?.id || (req as any).user?.userId;
+    
+    if (!createdBy) {
+      return res.status(401).json({
+        error: "Unauthorized",
+        message: "User ID not found in request",
+      });
+    }
+
+    const project = await taskTeamService.addProjectToTeam(teamId, projectId, createdBy);
+
+    res.status(201).json({
+      message: "Project added to team successfully",
+      project,
+    });
+  } catch (error) {
+    logger.error("Add project to team error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Add Project To Team Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Add Project To Team Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
  * /task-teams/projects/{id}:
  *   get:
  *     summary: Get task project by ID
@@ -931,6 +999,60 @@ export const deleteTaskProject = async (req: Request, res: Response) => {
     }
     res.status(500).json({
       error: "Delete Task Project Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /task-teams/{id}/projects/{projectId}:
+ *   delete:
+ *     summary: Remove project from task team
+ *     tags: [Task Teams]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Team ID
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Project ID
+ *     responses:
+ *       200:
+ *         description: Project removed from team successfully
+ *       404:
+ *         description: Project not found in team
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+export const removeProjectFromTeam = async (req: Request, res: Response) => {
+  try {
+    const teamId = parseInt(req.params.id);
+    const projectId = parseInt(req.params.projectId);
+    const result = await taskTeamService.removeProjectFromTeam(teamId, projectId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error("Remove project from team error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Remove Project From Team Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Remove Project From Team Error",
       message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }
@@ -1171,11 +1293,13 @@ export const taskTeamController = {
   removeTeamMember,
   updateTeamMemberRole,
   createTaskProject,
+  addProjectToTeam,
   getTaskProjectById,
   listTaskProjects,
   listAllProjects,
   updateTaskProject,
   deleteTaskProject,
+  removeProjectFromTeam,
   addProjectMember,
   removeProjectMember,
 };

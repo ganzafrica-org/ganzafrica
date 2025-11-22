@@ -444,18 +444,13 @@ const ApplicationsPage = () => {
       if (searchTerm) params.search = searchTerm;
       if (activeTab !== 'all') params.type = activeTab;
 
-      console.log('Fetching applications with params:', params);
-
       // Make API request with apiClient
       const response = await apiClient.get('/applications', {
         params
       });
 
-      console.log('API response:', response.data);
-
       // Extract the applications from the response using our helper function
       const applicationsData = extractApplicationsFromResponse(response.data);
-      console.log('Extracted applications:', applicationsData);
 
       // Set the applications with processed data
       setApplications(applicationsData);

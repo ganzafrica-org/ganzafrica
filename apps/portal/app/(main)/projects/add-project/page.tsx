@@ -229,7 +229,8 @@ const AddProjectPage = () => {
             };
           });
 
-          // Filter team members with team_type of "team" or "fellow" (case-insensitive)
+          // Filter team members - ONLY show "Our Team" or "Fellow/Fellows" (case-insensitive)
+          // Strict filtering: no fallback, only show matching team types
           const filtered = processedMembers.filter(member => {
             // Handle team_type as an object or string - ensure we have a string before calling toLowerCase()
             let teamTypeName = '';
@@ -240,20 +241,23 @@ const AddProjectPage = () => {
               teamTypeName = member.team_type.name;
             }
 
-            // Safely convert to lowercase if teamTypeName is a string
-            const teamTypeNameLower = typeof teamTypeName === 'string' ? teamTypeName.toLowerCase() : '';
+            // If no team_type found, exclude this member
+            if (!teamTypeName) {
+              return false;
+            }
 
-            return teamTypeNameLower === "team" || teamTypeNameLower === "fellow";
+            // Safely convert to lowercase if teamTypeName is a string
+            const teamTypeNameLower = typeof teamTypeName === 'string' ? teamTypeName.toLowerCase().trim() : '';
+
+            // Match "Our Team" or "Fellow/Fellows" (case-insensitive) - handle both singular and plural
+            return teamTypeNameLower === "our team" || 
+                   teamTypeNameLower === "fellow" || 
+                   teamTypeNameLower === "fellows";
           });
 
-          if (filtered.length === 0) {
-            // If no filtered results, include all team members as fallback
-            setFilteredTeamMembers(processedMembers);
-            setUsers(processedMembers);
-          } else {
-            setFilteredTeamMembers(filtered);
-            setUsers(filtered);
-          }
+          // Always use filtered results only - never show all members as fallback
+          setFilteredTeamMembers(filtered);
+          setUsers(filtered);
         } catch (error) {
           console.error('Error fetching teams:', error);
           setTeams([]);
@@ -1915,7 +1919,6 @@ const AddProjectPage = () => {
                           )}
                           <span>
                             {member.name || `Team Member ${member.id}`}
-                            {member.position && ` - ${member.position}`}
                           </span>
                         </div>
                       </CommandItem>

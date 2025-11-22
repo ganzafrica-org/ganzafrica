@@ -69,7 +69,6 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
           setImagePreview(testimonialData.image);
         }
       } catch (error: any) {
-        console.error('Error fetching testimonial:', error);
         toast.error(error.response?.data?.message || 'Failed to load testimonial');
         router.push('/testimonials');
       } finally {
@@ -147,7 +146,6 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
       
       // Check if upload was successful
       if (response.data && response.data.success) {
-        console.log('File uploaded successfully:', response.data.file);
         setUploadStatus('success');
         return response.data.file.url;
       } else {
@@ -155,7 +153,6 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
         throw new Error('File upload failed: Server returned unsuccessful response');
       }
     } catch (error) {
-      console.error('Error uploading file:', error);
       setUploadStatus('error');
       toast.error('Failed to upload image. Please try again.');
       throw error;
@@ -192,7 +189,6 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
       toast.success('Testimonial updated successfully');
       router.push('/testimonials');
     } catch (error: any) {
-      console.error('Error updating testimonial:', error);
       toast.error(error.response?.data?.message || 'Failed to update testimonial');
     } finally {
       setIsLoading(false);
@@ -330,7 +326,7 @@ export default function EditTestimonialPage({ params }: { params: { id: string }
                   {imagePreview ? (
                       <div className="relative">
                         <Avatar className="w-32 h-32 mx-auto">
-                          <AvatarImage src={imagePreview} alt="Preview" onError={() => console.error(`Failed to load image preview: ${imagePreview}`)} />
+                          <AvatarImage src={imagePreview} alt="Preview" />
                           <AvatarFallback>
                             <ImageIcon className="w-16 h-16 text-gray-400" />
                           </AvatarFallback>
