@@ -71,7 +71,13 @@ function AuthCallbackContent() {
 
         if (token && user) {
           try {
-            // Store the authentication tokens
+            // Clear ALL old tokens and user data first
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("user");
+            localStorage.removeItem("alumni_user");
+
+            // Store the NEW authentication tokens
             localStorage.setItem("accessToken", token);
 
             // Store user data - safely parse the user data
@@ -93,9 +99,10 @@ function AuthCallbackContent() {
             toast.success("Authentication successful!");
 
             // Wait for progress animation then redirect
+            // Use window.location to ensure a full page reload with fresh auth state
             setTimeout(() => {
               clearInterval(timer);
-              router.push("/");
+              window.location.href = "/";
             }, 2000);
           } catch (error: unknown) {
             console.error("Error processing authentication:", error);

@@ -5,18 +5,10 @@ import {
   resource_likes,
   resource_ratings,
   resource_downloads,
+  alumni_profiles,
 } from "../db/schema";
 import { users } from "../db/schema";
-import {
-  eq,
-  and,
-  or,
-  ilike,
-  sql,
-  desc,
-  asc,
-  count,
-} from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, count } from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("ResourcesController");
@@ -56,7 +48,7 @@ const RESOURCE_TYPES = [
  */
 export const getResourceStats = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     // Total resources
@@ -105,7 +97,7 @@ export const getResourceStats = async (
  */
 export const getAllResources = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { page, limit, search, category, type, sort } = req.query;
@@ -113,7 +105,7 @@ export const getAllResources = async (
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
     const limitNum = Math.min(
       50,
-      Math.max(1, parseInt(limit as string, 10) || 15)
+      Math.max(1, parseInt(limit as string, 10) || 15),
     );
     const offset = (pageNum - 1) * limitNum;
 
@@ -125,8 +117,8 @@ export const getAllResources = async (
       conditions.push(
         or(
           ilike(alumni_resources.title, `%${search}%`),
-          ilike(alumni_resources.description, `%${search}%`)
-        )
+          ilike(alumni_resources.description, `%${search}%`),
+        ),
       );
     }
 
@@ -196,8 +188,8 @@ export const getAllResources = async (
       case "rating":
         query = query.orderBy(
           desc(
-            sql`CASE WHEN ${alumni_resources.rating_count} > 0 THEN ${alumni_resources.rating_sum}::float / ${alumni_resources.rating_count} ELSE 0 END`
-          )
+            sql`CASE WHEN ${alumni_resources.rating_count} > 0 THEN ${alumni_resources.rating_sum}::float / ${alumni_resources.rating_count} ELSE 0 END`,
+          ),
         ) as any;
         break;
       case "views":
@@ -222,7 +214,10 @@ export const getAllResources = async (
         })
         .from(resource_likes)
         .where(
-          sql`${resource_likes.resource_id} IN (${sql.join(resourceIds.map((id) => sql`${id}`), sql`, `)})`
+          sql`${resource_likes.resource_id} IN (${sql.join(
+            resourceIds.map((id) => sql`${id}`),
+            sql`, `,
+          )})`,
         )
         .groupBy(resource_likes.resource_id);
 
@@ -304,7 +299,7 @@ export const getAllResources = async (
  */
 export const getResource = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const resourceId = parseInt(req.params.id, 10);
@@ -370,8 +365,8 @@ export const getResource = async (
         .where(
           and(
             eq(resource_likes.resource_id, resourceId),
-            eq(resource_likes.user_id, parseInt(req.user.id, 10))
-          )
+            eq(resource_likes.user_id, parseInt(req.user.id, 10)),
+          ),
         )
         .limit(1);
       hasLiked = userLike.length > 0;
@@ -386,8 +381,8 @@ export const getResource = async (
         .where(
           and(
             eq(resource_ratings.resource_id, resourceId),
-            eq(resource_ratings.user_id, parseInt(req.user.id, 10))
-          )
+            eq(resource_ratings.user_id, parseInt(req.user.id, 10)),
+          ),
         )
         .limit(1);
       userRating = ratingRecord.length > 0 ? ratingRecord[0].rating : null;
@@ -443,7 +438,7 @@ export const getResource = async (
  */
 export const createResource = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -493,14 +488,22 @@ export const createResource = async (
     const userId = parseInt(req.user.id, 10);
 
     // Get user info for caching
-    const userInfo = await db
-      .select({
-        name: sql<string>`CONCAT(${users.first_name}, ' ', ${users.last_name})`,
-        title: sql<string>`(SELECT title FROM alumni_profiles WHERE user_id = ${userId})`,
-      })
+    const userQuery = await db
+      .select()
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
+
+    const userName = userQuery[0]?.name || "Unknown";
+
+    // Get alumni profile title if exists
+    const profileQuery = await db
+      .select()
+      .from(alumni_profiles)
+      .where(eq(alumni_profiles.user_id, userId))
+      .limit(1);
+
+    const userTitle = profileQuery[0]?.title || null;
 
     const newResource = await db
       .insert(alumni_resources)
@@ -514,8 +517,8 @@ export const createResource = async (
         file_size: fileSize || null,
         thumbnail_url: thumbnailUrl || null,
         author_id: userId,
-        author_name: userInfo[0]?.name || "Unknown",
-        author_title: userInfo[0]?.title || null,
+        author_name: userName,
+        author_title: userTitle,
         tags: tags || [],
         estimated_time: estimatedTime || null,
         pages: pages || null,
@@ -542,7 +545,7 @@ export const createResource = async (
  */
 export const updateResource = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -572,9 +575,7 @@ export const updateResource = async (
 
     // Only owner can edit (admins would need role check)
     if (existing[0].author_id !== userId) {
-      res
-        .status(403)
-        .json({ error: "You can only edit your own resources" });
+      res.status(403).json({ error: "You can only edit your own resources" });
       return;
     }
 
@@ -651,7 +652,7 @@ export const updateResource = async (
  */
 export const deleteResource = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -680,9 +681,7 @@ export const deleteResource = async (
     }
 
     if (existing[0].author_id !== userId) {
-      res
-        .status(403)
-        .json({ error: "You can only delete your own resources" });
+      res.status(403).json({ error: "You can only delete your own resources" });
       return;
     }
 
@@ -705,7 +704,7 @@ export const deleteResource = async (
  */
 export const toggleLike = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -740,8 +739,8 @@ export const toggleLike = async (
       .where(
         and(
           eq(resource_likes.resource_id, resourceId),
-          eq(resource_likes.user_id, userId)
-        )
+          eq(resource_likes.user_id, userId),
+        ),
       )
       .limit(1);
 
@@ -785,7 +784,7 @@ export const toggleLike = async (
  */
 export const trackDownload = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -803,7 +802,10 @@ export const trackDownload = async (
 
     // Check if resource exists
     const resource = await db
-      .select({ id: alumni_resources.id, downloads: alumni_resources.downloads })
+      .select({
+        id: alumni_resources.id,
+        downloads: alumni_resources.downloads,
+      })
       .from(alumni_resources)
       .where(eq(alumni_resources.id, resourceId))
       .limit(1);
@@ -843,7 +845,7 @@ export const trackDownload = async (
  */
 export const rateResource = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -888,8 +890,8 @@ export const rateResource = async (
       .where(
         and(
           eq(resource_ratings.resource_id, resourceId),
-          eq(resource_ratings.user_id, userId)
-        )
+          eq(resource_ratings.user_id, userId),
+        ),
       )
       .limit(1);
 
@@ -949,7 +951,7 @@ export const rateResource = async (
  */
 export const toggleFeatured = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -967,7 +969,10 @@ export const toggleFeatured = async (
     }
 
     const resource = await db
-      .select({ id: alumni_resources.id, isFeatured: alumni_resources.is_featured })
+      .select({
+        id: alumni_resources.id,
+        isFeatured: alumni_resources.is_featured,
+      })
       .from(alumni_resources)
       .where(eq(alumni_resources.id, resourceId))
       .limit(1);

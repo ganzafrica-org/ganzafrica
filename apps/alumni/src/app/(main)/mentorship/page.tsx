@@ -209,7 +209,7 @@ const StatsCards = ({ stats }: { stats: MentorshipStats }) => (
 export default function MentorshipPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  useAuth();
 
   // Get initial values from URL
   const initialPage = parseInt(searchParams.get("page") || "1", 10);
@@ -383,7 +383,7 @@ export default function MentorshipPage() {
               <Button
                 variant="outline"
                 onClick={clearFilters}
-                className="border-slate-200"
+                className="border-green-primary text-green-primary hover:bg-green-primary hover:text-white"
               >
                 Clear Filters
               </Button>

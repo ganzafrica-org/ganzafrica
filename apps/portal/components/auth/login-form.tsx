@@ -260,9 +260,9 @@ export function LoginForm({ userType }: LoginFormProps) {
 
   // Render login form with floating card design
   return (
-    <div className="flex overflow-hidden rounded-lg shadow-xl mx-auto max-w-4xl">
-      {/* Left panel - green with "Welcome Back" */}
-      <div className="w-1/2 bg-primary-green text-white p-8 flex flex-col items-center justify-center">
+    <div className="flex overflow-hidden rounded-lg shadow-xl mx-auto max-w-4xl w-full">
+      {/* Left panel - green with "Welcome Back" - Hidden on mobile */}
+      <div className="hidden md:flex md:w-1/2 bg-primary-green text-white p-8 flex-col items-center justify-center">
         <div className="mb-6">
           <Image
             src="/images/logoLight.png"
@@ -287,7 +287,7 @@ export function LoginForm({ userType }: LoginFormProps) {
       </div>
 
       {/* Right panel - white with login form */}
-      <div className="w-2/3 bg-white p-8">
+      <div className="w-full md:w-2/3 bg-white p-6 md:p-8">
         <div className="max-w-md mx-auto">
           <h2 className="text-2xl font-semibold text-center mb-2">Login</h2>
           <p className="text-gray-500 text-center mb-6">

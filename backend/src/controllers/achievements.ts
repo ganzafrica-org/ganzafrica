@@ -155,8 +155,8 @@ export const getAllAchievements = async (
         views: alumni_achievements.views,
         createdAt: alumni_achievements.created_at,
         userId: alumni_achievements.user_id,
-        userName: sql<string>`CONCAT(${users.first_name}, ' ', ${users.last_name})`,
-        userAvatar: users.avatar,
+        userName: users.name,
+        userAvatar: users.avatar_url,
       })
       .from(alumni_achievements)
       .leftJoin(users, eq(alumni_achievements.user_id, users.id));
@@ -328,8 +328,8 @@ export const getAchievement = async (
         views: alumni_achievements.views,
         createdAt: alumni_achievements.created_at,
         userId: alumni_achievements.user_id,
-        userName: sql<string>`CONCAT(${users.first_name}, ' ', ${users.last_name})`,
-        userAvatar: users.avatar,
+        userName: users.name,
+        userAvatar: users.avatar_url,
         userTitle: sql<string>`(SELECT title FROM alumni_profiles WHERE user_id = ${alumni_achievements.user_id})`,
         userCompany: sql<string>`(SELECT company FROM alumni_profiles WHERE user_id = ${alumni_achievements.user_id})`,
       })
@@ -362,8 +362,8 @@ export const getAchievement = async (
         content: achievement_comments.content,
         createdAt: achievement_comments.created_at,
         userId: achievement_comments.user_id,
-        userName: sql<string>`CONCAT(${users.first_name}, ' ', ${users.last_name})`,
-        userAvatar: users.avatar,
+        userName: users.name,
+        userAvatar: users.avatar_url,
       })
       .from(achievement_comments)
       .leftJoin(users, eq(achievement_comments.user_id, users.id))
@@ -775,8 +775,8 @@ export const addComment = async (
     // Get user info
     const userInfo = await db
       .select({
-        name: sql<string>`CONCAT(${users.first_name}, ' ', ${users.last_name})`,
-        avatar: users.avatar,
+        name: users.name,
+        avatar: users.avatar_url,
       })
       .from(users)
       .where(eq(users.id, userId))

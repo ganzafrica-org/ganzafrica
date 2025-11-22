@@ -4,6 +4,7 @@ import {
   getAllAlumni,
   getAlumniProfile,
   updateAlumniProfile,
+  getDashboardStats,
 } from "../controllers/alumni";
 import { authenticate } from "../middlewares";
 
@@ -45,6 +46,36 @@ const router: Router = Router();
  *         description: Unauthorized
  */
 router.get("/stats", authenticate, getAlumniStats);
+
+/**
+ * @swagger
+ * /alumni/dashboard/stats:
+ *   get:
+ *     summary: Get dashboard statistics
+ *     tags: [Alumni]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stats:
+ *                   type: object
+ *                   properties:
+ *                     myMentorshipPairs:
+ *                       type: integer
+ *                     upcomingEvents:
+ *                       type: integer
+ *                     jobPostings:
+ *                       type: integer
+ *                     achievements:
+ *                       type: integer
+ */
+router.get("/dashboard/stats", authenticate, getDashboardStats);
 
 /**
  * @swagger

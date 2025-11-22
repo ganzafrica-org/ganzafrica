@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,9 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  User,
-  Building,
-  MapPin,
   Briefcase,
   Phone,
   Linkedin,
@@ -171,7 +174,7 @@ export default function ProfilePage() {
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -205,7 +208,9 @@ export default function ProfilePage() {
       setIsSaving(true);
       await alumniApi.updateProfile({
         ...formData,
-        graduationYear: formData.graduationYear ? parseInt(formData.graduationYear, 10) : null,
+        graduationYear: formData.graduationYear
+          ? parseInt(formData.graduationYear, 10)
+          : null,
       });
       toast.success("Profile updated successfully");
     } catch (error) {
@@ -222,7 +227,9 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-            <p className="text-gray-600">Manage your alumni profile information</p>
+            <p className="text-gray-600">
+              Manage your alumni profile information
+            </p>
           </div>
           <ProfileSkeleton />
         </div>
@@ -236,7 +243,9 @@ export default function ProfilePage() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-gray-600">Manage your alumni profile information</p>
+          <p className="text-gray-600">
+            Manage your alumni profile information
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -274,7 +283,8 @@ export default function ProfilePage() {
                 Current Role
               </CardTitle>
               <CardDescription>
-                What are you doing now? This will be displayed in the alumni directory.
+                What are you doing now? This will be displayed in the alumni
+                directory.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -385,7 +395,9 @@ export default function ProfilePage() {
                   <Label htmlFor="graduationYear">Graduation Year *</Label>
                   <Select
                     value={formData.graduationYear}
-                    onValueChange={(v) => handleSelectChange("graduationYear", v)}
+                    onValueChange={(v) =>
+                      handleSelectChange("graduationYear", v)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select year" />
@@ -462,7 +474,8 @@ export default function ProfilePage() {
                 Contact & Social Links
               </CardTitle>
               <CardDescription>
-                Help other alumni connect with you. Phone number is used for WhatsApp.
+                Help other alumni connect with you. Phone number is used for
+                WhatsApp.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

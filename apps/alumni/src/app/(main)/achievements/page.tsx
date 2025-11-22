@@ -29,12 +29,10 @@ import {
   Plus,
   Calendar,
   Building,
-  MapPin,
   ExternalLink,
   Eye,
   ThumbsUp,
   MessageSquare,
-  Briefcase,
   Globe,
   ChevronLeft,
   ChevronRight,
@@ -670,7 +668,7 @@ export default function AlumniAchievements() {
   return (
     <div className="space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold bg-blue-secondary bg-clip-text text-transparent">
             Alumni Achievements
@@ -802,7 +800,7 @@ export default function AlumniAchievements() {
               <Button
                 variant="outline"
                 onClick={clearFilters}
-                className="border-slate-200"
+                className="border-green-primary text-green-primary hover:bg-green-primary hover:text-white"
               >
                 Clear Filters
               </Button>
@@ -815,8 +813,8 @@ export default function AlumniAchievements() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
           {pagination
-            ? `Showing ${(currentPage - 1) * pagination.limit + 1}-${Math.min(currentPage * pagination.limit, pagination.totalCount)} of ${pagination.totalCount} achievements`
-            : "Loading..."}
+            ? `Showing ${pagination.totalCount > 0 ? (currentPage - 1) * pagination.limit + 1 : 0}-${Math.min(currentPage * pagination.limit, pagination.totalCount)} of ${pagination.totalCount} achievements`
+            : "Showing 0-0 of 0 achievements"}
         </p>
         {pagination && pagination.totalPages > 1 && (
           <div className="flex items-center gap-2">

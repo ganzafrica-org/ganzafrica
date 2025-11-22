@@ -1,23 +1,19 @@
 "use client";
 
-import { useState } from 'react';
-import Sidebar from '@/components/layout/Sidebar';
-import Navbar from '@/components/layout/Navbar';
-import { useAuth } from '@/lib/auth/auth-provider';
+import { useState } from "react";
+import Sidebar from "@/components/layout/Sidebar";
+import Navbar from "@/components/layout/Navbar";
+import { useAuth } from "@/lib/auth/auth-provider";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
-export default function MainLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function MainLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { isLoading, isAuthenticated } = useAuth();
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
+  const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
+  const toggleMobileSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center">
@@ -29,10 +25,9 @@ export default function MainLayout({
     );
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
-    if (typeof window !== 'undefined') {
-      const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
+    if (typeof window !== "undefined") {
+      const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
       window.location.href = `${portalUrl}/login?user=alumni`;
     }
     return null;
@@ -40,14 +35,40 @@ export default function MainLayout({
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] dark:bg-gray-900">
-      <Sidebar isCollapsed={isSidebarCollapsed} />
-      <div className={`transition-all duration-300 ${
-        isSidebarCollapsed ? 'pl-20' : 'pl-64'
-      }`}>
-        <Navbar onMenuClick={toggleSidebar} isSidebarCollapsed={isSidebarCollapsed} />
-        <main className="min-h-[calc(100vh-4rem)] p-6">
-          {children}
-        </main>
+
+      {/* MOBILE SIDEBAR SHEET */}
+      <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
+        <SheetContent side="left" className="p-0 w-64 bg-[#045F3C]">
+          <Sidebar
+            isCollapsed={false}
+            isMobile
+            onMobileClose={() => setIsMobileSidebarOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
+
+      {/* MAIN FLEX LAYOUT FOR DESKTOP */}
+      <div className="flex">
+        {/* SIDEBAR */}
+        <div className="hidden md:block">
+          <Sidebar isCollapsed={isSidebarCollapsed} />
+        </div>
+
+        {/* CONTENT AREA */}
+        <div
+          className={`flex-1 transition-all duration-300 ${
+            isSidebarCollapsed ? "md:ml-20" : "md:ml-64"
+          }`}
+        >
+          <Navbar
+            onMenuClick={toggleSidebar}
+            onMobileMenuClick={toggleMobileSidebar}
+            isSidebarCollapsed={isSidebarCollapsed}
+          />
+
+          {/* PAGE CONTENT */}
+          <main className="min-h-[calc(100vh-4rem)] p-4">{children}</main>
+        </div>
       </div>
     </div>
   );

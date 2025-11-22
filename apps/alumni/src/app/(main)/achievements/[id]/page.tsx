@@ -2,12 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -26,11 +21,7 @@ import {
   Trash2,
   Heart,
 } from "lucide-react";
-import {
-  achievementsApi,
-  AchievementDetail,
-  AchievementComment,
-} from "@/lib/api/alumni";
+import { achievementsApi, AchievementDetail } from "@/lib/api/alumni";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
 
@@ -79,7 +70,7 @@ export default function AchievementDetailPage() {
   const achievementId = parseInt(params.id as string, 10);
 
   const [achievement, setAchievement] = useState<AchievementDetail | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
@@ -125,7 +116,7 @@ export default function AchievementDetailPage() {
       setIsSubmittingComment(true);
       const response = await achievementsApi.addComment(
         achievement.id,
-        commentText
+        commentText,
       );
       setAchievement({
         ...achievement,
@@ -170,8 +161,8 @@ export default function AchievementDetailPage() {
           <CardContent>
             <h2 className="text-2xl font-bold mb-4">Achievement Not Found</h2>
             <p className="text-gray-600 mb-6">
-              The achievement you're looking for doesn't exist or has been
-              removed.
+              The achievement you&apos;re looking for doesn&apos;t exist or has
+              been removed.
             </p>
             <Button asChild>
               <Link href="/achievements">Back to Achievements</Link>
@@ -186,11 +177,7 @@ export default function AchievementDetailPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -313,7 +300,9 @@ export default function AchievementDetailPage() {
                 </span>
                 <span className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  <span className="font-medium">{achievement.comments.length}</span>
+                  <span className="font-medium">
+                    {achievement.comments.length}
+                  </span>
                   <span className="text-sm">comments</span>
                 </span>
               </div>
@@ -428,7 +417,7 @@ export default function AchievementDetailPage() {
                                 day: "numeric",
                                 hour: "2-digit",
                                 minute: "2-digit",
-                              }
+                              },
                             )}
                           </p>
                         </div>

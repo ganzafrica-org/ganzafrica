@@ -22,9 +22,15 @@ import { useAuth } from "@/lib/auth/auth-provider";
 
 interface SidebarProps {
   isCollapsed: boolean;
+  isMobile?: boolean;
+  onMobileClose?: () => void;
 }
 
-const Sidebar = ({ isCollapsed }: SidebarProps) => {
+const Sidebar = ({
+  isCollapsed,
+  isMobile = false,
+  onMobileClose,
+}: SidebarProps) => {
   const pathname = usePathname();
   const { logout } = useAuth();
   const [mentorshipOpen, setMentorshipOpen] = useState(false);
@@ -67,6 +73,12 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
     await logout();
   };
 
+  const handleLinkClick = () => {
+    if (isMobile && onMobileClose) {
+      onMobileClose();
+    }
+  };
+
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutGrid },
     { href: "/directory", label: "Alumni Directory", icon: Users },
@@ -78,7 +90,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
 
   return (
     <div
-      className={`fixed left-0 top-0 h-full bg-[#045F3C] text-white/90 transition-all duration-300 ${
+      className={`${isMobile ? "h-full" : "fixed left-0 top-0 h-full"} bg-[#045F3C] text-white/90 transition-all duration-300 ${
         isCollapsed ? "w-20" : "w-64"
       }`}
     >
@@ -159,6 +171,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                       <Link
                         key={item.href}
                         href={item.href}
+                        onClick={handleLinkClick}
                         className={`flex items-center ${isCollapsed ? "justify-center px-3" : "px-4"} py-2.5 rounded-lg transition-colors ${
                           isActive
                             ? "bg-white/10 text-white"
@@ -203,6 +216,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                       <>
                         <Link
                           href="/mentorship"
+                          onClick={handleLinkClick}
                           className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
                             pathname === "/mentorship"
                               ? "bg-white/10 text-white"
@@ -216,6 +230,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                         </Link>
                         <Link
                           href="/mentorship/my-connections"
+                          onClick={handleLinkClick}
                           className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
                             pathname === "/mentorship/my-connections"
                               ? "bg-white/10 text-white"

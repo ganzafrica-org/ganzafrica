@@ -3,12 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -153,11 +148,7 @@ export default function ResourceDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Resources
         </Button>
@@ -169,11 +160,7 @@ export default function ResourceDetailPage() {
   if (!resource) {
     return (
       <div className="space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Resources
         </Button>
@@ -184,7 +171,8 @@ export default function ResourceDetailPage() {
               Resource not found
             </h3>
             <p className="text-gray-600 mb-4">
-              The resource you're looking for doesn't exist or has been removed.
+              The resource you&apos;re looking for doesn&apos;t exist or has
+              been removed.
             </p>
             <Button
               onClick={() => router.push("/resources")}
@@ -354,7 +342,8 @@ export default function ResourceDetailPage() {
                   ))}
                   {userRating > 0 && (
                     <span className="text-sm text-gray-600 ml-2">
-                      You rated this {userRating} star{userRating !== 1 ? "s" : ""}
+                      You rated this {userRating} star
+                      {userRating !== 1 ? "s" : ""}
                     </span>
                   )}
                 </div>

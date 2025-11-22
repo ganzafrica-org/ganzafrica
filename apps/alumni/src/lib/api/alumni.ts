@@ -67,6 +67,13 @@ export interface AlumniStats {
   industriesCount: number;
 }
 
+export interface DashboardStats {
+  myMentorshipPairs: number;
+  upcomingEvents: number;
+  jobPostings: number;
+  achievements: number;
+}
+
 export interface AlumniFilters {
   countries: string[];
   industries: string[];
@@ -251,9 +258,102 @@ export interface JobsResponse {
   filters: JobFilters;
 }
 
+// Achievements types
+
+export interface Achievement {
+  id: number;
+  title: string;
+  description: string | null;
+  category: string;
+  type: string | null;
+  date: string | null;
+  organization: string | null;
+  location: string | null;
+  link: string | null;
+  imageUrl: string | null;
+  tags: string[];
+  views: number;
+  likes: number;
+  comments: number;
+  createdAt: string;
+  achiever: {
+    id: number;
+    name: string;
+    avatar: string | null;
+  };
+}
+
+export interface AchievementDetail extends Omit<Achievement, "comments"> {
+  hasLiked: boolean;
+  achiever: {
+    id: number;
+    name: string;
+    avatar: string | null;
+    title: string | null;
+    company: string | null;
+  };
+  comments: AchievementComment[];
+}
+
+export interface AchievementComment {
+  id: number;
+  content: string;
+  createdAt: string;
+  user: {
+    id: number;
+    name: string;
+    avatar: string | null;
+  };
+}
+
+export interface AchievementStats {
+  totalAchievements: number;
+  myAchievements: number;
+  categoriesCount: number;
+}
+
+export interface AchievementFilters {
+  categories: string[];
+  types: string[];
+  years: number[];
+}
+
+export interface AchievementsQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  type?: string;
+  year?: string;
+  sort?: string;
+}
+
+export interface AchievementsResponse {
+  achievements: Achievement[];
+  pagination: Pagination;
+  filters: AchievementFilters;
+}
+
+export interface CreateAchievementData {
+  title: string;
+  description?: string;
+  category: string;
+  type?: string;
+  date?: string;
+  organization?: string;
+  location?: string;
+  link?: string;
+  tags?: string[];
+}
+
 export const alumniApi = {
   getStats: async (): Promise<AlumniStatsResponse> => {
     const response = await apiClient.get("/alumni/stats");
+    return response.data;
+  },
+
+  getDashboardStats: async (): Promise<{ stats: DashboardStats }> => {
+    const response = await apiClient.get("/alumni/dashboard/stats");
     return response.data;
   },
 
@@ -428,93 +528,6 @@ export const mentorshipApi = {
     return response.data;
   },
 };
-
-// Achievement types
-export interface Achievement {
-  id: number;
-  title: string;
-  description: string | null;
-  category: string;
-  type: string | null;
-  date: string | null;
-  organization: string | null;
-  location: string | null;
-  link: string | null;
-  imageUrl: string | null;
-  tags: string[];
-  views: number;
-  likes: number;
-  comments: number;
-  createdAt: string;
-  achiever: {
-    id: number;
-    name: string;
-    avatar: string | null;
-  };
-}
-
-export interface AchievementDetail extends Achievement {
-  hasLiked: boolean;
-  achiever: {
-    id: number;
-    name: string;
-    avatar: string | null;
-    title: string | null;
-    company: string | null;
-  };
-  comments: AchievementComment[];
-}
-
-export interface AchievementComment {
-  id: number;
-  content: string;
-  createdAt: string;
-  user: {
-    id: number;
-    name: string;
-    avatar: string | null;
-  };
-}
-
-export interface AchievementStats {
-  totalAchievements: number;
-  myAchievements: number;
-  categoriesCount: number;
-}
-
-export interface AchievementFilters {
-  categories: string[];
-  types: string[];
-  years: number[];
-}
-
-export interface AchievementsQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  category?: string;
-  type?: string;
-  year?: string;
-  sort?: string;
-}
-
-export interface AchievementsResponse {
-  achievements: Achievement[];
-  pagination: Pagination;
-  filters: AchievementFilters;
-}
-
-export interface CreateAchievementData {
-  title: string;
-  description?: string;
-  category: string;
-  type?: string;
-  date?: string;
-  organization?: string;
-  location?: string;
-  link?: string;
-  tags?: string[];
-}
 
 // Achievements API
 export const achievementsApi = {
@@ -824,6 +837,113 @@ export const resourcesApi = {
     id: number,
   ): Promise<{ message: string; isFeatured: boolean }> => {
     const response = await apiClient.put(`/resources/${id}/feature`);
+    return response.data;
+  },
+};
+
+// Events Types
+export interface Event {
+  id: number;
+  title: string;
+  description: string;
+  eventDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  duration: string | null;
+  location: string | null;
+  isVirtual: boolean;
+  meetingUrl: string | null;
+  type: string;
+  category: string;
+  organizer: string;
+  organizerId: number | null;
+  maxAttendees: number | null;
+  isPaid: boolean;
+  price: string | null;
+  currency: string;
+  status: string;
+  imageUrl: string | null;
+  speakers: { name: string; title: string; company: string }[];
+  agenda: { time: string; activity: string }[];
+  tags: string[];
+  views: number;
+  attendees: number;
+  isRegistered: boolean;
+  createdAt: string;
+}
+
+export interface EventDetail extends Event {
+  updatedAt: string;
+}
+
+export interface EventStats {
+  totalEvents: number;
+  upcomingEvents: number;
+  myEvents: number;
+}
+
+export interface EventFilters {
+  types: string[];
+  categories: string[];
+}
+
+export interface EventsQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  type?: string;
+  category?: string;
+  status?: string;
+  myEvents?: boolean;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface EventsResponse {
+  events: Event[];
+  pagination: Pagination;
+  filters: EventFilters;
+}
+
+// Events API
+export const eventsApi = {
+  getStats: async (): Promise<{ stats: EventStats }> => {
+    const response = await apiClient.get("/events/stats");
+    return response.data;
+  },
+
+  getAll: async (params: EventsQueryParams = {}): Promise<EventsResponse> => {
+    const queryParams = new URLSearchParams();
+
+    if (params.page) queryParams.set("page", params.page.toString());
+    if (params.limit) queryParams.set("limit", params.limit.toString());
+    if (params.search) queryParams.set("search", params.search);
+    if (params.type && params.type !== "all")
+      queryParams.set("type", params.type);
+    if (params.category && params.category !== "all")
+      queryParams.set("category", params.category);
+    if (params.status && params.status !== "all")
+      queryParams.set("status", params.status);
+    if (params.myEvents) queryParams.set("myEvents", "true");
+    if (params.startDate) queryParams.set("startDate", params.startDate);
+    if (params.endDate) queryParams.set("endDate", params.endDate);
+
+    const queryString = queryParams.toString();
+    const url = queryString ? `/events?${queryString}` : "/events";
+
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  getOne: async (id: number): Promise<{ event: EventDetail }> => {
+    const response = await apiClient.get(`/events/${id}`);
+    return response.data;
+  },
+
+  toggleRegistration: async (
+    id: number,
+  ): Promise<{ registered: boolean; attendees: number; message: string }> => {
+    const response = await apiClient.post(`/events/${id}/register`);
     return response.data;
   },
 };

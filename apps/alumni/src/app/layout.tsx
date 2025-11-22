@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://alumni.ganzafrica.org",
+    url: "https://web.ganzafrica.org/portal/alumni",
     title: "GanzAfrica Alumni Portal",
     description: "Connect with the GanzAfrica alumni community",
     siteName: "GanzAfrica Alumni",

@@ -8,7 +8,16 @@ import {
   mentorship_sessions,
   alumni_profiles,
 } from "../db/schema";
-import { eq, and, count, countDistinct, avg, sql, inArray } from "drizzle-orm";
+import {
+  eq,
+  and,
+  or,
+  count,
+  countDistinct,
+  avg,
+  sql,
+  inArray,
+} from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("MentorshipController");
@@ -21,14 +30,13 @@ export const getMentorshipStats = async (
   res: Response,
 ): Promise<void> => {
   try {
-    // Get the fellow role ID
-    const fellowRole = await db
+    // Get the fellow and public role IDs
+    const rolesResult = await db
       .select()
       .from(roles)
-      .where(eq(roles.name, "fellow"))
-      .limit(1);
+      .where(or(eq(roles.name, "fellow"), eq(roles.name, "public")));
 
-    if (!fellowRole || fellowRole.length === 0) {
+    if (!rolesResult || rolesResult.length === 0) {
       res.status(200).json({
         stats: {
           availableMentees: 0,
@@ -40,22 +48,22 @@ export const getMentorshipStats = async (
       return;
     }
 
-    const fellowRoleId = fellowRole[0].id;
+    const roleIds = rolesResult.map((r) => r.id);
 
-    // Get total fellows count
-    const totalFellows = await db
+    // Get total fellows and public users count
+    const totalMentees = await db
       .select({ count: count() })
       .from(users)
-      .where(and(eq(users.role_id, fellowRoleId), eq(users.is_active, true)));
+      .where(and(inArray(users.role_id, roleIds), eq(users.is_active, true)));
 
-    // Get fellows with active mentors (not available)
-    const fellowsWithMentors = await db
+    // Get mentees with active mentors (not available)
+    const menteesWithMentors = await db
       .select({ count: countDistinct(alumni_mentorships.mentee_id) })
       .from(alumni_mentorships)
       .where(eq(alumni_mentorships.status, "active"));
 
     const availableMentees =
-      (totalFellows[0]?.count || 0) - (fellowsWithMentors[0]?.count || 0);
+      (totalMentees[0]?.count || 0) - (menteesWithMentors[0]?.count || 0);
 
     // Get total active relationships
     const activeRelationships = await db

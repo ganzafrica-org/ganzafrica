@@ -18,17 +18,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
   Search,
-  MapPin,
-  Building,
-  Linkedin,
-  Github,
   Globe,
   MessageSquare,
   Briefcase,
   Download,
   TrendingUp,
   Heart,
-  Twitter,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -282,7 +277,7 @@ export default function AlumniDirectory() {
   const [selectedIndustry, setSelectedIndustry] = useState(initialIndustry);
   const [selectedYear, setSelectedYear] = useState(initialYear);
   const [currentPage, setCurrentPage] = useState(initialPage);
-  const [pageLimit, setPageLimit] = useState(initialLimit);
+  const [pageLimit] = useState(initialLimit);
 
   const [alumni, setAlumni] = useState<Alumni[]>([]);
   const [stats, setStats] = useState<AlumniStats | null>(null);
@@ -423,16 +418,6 @@ export default function AlumniDirectory() {
             community
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-blue-secondary text-blue-secondary hover:bg-blue-secondary hover:text-white"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
       </div>
 
       {/* Stats Overview */}
@@ -516,7 +501,7 @@ export default function AlumniDirectory() {
               <Button
                 variant="outline"
                 onClick={clearFilters}
-                className="border-slate-200"
+                className="border-green-primary text-green-primary hover:bg-green-primary hover:text-white"
               >
                 Clear Filters
               </Button>

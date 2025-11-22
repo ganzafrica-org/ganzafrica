@@ -613,7 +613,7 @@ export default function AlumniJobs() {
               <Button
                 variant="outline"
                 onClick={clearFilters}
-                className="border-slate-200"
+                className="border-green-primary text-green-primary hover:bg-green-primary hover:text-white"
               >
                 Clear Filters
               </Button>

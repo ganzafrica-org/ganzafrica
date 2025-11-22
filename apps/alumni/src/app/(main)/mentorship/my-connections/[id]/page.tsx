@@ -30,13 +30,11 @@ import {
 import {
   ArrowLeft,
   Calendar,
-  MessageSquare,
   Target,
   Clock,
   CheckCircle,
   Plus,
   Trash2,
-  Edit,
   Phone,
   Mail,
   Settings,
@@ -50,7 +48,7 @@ interface Goal {
   description: string | null;
   isCompleted: boolean;
   completedAt: string | null;
-  createdAt: string | null;
+  createdAt?: string | null;
 }
 
 interface Session {

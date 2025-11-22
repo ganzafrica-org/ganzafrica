@@ -5,8 +5,11 @@ import {
   roles,
   alumni_profiles,
   alumni_mentorships,
+  alumni_events,
+  job_opportunities,
+  alumni_achievements,
 } from "../db/schema";
-import { eq, and, sql, count, countDistinct } from "drizzle-orm";
+import { eq, and, sql, count, countDistinct, gte, or } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
 
@@ -465,6 +468,75 @@ export const updateAlumniProfile = async (
     logger.error("Error updating alumni profile", error);
     res.status(500).json({
       error: "Failed to update profile",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+/**
+ * Get dashboard statistics
+ */
+export const getDashboardStats = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const userId = req.user ? parseInt(req.user.id, 10) : null;
+
+    // Mentorship Pairs (user's active connections as mentee)
+    let myMentorshipPairs = 0;
+    if (userId) {
+      const mentorshipResult = await db
+        .select({ count: count() })
+        .from(alumni_mentorships)
+        .where(
+          and(
+            eq(alumni_mentorships.status, "active"),
+            eq(alumni_mentorships.mentee_id, userId),
+          ),
+        );
+      myMentorshipPairs = mentorshipResult[0]?.count || 0;
+    }
+
+    // Upcoming Events (next 30 days)
+    const upcomingEventsResult = await db
+      .select({ count: count() })
+      .from(alumni_events)
+      .where(
+        and(
+          eq(alumni_events.status, "Open"),
+          gte(alumni_events.event_date, new Date()),
+        ),
+      );
+
+    // Job Postings (active jobs - jobs that haven't expired yet or have no expiry)
+    const jobPostingsResult = await db
+      .select({ count: count() })
+      .from(job_opportunities)
+      .where(
+        or(
+          sql`${job_opportunities.expires_at} IS NULL`,
+          gte(job_opportunities.expires_at, new Date()),
+        ),
+      );
+
+    // Achievements (all time, since filtering by year might cause SQL issues)
+    const achievementsResult = await db
+      .select({ count: count() })
+      .from(alumni_achievements);
+
+    res.status(200).json({
+      stats: {
+        myMentorshipPairs,
+        upcomingEvents: upcomingEventsResult[0]?.count || 0,
+        jobPostings: jobPostingsResult[0]?.count || 0,
+        achievements: achievementsResult[0]?.count || 0,
+      },
+    });
+  } catch (error) {
+    logger.error("Error fetching dashboard stats", error);
+    res.status(500).json({
+      error: "Failed to fetch dashboard stats",
       message: error instanceof Error ? error.message : "Unknown error",
     });
   }

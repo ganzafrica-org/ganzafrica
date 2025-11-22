@@ -40,24 +40,61 @@ export function AuthProvider({
 }): React.JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  useRouter();
 
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem("accessToken");
 
       if (token) {
+        // First, try to get user from localStorage (set by auth callback)
+        const userData =
+          localStorage.getItem("alumni_user") || localStorage.getItem("user");
+
+        if (userData) {
+          try {
+            const parsedUser = JSON.parse(userData);
+            setUser(parsedUser);
+            setIsLoading(false);
+
+            // Then fetch fresh profile in the background to update if needed
+            // This runs after we've already set the user, avoiding the race condition
+            fetchUserProfile()
+              .then((userProfile) => {
+                if (userProfile) {
+                  const updatedUserData =
+                    localStorage.getItem("alumni_user") ||
+                    localStorage.getItem("user");
+                  if (updatedUserData) {
+                    const updatedUser = JSON.parse(updatedUserData);
+                    setUser(updatedUser);
+                  }
+                } else {
+                  // Only clear if profile fetch explicitly fails (not just network error)
+                  console.warn("Failed to fetch user profile");
+                }
+              })
+              .catch((error) => {
+                // Don't clear session on network errors, just log
+                console.error("Error fetching user profile:", error);
+              });
+
+            return; // Exit early, user is set
+          } catch (error) {
+            console.error("Error parsing user data:", error);
+          }
+        }
+
+        // If we couldn't get user from localStorage, try fetching from API
         try {
-          // Fetch fresh user profile from API
           const userProfile = await fetchUserProfile();
 
           if (userProfile) {
-            // Get the complete user data from localStorage (updated by fetchUserProfile)
-            const userData =
+            const fetchedUserData =
               localStorage.getItem("alumni_user") ||
               localStorage.getItem("user");
-            if (userData) {
-              const parsedUser = JSON.parse(userData);
+            if (fetchedUserData) {
+              const parsedUser = JSON.parse(fetchedUserData);
               setUser(parsedUser);
             }
           } else {

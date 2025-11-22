@@ -218,3 +218,49 @@ export const resource_downloads = pgTable("resource_downloads", {
     .references(() => users.id, { onDelete: "cascade" }),
   ...timestampFields,
 });
+
+// Alumni Events
+export const alumni_events = pgTable("alumni_events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  event_date: timestamp("event_date").notNull(), // When the event happens
+  start_time: text("start_time"), // e.g., "10:00 AM"
+  end_time: text("end_time"), // e.g., "4:00 PM"
+  duration: text("duration"), // e.g., "6 hours"
+  location: text("location"), // Physical location or "Virtual Event"
+  is_virtual: boolean("is_virtual").default(false),
+  meeting_url: text("meeting_url"), // For virtual events
+  type: text("type").notNull(), // Career, Networking, Workshop, Social, etc.
+  category: text("category").notNull(), // Professional Development, Education, Social, etc.
+  organizer: text("organizer").notNull(), // Who's organizing (Alumni Association, Chapter name, etc.)
+  organizer_id: integer("organizer_id").references(() => users.id), // Optional: if organized by specific user
+  max_attendees: integer("max_attendees"), // null = unlimited
+  is_paid: boolean("is_paid").default(false),
+  price: text("price"), // e.g., "Free", "$25", "50,000 RWF"
+  currency: text("currency").default("USD"),
+  status: text("status").notNull().default("Open"), // Open, Closed, Cancelled, Completed
+  image_url: text("image_url"),
+  speakers: jsonb("speakers")
+    .$type<{ name: string; title: string; company: string }[]>()
+    .default([]),
+  agenda: jsonb("agenda")
+    .$type<{ time: string; activity: string }[]>()
+    .default([]),
+  tags: jsonb("tags").$type<string[]>().default([]),
+  views: integer("views").default(0),
+  ...timestampFields,
+});
+
+// Event registrations
+export const event_registrations = pgTable("event_registrations", {
+  id: serial("id").primaryKey(),
+  event_id: integer("event_id")
+    .notNull()
+    .references(() => alumni_events.id, { onDelete: "cascade" }),
+  user_id: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("Registered"), // Registered, Cancelled, Attended, No-show
+  ...timestampFields,
+});

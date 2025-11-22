@@ -23,6 +23,7 @@ import mentorshipRoutes from "./mentorship.routes";
 import jobsRoutes from "./jobs.routes";
 import achievementsRoutes from "./achievements.routes";
 import resourcesRoutes from "./resources.routes";
+import eventsRoutes from "./events.routes";
 
 const router: Router = Router();
 
@@ -51,5 +52,6 @@ router.use("/mentorship", mentorshipRoutes);
 router.use("/jobs", jobsRoutes);
 router.use("/achievements", achievementsRoutes);
 router.use("/resources", resourcesRoutes);
+router.use("/events", eventsRoutes);
 
 export default router;
