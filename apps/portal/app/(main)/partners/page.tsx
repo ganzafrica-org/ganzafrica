@@ -165,7 +165,6 @@ const PartnersPage = () => {
           setPartners(partnersData);
         }
       } catch (error) {
-        console.error('Error fetching partners:', error);
         setPartners([]);
       } finally {
         setLoading(false);
@@ -299,7 +298,6 @@ const PartnersPage = () => {
         throw new Error('Upload failed');
       }
     } catch (error) {
-      console.error('Error uploading file:', error);
       throw error;
     } finally {
       setIsUploading(false);
@@ -351,7 +349,6 @@ const PartnersPage = () => {
         setPage(1);
       }, 1500);
     } catch (error) {
-      console.error('Error adding partner:', error);
       setFormError(error.response?.data?.message || 'Failed to add partner. Please try again.');
     }
   };
@@ -401,7 +398,6 @@ const PartnersPage = () => {
         setPage(1);
       }, 1500);
     } catch (error) {
-      console.error('Error updating partner:', error);
       setFormError(error.response?.data?.message || 'Failed to update partner. Please try again.');
     }
   };
@@ -438,7 +434,6 @@ const PartnersPage = () => {
         setDeleteSuccess('');
       }, 3000);
     } catch (error) {
-      console.error('Error deleting partner:', error);
       setFormError(error.response?.data?.message || 'Failed to delete partner. Please try again.');
     }
   };
@@ -454,7 +449,6 @@ const PartnersPage = () => {
           alt="Logo Preview" 
           className="h-16 object-contain" 
           onError={(e) => {
-            console.error(`Failed to load image preview: ${logoUrl}`);
             e.target.onerror = null;
             e.target.src = '/api/placeholder/64/64';
           }}
@@ -485,7 +479,6 @@ const PartnersPage = () => {
     e: React.SyntheticEvent<HTMLImageElement>,
     fallbackText: string
   ) => {
-    console.error(`Failed to load image: ${e.currentTarget.src}`);
     // Create a canvas element for the fallback
     const canvas = document.createElement('canvas');
     canvas.width = 40;
@@ -611,9 +604,7 @@ const PartnersPage = () => {
                             src={partner.logo} 
                             alt={partner.name} 
                             className="h-full w-full object-contain"
-                            onLoad={() => console.log(`Successfully loaded image: ${partner.logo}`)}
                             onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                              console.error(`Failed to load image: ${partner.logo}`);
                               e.currentTarget.onerror = null; // Prevent infinite error loops
                               
                               // Create fallback with initial letter
@@ -1179,9 +1170,7 @@ const PartnersPage = () => {
                       src={currentPartner.logo} 
                       alt={currentPartner.name} 
                       className="h-full w-full object-contain"
-                      onLoad={() => console.log(`Successfully loaded image in view modal: ${currentPartner.logo}`)}
                       onError={(e) => {
-                        console.error(`Failed to load image in view modal: ${currentPartner.logo}`);
                         e.target.onerror = null;
                         // Create fallback with initial letter
                         const fallbackText = currentPartner.name?.charAt(0)?.toUpperCase() || 'P';

@@ -301,12 +301,8 @@ const TeamsPage = () => {
           params.team_type_id = getTeamTypeIdFromTab(activeTab);
         }
         
-        console.log('Fetching teams with params:', params);
-        
         // Make API request with apiClient
         const response = await apiClient.get('/teams', { params });
-        
-        console.log('API response:', response.data);
         
         if (response.data) {
           const fetched = response.data.teams || [];

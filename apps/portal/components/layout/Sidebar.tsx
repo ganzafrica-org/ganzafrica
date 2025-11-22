@@ -15,14 +15,16 @@ import {
   HelpCircle,
   Tag,
   Shield,
-  LogOut,
   ChevronDown,
   ChevronRight,
   UserPlus,
   MessageSquare,
   Mail,
-  ChevronUp
+  ChevronUp,
+  CheckSquare
 } from 'lucide-react';
+import { useAuth } from '@/components/auth/auth-provider';
+import { isAdminOrManager } from '@/lib/auth-utils';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -30,6 +32,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [projectsOpen, setProjectsOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
   const [teamsOpen, setTeamsOpen] = useState(false);
@@ -39,6 +42,12 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showTopArrow, setShowTopArrow] = useState(false);
   const [showBottomArrow, setShowBottomArrow] = useState(false);
+  
+  // Check if user is admin or manager
+  const userIsAdminOrManager = isAdminOrManager(user);
+  
+  // Get Task Management URL from environment variable
+  const taskManagementUrl = process.env.NEXT_PUBLIC_TASK_URL || 'http://localhost:3003';
 
   const toggleOpportunities = () => {
     if (!isCollapsed) {
@@ -546,16 +555,20 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
             </div>
           </div>
 
-          {/* Logout Button */}
-          <div className="flex-shrink-0 p-4 border-t border-white/10">
-            <button
-                className={`flex items-center ${isCollapsed ? 'justify-center' : ''} w-full px-4 py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors`}
-                aria-label="Logout"
-            >
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              {!isCollapsed && <span className="ml-3 font-medium">Logout</span>}
-            </button>
-          </div>
+          {/* Task Management Link - Only for Admin and Manager */}
+          {userIsAdminOrManager && (
+            <div className="flex-shrink-0 p-4 border-t border-white/10">
+              <a
+                href={`${taskManagementUrl}/my-tasks`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center ${isCollapsed ? 'justify-center px-3' : 'px-4'} py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors`}
+              >
+                <CheckSquare className="w-5 h-5 flex-shrink-0" />
+                {!isCollapsed && <span className="ml-3 font-medium">Task Management</span>}
+              </a>
+            </div>
+          )}
         </div>
       </div>
   );

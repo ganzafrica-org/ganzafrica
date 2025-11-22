@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
-import { X, Users, Edit2, Paperclip, Upload, Trash2, MessageSquare, FileText } from "lucide-react";
+import { X, Users, Edit2, Paperclip, Upload, Trash2, MessageSquare, FileText, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { Task, TeamMember, Status, Priority } from "@/lib/types";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { InputDialog } from "@/components/input-dialog";
@@ -57,6 +57,41 @@ export function TaskModal({
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+
+  // Helper function to get current user ID
+  const getCurrentUserId = (): number | null => {
+    try {
+      if (typeof window === 'undefined') return null;
+      const userStr = localStorage.getItem('task_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.id || null;
+      }
+    } catch (error) {
+      // Error getting current user
+    }
+    return null;
+  };
+
+  // Check if current user is the creator of the task
+  const isCurrentUserCreator = (): boolean => {
+    if (!draft?.created_by) return false;
+    const currentUserId = getCurrentUserId();
+    return currentUserId !== null && currentUserId === draft.created_by;
+  };
+
+  // Check if user can edit title and due date (only creator or admin/manager)
+  const canEditTitleAndDueDate = (): boolean => {
+    const isAdminOrManager = isCurrentUserAdminOrManager();
+    if (isAdminOrManager) return true;
+    // If task doesn't exist yet (new task), allow editing
+    if (!draft?.id) return true;
+    // For existing tasks, only creator can edit title and due date
+    return isCurrentUserCreator();
+  };
 
   // Helper function to check if task ID is valid (numeric)
   const isValidTaskId = (id: string | undefined): boolean => {
@@ -77,7 +112,6 @@ export function TaskModal({
       // Wait for teams and projects to be loaded before determining team
       // This ensures we have the correct mapping
       if (!teamsLoaded || teams.length === 0 || taskTeamProjects.length === 0) {
-        console.log('⏳ Waiting for teams and projects to load before loading task details...');
         // Load teams and projects if not loaded
         if (!teamsLoaded) {
           await loadTeams();
@@ -87,7 +121,8 @@ export function TaskModal({
             const resp = await taskApi.getTaskTeamProjects();
             setTaskTeamProjects(resp.projects || []);
           } catch (e) {
-            console.error('Error loading task team projects:', e);
+            // Error loading task team projects
+            // Error loading task team projects
           }
         }
       }
@@ -95,7 +130,6 @@ export function TaskModal({
       // Wait for teams and projects to be loaded before determining team
       // This ensures we have the correct mapping
       if (!teamsLoaded || teams.length === 0 || taskTeamProjects.length === 0) {
-        console.log('⏳ Waiting for teams and projects to load before loading task details...');
         // Load teams and projects if not loaded
         if (!teamsLoaded) {
           await loadTeams();
@@ -197,9 +231,6 @@ export function TaskModal({
         // Store updated taskUsers in window (merged with existing data)
         if (typeof window !== 'undefined') {
           (window as any).taskUsers = taskUsers;
-          console.log('✅ Updated taskUsers map with user info from task API. Total users:', taskUsers.size);
-          console.log('✅ User data from database:', Array.from(taskUsers.entries()).slice(0, 3));
-          console.log('✅ User data from database:', Array.from(taskUsers.entries()).slice(0, 3));
         }
         
         // Trigger userInfoVersion update to refresh memberById
@@ -227,7 +258,6 @@ export function TaskModal({
           // For managers: trust the selected team from task object
           teamInfo = task.team;
           teamIdStr = task.team.id;
-          console.log('✅ Manager: Using selected team from task object:', teamInfo.name);
         } else if (task?.teamId) {
           // If we have teamId but not full team object, try to find it in loaded teams
           const foundTeam = teams.find(t => t.id === parseInt(task.teamId || '0'));
@@ -239,10 +269,8 @@ export function TaskModal({
               memberIds: []
             };
             teamIdStr = task.teamId;
-            console.log('✅ Found team from task.teamId in loaded teams:', foundTeam.name);
           } else {
             teamIdStr = task.teamId;
-            console.log('⚠️ Team ID from task but team not in loaded teams yet:', task.teamId);
           }
         }
         
@@ -299,11 +327,9 @@ export function TaskModal({
                 memberIds: []
               };
               teamIdStr = String(team.id);
-              console.log('✅ Loaded team from database (project mapping):', team.name, 'for project_id:', response.task.project_id);
             } else {
               // Team not loaded yet, but we have the ID - set it and team will be loaded
               teamIdStr = String(mapped.team_id);
-              console.log('⚠️ Team ID found from project mapping but team not loaded yet:', mapped.team_id);
             }
           } else {
             console.warn('⚠️ Project not found in taskTeamProjects for project_id:', response.task.project_id);
@@ -384,7 +410,6 @@ export function TaskModal({
         loadFullTaskDetails(task.id);
       } else {
         // For new tasks or invalid IDs (temporary IDs), use the task as-is
-        console.log('Task has temporary ID, skipping full details fetch:', task.id);
         setDraft(task);
         // Preserve team from task if it exists
         if (task.team?.id) {
@@ -486,17 +511,13 @@ export function TaskModal({
   }, [task, open, teamsLoaded]);
 
   useEffect(() => {
-    console.log('🔍 useEffect triggered - selectedTeamId:', selectedTeamId, 'selectedTeamIds:', selectedTeamIds);
     if (selectedTeamIds.length > 0) {
       // Load members from multiple teams
-      console.log('🔍 Loading members from multiple teams:', selectedTeamIds);
       loadMembersFromMultipleTeams(selectedTeamIds);
     } else if (selectedTeamId) {
       // Load members from single team
-      console.log('🔍 Loading members from single team:', selectedTeamId);
       loadTeamMembers(selectedTeamId);
     } else {
-      console.log('🔍 No team selected, clearing members');
       setTeamMembers([]);
     }
   }, [selectedTeamId, selectedTeamIds]);
@@ -553,13 +574,11 @@ export function TaskModal({
         const teamId = parseInt(task.team.id);
         if (teamsToUse.find((t: any) => t.id === teamId)) {
           setSelectedTeamId(teamId);
-          console.log('✅ Preserved team from task:', task.team.name);
         }
       } else if (task?.teamId) {
         const teamId = parseInt(task.teamId || '0');
         if (teamsToUse.find((t: any) => t.id === teamId)) {
           setSelectedTeamId(teamId);
-          console.log('✅ Preserved teamId from task:', teamId);
         }
       } else {
         setSelectedTeamId(null);
@@ -567,9 +586,7 @@ export function TaskModal({
       }
       
       setTeamsLoaded(true);
-      console.log('✅ Loaded all teams for task creation:', teamsToUse.length, 'teams');
     } catch (error) {
-      console.error('Error loading teams:', error);
       setTeams([]);
       setTeamsLoaded(true); // Set to true even on error to prevent infinite retries
     } finally {
@@ -579,11 +596,8 @@ export function TaskModal({
 
   const loadTeamMembers = async (teamId: number) => {
     try {
-      console.log('🔍 loadTeamMembers called with teamId:', teamId, 'type:', typeof teamId);
       const response = await taskTeamsApi.getTeamById(teamId);
       const teamData = response.team;
-      
-      console.log('🔍 Team data received for teamId', teamId, ':', teamData);
       
       // Convert team members to TeamMember format
       const convertedMembers: TeamMember[] = (teamData.members || []).map((m: any) => {
@@ -596,22 +610,17 @@ export function TaskModal({
           teamId: teamId,
           teamName: teamData.name
         };
-        console.log('🔍 Converting member:', m, 'to:', member);
         return member;
       });
       
-      console.log('🔍 Processed team members:', convertedMembers);
-      console.log('🔍 Setting teamMembers to:', convertedMembers);
       setTeamMembers(convertedMembers);
     } catch (error) {
-      console.error('Error loading team members:', error);
       setTeamMembers([]);
     }
   };
 
   const loadMembersFromMultipleTeams = async (teamIds: number[]) => {
     try {
-      console.log('Loading members from multiple teams:', teamIds);
       const allMembers: TeamMember[] = [];
       
       // Load members from each selected team
@@ -637,11 +646,8 @@ export function TaskModal({
         }
       }
       
-      console.log('All members loaded:', allMembers);
-      console.log('🔍 Setting teamMembers to (multiple teams):', allMembers);
       setTeamMembers(allMembers);
     } catch (error) {
-      console.error('Error loading members from multiple teams:', error);
       setTeamMembers([]);
     }
   };
@@ -740,29 +746,17 @@ export function TaskModal({
   
   // Filter members based on selected team
   const availableMembers = useMemo(() => {
-    console.log('🔍 availableMembers calculation:', {
-      mode,
-      selectedTeamId,
-      selectedTeamIds,
-      teamMembersLength: teamMembers.length,
-      membersLength: members.length
-    });
-    
     // If a team is selected, always show team members regardless of mode
     if (selectedTeamId || selectedTeamIds.length > 0) {
-      console.log('🔍 Team selected, returning teamMembers:', teamMembers);
-      console.log('🔍 Team members details:', teamMembers.map(m => ({ id: m.id, name: m.name, email: m.email })));
       return teamMembers;
     }
     
     // If no team selected, use general members (for individual mode)
     if (mode === "individual") {
-      console.log('🔍 No team selected, returning general members:', members);
       return members;
     }
     
     // No team selected and not individual mode
-    console.log('🔍 No team selected and not individual mode, returning empty array');
     return [];
   }, [mode, selectedTeamId, selectedTeamIds, teamMembers, members]);
   
@@ -775,10 +769,7 @@ export function TaskModal({
   };
 
   const handleTeamChange = (teamId: string) => {
-    console.log('🔍 handleTeamChange called with teamId:', teamId);
     const numericTeamId = teamId ? parseInt(teamId) : null;
-    console.log('🔍 Converted to numericTeamId:', numericTeamId);
-    console.log('🔍 Available teams:', teams.map(t => ({ id: t.id, name: t.name })));
     
     setSelectedTeamId(numericTeamId);
     // Clear project selection when team changes - user must select project from team's projects
@@ -789,7 +780,6 @@ export function TaskModal({
     
     // Clear assignees when team changes
     const teamObj = teams.find(t => t.id === numericTeamId);
-    console.log('🔍 Found team object:', teamObj);
     
     update({ 
       teamId: teamId || undefined, 
@@ -833,9 +823,17 @@ export function TaskModal({
   };
 
   const handleSave = async () => {
+    // Prevent double submissions
+    if (isSaving) {
+      return;
+    }
+
+    // Prevent double submissions
+    if (isSaving) {
+      return;
+    }
+
     if (draft && draft.title.trim()) {
-      console.log('🔍 handleSave - draft.attachments:', draft.attachments);
-      console.log('🔍 handleSave - draft.id:', draft.id);
       
       // Require due date for task creation
       if (!draft.dueDate) {
@@ -867,9 +865,11 @@ export function TaskModal({
         }
       }
 
-      // If this is an existing task with a valid numeric ID, save changes to the database
-      if (draft.id && isValidTaskId(draft.id)) {
-        try {
+      setIsSaving(true);
+
+      try {
+        // If this is an existing task with a valid numeric ID, save changes to the database
+        if (draft.id && isValidTaskId(draft.id)) {
           const updateData = {
             title: draft.title,
             description: draft.description,
@@ -895,18 +895,18 @@ export function TaskModal({
           setToast({ type: 'success', message: 'Task updated successfully' });
           onChange(draft);
           onOpenChange(false);
-        } catch (error) {
-          console.error('Error updating task:', error);
-          setToast({ type: 'error', message: 'Failed to update task' });
-          setTimeout(() => setToast(null), 2500);
-          return; // Don't close modal if save failed
+        } else {
+          // For new tasks (no ID or temporary ID) - let parent handle creation
+          // The parent will create the task via API and get a real ID back
+          onChange(draft);
+          // Don't close modal here - let parent close it after successful creation
+          // The parent will update the task with the real ID from API response
         }
-      } else {
-        // For new tasks (no ID or temporary ID) - let parent handle creation
-        // The parent will create the task via API and get a real ID back
-        onChange(draft);
-        // Don't close modal here - let parent close it after successful creation
-        // The parent will update the task with the real ID from API response
+      } catch (error) {
+        setToast({ type: 'error', message: 'Failed to save task' });
+        setTimeout(() => setToast(null), 2500);
+      } finally {
+        setIsSaving(false);
       }
     }
   };
@@ -1059,7 +1059,75 @@ export function TaskModal({
       }
     } else {
       // For unsaved tasks, comment is stored locally and will be saved when task is saved
-      console.log('Task not saved yet, comment stored locally');
+    }
+  };
+
+  const handleAddLink = () => {
+    if (!linkUrl.trim()) {
+      setToast({ type: 'error', message: 'Please enter a valid URL' });
+      return;
+    }
+
+    // Validate URL format
+    let validUrl = linkUrl.trim();
+    if (!validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
+      validUrl = 'https://' + validUrl;
+    }
+
+    try {
+      new URL(validUrl); // Validate URL format
+    } catch (error) {
+      setToast({ type: 'error', message: 'Please enter a valid URL' });
+      return;
+    }
+
+    // Extract filename from URL or use domain name
+    const urlObj = new URL(validUrl);
+    const filename = urlObj.pathname.split('/').pop() || urlObj.hostname || 'Link';
+
+    // Create link attachment
+    const linkAttachment = {
+      id: Math.random().toString(36).slice(2),
+      filename: filename,
+      url: validUrl,
+      sizeKB: 0, // Links have no file size
+      uploadedAt: new Date().toISOString(),
+    };
+
+    // Add to attachments
+    const newAttachments = [...(draft.attachments || []), linkAttachment];
+    update({ attachments: newAttachments });
+
+    // Clear input and hide
+    setLinkUrl("");
+    setShowLinkInput(false);
+    setToast({ type: 'success', message: 'Link added successfully' });
+
+    // If task exists, save to database
+    if (draft?.id && isValidTaskId(draft.id)) {
+      const numericId = parseInt(draft.id);
+      const attachmentsToSave = newAttachments.map(a => ({
+        id: a.id,
+        filename: a.filename,
+        url: a.url,
+      }));
+
+      (async () => {
+        try {
+          const { taskApi } = await import('@/lib/api-client');
+          if (mode === "management") {
+            await taskApi.updateTaskUnrestricted(numericId, {
+              attachments: attachmentsToSave,
+            });
+          } else {
+            await taskApi.updateTask(numericId, {
+              attachments: attachmentsToSave,
+            });
+          }
+        } catch (error) {
+          // Error saving link - non-critical
+        }
+      })();
     }
   };
 
@@ -1073,7 +1141,6 @@ export function TaskModal({
       const uploadedFiles = [];
 
       for (const file of Array.from(files)) {
-        console.log('Uploading file:', file.name);
         
         const formData = new FormData();
         formData.append('file', file);
@@ -1085,10 +1152,8 @@ export function TaskModal({
           }
         });
 
-        console.log('Upload response:', response.data);
 
         if (response.data && response.data.success && response.data.file?.url) {
-          console.log('File uploaded successfully with URL:', response.data.file.url);
           uploadedFiles.push({
       id: Math.random().toString(36).slice(2),
       filename: file.name,
@@ -1102,19 +1167,14 @@ export function TaskModal({
         }
       }
 
-      console.log('All uploaded files:', uploadedFiles);
-      console.log('Current draft.attachments:', draft.attachments);
 
       // Add uploaded files to attachments
       const newAttachments = [...draft.attachments, ...uploadedFiles];
-      console.log('New attachments array (combined):', newAttachments);
       
       // Only keep attachments that have URLs (filter out old attachments without URLs)
       const attachmentsWithUrls = newAttachments.filter(a => a.url && a.url.trim() !== '');
-      console.log('Attachments with URLs (filtered):', attachmentsWithUrls);
       
       // Update local state with only attachments that have URLs
-      console.log('🔍 Updating local state with attachments:', attachmentsWithUrls);
       update({ attachments: attachmentsWithUrls });
 
       // If task exists, also save to database immediately
@@ -1127,12 +1187,8 @@ export function TaskModal({
           url: a.url,
         }));
         
-        console.log('Attachments to save (filtered for URLs):', attachmentsToSave);
-        console.log('Each attachment URL:', attachmentsToSave.map(a => ({ filename: a.filename, url: a.url })));
-        
         // Validate task ID before updating
         if (!isValidTaskId(draft.id)) {
-          console.error('Cannot save attachments: Task must be saved first. Invalid task ID:', draft.id);
           setToast({ type: 'error', message: 'Please save the task before uploading attachments' });
           setTimeout(() => setToast(null), 3000);
           return;
@@ -1149,7 +1205,6 @@ export function TaskModal({
             attachments: attachmentsToSave,
           });
         }
-        console.log('✅ Attachments saved to database');
         
         // After saving to database, reload the task to get the updated data
         try {
@@ -1168,9 +1223,7 @@ export function TaskModal({
               uploadedAt: new Date().toISOString(),
             }))
           });
-          console.log('✅ Task data reloaded from database');
         } catch (error) {
-          console.error('Error reloading task data:', error);
         }
       }
     } catch (error) {
@@ -1211,7 +1264,8 @@ export function TaskModal({
               type="text" 
               value={draft?.title || ''}
               onChange={e => update({ title: e.target.value })}
-              className="text-xl sm:text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none w-full"
+              disabled={!canEditTitleAndDueDate()}
+              className={`text-xl sm:text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none w-full ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed' : ''}`}
               placeholder="Task title..."
             />
             <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
@@ -1258,7 +1312,8 @@ export function TaskModal({
                     <select
                       value={selectedTeamId || ""}
                       onChange={(e) => handleTeamChange(e.target.value)}
-                      className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-sm sm:text-base touch-manipulation"
+                      disabled={!canEditTitleAndDueDate()}
+                      className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'bg-white'}`}
                       onFocus={(e) => e.stopPropagation()}
                     >
                       <option value="">Choose a team...</option>
@@ -1285,7 +1340,8 @@ export function TaskModal({
                           setSelectedProjectId(projectId);
                           update({ projectId: projectId || undefined });
                         }}
-                        className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-sm sm:text-base touch-manipulation"
+                        disabled={!canEditTitleAndDueDate()}
+                        className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'bg-white'}`}
                         onFocus={(e) => e.stopPropagation()}
                       >
                         <option value="">Choose a project...</option>
@@ -1338,33 +1394,28 @@ export function TaskModal({
                       </span>
                     )}
                   </label>
-                    {(selectedTeamId || selectedTeamIds.length > 0) && availableMembers.length > 0 && (
-                    <>
-                      {console.log('🔍 Rendering MemberDropdown with:', {
-                        selectedTeamId,
-                        selectedTeamIds,
-                        availableMembersLength: availableMembers.length,
-                        filteredMembers: availableMembers.filter(m => !draft.assignees.includes(m.id)),
-                        draftAssignees: draft.assignees
-                      })}
-                      <MemberDropdown
-                        members={availableMembers.filter(m => !draft.assignees.includes(m.id))}
-                        onSelect={handleAddAssignee}
-                        selectedMembers={draft.assignees}
-                        align="right"
-                      />
-                    </>
-                    )}
-                    {!selectedTeamId && selectedTeamIds.length === 0 && mode === "individual" && (
-                    <MemberDropdown
-                      members={availableMembers.filter(m => !draft.assignees.includes(m.id))}
-                      onSelect={handleAddAssignee}
-                      selectedMembers={draft.assignees}
-                      align="right"
-                    />
+                    {canEditTitleAndDueDate() && (
+                      <>
+                        {(selectedTeamId || selectedTeamIds.length > 0) && availableMembers.length > 0 && (
+                          <MemberDropdown
+                            members={availableMembers.filter(m => !draft.assignees.includes(m.id))}
+                            onSelect={handleAddAssignee}
+                            selectedMembers={draft.assignees}
+                            align="right"
+                          />
+                        )}
+                        {!selectedTeamId && selectedTeamIds.length === 0 && mode === "individual" && (
+                          <MemberDropdown
+                            members={availableMembers.filter(m => !draft.assignees.includes(m.id))}
+                            onSelect={handleAddAssignee}
+                            selectedMembers={draft.assignees}
+                            align="right"
+                          />
+                        )}
+                      </>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1">
+                  <div className={`flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 ${!canEditTitleAndDueDate() ? 'opacity-60' : ''}`}>
                     {draft.assignees.length === 0 ? (
                       <p className="text-sm text-gray-500">No assignees yet</p>
                     ) : (
@@ -1374,10 +1425,10 @@ export function TaskModal({
                         return (
                           <div 
                             key={assigneeId} 
-                            className="flex items-center gap-2 px-3 py-2 group transition"
+                            className={`flex items-center gap-2 px-3 py-2 transition ${canEditTitleAndDueDate() ? 'group' : ''}`}
                             style={{ backgroundColor: '#f0f8fc', borderRadius: '7px' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6f2f9')}
-                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f0f8fc')}
+                            onMouseEnter={canEditTitleAndDueDate() ? (e) => (e.currentTarget.style.backgroundColor = '#e6f2f9') : undefined}
+                            onMouseLeave={canEditTitleAndDueDate() ? (e) => (e.currentTarget.style.backgroundColor = '#f0f8fc') : undefined}
                           >
                             <UserAvatar 
                               userId={parseInt(assigneeId)} 
@@ -1401,12 +1452,14 @@ export function TaskModal({
                                 })()}
                               </span>
                             </div>
-                            <button 
-                              onClick={() => handleRemoveAssignee(assigneeId)}
-                              className="opacity-0 group-hover:opacity-100 ml-1 hover:bg-gray-200 rounded p-0.5 transition"
-                            >
-                              <X className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                            </button>
+                            {canEditTitleAndDueDate() && (
+                              <button 
+                                onClick={() => handleRemoveAssignee(assigneeId)}
+                                className="opacity-0 group-hover:opacity-100 ml-1 hover:bg-gray-200 rounded p-0.5 transition"
+                              >
+                                <X className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                              </button>
+                            )}
                           </div>
                         );
                       })
@@ -1424,7 +1477,8 @@ export function TaskModal({
                 <textarea 
                   value={draft.description || ""}
                   onChange={e => update({ description: e.target.value })}
-                  className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base"
+                  disabled={!canEditTitleAndDueDate()}
+                  className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''}`}
                   rows={4}
                   placeholder="List the activities to be done for this task..."
                   onFocus={(e) => e.stopPropagation()}
@@ -1440,7 +1494,8 @@ export function TaskModal({
                 <textarea 
                   value={draft.deliverables || ""}
                   onChange={e => update({ deliverables: e.target.value })}
-                  className="w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base"
+                  disabled={!canEditTitleAndDueDate()}
+                  className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''}`}
                   rows={4}
                   placeholder="Describe the expected deliverables for this task..."
                   onFocus={(e) => e.stopPropagation()}
@@ -1454,16 +1509,40 @@ export function TaskModal({
                     <Paperclip className="w-4 h-4" />
                     Attachments
                   </label>
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 transition"
-                    style={{ backgroundColor: '#f0f8fc', borderRadius: '7px' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6f2f9')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f0f8fc')}
-                  >
-                    <Upload className="w-4 h-4" />
-                    Upload
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {canEditTitleAndDueDate() && (
+                      <>
+                        <button 
+                          onClick={() => setShowLinkInput(!showLinkInput)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 transition"
+                          style={{ backgroundColor: showLinkInput ? '#e6f2f9' : '#f0f8fc', borderRadius: '7px' }}
+                          onMouseEnter={(e) => {
+                            if (!showLinkInput) {
+                              e.currentTarget.style.backgroundColor = '#e6f2f9';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!showLinkInput) {
+                              e.currentTarget.style.backgroundColor = '#f0f8fc';
+                            }
+                          }}
+                        >
+                          <LinkIcon className="w-4 h-4" />
+                          Add Link
+                        </button>
+                        <button 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 transition"
+                          style={{ backgroundColor: '#f0f8fc', borderRadius: '7px' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6f2f9')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f0f8fc')}
+                        >
+                          <Upload className="w-4 h-4" />
+                          Upload
+                        </button>
+                      </>
+                    )}
+                  </div>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -1473,6 +1552,49 @@ export function TaskModal({
                     accept="*/*"
                   />
                 </div>
+                
+                {/* Link Input */}
+                {showLinkInput && (
+                  <div className="mb-3 p-3 border border-gray-300 rounded-lg" style={{ backgroundColor: '#f9fafb' }}>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={linkUrl}
+                        onChange={(e) => setLinkUrl(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddLink();
+                          } else if (e.key === 'Escape') {
+                            setShowLinkInput(false);
+                            setLinkUrl("");
+                          }
+                        }}
+                        placeholder="Enter URL (e.g., https://example.com)"
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleAddLink}
+                        className="px-4 py-2 text-sm font-medium text-white transition"
+                        style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#054a73')}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#076297')}
+                      >
+                        Add
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowLinkInput(false);
+                          setLinkUrl("");
+                        }}
+                        className="p-2 text-gray-500 hover:text-gray-700 transition"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-2">
                   {(draft.attachments?.length || 0) === 0 ? (
                     <div 
@@ -1499,6 +1621,11 @@ export function TaskModal({
                       ];
                       const color = colors[index % colors.length];
                       
+                      // Check if this is a link (has http/https URL and sizeKB is 0)
+                      const isLink = attachment.url && 
+                        (attachment.url.startsWith('http://') || attachment.url.startsWith('https://')) &&
+                        attachment.sizeKB === 0;
+                      
                       return (
                         <div 
                           key={attachment.id} 
@@ -1512,11 +1639,8 @@ export function TaskModal({
                             onClick={() => {
                               // Get the file URL - could be relative or absolute
                               const fileUrl = (attachment as any).url;
-                              console.log('🔍 Attachment clicked:', attachment);
-                              console.log('🔍 Attachment URL:', fileUrl);
-                              console.log('🔍 Attachment type:', typeof fileUrl);
                               if (fileUrl) {
-                                // If it's a relative URL, prepend the API base URL
+                                // If it's a link, use it directly; otherwise prepend API base URL
                                 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
                                 const fullUrl = fileUrl.startsWith('http') 
                                   ? fileUrl 
@@ -1525,29 +1649,39 @@ export function TaskModal({
                                   window.open(fullUrl, '_blank');
                                 }
                               } else {
-                                alert('File URL not available. This file may not have been uploaded yet.');
+                                alert('URL not available. This attachment may not have been uploaded yet.');
                               }
                             }}
                           >
                             <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: color?.bg || '#dbeafe' }}>
-                              <Paperclip className="w-5 h-5" style={{ color: color?.icon || '#2563eb' }} />
+                              {isLink ? (
+                                <ExternalLink className="w-5 h-5" style={{ color: color?.icon || '#2563eb' }} />
+                              ) : (
+                                <Paperclip className="w-5 h-5" style={{ color: color?.icon || '#2563eb' }} />
+                              )}
                             </div>
                             <div>
                               <p className="text-sm font-medium text-gray-900 hover:underline">{attachment.filename}</p>
                               <p className="text-xs text-gray-500">
-                                {(attachment.sizeKB / 1000).toFixed(1)} MB • Added {new Date(attachment.uploadedAt).toLocaleDateString()}
+                                {isLink ? (
+                                  <>Link • Added {new Date(attachment.uploadedAt).toLocaleDateString()}</>
+                                ) : (
+                                  <>{(attachment.sizeKB / 1000).toFixed(1)} MB • Added {new Date(attachment.uploadedAt).toLocaleDateString()}</>
+                                )}
                               </p>
                             </div>
                           </div>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              update({ attachments: (draft.attachments || []).filter(a => a.id !== attachment.id) });
-                            }}
-                            className="p-2 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                          </button>
+                          {canEditTitleAndDueDate() && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                update({ attachments: (draft.attachments || []).filter(a => a.id !== attachment.id) });
+                              }}
+                              className="p-2 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                            </button>
+                          )}
                         </div>
                       );
                     })
@@ -1682,8 +1816,12 @@ export function TaskModal({
                   <option value="todo">To Do</option>
                   <option value="inprogress">In Progress</option>
                   <option value="review">Review</option>
-                  <option value="done">Completed</option>
-                  <option value="overdue">Overdue</option>
+                  {isCurrentUserAdminOrManager() && (
+                    <>
+                      <option value="done">Completed</option>
+                      <option value="overdue">Overdue</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -1693,7 +1831,8 @@ export function TaskModal({
                 <select 
                   value={draft.priority}
                   onChange={e => update({ priority: e.target.value as Priority })}
-                  className="w-full p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white text-sm sm:text-base touch-manipulation"
+                  disabled={!canEditTitleAndDueDate()}
+                  className={`w-full p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'bg-white'}`}
                   style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
                 >
                   <option value="high">🔴 High</option>
@@ -1719,7 +1858,8 @@ export function TaskModal({
                         update({ dueDate: undefined });
                       }
                     }}
-                    className="flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation"
+                    disabled={!canEditTitleAndDueDate()}
+                    className={`flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''}`}
                     style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
                   />
                   <input 
@@ -1738,7 +1878,8 @@ export function TaskModal({
                         update({ dueDate: newDateTime.toISOString() });
                       }
                     }}
-                    className="flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation"
+                    disabled={!canEditTitleAndDueDate()}
+                    className={`flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''}`}
                     style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
                   />
                 </div>
@@ -1760,37 +1901,41 @@ export function TaskModal({
                      draft.labels.map((label, idx) => (
                        <span 
                          key={label.id || idx} 
-                         className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium flex items-center gap-1 hover:bg-indigo-200 transition"
+                         className={`px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium flex items-center gap-1 transition ${canEditTitleAndDueDate() ? 'hover:bg-indigo-200' : 'opacity-60'}`}
                        >
                          {label.name}
-                         <button
-                           onClick={() => {
-                             const newLabels = draft.labels?.filter((_, i) => i !== idx) || [];
-                             update({ labels: newLabels });
-                           }}
-                         >
-                           <X className="w-3 h-3 cursor-pointer hover:text-indigo-900" />
-                         </button>
+                         {canEditTitleAndDueDate() && (
+                           <button
+                             onClick={() => {
+                               const newLabels = draft.labels?.filter((_, i) => i !== idx) || [];
+                               update({ labels: newLabels });
+                             }}
+                           >
+                             <X className="w-3 h-3 cursor-pointer hover:text-indigo-900" />
+                           </button>
+                         )}
                        </span>
                      ))
                    ) : (
                      <p className="text-xs text-gray-500">No labels yet</p>
                    )}
-                  <button 
-                    onClick={() => setShowAddLabel(true)}
-                    className="px-3 py-1 text-xs font-medium transition"
-                    style={{ backgroundColor: '#f0f8fc', color: '#076297', borderRadius: '9999px' }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#e6f2f9';
-                      e.currentTarget.style.color = '#054a73';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#f0f8fc';
-                      e.currentTarget.style.color = '#076297';
-                    }}
-                  >
-                    + Add Label
-                  </button>
+                  {canEditTitleAndDueDate() && (
+                    <button 
+                      onClick={() => setShowAddLabel(true)}
+                      className="px-3 py-1 text-xs font-medium transition"
+                      style={{ backgroundColor: '#f0f8fc', color: '#076297', borderRadius: '9999px' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#e6f2f9';
+                        e.currentTarget.style.color = '#054a73';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f0f8fc';
+                        e.currentTarget.style.color = '#076297';
+                      }}
+                    >
+                      + Add Label
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1832,24 +1977,24 @@ export function TaskModal({
             </button>
             <button
               onClick={handleSave}
-              disabled={!draft.title.trim() || !draft.dueDate}
+              disabled={!draft.title.trim() || !draft.dueDate || isSaving}
               className="px-4 py-2.5 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation order-1 sm:order-2"
               style={{ 
-                backgroundColor: (draft.title.trim() && draft.dueDate) ? '#076297' : '#9ca3af',
+                backgroundColor: (draft.title.trim() && draft.dueDate && !isSaving) ? '#076297' : '#9ca3af',
                 borderRadius: '7px'
               }}
               onMouseEnter={(e) => {
-                if (draft.title.trim() && draft.dueDate) {
+                if (draft.title.trim() && draft.dueDate && !isSaving) {
                   e.currentTarget.style.backgroundColor = '#054a73';
                 }
               }}
               onMouseLeave={(e) => {
-                if (draft.title.trim() && draft.dueDate) {
+                if (draft.title.trim() && draft.dueDate && !isSaving) {
                   e.currentTarget.style.backgroundColor = '#076297';
                 }
               }}
             >
-              Save Task
+              {isSaving ? 'Saving...' : 'Save Task'}
             </button>
           </div>
         </div>
