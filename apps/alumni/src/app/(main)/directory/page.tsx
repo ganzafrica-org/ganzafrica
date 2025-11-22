@@ -21,7 +21,6 @@ import {
   Globe,
   MessageSquare,
   Briefcase,
-  Download,
   TrendingUp,
   Heart,
   ChevronLeft,
