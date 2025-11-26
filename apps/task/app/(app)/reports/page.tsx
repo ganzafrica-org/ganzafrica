@@ -36,7 +36,7 @@ const getFileIcon = (fileType: string, filename?: string): string => {
   let extension = fileType?.toLowerCase() || '';
   if ((!extension || extension === 'unknown') && filename) {
     const match = filename.match(/\.([^.]+)$/);
-    extension = match ? match[1].toLowerCase() : '';
+    extension = match && match[1] ? match[1].toLowerCase() : '';
   }
   
   const iconMap: { [key: string]: string } = {

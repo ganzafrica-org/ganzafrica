@@ -15,7 +15,7 @@ import { eq, and, gte, lte, desc, asc, sql, inArray } from "drizzle-orm";
 import upload from "../middlewares/upload";
 import { getFileSubdirectory, getFileUrl } from "../middlewares/upload";
 import { Logger } from "../config";
-import { userService } from "../services/user.service";
+import * as userService from "../services/user.service";
 
 const logger = new Logger("ReportsController");
 
@@ -194,7 +194,9 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
     // Create a map of project_id to attachment count
     const attachmentCountMap = new Map<number, number>();
     for (const count of taskAttachmentCounts) {
-      attachmentCountMap.set(count.project_id, Number(count.attachment_count));
+      if (count.project_id !== null) {
+        attachmentCountMap.set(count.project_id, Number(count.attachment_count));
+      }
     }
 
     // Combine file counts from report_files and task attachments
@@ -203,7 +205,8 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
       const teamProjects = teamProjectIds.filter(p => p.team_id === team.id);
       // Sum up attachment counts for all projects in this team
       const taskAttachmentCount = teamProjects.reduce((sum, project) => {
-        return sum + (attachmentCountMap.get(project.project_id) || 0);
+        const projectId = project.project_id;
+        return sum + (projectId !== null ? (attachmentCountMap.get(projectId) || 0) : 0);
       }, 0);
 
       return {
@@ -727,4 +730,3 @@ export const getReportAnalytics = async (req: Request, res: Response) => {
   }
 };
 
-export { upload };

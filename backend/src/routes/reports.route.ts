@@ -8,9 +8,9 @@ import {
   markAsDeliverable,
   getProjectDeliverables,
   downloadFile,
-  getReportAnalytics,
-  upload
+  getReportAnalytics
 } from "../controllers/reports.controller";
+import upload from "../middlewares/upload";
 import { authenticate } from "../middlewares/auth.middleware";
 
 const router = Router();
