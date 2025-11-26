@@ -13,7 +13,7 @@ import {
   updateSession,
   deleteSession,
 } from "../controllers/mentorship";
-import { authenticate } from "../middlewares";
+import { authenticate, authorize } from "../middlewares";
 
 const router: Router = Router();
 
@@ -52,7 +52,12 @@ const router: Router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get("/stats", authenticate, getMentorshipStats);
+router.get(
+  "/stats",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getMentorshipStats,
+);
 
 /**
  * @swagger
@@ -125,8 +130,15 @@ router.get("/stats", authenticate, getMentorshipStats);
  *                       type: boolean
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/fellows", authenticate, getFellows);
+router.get(
+  "/fellows",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getFellows,
+);
 
 /**
  * @swagger
@@ -164,10 +176,17 @@ router.get("/fellows", authenticate, getFellows);
  *         description: Bad request or fellow already has a mentor
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Fellow not found
  */
-router.post("/add-mentee", authenticate, addMentee);
+router.post(
+  "/add-mentee",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  addMentee,
+);
 
 /**
  * @swagger
@@ -208,8 +227,15 @@ router.post("/add-mentee", authenticate, addMentee);
  *                         format: date-time
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/connections", authenticate, getMyConnections);
+router.get(
+  "/connections",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getMyConnections,
+);
 
 /**
  * @swagger
@@ -253,10 +279,17 @@ router.get("/connections", authenticate, getMyConnections);
  *                         type: object
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Connection not found
  */
-router.get("/connections/:id", authenticate, getConnection);
+router.get(
+  "/connections/:id",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getConnection,
+);
 
 /**
  * @swagger
@@ -292,10 +325,17 @@ router.get("/connections/:id", authenticate, getConnection);
  *         description: Connection updated successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Connection not found
  */
-router.put("/connections/:id", authenticate, updateConnection);
+router.put(
+  "/connections/:id",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  updateConnection,
+);
 
 /**
  * @swagger
@@ -332,10 +372,17 @@ router.put("/connections/:id", authenticate, updateConnection);
  *         description: Goal added successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Connection not found
  */
-router.post("/connections/:id/goals", authenticate, addGoal);
+router.post(
+  "/connections/:id/goals",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  addGoal,
+);
 
 /**
  * @swagger
@@ -376,10 +423,17 @@ router.post("/connections/:id/goals", authenticate, addGoal);
  *         description: Goal updated successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Goal not found
  */
-router.put("/connections/:id/goals/:goalId", authenticate, updateGoal);
+router.put(
+  "/connections/:id/goals/:goalId",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  updateGoal,
+);
 
 /**
  * @swagger
@@ -407,10 +461,17 @@ router.put("/connections/:id/goals/:goalId", authenticate, updateGoal);
  *         description: Goal deleted successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Goal not found
  */
-router.delete("/connections/:id/goals/:goalId", authenticate, deleteGoal);
+router.delete(
+  "/connections/:id/goals/:goalId",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  deleteGoal,
+);
 
 /**
  * @swagger
@@ -455,10 +516,17 @@ router.delete("/connections/:id/goals/:goalId", authenticate, deleteGoal);
  *         description: Session scheduled successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Connection not found
  */
-router.post("/connections/:id/sessions", authenticate, scheduleSession);
+router.post(
+  "/connections/:id/sessions",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  scheduleSession,
+);
 
 /**
  * @swagger
@@ -513,10 +581,17 @@ router.post("/connections/:id/sessions", authenticate, scheduleSession);
  *         description: Session updated successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Session not found
  */
-router.put("/connections/:id/sessions/:sessionId", authenticate, updateSession);
+router.put(
+  "/connections/:id/sessions/:sessionId",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  updateSession,
+);
 
 /**
  * @swagger
@@ -544,12 +619,15 @@ router.put("/connections/:id/sessions/:sessionId", authenticate, updateSession);
  *         description: Session deleted successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Session not found
  */
 router.delete(
   "/connections/:id/sessions/:sessionId",
   authenticate,
+  authorize(["alumni", "admin"]),
   deleteSession,
 );
 

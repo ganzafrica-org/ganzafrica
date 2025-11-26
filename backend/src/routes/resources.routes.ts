@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares";
+import { authenticate, authorize } from "../middlewares";
 import {
   getResourceStats,
   getAllResources,
@@ -21,6 +21,8 @@ const router = Router();
  *   get:
  *     summary: Get resources statistics
  *     tags: [Resources]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Resource statistics
@@ -40,8 +42,15 @@ const router = Router();
  *                       type: integer
  *                     categoriesCount:
  *                       type: integer
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/stats", getResourceStats);
+router.get(
+  "/stats",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getResourceStats,
+);
 
 /**
  * @swagger
@@ -49,6 +58,8 @@ router.get("/stats", getResourceStats);
  *   get:
  *     summary: Get all resources with pagination and filters
  *     tags: [Resources]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -80,8 +91,10 @@ router.get("/stats", getResourceStats);
  *     responses:
  *       200:
  *         description: List of resources
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/", getAllResources);
+router.get("/", authenticate, authorize(["alumni", "admin"]), getAllResources);
 
 /**
  * @swagger
@@ -89,6 +102,8 @@ router.get("/", getAllResources);
  *   get:
  *     summary: Get a single resource
  *     tags: [Resources]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -98,10 +113,12 @@ router.get("/", getAllResources);
  *     responses:
  *       200:
  *         description: Resource details
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Resource not found
  */
-router.get("/:id", getResource);
+router.get("/:id", authenticate, authorize(["alumni", "admin"]), getResource);
 
 /**
  * @swagger
@@ -159,8 +176,10 @@ router.get("/:id", getResource);
  *         description: Invalid input
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.post("/", authenticate, createResource);
+router.post("/", authenticate, authorize(["alumni", "admin"]), createResource);
 
 /**
  * @swagger
@@ -186,11 +205,16 @@ router.post("/", authenticate, createResource);
  *       200:
  *         description: Resource updated successfully
  *       403:
- *         description: Forbidden
+ *         description: Forbidden - not owner or requires alumni/admin role
  *       404:
  *         description: Resource not found
  */
-router.put("/:id", authenticate, updateResource);
+router.put(
+  "/:id",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  updateResource,
+);
 
 /**
  * @swagger
@@ -210,11 +234,16 @@ router.put("/:id", authenticate, updateResource);
  *       200:
  *         description: Resource deleted successfully
  *       403:
- *         description: Forbidden
+ *         description: Forbidden - not owner or requires alumni/admin role
  *       404:
  *         description: Resource not found
  */
-router.delete("/:id", authenticate, deleteResource);
+router.delete(
+  "/:id",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  deleteResource,
+);
 
 /**
  * @swagger
@@ -233,10 +262,17 @@ router.delete("/:id", authenticate, deleteResource);
  *     responses:
  *       200:
  *         description: Like toggled successfully
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Resource not found
  */
-router.post("/:id/like", authenticate, toggleLike);
+router.post(
+  "/:id/like",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  toggleLike,
+);
 
 /**
  * @swagger
@@ -255,10 +291,17 @@ router.post("/:id/like", authenticate, toggleLike);
  *     responses:
  *       200:
  *         description: Download tracked successfully
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Resource not found
  */
-router.post("/:id/download", authenticate, trackDownload);
+router.post(
+  "/:id/download",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  trackDownload,
+);
 
 /**
  * @swagger
@@ -294,10 +337,17 @@ router.post("/:id/download", authenticate, trackDownload);
  *         description: Rating added/updated successfully
  *       400:
  *         description: Invalid rating
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Resource not found
  */
-router.post("/:id/rate", authenticate, rateResource);
+router.post(
+  "/:id/rate",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  rateResource,
+);
 
 /**
  * @swagger
@@ -316,9 +366,11 @@ router.post("/:id/rate", authenticate, rateResource);
  *     responses:
  *       200:
  *         description: Featured status toggled successfully
+ *       403:
+ *         description: Forbidden - Requires admin role
  *       404:
  *         description: Resource not found
  */
-router.put("/:id/feature", authenticate, toggleFeatured);
+router.put("/:id/feature", authenticate, authorize(["admin"]), toggleFeatured);
 
 export default router;

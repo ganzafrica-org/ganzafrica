@@ -7,7 +7,7 @@ import {
   createJob,
   triggerJobScraping,
 } from "../controllers/jobs";
-import { authenticate } from "../middlewares";
+import { authenticate, authorize } from "../middlewares";
 
 const router: Router = Router();
 
@@ -44,7 +44,7 @@ const router: Router = Router();
  *                     internalJobs:
  *                       type: integer
  */
-router.get("/stats", authenticate, getJobStats);
+router.get("/stats", authenticate, authorize(["alumni", "admin"]), getJobStats);
 
 /**
  * @swagger
@@ -71,8 +71,15 @@ router.get("/stats", authenticate, getJobStats);
  *                         type: string
  *                       count:
  *                         type: integer
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/trending-skills", authenticate, getTrendingSkills);
+router.get(
+  "/trending-skills",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getTrendingSkills,
+);
 
 /**
  * @swagger
@@ -96,6 +103,8 @@ router.get("/trending-skills", authenticate, getTrendingSkills);
  *                   example: Job scraping completed successfully
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       500:
  *         description: Scraping failed
  *         content:
@@ -108,7 +117,12 @@ router.get("/trending-skills", authenticate, getTrendingSkills);
  *                 message:
  *                   type: string
  */
-router.post("/scrape", authenticate, triggerJobScraping);
+router.post(
+  "/scrape",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  triggerJobScraping,
+);
 
 /**
  * @swagger
@@ -176,8 +190,10 @@ router.post("/scrape", authenticate, triggerJobScraping);
  *     responses:
  *       200:
  *         description: List of jobs with pagination
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/", authenticate, getAllJobs);
+router.get("/", authenticate, authorize(["alumni", "admin"]), getAllJobs);
 
 /**
  * @swagger
@@ -197,10 +213,12 @@ router.get("/", authenticate, getAllJobs);
  *     responses:
  *       200:
  *         description: Job details
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Job not found
  */
-router.get("/:id", authenticate, getJob);
+router.get("/:id", authenticate, authorize(["alumni", "admin"]), getJob);
 
 /**
  * @swagger
@@ -258,7 +276,9 @@ router.get("/:id", authenticate, getJob);
  *     responses:
  *       201:
  *         description: Job created successfully
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.post("/", authenticate, createJob);
+router.post("/", authenticate, authorize(["alumni", "admin"]), createJob);
 
 export default router;

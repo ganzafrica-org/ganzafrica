@@ -100,7 +100,11 @@ const Sidebar = ({
           <div className="flex items-center">
             {!isCollapsed ? (
               <Image
-                src="/images/logo-2.png"
+                src={
+                  process.env.NODE_ENV === "production"
+                    ? "/alumni/images/logo-2.png"
+                    : "/images/logo-2.png"
+                }
                 alt="GanzAfrica"
                 width={130}
                 height={35}
@@ -109,7 +113,11 @@ const Sidebar = ({
               />
             ) : (
               <Image
-                src="/images/logoLight.png"
+                src={
+                  process.env.NODE_ENV === "production"
+                    ? "/alumni/images/logoLight.png"
+                    : "/images/logoLight.png"
+                }
                 alt="GanzAfrica"
                 width={32}
                 height={32}

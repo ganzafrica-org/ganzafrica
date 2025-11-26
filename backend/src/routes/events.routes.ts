@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../middlewares";
+import { authenticate, authorize } from "../middlewares";
 import {
   getEventStats,
   getAllEvents,
@@ -15,11 +15,20 @@ const router = Router();
  *   get:
  *     summary: Get events statistics
  *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Event statistics
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/stats", getEventStats);
+router.get(
+  "/stats",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getEventStats,
+);
 
 /**
  * @swagger
@@ -27,6 +36,8 @@ router.get("/stats", getEventStats);
  *   get:
  *     summary: Get all events with pagination and filters
  *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -61,8 +72,10 @@ router.get("/stats", getEventStats);
  *     responses:
  *       200:
  *         description: List of events
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/", getAllEvents);
+router.get("/", authenticate, authorize(["alumni", "admin"]), getAllEvents);
 
 /**
  * @swagger
@@ -70,6 +83,8 @@ router.get("/", getAllEvents);
  *   get:
  *     summary: Get a single event
  *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -79,10 +94,12 @@ router.get("/", getAllEvents);
  *     responses:
  *       200:
  *         description: Event details
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Event not found
  */
-router.get("/:id", getEvent);
+router.get("/:id", authenticate, authorize(["alumni", "admin"]), getEvent);
 
 /**
  * @swagger
@@ -103,9 +120,16 @@ router.get("/:id", getEvent);
  *         description: Registration toggled successfully
  *       400:
  *         description: Event is full or not open
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Event not found
  */
-router.post("/:id/register", authenticate, toggleRegistration);
+router.post(
+  "/:id/register",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  toggleRegistration,
+);
 
 export default router;
