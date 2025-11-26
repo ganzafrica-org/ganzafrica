@@ -53,7 +53,6 @@ export function KanbanBoard({
       const taskId = String(t.id);
       // Skip if we've already seen this task ID
       if (seenIds.has(taskId)) {
-        console.warn(`Duplicate task detected with ID ${taskId}, skipping`);
         continue;
       }
       seenIds.add(taskId);
@@ -88,11 +87,6 @@ export function KanbanBoard({
     });
     
     if (!originalTask) {
-      console.error('Original task not found', { 
-        searchedId: id, 
-        searchedIdType: typeof id,
-        availableIds: tasks.map(t => ({ id: t.id, type: typeof t.id, title: t.title }))
-      });
       showError(
         "Task Not Found",
         `Could not find task with ID ${id}. Please refresh the page and try again.`

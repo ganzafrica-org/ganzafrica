@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown, Menu } from "lucide-react";
+import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown, AlignJustify } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -77,7 +77,7 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
           className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors sidebar-toggle"
           aria-label="Toggle menu"
         >
-          <Menu className="h-6 w-6 text-gray-700" />
+          <AlignJustify className="h-6 w-6 text-gray-700" />
         </button>
       )}
       

@@ -18,6 +18,7 @@ import uploadRoutes from "./upload";
 import taskTeamRoutes from "./task-teams.route";
 import portalDataRoutes from "./portal-data.route";
 import tasksRoutes from "./tasks.route";
+import reportsRoutes from "./reports.route";
 
 const router: Router = Router();
 
@@ -41,5 +42,6 @@ router.use("/uploads", uploadRoutes);
 router.use("/task-teams", taskTeamRoutes);
 router.use("/portal-data", portalDataRoutes);
 router.use("/tasks", tasksRoutes);
+router.use("/reports", reportsRoutes);
 
 export default router;

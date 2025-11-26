@@ -7,7 +7,7 @@ import { Navbar } from '@/components/navbar';
 import { PageLayout } from '@/components/page-layout';
 import { DateFilter } from '@/components/date-filter';
 import { Task, TeamMember } from '@/lib/types';
-import { CheckCircle, FileText, Download, Eye, Calendar, User as UserIcon, X, Upload, FolderOpen, Users, Folder, ChevronRight, Filter, Plus, FileIcon, Archive, Loader2, Briefcase, ArrowLeft } from 'lucide-react';
+import { CheckCircle, FileText, Download, Calendar, User as UserIcon, X, FolderOpen, Users, Folder, ChevronRight, Filter, Plus, FileIcon, Archive, Loader2, Briefcase, ArrowLeft } from 'lucide-react';
 import { taskTeamsApi, TaskTeam } from '@/lib/api/task-teams';
 import { usersApi, User } from '@/lib/api/users';
 import apiClient from '@/lib/api-client';
@@ -31,7 +31,14 @@ const formatDate = (dateString: string): string => {
   });
 };
 
-const getFileIcon = (fileType: string): string => {
+const getFileIcon = (fileType: string, filename?: string): string => {
+  // Extract file extension from filename if fileType is unknown or missing
+  let extension = fileType?.toLowerCase() || '';
+  if ((!extension || extension === 'unknown') && filename) {
+    const match = filename.match(/\.([^.]+)$/);
+    extension = match ? match[1].toLowerCase() : '';
+  }
+  
   const iconMap: { [key: string]: string } = {
     'pdf': '📄',
     'doc': '📝',
@@ -46,9 +53,27 @@ const getFileIcon = (fileType: string): string => {
     'jpg': '🖼️',
     'jpeg': '🖼️',
     'png': '🖼️',
-    'gif': '🖼️'
+    'gif': '🖼️',
+    'svg': '🖼️',
+    'webp': '🖼️',
+    'mp4': '🎥',
+    'mov': '🎥',
+    'avi': '🎥',
+    'mp3': '🎵',
+    'wav': '🎵',
+    'csv': '📊',
+    'json': '📋',
+    'xml': '📋',
+    'html': '🌐',
+    'css': '🎨',
+    'js': '💻',
+    'ts': '💻',
+    'py': '🐍',
+    'java': '☕',
+    'cpp': '💻',
+    'c': '💻'
   };
-  return iconMap[fileType.toLowerCase()] || '📄';
+  return iconMap[extension] || '📄';
 };
 
 function ReportsContent() {
@@ -58,9 +83,7 @@ function ReportsContent() {
   const [selectedFile, setSelectedFile] = useState<any | null>(null);
   const [dateFilter, setDateFilter] = useState('all');
   const [customDateRange, setCustomDateRange] = useState<{start: string, end: string}>({start: '', end: ''});
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [showFilesModal, setShowFilesModal] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
   
   // API data states
   const [teams, setTeams] = useState<TaskTeam[]>([]);
@@ -81,11 +104,23 @@ function ReportsContent() {
     try {
       setLoading(prev => ({ ...prev, teams: true }));
       setError(null);
-      const response = await taskTeamsApi.listTeams();
-      setTeams(response.teams || []);
+      // Use the reports API endpoint that includes file counts from both report_files and task attachments
+      const response = await apiClient.get(`/reports/teams`);
+      
+      // Handle response structure - the endpoint returns { success: true, data: [...] }
+      let teams = [];
+      if (response.data?.data) {
+        teams = Array.isArray(response.data.data) ? response.data.data : [];
+      } else if (response.data?.teams) {
+        teams = response.data.teams;
+      } else if (Array.isArray(response.data)) {
+        teams = response.data;
+      }
+      
+      setTeams(teams);
     } catch (err) {
       setError('Failed to fetch teams');
-      console.error('Error fetching teams:', err);
+      setTeams([]);
     } finally {
       setLoading(prev => ({ ...prev, teams: false }));
     }
@@ -95,42 +130,21 @@ function ReportsContent() {
     try {
       setLoading(prev => ({ ...prev, projects: true }));
       setError(null);
-      const response = await taskTeamsApi.getTeamById(teamId);
-      const projects = response.team?.projects || [];
+      // Use the reports API endpoint that includes file counts from both report_files and task attachments
+      const response = await apiClient.get(`/reports/teams/${teamId}/projects`);
       
-      // Calculate file counts for each project by fetching tasks
-      const projectsWithFileCounts = await Promise.all(
-        projects.map(async (project: any) => {
-          try {
-            const tasksResponse = await apiClient.get(`/tasks/project/${project.id}`);
-            const tasks = tasksResponse.data.tasks || [];
-            
-            // Count attachments from all tasks
-            let fileCount = 0;
-            for (const task of tasks) {
-              if (task.attachments && Array.isArray(task.attachments)) {
-                fileCount += task.attachments.length;
-              }
-            }
-            
-            return {
-              ...project,
-              file_count: fileCount
-            };
-          } catch (err) {
-            console.error(`Error fetching tasks for project ${project.id}:`, err);
-            return {
-              ...project,
-              file_count: 0
-            };
-          }
-        })
-      );
+      // Handle response structure - the endpoint returns { success: true, data: [...] }
+      let projects = [];
+      if (response.data?.data) {
+        projects = Array.isArray(response.data.data) ? response.data.data : [];
+      } else if (Array.isArray(response.data)) {
+        projects = response.data;
+      }
       
-      setProjects(projectsWithFileCounts);
+      setProjects(projects);
     } catch (err) {
       setError('Failed to fetch projects');
-      console.error('Error fetching projects:', err);
+      setProjects([]);
     } finally {
       setLoading(prev => ({ ...prev, projects: false }));
     }
@@ -140,12 +154,25 @@ function ReportsContent() {
     try {
       setLoading(prev => ({ ...prev, files: true }));
       setError(null);
-      // For now, we'll use mock files since we need to implement file fetching
-      // This should be replaced with actual file fetching API
+      
+      // Use the reports API endpoint that gets files from BOTH report_files table AND task attachments
+      const response = await apiClient.get(`/reports/projects/${projectId}/files`);
+      
+      // Handle response structure - the endpoint returns { success: true, data: { files: [...] } }
+      let files = [];
+      if (response.data?.data?.files) {
+        files = response.data.data.files;
+      } else if (response.data?.files) {
+        files = response.data.files;
+      } else if (Array.isArray(response.data)) {
+        files = response.data;
+      }
+      
+      setFiles(files || []);
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to fetch files';
+      setError(`Failed to fetch files: ${errorMessage}`);
       setFiles([]);
-    } catch (err) {
-      setError('Failed to fetch files');
-      console.error('Error fetching files:', err);
     } finally {
       setLoading(prev => ({ ...prev, files: false }));
     }
@@ -181,7 +208,6 @@ function ReportsContent() {
       
       setMembers(teamMembers);
     } catch (err) {
-      console.error('Error fetching members:', err);
       setMembers([]);
     } finally {
       setLoading(prev => ({ ...prev, members: false }));
@@ -225,36 +251,7 @@ function ReportsContent() {
     return files;
   }, [files]);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setUploadFile(file);
-    }
-  };
-
-  const handleUploadSubmit = async () => {
-    if (uploadFile && selectedProject) {
-      try {
-        setLoading(prev => ({ ...prev, upload: true }));
-        setError(null);
-        
-        // For now, we'll show a message since we need to select a specific task to upload to
-        // In a real implementation, you might want to create a task first or select an existing one
-        console.log('File upload would require selecting a specific task:', uploadFile.name);
-        
-        setShowUploadModal(false);
-        setUploadFile(null);
-        
-        // Show a message to the user
-        setError('Please select a specific task to upload files to. Files are uploaded to tasks, not directly to projects.');
-      } catch (err) {
-        setError('Failed to upload file');
-        console.error('Error uploading file:', err);
-      } finally {
-        setLoading(prev => ({ ...prev, upload: false }));
-      }
-    }
-  };
+  // Upload functionality removed - files should be uploaded through tasks, not directly to projects
 
   const handleFileDownload = async (file: any) => {
     try {
@@ -268,33 +265,18 @@ function ReportsContent() {
         a.click();
         document.body.removeChild(a);
       } else {
-        console.error('No file URL available for download');
         setError('File URL not available');
       }
     } catch (err) {
       setError('Failed to download file');
-      console.error('Error downloading file:', err);
     }
   };
 
   const handleViewFiles = async (project: any) => {
-    try {
-      setSelectedProject(project);
-      setLoading(prev => ({ ...prev, files: true }));
-      setError(null);
-      
-      // Use the new role-filtered files API
-      const response = await apiClient.get(`/tasks/project/${project.id}/files`);
-      const files = response.data.files || [];
-      
-      setFiles(files);
-      setShowFilesModal(true);
-    } catch (err) {
-      setError('Failed to fetch files');
-      console.error('Error fetching files:', err);
-    } finally {
-      setLoading(prev => ({ ...prev, files: false }));
-    }
+    // Set the project - this will trigger useEffect to fetch files automatically
+    setSelectedProject(project);
+    // Open the files modal
+    setShowFilesModal(true);
   };
 
   return (
@@ -318,16 +300,7 @@ function ReportsContent() {
           </div>
           
           <div className="flex items-center gap-3">
-            
-            {selectedProject && (
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                Upload File
-              </button>
-            )}
+            {/* Upload functionality removed - files should be uploaded through tasks, not directly to projects */}
           </div>
         </div>
 
@@ -442,7 +415,7 @@ function ReportsContent() {
                     </div>
                       <div className="flex items-center gap-1">
                         <FileText className="w-4 h-4" />
-                        <span>0 files</span>
+                        <span>{Number(team.file_count) || 0} files</span>
                     </div>
                   </div>
                 </div>
@@ -484,44 +457,46 @@ function ReportsContent() {
                 <table className="w-full border-collapse">
                         <thead>
                           <tr className="border-b border-gray-200">
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700">Project Name</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700">Description</th>
-                            <th className="text-center py-3 px-4 font-semibold text-gray-700">Files</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                            <th className="text-left py-3 px-4 font-semibold text-gray-700">Created</th>
-                            <th className="text-center py-3 px-4 font-semibold text-gray-700">Actions</th>
+                            <th className="text-left py-3 px-2 sm:px-4 font-semibold text-gray-700">Project Name</th>
+                            <th className="text-left py-3 px-2 sm:px-4 font-semibold text-gray-700 hidden md:table-cell">Description</th>
+                            <th className="text-center py-3 px-2 sm:px-4 font-semibold text-gray-700 whitespace-nowrap">Files</th>
+                            <th className="text-left py-3 px-2 sm:px-4 font-semibold text-gray-700 whitespace-nowrap">Status</th>
+                            <th className="text-left py-3 px-2 sm:px-4 font-semibold text-gray-700 whitespace-nowrap">Created</th>
+                            <th className="text-center py-3 px-2 sm:px-4 font-semibold text-gray-700 whitespace-nowrap">Actions</th>
                           </tr>
                         </thead>
                   <tbody>
                     {filteredProjects.map((project) => (
                       <tr key={project.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
+                        <td className="py-4 px-2 sm:px-4 max-w-[200px] md:max-w-[300px] lg:max-w-[400px]">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                             <div 
-                              className="w-8 h-8 flex items-center justify-center flex-shrink-0"
+                              className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0"
                               style={{ backgroundColor: project.color || selectedTeam.color || '#073392', borderRadius: '7px' }}
                             >
-                              <Briefcase className="w-4 h-4" style={{ color: '#ffffff' }} />
+                              <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" style={{ color: '#ffffff' }} />
                             </div>
-                            <div>
-                              <div className="font-medium text-gray-900">{project.name}</div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-gray-900 text-sm sm:text-base truncate" title={project.name}>
+                                {project.name}
+                              </div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-4 px-4">
-                          <div className="text-sm text-gray-600 max-w-xs truncate">
+                        <td className="py-4 px-2 sm:px-4 hidden md:table-cell max-w-[150px]">
+                          <div className="text-sm text-gray-600 truncate" title={project.description || 'No description'}>
                             {project.description || 'No description'}
                           </div>
                         </td>
-                        <td className="py-4 px-4">
+                        <td className="py-4 px-2 sm:px-4">
                           <div className="flex items-center justify-center">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                              {project.file_count || 0} files
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium whitespace-nowrap">
+                              {Number(project.file_count) || 0} files
                             </span>
                           </div>
                         </td>
-                        <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        <td className="py-4 px-2 sm:px-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                             project.status === 'completed' ? 'bg-green-100 text-green-800' :
                             project.status === 'active' ? 'bg-blue-100 text-blue-800' :
                             project.status === 'planning' ? 'bg-yellow-100 text-yellow-800' :
@@ -530,27 +505,28 @@ function ReportsContent() {
                             {project.status.replace('_', ' ')}
                           </span>
                         </td>
-                        <td className="py-4 px-4">
-                          <div className="text-sm text-gray-600">
+                        <td className="py-4 px-2 sm:px-4">
+                          <div className="text-sm text-gray-600 whitespace-nowrap">
                             {formatDate(project.created_at)}
                           </div>
                         </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center justify-center gap-2">
+                        <td className="py-4 px-2 sm:px-4">
+                          <div className="flex items-center justify-center">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleViewFiles(project);
                               }}
-                              className="px-3 py-1.5 text-sm font-medium transition-colors hover:opacity-90"
+                              className="px-2 py-1.5 sm:px-3 text-xs sm:text-sm font-medium transition-colors hover:opacity-90 whitespace-nowrap flex items-center gap-1"
                               style={{ 
                                 backgroundColor: '#ffffff',
                                 color: '#073392',
-                                borderRadius: '7px'
+                                borderRadius: '7px',
+                                border: '1px solid #e5e7eb'
                               }}
                             >
-                              <Eye className="w-4 h-4 inline mr-1" />
-                              View Files
+                              <span className="hidden sm:inline">View Files</span>
+                              <span className="sm:hidden">View</span>
                             </button>
                           </div>
                         </td>
@@ -599,16 +575,25 @@ function ReportsContent() {
                   className="p-4 cursor-pointer transition-all border border-gray-200 rounded-lg hover:shadow-md"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="text-2xl">{getFileIcon(file.file_type)}</div>
+                    <div className="text-2xl">{getFileIcon(file.file_type, file.original_filename || file.filename)}</div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{file.original_filename}</h4>
-                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                      <h4 className="font-medium text-gray-800">{file.original_filename || file.filename}</h4>
+                      <div className="flex items-center gap-4 text-sm text-gray-500 mt-1 flex-wrap">
+                        {file.metadata?.task_title && (
+                          <>
+                            <span className="flex items-center gap-1">
+                              <FileText className="w-3 h-3" />
+                              <span className="font-medium text-gray-700">{file.metadata.task_title}</span>
+                            </span>
+                            <span>•</span>
+                          </>
+                        )}
                         <span>{formatFileSize(file.file_size)}</span>
                         <span>•</span>
-                          <span>Uploaded by {file.uploader?.name || 'Unknown'}</span>
+                        <span>Uploaded by {file.uploader?.name || 'Unknown'}</span>
                         <span>•</span>
                         <span>{formatDate(file.created_at)}</span>
-                        {file.metadata?.tags && (
+                        {file.metadata?.tags && file.metadata.tags.length > 0 && (
                           <>
                             <span>•</span>
                             <div className="flex gap-1">
@@ -627,18 +612,10 @@ function ReportsContent() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                            setSelectedFile(file);
-                        }}
-                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
                             handleFileDownload(file);
                         }}
                         className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Download file"
                       >
                         <Download className="w-4 h-4" />
                       </button>
@@ -667,7 +644,7 @@ function ReportsContent() {
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between" style={{ borderColor: '#e5e7eb', borderRadius: '7px 7px 0 0' }}>
               <div className="flex items-center gap-3">
-                <div className="text-2xl">{getFileIcon(selectedFile.file_type)}</div>
+                <div className="text-2xl">{getFileIcon(selectedFile.file_type, selectedFile.original_filename || selectedFile.filename)}</div>
                 <h2 className="text-xl font-bold text-gray-800">File Details</h2>
               </div>
               <button
@@ -682,10 +659,15 @@ function ReportsContent() {
             <div className="p-6 space-y-6">
               {/* File Info */}
               <div className="flex items-center gap-4">
-                <div className="text-6xl">{getFileIcon(selectedFile.file_type)}</div>
+                <div className="text-6xl">{getFileIcon(selectedFile.file_type, selectedFile.original_filename || selectedFile.filename)}</div>
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-gray-800 mb-1">{selectedFile.original_filename}</h3>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-1">{selectedFile.original_filename || selectedFile.filename}</h3>
                   <p className="text-gray-500">{selectedFile.file_type.toUpperCase()} File</p>
+                  {selectedFile.metadata?.task_title && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      <span className="font-medium">From task:</span> {selectedFile.metadata.task_title}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -746,123 +728,18 @@ function ReportsContent() {
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t" style={{ borderColor: '#e5e7eb' }}>
                 <button
+                  onClick={() => {
+                    handleFileDownload(selectedFile);
+                  }}
                   className="flex-1 px-4 py-2 font-medium text-white transition-colors"
                   style={{ backgroundColor: '#076297', borderRadius: '7px' }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#054a73')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#076297')}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <Eye className="w-4 h-4" />
-                    Preview
-                  </div>
-                </button>
-                <button
-                  className="flex-1 px-4 py-2 font-medium transition-colors"
-                  style={{ backgroundColor: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb', borderRadius: '7px' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
-                >
-                  <div className="flex items-center justify-center gap-2">
                     <Download className="w-4 h-4" />
                     Download
                   </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upload Modal */}
-      {showUploadModal && selectedProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowUploadModal(false)}>
-          <div 
-            className="bg-white shadow-2xl w-[500px] max-h-[80vh] overflow-y-auto"
-            style={{ borderRadius: '7px' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between" style={{ borderColor: '#e5e7eb', borderRadius: '7px 7px 0 0' }}>
-              <div className="flex items-center gap-3">
-                <Upload className="w-6 h-6 text-blue-600" />
-                <h2 className="text-xl font-bold text-gray-800">Upload File to {selectedProject.name}</h2>
-              </div>
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Select File</label>
-                <input
-                  type="file"
-                  onChange={handleFileUpload}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                {uploadFile && (
-                  <p className="text-sm text-gray-600 mt-2">
-                    Selected: {uploadFile.name} ({formatFileSize(uploadFile.size)})
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Description (Optional)</label>
-                <textarea
-                  id="upload-description"
-                  placeholder="Describe the file content..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Tags (Optional)</label>
-                <input
-                  id="upload-tags"
-                  type="text"
-                  placeholder="Enter tags separated by commas..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t" style={{ borderColor: '#e5e7eb' }}>
-                <button
-                  onClick={() => setShowUploadModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUploadSubmit}
-                  disabled={!uploadFile || loading.upload}
-                  className="flex-1 px-4 py-2 font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{ backgroundColor: '#076297', borderRadius: '7px' }}
-                  onMouseEnter={(e) => {
-                    if (!e.currentTarget.disabled) {
-                      e.currentTarget.style.backgroundColor = '#054a73';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!e.currentTarget.disabled) {
-                      e.currentTarget.style.backgroundColor = '#076297';
-                    }
-                  }}
-                >
-                  {loading.upload ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    'Upload File'
-                  )}
                 </button>
               </div>
             </div>
@@ -908,10 +785,19 @@ function ReportsContent() {
                       style={{ borderRadius: '7px' }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="text-2xl">{getFileIcon(file.file_type)}</div>
+                        <div className="text-2xl">{getFileIcon(file.file_type, file.original_filename || file.filename)}</div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-800">{file.original_filename}</h4>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                          <h4 className="font-medium text-gray-800">{file.original_filename || file.filename}</h4>
+                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-1 flex-wrap">
+                            {file.metadata?.task_title && (
+                              <>
+                                <span className="flex items-center gap-1">
+                                  <FileText className="w-3 h-3" />
+                                  <span className="font-medium text-gray-700">{file.metadata.task_title}</span>
+                                </span>
+                                <span>•</span>
+                              </>
+                            )}
                             <span>{formatFileSize(file.file_size)}</span>
                             <span>•</span>
                             <span>Uploaded by {file.uploader?.name || 'Unknown'}</span>
@@ -921,22 +807,6 @@ function ReportsContent() {
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Handle file view
-                              console.log('View file:', file.original_filename);
-                            }}
-                            className="px-3 py-1.5 text-sm font-medium transition-colors hover:opacity-90"
-                            style={{ 
-                              backgroundColor: '#ffffff',
-                              color: '#073392',
-                              borderRadius: '7px'
-                            }}
-                          >
-                            <Eye className="w-4 h-4 inline mr-1" />
-                            View
-                          </button>
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
