@@ -131,14 +131,16 @@ export function AuthProvider({
   };
 
   // Check if user is authenticated AND has alumni or admin role
-  const isAuthenticated =
+  const isAuthenticated: boolean =
     !!user &&
-    (user.role_name?.toLowerCase() === "alumni" ||
+    !!(
+      user.role_name?.toLowerCase() === "alumni" ||
       user.role_name?.toLowerCase() === "admin" ||
       user.roles?.some(
         (role) =>
           role.toLowerCase() === "alumni" || role.toLowerCase() === "admin",
-      ));
+      )
+    );
 
   return (
     <AuthContext.Provider
