@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { taskService } from "../services/task.service";
-import { userService } from "../services/user.service";
+import * as userService from "../services/user.service";
 import { AppError } from "../middlewares";
 import { constants, Logger, env } from "../config";
 import { getFileSubdirectory } from "../middlewares/upload";
