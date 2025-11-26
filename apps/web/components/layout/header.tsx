@@ -52,7 +52,7 @@ export default function Header({ locale }: HeaderProps) {
   const dict = useDict();
 
   // Check if we're on the homepage
-  const isHomePage = pathname === `/${locale}` || pathname === "/";
+  const isHomePage = pathname === `/` || pathname === "/";
 
   return (
     <>
@@ -64,7 +64,7 @@ export default function Header({ locale }: HeaderProps) {
         />
       ) : (
         // For other pages, just use the Navigation component without a hero section
-        <Navigation locale={locale} isHomePage={false} />
+        <Navigation isHomePage={false} />
       )}
     </>
   );

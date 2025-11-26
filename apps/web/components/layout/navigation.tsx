@@ -17,7 +17,8 @@ import {
   NavigationMenuTrigger,
 } from "@workspace/ui/components/navigation-menu";
 import { Button } from "@workspace/ui/components/button";
-import LanguageSwitcher from "@/components/layout/language-switcher";
+// import LanguageSwitcher from "@/components/layout/language-switcher";
+// import { LanguageSwitcher } from '@/components/layout/lang-switcher';
 
 // Define types for menu items
 interface MenuItem {
@@ -55,9 +56,18 @@ interface DictionaryType {
 
 // Define Navigation props
 interface NavigationProps {
-  locale: string;
   isHomePage?: boolean;
 }
+
+const resolveHref = (path: string) => {
+  if (!path) return "/";
+  // Keep absolute URLs as-is
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  // Avoid protocol-relative URLs like //about
+  if (path.startsWith("//")) return `/${path.replace(/^\/+/, "")}`;
+  // Ensure a single leading slash for internal routes
+  return path.startsWith("/") ? path : `/${path}`;
+};
 
 // Menu items with descriptions for rich dropdowns
 const aboutItems: MenuItem[] = [
@@ -131,7 +141,6 @@ const ListItem = React.forwardRef<
 ListItem.displayName = "ListItem";
 
 export default function Navigation({
-  locale,
   isHomePage = false,
 }: NavigationProps) {
   const dict = useDict();
@@ -191,7 +200,7 @@ export default function Navigation({
     return (
       <div className="fixed inset-0 z-50 bg-white w-screen h-screen overflow-y-auto md:hidden">
         <div className="flex justify-between items-center px-4 py-4 border-b">
-          <Link href={`/${locale}`} className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+          <Link href='/' className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="relative h-14 w-24">
               <Image
                 src="/images/logo.png"
@@ -230,7 +239,7 @@ export default function Navigation({
                 {aboutItems.map((item) => (
                   <Link
                     key={item.href}
-                    href={`/${locale}${item.href}`}
+                    href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
@@ -245,8 +254,8 @@ export default function Navigation({
           </div>
 
           {/* Our Approach - Direct Link */}
-          <Link
-            href={`/${locale}/our-approach`}
+                  <Link
+                    href={resolveHref("/our-approach")}
             className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
             onClick={() => setIsMobileMenuOpen(false)}
             prefetch={true}
@@ -270,7 +279,7 @@ export default function Navigation({
                 {programsItems.map((item) => (
                   <Link
                     key={item.href}
-                    href={`/${locale}${item.href}`}
+                    href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
@@ -298,7 +307,7 @@ export default function Navigation({
                 {newsItems.map((item) => (
                   <Link
                     key={item.href}
-                    href={`/${locale}${item.href}`}
+                    href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
@@ -312,7 +321,7 @@ export default function Navigation({
 
           {/* Add sign in button at the bottom */}
           <div className="mt-auto pt-6 border-t">
-            <Link href={`/${locale}/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+            <Link href={resolveHref("/login")} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
               <Button
                 size="lg"
                 className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"
@@ -340,7 +349,7 @@ export default function Navigation({
           {/* Logo */}
           <div className="min-h-full w-32 md:w-52 flex items-center p-8">
             <Link
-              href={`/${locale}`}
+              href={`/`}
               className="relative z-50 flex items-center gap-2"
               prefetch={true}
             >
@@ -372,7 +381,7 @@ export default function Navigation({
                         <NavigationMenuLink asChild>
                           <a
                             className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/about/who-we-are`}
+                            href={resolveHref("/about/who-we-are")}
                           >
                             <div className="mb-2 mt-4 text-lg font-medium">
                               Who We Are
@@ -386,7 +395,7 @@ export default function Navigation({
                       {aboutItems.map((item) => (
                         <ListItem
                           key={item.href}
-                          href={`/${locale}${item.href}`}
+                          href={resolveHref(item.href)}
                           title={
                             dict?.about?.[
                               item.title.toLowerCase().replace(/ /g, "_")
@@ -402,7 +411,7 @@ export default function Navigation({
                 
                 {/* Our Approach - Direct Link */} 
                 <NavigationMenuItem>
-                  <Link href={`/${locale}/our-approach`} passHref>
+                  <Link href={resolveHref("/our-approach")} passHref>
                     <NavigationMenuLink 
                       className={`${getNavItemColor()} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
                     >
@@ -422,7 +431,7 @@ export default function Navigation({
                         <NavigationMenuLink asChild>
                           <a
                             className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/projects`}
+                            href={resolveHref("/projects")}
                           >
                             <div className="mb-2 mt-4 text-lg font-medium">
                              Our Projects
@@ -437,7 +446,7 @@ export default function Navigation({
                       {programsItems.map((item) => (
                         <ListItem
                           key={item.href}
-                          href={`/${locale}${item.href}`}
+                          href={resolveHref(item.href)}
                           title={item.title}
                         >
                           {item.description}
@@ -458,7 +467,7 @@ export default function Navigation({
                         <NavigationMenuLink asChild>
                           <a
                             className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/newsroom`}
+                            href={resolveHref("/newsroom")}
                           >
                             <div className="mb-2 mt-4 text-lg font-medium">
                               News & Updates
@@ -473,7 +482,7 @@ export default function Navigation({
                       {newsItems.map((item) => (
                         <ListItem
                           key={item.href}
-                          href={`/${locale}${item.href}`}
+                          href={resolveHref(item.href)}
                           title={item.title}
                         >
                           {item.description}
@@ -489,8 +498,8 @@ export default function Navigation({
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
             <div className="flex items-center gap-2 border-3">
-              <LanguageSwitcher />
-              <Link href={`/${locale}/login`} className="hidden md:block">
+              {/* <LanguageSwitcher /> */}
+              <Link href={`/login`} className="hidden md:block">
                 <Button
                   size="sm"
                   className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
