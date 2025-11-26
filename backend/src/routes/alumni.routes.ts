@@ -6,7 +6,7 @@ import {
   updateAlumniProfile,
   getDashboardStats,
 } from "../controllers/alumni";
-import { authenticate } from "../middlewares";
+import { authenticate, authorize } from "../middlewares";
 
 const router: Router = Router();
 
@@ -44,8 +44,15 @@ const router: Router = Router();
  *                       type: integer
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/stats", authenticate, getAlumniStats);
+router.get(
+  "/stats",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getAlumniStats,
+);
 
 /**
  * @swagger
@@ -74,8 +81,15 @@ router.get("/stats", authenticate, getAlumniStats);
  *                       type: integer
  *                     achievements:
  *                       type: integer
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/dashboard/stats", authenticate, getDashboardStats);
+router.get(
+  "/dashboard/stats",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getDashboardStats,
+);
 
 /**
  * @swagger
@@ -128,10 +142,17 @@ router.get("/dashboard/stats", authenticate, getDashboardStats);
  *                       type: string
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Profile not found
  */
-router.get("/profile", authenticate, getAlumniProfile);
+router.get(
+  "/profile",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getAlumniProfile,
+);
 
 /**
  * @swagger
@@ -186,10 +207,17 @@ router.get("/profile", authenticate, getAlumniProfile);
  *                   type: object
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       400:
  *         description: Bad request
  */
-router.put("/profile", authenticate, updateAlumniProfile);
+router.put(
+  "/profile",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  updateAlumniProfile,
+);
 
 /**
  * @swagger
@@ -295,7 +323,9 @@ router.put("/profile", authenticate, updateAlumniProfile);
  *                         type: integer
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.get("/", authenticate, getAllAlumni);
+router.get("/", authenticate, authorize(["alumni", "admin"]), getAllAlumni);
 
 export default router;

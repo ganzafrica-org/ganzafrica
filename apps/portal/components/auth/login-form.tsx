@@ -265,7 +265,11 @@ export function LoginForm({ userType }: LoginFormProps) {
       <div className="hidden md:flex md:w-1/2 bg-primary-green text-white p-8 flex-col items-center justify-center">
         <div className="mb-6">
           <Image
-            src="/images/logoLight.png"
+            src={
+              process.env.NODE_ENV === "production"
+                ? "/portal/images/logoLight.png"
+                : "/images/logoLight.png"
+            }
             alt="Logo"
             width={100}
             height={30}

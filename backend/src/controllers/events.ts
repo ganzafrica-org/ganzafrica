@@ -2,7 +2,18 @@ import { Request, Response } from "express";
 import { db } from "../db/client";
 import { alumni_events, event_registrations } from "../db/schema";
 import { users } from "../db/schema";
-import { eq, and, or, ilike, sql, desc, asc, count, gte, lte } from "drizzle-orm";
+import {
+  eq,
+  and,
+  or,
+  ilike,
+  sql,
+  desc,
+  asc,
+  count,
+  gte,
+  lte,
+} from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("EventsController");
@@ -34,7 +45,7 @@ const EVENT_CATEGORIES = [
  */
 export const getEventStats = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     // Total events
@@ -50,8 +61,8 @@ export const getEventStats = async (
       .where(
         and(
           eq(alumni_events.status, "Open"),
-          gte(alumni_events.event_date, new Date())
-        )
+          gte(alumni_events.event_date, new Date()),
+        ),
       );
 
     // User's registered events
@@ -63,8 +74,8 @@ export const getEventStats = async (
         .where(
           and(
             eq(event_registrations.user_id, parseInt(req.user.id, 10)),
-            eq(event_registrations.status, "Registered")
-          )
+            eq(event_registrations.status, "Registered"),
+          ),
         );
       myEvents = myEventsResult[0]?.count || 0;
     }
@@ -90,13 +101,26 @@ export const getEventStats = async (
  */
 export const getAllEvents = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
-    const { page, limit, search, type, category, status, myEvents, startDate, endDate } = req.query;
+    const {
+      page,
+      limit,
+      search,
+      type,
+      category,
+      status,
+      myEvents,
+      startDate,
+      endDate,
+    } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 15));
+    const limitNum = Math.min(
+      50,
+      Math.max(1, parseInt(limit as string, 10) || 15),
+    );
     const offset = (pageNum - 1) * limitNum;
 
     // Build conditions
@@ -108,8 +132,8 @@ export const getAllEvents = async (
         or(
           ilike(alumni_events.title, `%${search}%`),
           ilike(alumni_events.description, `%${search}%`),
-          ilike(alumni_events.organizer, `%${search}%`)
-        )
+          ilike(alumni_events.organizer, `%${search}%`),
+        ),
       );
     }
 
@@ -130,10 +154,14 @@ export const getAllEvents = async (
 
     // Date range filters
     if (startDate) {
-      conditions.push(gte(alumni_events.event_date, new Date(startDate as string)));
+      conditions.push(
+        gte(alumni_events.event_date, new Date(startDate as string)),
+      );
     }
     if (endDate) {
-      conditions.push(lte(alumni_events.event_date, new Date(endDate as string)));
+      conditions.push(
+        lte(alumni_events.event_date, new Date(endDate as string)),
+      );
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -150,19 +178,22 @@ export const getAllEvents = async (
         .where(
           and(
             eq(event_registrations.user_id, userId),
-            eq(event_registrations.status, "Registered")
-          )
+            eq(event_registrations.status, "Registered"),
+          ),
         );
 
-      const eventIds = userRegistrations.map(r => r.eventId);
+      const eventIds = userRegistrations.map((r) => r.eventId);
 
       if (eventIds.length > 0) {
         conditions.push(
-          sql`${alumni_events.id} IN (${sql.join(eventIds.map(id => sql`${id}`), sql`, `)})`
+          sql`${alumni_events.id} IN (${sql.join(
+            eventIds.map((id: number) => sql`${id}`),
+            sql`, `,
+          )})`,
         );
       } else {
         // User has no registered events, return empty
-        return res.status(200).json({
+        res.status(200).json({
           events: [],
           pagination: {
             page: pageNum,
@@ -176,10 +207,12 @@ export const getAllEvents = async (
             categories: EVENT_CATEGORIES,
           },
         });
+        return;
       }
     }
 
-    const finalWhereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const finalWhereClause =
+      conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get total count
     const totalResult = await db
@@ -231,7 +264,7 @@ export const getAllEvents = async (
     const events = await query.limit(limitNum).offset(offset);
 
     // Get attendee counts and registration status for each event
-    const eventIds = events.map((e) => e.id);
+    const eventIds = events.map((e: any) => e.id);
     let attendeeCounts: Record<number, number> = {};
     let registrationStatus: Record<number, boolean> = {};
 
@@ -245,9 +278,12 @@ export const getAllEvents = async (
         .from(event_registrations)
         .where(
           and(
-            sql`${event_registrations.event_id} IN (${sql.join(eventIds.map((id) => sql`${id}`), sql`, `)})`,
-            eq(event_registrations.status, "Registered")
-          )
+            sql`${event_registrations.event_id} IN (${sql.join(
+              eventIds.map((id: number) => sql`${id}`),
+              sql`, `,
+            )})`,
+            eq(event_registrations.status, "Registered"),
+          ),
         )
         .groupBy(event_registrations.event_id);
 
@@ -263,10 +299,13 @@ export const getAllEvents = async (
           .from(event_registrations)
           .where(
             and(
-              sql`${event_registrations.event_id} IN (${sql.join(eventIds.map((id) => sql`${id}`), sql`, `)})`,
+              sql`${event_registrations.event_id} IN (${sql.join(
+                eventIds.map((id: number) => sql`${id}`),
+                sql`, `,
+              )})`,
               eq(event_registrations.user_id, userId),
-              eq(event_registrations.status, "Registered")
-            )
+              eq(event_registrations.status, "Registered"),
+            ),
           );
 
         userRegs.forEach((r) => {
@@ -283,11 +322,15 @@ export const getAllEvents = async (
       })
       .from(alumni_events);
 
-    const types = [...new Set(allEvents.map((e) => e.type).filter(Boolean))].sort();
-    const categories = [...new Set(allEvents.map((e) => e.category).filter(Boolean))].sort();
+    const types = [
+      ...new Set(allEvents.map((e) => e.type).filter(Boolean)),
+    ].sort();
+    const categories = [
+      ...new Set(allEvents.map((e) => e.category).filter(Boolean)),
+    ].sort();
 
     res.status(200).json({
-      events: events.map((e) => ({
+      events: events.map((e: any) => ({
         id: e.id,
         title: e.title,
         description: e.description,
@@ -340,10 +383,7 @@ export const getAllEvents = async (
 /**
  * Get single event
  */
-export const getEvent = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const getEvent = async (req: Request, res: Response): Promise<void> => {
   try {
     const eventId = parseInt(req.params.id, 10);
 
@@ -376,8 +416,8 @@ export const getEvent = async (
       .where(
         and(
           eq(event_registrations.event_id, eventId),
-          eq(event_registrations.status, "Registered")
-        )
+          eq(event_registrations.status, "Registered"),
+        ),
       );
 
     const attendees = attendeeResult[0]?.count || 0;
@@ -392,8 +432,8 @@ export const getEvent = async (
           and(
             eq(event_registrations.event_id, eventId),
             eq(event_registrations.user_id, parseInt(req.user.id, 10)),
-            eq(event_registrations.status, "Registered")
-          )
+            eq(event_registrations.status, "Registered"),
+          ),
         )
         .limit(1);
       isRegistered = regCheck.length > 0;
@@ -446,7 +486,7 @@ export const getEvent = async (
  */
 export const toggleRegistration = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -486,8 +526,8 @@ export const toggleRegistration = async (
       .where(
         and(
           eq(event_registrations.event_id, eventId),
-          eq(event_registrations.user_id, userId)
-        )
+          eq(event_registrations.user_id, userId),
+        ),
       )
       .limit(1);
 
@@ -518,8 +558,8 @@ export const toggleRegistration = async (
           .where(
             and(
               eq(event_registrations.event_id, eventId),
-              eq(event_registrations.status, "Registered")
-            )
+              eq(event_registrations.status, "Registered"),
+            ),
           );
 
         if ((attendeeCount[0]?.count || 0) >= event[0].max_attendees) {
@@ -544,8 +584,8 @@ export const toggleRegistration = async (
       .where(
         and(
           eq(event_registrations.event_id, eventId),
-          eq(event_registrations.status, "Registered")
-        )
+          eq(event_registrations.status, "Registered"),
+        ),
       );
 
     res.status(200).json({

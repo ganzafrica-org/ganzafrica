@@ -11,11 +11,16 @@ function LoadingScreen({
 }: {
   message?: string;
 }) {
+  const logoSrc =
+    process.env.NODE_ENV === "production"
+      ? "/alumni/images/logo.png"
+      : "/images/logo.png";
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="text-center w-full max-w-md px-4">
         <Image
-          src="/images/logo.png"
+          src={logoSrc}
           alt="GanzAfrica Logo"
           width={200}
           height={200}
@@ -40,6 +45,10 @@ function AuthCallbackContent() {
   const searchParams = useSearchParams();
   const [progress, setProgress] = useState(0);
   const [loadingStep, setLoadingStep] = useState("Initializing application");
+  const logoSrc =
+    process.env.NODE_ENV === "production"
+      ? "/alumni/images/logo.png"
+      : "/images/logo.png";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -135,7 +144,7 @@ function AuthCallbackContent() {
     <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="text-center w-full max-w-md px-4">
         <Image
-          src="/images/logo.png"
+          src={logoSrc}
           alt="GanzAfrica Logo"
           width={200}
           height={200}

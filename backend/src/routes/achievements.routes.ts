@@ -10,7 +10,7 @@ import {
   addComment,
   deleteComment,
 } from "../controllers/achievements";
-import { authenticate } from "../middlewares";
+import { authenticate, authorize } from "../middlewares";
 
 const router: Router = Router();
 
@@ -49,7 +49,12 @@ const router: Router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get("/stats", authenticate, getAchievementStats);
+router.get(
+  "/stats",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getAchievementStats,
+);
 
 /**
  * @swagger
@@ -178,7 +183,12 @@ router.get("/stats", authenticate, getAchievementStats);
  *                       items:
  *                         type: integer
  */
-router.get("/", authenticate, getAllAchievements);
+router.get(
+  "/",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getAllAchievements,
+);
 
 /**
  * @swagger
@@ -198,10 +208,17 @@ router.get("/", authenticate, getAllAchievements);
  *     responses:
  *       200:
  *         description: Achievement details with comments
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Achievement not found
  */
-router.get("/:id", authenticate, getAchievement);
+router.get(
+  "/:id",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  getAchievement,
+);
 
 /**
  * @swagger
@@ -250,8 +267,15 @@ router.get("/:id", authenticate, getAchievement);
  *         description: Bad request
  *       401:
  *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  */
-router.post("/", authenticate, createAchievement);
+router.post(
+  "/",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  createAchievement,
+);
 
 /**
  * @swagger
@@ -300,11 +324,16 @@ router.post("/", authenticate, createAchievement);
  *       200:
  *         description: Achievement updated successfully
  *       403:
- *         description: Forbidden - not owner
+ *         description: Forbidden - not owner or requires alumni/admin role
  *       404:
  *         description: Achievement not found
  */
-router.put("/:id", authenticate, updateAchievement);
+router.put(
+  "/:id",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  updateAchievement,
+);
 
 /**
  * @swagger
@@ -325,11 +354,16 @@ router.put("/:id", authenticate, updateAchievement);
  *       200:
  *         description: Achievement deleted successfully
  *       403:
- *         description: Forbidden - not owner
+ *         description: Forbidden - not owner or requires alumni/admin role
  *       404:
  *         description: Achievement not found
  */
-router.delete("/:id", authenticate, deleteAchievement);
+router.delete(
+  "/:id",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  deleteAchievement,
+);
 
 /**
  * @swagger
@@ -358,10 +392,17 @@ router.delete("/:id", authenticate, deleteAchievement);
  *                   type: boolean
  *                 likes:
  *                   type: integer
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Achievement not found
  */
-router.post("/:id/like", authenticate, toggleLike);
+router.post(
+  "/:id/like",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  toggleLike,
+);
 
 /**
  * @swagger
@@ -394,10 +435,17 @@ router.post("/:id/like", authenticate, toggleLike);
  *         description: Comment added successfully
  *       400:
  *         description: Content is required
+ *       403:
+ *         description: Forbidden - Requires alumni or admin role
  *       404:
  *         description: Achievement not found
  */
-router.post("/:id/comments", authenticate, addComment);
+router.post(
+  "/:id/comments",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  addComment,
+);
 
 /**
  * @swagger
@@ -424,10 +472,15 @@ router.post("/:id/comments", authenticate, addComment);
  *       200:
  *         description: Comment deleted successfully
  *       403:
- *         description: Forbidden - not owner
+ *         description: Forbidden - not owner or requires alumni/admin role
  *       404:
  *         description: Comment not found
  */
-router.delete("/:id/comments/:commentId", authenticate, deleteComment);
+router.delete(
+  "/:id/comments/:commentId",
+  authenticate,
+  authorize(["alumni", "admin"]),
+  deleteComment,
+);
 
 export default router;

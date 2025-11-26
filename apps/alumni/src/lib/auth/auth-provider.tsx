@@ -17,6 +17,7 @@ interface User {
   role_name?: string;
   role_id?: number;
   avatar_url?: string | null;
+  roles?: string[];
 }
 
 interface AuthContextType {
@@ -129,7 +130,15 @@ export function AuthProvider({
     window.location.href = `${portalUrl}/login?user=alumni`;
   };
 
-  const isAuthenticated = !!user;
+  // Check if user is authenticated AND has alumni or admin role
+  const isAuthenticated =
+    !!user &&
+    (user.role_name?.toLowerCase() === "alumni" ||
+      user.role_name?.toLowerCase() === "admin" ||
+      user.roles?.some(
+        (role) =>
+          role.toLowerCase() === "alumni" || role.toLowerCase() === "admin",
+      ));
 
   return (
     <AuthContext.Provider
