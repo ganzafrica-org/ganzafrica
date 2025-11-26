@@ -205,7 +205,8 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
       const teamProjects = teamProjectIds.filter(p => p.team_id === team.id);
       // Sum up attachment counts for all projects in this team
       const taskAttachmentCount = teamProjects.reduce((sum, project) => {
-        return sum + (attachmentCountMap.get(project.project_id) || 0);
+        const projectId = project.project_id;
+        return sum + (projectId !== null ? (attachmentCountMap.get(projectId) || 0) : 0);
       }, 0);
 
       return {
@@ -729,4 +730,3 @@ export const getReportAnalytics = async (req: Request, res: Response) => {
   }
 };
 
-export { upload };
