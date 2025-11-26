@@ -9,10 +9,11 @@ GanzAfrica Platform is a monorepo containing multiple applications for GanzAfric
 ## Architecture
 
 **Monorepo Structure:**
-- `apps/web/` - Public website (Next.js) - runs on localhost:3000
-- `apps/portal/` - Admin portal (Next.js) - runs on localhost:3001
-- `apps/internal/` - Internal platform for HR, CRM, hiring (Next.js) - runs on localhost:3003
-- `backend/` - Express.js API with DrizzleORM - runs on localhost:3002
+- `apps/web/` - Public website (Next.js) - localhost:3000
+- `apps/portal/` - Admin portal (Next.js) - localhost:3001
+- `apps/internal/` - Internal platform for HR, CRM, hiring (Next.js)
+- `apps/task/` - Task management app (Next.js) - localhost:3003
+- `backend/` - Express.js API with DrizzleORM - localhost:3002
 - `packages/ui/` - Shared UI components (shadcn/ui)
 - `packages/eslint-config/` - Shared ESLint configs
 - `packages/typescript-config/` - Shared TypeScript configs
@@ -49,6 +50,7 @@ GanzAfrica Platform is a monorepo containing multiple applications for GanzAfric
 - `pnpm --filter web dev` - Website development server
 - `pnpm --filter portal dev` - Admin portal development server
 - `pnpm --filter internal dev` - Internal platform development server
+- `pnpm --filter task dev` - Task management development server
 
 ## Database Setup
 
@@ -66,10 +68,11 @@ Database setup process:
 ## Key Patterns
 
 **Authentication:** PASETO-based authentication with HTTP-only cookies
-**API Structure:** Express routes in `backend/src/routes/`, controllers in `backend/src/controllers/`
+**API Structure:** Express routes in `backend/src/routes/`, controllers in `backend/src/controllers/`, services in `backend/src/services/`
+**Validation:** Zod schemas in `backend/src/validations/`
 **Database:** DrizzleORM with schema in `backend/src/db/schema/`, migrations in `backend/drizzle/`
 **Shared Components:** UI components in `packages/ui/` using shadcn/ui patterns
-**File Uploads:** AWS S3-compatible storage with multer and multer-s3
+**File Uploads:** AWS S3-compatible storage (Digital Ocean Spaces) with multer and multer-s3
 
 ## Package Manager
 
