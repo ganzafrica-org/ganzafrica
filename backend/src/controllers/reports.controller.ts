@@ -15,6 +15,7 @@ import { eq, and, gte, lte, desc, asc, sql, inArray } from "drizzle-orm";
 import upload from "../middlewares/upload";
 import { getFileSubdirectory, getFileUrl } from "../middlewares/upload";
 import { Logger } from "../config";
+import { userService } from "../services/user.service";
 
 const logger = new Logger("ReportsController");
 
@@ -142,7 +143,7 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
       }
     }
 
-    // Get teams with project and file counts
+    // Get teams with project and file counts from report_files
     const teams = await db
       .select({
         id: task_teams.id,
@@ -164,9 +165,56 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
       .groupBy(task_teams.id, task_teams.name, task_teams.description, task_teams.color, task_teams.status, task_teams.created_at)
       .orderBy(desc(task_teams.created_at));
 
+    // Get task attachment counts for all teams
+    const teamIds = teams.map(t => t.id);
+    const teamProjectIds = await db
+      .select({
+        team_id: task_team_projects.team_id,
+        project_id: task_team_projects.id
+      })
+      .from(task_team_projects)
+      .where(inArray(task_team_projects.team_id, teamIds));
+
+    const projectIds = teamProjectIds.map(p => p.project_id);
+    
+    const taskAttachmentCounts = await db
+      .select({
+        project_id: tasks.project_id,
+        attachment_count: sql<number>`sum(jsonb_array_length(${tasks.attachments}))`
+      })
+      .from(tasks)
+      .where(
+        and(
+          inArray(tasks.project_id, projectIds),
+          sql`${tasks.attachments} IS NOT NULL AND jsonb_array_length(${tasks.attachments}) > 0`
+        )
+      )
+      .groupBy(tasks.project_id);
+
+    // Create a map of project_id to attachment count
+    const attachmentCountMap = new Map<number, number>();
+    for (const count of taskAttachmentCounts) {
+      attachmentCountMap.set(count.project_id, Number(count.attachment_count));
+    }
+
+    // Combine file counts from report_files and task attachments
+    const teamsWithTotalFiles = teams.map(team => {
+      // Get all projects for this team
+      const teamProjects = teamProjectIds.filter(p => p.team_id === team.id);
+      // Sum up attachment counts for all projects in this team
+      const taskAttachmentCount = teamProjects.reduce((sum, project) => {
+        return sum + (attachmentCountMap.get(project.project_id) || 0);
+      }, 0);
+
+      return {
+        ...team,
+        file_count: Number(team.file_count) + taskAttachmentCount
+      };
+    });
+
     res.json({
       success: true,
-      data: teams
+      data: teamsWithTotalFiles
     });
   } catch (error) {
     logger.error('Error fetching teams with projects:', error);
@@ -319,37 +367,111 @@ export const getProjectFiles = async (req: Request, res: Response) => {
         title: tasks.title,
         attachments: tasks.attachments,
         created_at: tasks.created_at,
-        uploader: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
-        }
+        created_by: tasks.created_by,
       })
       .from(tasks)
-      .leftJoin(users, eq(tasks.created_by, users.id))
       .where(eq(tasks.project_id, Number(projectId)));
 
+    logger.info(`Found ${taskFiles.length} tasks for project ${projectId}`);
+
+    // Collect all unique user IDs from attachments and tasks
+    const userIds = new Set<number>();
+    for (const task of taskFiles) {
+      // Log attachment structure for debugging
+      if (task.attachments) {
+        logger.info(`Task ${task.id} attachments:`, {
+          type: typeof task.attachments,
+          isArray: Array.isArray(task.attachments),
+          length: Array.isArray(task.attachments) ? task.attachments.length : 'N/A',
+          sample: Array.isArray(task.attachments) && task.attachments.length > 0 ? task.attachments[0] : null
+        });
+      }
+      
+      if (task.attachments && Array.isArray(task.attachments)) {
+        for (const attachment of task.attachments) {
+          if (attachment.uploaded_by) {
+            userIds.add(attachment.uploaded_by);
+          }
+        }
+      }
+      if (task.created_by) {
+        userIds.add(task.created_by);
+      }
+    }
+    
+    logger.info(`Found ${userIds.size} unique user IDs for uploaders`);
+    
+    // Fetch all users in one go
+    const usersMap = new Map<number, { name: string; email: string }>();
+    for (const uid of userIds) {
+      try {
+        const user = await userService.getUserById(uid);
+        usersMap.set(uid, {
+          name: user.name || 'Unknown',
+          email: user.email || 'unknown@example.com'
+        });
+      } catch (error) {
+        // If user not found, use default
+        usersMap.set(uid, {
+          name: 'Unknown',
+          email: 'unknown@example.com'
+        });
+      }
+    }
 
     // Process task attachments into individual files
     const allTaskFiles = [];
     for (const task of taskFiles) {
-      if (task.attachments && Array.isArray(task.attachments)) {
-        for (const attachment of task.attachments) {
+      // Handle case where attachments might be a JSON string
+      let attachments = task.attachments;
+      if (typeof attachments === 'string') {
+        try {
+          attachments = JSON.parse(attachments);
+        } catch (e) {
+          logger.warn(`Failed to parse attachments JSON for task ${task.id}:`, e);
+          attachments = null;
+        }
+      }
+      
+      if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+        logger.info(`Processing ${attachments.length} attachments for task ${task.id}`);
+        for (const attachment of attachments) {
+          // Get uploader information
+          const uploaderId = attachment.uploaded_by || task.created_by;
+          const uploader = usersMap.get(uploaderId) || { name: 'Unknown', email: 'unknown@example.com' };
+          
+          // Extract file type from filename or type field
+          let fileType = 'unknown';
+          if ((attachment as any).type) {
+            fileType = (attachment as any).type.split('/')[1] || 'unknown';
+          }
+          if (fileType === 'unknown' && attachment.filename) {
+            const match = attachment.filename.match(/\.([^.]+)$/);
+            fileType = match ? match[1].toLowerCase() : 'unknown';
+          }
+          
+          // Get file size
+          const fileSize = (attachment as any).sizeKB ? (attachment as any).sizeKB * 1024 : ((attachment as any).size || 0);
+          
+          // Use uploaded_at if available, otherwise use task created_at
+          const createdAt = attachment.uploaded_at || task.created_at;
+          
           allTaskFiles.push({
             id: `task-${task.id}-${attachment.id}`,
             filename: attachment.filename,
             original_filename: attachment.filename,
-            file_type: 'unknown', // Task attachments don't store file type
-            file_size: 0, // Task attachments don't store file size
+            file_type: fileType,
+            file_size: fileSize,
             file_url: attachment.url,
-            created_at: task.created_at,
+            created_at: createdAt,
             metadata: {
               description: `Attachment from task: ${task.title}`,
               tags: ['task-attachment'],
               task_id: task.id,
-              task_title: task.title
+              task_title: task.title,
+              uploaded_by: uploaderId
             },
-            uploader: task.uploader
+            uploader: uploader
           });
         }
       }
@@ -360,6 +482,7 @@ export const getProjectFiles = async (req: Request, res: Response) => {
     const allFiles = [...reportFiles, ...allTaskFiles]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+    logger.info(`Total files found for project ${projectId}: ${allFiles.length} (${reportFiles.length} from report_files, ${allTaskFiles.length} from task attachments)`);
 
     // Apply pagination
     const paginatedFiles = allFiles.slice(offset, offset + Number(limit));

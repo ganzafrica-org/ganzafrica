@@ -144,7 +144,6 @@ export function WorkloadAnalyticsModal({
         days
       });
     } catch (error) {
-      console.error('Error calculating weekly analytics:', error);
     } finally {
       setLoading(false);
     }

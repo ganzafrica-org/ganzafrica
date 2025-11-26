@@ -104,7 +104,6 @@ export function TaskModal({
     try {
       // Validate taskId is a valid number
       if (!isValidTaskId(taskId)) {
-        console.error('Invalid task ID (task may not be saved yet):', taskId);
         return;
       }
       const numericId = parseInt(taskId);
@@ -139,7 +138,6 @@ export function TaskModal({
             const resp = await taskApi.getTaskTeamProjects();
             setTaskTeamProjects(resp.projects || []);
           } catch (e) {
-            console.error('Error loading task team projects:', e);
           }
         }
       }
@@ -190,7 +188,6 @@ export function TaskModal({
                 });
               } else if (!taskUsers.has(userId)) {
                 // If user object is missing and we don't have it in cache, log for debugging
-                console.warn(`User object not found for assignee with user_id: ${userId}. Assignee data:`, JSON.stringify(assignee, null, 2));
               }
             }
           });
@@ -222,7 +219,6 @@ export function TaskModal({
                 });
               } else if (!taskUsers.has(userId)) {
                 // If user object is missing and we don't have it in cache, log for debugging
-                console.warn(`User object not found for comment with user_id: ${userId}. Comment data:`, JSON.stringify(comment, null, 2));
               }
             }
           });
@@ -296,7 +292,6 @@ export function TaskModal({
                       return user.id;
                     }
                   } catch (error) {
-                    console.error('Error getting current user:', error);
                   }
                   return null;
                 })() : null;
@@ -311,7 +306,6 @@ export function TaskModal({
               setTaskTeamProjects(resp.projects || []);
               currentProjects = resp.projects || [];
             } catch (e) {
-              console.error('Error loading task team projects in loadFullTaskDetails:', e);
             }
           }
           
@@ -332,10 +326,8 @@ export function TaskModal({
               teamIdStr = String(mapped.team_id);
             }
           } else {
-            console.warn('⚠️ Project not found in taskTeamProjects for project_id:', response.task.project_id);
           }
         } else if (!teamInfo && !response.task.project_id) {
-          console.warn('⚠️ Task has no project_id and no team info, cannot determine team');
         }
 
         // Convert the API response to the expected format
@@ -396,7 +388,6 @@ export function TaskModal({
         }
       }
     } catch (error) {
-      console.error('Error loading full task details:', error);
       // Fallback to the original task if fetching fails
       setDraft(task);
     }
@@ -642,7 +633,6 @@ export function TaskModal({
           
           allMembers.push(...convertedMembers);
         } catch (error) {
-          console.error(`Error loading members for team ${teamId}:`, error);
         }
       }
       
@@ -706,7 +696,6 @@ export function TaskModal({
             // Try to get from teamMembers (already added to map above)
             // If still not found, try to fetch from backend (no dummy data)
             if (!map[assigneeId]) {
-              console.warn(`User info not found for assignee ID: ${assigneeId}. Attempting to fetch from backend.`);
               // Don't create dummy data - user info should come from backend
               // The user will be displayed with their ID until backend provides the info
             }
@@ -732,7 +721,6 @@ export function TaskModal({
               // Try to get from teamMembers (already added to map above)
               // If still not found, don't create dummy data - wait for backend
               if (!map[comment.userId]) {
-                console.warn(`User info not found for commenter ID: ${comment.userId}. Backend should provide user objects.`);
                 // Don't create dummy data - user info should come from backend
               }
             }
@@ -1053,7 +1041,6 @@ export function TaskModal({
         
         update({ comments: updatedComments });
       } catch (error) {
-        console.error('Error posting comment to backend:', error);
         // Comment was already added locally, so we keep it
         // The comment will be saved when the task is saved or can be retried
       }
@@ -1162,7 +1149,6 @@ export function TaskModal({
             uploadedAt: new Date().toISOString(),
           });
         } else {
-          console.error('Upload failed or no URL in response:', response.data);
           alert(`Failed to upload ${file.name}. Response: ${JSON.stringify(response.data)}`);
         }
       }
@@ -1227,7 +1213,6 @@ export function TaskModal({
         }
       }
     } catch (error) {
-      console.error('Error uploading files:', error);
       alert('Failed to upload files. Please try again. Check console for details.');
     }
     
@@ -2033,14 +2018,12 @@ export function TaskModal({
           
           // Validate task and comment IDs
           if (!isValidTaskId(draft.id as string)) {
-            console.error('Cannot update comment: Task must be saved first. Invalid task ID:', draft.id);
             setToast({ type: 'error', message: 'Invalid task ID' });
             return;
           }
           const taskNumericId = parseInt(draft.id as string);
           const commentNumericId = parseInt(editCommentId as string);
           if (isNaN(commentNumericId) || commentNumericId <= 0) {
-            console.error('Cannot update comment: Invalid IDs', { taskId: draft.id, commentId: editCommentId });
             setToast({ type: 'error', message: 'Invalid task or comment ID' });
             return;
           }
@@ -2082,14 +2065,12 @@ export function TaskModal({
           
           // Validate task and comment IDs
           if (!isValidTaskId(draft.id as string)) {
-            console.error('Cannot delete comment: Task must be saved first. Invalid task ID:', draft.id);
             setToast({ type: 'error', message: 'Invalid task ID' });
             return;
           }
           const taskNumericId = parseInt(draft.id as string);
           const commentNumericId = parseInt(deleteCommentId as string);
           if (isNaN(commentNumericId) || commentNumericId <= 0) {
-            console.error('Cannot delete comment: Invalid IDs', { taskId: draft.id, commentId: deleteCommentId });
             setToast({ type: 'error', message: 'Invalid task or comment ID' });
             return;
           }
@@ -2120,7 +2101,6 @@ export function TaskModal({
           
           // Validate task ID
           if (!isValidTaskId(draft.id)) {
-            console.error('Cannot delete task: Invalid task ID:', draft.id);
             setToast({ type: 'error', message: 'Invalid task ID' });
             return;
           }
@@ -2132,7 +2112,6 @@ export function TaskModal({
             onOpenChange(false);
             setToast({ type: 'success', message: 'Task deleted successfully' });
           } catch (error) {
-            console.error('Error deleting task:', error);
             setToast({ type: 'error', message: 'Failed to delete task' });
           } finally {
             setShowDeleteConfirm(false);

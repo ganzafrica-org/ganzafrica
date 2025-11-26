@@ -56,16 +56,6 @@ export function DataTable<T extends Record<string, any>>({
   // Get current page data
   const currentPageData = sortedData.slice(startIndex, endIndex);
   
-  // Debug pagination state
-  console.log('Pagination Debug:', {
-    currentPage,
-    totalPages,
-    dataLength: data.length,
-    startIndex,
-    endIndex,
-    currentPageDataLength: currentPageData.length
-  });
-
   // Handle sort
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -79,7 +69,6 @@ export function DataTable<T extends Record<string, any>>({
   // Handle page change
   const handlePageChange = (page: number) => {
     const newPage = Math.max(1, Math.min(totalPages, page));
-    console.log('Changing page from', currentPage, 'to', newPage);
     setCurrentPage(newPage);
   };
 
