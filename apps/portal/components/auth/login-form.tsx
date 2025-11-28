@@ -97,17 +97,11 @@ export function LoginForm({ userType }: LoginFormProps) {
           setLoginError(null);
           showSuccessToast({ message: "Login successful" });
 
-          // If user came from alumni login link, redirect directly to alumni app
+          // Always redirect to platform-selection first
+          // Platform-selection will call /me endpoint to get complete user data including role_name
+          // Then user can select which platform to access (or auto-redirect for alumni)
           if (userType === "alumni") {
-            const alumniAppUrl =
-              process.env.NEXT_PUBLIC_ALUMNI_URL || "http://localhost:3004";
-            const userData = localStorage.getItem("user");
-            const alumniUrl = new URL(`${alumniAppUrl}/auth-callback`);
-            alumniUrl.searchParams.set("token", response.data.token);
-            if (userData) {
-              alumniUrl.searchParams.set("user", encodeURIComponent(userData));
-            }
-            window.location.href = alumniUrl.toString();
+            router.push("/platform-selection?user=alumni");
           } else {
             router.push("/platform-selection");
           }
@@ -179,17 +173,10 @@ export function LoginForm({ userType }: LoginFormProps) {
 
         showSuccessToast({ message: "Authentication successful" });
 
-        // If user came from alumni login link, redirect directly to alumni app
+        // Always redirect to platform-selection first
+        // Platform-selection will call /me endpoint to get complete user data including role_name
         if (userType === "alumni") {
-          const alumniAppUrl =
-            process.env.NEXT_PUBLIC_ALUMNI_URL || "http://localhost:3004";
-          const userData = localStorage.getItem("user");
-          const alumniUrl = new URL(`${alumniAppUrl}/auth-callback`);
-          alumniUrl.searchParams.set("token", response.data.token);
-          if (userData) {
-            alumniUrl.searchParams.set("user", encodeURIComponent(userData));
-          }
-          window.location.href = alumniUrl.toString();
+          router.push("/platform-selection?user=alumni");
         } else {
           router.push("/platform-selection");
         }

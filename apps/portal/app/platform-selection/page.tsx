@@ -67,20 +67,13 @@ function PlatformSelectionContent(): React.JSX.Element {
         try {
           const parsedUser = JSON.parse(cachedUser);
           setUser(parsedUser);
-
-          // If user=alumni param is present and user fetched, redirect immediately
-          if (userTypeParam === "alumni") {
-            redirectToAlumni(token, cachedUser);
-            return;
-          }
-
-          setIsLoading(false);
+          // Don't redirect yet - wait for fresh API data with role_name
         } catch (error) {
           console.error("Error parsing cached user:", error);
         }
       }
 
-      // Then fetch fresh data from API in the background
+      // Fetch fresh data from API - this has complete user data including role_name
       try {
         const response = await apiClient.get("/users/profile/me");
         if (response.data && response.data.profile) {
@@ -95,26 +88,22 @@ function PlatformSelectionContent(): React.JSX.Element {
             email_verified: profile.email_verified,
           };
           setUser(userData);
-          // Also update localStorage with fresh data
+          // Update localStorage with fresh data that includes role_name
           localStorage.setItem("user", JSON.stringify(userData));
 
-          // If user=alumni param is present, redirect immediately
+          // NOW redirect if user=alumni param is present (after we have role_name)
           if (userTypeParam === "alumni") {
             redirectToAlumni(token, JSON.stringify(userData));
             return;
           }
 
-          if (!cachedUser) {
-            setIsLoading(false);
-          }
+          setIsLoading(false);
           return;
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
         // If API fails but we have cached data, keep using it
-        if (!cachedUser) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
 
       // Fallback: Get user data from localStorage (stored during login)
@@ -291,9 +280,10 @@ function PlatformSelectionContent(): React.JSX.Element {
 
   // Determine which cards to show
   const showPortal = isAdminOrManager(user);
-  const showAlumni = isAlumni(user);
-  // Alumni users should NOT see Task Management - only Alumni + Website
-  const showTask = !showAlumni;
+  // Show Alumni card to both alumni users AND admin/manager users
+  const showAlumni = isAlumni(user) || isAdminOrManager(user);
+  // Alumni users (not admin/manager) should NOT see Task Management - only Alumni + Website
+  const showTask = !isAlumni(user);
 
   // Calculate grid columns based on visible cards
   let visibleCards = 1; // Website is always visible
