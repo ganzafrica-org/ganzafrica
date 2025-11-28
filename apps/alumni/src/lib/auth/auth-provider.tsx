@@ -134,11 +134,16 @@ export function AuthProvider({
   const isAuthenticated: boolean =
     !!user &&
     !!(
-      user.role_name?.toLowerCase() === "alumni" ||
-      user.role_name?.toLowerCase() === "admin" ||
+      user.role_name?.toLowerCase().includes("alumni") ||
+      user.role_name?.toLowerCase().includes("admin") ||
+      user.role_name?.toLowerCase().includes("manager") ||
+      user.role_name?.toLowerCase().includes("staff") ||
       user.roles?.some(
         (role) =>
-          role.toLowerCase() === "alumni" || role.toLowerCase() === "admin",
+          role.toLowerCase().includes("alumni") ||
+          role.toLowerCase().includes("admin") ||
+          role.toLowerCase().includes("manager") ||
+          role.toLowerCase().includes("staff"),
       )
     );
 
