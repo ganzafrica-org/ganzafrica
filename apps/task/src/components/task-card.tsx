@@ -24,7 +24,6 @@ export function TaskCard({ task, members, onClick, hidePriority, isManager = fal
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLButtonElement>) => {
-    console.log('Drag started for task:', task.id, task.title);
     setIsDragging(true);
     e.dataTransfer.setData("text/task-id", task.id);
     e.dataTransfer.effectAllowed = "move";
@@ -35,7 +34,6 @@ export function TaskCard({ task, members, onClick, hidePriority, isManager = fal
   };
 
   const handleDragEnd = (e: React.DragEvent<HTMLButtonElement>) => {
-    console.log('Drag ended for task:', task.id);
     setIsDragging(false);
     setDragStartPos(null);
     e.currentTarget.style.opacity = "1";

@@ -26,7 +26,6 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
         const hasAccess = await isCurrentUserAdminOrManagerAsync();
         setUserHasAccess(hasAccess);
       } catch (error) {
-        console.error('Error checking user access in sidebar:', error);
         setUserHasAccess(false);
       }
     };
