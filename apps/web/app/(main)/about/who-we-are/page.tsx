@@ -50,6 +50,7 @@ interface PromiseCardProps {
   items?: string[];
   content?: string | string[];
   hasCurvedCorner?: boolean;
+  marginRight?: string;
 }
 
 interface PageProps {
@@ -137,12 +138,14 @@ const ValueCard: FC<ValueCardProps> = ({
   </div>
 );
 
+
 // Promise Card component
 const PromiseCard: FC<PromiseCardProps> = ({
   type,
   items,
   content,
   hasCurvedCorner = false,
+  marginRight = "",
 }) => {
   const bgColor = type === "partners" ? "bg-[#073392]" : "bg-green-800";
   const labelColor = type === "partners" ? "bg-primary-orange" : "bg-green-500";
@@ -151,7 +154,7 @@ const PromiseCard: FC<PromiseCardProps> = ({
   const iconBg = type === "partners" ? "bg-primary-orange" : "bg-green-600";
 
   return (
-    <div className={`${bgColor} rounded-3xl p-6 sm:p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
+    <div className={`${bgColor} ${marginRight} rounded-3xl p-6 sm:p-8 relative transition-all duration-300 border-0 mb-5 hover:-translate-y-1`}>
       <div className="flex items-center mb-4">
         <div
           className={`${labelColor} text-white font-bold md:text-xl rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm`}
@@ -185,12 +188,12 @@ const PromiseCard: FC<PromiseCardProps> = ({
       )}
       
       {hasCurvedCorner && (
-        <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" 
+        <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" 
              style={{ borderBottomLeftRadius: "100%" }} />
       )}
       
       {type === "fellows" && (
-        <div className="absolute -top-4 -right-4 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+        <div className="absolute -top-5 -right-5 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
           <Telescope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
         </div>
       )}
@@ -322,7 +325,7 @@ export default async function AboutPage(props: PageProps) {
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black opacity-70 z-10"></div>
+        <div className="absolute inset-0 bg-black opacity-70 z-0"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
@@ -441,7 +444,7 @@ export default async function AboutPage(props: PageProps) {
             </div>
             {/* Right side - Mission Cards */}
             <div className="w-full md:w-1/2 flex flex-col space-y-6 sm:space-y-8">
-              <div className="bg-[#073392] rounded-3xl p-6 sm:p-8 relative">
+              <div className="bg-[#073392] rounded-3xl p-6 sm:p-8 relative mr-5">
                 <div className="flex items-center mb-4">
                   <div className="bg-primary-orange text-white font-bold md:text-xl  rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
                     <span className="mr-2"></span> Our Vision
@@ -451,13 +454,15 @@ export default async function AboutPage(props: PageProps) {
                   {dict?.about?.aspirations?.mission_1 ||
                     "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"}
                 </p>
-                <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
-                <div className="absolute -top-4 -right-4 bg-primary-orange rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+
+                <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
+                
+                <div className="absolute -top-5 -right-5 bg-primary-orange rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
                   <Goal className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
               </div>
 
-              <div className="bg-green-800 rounded-3xl p-6 sm:p-8 relative">
+              <div className="bg-green-800 rounded-3xl p-6 sm:p-8 relative mr-5">
                 <div className="flex items-center mb-4">
                   <div className="bg-green-500 text-white md:text-xl font-bold rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm">
                     <span className="mr-2"></span> {dict?.about?.aspirations?.mission_label || "Our Mission"}
@@ -467,8 +472,8 @@ export default async function AboutPage(props: PageProps) {
                   {dict?.about?.aspirations?.mission_2 ||
                     "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."}
                 </p>
-                <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
-                <div className="absolute -top-4 -right-4 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+                <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
+                <div className="absolute -top-5 -right-5 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
                   <Telescope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
               </div>
@@ -548,7 +553,7 @@ export default async function AboutPage(props: PageProps) {
       </section>
      
       {/* Our Promise */}
-      <section className="py-8 sm:py-12 md:py-16 bg-white text-base md:text-xl ">
+      <section className="py-8 sm:py-12 md:py-16 bg-white text-base md:text-xl">
         <div className="flex justify-center mb-6 sm:mb-10">
           <DecoratedHeading
             firstText={dict?.about?.promise?.heading_first || "Our"}
@@ -560,7 +565,7 @@ export default async function AboutPage(props: PageProps) {
           <div className="w-full md:w-1/2 mb-4 md:mb-0">
             <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[600px]">
               <Image
-                src="/images/Subtract.png"
+                src="/images/_BAB8908.jpg"
                 alt="Two professionals shaking hands at Ministry of Environment event"
                 width={600}
                 height={500}
@@ -570,7 +575,7 @@ export default async function AboutPage(props: PageProps) {
           </div>
 
           {/* Right side - Content */}
-          <div className="w-full md:w-1/2 flex flex-col space-y-4 sm:space-y-6">
+          <div className="w-full md:w-1/2 flex flex-col space-y-4 sm:space-y-6 ">
             <PromiseCard
               type="partners"
               items={
@@ -590,6 +595,7 @@ export default async function AboutPage(props: PageProps) {
                   "Deliver work secondments with one of our partners to apply skills learned",
                 ]
               }
+              marginRight="mr-5"
               hasCurvedCorner={true}
             />
           </div>

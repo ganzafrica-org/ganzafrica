@@ -11,7 +11,7 @@ export default async function OurApproachPage({ params }: { params: Params }) {
 
   return (
     <>
-      <Header locale={locale} />
+      <Header />
       <OurApproachPageContent />
     </>
   );

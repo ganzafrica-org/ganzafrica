@@ -47,9 +47,8 @@ interface HeaderProps {
   locale: string;
 }
 
-export default function Header({ locale }: HeaderProps) {
+export default function Header() {
   const pathname = usePathname();
-  const dict = useDict();
 
   // Check if we're on the homepage
   const isHomePage = pathname === `/` || pathname === "/";
@@ -59,7 +58,6 @@ export default function Header({ locale }: HeaderProps) {
       {isHomePage ? (
         // For homepage, use the HomeHero component which includes navigation and hero section
         <HomeHero
-          locale={locale}
           backgroundImage="/images/hero-test.jpg"
         />
       ) : (

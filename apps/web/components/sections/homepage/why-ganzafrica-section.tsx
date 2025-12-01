@@ -24,7 +24,7 @@ const ColoredCheckCircle = ({
         className="absolute inset-0 rounded-full"
         style={{ backgroundColor: color, zIndex: 1 }}
       ></div>
-      <CircleCheck className="relative z-10 text-white" />
+      <CircleCheck className="relative z-10 text-white w-full h-full" />
     </div>
   );
 };
@@ -90,7 +90,7 @@ export default function WhyGanzAfricaSection({
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           {/* Left side - Enhanced Content Card */}
           <div className="w-full lg:w-1/2 lg:-mr-12 relative z-20">
-            <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-3 sm:p-4 md:p-5 lg:p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 h-[350px] sm:h-[450px] lg:h-[550px] flex flex-col">
+            <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-3 sm:p-4 md:p-5 lg:p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 h-auto sm:h-[450px] lg:h-[550px] flex flex-col">
               {/* Enhanced Heading */}
               <div className="mb-2 sm:mb-3 lg:mb-4">
                 <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-1 sm:mb-2">
@@ -101,7 +101,7 @@ export default function WhyGanzAfricaSection({
                     {dict.home?.why_section?.heading_second || "GanzAfrica?"}
                   </span>
                 </h2>
-                <div className="w-10 sm:w-12 h-0.5 sm:h-1 bg-gradient-to-r from-primary-green to-primary-orange rounded-full"></div>
+                {/* <div className="w-10 sm:w-12 h-0.5 sm:h-1 bg-gradient-to-r from-primary-green to-primary-orange rounded-full"></div> */}
               </div>
 
               {/* Enhanced Bullet Points */}
@@ -116,12 +116,12 @@ export default function WhyGanzAfricaSection({
                 >
                   <div className="mt-0.5 relative flex-shrink-0">
                     <div 
-                      className="absolute -inset-1 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      className="absolute -inset-0.5 sm:-inset-1 md:-inset-1.5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                       style={{ backgroundColor: "rgba(255, 140, 0, 0.2)" }}
                     ></div>
                     <ColoredCheckCircle
-                      color="  #f8b712"
-                      className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
+                      color="#f8b712"
+                      className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -151,12 +151,12 @@ export default function WhyGanzAfricaSection({
                 >
                   <div className="mt-0.5 relative flex-shrink-0">
                     <div 
-                      className="absolute -inset-1 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      className="absolute -inset-0.5 sm:-inset-1 md:-inset-1.5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                       style={{ backgroundColor: "rgba(7, 51, 146, 0.2)" }}
                     ></div>
                     <ColoredCheckCircle
                       color="#073392"
-                      className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
+                      className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -186,12 +186,12 @@ export default function WhyGanzAfricaSection({
                 >
                   <div className="mt-0.5 relative flex-shrink-0">
                     <div 
-                      className="absolute -inset-1 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      className="absolute -inset-0.5 sm:-inset-1 md:-inset-1.5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                       style={{ backgroundColor: "rgba(255, 215, 0, 0.3)" }}
                     ></div>
                     <ColoredCheckCircle
                       color="#FFD700"
-                      className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
+                      className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -221,12 +221,12 @@ export default function WhyGanzAfricaSection({
                 >
                   <div className="mt-0.5 relative flex-shrink-0">
                     <div 
-                      className="absolute -inset-1 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      className="absolute -inset-0.5 sm:-inset-1 md:-inset-1.5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                       style={{ backgroundColor: "rgba(7, 51, 146, 0.2)" }}
                     ></div>
                     <ColoredCheckCircle
                       color="#073392"
-                      className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
+                      className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">

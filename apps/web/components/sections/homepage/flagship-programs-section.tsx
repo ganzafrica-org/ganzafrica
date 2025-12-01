@@ -54,7 +54,7 @@ export default function FlagshipProgramsSection({
           dict?.programs?.fellowship?.description ||
           "Our fellowship program provides young leaders with the skills and opportunities to drive sustainable change in their communities across Africa. This immersive experience helps develop essential leadership qualities and technical expertise.",
       image: "/images/amiteam.jpg",
-      link: `/${locale}/programs/fellowship`,
+      link: "/programs/fellowship",
       date: "Year-round",
       iconColor: "#073392", // primary-blue
       icon: <FellowshipIcon />
@@ -66,7 +66,7 @@ export default function FlagshipProgramsSection({
           dict?.programs?.alumni?.description ||
           "Building a network of skilled professionals driving Africa's transformation in land, agriculture, and environment. Our alumni continue to innovate, lead, and create positive change across the continent.",
       image: "/images/alumni_program.jpg",
-      link: `/${locale}/programs/alumni`,
+      link: "/programs/alumni",
       date: "Year-round",
       iconColor: "#F8B712", // primary-orange equivalent
       icon: <AlumniIcon />
@@ -90,12 +90,12 @@ export default function FlagshipProgramsSection({
                     key={program.id}
                     style={{
                       position: 'relative',
-                      width: '350px',
+                      width: '450px',
                       height: '350px',
                       borderRadius: '3px',
                       boxShadow: '0 1px 4px rgba(0, 0, 0, 0.3)',
                       overflow: 'hidden',
-                      margin: '1rem'
+                      margin: '0rem'
                     }}
                 >
                   <div

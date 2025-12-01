@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { PlayCircle, PauseCircle } from "lucide-react";
+import { PlayCircle, PauseCircle, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { useDict } from '@/context/dictionary';
@@ -13,6 +13,8 @@ interface KeyElement {
   description: string;
   icon: React.ReactNode; // Changed to ReactNode for inline SVGs
   color: string;
+  imageUrl?: string;
+  isHighlighted?: boolean;
 }
 
 interface GanzAfricaUniqueSectionProps {
@@ -63,7 +65,8 @@ export default function GanzAfricaUniqueSection({
           dict?.unique?.elements?.data?.description ||
           "We champion a data & evidence-based approach, equipping our fellows with key skills in data analytics to support evidence-informed decisions and policies.",
       icon: <DataIcon />, // Custom SVG icon
-      color: "#f8b712", // Yellow
+      color: "#FFB800", // Deep amber
+      imageUrl: "/images/Fellows3.jpeg",
     },
     {
       title: dict?.unique?.elements?.implementation?.title || "Implementation",
@@ -71,7 +74,9 @@ export default function GanzAfricaUniqueSection({
           dict?.unique?.elements?.implementation?.description ||
           "We go beyond ideas, cultivating a generation of young african leaders with the skills and resources to translate their vision into reality, implementing solutions to improve community livelihoods in Africa.",
       icon: <ImplementationIcon />, // Custom SVG icon
-      color: "#009758", // Green
+      color: "#166534", // Deep blue
+      imageUrl: "/images/Fellows1.jpeg",
+      isHighlighted: true,
     },
     {
       title:
@@ -80,7 +85,8 @@ export default function GanzAfricaUniqueSection({
           dict?.unique?.elements?.public_sector?.description ||
           "We aim to solve endemic and important public sector challenges, based on the belief that only solutions at this level lead to large-scale and long-lasting impact in agriculture and food systems.",
       icon: <PublicSectorIcon />, // Custom SVG icon
-      color: "#073392", // Blue
+      color: "#073392",// Deep green
+      imageUrl: "/images/amiteam.jpg",
     },
   ];
 
@@ -151,31 +157,31 @@ export default function GanzAfricaUniqueSection({
 
         <div className="container mx-auto px-4 relative z-10">
           <motion.div 
-            className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center"
+            className="space-y-10"
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-100px" }}
             variants={container}
           >
-            {/* Left column with title and video */}
+            {/* Title */}
             <div>
               <motion.div 
                 className="space-y-6"
                 variants={item}
               >
                 <motion.div 
-                  className="space-y-2"
+                  className="space-y-2 flex justify-center items-center"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.6 }}
                 >
-                <DecoratedHeading
-                firstText={dict.home?.unique?.title_first || "3 Key Elements that make"}
-                secondText={dict.home?.unique?.title_second || "GanzAfrica Unique"}
-              />
+                  <DecoratedHeading
+                    firstText={dict.home?.unique?.title_first || "3 Key Elements that make"}
+                    secondText={dict.home?.unique?.title_second || "GanzAfrica Unique"}
+                  />
                 </motion.div>
-                <motion.div 
+                {/* <motion.div 
                   className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"
                   variants={videoContainer}
                   whileHover={{ scale: 1.02 }}
@@ -225,51 +231,76 @@ export default function GanzAfricaUniqueSection({
                       )}
                     </AnimatePresence>
                   </motion.button>
-                </motion.div>
+                </motion.div> */}
               </motion.div>
             </div>
 
-            {/* Right column with key elements */}
+            {/* Key elements as cards below title */}
             <div className="space-y-6">
               <motion.div 
                 className="space-y-4 relative"
                 variants={item}
               >
                 <div className="absolute -left-6 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-neutral-100 z-10 pointer-events-none"></div>
-                <div className="relative space-y-4 pl-2 pr-1 py-4 overflow-visible">
+                <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 pl-2 pr-1 py-4 overflow-visible">
                   <div className="absolute -right-6 top-0 bottom-0 w-6 bg-gradient-to-l from-neutral-100 to-transparent z-10 pointer-events-none"></div>
                   {keyElements.map((element, index) => (
-                      <motion.div
-                          key={index}
-                          className={`p-5 rounded-lg bg-white bg-opacity-90 backdrop-blur-sm border-l-4`}
-                          style={{ borderLeftColor: element.color }}
-                          variants={item}
-                          whileHover={{ 
-                            scale: 1.02,
-                            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)"
-                          }}
-                      >
-                        <div className="flex items-start space-x-4">
-                          <motion.div
-                              className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
-                              style={{ backgroundColor: element.color }}
-                              whileHover={{ rotate: 10, scale: 1.1 }}
-                              transition={{ type: "spring", stiffness: 300 }}
-                          >
-                            {React.cloneElement(element.icon as React.ReactElement, { 
-                              className: 'w-6 h-6 text-white' 
-                            })}
-                          </motion.div>
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold mb-2" style={{ color: element.color }}>
-                              {element.title}
-                            </h3>
-                            <p className="text-gray-700">
-                              {element.description}
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
+                    <motion.div
+                      key={index}
+                      className={`relative rounded-2xl overflow-hidden transition-all ${
+                        element.isHighlighted
+                          ? "bg-amber-50 shadow-lg border-2 border-amber-200"
+                          : "bg-slate-50 shadow-md border border-gray-200 hover:shadow-lg"
+                      }`}
+                      variants={item}
+                      whileHover={{ 
+                        scale: 1.02,
+                        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)"
+                      }}
+                    >
+                      {/* Image Banner at Top */}
+                      <div className="h-32 overflow-hidden">
+                        {element.imageUrl ? (
+                          <Image
+                            src={element.imageUrl}
+                            alt={element.title}
+                            width={800}
+                            height={200}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-blue-900" />
+                        )}
+                      </div>
+
+                      {/* Icon - Overlapping Image and Content */}
+                      <div className="absolute left-6 top-20 flex h-20 w-20 items-center justify-center rounded-full border-4 border-white shadow-lg"
+                           style={{ backgroundColor: element.color }}>
+                        {element.icon}
+                      </div>
+
+                      {/* Content Area */}
+                      <div className="pt-12 px-8 pb-8">
+                        {/* Title */}
+                        <h3 className="mb-4 text-xl font-bold" style={{ color: element.color }}>
+                          {element.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="mb-6 text-sm text-gray-700 leading-relaxed">
+                          {element.description}
+                        </p>
+
+                        {/* Learn More Link */}
+                        <button
+                          type="button"
+                          className="flex items-center gap-2 text-amber-700 font-semibold hover:text-amber-800 transition-colors"
+                        >
+                          Learn more
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>

@@ -198,7 +198,7 @@ export default function Navigation({
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-50 bg-white w-screen h-screen overflow-y-auto md:hidden">
+      <div className="fixed inset-0 z-60 bg-white w-screen h-screen overflow-y-auto md:hidden">
         <div className="flex justify-between items-center px-4 py-4 border-b">
           <Link href='/' className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="relative h-14 w-24">

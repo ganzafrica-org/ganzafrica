@@ -207,9 +207,11 @@ export default function HowToApplyPageContent() {
         </div>
       </section>
 
-      <div className="w-full overflow-hidden">
-        <div className="flex justify-center"><HeaderBelt /></div>
-      </div>
+      {/* <div className="w-full overflow-hidden">
+        <div className="flex justify-center"> */}
+          <HeaderBelt />
+        {/* </div> */}
+      {/* </div> */}
 
       <section className="relative py-20 bg-[url('/images/pattern-bg.png')] bg-repeat">
         <div className="absolute inset-0 bg-white/80"></div>

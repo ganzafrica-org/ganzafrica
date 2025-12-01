@@ -330,7 +330,7 @@ if (selectedType !== "all") {
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
+        <div className="absolute inset-0 bg-black/70 z-0"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">

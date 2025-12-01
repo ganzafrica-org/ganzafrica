@@ -6,7 +6,7 @@ import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Leaf, Send, CheckCircle2, Building2, AlertCircle } from "lucide-react";
 import { safeAccess } from "@/lib/utils/safeAccess";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/lib/api-client";
 import { useDict } from '@/context/dictionary';
 
@@ -20,7 +20,7 @@ const ContactUsContent: React.FC = () => {
         location: "rwanda", 
     });
 
-    const [showPointer, setShowPointer] = useState(true);
+    const [isPointerActive, setIsPointerActive] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [formSuccess, setFormSuccess] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
@@ -108,10 +108,6 @@ const ContactUsContent: React.FC = () => {
         }
     };
 
-    const handlePointerClick = () => {
-        setShowPointer(false);
-    };
-
     const fadeInUp = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
@@ -186,13 +182,13 @@ const ContactUsContent: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Contact Form */}
                         <motion.div 
-                            className="space-y-6"
+                            className="space-y-8 flex flex-col justify-center items-start"
                             variants={fadeInUp}
                             initial="hidden"
                             animate="visible"
                         >
                             <motion.h2 
-                                className="text-2xl font-bold text-[#005c3d] mb-6"
+                                className="text-2xl font-bold text-[#005c3d] "
                                 variants={itemFadeIn}
                             >
                                 {dict?.contact?.form?.title || "Send Us a Message"}
@@ -222,12 +218,12 @@ const ContactUsContent: React.FC = () => {
                             
                             <motion.form 
                                 onSubmit={handleSubmit} 
-                                className="space-y-6"
+                                className="space-y-8"
                                 variants={staggerContainer}
                                 initial="hidden"
                                 animate="visible"
                             >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             {dict?.contact?.form?.nameLabel || "Name"} *
@@ -455,36 +451,48 @@ const ContactUsContent: React.FC = () => {
                             referrerPolicy="no-referrer-when-downgrade"
                             title="GanzAfrica Rwanda Location"
                         ></iframe>
-                        {showPointer && (
-                            <motion.div 
-                                className="absolute top-[48%] left-[48%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-opacity duration-300"
-                                onClick={handlePointerClick}
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.8, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <motion.div 
-                                    className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-4 border-2 border-[#005c3d] hover:scale-105 transition-transform duration-300"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <div className="flex flex-col items-center space-y-2">
-                                        <div className="flex-shrink-0 bg-white p-2">
-                                            <img 
-                                                src="/images/logo.png" 
-                                                alt="GanzAfrica Logo" 
-                                                className="h-12 w-auto object-contain"
-                                            />
+                        <div className="absolute inset-0 pointer-events-none">
+                            <div
+                                className="absolute top-[38%] left-[52%] w-16 h-16 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+                                onMouseEnter={() => setIsPointerActive(true)}
+                                onMouseLeave={() => setIsPointerActive(false)}
+                                onFocus={() => setIsPointerActive(true)}
+                                onBlur={() => setIsPointerActive(false)}
+                                tabIndex={0}
+                                aria-label={dict?.contact?.office?.mapLabel || "Rwanda Office location"}
+                            />
+
+                            <AnimatePresence>
+                                {isPointerActive && (
+                                    <motion.div 
+                                        key="pointer-card"
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="absolute top-[28%] left-[51%] -translate-x-1/2 -translate-y-full pointer-events-none"
+                                    >
+                                        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-4 border-2 border-[#005c3d] w-48 text-center">
+                                            <div className="flex flex-col items-center space-y-2">
+                                                <div className="flex-shrink-0 bg-white p-2">
+                                                    <img 
+                                                        src="/images/logo.png" 
+                                                        alt="GanzAfrica Logo" 
+                                                        className="h-12 w-auto object-contain"
+                                                    />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-medium text-[#005c3d]">
+                                                        {dict?.contact?.office?.mapLabel || "Rwanda Office"}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="text-center">
-                                            <p className="text-sm font-medium text-[#005c3d]">{dict?.contact?.office?.mapLabel || "Rwanda Office"}</p>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                                <div className="w-4 h-4 bg-[#005c3d] rotate-45 mx-auto -mt-2"></div>
-                            </motion.div>
-                        )}
+                                        {/* <div className="w-4 h-4 bg-[#005c3d] rotate-45 mx-auto -mt-2 border-2 border-white"></div> */}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </motion.div>
                 </motion.div>
             </div>

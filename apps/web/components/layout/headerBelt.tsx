@@ -8,10 +8,10 @@ import React from "react";
 const HeaderBelt = () => {
   return (
     <div 
-      className="w-full relative overflow-hidden -mt-12" 
+      className="w-full relative overflow-hidden -mt-12 z-10 pointer-events-none" 
       style={{ 
         height: '60px',
-        zIndex: 9999,
+        zIndex: 0,
         position: 'relative'
       }}
     >

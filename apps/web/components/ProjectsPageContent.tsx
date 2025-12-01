@@ -199,7 +199,6 @@ export default function ProjectsPageContent() {
   const [totalProjects, setTotalProjects] = useState(0);
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const projectsGridRef = useRef<HTMLDivElement>(null);
-  const bannerRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [projectsPerPage] = useState(6);
   const [totalPages, setTotalPages] = useState(1);
@@ -293,9 +292,6 @@ export default function ProjectsPageContent() {
     if (projectsGridRef.current) {
       gsap.from(".project-card", { y: 50, opacity: 0, duration: 0.5, stagger: 0.1, ease: "power3.out" });
     }
-    if (bannerRef.current) {
-      gsap.from(bannerRef.current, { y: -50, opacity: 0, duration: 1, ease: "power3.out" });
-    }
     return () => clearTimeout(timer);
   }, [isPageLoaded, loading]);
 
@@ -344,16 +340,14 @@ export default function ProjectsPageContent() {
         <div className="absolute inset-0 z-0">
           <Image src="/images/news/maize.avif" alt={dict?.projects?.heroAlt || 'Agricultural fields'} fill sizes="100vw" className="object-cover" priority />
         </div>
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
+        <div className="absolute inset-0 bg-black/70 z-0"></div>
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
           <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">{dict?.projects?.heroTitle || 'PROJECTS'}</h2>
           <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"><span>{dict?.projects?.heroSubtitle || 'Turning Ideas Into Action'}</span></h1>
         </div>
       </section>
 
-      <div ref={bannerRef} className="w-full overflow-hidden">
-        <div className="flex justify-center"><HeaderBelt /></div>
-      </div>
+      <HeaderBelt />
 
       <div className="max-w-6xl mx-auto px-4 py-8 bg-white">
       {loading && (

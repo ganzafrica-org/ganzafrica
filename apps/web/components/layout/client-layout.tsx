@@ -28,7 +28,7 @@ export default function ClientLayout({
     >
       <DictionaryProvider dict={dict}>
         <div className="relative flex min-h-screen flex-col">
-          <Header locale={locale} />
+          <Header />
           <GoogleTranslate /> {/* Render the Google Translate widget here */}
           <div className="flex-1">{children}</div>
           <Footer locale={locale} />

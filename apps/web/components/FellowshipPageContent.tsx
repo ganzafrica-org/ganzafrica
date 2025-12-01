@@ -338,7 +338,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               transition={{ duration: 0.8, delay: 0.4 }}
               className="flex items-center justify-center gap-4"
             >
-              <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
+              <Link href="/programs/fellowship/how-to-apply">
                 <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
                   {dict?.fellowship?.hero?.cta || "How to Apply"}
                 </Button>
@@ -434,7 +434,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                 {dict?.fellowship?.about?.description || "Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners."}
               </p>
               
-              <Link href={`/${locale}/programs/fellowship/how-to-apply`}>
+              <Link href="/programs/fellowship/how-to-apply">
                 <motion.button
                   className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white px-6 py-3 rounded-md font-medium transition-colors"
                   whileHover={{ scale: 1.05 }}
@@ -487,7 +487,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               <p className="text-gray-600 text-sm md:text-base mb-8">
                 {dict?.fellowship?.discover?.description || "Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life."}
               </p>
-              <Link href={`/${locale}/about/team`}>
+              <Link href="/about/team">
                 <motion.button
                   className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
                   whileHover={{ scale: 1.05 }}
@@ -563,19 +563,33 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               className="bg-white rounded-[16px] overflow-hidden border border-gray-100 h-full"
             >
               <div className="p-3">
-                <div className="rounded-xl overflow-hidden relative h-[600px]">
+                <div className="rounded-xl overflow-hidden relative lg:h-[580px]">
+                  {/* LARGE DEVICES */}
                   <Image
                     src="/images/ganzafrica-fellows.jpg"
                     alt={benefits[2]?.title || "Develop Your Skills"}
                     width={800}
                     height={600}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover hidden md:block"
                     style={{
                       objectPosition: "center center",
                       objectFit: "cover"
                     }}
                     priority
                   />
+                  {/* SMALL DEVICES */}
+                  <div className="p-3 md:hidden">
+                    <div className="rounded-xl overflow-hidden relative">
+                      <img
+                        src={benefits[2]?.image}
+                        alt={benefits[2]?.title || "Develop Your Skills"}
+                        width={600}
+                        height={200}
+                        className="w-full h-[200px] object-cover"
+                        style={{ objectPosition: "center center" }}
+                      />
+                    </div>
+                </div>
                 </div>
               </div>
               <div className="p-6">

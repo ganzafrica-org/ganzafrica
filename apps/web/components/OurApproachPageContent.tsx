@@ -14,7 +14,7 @@ const fadeIn = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
+    transition: { 
       duration: 0.6,
       ease: "easeOut",
     },
@@ -40,7 +40,7 @@ export default function OurApproachPageContent() {
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/60 z-10"></div>
+        <div className="absolute inset-0 bg-black/60 z-0"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
@@ -64,12 +64,7 @@ export default function OurApproachPageContent() {
         </div>
       </section>
 
-      {/* Banner Section */}
-      <div className="w-full overflow-hidden">
-        <div className="flex justify-center">
-          <HeaderBelt />
-        </div>
-      </div>
+      <HeaderBelt />
       
       {/* Page Content */}
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>

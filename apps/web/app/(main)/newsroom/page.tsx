@@ -249,7 +249,7 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
   const imageUrl = getCoverImage();
 
   return (
-      <Link href={`/${locale}/newsroom/${slug}`} className="block group">
+      <Link href={`/newsroom/${slug}`} className="block group">
         <div className="relative bg-white rounded-[24px] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl border border-gray-200">
           <div className="relative aspect-[16/10]">
             {/* Image Container - Modified to push images down for better face visibility */}
@@ -430,7 +430,7 @@ const NewsroomPage = () => {
   </div>
   
   {/* Dark overlay */}
-  <div className="absolute inset-0 bg-black/70 z-10"></div>
+  <div className="absolute inset-0 bg-black/70 z-0"></div>
 
   {/* Content */}
   <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">

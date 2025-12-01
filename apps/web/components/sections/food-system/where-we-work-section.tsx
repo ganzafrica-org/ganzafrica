@@ -42,14 +42,10 @@ const WhereWeWorkSection = () => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.7 }}
         >
-          {/* <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                        <span>Where does our </span>
-                        <span className="text-primary-green">work reside?</span>
-                    </h2> */}
-          <p className="text-gray-600 max-w-3xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 max-w-5xl mx-auto mb-4 leading-tight">
             Our holistic approach addresses challenges and leverages
             opportunities in 3 main sectors.
-          </p>
+          </h1>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">

@@ -233,7 +233,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                 <div className="h-48 bg-gray-200 perspective-element"></div>
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-4 h-4 bg-gray-200 animate-pulse rounded-full"></div>
+                    <div className="w-4 h-4 bg-gray-200 animate-pulse rounded-md"></div>
                     <div className="w-24 h-4 bg-gray-200 animate-pulse rounded"></div>
                   </div>
                   <div className="h-6 w-3/4 bg-gray-200 animate-pulse rounded mb-3"></div>
@@ -318,7 +318,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                   >
                     {/* Category badge */}
                     {newsItem.category_name && (
-                      <span className="absolute top-3 left-3 bg-primary-green text-white text-xs font-semibold px-2.5 py-1 rounded-full z-10">
+                      <span className="absolute top-3 left-3 bg-primary-green text-white text-xs font-semibold px-2.5 py-1 rounded-sm z-10">
                         {newsItem.category_name}
                       </span>
                     )}
@@ -365,7 +365,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
         {newsItems.length > 0 && (
           <div className="text-center mt-12">
             <Link
-              href={`/${locale}/newsroom`}
+              href="/newsroom"
               className={cn(
                 "inline-flex items-center gap-2",
                 "bg-primary-green hover:bg-primary-green/90",
@@ -385,7 +385,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
       <style jsx global>{`
         .news-card {
           position: relative;
-          border-radius: 24px;
+          border-radius: 10px;
           background: white;
           box-shadow: 0 6px 16px rgba(0,0,0,0.08);
           overflow: hidden;
@@ -420,7 +420,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
           height: 100%;
           background-size: cover;
           background-position: center;
-          border-radius: 24px 24px 0 0;
+          border-radius: 10px 10px 0 0;
           transform: translateZ(0) rotateY(-5deg) scale(1.05);
           transform-origin: right center;
           box-shadow: -8px 5px 10px rgba(0,0,0,0.1);
