@@ -25,6 +25,7 @@ import jobsRoutes from "./jobs.routes";
 import achievementsRoutes from "./achievements.routes";
 import resourcesRoutes from "./resources.routes";
 import eventsRoutes from "./events.routes";
+import googleCalendarRoutes from "./google-calendar.routes";
 
 const router: Router = Router();
 
@@ -55,5 +56,6 @@ router.use("/jobs", jobsRoutes);
 router.use("/achievements", achievementsRoutes);
 router.use("/resources", resourcesRoutes);
 router.use("/events", eventsRoutes);
+router.use("/google-calendar", googleCalendarRoutes);
 
 export default router;

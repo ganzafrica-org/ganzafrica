@@ -35,6 +35,7 @@ const envSchema = z.object({
   // URLs
   WEBSITE_URL: z.string().url(),
   PORTAL_URL: z.string().url(),
+  TASK_URL: z.string().url().nullish(),
 
   // Authentication
   SESSION_SECRET: z.string().min(32),
@@ -43,11 +44,27 @@ const envSchema = z.object({
   ACCESS_TOKEN_EXPIRY: z.string().default("24h"),
   REFRESH_TOKEN_EXPIRY: z.string().default("30d"),
 
-  // Email
-  EMAIL_FROM: z.string().email(),
-  EMAIL_PASSWORD: z.string(),
-  SMTP_HOST: z.string(),
-  SMTP_PORT: z.coerce.number(),
+  // Email (optional - only required if email functionality is used)
+  EMAIL_FROM: z.string().nullish(),
+  EMAIL_PASSWORD: z.string().nullish(),
+  SMTP_HOST: z.string().nullish(),
+  SMTP_PORT: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null || val === "") return undefined;
+      const num = Number(val);
+      return isNaN(num) ? undefined : num;
+    },
+    z.number().nullish()
+  ),
+  // Support EMAIL_PORT as alias for SMTP_PORT (can be used instead of SMTP_PORT)
+  EMAIL_PORT: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null || val === "") return undefined;
+      const num = Number(val);
+      return isNaN(num) ? undefined : num;
+    },
+    z.number().nullish()
+  ),
 
   // Security
   CORS_ORIGINS: z.string().transform((val) => val.split(",")),
@@ -59,6 +76,11 @@ const envSchema = z.object({
   DO_SPACES_SECRET_KEY: z.string(),
   DO_SPACES_BUCKET: z.string(),
   DO_SPACES_CDN_URL: z.string().url().optional(),
+
+  // Google Calendar (optional - only required if Google Calendar integration is used)
+  GOOGLE_CALENDAR_CLIENT_ID: z.string().nullish(),
+  GOOGLE_CALENDAR_CLIENT_SECRET: z.string().nullish(),
+  GOOGLE_CALENDAR_REDIRECT_URI: z.string().url().nullish(),
 });
 
 // Parse and validate environment variables

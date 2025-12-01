@@ -313,7 +313,7 @@ function PlatformSelectionContent(): React.JSX.Element {
       {/* Main Container - Centered */}
       <div className="bg-white p-4 sm:p-6 lg:p-8 w-full max-w-7xl relative">
         {/* Header - Centered */}
-        <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+        <div className="text-center mb-8 sm:mb-10 lg:mb-12 mt-12 sm:mt-4 lg:mt-0">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4">
             Welcome back,{" "}
             <span className="text-blue-600">{user?.name || "User"}</span>
