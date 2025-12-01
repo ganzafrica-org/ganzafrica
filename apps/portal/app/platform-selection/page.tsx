@@ -297,390 +297,246 @@ function PlatformSelectionContent(): React.JSX.Element {
       : visibleCards === 3
         ? "max-w-6xl md:grid-cols-2 lg:grid-cols-3"
         : "max-w-7xl md:grid-cols-2 lg:grid-cols-4";
+  
+  // Add class to center 4th card when there are exactly 4 cards in 2-column layout
+  const centerFourthCard = visibleCards === 4 ? "center-fourth-card" : "";
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-      {/* Main Container - Centered */}
-      <div className="bg-white p-4 sm:p-6 lg:p-8 w-full max-w-7xl relative">
-        {/* Header - Centered */}
-        <div className="text-center mb-8 sm:mb-10 lg:mb-12">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4">
-            Welcome back,{" "}
-            <span className="text-blue-600">{user?.name || "User"}</span>
-          </h1>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-4 sm:mb-5 lg:mb-6">
-            Choose your platform to continue
-          </p>
-        </div>
+    <div className="min-h-screen flex flex-col relative bg-[#F5F7FA] overflow-y-auto">
+      <div className="flex-1 relative flex items-center justify-center overflow-y-auto bg-[#F5F7FA] min-h-screen py-8 md:py-12">
+        <div className="hidden md:block absolute bottom-0 left-0 right-0 h-[25vh] min-h-[180px] bg-[#045F3C] z-[1]" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q50 20 100 0 T100 100 Q50 80 0 100 Z' fill='%23000000' fill-opacity='0.1'/%3E%3C/svg%3E")`,
+          backgroundSize: '200px 200px',
+        }}></div>
+        
+        <div className="w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 relative z-[2] py-2 sm:py-3 md:py-4">
+          <div className="fixed top-2 right-2 sm:top-2 sm:right-4 md:top-3 md:right-5 lg:top-3 lg:right-6 flex items-center gap-2 z-[9999] bg-[#F5F7FA] sm:bg-transparent rounded-lg sm:rounded-none p-1 sm:p-0">
+            <button
+              onClick={() => {
+                setIsProfileModalOpen(true);
+                setModalAvatarError(false);
+              }}
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary-green focus:ring-offset-2 cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0"
+              style={{
+                backgroundColor: "#045F3C",
+                border: "2px solid rgba(4, 95, 60, 0.3)",
+              }}
+            >
+              {user?.avatar_url && !avatarError ? (
+                <img
+                  src={
+                    user.avatar_url.startsWith("http")
+                      ? user.avatar_url
+                      : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api"}${user.avatar_url}`
+                  }
+                  alt={user.name || "Profile"}
+                  className="w-full h-full object-cover"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                </div>
+              )}
+            </button>
+            <Button
+              variant="outline"
+              onClick={handleLogout}
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 flex-shrink-0 whitespace-nowrap"
+            >
+              <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="inline sm:inline">Logout</span>
+            </Button>
+          </div>
 
-        {/* User Profile and Logout - Top Right */}
-        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 lg:top-8 lg:right-8 flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => {
-              setIsProfileModalOpen(true);
-              setModalAvatarError(false);
-            }}
-            className="h-8 w-8 sm:h-10 sm:w-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary-green focus:ring-offset-2 cursor-pointer hover:opacity-90 transition-opacity"
-            style={{
-              backgroundColor: "#045F3C",
-              border: "2px solid rgba(4, 95, 60, 0.3)",
-            }}
-          >
-            {user?.avatar_url && !avatarError ? (
-              <img
-                src={
-                  user.avatar_url.startsWith("http")
-                    ? user.avatar_url
-                    : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api"}${user.avatar_url}`
-                }
-                alt={user.name || "Profile"}
-                className="w-full h-full object-cover"
-                onError={() => setAvatarError(true)}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm">
-                {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-              </div>
-            )}
-          </button>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2"
-          >
-            <LogOut className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
-        </div>
+          {/* Header - Centered - Below Profile/Logout */}
+          <div className="text-center mb-6 sm:mb-8 md:mb-12 lg:mb-16 xl:mb-20 mt-12 sm:mt-16 md:mt-20 lg:mt-24 xl:mt-28">
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 leading-tight px-2 sm:px-4" style={{ color: '#1e293b' }}>
+              Choose the platform to continue
+            </h1>
+          </div>
 
-        {/* Profile Modal */}
-        <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Profile Information
-              </DialogTitle>
-              <DialogDescription>Your account details</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="flex items-center justify-center mb-4">
-                <div
-                  className="w-20 h-20 rounded-full overflow-hidden"
-                  style={{
-                    border: "2px solid rgba(4, 95, 60, 0.3)",
-                    backgroundColor: "#045F3C",
-                  }}
-                >
-                  {user?.avatar_url && !modalAvatarError ? (
-                    <img
-                      src={
-                        user.avatar_url.startsWith("http")
-                          ? user.avatar_url
-                          : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api"}${user.avatar_url}`
-                      }
-                      alt={user.name || "Profile"}
-                      className="w-full h-full object-cover"
-                      onError={() => setModalAvatarError(true)}
-                    />
-                  ) : (
+          {/* Profile Modal */}
+          <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+            <DialogContent className="w-[90%] max-w-[90%] sm:max-w-md mx-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Profile Information
+                  </DialogTitle>
+                  <DialogDescription>Your account details</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="flex items-center justify-center mb-4">
                     <div
-                      className="w-full h-full flex items-center justify-center text-white text-2xl font-semibold"
-                      style={{ backgroundColor: "#045F3C" }}
+                      className="w-20 h-20 rounded-full overflow-hidden"
+                      style={{
+                        border: "2px solid rgba(4, 95, 60, 0.3)",
+                        backgroundColor: "#045F3C",
+                      }}
                     >
-                      {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                      {user?.avatar_url && !modalAvatarError ? (
+                        <img
+                          src={
+                            user.avatar_url.startsWith("http")
+                              ? user.avatar_url
+                              : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api"}${user.avatar_url}`
+                          }
+                          alt={user.name || "Profile"}
+                          className="w-full h-full object-cover"
+                          onError={() => setModalAvatarError(true)}
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center text-white text-2xl font-semibold"
+                          style={{ backgroundColor: "#045F3C" }}
+                        >
+                          {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Name
-                  </label>
-                  <p className="text-base font-semibold text-gray-900 mt-1">
-                    {user?.name || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Email
-                  </label>
-                  <p className="text-base font-semibold text-gray-900 mt-1">
-                    {user?.email || "N/A"}
-                  </p>
-                </div>
-                {user?.role_name && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Role
-                    </label>
-                    <p className="text-base font-semibold text-gray-900 mt-1">
-                      <span className="px-2 py-1 bg-gray-100 rounded-full text-sm">
-                        {user.role_name}
-                      </span>
-                    </p>
                   </div>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Name
+                      </label>
+                      <p className="text-base font-semibold text-gray-900 mt-1">
+                        {user?.name || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Email
+                      </label>
+                      <p className="text-base font-semibold text-gray-900 mt-1">
+                        {user?.email || "N/A"}
+                      </p>
+                    </div>
+                    {user?.role_name && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">
+                          Role
+                        </label>
+                        <p className="text-base font-semibold text-gray-900 mt-1">
+                          <span className="px-2 py-1 bg-gray-100 rounded-full text-sm">
+                            {user.role_name}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+          </Dialog>
 
-        {/* Platform Cards - Centered */}
-        <div className="flex justify-center">
-          <div
-            className={`grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 w-full ${gridClass}`}
-          >
+          {/* Platform Cards - Centered */}
+          <div className="flex justify-center w-full px-3 sm:px-4 md:px-6 lg:px-0 relative z-[3]">
+            <div
+              className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 xl:gap-10 w-full max-w-7xl relative z-[3]`}
+            >
             {/* Portal Platform - Only visible to Admin and Manager */}
             {showPortal && (
-              <Card className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary-green flex flex-col h-full">
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto mb-4 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary-green to-[#045F3C] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <Users className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-                  </div>
-                  <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">
+              <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
+                {/* Large circular icon extending beyond card */}
+                <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10" style={{ backgroundColor: "#045F3C" }}>
+                  <Users className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                </div>
+                <div className="text-center flex flex-col flex-grow">
+                  <h3 className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2" style={{ color: '#1e293b' }}>
                     Portal
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 text-sm sm:text-base">
-                    Access your organization's main portal with projects, teams,
-                    and content management
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0 flex flex-col flex-grow">
-                  <div className="space-y-2 sm:space-y-3 flex-grow">
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div className="w-2 h-2 bg-primary-green rounded-full"></div>
-                      <span>Project Management</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div className="w-2 h-2 bg-primary-green rounded-full"></div>
-                      <span>Team Collaboration</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div className="w-2 h-2 bg-primary-green rounded-full"></div>
-                      <span>Content & News Management</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div className="w-2 h-2 bg-primary-green rounded-full"></div>
-                      <span>Partnership & Opportunities</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 sm:mt-6">
-                    <Button
+                  </h3>
+                  <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                    Access your organization's main portal with projects, teams, and content management.
+                  </p>
+                  <div className="mt-auto">
+                    <button
                       onClick={() => handlePlatformSelect("portal")}
-                      className="w-full bg-primary-green hover:bg-[#045F3C] text-white group-hover:bg-[#045F3C] transition-colors duration-300 text-sm sm:text-base"
+                      className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
                     >
-                      Access Portal
-                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                    </Button>
+                      Connect to Portal <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                    </button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
-            {/* Alumni Platform - Only visible to Alumni users - GREEN theme */}
+            {/* Alumni Platform - Only visible to Alumni users */}
             {showAlumni && (
-              <Card
-                className="group hover:shadow-xl transition-all duration-300 border-2 hover:border-primary-green flex flex-col h-full"
-                style={{ borderColor: "#e5e7eb" }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.borderColor = "#045F3C")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.borderColor = "#e5e7eb")
-                }
-              >
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto mb-4 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary-green to-[#045F3C]">
-                    <GraduationCap className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-                  </div>
-                  <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">
+              <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
+                {/* Large circular icon extending beyond card */}
+                <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10" style={{ backgroundColor: "#045F3C" }}>
+                  <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                </div>
+                <div className="text-center flex flex-col flex-grow">
+                  <h3 className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2" style={{ color: '#1e293b' }}>
                     Alumni Network
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 text-sm sm:text-base">
-                    Connect with fellow alumni, find mentors, and explore career
-                    opportunities
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0 flex flex-col flex-grow">
-                  <div className="space-y-2 sm:space-y-3 flex-grow">
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div className="w-2 h-2 rounded-full bg-primary-green"></div>
-                      <span>Alumni Directory</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div className="w-2 h-2 rounded-full bg-primary-green"></div>
-                      <span>Mentorship Program</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div className="w-2 h-2 rounded-full bg-primary-green"></div>
-                      <span>Job Opportunities</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div className="w-2 h-2 rounded-full bg-primary-green"></div>
-                      <span>Events & Networking</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 sm:mt-6">
-                    <Button
+                  </h3>
+                  <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                    Connect with fellow alumni, find mentors, and explore career opportunities. Build your professional network.
+                  </p>
+                  <div className="mt-auto">
+                    <button
                       onClick={() => handlePlatformSelect("alumni")}
-                      className="w-full text-white transition-colors duration-300 text-sm sm:text-base bg-primary-green hover:bg-[#045F3C]"
+                      className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
                     >
-                      Access Alumni Network
-                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                    </Button>
+                      Connect to Alumni Network <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                    </button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {/* Website Platform */}
-            <Card
-              className="group hover:shadow-xl transition-all duration-300 border-2 flex flex-col h-full"
-              style={{ borderColor: "#e5e7eb" }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.borderColor = "#f8ba1d")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.borderColor = "#e5e7eb")
-              }
-            >
-              <CardHeader className="text-center pb-4">
-                <div
-                  className="mx-auto mb-4 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                  style={{ backgroundColor: "#f8ba1d" }}
-                >
-                  <Globe className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-                </div>
-                <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">
+            <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
+              {/* Large circular icon extending beyond card */}
+              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10" style={{ backgroundColor: "#045F3C" }}>
+                <Globe className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+              </div>
+              <div className="text-center flex flex-col flex-grow">
+                <h3 className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2" style={{ color: '#1e293b' }}>
                   Website
-                </CardTitle>
-                <CardDescription className="text-gray-600 text-sm sm:text-base">
-                  Visit the public-facing website to explore programs, news, and
-                  opportunities
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0 flex flex-col flex-grow">
-                <div className="space-y-2 sm:space-y-3 flex-grow">
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: "#f8ba1d" }}
-                    ></div>
-                    <span>Public Content & News</span>
-                  </div>
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: "#f8ba1d" }}
-                    ></div>
-                    <span>Programs & Opportunities</span>
-                  </div>
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: "#f8ba1d" }}
-                    ></div>
-                    <span>About & Contact Information</span>
-                  </div>
-                </div>
-                <div className="mt-4 sm:mt-6">
-                  <Button
+                </h3>
+                <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                  Visit the public-facing website to explore programs, news, and opportunities. Discover what we offer.
+                </p>
+                <div className="mt-auto">
+                  <button
                     onClick={() => handlePlatformSelect("website")}
-                    className="w-full text-white transition-colors duration-300 text-sm sm:text-base"
-                    style={{ backgroundColor: "#f8ba1d" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#d99f19")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#f8ba1d")
-                    }
+                    className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
                   >
-                    Visit Website
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                  </Button>
+                    Connect to Website <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Task Management Platform - Hidden for Alumni users */}
             {showTask && (
-              <Card
-                className="group hover:shadow-xl transition-all duration-300 border-2 flex flex-col h-full"
-                style={{ borderColor: "#e5e7eb" }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.borderColor = "#076297")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.borderColor = "#e5e7eb")
-                }
-              >
-                <CardHeader className="text-center pb-4">
-                  <div
-                    className="mx-auto mb-4 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                    style={{ backgroundColor: "#076297" }}
-                  >
-                    <CheckSquare className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-                  </div>
-                  <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">
+              <div className={`group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6 ${visibleCards === 4 ? 'sm:col-span-2 sm:col-start-1 md:col-span-1 md:col-start-2 md:justify-self-center lg:col-start-auto lg:justify-self-auto xl:col-start-auto xl:justify-self-auto' : ''}`}>
+                {/* Large circular icon extending beyond card */}
+                <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10" style={{ backgroundColor: "#045F3C" }}>
+                  <CheckSquare className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                </div>
+                <div className="text-center flex flex-col flex-grow">
+                  <h3 className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2" style={{ color: '#1e293b' }}>
                     Task Management
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 text-sm sm:text-base">
-                    Manage tasks, track progress, and collaborate with your team
-                    using Kanban boards
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0 flex flex-col flex-grow">
-                  <div className="space-y-2 sm:space-y-3 flex-grow">
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: "#076297" }}
-                      ></div>
-                      <span>Kanban Board Management</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: "#076297" }}
-                      ></div>
-                      <span>Task Assignment & Tracking</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: "#076297" }}
-                      ></div>
-                      <span>Team Collaboration</span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: "#076297" }}
-                      ></div>
-                      <span>Progress Reports & Analytics</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 sm:mt-6">
-                    <Button
+                  </h3>
+                  <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                    Manage tasks, track progress, and collaborate with your team. Stay organized and productive.
+                  </p>
+                  <div className="mt-auto">
+                    <button
                       onClick={() => handlePlatformSelect("task")}
-                      className="w-full text-white transition-colors duration-300 text-sm sm:text-base"
-                      style={{ backgroundColor: "#076297" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#065a7a")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#076297")
-                      }
+                      className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
                     >
-                      Access Task Management
-                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                    </Button>
+                      Connect to Task Management <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                    </button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
+            </div>
           </div>
         </div>
       </div>

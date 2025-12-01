@@ -14,10 +14,11 @@ import React from "react";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { Toaster } from "sonner";
 
 export default function RootLayout({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
-    <html lang="en" style={{ overflowX: 'hidden', width: '100%' }}>
+    <html lang="en" style={{ overflowX: 'hidden', width: '100%' }} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
         <ErrorBoundary>
           <AuthProvider>
             {children}
+            <Toaster position="top-right" richColors />
           </AuthProvider>
         </ErrorBoundary>
       </body>

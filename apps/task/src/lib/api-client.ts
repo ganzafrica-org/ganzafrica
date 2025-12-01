@@ -28,6 +28,71 @@ const isTokenExpired = (token: string): boolean => {
   }
 };
 
+// Helper function to refresh the access token
+const refreshAccessToken = async (): Promise<string | null> => {
+  try {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      logger.debug('No refresh token available');
+      return null;
+    }
+
+    logger.debug('Attempting to refresh access token...');
+    
+    // Call refresh token endpoint
+    const response = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api'}/auth/refresh-token`,
+      { refresh_token: refreshToken },
+      { 
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+
+    logger.debug('Refresh token response:', { 
+      status: response.status, 
+      hasToken: !!response.data?.token,
+      dataKeys: Object.keys(response.data || {})
+    });
+
+    if (response.data?.token) {
+      const newAccessToken = response.data.token;
+      localStorage.setItem('accessToken', newAccessToken);
+      
+      // Update refresh token if a new one is provided
+      if (response.data.refresh_token) {
+        localStorage.setItem('refreshToken', response.data.refresh_token);
+        logger.debug('Refresh token also updated');
+      }
+      
+      logger.debug('Token refreshed successfully');
+      return newAccessToken;
+    }
+    
+    logger.warn('Refresh token response did not contain a token');
+    return null;
+  } catch (error: any) {
+    logger.error('Failed to refresh token:', {
+      message: error?.message,
+      status: error?.response?.status,
+      data: error?.response?.data
+    });
+    
+    // Clear tokens on refresh failure
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('task_user');
+    return null;
+  }
+};
+
+// Flag to prevent multiple simultaneous refresh attempts
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
 // Request interceptor for adding tokens
 apiClient.interceptors.request.use(
   async (config) => {
@@ -37,10 +102,30 @@ apiClient.interceptors.request.use(
       // If token exists but is expired, try to refresh it first
       if (isTokenExpired(token)) {
         logger.debug('Token expired, attempting to refresh...');
-        // For now, we'll just clear the token and let the user re-login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        token = null;
+        
+        // If already refreshing, wait for that promise
+        if (isRefreshing && refreshPromise) {
+          logger.debug('Waiting for ongoing token refresh...');
+          token = await refreshPromise;
+        } else {
+          // Start new refresh
+          isRefreshing = true;
+          refreshPromise = refreshAccessToken();
+          token = await refreshPromise;
+          isRefreshing = false;
+          refreshPromise = null;
+        }
+      }
+    } else {
+      // No token at all - try to refresh if refresh token exists
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken && !isRefreshing) {
+        logger.debug('No access token, attempting to refresh...');
+        isRefreshing = true;
+        refreshPromise = refreshAccessToken();
+        token = await refreshPromise;
+        isRefreshing = false;
+        refreshPromise = null;
       }
     }
     
@@ -60,20 +145,29 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // Handle 401 errors (unauthorized)
+    // Handle 401 errors (unauthorized) - try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
-      // Clear tokens and redirect to portal login
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('task_user');
+      // Try to refresh the token
+      const newToken = await refreshAccessToken();
       
-      // Redirect to portal login page if in browser environment
-      if (typeof window !== 'undefined') {
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
-        window.location.href = `${portalUrl}/login`;
+      if (newToken) {
+        // Retry the original request with the new token
+        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+        return apiClient(originalRequest);
+      } else {
+        // Refresh failed - clear tokens and redirect to portal login
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('task_user');
+        
+        // Redirect to portal login page if in browser environment
+        if (typeof window !== 'undefined') {
+          const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
+          window.location.href = `${portalUrl}/login`;
+        }
       }
     }
     

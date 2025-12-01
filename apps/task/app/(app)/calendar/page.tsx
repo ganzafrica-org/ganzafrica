@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Plus, Filter, MoreHorizontal, ChevronDown, ChevronLeft, ChevronRight, X, Clock, Users, User as UserIcon, CalendarDays } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "@/components/sidebar";
@@ -13,6 +13,8 @@ import { taskTeamsApi } from "@/lib/api/task-teams";
 import { UserAvatar } from "@/components/user-avatar";
 import { Tabs } from "@/components/tabs";
 import { isCurrentUserAdminOrManager, isCurrentUserAdminOrManagerAsync, getCurrentUserRole, isCurrentUserAdmin } from "@/lib/auth-utils";
+import { googleCalendarApi, GoogleCalendarEvent } from "@/lib/api/google-calendar";
+import { toast } from "sonner";
 
 interface Meeting {
   id: string;
@@ -39,29 +41,46 @@ export default function CalendarPage(): React.JSX.Element {
 
   const [meetings, setMeetings] = useState<Meeting[]>([]);
 
-  const [currentDate, setCurrentDate] = useState(new Date());
+  // Initialize calendar to current month (first day of current month)
+  const [currentDate, setCurrentDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [showViewDropdown, setShowViewDropdown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [focusedDay, setFocusedDay] = useState<number | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedDayDetails, setSelectedDayDetails] = useState<{ day: number; month: number; year: number } | null>(null);
-  const [showCreateMeeting, setShowCreateMeeting] = useState(false);
-  const [newMeetingTitle, setNewMeetingTitle] = useState('');
-  const [newMeetingDate, setNewMeetingDate] = useState('');
-  const [newMeetingTime, setNewMeetingTime] = useState('');
-  const [newMeetingDuration, setNewMeetingDuration] = useState('60');
-  const [newMeetingType, setNewMeetingType] = useState<'regular' | 'zoom'>('regular');
   const [currentUser, setCurrentUser] = useState('1'); // Default to John (ID: 1)
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-  const [selectedMeetingMembers, setSelectedMeetingMembers] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'individual' | 'team'>('individual');
   const [selectedMember, setSelectedMember] = useState<string>('1'); // 'all' or member id - default to user 1
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null); // Store logged-in user ID
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [outlookMeetings, setOutlookMeetings] = useState<Meeting[]>([]);
   const [isSyncingOutlook, setIsSyncingOutlook] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [teams, setTeams] = useState<any[]>([]);
+  const [tabs, setTabs] = useState<Array<{ id: string; label: string; icon: any }>>([
+    { id: 'individual', label: 'Individual View', icon: UserIcon }
+  ]);
+  const [googleCalendarEvents, setGoogleCalendarEvents] = useState<Array<GoogleCalendarEvent & { userId?: string }>>([]);
+  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
+  const [isLoadingGoogleCalendar, setIsLoadingGoogleCalendar] = useState(false);
+  // Show Google Calendar by default when connected
+  const [showGoogleCalendar, setShowGoogleCalendar] = useState(true);
+  const [connectedUserIds, setConnectedUserIds] = useState<string[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Initialize logged-in user ID on mount
+  useEffect(() => {
+    const currentUserId = getCurrentUserId();
+    if (currentUserId > 0 && !loggedInUserId) {
+      const userIdStr = currentUserId.toString();
+      setLoggedInUserId(userIdStr);
+    }
+  }, []);
 
   // Sync Outlook meetings from backend
   const syncOutlookMeetings = async () => {
@@ -69,13 +88,12 @@ export default function CalendarPage(): React.JSX.Element {
     try {
       // TODO: Implement real Outlook integration with Microsoft Graph API
       // For now, this is a placeholder for future implementation
-      console.log('Outlook sync not yet implemented');
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
     } catch (error) {
-      console.error('Error syncing Outlook meetings:', error);
+      // Error syncing Outlook meetings
     } finally {
       setIsSyncingOutlook(false);
     }
@@ -84,10 +102,163 @@ export default function CalendarPage(): React.JSX.Element {
   // Get current user ID from localStorage
   const getCurrentUserId = (): number => {
     try {
-      return parseInt(localStorage.getItem('task_user_id') || localStorage.getItem('user_id') || '0');
+      // Check if we're in the browser environment
+      if (typeof window === 'undefined') {
+        return 0; // fallback for SSR
+      }
+      
+      // Try task_user first (most common)
+      const userStr = localStorage.getItem('task_user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.id || 0;
+      }
+      
+      // Fallback to task_user_id or user_id
+      const userIdStr = localStorage.getItem('task_user_id') || localStorage.getItem('user_id');
+      if (userIdStr) {
+        return parseInt(userIdStr, 10);
+      }
     } catch (error) {
-      console.error('Error getting current user ID:', error);
-      return 0;
+      // Error getting current user ID
+    }
+    return 0;
+  };
+
+  // Check Google Calendar connection status
+  const checkGoogleCalendarStatus = async () => {
+    try {
+      const currentUserId = getCurrentUserId();
+      const userIdStr = currentUserId > 0 ? currentUserId.toString() : null;
+      
+      // Check connection status for the logged-in user
+      const response = userIdStr 
+        ? await googleCalendarApi.getConnectionStatus([userIdStr])
+        : await googleCalendarApi.getConnectionStatus();
+      
+      // Handle both single and multi-user response formats
+      const isConnected = !!(response.connected || 
+        (response.connectedUserIds && response.connectedUserIds.length > 0));
+      
+      setIsGoogleCalendarConnected(isConnected);
+    } catch (error) {
+      setIsGoogleCalendarConnected(false);
+    }
+  };
+
+  // Get user IDs to fetch Google Calendar events for based on current selection
+  const getUserIdsForCalendarSync = useMemo(() => {
+    const userIds: string[] = [];
+    const isManagerOrAdmin = isCurrentUserAdminOrManager();
+    
+    // Get logged-in user ID as default
+    const currentUserId = getCurrentUserId();
+    const loggedInUserId = currentUserId > 0 ? currentUserId.toString() : null;
+    
+    if (viewMode === 'individual') {
+      if (selectedMember === 'all') {
+        // When "All Members" is selected, show logged-in user's calendar by default
+        if (loggedInUserId) {
+          userIds.push(loggedInUserId);
+        }
+      } else {
+        // Show events for selected member
+        userIds.push(selectedMember);
+      }
+    } else {
+      // Team view
+      if (selectedTeam) {
+        // Get all team member IDs
+        const teamMemberIds = selectedTeam.members?.map((member: any) => member.user_id.toString()) || [];
+        userIds.push(...teamMemberIds);
+      } else if (selectedMember === 'all') {
+        // When "All Members" is selected, show logged-in user's calendar by default
+        if (loggedInUserId) {
+          userIds.push(loggedInUserId);
+        }
+      } else {
+        // Show events for selected member
+        userIds.push(selectedMember);
+      }
+    }
+    
+    // Remove duplicates
+    return [...new Set(userIds)];
+  }, [viewMode, selectedMember, selectedTeam, members, allUsers]);
+
+  // Sync Google Calendar events
+  const syncGoogleCalendarEvents = useCallback(async () => {
+    // Allow all users to sync their Google Calendar (not just managers/admins)
+    if (!isGoogleCalendarConnected) {
+      return;
+    }
+
+    setIsLoadingGoogleCalendar(true);
+    try {
+      // Calculate date range for current month view
+      const { year, month } = getDaysInMonth(currentDate);
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+
+      // Get user IDs to fetch events for
+      const userIdsToSync = getUserIdsForCalendarSync;
+
+      // Check which users have Google Calendar connected
+      const statusResponse = await googleCalendarApi.getConnectionStatus(userIdsToSync);
+      
+      // Handle both single user (connected: boolean) and multi-user (connectedUserIds: string[]) responses
+      let connectedIds: string[] = [];
+      if (statusResponse.connectedUserIds && statusResponse.connectedUserIds.length > 0) {
+        // Multi-user response
+        connectedIds = statusResponse.connectedUserIds;
+      } else if (statusResponse.connected && userIdsToSync.length === 1) {
+        // Single user response - if connected is true and we only requested one user, use that user
+        connectedIds = userIdsToSync;
+      }
+      
+      if (connectedIds.length === 0) {
+        setGoogleCalendarEvents([]);
+        setIsLoadingGoogleCalendar(false);
+        return;
+      }
+
+      // Fetch events for all connected users
+      const response = await googleCalendarApi.getEvents(
+        startDate.toISOString(),
+        endDate.toISOString(),
+        connectedIds
+      );
+      
+      setGoogleCalendarEvents(response.events || []);
+    } catch (error) {
+      setGoogleCalendarEvents([]);
+    } finally {
+      setIsLoadingGoogleCalendar(false);
+    }
+  }, [isCurrentUserAdminOrManager, isGoogleCalendarConnected, currentDate, getUserIdsForCalendarSync, viewMode, selectedMember, selectedTeam]);
+
+  // Connect Google Calendar
+  const connectGoogleCalendar = async () => {
+    try {
+      const response = await googleCalendarApi.getAuthUrl();
+      if (response.authUrl) {
+        window.location.href = response.authUrl;
+      }
+    } catch (error) {
+      toast.error('Failed to connect Google Calendar. Please try again.');
+    }
+  };
+
+  // Disconnect Google Calendar
+  const disconnectGoogleCalendar = async () => {
+    try {
+      await googleCalendarApi.disconnect();
+      setIsGoogleCalendarConnected(false);
+      setGoogleCalendarEvents([]);
+      setShowGoogleCalendar(false);
+      toast.success('Google Calendar disconnected successfully');
+    } catch (error) {
+      toast.error('Failed to disconnect Google Calendar. Please try again.');
     }
   };
 
@@ -107,7 +278,64 @@ export default function CalendarPage(): React.JSX.Element {
         
         // Load tasks
         const tasksResponse = await taskApi.getAllTasks();
-        setTasks(tasksResponse.tasks || []);
+        // Transform tasks from API format (snake_case) to frontend format (camelCase)
+        const transformedTasks: Task[] = (tasksResponse.tasks || []).map((task: any) => {
+          // Preserve the original date string to avoid timezone conversion issues
+          // If due_date exists, keep it as-is (it's already in ISO format from backend)
+          // This ensures November dates stay November, October dates stay October
+          let dueDateStr: string | undefined = undefined;
+          if (task.due_date) {
+            // If it's already a string, use it directly
+            if (typeof task.due_date === 'string') {
+              dueDateStr = task.due_date;
+            } else {
+              // If it's a Date object or other format, convert to ISO string
+              dueDateStr = new Date(task.due_date).toISOString();
+            }
+          }
+          
+          let createdAtStr: string | undefined = undefined;
+          if (task.created_at) {
+            if (typeof task.created_at === 'string') {
+              createdAtStr = task.created_at;
+            } else {
+              createdAtStr = new Date(task.created_at).toISOString();
+            }
+          }
+          
+          let updatedAtStr: string | undefined = undefined;
+          if (task.updated_at) {
+            if (typeof task.updated_at === 'string') {
+              updatedAtStr = task.updated_at;
+            } else {
+              updatedAtStr = new Date(task.updated_at).toISOString();
+            }
+          }
+          
+          return {
+            id: task.id ? task.id.toString() : Math.random().toString(36).slice(2),
+            title: task.title || 'Untitled Task',
+            description: task.description || '',
+            deliverables: task.deliverables || '',
+            status: (task.status === 'backlog' ? 'overdue' : task.status) || 'todo',
+            priority: task.priority || 'medium',
+            dueDate: dueDateStr,
+            createdAt: createdAtStr,
+            updatedAt: updatedAtStr,
+            labels: task.labels || [],
+            // Normalize assignees to string IDs
+            assignees: (task.assignees || [])
+              .map((a: any) => (a?.user_id ?? a)?.toString())
+              .filter((v: any) => v && v !== ''),
+            comments: task.comments || [],
+            attachments: task.attachments || [],
+            projectId: task.project_id,
+            created_by: task.created_by,
+            creator_role_id: task.creator_role_id,
+            creator_role_name: task.creator_role_name,
+          };
+        });
+        setTasks(transformedTasks);
         
       // Load teams
       const teamsResponse = await taskTeamsApi.listTeams();
@@ -127,13 +355,56 @@ export default function CalendarPage(): React.JSX.Element {
         // Set current user to logged-in user
         const currentUserId = getCurrentUserId();
         if (currentUserId > 0) {
-          setCurrentUser(currentUserId.toString());
-          // Set selected member to current user by default
-          setSelectedMember(currentUserId.toString());
+          const userIdStr = currentUserId.toString();
+          setCurrentUser(userIdStr);
+          setLoggedInUserId(userIdStr);
+          // Always default to logged-in user's calendar (for both managers/admins and regular users)
+          // Managers/admins can still switch to other users via the member selection modal
+          setSelectedMember(userIdStr);
+        }
+
+        // Check Google Calendar connection status and sync events for all users
+        try {
+          const currentUserId = getCurrentUserId();
+          const userIdStr = currentUserId > 0 ? currentUserId.toString() : null;
+          
+          // Check connection status for the logged-in user
+          const statusResponse = userIdStr 
+            ? await googleCalendarApi.getConnectionStatus([userIdStr])
+            : await googleCalendarApi.getConnectionStatus();
+          
+          // Handle both single and multi-user response formats
+          const isConnected = !!(statusResponse.connected || 
+            (statusResponse.connectedUserIds && statusResponse.connectedUserIds.length > 0));
+
+          setIsGoogleCalendarConnected(isConnected);
+          
+          if (isConnected) {
+            setShowGoogleCalendar(true);
+            // Sync events for current month automatically
+            const { year, month } = getDaysInMonth(currentDate);
+            const startDate = new Date(year, month, 1);
+            const endDate = new Date(year, month + 1, 0, 23, 59, 59);
+            
+            try {
+              // Fetch events for the selected member (logged-in user by default)
+              const userIdsToFetch = userIdStr ? [userIdStr] : [];
+              const eventsResponse = await googleCalendarApi.getEvents(
+                startDate.toISOString(),
+                endDate.toISOString(),
+                userIdsToFetch.length > 0 ? userIdsToFetch : undefined
+              );
+              setGoogleCalendarEvents(eventsResponse.events || []);
+            } catch (syncError) {
+              setGoogleCalendarEvents([]);
+            }
+          }
+          // If not connected, user can manually connect using the button
+        } catch (statusError) {
+          setIsGoogleCalendarConnected(false);
         }
         
       } catch (error) {
-        console.error('Error loading calendar data:', error);
         setError('Failed to load calendar data');
       } finally {
         setLoading(false);
@@ -143,31 +414,56 @@ export default function CalendarPage(): React.JSX.Element {
     loadData();
   }, []);
 
-  // Filter members based on selected team
-  const availableMembersForMeeting = useMemo(() => {
-    if (!selectedTeamId) {
-      return [];
+  // Sync Google Calendar events when calendar month changes, connection status changes, or selection changes
+  useEffect(() => {
+    if (isGoogleCalendarConnected) {
+      syncGoogleCalendarEvents();
     }
-    
-    const selectedTeam = teams.find(t => t.id.toString() === selectedTeamId);
-    if (!selectedTeam) {
-      return [];
+  }, [currentDate, isGoogleCalendarConnected, viewMode, selectedMember, selectedTeam, getUserIdsForCalendarSync, syncGoogleCalendarEvents, isCurrentUserAdminOrManager]);
+
+  // Auto-sync Google Calendar events when connected (on mount and when connection status changes)
+  useEffect(() => {
+    if (isGoogleCalendarConnected) {
+      // Auto-enable Google Calendar view and sync events
+      setShowGoogleCalendar(true);
+      syncGoogleCalendarEvents();
     }
+  }, [isGoogleCalendarConnected, syncGoogleCalendarEvents]);
+
+  // Set mounted state to avoid hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Handle Google Calendar OAuth callback
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     
-    if (!selectedTeam.members) {
-      return [];
+    const urlParams = new URLSearchParams(window.location.search);
+    const googleConnected = urlParams.get('google_calendar_connected');
+    const googleError = urlParams.get('error');
+    const errorMessage = urlParams.get('message');
+
+    if (googleConnected === 'true') {
+      setIsGoogleCalendarConnected(true);
+      setShowGoogleCalendar(true);
+      // Sync events immediately after connection
+      if (isCurrentUserAdminOrManager()) {
+        syncGoogleCalendarEvents();
+      }
+      // Remove query parameter from URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (googleError === 'google_auth_failed') {
+      const message = errorMessage 
+        ? `Failed to connect Google Calendar: ${decodeURIComponent(errorMessage)}`
+        : 'Failed to connect Google Calendar. Please try again.';
+      alert(message);
+      // Google Calendar connection error
+      // Remove query parameter from URL
+      window.history.replaceState({}, '', window.location.pathname);
     }
-    
-    // Map team member IDs to members
-    const filteredMembers = members.filter(member => {
-      const isTeamMember = selectedTeam.members.some((teamMember: any) => {
-        return teamMember.user_id.toString() === member.id;
-      });
-      return isTeamMember;
-    });
-    
-    return filteredMembers;
-  }, [selectedTeamId, members, teams, selectedTeam]);
+  }, []);
+
 
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"];
@@ -195,32 +491,172 @@ export default function CalendarPage(): React.JSX.Element {
     setFocusedDay(null);
   };
 
-  // Define tabs based on user role
-  const tabs = useMemo(() => {
+  // Define tabs based on user role - compute on client side only to avoid hydration mismatch
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    let computedTabs: Array<{ id: string; label: string; icon: any }>;
     if (isCurrentUserAdmin()) {
       // Admin sees only individual view
-      return [
+      computedTabs = [
         { id: 'individual', label: 'Individual View', icon: UserIcon }
       ];
     } else if (isCurrentUserAdminOrManager()) {
       // Manager sees both individual and team view
-      return [
+      computedTabs = [
         { id: 'individual', label: 'Individual View', icon: UserIcon },
         { id: 'team', label: 'Team View', icon: Users }
       ];
     } else {
       // Other users see only individual view
-      return [
+      computedTabs = [
         { id: 'individual', label: 'Individual View', icon: UserIcon }
       ];
     }
+    setTabs(computedTabs);
   }, []);
 
+  // Helper function to get task date, normalized to start of day
+  // Parses date strings carefully to avoid timezone issues
+  const getTaskDate = (task: Task): Date => {
+    let taskDate: Date;
+    if (task.dueDate) {
+      // Parse the ISO string date and extract just the date part to avoid timezone issues
+      const dateStr = task.dueDate;
+      // If it's an ISO string, extract the date part (YYYY-MM-DD)
+      if (dateStr.includes('T')) {
+        const dateOnly = dateStr.split('T')[0];
+        if (!dateOnly) return new Date(dateStr);
+        const parts = dateOnly.split('-');
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10); // 1-12
+          const day = parseInt(parts[2], 10);
+          // Validate the parsed values
+          if (!isNaN(year) && !isNaN(month) && !isNaN(day) && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            taskDate = new Date(year, month - 1, day); // month is 0-indexed in Date constructor
+          } else {
+            // Fallback to parsing the full string
+            taskDate = new Date(dateStr);
+          }
+        } else {
+          taskDate = new Date(dateStr);
+        }
+      } else if (dateStr.includes('-')) {
+        // Handle date-only strings like "2024-01-27"
+        const parts = dateStr.split('-');
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10); // 1-12
+          const day = parseInt(parts[2], 10);
+          // Validate the parsed values
+          if (!isNaN(year) && !isNaN(month) && !isNaN(day) && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            taskDate = new Date(year, month - 1, day);
+          } else {
+            taskDate = new Date(dateStr);
+          }
+        } else {
+          taskDate = new Date(dateStr);
+        }
+      } else {
+        taskDate = new Date(dateStr);
+      }
+    } else if (task.createdAt) {
+      // Parse creation date similarly
+      const dateStr = task.createdAt;
+      if (dateStr.includes('T')) {
+        const dateOnly = dateStr.split('T')[0];
+        if (!dateOnly) return new Date(dateStr);
+        const parts = dateOnly.split('-');
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10); // 1-12
+          const day = parseInt(parts[2], 10);
+          if (!isNaN(year) && !isNaN(month) && !isNaN(day) && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            taskDate = new Date(year, month - 1, day);
+          } else {
+            taskDate = new Date(dateStr);
+          }
+        } else {
+          taskDate = new Date(dateStr);
+        }
+      } else if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10); // 1-12
+          const day = parseInt(parts[2], 10);
+          if (!isNaN(year) && !isNaN(month) && !isNaN(day) && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            taskDate = new Date(year, month - 1, day);
+          } else {
+            taskDate = new Date(dateStr);
+          }
+        } else {
+          taskDate = new Date(dateStr);
+        }
+      } else {
+        taskDate = new Date(dateStr);
+      }
+    } else {
+      // If no due date or creation date, show on today's date
+      taskDate = new Date();
+    }
+    
+    // Normalize to start of day to avoid timezone issues
+    taskDate.setHours(0, 0, 0, 0);
+    
+    // Final validation: ensure the date is valid
+    if (isNaN(taskDate.getTime())) {
+      // Invalid date parsed for task
+      // Fallback to today's date
+      taskDate = new Date();
+      taskDate.setHours(0, 0, 0, 0);
+    }
+    
+    return taskDate;
+  };
+
+  /**
+   * Get meetings and tasks for a specific day in the calendar
+   * @param day - Day of the month (1-31)
+   * @param currentMonth - Month index (0-indexed: 0 = January, 11 = December)
+   * @param currentYear - Year (e.g., 2025)
+   * @returns Array of meetings and tasks for the specified day
+   * 
+   * This function ensures:
+   * 1. Tasks are displayed only on their actual due date
+   * 2. Tasks appear in the correct month (October tasks in October, November tasks in November)
+   * 3. Tasks display with their actual time from the database
+   * 4. Month boundaries are respected (no cross-month date rollover)
+   */
   const getMeetingsForDay = (day: number, currentMonth: number, currentYear: number) => {
+    // Normalize the target date to start of day for comparison
+    // currentMonth is 0-indexed (0 = January, 11 = December)
+    const targetDate = new Date(currentYear, currentMonth, day);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    // Validate that the created date matches the intended month/year
+    // (JavaScript Date constructor can roll over to next month if day is invalid)
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth();
+    const targetDay = targetDate.getDate();
+    
+    // CRITICAL: If the month doesn't match, the date rolled over - don't show tasks for this day
+    // This ensures we only show tasks for the actual calendar month being viewed
+    // For example: if viewing November (month 10), don't show October (month 9) tasks
+    if (targetMonth !== currentMonth || targetYear !== currentYear) {
+      return [];
+    }
+    
+    // Debug logging for month verification (enable if needed)
+    // console.log(`Calendar showing month ${currentMonth + 1}/${currentYear}, checking day ${day} -> ${targetYear}-${targetMonth + 1}-${targetDay}`);
+    
     const dayMeetings = meetings.filter(m => {
-      const matchesDate = m.date.getDate() === day && 
-                         m.date.getMonth() === currentMonth &&
-                         m.date.getFullYear() === currentYear;
+      // Normalize meeting date to start of day
+      const meetingDate = new Date(m.date);
+      meetingDate.setHours(0, 0, 0, 0);
+      
+      const matchesDate = meetingDate.getTime() === targetDate.getTime();
       
       if (viewMode === 'individual') {
         return matchesDate && m.memberId === currentUser;
@@ -230,78 +666,238 @@ export default function CalendarPage(): React.JSX.Element {
       }
     });
 
-    // Add tasks as calendar events
+    // Add tasks as calendar events - filter by exact date match
     const dayTasks = tasks.filter(task => {
-      // If task has no due date, show it on the current date or creation date
-      let taskDate;
+      // CRITICAL: Extract month directly from the dueDate string FIRST to avoid timezone issues
+      // This ensures November tasks (month 11) only show in November, October tasks (month 10) only in October
+      let taskMonthFromString: number | null = null;
+      let taskYearFromString: number | null = null;
+      let taskDayFromString: number | null = null;
+      
       if (task.dueDate) {
-        taskDate = new Date(task.dueDate);
-      } else if (task.createdAt) {
-        taskDate = new Date(task.createdAt);
+        const dateStr = task.dueDate;
+        const dateOnly = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
+        if (dateOnly) {
+          const parts = dateOnly.split('-');
+          if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+            taskYearFromString = parseInt(parts[0], 10);
+            taskMonthFromString = parseInt(parts[1], 10); // 1-12 from database
+            taskDayFromString = parseInt(parts[2], 10);
+          }
+        }
+      }
+      
+      // Use string-based comparison first (most reliable)
+      if (taskMonthFromString !== null && taskYearFromString !== null && taskDayFromString !== null) {
+        // Convert database month (1-12) to 0-indexed (0-11) for comparison with targetMonth
+        const taskMonth0Indexed = taskMonthFromString - 1;
+        
+        // CRITICAL CHECK: Month and year must match exactly
+        // November tasks (month 11 = index 10) should only show when viewing November (targetMonth = 10)
+        // October tasks (month 10 = index 9) should only show when viewing October (targetMonth = 9)
+        // This prevents October tasks from appearing in November view
+        if (taskMonth0Indexed !== targetMonth || taskYearFromString !== targetYear) {
+          // Debug: Log when tasks are filtered out due to month mismatch
+          // console.log(`Filtering out task "${task.title}": Task month=${taskMonthFromString} (index ${taskMonth0Indexed}), Calendar month=${targetMonth + 1} (index ${targetMonth})`);
+          return false; // Task is in a different month/year - don't show it
+        }
+        
+        // Day must also match
+        if (taskDayFromString !== targetDay) {
+          return false; // Day doesn't match
+        }
       } else {
-        // If no due date or creation date, show on today's date
-        taskDate = new Date();
+        // Fallback: use parsed date if string parsing failed
+        const taskDate = getTaskDate(task);
+        const taskYear = taskDate.getFullYear();
+        const taskMonth = taskDate.getMonth(); // 0-indexed (0 = January, 11 = December)
+        const taskDay = taskDate.getDate();
+        
+        // Verify month and year match
+        if (taskMonth !== targetMonth || taskYear !== targetYear) {
+          return false; // Task is in a different month/year - don't show it
+        }
+        
+        // Verify day matches
+        if (taskDay !== targetDay) {
+          return false; // Day doesn't match
+        }
       }
       
-      // TEMPORARY FIX: If all tasks have the same date (Oct 22, 2025), 
-      // show them on today's date for testing
-      const today = new Date();
-      if (taskDate.getFullYear() === 2025 && taskDate.getMonth() === 9 && taskDate.getDate() === 22) {
-        taskDate = today;
-      }
+      // If we get here, the date matches (month, year, and day all match)
+      // No need for additional checks - we've already verified everything above
       
-      const matchesDate = taskDate.getDate() === day && 
-                         taskDate.getMonth() === currentMonth &&
-                         taskDate.getFullYear() === currentYear;
-      
+      // Apply view mode and member filtering
       if (viewMode === 'individual') {
         // Individual view - show tasks based on selected member
         if (selectedMember === 'all') {
-          // Show all tasks
-          return matchesDate;
-        } else {
-          // Show tasks for selected member (default to current user if no member selected)
-          const memberToShow = selectedMember || currentUser;
+          // When "All Members" is selected, show tasks for logged-in user
+          const loggedInUserId = getCurrentUserId();
+          const memberToShow = loggedInUserId > 0 ? loggedInUserId.toString() : currentUser;
           const isAssignedToMember = task.assignees && task.assignees.some(assigneeId => 
             assigneeId.toString() === memberToShow
           );
-          return matchesDate && isAssignedToMember;
+          return isAssignedToMember;
+        } else {
+          // Show tasks for selected member
+          const isAssignedToMember = task.assignees && task.assignees.some(assigneeId => 
+            assigneeId.toString() === selectedMember
+          );
+          return isAssignedToMember;
         }
       } else {
         // Team view - show tasks for selected member or all
         if (selectedMember === 'all') {
-          // If a team is selected, only show tasks for team members
-          if (selectedTeam) {
-            const teamMemberIds = selectedTeam.members?.map((member: any) => {
-              return member.user_id.toString();
-            }) || [];
-            
-            const isAssignedToTeamMember = task.assignees && task.assignees.some(assigneeId => 
-              teamMemberIds.includes(assigneeId.toString())
-            );
-            
-            return matchesDate && isAssignedToTeamMember;
-          }
-          return matchesDate;
+          // When "All Members" is selected, show tasks for logged-in user
+          const loggedInUserId = getCurrentUserId();
+          const memberToShow = loggedInUserId > 0 ? loggedInUserId.toString() : currentUser;
+          const isAssignedToMember = task.assignees && task.assignees.some(assigneeId => 
+            assigneeId.toString() === memberToShow
+          );
+          return isAssignedToMember;
         } else {
           const isAssignedToMember = task.assignees && task.assignees.some(assigneeId => 
             assigneeId.toString() === selectedMember
           );
-          return matchesDate && isAssignedToMember;
+          return isAssignedToMember;
         }
       }
     });
 
+    // Add Google Calendar events (filtered by selected users/teams)
+    const googleCalendarDayEvents: Meeting[] = [];
+    const shouldShowGoogleCalendar = isGoogleCalendarConnected;
+    
+    if (shouldShowGoogleCalendar && googleCalendarEvents.length > 0) {
+      // Determine which user IDs to show events for
+      const userIdsToShow: string[] = [];
+      const loggedInUserId = getCurrentUserId();
+      const loggedInUserIdStr = loggedInUserId > 0 ? loggedInUserId.toString() : null;
+      
+      if (viewMode === 'individual') {
+        if (selectedMember === 'all') {
+          // When "All Members" is selected, show logged-in user's calendar
+          if (loggedInUserIdStr) {
+            userIdsToShow.push(loggedInUserIdStr);
+          }
+        } else {
+          userIdsToShow.push(selectedMember);
+        }
+      } else {
+        // Team view
+        if (selectedTeam) {
+          const teamMemberIds = selectedTeam.members?.map((member: any) => member.user_id.toString()) || [];
+          userIdsToShow.push(...teamMemberIds);
+        } else if (selectedMember === 'all') {
+          // When "All Members" is selected, show logged-in user's calendar
+          if (loggedInUserIdStr) {
+            userIdsToShow.push(loggedInUserIdStr);
+          }
+        } else {
+          userIdsToShow.push(selectedMember);
+        }
+      }
+      
+      googleCalendarEvents.forEach((event) => {
+        // Filter events by userId if available
+        const eventUserId = (event as any).userId;
+        if (eventUserId && !userIdsToShow.includes(eventUserId)) {
+          return; // Skip events from users not in the selection
+        }
+        
+        // If no userId on event but we have a selection, only show if selectedMember is 'all'
+        if (!eventUserId && selectedMember !== 'all') {
+          return;
+        }
+        
+        let eventDate: Date;
+        
+        // Handle both dateTime and date formats
+        if (event.start.dateTime) {
+          eventDate = new Date(event.start.dateTime);
+        } else if (event.start.date) {
+          eventDate = new Date(event.start.date);
+        } else {
+          return; // Skip if no valid date
+        }
+
+        eventDate.setHours(0, 0, 0, 0);
+        
+        // Check if event is on the target day
+        if (
+          eventDate.getFullYear() === targetYear &&
+          eventDate.getMonth() === targetMonth &&
+          eventDate.getDate() === targetDay
+        ) {
+          // Extract time from event
+          let startTime: string | undefined;
+          let endTime: string | undefined;
+          
+          if (event.start.dateTime) {
+            const start = new Date(event.start.dateTime);
+            startTime = `${start.getHours().toString().padStart(2, '0')}:${start.getMinutes().toString().padStart(2, '0')}`;
+          }
+          
+          if (event.end.dateTime) {
+            const end = new Date(event.end.dateTime);
+            endTime = `${end.getHours().toString().padStart(2, '0')}:${end.getMinutes().toString().padStart(2, '0')}`;
+          }
+
+          // Use event userId if available, otherwise fall back to currentUser
+          const memberIdForEvent = eventUserId || currentUser;
+
+          googleCalendarDayEvents.push({
+            id: `google-${event.id}-${memberIdForEvent}`,
+            title: event.summary || 'Untitled Event',
+            date: eventDate,
+            color: '#dc2626', // Red color for Google Calendar events
+            memberId: memberIdForEvent,
+            startTime,
+            endTime,
+            type: 'meeting',
+          });
+        }
+      });
+    }
+
     // Convert tasks to meeting-like objects for display
     const taskEvents = dayTasks.map(task => {
-      // Use due date, creation date, or current date
-      let taskDate;
+      const taskDate = getTaskDate(task);
+      
+      // Extract time from dueDate if it exists and contains time information
+      let startTime: string | undefined;
+      let endTime: string | undefined;
+      
       if (task.dueDate) {
-        taskDate = new Date(task.dueDate);
+        // Check if the date string contains time information (has 'T' or space followed by time)
+        const hasTime = task.dueDate.includes('T') || /\s\d{2}:\d{2}/.test(task.dueDate);
+        if (hasTime) {
+          // Parse the full dueDate to get the time component
+          const fullDueDate = new Date(task.dueDate);
+          const hours = fullDueDate.getHours().toString().padStart(2, '0');
+          const minutes = fullDueDate.getMinutes().toString().padStart(2, '0');
+          startTime = `${hours}:${minutes}`;
+          // Set end time to 1 hour after start time
+          const endDate = new Date(fullDueDate);
+          endDate.setHours(fullDueDate.getHours() + 1);
+          const endHours = endDate.getHours().toString().padStart(2, '0');
+          const endMinutes = endDate.getMinutes().toString().padStart(2, '0');
+          endTime = `${endHours}:${endMinutes}`;
+        }
       } else if (task.createdAt) {
-        taskDate = new Date(task.createdAt);
-      } else {
-        taskDate = new Date();
+        // Fallback to creation time if no due date and creation date has time
+        const hasTime = task.createdAt.includes('T') || /\s\d{2}:\d{2}/.test(task.createdAt);
+        if (hasTime) {
+          const createdDate = new Date(task.createdAt);
+          const hours = createdDate.getHours().toString().padStart(2, '0');
+          const minutes = createdDate.getMinutes().toString().padStart(2, '0');
+          startTime = `${hours}:${minutes}`;
+          const endDate = new Date(createdDate);
+          endDate.setHours(createdDate.getHours() + 1);
+          const endHours = endDate.getHours().toString().padStart(2, '0');
+          const endMinutes = endDate.getMinutes().toString().padStart(2, '0');
+          endTime = `${endHours}:${endMinutes}`;
+        }
       }
       
       return {
@@ -310,48 +906,64 @@ export default function CalendarPage(): React.JSX.Element {
         date: taskDate,
         color: task.priority === 'high' ? '#dc2626' : task.priority === 'medium' ? '#f59e0b' : '#10b981',
         memberId: task.assignees?.[0]?.toString() || '0',
-        startTime: '09:00', // Default time for tasks
-        endTime: '10:00',
+        startTime,
+        endTime,
         type: 'task' as const,
         priority: task.priority,
         status: task.status
       };
     });
 
-    return [...dayMeetings, ...taskEvents];
+    return [...dayMeetings, ...taskEvents, ...googleCalendarDayEvents];
   };
 
 
-  const isToday = (day: number) => {
+  const isToday = (day: number, checkMonth?: number, checkYear?: number) => {
     const today = new Date();
-    return day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+    today.setHours(0, 0, 0, 0);
+    const checkMonthValue = checkMonth !== undefined ? checkMonth : month;
+    const checkYearValue = checkYear !== undefined ? checkYear : year;
+    const checkDate = new Date(checkYearValue, checkMonthValue, day);
+    checkDate.setHours(0, 0, 0, 0);
+    return checkDate.getTime() === today.getTime();
   };
 
-  const shouldShowDay = (day: number, isPrevMonth: boolean, isNextMonth: boolean) => {
+  const shouldShowDay = (day: number, isPrevMonth: boolean, isNextMonth: boolean, checkMonth?: number, checkYear?: number) => {
     if (focusedDay === null) return true;
     if (isPrevMonth || isNextMonth) return false;
     
     const today = new Date();
-    const targetDate = new Date(year, month, day);
+    today.setHours(0, 0, 0, 0);
+    
+    const checkMonthValue = checkMonth !== undefined ? checkMonth : month;
+    const checkYearValue = checkYear !== undefined ? checkYear : year;
+    const targetDate = new Date(checkYearValue, checkMonthValue, day);
+    targetDate.setHours(0, 0, 0, 0);
+    
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
     
     switch (selectedFilter) {
       case 'today':
-        return day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+        return targetDate.getTime() === today.getTime();
       case 'tomorrow':
-        return day === tomorrow.getDate() && month === tomorrow.getMonth() && year === tomorrow.getFullYear();
+        return targetDate.getTime() === tomorrow.getTime();
       case 'week':
         const weekStart = new Date(today);
         weekStart.setDate(today.getDate() - today.getDay());
+        weekStart.setHours(0, 0, 0, 0);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
         return targetDate >= weekStart && targetDate <= weekEnd;
       case '2weeks':
         const twoWeekStart = new Date(today);
         twoWeekStart.setDate(today.getDate() - today.getDay());
+        twoWeekStart.setHours(0, 0, 0, 0);
         const twoWeekEnd = new Date(twoWeekStart);
         twoWeekEnd.setDate(twoWeekStart.getDate() + 13);
+        twoWeekEnd.setHours(23, 59, 59, 999);
         return targetDate >= twoWeekStart && targetDate <= twoWeekEnd;
       case 'month':
         return true;
@@ -382,41 +994,7 @@ export default function CalendarPage(): React.JSX.Element {
     );
   };
 
-  const createMeeting = () => {
-    if (!newMeetingTitle.trim() || !newMeetingDate || !newMeetingTime) return;
-    
-    const meetingColors = ['#076297', '#005C30', '#009758', '#F8B712', '#073392', '#2F88E1', '#D42B1D', '#6366f1', '#059669', '#7c3aed'];
-    const [hours, minutes] = newMeetingTime.split(':');
-    const meetingDate = new Date(newMeetingDate);
-    meetingDate.setHours(parseInt(hours || '0'), parseInt(minutes || '0'));
-    
-    const duration = parseInt(newMeetingDuration);
-    const endTime = new Date(meetingDate.getTime() + duration * 60000);
-    
-    const newMeeting: Meeting = {
-      id: Date.now().toString(),
-      title: newMeetingType === 'zoom' ? `🔗 ${newMeetingTitle}` : newMeetingTitle,
-      date: meetingDate,
-      color: newMeetingType === 'zoom' ? '#6366f1' : (meetingColors[Math.floor(Math.random() * meetingColors.length)] ?? '#076297'),
-      memberId: currentUser, // Assign to current user
-      startTime: newMeetingTime,
-      endTime: `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`
-    };
-    
-    setMeetings([...meetings, newMeeting]);
-    setNewMeetingTitle('');
-    setNewMeetingDate('');
-    setNewMeetingTime('');
-    setNewMeetingDuration('60');
-    setNewMeetingType('regular');
-    setShowCreateMeeting(false);
-  };
 
-  const getAvailabilityForDay = (day: number, currentMonth: number, currentYear: number) => {
-    // For now, return empty array since we don't have availability data
-    // In a real implementation, this would fetch availability from the backend
-    return [];
-  };
 
   // Check if a team has tasks (is occupied)
   const isTeamOccupied = (team: any) => {
@@ -453,18 +1031,6 @@ export default function CalendarPage(): React.JSX.Element {
       members={members} 
       tasks={tasks} 
       title="Calendar"
-      headerAction={
-        <div className="flex items-center gap-4">
-          <Button
-            onClick={() => setShowCreateMeeting(true)}
-            variant="primary"
-            size="md"
-            showPlusIcon
-          >
-            Create Meeting
-          </Button>
-        </div>
-      }
     >
       {/* Tabs Section */}
       <div className="mb-6 bg-white rounded-lg border border-gray-200 p-4">
@@ -487,8 +1053,31 @@ export default function CalendarPage(): React.JSX.Element {
             />
           )}
           
-          {/* Profile Selector */}
-          <div className="flex items-center gap-3">
+          {/* Profile Selector - Pushed to the right */}
+          <div className="flex items-center gap-3 ml-auto">
+            {/* Google Calendar integration */}
+            {!isGoogleCalendarConnected ? (
+              <Button
+                onClick={connectGoogleCalendar}
+                variant="outline"
+                size="sm"
+                disabled={isLoadingGoogleCalendar}
+                className="flex items-center gap-2"
+              >
+                {isLoadingGoogleCalendar ? 'Connecting...' : 'Connect Google Calendar'}
+              </Button>
+            ) : (
+              <Button
+                onClick={disconnectGoogleCalendar}
+                variant="outline"
+                size="sm"
+                disabled={isLoadingGoogleCalendar}
+                className="flex items-center gap-2"
+              >
+                Disconnect Google Calendar
+              </Button>
+            )}
+            
             {/* Individual View - Show member selector button */}
             {viewMode === 'individual' && (
               <button
@@ -642,24 +1231,43 @@ export default function CalendarPage(): React.JSX.Element {
               <div className="grid grid-cols-7">
                 {calendarDays.map((dayObj, idx) => {
                   const { day, isPrevMonth, isNextMonth } = dayObj;
-                  const currentMonthForDay = isPrevMonth ? month - 1 : isNextMonth ? month + 1 : month;
-                  const dayMeetings = getMeetingsForDay(day, currentMonthForDay, year);
-                  const availability = getAvailabilityForDay(day, currentMonthForDay, year);
+                  
+                  // Calculate correct month and year for previous/next month days
+                  let currentMonthForDay = month;
+                  let currentYearForDay = year;
+                  
+                  if (isPrevMonth) {
+                    if (month === 0) {
+                      currentMonthForDay = 11;
+                      currentYearForDay = year - 1;
+                    } else {
+                      currentMonthForDay = month - 1;
+                    }
+                  } else if (isNextMonth) {
+                    if (month === 11) {
+                      currentMonthForDay = 0;
+                      currentYearForDay = year + 1;
+                    } else {
+                      currentMonthForDay = month + 1;
+                    }
+                  }
+                  
+                  const dayMeetings = getMeetingsForDay(day, currentMonthForDay, currentYearForDay);
                   const additionalCount = dayMeetings.length > 2 ? dayMeetings.length - 2 : 0;
-                  const show = shouldShowDay(day, isPrevMonth, isNextMonth);
+                  const show = shouldShowDay(day, isPrevMonth, isNextMonth, currentMonthForDay, currentYearForDay);
                   
                   if (!show) return null;
                   
                   return (
                     <div 
                       key={idx} 
-                      onClick={() => setSelectedDayDetails({ day, month: currentMonthForDay, year })}
+                      onClick={() => setSelectedDayDetails({ day, month: currentMonthForDay, year: currentYearForDay })}
                       className={`min-h-[80px] border-r border-b border-gray-100 p-2 transition cursor-pointer bg-white hover:bg-blue-50 ${
-                        isToday(day) && !isPrevMonth && !isNextMonth ? 'ring-2 ring-blue-500 ring-inset' : ''
+                        isToday(day, currentMonthForDay, currentYearForDay) ? 'ring-2 ring-blue-500 ring-inset' : ''
                       }`}
                     >
                       <div className="mb-1.5">
-                        {isToday(day) && !isPrevMonth && !isNextMonth ? (
+                        {isToday(day, currentMonthForDay, currentYearForDay) ? (
                           <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                             {day}
                           </div>
@@ -692,168 +1300,12 @@ export default function CalendarPage(): React.JSX.Element {
                             +{additionalCount} more
                           </div>
                         )}
-                        {availability.length > 0 && (
-                          <div className="text-[9px] text-green-600 font-medium pt-1 border-t border-gray-100">
-                            {availability.length} available
-                          </div>
-                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
             </div>
-
-          {/* Create Meeting Modal */}
-          {showCreateMeeting && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl shadow-2xl p-6 w-[500px] max-h-[80vh] overflow-y-auto">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-bold text-gray-800">Create Meeting</h3>
-                  <button onClick={() => setShowCreateMeeting(false)} className="text-gray-400 hover:text-gray-600">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={newMeetingTitle}
-                    onChange={(e) => setNewMeetingTitle(e.target.value)}
-                    placeholder="Meeting title"
-                    className="w-full px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
-                  />
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={newMeetingDate}
-                      onChange={(e) => setNewMeetingDate(e.target.value)}
-                      className="flex-1 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
-                    />
-                    <input
-                      type="time"
-                      value={newMeetingTime}
-                      onChange={(e) => setNewMeetingTime(e.target.value)}
-                      className="flex-1 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <select
-                      value={newMeetingDuration}
-                      onChange={(e) => setNewMeetingDuration(e.target.value)}
-                      className="flex-1 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
-                    >
-                      <option value="15">15 min</option>
-                      <option value="30">30 min</option>
-                      <option value="60">1 hour</option>
-                      <option value="90">1.5 hours</option>
-                      <option value="120">2 hours</option>
-                    </select>
-                    <select
-                      value={newMeetingType}
-                      onChange={(e) => setNewMeetingType(e.target.value as 'regular' | 'zoom')}
-                      className="flex-1 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
-                    >
-                      <option value="regular">Regular</option>
-                      <option value="zoom">Zoom Meeting</option>
-                    </select>
-                  </div>
-
-                  {/* Assign Team Section */}
-                  <div>
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                      <Users className="w-4 h-4" />
-                      Assign Team
-                    </label>
-                    <select
-                      value={selectedTeamId || ""}
-                      onChange={(e) => {
-                        setSelectedTeamId(e.target.value || null);
-                        setSelectedMeetingMembers([]);
-                      }}
-                      className="w-full px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
-                    >
-                      <option value="">Select a team...</option>
-                      {teams.map((team) => (
-                        <option key={team.id} value={team.id}>
-                          {team.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Team Members Section - Only show after team selection */}
-                  {selectedTeamId && (
-                    <div>
-                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                        <Users className="w-4 h-4" />
-                        Team Members
-                      </label>
-                      <div className="max-h-[200px] overflow-y-auto space-y-2 p-2" style={{ border: '1px solid #e5e7eb', borderRadius: '7px' }}>
-                        {availableMembersForMeeting.length > 0 ? (
-                          availableMembersForMeeting.map((member) => (
-                            <label key={member.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedMeetingMembers.includes(member.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedMeetingMembers([...selectedMeetingMembers, member.id]);
-                                  } else {
-                                    setSelectedMeetingMembers(selectedMeetingMembers.filter(id => id !== member.id));
-                                  }
-                                }}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <UserAvatar 
-                                userId={parseInt(member.id)} 
-                                size="sm"
-                                fallbackColor={member.color}
-                              />
-                              <span className="text-sm text-gray-700">{member.name}</span>
-                            </label>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500 text-center py-4">No members in this team</p>
-                        )}
-                      </div>
-                      {selectedMeetingMembers.length > 0 && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          {selectedMeetingMembers.length} member(s) selected
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    onClick={createMeeting}
-                    variant="primary"
-                    size="md"
-                    className="flex-1"
-                  >
-                    Create Meeting
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowCreateMeeting(false);
-                      setSelectedTeamId(null);
-                      setSelectedMeetingMembers([]);
-                    }}
-                    variant="outline"
-                    size="md"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Day Details Modal */}
           {selectedDayDetails && (
@@ -909,13 +1361,6 @@ export default function CalendarPage(): React.JSX.Element {
                     )}
                   </div>
 
-                  <div>
-                    <h4 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      Availability
-                    </h4>
-                    <p className="text-sm text-gray-500">No availability information</p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1020,26 +1465,31 @@ export default function CalendarPage(): React.JSX.Element {
                   {/* Individual View - Show all members */}
                   {viewMode === 'individual' && (
                     <>
-                      {/* All Members Button */}
+                      {/* All Members Button - Selects logged-in user's calendar */}
                       <button
                         onClick={() => {
-                          setSelectedMember('all');
+                          const currentUserId = getCurrentUserId();
+                          const userIdToSelect = loggedInUserId || (currentUserId > 0 ? currentUserId.toString() : null);
+                          
+                          if (userIdToSelect) {
+                            setSelectedMember(userIdToSelect);
+                            // Also update loggedInUserId if it wasn't set
+                            if (!loggedInUserId && currentUserId > 0) {
+                              setLoggedInUserId(userIdToSelect);
+                            }
+                          }
                           setShowMemberModal(false);
                         }}
                         className="w-full p-3 flex items-center gap-3 transition"
                         style={{
-                          backgroundColor: selectedMember === 'all' ? '#f0f8fc' : '#f9fafb',
+                          backgroundColor: '#f9fafb',
                           borderRadius: '7px'
                         }}
                         onMouseEnter={(e) => {
-                          if (selectedMember !== 'all') {
-                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                          }
+                          e.currentTarget.style.backgroundColor = '#f3f4f6';
                         }}
                         onMouseLeave={(e) => {
-                          if (selectedMember !== 'all') {
-                            e.currentTarget.style.backgroundColor = '#f9fafb';
-                          }
+                          e.currentTarget.style.backgroundColor = '#f9fafb';
                         }}
                       >
                         <div 
@@ -1050,47 +1500,53 @@ export default function CalendarPage(): React.JSX.Element {
                         </div>
                         <div className="flex-1 text-left">
                           <div className="font-medium text-gray-800">All Members</div>
-                          <div className="text-xs text-gray-500">View tasks for all members</div>
+                          <div className="text-xs text-gray-500">View your calendar events</div>
                         </div>
-                        {selectedMember === 'all' && (
-                          <div style={{ color: '#076297' }} className="font-bold">✓</div>
-                        )}
                       </button>
                       
                       {/* All Members List */}
-                      {members.map((member) => (
-                        <button
-                          key={member.id}
-                          onClick={() => {
-                            setSelectedMember(member.id);
-                            setShowMemberModal(false);
-                          }}
-                          className="w-full p-3 flex items-center gap-3 transition"
-                          style={{
-                            backgroundColor: selectedMember === member.id ? '#f0f8fc' : '#f9fafb',
-                            borderRadius: '7px'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (selectedMember !== member.id) {
-                              e.currentTarget.style.backgroundColor = '#f3f4f6';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (selectedMember !== member.id) {
-                              e.currentTarget.style.backgroundColor = '#f9fafb';
-                            }
-                          }}
-                        >
-                          <UserAvatar userId={parseInt(member.id)} size="md" />
-                          <div className="flex-1 text-left">
-                            <div className="font-medium text-gray-800">{member.name}</div>
-                            <div className="text-xs text-gray-500">{member.email || 'Member'}</div>
-                          </div>
-                          {selectedMember === member.id && (
-                            <div style={{ color: '#076297' }} className="font-bold">✓</div>
-                          )}
-                        </button>
-                      ))}
+                      {members.map((member) => {
+                        const isLoggedInUser = loggedInUserId && member.id === loggedInUserId;
+                        // Only show selected if it's the actual selected member (not 'all')
+                        const isSelected = selectedMember === member.id;
+                        
+                        return (
+                          <button
+                            key={member.id}
+                            onClick={() => {
+                              setSelectedMember(member.id);
+                              setShowMemberModal(false);
+                            }}
+                            className="w-full p-3 flex items-center gap-3 transition"
+                            style={{
+                              backgroundColor: isSelected ? '#f0f8fc' : '#f9fafb',
+                              borderRadius: '7px'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.backgroundColor = '#f9fafb';
+                              }
+                            }}
+                          >
+                            <UserAvatar userId={parseInt(member.id)} size="md" />
+                            <div className="flex-1 text-left">
+                              <div className="font-medium text-gray-800">
+                                {member.name}
+                                {isLoggedInUser && <span className="text-xs text-gray-500 ml-2">(You)</span>}
+                              </div>
+                              <div className="text-xs text-gray-500">{member.email || 'Member'}</div>
+                            </div>
+                            {isSelected && (
+                              <div style={{ color: '#076297' }} className="font-bold">✓</div>
+                            )}
+                          </button>
+                        );
+                      })}
                     </>
                   )}
                   
@@ -1098,21 +1554,30 @@ export default function CalendarPage(): React.JSX.Element {
                   {viewMode === 'team' && selectedTeam && (
                     <button
                       onClick={() => {
-                        setSelectedMember('all');
+                        if (loggedInUserId) {
+                          setSelectedMember(loggedInUserId);
+                        } else {
+                          const currentUserId = getCurrentUserId();
+                          if (currentUserId > 0) {
+                            setSelectedMember(currentUserId.toString());
+                          } else {
+                            setSelectedMember('all');
+                          }
+                        }
                         setShowMemberModal(false);
                       }}
                       className="w-full p-3 flex items-center gap-3 transition"
                       style={{
-                        backgroundColor: selectedMember === 'all' ? '#f0f8fc' : '#f9fafb',
+                        backgroundColor: (selectedMember === 'all' || selectedMember === loggedInUserId) ? '#f0f8fc' : '#f9fafb',
                         borderRadius: '7px'
                       }}
                       onMouseEnter={(e) => {
-                        if (selectedMember !== 'all') {
+                        if (selectedMember !== 'all' && selectedMember !== loggedInUserId) {
                           e.currentTarget.style.backgroundColor = '#f3f4f6';
                         }
                       }}
                       onMouseLeave={(e) => {
-                        if (selectedMember !== 'all') {
+                        if (selectedMember !== 'all' && selectedMember !== loggedInUserId) {
                           e.currentTarget.style.backgroundColor = '#f9fafb';
                         }
                       }}
@@ -1125,9 +1590,9 @@ export default function CalendarPage(): React.JSX.Element {
                       </div>
                       <div className="flex-1 text-left">
                         <div className="font-medium text-gray-800">All Team Members</div>
-                        <div className="text-xs text-gray-500">View all members in {selectedTeam.name}</div>
+                        <div className="text-xs text-gray-500">View your calendar events</div>
                       </div>
-                      {selectedMember === 'all' && (
+                      {(selectedMember === 'all' || selectedMember === loggedInUserId) && (
                         <div style={{ color: '#076297' }} className="font-bold">✓</div>
                       )}
                     </button>
