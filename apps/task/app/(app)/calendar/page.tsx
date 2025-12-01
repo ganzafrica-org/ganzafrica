@@ -137,8 +137,8 @@ export default function CalendarPage(): React.JSX.Element {
         : await googleCalendarApi.getConnectionStatus();
       
       // Handle both single and multi-user response formats
-      const isConnected = response.connected || 
-        (response.connectedUserIds && response.connectedUserIds.length > 0);
+      const isConnected = !!(response.connected || 
+        (response.connectedUserIds && response.connectedUserIds.length > 0));
       
       setIsGoogleCalendarConnected(isConnected);
     } catch (error) {
@@ -374,9 +374,9 @@ export default function CalendarPage(): React.JSX.Element {
             : await googleCalendarApi.getConnectionStatus();
           
           // Handle both single and multi-user response formats
-          const isConnected = statusResponse.connected || 
-            (statusResponse.connectedUserIds && statusResponse.connectedUserIds.length > 0);
-          
+          const isConnected = !!(statusResponse.connected || 
+            (statusResponse.connectedUserIds && statusResponse.connectedUserIds.length > 0));
+
           setIsGoogleCalendarConnected(isConnected);
           
           if (isConnected) {
@@ -526,8 +526,9 @@ export default function CalendarPage(): React.JSX.Element {
       // If it's an ISO string, extract the date part (YYYY-MM-DD)
       if (dateStr.includes('T')) {
         const dateOnly = dateStr.split('T')[0];
+        if (!dateOnly) return new Date(dateStr);
         const parts = dateOnly.split('-');
-        if (parts.length === 3) {
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
           const year = parseInt(parts[0], 10);
           const month = parseInt(parts[1], 10); // 1-12
           const day = parseInt(parts[2], 10);
@@ -544,7 +545,7 @@ export default function CalendarPage(): React.JSX.Element {
       } else if (dateStr.includes('-')) {
         // Handle date-only strings like "2024-01-27"
         const parts = dateStr.split('-');
-        if (parts.length === 3) {
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
           const year = parseInt(parts[0], 10);
           const month = parseInt(parts[1], 10); // 1-12
           const day = parseInt(parts[2], 10);
@@ -565,8 +566,9 @@ export default function CalendarPage(): React.JSX.Element {
       const dateStr = task.createdAt;
       if (dateStr.includes('T')) {
         const dateOnly = dateStr.split('T')[0];
+        if (!dateOnly) return new Date(dateStr);
         const parts = dateOnly.split('-');
-        if (parts.length === 3) {
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
           const year = parseInt(parts[0], 10);
           const month = parseInt(parts[1], 10); // 1-12
           const day = parseInt(parts[2], 10);
@@ -580,7 +582,7 @@ export default function CalendarPage(): React.JSX.Element {
         }
       } else if (dateStr.includes('-')) {
         const parts = dateStr.split('-');
-        if (parts.length === 3) {
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
           const year = parseInt(parts[0], 10);
           const month = parseInt(parts[1], 10); // 1-12
           const day = parseInt(parts[2], 10);
@@ -675,11 +677,13 @@ export default function CalendarPage(): React.JSX.Element {
       if (task.dueDate) {
         const dateStr = task.dueDate;
         const dateOnly = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.split(' ')[0];
-        const parts = dateOnly.split('-');
-        if (parts.length === 3) {
-          taskYearFromString = parseInt(parts[0], 10);
-          taskMonthFromString = parseInt(parts[1], 10); // 1-12 from database
-          taskDayFromString = parseInt(parts[2], 10);
+        if (dateOnly) {
+          const parts = dateOnly.split('-');
+          if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+            taskYearFromString = parseInt(parts[0], 10);
+            taskMonthFromString = parseInt(parts[1], 10); // 1-12 from database
+            taskDayFromString = parseInt(parts[2], 10);
+          }
         }
       }
       

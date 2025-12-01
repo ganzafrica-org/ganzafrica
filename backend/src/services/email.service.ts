@@ -16,7 +16,7 @@ const isEmailConfigured = () => {
   const hasPort = smtpPort !== undefined && smtpPort !== null;
   
   // Validate email format if EMAIL_FROM is provided
-  if (hasEmailFrom && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.EMAIL_FROM)) {
+  if (hasEmailFrom && env.EMAIL_FROM && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.EMAIL_FROM)) {
     logger.warn(`Invalid email format for EMAIL_FROM: ${env.EMAIL_FROM}`);
     return false;
   }

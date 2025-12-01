@@ -11,7 +11,7 @@ const fontVariable = '--font-rubik';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-      <html lang="en" className="light">
+      <html lang="en" className="light" suppressHydrationWarning>
       <head>
         <link
           rel="preconnect"
