@@ -107,11 +107,15 @@ function AuthCallbackContent() {
 
             toast.success("Authentication successful!");
 
-            // Wait for progress animation then redirect
+            // Wait for progress animation then redirect to dashboard
             // Use window.location to ensure a full page reload with fresh auth state
             setTimeout(() => {
               clearInterval(timer);
-              window.location.href = "/";
+              // In production, basePath is /alumni, so we need to redirect relative to current location
+              // Using relative path ensures it works in both dev (no basePath) and prod (with /alumni basePath)
+              const basePath =
+                process.env.NODE_ENV === "production" ? "/alumni" : "";
+              window.location.href = `${basePath}/`;
             }, 2000);
           } catch (error: unknown) {
             console.error("Error processing authentication:", error);
