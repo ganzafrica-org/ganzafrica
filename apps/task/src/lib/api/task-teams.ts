@@ -14,6 +14,7 @@ export interface TaskTeam {
   member_count?: number;
   projects?: TaskProject[];
   project_count?: number;
+  file_count?: number;
   created_at: string;
   updated_at: string;
 }

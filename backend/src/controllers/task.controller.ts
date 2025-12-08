@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { taskService } from "../services/task.service";
+import * as userService from "../services/user.service";
 import { AppError } from "../middlewares";
 import { constants, Logger, env } from "../config";
 import { getFileSubdirectory } from "../middlewares/upload";
@@ -872,6 +873,39 @@ export const getProjectFilesWithRoleFilter = async (req: Request, res: Response)
     // Get all tasks for the project
     const tasks = await taskService.listTasksByProject(projectId, userId);
     
+    // Collect all unique user IDs from attachments and task creators
+    const userIds = new Set<number>();
+    for (const task of tasks) {
+      if (task.attachments && Array.isArray(task.attachments)) {
+        for (const attachment of task.attachments) {
+          if (attachment.uploaded_by) {
+            userIds.add(attachment.uploaded_by);
+          }
+        }
+      }
+      if (task.created_by) {
+        userIds.add(task.created_by);
+      }
+    }
+    
+    // Fetch all users in one go
+    const usersMap = new Map<number, { name: string; email: string }>();
+    for (const uid of userIds) {
+      try {
+        const user = await userService.getUserById(uid);
+        usersMap.set(uid, {
+          name: user.name || 'Unknown',
+          email: user.email || 'unknown@example.com'
+        });
+      } catch (error) {
+        // If user not found, use default
+        usersMap.set(uid, {
+          name: 'Unknown',
+          email: 'unknown@example.com'
+        });
+      }
+    }
+    
     // Extract all attachments from all tasks
     const allFiles = [];
     for (const task of tasks) {
@@ -891,12 +925,24 @@ export const getProjectFilesWithRoleFilter = async (req: Request, res: Response)
           }
           
           if (shouldShow) {
+            const uploaderId = attachment.uploaded_by || task.created_by;
+            const uploader = usersMap.get(uploaderId) || { name: 'Unknown', email: 'unknown@example.com' };
+            
+            // Extract file type from filename if not available
+            let fileType = (attachment as any).type?.split('/')[1] || 'unknown';
+            if (fileType === 'unknown' && attachment.filename) {
+              const match = attachment.filename.match(/\.([^.]+)$/);
+              if (match) {
+                fileType = match[1].toLowerCase();
+              }
+            }
+            
             allFiles.push({
               id: `task-${task.id}-${attachment.id}`,
               filename: attachment.filename,
               original_filename: attachment.filename,
-              file_type: (attachment as any).type?.split('/')[1] || 'unknown',
-              file_size: (attachment as any).size || 0,
+              file_type: fileType,
+              file_size: (attachment as any).sizeKB ? (attachment as any).sizeKB * 1024 : ((attachment as any).size || 0),
               file_url: attachment.url,
               created_at: attachment.uploaded_at || task.created_at,
               metadata: {
@@ -904,9 +950,9 @@ export const getProjectFilesWithRoleFilter = async (req: Request, res: Response)
                 tags: ['task-attachment'],
                 task_id: task.id,
                 task_title: task.title,
-                uploaded_by: attachment.uploaded_by
+                uploaded_by: attachment.uploaded_by || task.created_by
               },
-              uploader: { name: 'Unknown', email: 'unknown@example.com' }
+              uploader: uploader
             });
           }
         }

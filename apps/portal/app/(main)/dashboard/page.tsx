@@ -27,7 +27,6 @@ import {
   Legend,
   Line,
   LineChart,
-  ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
 import {
@@ -73,7 +72,6 @@ export default function DashboardPage() {
         // Check if data is an array or has a users property that's an array
         const usersArray = Array.isArray(data) ? data : (data.users || []);
         setTotalUsers(usersArray.length || 0);
-        console.log('Users data:', usersArray);
       })
       .catch(error => console.error('Error fetching users:', error));
 
@@ -84,7 +82,6 @@ export default function DashboardPage() {
         // Check if data is an array or has a projects property that's an array
         const projectsArray = Array.isArray(data) ? data : (data.projects || []);
         setTotalProjects(projectsArray.length || 0);
-        console.log('Projects data:', projectsArray);
         
         // Extract active projects for the sidebar
         const active = projectsArray
@@ -182,8 +179,6 @@ export default function DashboardPage() {
         
         // Calculate the total across all displayed months for verification
         const chartTotal = chartData.reduce((sum, item) => sum + item.total, 0);
-        console.log('Total projects in chart:', chartTotal);
-        console.log('Total projects from API:', projectsArray.length);
         
         // Add totals by status for the cards
         const completedTotal = projectsArray.filter(p => p && p.status === 'completed').length;
@@ -250,7 +245,6 @@ export default function DashboardPage() {
         // Check if data is an array or has an opportunities property that's an array
         const opportunitiesArray = Array.isArray(data) ? data : (data.opportunities || []);
         setTotalOpportunities(opportunitiesArray.length || 0);
-        console.log('Opportunities data:', opportunitiesArray);
       })
       .catch(error => console.error('Error fetching opportunities:', error));
 
@@ -261,7 +255,6 @@ export default function DashboardPage() {
         // Check if data is an array or has a news property that's an array
         const newsArray = Array.isArray(data) ? data : (data.news || []);
         setTotalNews(newsArray.length || 0);
-        console.log('News data:', newsArray);
       })
       .catch(error => console.error('Error fetching news:', error));
       
@@ -555,12 +548,13 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="px-2 md:px-4">
             <ChartContainer config={projectChartConfig}>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart 
-                  accessibilityLayer 
-                  data={projectStatsData}
-                  margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-                >
+              <LineChart 
+                accessibilityLayer 
+                data={projectStatsData}
+                width={558}
+                height={250}
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+              >
                   <CartesianGrid vertical={false} />
                   <XAxis
                     dataKey="month"
@@ -631,8 +625,7 @@ export default function DashboardPage() {
                       ]} 
                     />
                   )}
-                </LineChart>
-              </ResponsiveContainer>
+              </LineChart>
             </ChartContainer>
           </CardContent>
           <CardFooter className="flex justify-center items-center pt-0 pb-4 px-4">
@@ -672,17 +665,18 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="px-2 md:px-4">
             <ChartContainer config={engagementChartConfig}>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart
-                  accessibilityLayer
-                  data={userEngagementData}
-                  margin={{
-                    top: 5,
-                    left: 0,
-                    right: 10,
-                    bottom: 5
-                  }}
-                >
+              <LineChart
+                accessibilityLayer
+                data={userEngagementData}
+                width={558}
+                height={250}
+                margin={{
+                  top: 5,
+                  left: 0,
+                  right: 10,
+                  bottom: 5
+                }}
+              >
                   <CartesianGrid vertical={false} />
                   <XAxis
                     dataKey="week"
@@ -742,8 +736,7 @@ export default function DashboardPage() {
                       r: 6,
                     }}
                   />
-                </LineChart>
-              </ResponsiveContainer>
+              </LineChart>
             </ChartContainer>
           </CardContent>
           <CardFooter className="flex justify-center items-center pt-0 pb-4 px-4">

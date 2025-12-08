@@ -98,7 +98,6 @@ export function getCurrentUserRole(): UserRole | null {
       };
     }
   } catch (error) {
-    console.error('Error getting current user role:', error);
   }
   return null;
 }
@@ -139,7 +138,6 @@ export async function fetchUserProfile(): Promise<UserRole | null> {
       };
     }
   } catch (error) {
-    console.error('Error fetching user profile:', error);
   }
   return null;
 }
@@ -207,7 +205,6 @@ export function canEditTask(taskCreatorId: number | string): boolean {
     const currentUserId = parseInt(localStorage.getItem('task_user_id') || localStorage.getItem('user_id') || '0');
     return currentUserId === parseInt(taskCreatorId.toString());
   } catch (error) {
-    console.error('Error checking task edit permissions:', error);
     return false;
   }
 }
@@ -230,7 +227,6 @@ export async function canEditTaskAsync(taskCreatorId: number | string): Promise<
     const currentUserId = parseInt(localStorage.getItem('task_user_id') || localStorage.getItem('user_id') || '0');
     return currentUserId === parseInt(taskCreatorId.toString());
   } catch (error) {
-    console.error('Error checking task edit permissions:', error);
     return false;
   }
 }

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Bell, HelpCircle, Menu, User, Settings, LogOut, Info, Check, X } from 'lucide-react';
-import Image from 'next/image';
 import { useAuth } from '@/components/auth/auth-provider';
 import Link from 'next/link';
 import { Button } from '@workspace/ui/components/button';
@@ -57,24 +56,6 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
   // Get auth context
   const { user, logout, isLoading } = useAuth();
   
-  // Console log the logged-in user details and token for debugging
-  useEffect(() => {
-    console.log('Logged-in user details:', user);
-    
-    // Also check the raw token contents
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      try {
-        // Use the imported jwtDecode function instead of require
-        const decodedToken = jwtDecode(token);
-        console.log('Raw token payload:', decodedToken);
-      } catch (error) {
-        console.error('Error decoding token:', error);
-      }
-    } else {
-      console.log('No access token found in localStorage');
-    }
-  }, [user]);
 
   // Generate initials from the user's full name
   const getInitials = () => {
@@ -288,8 +269,34 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
                     className="flex items-center space-x-3 cursor-pointer p-1.5 pl-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                     onClick={toggleDropdown}
                 >
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center">
-                    <span className="text-sm font-medium">{getInitials()}</span>
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center" style={{ minWidth: '32px', minHeight: '32px' }}>
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.name || 'User'}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover',
+                          objectPosition: 'center'
+                        }}
+                        onError={(e) => {
+                          // Fallback to initials if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && !parent.querySelector('span')) {
+                            const span = document.createElement('span');
+                            span.className = 'text-sm font-medium relative z-10';
+                            span.textContent = getInitials();
+                            parent.appendChild(span);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="text-sm font-medium relative z-10">{getInitials()}</span>
+                    )}
                   </div>
                   <span className="font-medium text-gray-700 dark:text-gray-200">{user.name}</span>
                   <svg
@@ -306,8 +313,34 @@ const Navbar = ({ onMenuClick, isSidebarCollapsed }: NavbarProps) => {
                     <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-100 dark:border-gray-700">
                       <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                         <div className="flex items-center space-x-3">
-                          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center">
-                            <span className="text-sm font-medium">{getInitials()}</span>
+                          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-primary-green text-white flex items-center justify-center" style={{ minWidth: '40px', minHeight: '40px' }}>
+                            {user.avatar_url ? (
+                              <img
+                                src={user.avatar_url}
+                                alt={user.name || 'User'}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  objectFit: 'cover',
+                                  objectPosition: 'center'
+                                }}
+                                onError={(e) => {
+                                  // Fallback to initials if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent && !parent.querySelector('span')) {
+                                    const span = document.createElement('span');
+                                    span.className = 'text-sm font-medium relative z-10';
+                                    span.textContent = getInitials();
+                                    parent.appendChild(span);
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span className="text-sm font-medium relative z-10">{getInitials()}</span>
+                            )}
                           </div>
                           <div>
                             <p className="font-medium text-gray-800 dark:text-white">{user.name}</p>

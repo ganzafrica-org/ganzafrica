@@ -18,7 +18,9 @@ router.patch("/:id/members/:userId/role", authenticate, taskTeamController.updat
 
 // Task Team Projects Routes
 router.post("/:id/projects", authenticate, taskTeamController.createTaskProject);
+router.post("/:id/projects/:projectId", authenticate, taskTeamController.addProjectToTeam);
 router.get("/:id/projects", authenticate, taskTeamController.listTaskProjects);
+router.delete("/:id/projects/:projectId", authenticate, taskTeamController.removeProjectFromTeam);
 
 // Task Projects Routes (standalone)
 router.get("/projects/all", authenticate, taskTeamController.listAllProjects);

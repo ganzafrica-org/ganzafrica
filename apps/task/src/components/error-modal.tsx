@@ -73,7 +73,20 @@ export function ErrorModal({
               onClose();
             }}
             className="px-4 py-2 text-white rounded-md transition-colors"
-            style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+            style={{ 
+              backgroundColor: confirmText.toLowerCase().includes('delete') ? '#dc2626' : '#076297', 
+              borderRadius: '7px' 
+            }}
+            onMouseEnter={(e) => {
+              if (confirmText.toLowerCase().includes('delete')) {
+                e.currentTarget.style.backgroundColor = '#b91c1c';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (confirmText.toLowerCase().includes('delete')) {
+                e.currentTarget.style.backgroundColor = '#dc2626';
+              }
+            }}
           >
             {confirmText}
           </button>

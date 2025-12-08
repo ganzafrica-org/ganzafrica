@@ -1,5 +1,7 @@
 import app from "./app";
 import { env, Logger } from "./config";
+import cron from "node-cron";
+import { runWeeklyJobTask } from "./services/job-scraper.service";
 
 const logger = new Logger("Server");
 const PORT = env.API_PORT || 3002;
@@ -8,10 +10,19 @@ const PORT = env.API_PORT || 3002;
 const server = app.listen(PORT, () => {
   logger.info(`Server running in ${env.NODE_ENV} mode on port ${PORT}`);
   logger.info(
-    `API Documentation available at ${env.NODE_ENV === "production"
-      ? "https://backend-cbx8.onrender.com/api/docs"
-      : `http://localhost:${PORT}/api/docs`}`
+    `API Documentation available at ${
+      env.NODE_ENV === "production"
+        ? "https://backend-cbx8.onrender.com/api/docs"
+        : `http://localhost:${PORT}/api/docs`
+    }`,
   );
+
+  // Schedule weekly job scraping task - runs every Sunday at 2:00 AM
+  cron.schedule("0 2 * * 0", async () => {
+    logger.info("Starting scheduled weekly job scraping task...");
+    await runWeeklyJobTask();
+  });
+  logger.info("Job scraping cron scheduled: every Sunday at 2:00 AM");
 });
 
 // Handle unhandled promise rejections

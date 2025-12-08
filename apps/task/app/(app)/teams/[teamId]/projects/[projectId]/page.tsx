@@ -19,13 +19,16 @@ import { TruncatedText } from "@/components/truncated-text";
 import { WorkloadAnalyticsModal } from "@/components/workload-analytics-modal";
 import { UserAvatar } from "@/components/user-avatar";
 import { isCurrentUserAdminOrManager } from "@/lib/auth-utils";
+import { useToast, ToastContainer } from "@/components/toast";
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ teamId: string; projectId: string }> }): React.JSX.Element {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { toasts, removeToast, showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState('board');
   const [tasks, setTasks] = useState<TaskType[]>([]);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [isCreatingTaskInProgress, setIsCreatingTaskInProgress] = useState(false);
   const [creatingTaskStatus, setCreatingTaskStatus] = useState<string>('todo');
   const [dateFilter, setDateFilter] = useState<string>('all'); // 'all', 'week', 'month', 'custom'
   const [showWorkloadModal, setShowWorkloadModal] = useState(false);
@@ -227,15 +230,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       
       // Merge with existing tasks to preserve any optimistic updates
       setTasks(prevTasks => {
-        // Create a map of existing tasks by ID for quick lookup
-        const existingTasksMap = new Map(prevTasks.map(t => [t.id, t]));
+        // Create a map of existing tasks by ID for quick lookup (normalize IDs to strings)
+        const existingTasksMap = new Map<string, TaskType>();
         
-        // Update or add tasks from the API response
-        convertedTasks.forEach(task => {
-          existingTasksMap.set(task.id, task);
+        // Add existing tasks to map (normalize IDs to strings)
+        prevTasks.forEach(t => {
+          const normalizedId = String(t.id);
+          if (!existingTasksMap.has(normalizedId)) {
+            existingTasksMap.set(normalizedId, t);
+          }
         });
         
-        // Return all tasks, preserving the order (newest first if possible)
+        // Update or add tasks from the API response (normalize IDs to strings)
+        convertedTasks.forEach(task => {
+          const normalizedId = String(task.id);
+          // Always use the latest version from API to ensure consistency
+          existingTasksMap.set(normalizedId, task);
+        });
+        
+        // Return all tasks, deduplicated by ID, preserving the order (newest first if possible)
         return Array.from(existingTasksMap.values()).sort((a, b) => {
           // Sort by creation date if available, otherwise maintain order
           if (a.dueDate && b.dueDate) {
@@ -336,7 +349,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
   };
 
   const handleCreateTask = async (task: TaskType) => {
+    // Prevent duplicate task creation
+    if (isCreatingTaskInProgress) {
+      return;
+    }
+
     try {
+      setIsCreatingTaskInProgress(true);
+
       // Check if user is assigned to the team
       if (!isCurrentUserAssignedToTeam()) {
         setErrorModal({
@@ -380,6 +400,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       // Transform the response task to match frontend format
       const newTask: TaskType = {
         ...response.task,
+        id: response.task.id.toString(), // Ensure ID is always a string
         assignees: response.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
         comments: response.task.comments || [],
         attachments: response.task.attachments || [],
@@ -388,10 +409,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       
       // Add task to the list immediately (optimistic update)
       setTasks(prevTasks => {
-        // Check if task already exists (from background reload)
-        const existingIndex = prevTasks.findIndex(t => t.id === newTask.id);
+        // Check if task already exists by ID (handle both string and number comparisons)
+        const existingIndex = prevTasks.findIndex(t => {
+          const taskId = String(t.id);
+          const newTaskId = String(newTask.id);
+          return taskId === newTaskId;
+        });
         if (existingIndex >= 0) {
-          // Task already exists, update it
+          // Task already exists, update it instead of adding duplicate
           const updated = [...prevTasks];
           updated[existingIndex] = newTask;
           return updated;
@@ -413,9 +438,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       // Reload tasks in the background to ensure data consistency and get full details (non-blocking)
       // This will merge any updates but won't remove the task we just added
       setTimeout(() => {
-        loadTasks().then(() => {
-          console.log('✅ Tasks reloaded in background after creation');
-        }).catch(console.error);
+        loadTasks().catch(() => {
+          // Error reloading tasks - non-critical
+        });
       }, 500); // Small delay to ensure the optimistic update is rendered first
     } catch (error: any) {
       console.error('Error creating task:', error);
@@ -424,6 +449,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
         title: 'Error Creating Task',
         message: error.response?.data?.message || 'Failed to create task. Please try again.',
       });
+    } finally {
+      setIsCreatingTaskInProgress(false);
     }
   };
 
@@ -473,13 +500,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
   const handleDeleteTask = async (taskId: string) => {
     // Check if user is assigned to the team
     if (!isCurrentUserAssignedToTeam()) {
-      setErrorModal({
-        isOpen: true,
-        title: 'Access Denied',
-        message: 'You are not assigned to this team. Only team members can delete tasks.',
-      });
+      showError(
+        'Access Denied',
+        'You are not assigned to this team. Only team members can delete tasks.'
+      );
       return;
     }
+
+    // Find the task before deletion for optimistic update and error recovery
+    const taskToDelete = tasks.find(t => String(t.id) === String(taskId));
 
     setConfirmDialog({
       isOpen: true,
@@ -487,27 +516,75 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       message: 'Are you sure you want to delete this task? This action cannot be undone.',
       onConfirm: async () => {
         try {
-          if (isCurrentUserManager()) {
-            await taskApi.deleteTaskUnrestricted(parseInt(taskId));
-          } else {
-            await taskApi.deleteTask(parseInt(taskId));
-          }
+          // Optimistically remove task from state immediately
+          setTasks(prevTasks => prevTasks.filter(t => String(t.id) !== String(taskId)));
           setConfirmDialog({ ...confirmDialog, isOpen: false });
-          loadTasks(); // Reload tasks
+
+          let deletionSuccessful = false;
           
-          setErrorModal({
-            isOpen: true,
-            title: 'Success',
-            message: 'Task deleted successfully.',
-          });
+          // Delete task via API
+          try {
+            if (isCurrentUserManager()) {
+              await taskApi.deleteTaskUnrestricted(parseInt(taskId));
+            } else {
+              await taskApi.deleteTask(parseInt(taskId));
+            }
+            deletionSuccessful = true;
+          } catch (deleteError: any) {
+            // Check if error is 404 (task not found) - this might mean task was already deleted
+            // or doesn't exist, but since we optimistically removed it, treat as success
+            if (deleteError.response?.status === 404) {
+              const errorMsg = deleteError.response?.data?.message || deleteError.message || '';
+              // If it's a "not found" error, the task is already gone, so treat as success
+              if (errorMsg.toLowerCase().includes('not found') || errorMsg.toLowerCase().includes('task not found')) {
+                deletionSuccessful = true;
+              } else {
+                throw deleteError; // Re-throw if it's a different 404 error
+              }
+            } else {
+              throw deleteError; // Re-throw other errors
+            }
+          }
+
+          if (deletionSuccessful) {
+            // Show success toast
+            showSuccess(
+              'Task Deleted',
+              taskToDelete 
+                ? `"${taskToDelete.title}" has been deleted successfully.`
+                : 'Task has been deleted successfully.'
+            );
+
+            // Reload tasks in the background to ensure data consistency
+            // Silently handle any errors from reload - task is already deleted successfully
+            setTimeout(() => {
+              loadTasks().catch((error) => {
+                // Silently log error - don't show to user as task was already deleted successfully
+                console.error('Error reloading tasks after deletion (non-critical):', error);
+              });
+            }, 500);
+          }
         } catch (error: any) {
           console.error('Error deleting task:', error);
-          setConfirmDialog({ ...confirmDialog, isOpen: false });
-          setErrorModal({
-            isOpen: true,
-            title: 'Error Deleting Task',
-            message: error.response?.data?.message || 'Failed to delete task.',
-          });
+          
+          // Restore task to state if deletion failed
+          if (taskToDelete) {
+            setTasks(prevTasks => {
+              // Check if task already exists
+              const exists = prevTasks.some(t => String(t.id) === String(taskId));
+              if (!exists) {
+                return [...prevTasks, taskToDelete];
+              }
+              return prevTasks;
+            });
+          }
+
+          // Show error toast only for actual failures
+          const errorMessage = error.response?.data?.message || error.message || 'Failed to delete task. Please try again.';
+          showError(
+            'Delete Failed',
+            errorMessage
+          );
         }
       },
     });
@@ -647,21 +724,22 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       tasks={tasks} 
       title={project.name}
       headerAction={
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
           <button
             onClick={() => router.push(`/teams/${resolvedParams.teamId}`)}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors font-medium"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base text-gray-600 hover:text-gray-800 transition-colors font-medium w-full sm:w-auto touch-manipulation"
             style={{ borderRadius: '7px' }}
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to {team.name}
+            <span className="hidden sm:inline">Back to {team.name}</span>
+            <span className="sm:hidden">Back</span>
           </button>
         </div>
       }
     >
       {/* Project Overview */}
       <div 
-        className="p-4 mb-6"
+        className="p-3 sm:p-4 md:p-6 mb-4 sm:mb-6"
         style={{ 
           backgroundColor: '#ffffff',
           borderRadius: '7px',
@@ -669,23 +747,23 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
         }}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
           <div 
-            className="w-16 h-16 flex items-center justify-center flex-shrink-0"
+            className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0"
             style={{ backgroundColor: project.color || team.color || '#073392', borderRadius: '7px' }}
           >
-            <Calendar className="w-8 h-8" style={{ color: '#ffffff' }} />
+            <Calendar className="w-6 h-6 sm:w-8 sm:h-8" style={{ color: '#ffffff' }} />
           </div>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2" style={{ color: '#1f2937' }}>{project.name}</h2>
-            <div className="text-lg mb-4" style={{ color: '#6b7280' }}>
+          <div className="flex-1 w-full text-center sm:text-left">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2" style={{ color: '#1f2937' }}>{project.name}</h2>
+            <div className="text-sm sm:text-base md:text-lg mb-3 sm:mb-4" style={{ color: '#6b7280' }}>
               <TruncatedText 
                 text={project.description || 'No description'} 
                 maxLength={170}
                 className=""
               />
             </div>
-            <div className="flex items-center gap-6 text-sm">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-start gap-3 sm:gap-6 text-sm">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" style={{ color: project.color || team.color || '#073392' }} />
                 <span style={{ color: '#4b5563' }}>{project.member_count || 0} members</span>
@@ -707,44 +785,48 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
         </div>
       </div>
       {/* Tabs Container with Date Filter */}
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
-        <div className="flex items-center justify-between">
-          <Tabs 
-            tabs={tabs} 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab}
-          />
+      <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="w-full sm:w-auto overflow-x-auto">
+            <Tabs 
+              tabs={tabs} 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab}
+            />
+          </div>
           {activeTab === 'board' && (
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
               {/* Add a task button - Only show for assigned users */}
               {isCurrentUserAssignedToTeam() && (
                 <Button
                   onClick={() => setIsCreatingTask(true)}
                   variant="primary"
                   size="md"
-                  className="flex items-center gap-2"
+                  className="flex items-center justify-center gap-2 w-full sm:w-auto touch-manipulation"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Add a task</span>
+                  <span className="text-sm sm:text-base">Add a task</span>
                 </Button>
               )}
               
-              <DateFilter
-                dateFilter={dateFilter}
-                setDateFilter={setDateFilter}
-                customDateRange={customDateRange}
-                setCustomDateRange={setCustomDateRange}
-              />
+              <div className="w-full sm:w-auto">
+                <DateFilter
+                  dateFilter={dateFilter}
+                  setDateFilter={setDateFilter}
+                  customDateRange={customDateRange}
+                  setCustomDateRange={setCustomDateRange}
+                />
+              </div>
             </div>
           )}
         </div>
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-xl shadow-sm p-4">
+      <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 md:p-6">
         {activeTab === 'board' && (
           <div>
-            <h3 className="text-lg font-semibold mb-4" style={{ color: '#1f2937' }}>Project Board</h3>
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold mb-3 sm:mb-4" style={{ color: '#1f2937' }}>Project Board</h3>
             {loadingTasks ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#076297' }} />
@@ -819,28 +901,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
 
         {activeTab === 'members' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>Project Members ({projectMembers.length})</h3>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-center sm:text-left" style={{ color: '#1f2937' }}>Project Members ({projectMembers.length})</h3>
               {isCurrentUserAssignedToTeam() && (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => setIsAddingMember(true)}
-                    className="px-3 py-1.5 text-sm rounded-md text-white transition-colors flex items-center gap-1"
+                    className="px-3 py-2 text-sm rounded-md text-white transition-colors flex items-center justify-center gap-2 w-full sm:w-auto touch-manipulation"
                     style={{ backgroundColor: '#076297', borderRadius: '7px' }}
                   >
                     <Users className="w-4 h-4" />
-                    Add from Team
+                    <span className="text-sm sm:text-base">Add from Team</span>
                   </button>
                   <button
                     onClick={() => {
                       setIsAddingExternalMember(true);
                       loadAllUsers();
                     }}
-                    className="px-3 py-1.5 text-sm rounded-md border transition-colors flex items-center gap-1"
+                    className="px-3 py-2 text-sm rounded-md border transition-colors flex items-center justify-center gap-2 w-full sm:w-auto touch-manipulation"
                     style={{ borderColor: '#076297', color: '#076297', borderRadius: '7px' }}
                   >
                     <UserPlus className="w-4 h-4" />
-                    Add External
+                    <span className="text-sm sm:text-base">Add External</span>
                   </button>
                 </div>
               )}
@@ -993,7 +1075,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
             )}
 
             {/* Project Members Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {projectMembers.map((projectMember) => {
                 const memberId = projectMember.user_id?.toString() || '';
                 const memberTasks = filteredTasks.filter(task => task.assignees.includes(memberId));
@@ -1046,14 +1128,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
 
         {activeTab === 'workload' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>Team Workload</h3>
-              <DateFilter
-                dateFilter={dateFilter}
-                setDateFilter={setDateFilter}
-                customDateRange={customDateRange}
-                setCustomDateRange={setCustomDateRange}
-              />
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+              <h3 className="text-base sm:text-lg md:text-xl font-semibold text-center sm:text-left" style={{ color: '#1f2937' }}>Team Workload</h3>
+              <div className="w-full sm:w-auto">
+                <DateFilter
+                  dateFilter={dateFilter}
+                  setDateFilter={setDateFilter}
+                  customDateRange={customDateRange}
+                  setCustomDateRange={setCustomDateRange}
+                />
+              </div>
             </div>
             <div className="space-y-3">
               {memberWorkload.map(({ member, totalTasks, completedTasks, progress, weeklyOccupancy, occupiedDays, totalWeekDays }) => (
@@ -1067,20 +1151,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
                     boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
                   }}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
                       <UserAvatar 
                         userId={parseInt(member.id)} 
                         size="md"
                         fallbackColor={member.color}
                       />
-                      <div>
-                        <h4 className="font-semibold" style={{ color: '#1f2937' }}>{member.name}</h4>
-                        <p className="text-sm" style={{ color: '#6b7280' }}>{totalTasks} tasks assigned</p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm sm:text-base" style={{ color: '#1f2937' }}>{member.name}</h4>
+                        <p className="text-xs sm:text-sm" style={{ color: '#6b7280' }}>{totalTasks} tasks assigned</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold" style={{ 
+                    <div className="text-left sm:text-right w-full sm:w-auto">
+                      <p className="text-xs sm:text-sm font-bold" style={{ 
                         color: weeklyOccupancy === 100 ? '#ef4444' : '#005c30'
                       }}>
                         {weeklyOccupancy}% ({occupiedDays}/{totalWeekDays} days)
@@ -1229,7 +1313,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           }
         }}
         onChange={(updatedTask: TaskType) => {
-          if (updatedTask.id) {
+          if (updatedTask.id && updatedTask.id !== '' && updatedTask.id !== '0') {
             // Editing existing task
             handleUpdateTask(updatedTask);
           } else {
@@ -1273,6 +1357,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
           customDateRange={customDateRange}
         />
       )}
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </PageLayout>
   );
 }

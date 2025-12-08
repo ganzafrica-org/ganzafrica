@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown } from "lucide-react";
+import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown, AlignJustify } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Task } from "@/lib/types";
 import { useAuth } from "./auth-provider";
 import { useProfile } from "@/contexts/profile-context";
@@ -68,7 +69,18 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
   }, []);
 
   return (
-    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-white">
+    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-white" style={{ overflowX: 'visible', overflowY: 'visible' }}>
+      {/* Hamburger Menu - Only visible on mobile/small screens */}
+      {onToggleSidebar && (
+        <button
+          onClick={onToggleSidebar}
+          className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors sidebar-toggle"
+          aria-label="Toggle menu"
+        >
+          <AlignJustify className="h-6 w-6 text-gray-700" />
+        </button>
+      )}
+      
       <div className="flex items-center gap-2">
         <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-[#076297] via-[#0a84c1] to-[#3db1ff]" />
         <span className="font-semibold text-sm sm:text-base">Task Management</span>
@@ -106,7 +118,7 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
       </button>
       
       {/* Profile Menu */}
-      <div className="relative" ref={profileMenuRef}>
+      <div className="relative" ref={profileMenuRef} style={{ overflow: 'visible', zIndex: 10000 }}>
         <button 
           onClick={() => setShowProfileMenu(!showProfileMenu)}
           className="h-8 w-8 rounded-full text-white grid place-items-center text-xs font-semibold hover:opacity-90 transition-opacity overflow-hidden"
@@ -139,20 +151,32 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
         {/* Dropdown Menu */}
         {showProfileMenu && (
           <div 
-            className="absolute right-0 mt-2 w-64 bg-white shadow-xl z-50"
-            style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
+            className="absolute bg-white shadow-xl"
+            style={{ 
+              borderRadius: '7px', 
+              border: '1px solid #e5e7eb',
+              right: '100%',
+              marginRight: '8px',
+              marginTop: '8px',
+              zIndex: 10000,
+              position: 'absolute',
+              top: '0',
+              width: '280px',
+              minWidth: '280px'
+            }}
           >
             {/* Profile Option */}
-              <button
-                onClick={() => {
-                  setActiveMenuItem('profile');
-                  setShowProfileMenu(false);
-                  router.push('/profile');
-                }}
-              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left"
+            <Link
+              href="/profile"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileMenu(false);
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
               style={{ 
                 borderBottom: '1px solid #e5e7eb',
-                backgroundColor: activeMenuItem === 'profile' ? '#076297' : 'transparent'
+                backgroundColor: activeMenuItem === 'profile' ? '#076297' : 'transparent',
+                textDecoration: 'none'
               }}
               onMouseEnter={(e) => {
                 if (activeMenuItem !== 'profile') {
@@ -166,16 +190,16 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
               }}
             >
               <User 
-                className="w-4 h-4" 
+                className="w-4 h-4 flex-shrink-0" 
                 style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#4b5563' }}
               />
               <span 
-                className="text-sm font-medium"
+                className="text-sm font-medium whitespace-nowrap"
                 style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#374151' }}
               >
                 Profile
               </span>
-            </button>
+            </Link>
 
             {/* Mute Notifications */}
             <button
@@ -197,11 +221,11 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
               }}
             >
               <BellOff 
-                className="w-4 h-4" 
+                className="w-4 h-4 flex-shrink-0" 
                 style={{ color: activeMenuItem === 'mute' ? '#ffffff' : '#4b5563' }}
               />
               <span 
-                className="text-sm font-medium flex-1"
+                className="text-sm font-medium flex-1 whitespace-nowrap"
                 style={{ color: activeMenuItem === 'mute' ? '#ffffff' : '#374151' }}
               >
                 Mute Notifications
@@ -220,16 +244,17 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
             </button>
 
             {/* Settings */}
-              <button
-                onClick={() => {
-                  setActiveMenuItem('settings');
-                  setShowProfileMenu(false);
-                  router.push('/settings');
-                }}
-              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left"
+            <Link
+              href="/settings"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileMenu(false);
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
               style={{ 
                 borderBottom: '1px solid #e5e7eb',
-                backgroundColor: activeMenuItem === 'settings' ? '#076297' : 'transparent'
+                backgroundColor: activeMenuItem === 'settings' ? '#076297' : 'transparent',
+                textDecoration: 'none'
               }}
               onMouseEnter={(e) => {
                 if (activeMenuItem !== 'settings') {
@@ -243,28 +268,29 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
               }}
             >
               <Settings 
-                className="w-4 h-4" 
+                className="w-4 h-4 flex-shrink-0" 
                 style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#4b5563' }}
               />
               <span 
-                className="text-sm font-medium"
+                className="text-sm font-medium whitespace-nowrap"
                 style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#374151' }}
               >
                 Settings
               </span>
-            </button>
+            </Link>
 
             {/* Help */}
-              <button
-                onClick={() => {
-                  setActiveMenuItem('help');
-                  setShowProfileMenu(false);
-                  router.push('/help');
-                }}
-              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left"
+            <Link
+              href="/help"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowProfileMenu(false);
+              }}
+              className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
               style={{ 
                 borderBottom: '1px solid #e5e7eb',
-                backgroundColor: activeMenuItem === 'help' ? '#076297' : 'transparent'
+                backgroundColor: activeMenuItem === 'help' ? '#076297' : 'transparent',
+                textDecoration: 'none'
               }}
               onMouseEnter={(e) => {
                 if (activeMenuItem !== 'help') {
@@ -278,16 +304,16 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
               }}
             >
               <HelpCircle 
-                className="w-4 h-4" 
+                className="w-4 h-4 flex-shrink-0" 
                 style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#4b5563' }}
               />
               <span 
-                className="text-sm font-medium"
+                className="text-sm font-medium whitespace-nowrap"
                 style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#374151' }}
               >
                 Help
               </span>
-            </button>
+            </Link>
 
             {/* Sign Out */}
               <button
@@ -333,7 +359,6 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
                     setShowMuteSubmenu(false);
                     setShowProfileMenu(false);
                     // Handle mute notification
-                    console.log('Mute for:', option.value);
                   }}
                   className="w-full px-3 py-2 text-left transition-colors"
                   style={{
