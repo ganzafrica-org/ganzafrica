@@ -5473,12 +5473,8 @@
         "active",
         "completed",
         "cancelled",
-<<<<<<< HEAD
-        "on_hold"
-=======
         "on_hold",
         "overdue"
->>>>>>> ac9711053c6cdf95302682ffd7dbf34e99a6d1e2
       ]
     },
     "public.resource_access": {
@@ -5501,8 +5497,6 @@
         "research"
       ]
     },
-<<<<<<< HEAD
-=======
     "public.task_project_status": {
       "name": "task_project_status",
       "schema": "public",
@@ -5550,8 +5544,6 @@
         "email",
         "phone"
       ]
-<<<<<<< HEAD
-=======
     },
     "public.task_priority": {
       "name": "task_priority",
