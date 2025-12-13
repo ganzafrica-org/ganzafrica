@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type JSX } from "react";
 import { X, Calendar, Clock, User, BarChart3, TrendingUp, TrendingDown } from "lucide-react";
 import { TeamMember, Task } from "@/lib/types";
 import { UserAvatar } from "@/components/user-avatar";
@@ -41,7 +41,7 @@ export function WorkloadAnalyticsModal({
   tasks,
   dateFilter,
   customDateRange
-}: WorkloadAnalyticsModalProps) {
+}: WorkloadAnalyticsModalProps): JSX.Element | null {
   const [weeklyAnalytics, setWeeklyAnalytics] = useState<WeeklyAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
 

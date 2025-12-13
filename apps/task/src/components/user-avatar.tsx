@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 import { useProfile } from '@/contexts/profile-context';
 
 interface UserAvatarProps {
@@ -26,7 +26,7 @@ export function UserAvatar({
   showName = false,
   nameClassName = '',
   fallbackColor,
-}: UserAvatarProps) {
+}: UserAvatarProps): JSX.Element {
   const { getUserProfile, getUserInitials, getUserDisplayImage, loadUserProfile } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
   

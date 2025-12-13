@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { profileApi } from '@/lib/api-client';
 import { logger } from '@/lib/logger';
 
@@ -50,7 +50,7 @@ const ProfileContext = createContext<ProfileContextType>({
   getUserDisplayImage: () => null,
 });
 
-export function ProfileProvider({ children }: { children: ReactNode }) {
+export function ProfileProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
   const [userProfiles, setUserProfiles] = useState<Map<number, UserProfile>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
