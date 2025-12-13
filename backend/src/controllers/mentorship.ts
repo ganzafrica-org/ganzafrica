@@ -123,14 +123,13 @@ export const getFellows = async (
       Math.max(1, parseInt(limit as string, 10) || 15),
     );
 
-    // Get the fellow role ID
-    const fellowRole = await db
+    // Get the fellow and public role IDs (matching the stats logic)
+    const rolesResult = await db
       .select()
       .from(roles)
-      .where(eq(roles.name, "fellow"))
-      .limit(1);
+      .where(or(eq(roles.name, "fellow"), eq(roles.name, "public")));
 
-    if (!fellowRole || fellowRole.length === 0) {
+    if (!rolesResult || rolesResult.length === 0) {
       res.status(200).json({
         fellows: [],
         pagination: {
@@ -144,9 +143,9 @@ export const getFellows = async (
       return;
     }
 
-    const fellowRoleId = fellowRole[0].id;
+    const roleIds = rolesResult.map((r) => r.id);
 
-    // Get all fellows with their profiles
+    // Get all fellows and public users with their profiles
     const fellowsList = await db
       .select({
         id: users.id,
@@ -156,7 +155,7 @@ export const getFellows = async (
       })
       .from(users)
       .leftJoin(alumni_profiles, eq(users.id, alumni_profiles.user_id))
-      .where(and(eq(users.role_id, fellowRoleId), eq(users.is_active, true)));
+      .where(and(inArray(users.role_id, roleIds), eq(users.is_active, true)));
 
     // Get fellows with active mentors
     const menteeIds = await db
