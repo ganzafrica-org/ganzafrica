@@ -162,12 +162,12 @@
   
   /* Ensure mobile sidebar is completely hidden by default */
   @media (max-width: 1023px) {
-    .sidebar-container.lg\\:hidden {
+    .sidebar-container[class*="lg:hidden"] {
       transform: translateX(-100%);
       opacity: 0;
     }
     
-    .sidebar-container.lg\\:hidden[style*="translate-x-0"] {
+    .sidebar-container[class*="lg:hidden"][style*="translate-x-0"] {
       transform: translateX(0);
       opacity: 1;
     }
