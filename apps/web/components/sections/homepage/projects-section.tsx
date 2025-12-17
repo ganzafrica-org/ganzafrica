@@ -410,7 +410,7 @@ return (
                     return (
                         <motion.div 
                             key={project.id}
-                            className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
+                            className="group relative overflow-hidden rounded-md bg-white shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}

@@ -1,8 +1,6 @@
-'use client";'
 import { Rubik } from "next/font/google";
 import { getDictionary } from "@/lib/get-dictionary";
 import ClientLayout from "@/components/layout/client-layout";
-import GoogleTranslate from "@/components/layout/GoogleTranslate";
 
 import "@workspace/ui/globals.css";
 

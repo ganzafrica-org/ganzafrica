@@ -45,7 +45,7 @@ export default async function HomePage({ params }: PageProps) {
       <FellowsSection locale={locale} />
       <WhyGanzAfricaSection locale={locale} />
       <GanzAfricaUniqueSection locale={locale} />
-      <FlagshipProgramsSection locale={locale} />
+      <FlagshipProgramsSection locale={locale} dict={undefined} />
       <ProjectsSection locale={locale} />
       <PartnersSection locale={locale} />
       <TestimonialsSection locale={locale} />

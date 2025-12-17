@@ -172,7 +172,7 @@ export default function FellowsSection({ locale }: FellowsSectionProps) {
               </div>
               
               {/* Orbiting images for mobile - smaller radius */}
-              <div className="block sm:hidden">
+              <div className="block sm:hidden border-2">
                 {getOrbitingImages(true).map(({ image, position, index }) => (
                   <motion.div
                     key={`orbit-mobile-${image?.id}`}

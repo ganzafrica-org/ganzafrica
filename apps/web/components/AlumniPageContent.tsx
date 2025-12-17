@@ -258,7 +258,7 @@ export default function AlumniPageContent() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">
               <span className="text-black">{dict?.alumni?.purpose?.prefixText || "Purpose of the "}</span>
-              <span className="text-[#045f3c]">{dict?.alumni?.purpose?.title || "Alumni Network"}</span>
+              <span className="text-[#045f3c] ml-2">{dict?.alumni?.purpose?.title || "Alumni Network"}</span>
             </h2>
           </div>
 
@@ -295,7 +295,7 @@ export default function AlumniPageContent() {
             ].map((item, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+                className="bg-white rounded-md p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
               >
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto"
@@ -322,7 +322,7 @@ export default function AlumniPageContent() {
           <div className="text-center mb-20">
             <h2 className="text-3xl font-bold mb-6">
               <span className="text-black">{dict?.alumni?.impact?.prefix || "Alumni "}</span>
-              <span className="text-[#045f3c]">{dict?.alumni?.impact?.title || "Impact"}</span>
+              <span className="text-[#045f3c] ml-2">{dict?.alumni?.impact?.title || "Impact"}</span>
             </h2>
           </div>
 
@@ -357,7 +357,7 @@ export default function AlumniPageContent() {
               ].map((project, index) => (
                 <div key={index} className="group cursor-pointer">
                   {/* Minimalist card design */}
-                  <div className="bg-white rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
+                  <div className="bg-white rounded-md p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
                     {/* Icon and title on same line */}
                     <div className="flex items-center gap-4 mb-6">
                       <div
@@ -416,7 +416,7 @@ export default function AlumniPageContent() {
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold">
               <span className="text-black">{dict?.alumni?.events?.prefix || "Alumni "}</span>
-              <span className="text-[#045f3c]">{dict?.alumni?.events?.title || "Events"}</span>
+              <span className="text-[#045f3c] ml-2">{dict?.alumni?.events?.title || "Events"}</span>
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -515,7 +515,7 @@ export default function AlumniPageContent() {
         <style jsx global>{`
           .news-card {
             position: relative;
-            border-radius: 24px;
+            border-radius: 5px;
             background: white;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             overflow: hidden;
@@ -536,7 +536,7 @@ export default function AlumniPageContent() {
             width: 100%;
             overflow: hidden;
             transform-style: preserve-3d;
-            border-radius: 24px 24px 0 0;
+            border-radius: 5px 5px 0 0;
           }
           .perspective-image {
             position: absolute;
@@ -546,7 +546,7 @@ export default function AlumniPageContent() {
             height: 100%;
             background-size: cover;
             background-position: center;
-            border-radius: 24px 24px 0 0;
+            border-radius: 5px 5px 0 0;
             transform: translateZ(0) rotateY(-5deg) scale(1.05);
             transform-origin: right center;
             box-shadow: -8px 5px 10px rgba(0, 0, 0, 0.1);
@@ -575,7 +575,7 @@ export default function AlumniPageContent() {
           }
           @media (max-width: 768px) {
             .news-card {
-              max-width: 320px;
+              max-width: 100%;
               margin: 0 auto;
             }
           }

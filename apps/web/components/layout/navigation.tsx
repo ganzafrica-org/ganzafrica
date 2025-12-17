@@ -49,9 +49,6 @@ interface DictionaryType {
     our_story?: string;
     [key: string]: string | undefined;
   };
-  cta?: {
-    sign_in?: string;
-  };
 }
 
 // Define Navigation props
@@ -198,7 +195,7 @@ export default function Navigation({
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-60 bg-white w-screen h-screen overflow-y-auto md:hidden">
+      <div className="fixed inset-0 z-60 bg-white w-screen h-screen overflow-y-auto md:hidden ">
         <div className="flex justify-between items-center px-4 py-4 border-b">
           <Link href='/' className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="relative h-14 w-24">
@@ -318,18 +315,6 @@ export default function Navigation({
               </div>
             )}
           </div>
-
-          {/* Add sign in button at the bottom */}
-          <div className="mt-auto pt-6 border-t">
-            <Link href={resolveHref("/login")} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button
-                size="lg"
-                className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"
-              >
-                {dict?.cta?.sign_in || "Sign In"}
-              </Button>
-            </Link>
-          </div>
         </nav>
       </div>
     );
@@ -338,16 +323,22 @@ export default function Navigation({
   return (
     <header ref={navRef} className={getHeaderBgClass()}>
       {/* Google Translate Widget */}
-      <div className="fixed top-4 right-4 z-40 bg-white rounded-lg shadow-lg p-2 hidden">
+      {/* <div className="fixed top-4 right-4 z-40 bg-white rounded-lg shadow-lg p-2 hidden">
         <div id="google_translate_element" className="flex items-center gap-2">
           <Globe className="w-4 h-4 text-primary-orange" />
         </div>
-      </div>
+      </div> */}
 
       <div className="container min-w-full py-0">
         <div className="flex h-20 items-stretch justify-between relative">
           {/* Logo */}
-          <div className="min-h-full w-32 md:w-52 flex items-center p-8">
+          <div
+            className={cn(
+              "min-h-full w-32 md:w-52 flex items-center p-8 transition-opacity duration-200",
+              isMobileMenuOpen ? "opacity-0 pointer-events-none" : "opacity-100",
+            )}
+            aria-hidden={isMobileMenuOpen}
+          >
             <Link
               href={`/`}
               className="relative z-50 flex items-center gap-2"
@@ -372,7 +363,7 @@ export default function Navigation({
               <NavigationMenuList>
                 {/* About Dropdown */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base font-medium`}>
+                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium`}>
                     {dict?.navigation?.about || "About"}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -413,7 +404,7 @@ export default function Navigation({
                 <NavigationMenuItem>
                   <Link href={resolveHref("/our-approach")} passHref>
                     <NavigationMenuLink 
-                      className={`${getNavItemColor()} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
+                      className={`${getNavItemColor()} block px-0 py-2 text-base md:text-sm lg:text-base font-medium hover:text-accent-foreground`}
                     >
                       {dict?.navigation?.our_approach || "Our Approach"}
                     </NavigationMenuLink>
@@ -422,7 +413,7 @@ export default function Navigation({
 
                 {/* Programs Dropdown */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base font-medium`}>
+                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium`}>
                     {dict?.navigation?.programs || "Programs"}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -458,7 +449,7 @@ export default function Navigation({
 
                 {/* News & Updates Dropdown */}
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base font-medium`}>
+                  <NavigationMenuTrigger className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium`}>
                     News & Updates
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -498,15 +489,6 @@ export default function Navigation({
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
             <div className="flex items-center gap-2 border-3">
-              {/* <LanguageSwitcher /> */}
-              <Link href={`/login`} className="hidden md:block">
-                <Button
-                  size="sm"
-                  className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
-                >
-                  {dict?.cta?.sign_in || "Sign In"}
-                </Button>
-              </Link>
               <div className="md:hidden">
                 <Button
                   variant="ghost"

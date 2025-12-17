@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { FC } from "react";
+import { TransformativePartner } from "@/components/TransformativePartner";
 
 // Types for props
 interface MissionCardProps {
@@ -306,10 +307,6 @@ export default async function AboutPage(props: PageProps) {
 
   return (
     <main className="flex flex-col min-h-screen">
-      {/* Language Switcher */}
-      <div className="flex justify-end p-4">
-        <LanguageSwitcher />
-      </div>
 
       {/* Hero Section */}
       <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
@@ -347,10 +344,10 @@ export default async function AboutPage(props: PageProps) {
       
       {/* A Transformative Partner Section */}
       <section className="py-8 md:py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+        {/* <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto"> */}
             {/* Left side - Images (hidden on mobile, visible on lg screens) */}
-            <div className="hidden lg:block lg:w-1/2">
+            {/* <div className="hidden lg:block lg:w-1/2">
               <div className="relative mx-auto" style={{ width: 'fit-content' }}>
                 <div className="rounded-full overflow-hidden w-[300px] h-[300px] md:w-[400px] md:h-[400px] border-4 border-transparent">
                   <Image
@@ -372,10 +369,10 @@ export default async function AboutPage(props: PageProps) {
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
             
             {/* Right side - Text content */}
-            <div className="w-full lg:w-1/2">
+            {/* <div className="w-full lg:w-1/2">
               <div className="flex justify-left mb-4">
                 <DecoratedHeading
                   firstText={
@@ -408,9 +405,10 @@ export default async function AboutPage(props: PageProps) {
                     "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
                 </p>
               </div>
-            </div>
-          </div>
-        </div>
+            </div> */}
+          {/* </div>
+        </div> */}
+        <TransformativePartner />
       </section>
 
       {/* OUR ASPIRATIONS SECTION */}
@@ -502,7 +500,7 @@ export default async function AboutPage(props: PageProps) {
           {/* Values Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
             {/* Evidence Based Card */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8">
+            <div className="bg-white rounded-md p-6 sm:p-8">
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-primary-green rounded-full flex items-center justify-center mb-6">
                   <BarChart3 className="w-8 h-8 text-white" />
@@ -518,7 +516,7 @@ export default async function AboutPage(props: PageProps) {
             </div>
 
             {/* Integrity Card */}
-            <div className="bg-primary-green rounded-2xl p-6 sm:p-8">
+            <div className="bg-primary-green rounded-md p-6 sm:p-8">
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6">
                   <ShieldCheck className="w-8 h-8 text-primary-green" />
@@ -534,7 +532,7 @@ export default async function AboutPage(props: PageProps) {
             </div>
 
             {/* Stewardship Card */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 sm:col-span-2 lg:col-span-1">
+            <div className="bg-white rounded-md p-6 sm:p-8 sm:col-span-2 lg:col-span-1">
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-primary-green rounded-full flex items-center justify-center mb-6">
                   <Leaf className="w-8 h-8 text-white" />
@@ -563,7 +561,7 @@ export default async function AboutPage(props: PageProps) {
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 px-6 sm:px-8 md:px-4 max-w-6xl mx-auto">
           {/* Left side - Image */}
           <div className="w-full md:w-1/2 mb-4 md:mb-0">
-            <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[600px]">
+            <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[710px] lg:h-[660px] xl:h-[612px]">
               <Image
                 src="/images/_BAB8908.jpg"
                 alt="Two professionals shaking hands at Ministry of Environment event"

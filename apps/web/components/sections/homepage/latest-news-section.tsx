@@ -385,7 +385,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
       <style jsx global>{`
         .news-card {
           position: relative;
-          border-radius: 10px;
+          border-radius: 5px;
           background: white;
           box-shadow: 0 6px 16px rgba(0,0,0,0.08);
           overflow: hidden;
@@ -409,7 +409,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
           width: 100%;
           overflow: hidden;
           transform-style: preserve-3d;
-          border-radius: 24px 24px 0 0;
+          border-radius: 5px 5px 0 0;
         }
         
         .perspective-image {
@@ -420,7 +420,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
           height: 100%;
           background-size: cover;
           background-position: center;
-          border-radius: 10px 10px 0 0;
+          border-radius: 5px 5px 0 0;
           transform: translateZ(0) rotateY(-5deg) scale(1.05);
           transform-origin: right center;
           box-shadow: -8px 5px 10px rgba(0,0,0,0.1);

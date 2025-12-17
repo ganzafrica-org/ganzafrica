@@ -252,7 +252,7 @@ export default function WhyGanzAfricaSection({
           {/* Right side - Enhanced Image */}
           <div className="w-full lg:w-1/2 mb-8 lg:mb-0">
             <div className="relative group">
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary-green/20 to-primary-orange/20 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute -inset-4 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[350px] sm:h-[450px] lg:h-[550px] transform transition-transform duration-500 group-hover:scale-[1.02]">
                 <Image
                   src="/images/2-fellows.jpg"

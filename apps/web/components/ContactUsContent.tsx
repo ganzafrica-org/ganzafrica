@@ -17,7 +17,7 @@ const ContactUsContent: React.FC = () => {
         email: "",
         phone: "",
         message: "",
-        location: "rwanda", 
+        location: "rwanda",
     });
 
     const [isPointerActive, setIsPointerActive] = useState(false);
@@ -42,11 +42,11 @@ const ContactUsContent: React.FC = () => {
         e.preventDefault();
         setSubmitting(true);
         setFormError(null);
-        
+
         try {
             // Send to the API endpoint
             const response = await apiClient.post('/contacts', formState, { timeout: 10000 });
-            
+
             // Show success message and reset form
             setFormSuccess(true);
             setFormState({
@@ -56,15 +56,15 @@ const ContactUsContent: React.FC = () => {
                 message: "",
                 location: "rwanda",
             });
-            
+
             // Reset success message after 5 seconds
             setTimeout(() => {
                 setFormSuccess(false);
             }, 5000);
-            
+
         } catch (error: any) {
             console.error("Error submitting contact form:", error);
-            
+
             // Set appropriate error message
             if (error.response && error.response.data && error.response.data.message) {
                 setFormError(error.response.data.message);
@@ -78,27 +78,27 @@ const ContactUsContent: React.FC = () => {
 
     const handleNewsletterSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!newsletterEmail) return;
-        
+
         setNewsletterError(null);
-        
+
         try {
             const response = await apiClient.post('/newsletter/subscribe', {
                 email: newsletterEmail
             });
-            
+
             // Show success message and reset form
             setNewsletterSuccess(true);
             setNewsletterEmail("");
-            
+
             // Reset success message after 5 seconds
             setTimeout(() => {
                 setNewsletterSuccess(false);
             }, 5000);
         } catch (error: any) {
             console.error("Error subscribing to newsletter:", error);
-            
+
             // Set appropriate error message
             if (error.response && error.response.data && error.response.data.message) {
                 setNewsletterError(error.response.data.message);
@@ -131,7 +131,7 @@ const ContactUsContent: React.FC = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Hero Section with Background Image */}
-            <motion.section 
+            <motion.section
                 className="relative h-[400px] md:h-[500px]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -151,7 +151,7 @@ const ContactUsContent: React.FC = () => {
                 </div>
                 <div className="relative z-10 h-full flex items-center justify-center">
                     <div className="container mx-auto px-4 text-center">
-                        <motion.h1 
+                        <motion.h1
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
@@ -159,7 +159,7 @@ const ContactUsContent: React.FC = () => {
                         >
                             {dict?.contact?.hero?.title || "Get in "} <span className="text-[#FDB022]">{dict?.contact?.hero?.highlight || "Touch"}</span> {dict?.contact?.hero?.subtitle || "With Our Team"}
                         </motion.h1>
-                        <motion.p 
+                        <motion.p
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
@@ -173,7 +173,7 @@ const ContactUsContent: React.FC = () => {
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20">
-                <motion.div 
+                <motion.div
                     className="bg-white rounded-xl shadow-xl p-8 md:p-10"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -181,19 +181,19 @@ const ContactUsContent: React.FC = () => {
                 >
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Contact Form */}
-                        <motion.div 
+                        <motion.div
                             className="space-y-8 flex flex-col justify-center items-start"
                             variants={fadeInUp}
                             initial="hidden"
                             animate="visible"
                         >
-                            <motion.h2 
+                            <motion.h2
                                 className="text-2xl font-bold text-[#005c3d] "
                                 variants={itemFadeIn}
                             >
                                 {dict?.contact?.form?.title || "Send Us a Message"}
                             </motion.h2>
-                            
+
                             {/* Success Message */}
                             {formSuccess && (
                                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start">
@@ -204,7 +204,7 @@ const ContactUsContent: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                            
+
                             {/* Error Message */}
                             {formError && (
                                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
@@ -215,15 +215,15 @@ const ContactUsContent: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                            
-                            <motion.form 
-                                onSubmit={handleSubmit} 
-                                className="space-y-8"
+
+                            <motion.form
+                                onSubmit={handleSubmit}
+                                className="space-y-8 w-full"
                                 variants={staggerContainer}
                                 initial="hidden"
                                 animate="visible"
                             >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             {dict?.contact?.form?.nameLabel || "Name"} *
@@ -284,10 +284,10 @@ const ContactUsContent: React.FC = () => {
                                     />
                                 </div>
                                 {/* Hidden input for location value */}
-                                <input 
-                                    type="hidden" 
-                                    name="location" 
-                                    value={formState.location} 
+                                <input
+                                    type="hidden"
+                                    name="location"
+                                    value={formState.location}
                                 />
                                 <Button
                                     type="submit"
@@ -313,14 +313,14 @@ const ContactUsContent: React.FC = () => {
                         </motion.div>
 
                         {/* Contact Information */}
-                        <motion.div 
+                        <motion.div
                             className="space-y-8"
                             variants={fadeInUp}
                             initial="hidden"
                             animate="visible"
                             transition={{ delay: 0.3 }}
                         >
-                            <motion.div 
+                            <motion.div
                                 className="bg-[#FFFDEB] rounded-lg p-8"
                                 variants={itemFadeIn}
                             >
@@ -330,7 +330,7 @@ const ContactUsContent: React.FC = () => {
                                 <p className="text-gray-600 mb-6">
                                     {dict?.contact?.newsletter?.description || "Subscribe to our newsletter to receive updates about our programs, events, and opportunities."}
                                 </p>
-                                
+
                                 {/* Newsletter Success Message */}
                                 {newsletterSuccess && (
                                     <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start mb-4">
@@ -341,7 +341,7 @@ const ContactUsContent: React.FC = () => {
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Newsletter Error Message */}
                                 {newsletterError && (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start mb-4">
@@ -352,7 +352,7 @@ const ContactUsContent: React.FC = () => {
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 <form onSubmit={handleNewsletterSubmit} className="space-y-4">
                                     <Input
                                         type="email"
@@ -372,7 +372,7 @@ const ContactUsContent: React.FC = () => {
                             </motion.div>
 
                             {/* Rwanda Office Information */}
-                            <motion.div 
+                            <motion.div
                                 className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden"
                                 variants={itemFadeIn}
                             >
@@ -402,11 +402,17 @@ const ContactUsContent: React.FC = () => {
                                                     <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
                                                         <Mail className="h-5 w-5 text-[#005c3d]" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-gray-600">{dict?.contact?.office?.email || "info@ganzafrica.org"}</p>
-                                                        <p className="text-xs text-gray-500">{dict?.contact?.office?.emailResponse || "Response within 24 hours"}</p>
+
+                                                    <div className="min-w-0 flex-1 break-words">
+                                                        <p className="text-gray-600 break-words">
+                                                            {dict?.contact?.office?.email || "info@ganzafrica.org"}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 break-words">
+                                                            {dict?.contact?.office?.emailResponse || "Response within 24 hours"}
+                                                        </p>
                                                     </div>
                                                 </div>
+
                                             </div>
                                         </div>
 
@@ -430,13 +436,13 @@ const ContactUsContent: React.FC = () => {
                 </motion.div>
 
                 {/* Map Section */}
-                <motion.div 
+                <motion.div
                     className="mt-8 mb-16"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                 >
-                    <motion.div 
+                    <motion.div
                         className="h-[400px] w-full rounded-lg overflow-hidden border-2 border-gray-200 relative shadow-lg"
                         whileHover={{ scale: 1.01 }}
                         transition={{ duration: 0.3 }}
@@ -464,7 +470,7 @@ const ContactUsContent: React.FC = () => {
 
                             <AnimatePresence>
                                 {isPointerActive && (
-                                    <motion.div 
+                                    <motion.div
                                         key="pointer-card"
                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -475,9 +481,9 @@ const ContactUsContent: React.FC = () => {
                                         <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-4 border-2 border-[#005c3d] w-48 text-center">
                                             <div className="flex flex-col items-center space-y-2">
                                                 <div className="flex-shrink-0 bg-white p-2">
-                                                    <img 
-                                                        src="/images/logo.png" 
-                                                        alt="GanzAfrica Logo" 
+                                                    <img
+                                                        src="/images/logo.png"
+                                                        alt="GanzAfrica Logo"
                                                         className="h-12 w-auto object-contain"
                                                     />
                                                 </div>

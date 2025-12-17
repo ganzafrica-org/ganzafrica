@@ -11,7 +11,7 @@ import { useDict } from '@/context/dictionary';
 interface KeyElement {
   title: string;
   description: string;
-  icon: React.ReactNode; // Changed to ReactNode for inline SVGs
+  icon: React.ReactNode;
   color: string;
   imageUrl?: string;
   isHighlighted?: boolean;
@@ -64,8 +64,8 @@ export default function GanzAfricaUniqueSection({
       description:
           dict?.unique?.elements?.data?.description ||
           "We champion a data & evidence-based approach, equipping our fellows with key skills in data analytics to support evidence-informed decisions and policies.",
-      icon: <DataIcon />, // Custom SVG icon
-      color: "#FFB800", // Deep amber
+      icon: <DataIcon />,
+      color: "#166534", // Deep amber
       imageUrl: "/images/Fellows3.jpeg",
     },
     {
@@ -73,8 +73,8 @@ export default function GanzAfricaUniqueSection({
       description:
           dict?.unique?.elements?.implementation?.description ||
           "We go beyond ideas, cultivating a generation of young african leaders with the skills and resources to translate their vision into reality, implementing solutions to improve community livelihoods in Africa.",
-      icon: <ImplementationIcon />, // Custom SVG icon
-      color: "#166534", // Deep blue
+      icon: <ImplementationIcon />,
+      color: "#FFB800", // Deep blue
       imageUrl: "/images/Fellows1.jpeg",
       isHighlighted: true,
     },
@@ -84,7 +84,7 @@ export default function GanzAfricaUniqueSection({
       description:
           dict?.unique?.elements?.public_sector?.description ||
           "We aim to solve endemic and important public sector challenges, based on the belief that only solutions at this level lead to large-scale and long-lasting impact in agriculture and food systems.",
-      icon: <PublicSectorIcon />, // Custom SVG icon
+      icon: <PublicSectorIcon />,
       color: "#073392",// Deep green
       imageUrl: "/images/amiteam.jpg",
     },
@@ -120,13 +120,13 @@ export default function GanzAfricaUniqueSection({
 
   const videoContainer = {
     hidden: { opacity: 0, scale: 0.95 },
-    show: { 
-      opacity: 1, 
+    show: {
+      opacity: 1,
       scale: 1,
-      transition: { 
+      transition: {
         duration: 0.6,
         ease: "easeOut"
-      } 
+      }
     }
   };
 
@@ -155,8 +155,8 @@ export default function GanzAfricaUniqueSection({
           />
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div 
+        <div className="container mx-auto relative z-10 flex justify-center">
+          <motion.div
             className="space-y-10"
             initial="hidden"
             whileInView="show"
@@ -165,12 +165,12 @@ export default function GanzAfricaUniqueSection({
           >
             {/* Title */}
             <div>
-              <motion.div 
+              <motion.div
                 className="space-y-6"
                 variants={item}
               >
-                <motion.div 
-                  className="space-y-2 flex justify-center items-center"
+                <motion.div
+                  className="space-y-2 flex justify-center  px-4"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -181,7 +181,7 @@ export default function GanzAfricaUniqueSection({
                     secondText={dict.home?.unique?.title_second || "GanzAfrica Unique"}
                   />
                 </motion.div>
-                {/* <motion.div 
+                {/* <motion.div
                   className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"
                   variants={videoContainer}
                   whileHover={{ scale: 1.02 }}
@@ -236,45 +236,30 @@ export default function GanzAfricaUniqueSection({
             </div>
 
             {/* Key elements as cards below title */}
-            <div className="space-y-6">
-              <motion.div 
+                <div className="space-y-6 max-w-6xl">
+              <motion.div
                 className="space-y-4 relative"
                 variants={item}
               >
                 <div className="absolute -left-6 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-neutral-100 z-10 pointer-events-none"></div>
-                <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 pl-2 pr-1 py-4 overflow-visible">
+                <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 pl-2 pr-1 py-4 overflow-visible mx-2 lg:mx-0 mb-[10rem]">
                   <div className="absolute -right-6 top-0 bottom-0 w-6 bg-gradient-to-l from-neutral-100 to-transparent z-10 pointer-events-none"></div>
                   {keyElements.map((element, index) => (
                     <motion.div
                       key={index}
-                      className={`relative rounded-2xl overflow-hidden transition-all ${
+                      className={`mb-5 md:mb-0 relative bg-white rounded-md transition-all z-0${
                         element.isHighlighted
-                          ? "bg-amber-50 shadow-lg border-2 border-amber-200"
-                          : "bg-slate-50 shadow-md border border-gray-200 hover:shadow-lg"
+                          ? "bg-amber-50 shadow-lg"
+                          : "bg-slate-50 shadow-md hover:shadow-lg"
                       }`}
                       variants={item}
-                      whileHover={{ 
+                      whileHover={{
                         scale: 1.02,
                         boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)"
                       }}
                     >
-                      {/* Image Banner at Top */}
-                      <div className="h-32 overflow-hidden">
-                        {element.imageUrl ? (
-                          <Image
-                            src={element.imageUrl}
-                            alt={element.title}
-                            width={800}
-                            height={200}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-blue-900" />
-                        )}
-                      </div>
-
                       {/* Icon - Overlapping Image and Content */}
-                      <div className="absolute left-6 top-20 flex h-20 w-20 items-center justify-center rounded-full border-4 border-white shadow-lg"
+                      <div className="absolute left-6 -top-10 z-20 flex h-20 w-20 items-center justify-center rounded-full border-4 border-white shadow-lg"
                            style={{ backgroundColor: element.color }}>
                         {element.icon}
                       </div>
@@ -290,15 +275,6 @@ export default function GanzAfricaUniqueSection({
                         <p className="mb-6 text-sm text-gray-700 leading-relaxed">
                           {element.description}
                         </p>
-
-                        {/* Learn More Link */}
-                        <button
-                          type="button"
-                          className="flex items-center gap-2 text-amber-700 font-semibold hover:text-amber-800 transition-colors"
-                        >
-                          Learn more
-                          <ChevronRight className="h-4 w-4" />
-                        </button>
                       </div>
                     </motion.div>
                   ))}

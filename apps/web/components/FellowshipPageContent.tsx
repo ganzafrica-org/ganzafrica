@@ -398,14 +398,14 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                     loop
                     playsInline
                   />
-                  <div className="absolute bottom-4 right-4 flex space-x-3">
+                  <div className="absolute bottom-4 left-4 flex space-x-3">
                     <button 
                       onClick={toggleMute}
                       className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
                       aria-label={isMuted ? "Unmute video" : "Mute video"}
                     >
                       {isMuted ? <AudioMutedIcon /> : <AudioUnmutedIcon />}
-                    </button>
+                    </button> 
                     <button 
                       onClick={toggleFullScreen}
                       className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
@@ -562,7 +562,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               transition={{ delay: 0.4, duration: 0.8 }}
               className="bg-white rounded-[16px] overflow-hidden border border-gray-100 h-full"
             >
-              <div className="p-3">
+              <div className="p-2 md:p-3">
                 <div className="rounded-xl overflow-hidden relative lg:h-[580px]">
                   {/* LARGE DEVICES */}
                   <Image
@@ -578,7 +578,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                     priority
                   />
                   {/* SMALL DEVICES */}
-                  <div className="p-3 md:hidden">
+                  <div className="p-1 md:hidden">
                     <div className="rounded-xl overflow-hidden relative">
                       <img
                         src={benefits[2]?.image}
