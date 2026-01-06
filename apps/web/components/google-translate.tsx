@@ -36,7 +36,7 @@ export default function GoogleTranslate() {
           setTimeout(() => {
             const comboBox = document.querySelector('.goog-te-combo') as HTMLSelectElement;
             const menuValue = document.querySelector('.goog-te-menu-value') as HTMLElement;
-            
+
             if (comboBox && menuValue) {
               // Toggle dropdown when clicking the button again
               menuValue.addEventListener('click', (e) => {
@@ -44,10 +44,10 @@ export default function GoogleTranslate() {
                   const menuFrame = document.querySelector('.goog-te-menu-frame') as HTMLElement;
                   if (menuFrame) {
                     // Check if dropdown is already open
-                    const isOpen = menuFrame.style.display !== 'none' && 
+                    const isOpen = menuFrame.style.display !== 'none' &&
                                    menuFrame.offsetParent !== null &&
                                    window.getComputedStyle(menuFrame).display !== 'none';
-                    
+
                     if (isOpen) {
                       // If open, close it
                       menuFrame.style.display = 'none';
@@ -91,7 +91,7 @@ export default function GoogleTranslate() {
                 const target = e.target as HTMLElement;
                 const menuFrame = document.querySelector('.goog-te-menu-frame') as HTMLElement;
                 const translateElement = document.querySelector('#google_translate_element') as HTMLElement;
-                
+
                 if (menuFrame && menuFrame.style.display !== 'none') {
                   if (!target.closest('.goog-te-menu-frame') && !target.closest('#google_translate_element')) {
                     menuFrame.style.display = 'none';
@@ -133,11 +133,11 @@ export default function GoogleTranslate() {
           console.error('Failed to load Google Translate script:', e);
         }}
       />
-      
+
       <div className="flex items-center space-x-2 border border-gray-200 rounded-lg px-2 bg-white relative z-[100] h-10">
         <Globe className="w-4 h-4 text-gray-500 flex-shrink-0" />
-        <div 
-          id="google_translate_element" 
+        <div
+          id="google_translate_element"
           ref={elementRef}
           className="google-translate-container"
         ></div>
@@ -155,13 +155,13 @@ export default function GoogleTranslate() {
         .goog-te-banner-frame { 
           display: none !important; 
         }
-        
+
         /* Ensure dropdown appears above everything */
         .goog-te-menu-frame {
           z-index: 99999 !important;
           position: fixed !important;
         }
-        
+
         /* Cleanup the Google UI to look modern */
         .goog-te-gadget { 
           font-size: 0 !important; 

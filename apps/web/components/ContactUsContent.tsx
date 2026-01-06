@@ -174,7 +174,7 @@ const ContactUsContent: React.FC = () => {
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20">
                 <motion.div
-                    className="bg-white rounded-xl shadow-xl p-8 md:p-10"
+                    className="bg-white rounded-md shadow-xl p-8 md:p-10"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
@@ -387,7 +387,7 @@ const ContactUsContent: React.FC = () => {
                                 {/* Content */}
                                 <div className="p-6">
                                     <div className="space-y-4">
-                                        <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                        <div className="bg-[#005c3d]/5 rounded-md p-4">
                                             <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-4 ">
                                                 <div className="flex items-center space-x-3 border-0 md:border-r md:border-gray-200 pr-4">
                                                     <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
@@ -398,7 +398,7 @@ const ContactUsContent: React.FC = () => {
                                                         <p className="text-xs text-gray-500">{dict?.contact?.office?.hours || "Mon-Fri, 8:00 AM - 5:00 PM"}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center space-x-3 pl-0 md:pl-4">
+                                                <div className="bg-red-500 flex items-center space-x-3 pl-0 md:pl-4">
                                                     <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
                                                         <Mail className="h-5 w-5 text-[#005c3d]" />
                                                     </div>
@@ -416,7 +416,7 @@ const ContactUsContent: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                        <div className="bg-[#005c3d]/5 rounded-md p-4">
                                             <div className="flex items-center space-x-3">
                                                 <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
                                                     <MapPin className="h-5 w-5 text-[#005c3d]" />
@@ -443,7 +443,7 @@ const ContactUsContent: React.FC = () => {
                     transition={{ duration: 0.6, delay: 0.4 }}
                 >
                     <motion.div
-                        className="h-[400px] w-full rounded-lg overflow-hidden border-2 border-gray-200 relative shadow-lg"
+                        className="h-[400px] w-full rounded-md overflow-hidden border-2 border-gray-200 relative shadow-lg"
                         whileHover={{ scale: 1.01 }}
                         transition={{ duration: 0.3 }}
                     >

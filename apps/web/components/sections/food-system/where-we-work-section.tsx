@@ -54,7 +54,7 @@ const WhereWeWorkSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.7 }}
-            className="relative h-full rounded-[20px] overflow-hidden"
+            className="relative h-full rounded-md overflow-hidden"
           >
             <Image
               src="/images/Fellows7.jpg"
@@ -62,6 +62,7 @@ const WhereWeWorkSection = () => {
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
+              unoptimized
             />
           </motion.div>
 

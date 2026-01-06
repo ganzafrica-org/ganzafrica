@@ -17,8 +17,7 @@ import {
   NavigationMenuTrigger,
 } from "@workspace/ui/components/navigation-menu";
 import { Button } from "@workspace/ui/components/button";
-// import LanguageSwitcher from "@/components/layout/language-switcher";
-// import { LanguageSwitcher } from '@/components/layout/lang-switcher';
+
 
 // Define types for menu items
 interface MenuItem {
@@ -322,12 +321,6 @@ export default function Navigation({
 
   return (
     <header ref={navRef} className={getHeaderBgClass()}>
-      {/* Google Translate Widget */}
-      {/* <div className="fixed top-4 right-4 z-40 bg-white rounded-lg shadow-lg p-2 hidden">
-        <div id="google_translate_element" className="flex items-center gap-2">
-          <Globe className="w-4 h-4 text-primary-orange" />
-        </div>
-      </div> */}
 
       <div className="container min-w-full py-0">
         <div className="flex h-20 items-stretch justify-between relative">

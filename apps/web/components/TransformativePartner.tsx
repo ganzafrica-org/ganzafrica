@@ -1,3 +1,5 @@
+import Image from "next/image"
+
 export const TransformativePartner = () => {
     return (
       <section className="relative py-16 md:py-24 overflow-hidden">
@@ -6,12 +8,11 @@ export const TransformativePartner = () => {
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="space-y-8">
                 <div>
-                  <h2 className="text-4xl md:text-5xl font-black leading-tight text-balance">
-                    A TRANS&shy;FORMATIVE <span className="text-primary">PARTNER</span>
+                  <h2 className="font-h4 md:font-h3 whitespace-normal font-black text-black">
+                    A transformative <span className="text-primary-green">Partner</span>
                   </h2>
                 </div>
-  
-                <div className="space-y-4 text-muted-foreground leading-relaxed">
+                <div className="space-y-4 text-black">
                   <p className="text-lg">
                   GanzAfrica runs a holistic program that combines training, mentorship, and work placements to prepare African youth for careers in transforming agriculture and land management.
                   </p>
@@ -27,14 +28,17 @@ export const TransformativePartner = () => {
               <div className="relative">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-4">
-                    <div className="aspect-square rounded-2xl overflow-hidden shadow-xl">
-                      <img
+                    <div className="aspect-square rounded-md overflow-hidden shadow-xl">
+                      <Image
                         src="/images/GroupMico.jpeg"
                         alt="Learning"
-                        className="w-full h-full object-cover"
+                        width={100}
+                        height={100}
+                        className="w-full h-full object-cover rounded-md"
+                        unoptimized
                       />
                     </div>
-                    <div className="aspect-[4/3] rounded-2xl bg-primary/10 p-6 flex items-center justify-center">
+                    <div className="aspect-[4/3] rounded-md bg-primary-green/10 p-6 flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-4xl font-bold text-primary-green mb-2">25+</div>
                         <div className="text-sm font-medium">Fellows Trained</div>
@@ -42,17 +46,20 @@ export const TransformativePartner = () => {
                     </div>
                   </div>
                   <div className="space-y-4 mt-8">
-                    <div className="aspect-[4/3] rounded-2xl bg-accent/30 p-6 flex items-center justify-center">
+                    <div className="aspect-[4/3] rounded-md bg-primary-orange/5 p-6 flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-4xl font-bold text-primary-green mb-2">95%</div>
                         <div className="text-sm font-medium">Job Placement</div>
                       </div>
                     </div>
-                    <div className="aspect-square rounded-2xl overflow-hidden shadow-xl">
-                      <img
+                    <div className="aspect-square rounded-md overflow-hidden shadow-xl">
+                      <Image
                         src="/images/Presenting.jpg"
                         alt="Students"
-                        className="w-full h-full object-cover"
+                        width={100}
+                        height={100}
+                        className="w-full h-full object-cover rounded-md"
+                        unoptimized
                       />
                     </div>
                   </div>

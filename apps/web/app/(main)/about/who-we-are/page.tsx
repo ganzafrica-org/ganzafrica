@@ -1,7 +1,6 @@
 import { getDictionary } from "@/lib/get-dictionary";
 import Image from "next/image";
 import { DecoratedHeading } from "@/components/layout/headertext";
-import LanguageSwitcher from "@/components/layout/language-switcher";
 import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { 
@@ -155,7 +154,7 @@ const PromiseCard: FC<PromiseCardProps> = ({
   const iconBg = type === "partners" ? "bg-primary-orange" : "bg-green-600";
 
   return (
-    <div className={`${bgColor} ${marginRight} rounded-3xl p-6 sm:p-8 relative transition-all duration-300 border-0 mb-5 hover:-translate-y-1`}>
+    <div className={`${bgColor} ${marginRight} rounded-md p-6 sm:p-8 relative transition-all duration-300 border-0 mb-5 hover:-translate-y-1`}>
       <div className="flex items-center mb-4">
         <div
           className={`${labelColor} text-white font-bold md:text-xl rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm`}
@@ -430,19 +429,20 @@ export default async function AboutPage(props: PageProps) {
           <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
             {/* Left side - Team Image */}
             <div className="w-full md:w-1/2 mb-6 md:mb-0">
-              <div className="rounded-3xl overflow-hidden h-[80px] sm:h-[300px] md:h-[400px]">
+              <div className="rounded-md overflow-hidden h-[80px] sm:h-[300px] md:h-[400px]">
                 <Image
                   src="/images/_BAB8852.jpg"
                   alt="GanzAfrica team members"
                   width={300}
                   height={300}
                   className="w-full h-full object-cover"
+                  unoptimized
                 />
               </div>
             </div>
             {/* Right side - Mission Cards */}
             <div className="w-full md:w-1/2 flex flex-col space-y-6 sm:space-y-8">
-              <div className="bg-[#073392] rounded-3xl p-6 sm:p-8 relative mr-5">
+              <div className="bg-[#073392] rounded-md p-6 sm:p-8 relative mr-5">
                 <div className="flex items-center mb-4">
                   <div className="bg-primary-orange text-white font-bold md:text-xl  rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
                     <span className="mr-2"></span> Our Vision
@@ -460,7 +460,7 @@ export default async function AboutPage(props: PageProps) {
                 </div>
               </div>
 
-              <div className="bg-green-800 rounded-3xl p-6 sm:p-8 relative mr-5">
+              <div className="bg-green-800 rounded-md p-6 sm:p-8 relative mr-5">
                 <div className="flex items-center mb-4">
                   <div className="bg-green-500 text-white md:text-xl font-bold rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm">
                     <span className="mr-2"></span> {dict?.about?.aspirations?.mission_label || "Our Mission"}
@@ -561,13 +561,14 @@ export default async function AboutPage(props: PageProps) {
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 px-6 sm:px-8 md:px-4 max-w-6xl mx-auto">
           {/* Left side - Image */}
           <div className="w-full md:w-1/2 mb-4 md:mb-0">
-            <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[710px] lg:h-[660px] xl:h-[612px]">
+            <div className="rounded-md overflow-hidden h-[300px] sm:h-[400px] md:h-[710px] lg:h-[660px] xl:h-[612px]">
               <Image
                 src="/images/_BAB8908.jpg"
                 alt="Two professionals shaking hands at Ministry of Environment event"
                 width={600}
                 height={500}
                 className="w-full h-full object-cover"
+                unoptimized
               />
             </div>
           </div>

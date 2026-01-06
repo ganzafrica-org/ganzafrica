@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react"
 import { Home, Phone, Mail } from "lucide-react";
 import { LinkedInIcon, TwitterIcon } from "@/components/ui/icons";
 import { Button } from "@workspace/ui/components/button";
@@ -11,6 +14,11 @@ export default function Footer({
   locale: string;
 }) {
   const dict = useDict();
+
+  const [year, setYear] = useState<number | null>(null)
+    useEffect(()=>{
+        setYear(new Date().getFullYear())
+    },[])
 
   return (
       <footer className="bg-primary-green text-white py-1" id="footer-translate">
@@ -176,7 +184,7 @@ export default function Footer({
           {/* Bottom Section */}
           <div className="flex flex-col md:flex-row justify-between items-center text-sm">
             <div className="mb-0.5 md:mb-0">
-              <p>© 2025 All Rights Reserved GanzAfrica</p>
+              <p>© {year} All Rights Reserved GanzAfrica</p>
             </div>
             <div className="flex flex-col md:flex-row items-center space-y-0 md:space-y-0 md:space-x-6 mb-0.5 md:mb-0">
               <div className="flex items-center">

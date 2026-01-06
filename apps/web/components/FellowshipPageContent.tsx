@@ -388,7 +388,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               className="w-full md:w-[60%] mb-8 md:mb-0"
             >
               <div className="relative">
-                <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-lg overflow-hidden">
+                <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-md overflow-hidden">
                   <video
                     ref={videoRef}
                     className="w-full h-full object-cover"
@@ -423,7 +423,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3, duration: 0.8 }}
-              className="w-full md:absolute md:top-12 md:right-0 md:w-[50%] bg-white p-4 sm:p-6 rounded-lg shadow-lg"
+              className="w-full md:absolute md:top-12 md:right-0 md:w-[50%] bg-white p-4 sm:p-6 rounded-md shadow-lg"
             >
               <DecoratedHeading
                 firstText={dict?.fellowship?.about?.firstText || "About the"}
@@ -467,7 +467,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               <img
                 src="/images/SHIR5142-Enhanced-NR.jpg"
                 alt="Food System"
-                className="rounded-lg w-full h-[500px] object-cover"
+                className="rounded-md w-full h-[500px] object-cover"
               />
             </motion.div>
             <motion.div
@@ -533,17 +533,18 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.2, duration: 0.8 }}
-                  className="bg-white rounded-[16px] overflow-hidden border border-gray-100"
+                  className="bg-white rounded-md overflow-hidden border border-gray-100"
                 >
                   <div className="p-3">
-                    <div className="rounded-xl overflow-hidden relative">
-                      <img
+                    <div className="rounded-md overflow-hidden relative">
+                      <Image
                         src={benefit.image}
                         alt={benefit.title}
                         width={600}
                         height={200}
                         className="w-full h-[200px] object-cover"
                         style={{ objectPosition: "center center" }}
+                        unoptimized
                       />
                     </div>
                   </div>
@@ -560,10 +561,10 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4, duration: 0.8 }}
-              className="bg-white rounded-[16px] overflow-hidden border border-gray-100 h-full"
+              className="bg-white rounded-md overflow-hidden border border-gray-100 h-full"
             >
               <div className="p-2 md:p-3">
-                <div className="rounded-xl overflow-hidden relative lg:h-[580px]">
+                <div className="rounded-md overflow-hidden relative lg:h-[580px]">
                   {/* LARGE DEVICES */}
                   <Image
                     src="/images/ganzafrica-fellows.jpg"
@@ -579,14 +580,15 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                   />
                   {/* SMALL DEVICES */}
                   <div className="p-1 md:hidden">
-                    <div className="rounded-xl overflow-hidden relative">
-                      <img
-                        src={benefits[2]?.image}
+                    <div className="rounded-md overflow-hidden relative">
+                      <Image
+                        src={benefits[2]?.image || "Develop Your Skills"}
                         alt={benefits[2]?.title || "Develop Your Skills"}
                         width={600}
                         height={200}
                         className="w-full h-[200px] object-cover"
                         style={{ objectPosition: "center center" }}
+                        unoptimized
                       />
                     </div>
                 </div>

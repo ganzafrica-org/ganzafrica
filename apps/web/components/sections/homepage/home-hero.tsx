@@ -8,7 +8,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
-import GoogleTranslate from "@/components/google-translate";
+// import GoogleTranslate from "@/components/google-translate";
 import { useDict } from '@/context/dictionary';
 
 // Import shadcn Navigation Menu components
@@ -644,7 +644,7 @@ export default function HomeHero({
             {/* Right side items */}
             <div className="bg-white rounded-tl-none rounded-bl-2xl min-h-full p-4 w-auto flex items-center">
               <div className="flex items-center gap-2">
-                <GoogleTranslate />
+                {/*<GoogleTranslate />*/}
                 <div className="md:hidden">
                   <Button
                     variant="ghost"
@@ -715,9 +715,9 @@ export default function HomeHero({
       {/* Initial content */}
       <div
         ref={initialContentRef}
-        className="absolute inset-0 flex items-center justify-center z-30 hidden md:block"
+        className="absolute inset-0 flex items-center top-52 justify-center z-30 hidden md:block"
       >
-        <div className="text-center text-white mt-16">
+        <div className="text-center text-white mt-20">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
             {dict?.home?.hero?.title ||
               "Sustainable Solutions for Africa's Future"}
