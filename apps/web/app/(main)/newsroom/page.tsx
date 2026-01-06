@@ -19,6 +19,18 @@ import HeaderBelt from "@/components/layout/headerBelt";
 import axios from 'axios';
 import { useParams } from "next/navigation";
 
+// Normalize Next.js Link typing across React type versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+
+// Normalize Next.js Image typing across React type versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeImage = Image as unknown as React.ComponentType<any>;
+
+// Normalize lucide icon component types across React type versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const ArrowUpRightIcon = ArrowUpRight as unknown as SvgIconComponent;
+
 // Create an axios instance with retry configuration
 const axiosInstance = axios.create({
   timeout: 10000,
@@ -430,7 +442,7 @@ const NewsroomPage = () => {
   </div>
   
   {/* Dark overlay */}
-  <div className="absolute inset-0 bg-black/70 z-0"></div>
+  <div className="absolute inset-0 bg-black/70 z-10"></div>
 
   {/* Content */}
   <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">

@@ -11,14 +11,27 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ArrowRight,
+  Plus,
   Eye,
   Edit,
   Trash,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
+import { toast } from 'sonner';
 
 // Define interfaces for our data structures
 interface Project {
@@ -99,6 +112,11 @@ const ProjectsPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  
+  // State for delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Function to toggle dropdown menu
   const toggleMenu = (id: number) => {
@@ -119,17 +137,8 @@ const ProjectsPage = () => {
         router.push(`/projects/${projectId}`);
         break;
       case 'delete':
-        if (window.confirm('Are you sure you want to delete this project?')) {
-          try {
-            await apiClient.delete(`/projects/${projectId}`);
-            // Refresh the projects list after deletion
-            const updatedPage = projects.length === 1 && page > 1 ? page - 1 : page;
-            setPage(updatedPage);
-          } catch (error) {
-            console.error('Error deleting project:', error);
-            alert('Failed to delete project. Please try again.');
-          }
-        }
+        setProjectToDelete(projectId);
+        setIsDeleteDialogOpen(true);
         break;
       case 'update':
         // Navigate to update page
@@ -137,10 +146,39 @@ const ProjectsPage = () => {
         break;
       case 'status':
         // Open status change modal/form
-        console.log(`Change status for project ${projectId}`);
         break;
       default:
         break;
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+
+    try {
+      await apiClient.delete(`/projects/${projectToDelete}`);
+      
+      // Close dialog and reset state
+      setIsDeleteDialogOpen(false);
+      setProjectToDelete(null);
+      
+      // Show success toast
+      toast.success('Project deleted successfully');
+      
+      // Trigger refresh by updating refreshTrigger
+      // This will cause the useEffect to refetch projects
+      setRefreshTrigger(prev => prev + 1);
+      
+      // Adjust page if needed (if we deleted the last item on the page)
+      if (projects.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch (error: any) {
+      console.error('Error deleting project:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete project. Please try again.');
+      setIsDeleteDialogOpen(false);
+      setProjectToDelete(null);
     }
   };
 
@@ -195,9 +233,7 @@ const ProjectsPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        console.log('Fetching categories from API...');
         const response = await apiClient.get('/categories');
-        console.log('Categories API response:', response.data);
 
         // Handle different response formats
         if (response.data) {
@@ -210,7 +246,6 @@ const ProjectsPage = () => {
 
           // If response is an empty object, provide default categories as fallback
           if (Object.keys(response.data).length === 0) {
-            console.log('Empty categories response, using default categories');
             categoriesData = [
               { id: 1, name: "Food System" },
               { id: 2, name: "Climate Adaptation" },
@@ -229,7 +264,6 @@ const ProjectsPage = () => {
                 categoriesObj[category.id.toString()] = category.name;
               }
             });
-            console.log('Processed categories:', categoriesObj);
             setCategories(categoriesObj);
           } else {
             console.error('Unable to process categories data:', categoriesData);
@@ -369,23 +403,10 @@ const ProjectsPage = () => {
         const apiStatus = mapUIToAPIStatus(activeTab);
         if (apiStatus) params.status = apiStatus;
 
-        console.log('Fetching projects with params:', params);
-
         // Make API request
         const response = await apiClient.get('/projects', { params });
 
-        console.log('API response projects:', response.data.projects);
-
         if (response.data) {
-          // Log a sample project to see its structure
-          if (response.data.projects && response.data.projects.length > 0) {
-            console.log('Sample project structure:', response.data.projects[0]);
-
-            // Look for category_id in the projects
-            response.data.projects.forEach((project: Project) => {
-              console.log(`Project ${project.id} has category_id: ${project.category_id}`);
-            });
-          }
 
           setProjects(response.data.projects || []);
 
@@ -408,7 +429,7 @@ const ProjectsPage = () => {
     };
 
     fetchProjects();
-  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, refreshTrigger]);
 
   // Extract team lead from project members
   const getTeamLead = (project: Project) => {
@@ -466,8 +487,8 @@ const ProjectsPage = () => {
             Import Projects
           </button>
           <Link href="/projects/add-project" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
+            <Plus className="w-4 h-4 mr-2" />
             Add Project
-            <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </div>
       </div>
@@ -564,7 +585,6 @@ const ProjectsPage = () => {
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project name</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team Lead</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created at</th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -580,15 +600,6 @@ const ProjectsPage = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {getCategoryName(project.category_id)}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {index === 8 ? (
-                        <span className="border border-purple-500 border-dashed py-0.5 px-1 rounded">
-                          {getTeamLead(project)}
-                        </span>
-                      ) : (
-                        getTeamLead(project)
-                      )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {typeof project.location === 'string' && project.location.length > 0
@@ -735,6 +746,37 @@ const ProjectsPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              Delete Project
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this project? This action cannot be undone and will permanently delete the project and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteDialogOpen(false);
+              setProjectToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+            >
+              Delete Project
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

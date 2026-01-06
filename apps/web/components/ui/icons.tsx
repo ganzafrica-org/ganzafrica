@@ -2,7 +2,7 @@ interface LinkedInIconProps {
     className?: string
 }
 
-export const LinkedInIcon = ({className}: LinkedInIconProps) => (
+export const LinkedInIcon = ({className}: LinkedInIconProps): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -18,7 +18,7 @@ interface TwitterIconProps {
     className?: string
 }
 
-export const TwitterIcon = ({className}: TwitterIconProps) => (
+export const TwitterIcon = ({className}: TwitterIconProps): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -30,7 +30,7 @@ export const TwitterIcon = ({className}: TwitterIconProps) => (
     </svg>
 );
 
-export const PersonIcon = ({className = "h-5 w-5 text-primary-green"}) => (
+export const PersonIcon = ({className = "h-5 w-5 text-primary-green"}): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 60 60"
@@ -49,7 +49,7 @@ export const PersonIcon = ({className = "h-5 w-5 text-primary-green"}) => (
     </svg>
 );
 
-export const BikeIcon = ({className = "w-12 h-12", color = "white"}) => (
+export const BikeIcon = ({className = "w-12 h-12", color = "white"}): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -65,7 +65,7 @@ export const BikeIcon = ({className = "w-12 h-12", color = "white"}) => (
 export const LandGovernanceIcon = ({
                                        className = "w-12 h-12",
                                        color = "white",
-                                   }) => (
+                                   }): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -87,7 +87,7 @@ export const LandGovernanceIcon = ({
 export const SustainableAgricultureIcon = ({
                                                className = "w-12 h-12",
                                                color = "white",
-                                           }) => (
+                                           }): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -108,7 +108,7 @@ export const SustainableAgricultureIcon = ({
 export const ClimateAdaptationIcon = ({
                                           className = "w-12 h-12",
                                           color = "white",
-                                      }) => (
+                                      }): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -123,7 +123,7 @@ export const ClimateAdaptationIcon = ({
 export const TechnologyIcon = ({
                                    className = "w-12 h-12",
                                    color = "currentColor",
-                               }) => (
+                               }): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -150,7 +150,7 @@ export const TechnologyIcon = ({
 );
 
 // Audio Controls Icons
-export const AudioUnmutedIcon = ({className = "h-5 w-5"}) => (
+export const AudioUnmutedIcon = ({className = "h-5 w-5"}): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         className={className}
@@ -167,7 +167,7 @@ export const AudioUnmutedIcon = ({className = "h-5 w-5"}) => (
     </svg>
 );
 
-export const AudioMutedIcon = ({className = "h-5 w-5"}) => (
+export const AudioMutedIcon = ({className = "h-5 w-5"}): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         className={className}
@@ -190,7 +190,7 @@ export const AudioMutedIcon = ({className = "h-5 w-5"}) => (
     </svg>
 );
 
-export const FullscreenIcon = ({className = "h-5 w-5"}) => (
+export const FullscreenIcon = ({className = "h-5 w-5"}): JSX.Element => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         className={className}

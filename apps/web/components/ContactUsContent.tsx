@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState } from "react";
 import { Button } from "@workspace/ui/components/button";
@@ -9,6 +9,7 @@ import { safeAccess } from "@/lib/utils/safeAccess";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/lib/api-client";
 import { useDict } from '@/context/dictionary';
+import { trackFormSubmission, trackVideoEvent } from "@/components/analytics/google-analytics";
 
 const ContactUsContent: React.FC = () => {
     const dict = useDict();
@@ -49,6 +50,10 @@ const ContactUsContent: React.FC = () => {
 
             // Show success message and reset form
             setFormSuccess(true);
+
+            // Track successful form submission
+            trackFormSubmission('contact_form', true);
+
             setFormState({
                 name: "",
                 email: "",
@@ -64,6 +69,10 @@ const ContactUsContent: React.FC = () => {
 
         } catch (error: any) {
             console.error("Error submitting contact form:", error);
+
+            // Track failed form submission
+            trackFormSubmission('contact_form', false);
+
 
             // Set appropriate error message
             if (error.response && error.response.data && error.response.data.message) {
@@ -90,6 +99,10 @@ const ContactUsContent: React.FC = () => {
 
             // Show success message and reset form
             setNewsletterSuccess(true);
+
+            // Track successful newsletter subscription
+            trackFormSubmission('newsletter_subscribe_contact', true);
+
             setNewsletterEmail("");
 
             // Reset success message after 5 seconds
@@ -98,6 +111,9 @@ const ContactUsContent: React.FC = () => {
             }, 5000);
         } catch (error: any) {
             console.error("Error subscribing to newsletter:", error);
+
+            // Track failed newsletter subscription
+            trackFormSubmission('newsletter_subscribe_contact', false);
 
             // Set appropriate error message
             if (error.response && error.response.data && error.response.data.message) {
@@ -144,6 +160,9 @@ const ContactUsContent: React.FC = () => {
                         muted
                         playsInline
                         className="w-full h-full object-cover"
+                        onPlay={() => trackVideoEvent('play', 'Contact Page Hero Video')}
+                        onPause={() => trackVideoEvent('pause', 'Contact Page Hero Video')}
+                        onEnded={() => trackVideoEvent('complete', 'Contact Page Hero Video')}
                     >
                         <source src="/videos/hero-video.mp4" type="video/mp4" />
                     </video>

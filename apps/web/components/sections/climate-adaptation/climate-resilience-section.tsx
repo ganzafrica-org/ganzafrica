@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
 import { DecoratedHeading } from "@/components/layout/headertext";
 
@@ -31,7 +32,7 @@ const imageVariant = {
   },
 };
 
-const ClimateResilienceSection = () => {
+const ClimateResilienceSection = (): JSX.Element => {
   return (
     <section className="py-16 bg-white">
       <Container>
@@ -53,7 +54,7 @@ const ClimateResilienceSection = () => {
           >
             {/* Main image - circular */}
             <div className="rounded-full overflow-hidden w-[320px] h-[320px] relative">
-              <Image
+              <SafeImage
                 src="/images/food-system-1.png"
                 alt="Hands holding grains"
                 fill
@@ -64,7 +65,7 @@ const ClimateResilienceSection = () => {
             {/* Circle overlay with person image */}
             <div className="absolute -bottom-5 -left-5 w-[120px] h-[120px] border-4 border-primary-green rounded-full overflow-hidden shadow-lg">
               <div className="w-full h-full bg-primary-green rounded-full flex items-center justify-center overflow-hidden">
-                <Image
+                <SafeImage
                   src="/images/food-system.jpeg"
                   alt="Young professional"
                   fill

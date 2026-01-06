@@ -17,6 +17,8 @@
       <change beforePath="$PROJECT_DIR$/apps/web/components/sections/homepage/home-hero.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/sections/homepage/home-hero.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/components/sections/homepage/why-ganzafrica-section.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/sections/homepage/why-ganzafrica-section.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
+    <list default="true" id="42530edf-8064-41f4-890d-b4df3c3495f7" name="Changes" comment="[chore] updated upload functionalities to upload and save on digital ocean instead of local disk">
+      <change beforePath="$PROJECT_DIR$/backend/drizzle/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/drizzle/meta/_journal.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,7 +29,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="feature/homepage" />
+        <entry key="$PROJECT_DIR$" value="dev" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -82,6 +84,28 @@
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\PC\\Desktop\\HALL OF FAME\\PROJECTS\\GANZAFRICA\\ganzafrica\\node_modules\\typescript\\lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.GoLinterPluginOnboarding": "true",
+    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "feature/upload-digital-ocean",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/josek/GolandProjects/ganzafrica",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "pnpm",
+    "settings.editor.selected.configurable": "preferences.keymap",
+    "ts.external.directory.path": "C:\\Users\\josek\\GolandProjects\\ganzafrica\\node_modules\\typescript\\lib"
   },
   &quot;keyToStringList&quot;: {
     &quot;DatabaseDriversLRU&quot;: [
@@ -106,6 +130,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
+        <option value="bundled-gosdk-3b128438d3f6-4b567d62c776-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-251.25410.140" />
+        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-GO-251.25410.140" />
         <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10" />
       </set>
     </attachedChunks>
@@ -140,6 +166,16 @@
     </task>
     <servers />
   </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="42530edf-8064-41f4-890d-b4df3c3495f7" name="Changes" comment="[chore] set up confirm password on register form" />
+      <created>1757928031961</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1757928031961</updated>
+    </task>
+    <servers />
+  </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
@@ -162,7 +198,8 @@
     <MESSAGE value="[chore] setting up the database migration phase 5" />
     <MESSAGE value="[chore] setting up web structure with translations" />
     <MESSAGE value="[chore] set up confirm password on register form" />
-    <option name="LAST_COMMIT_MESSAGE" value="[chore] set up confirm password on register form" />
+    <MESSAGE value="[chore] updated upload functionalities to upload and save on digital ocean instead of local disk" />
+    <option name="LAST_COMMIT_MESSAGE" value="[chore] updated upload functionalities to upload and save on digital ocean instead of local disk" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>

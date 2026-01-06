@@ -1,25 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Loader } from "lucide-react";
+import { toast } from "sonner";
 
 import { useAuth } from '@/components/auth/auth-provider';
+import { isAdminOrManager } from '@/lib/auth-utils';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   fallbackUrl?: string;
   roles?: string[];
+  requireAdminOrManager?: boolean;
 }
 
 export function ProtectedRoute({
                                    children,
                                    fallbackUrl = '/login',
                                    roles = [],
+                                   requireAdminOrManager = false,
                                }: ProtectedRouteProps) {
     const { user, isLoading, isAuthenticated } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const hasShownError = useRef(false);
 
   useEffect(() => {
     // Don't redirect while loading
@@ -36,14 +41,34 @@ export function ProtectedRoute({
       return;
     }
 
-    // Check roles if specified
-    if (roles.length > 0 && user) {
-      const hasRequiredRole = roles.includes(user.role);
-      if (!hasRequiredRole) {
+    // Check if admin/manager is required
+    if (requireAdminOrManager && user) {
+      if (!isAdminOrManager(user)) {
+        if (!hasShownError.current) {
+          toast.error("You are not authenticated to access this platform. Only administrators and managers can access the portal.");
+          hasShownError.current = true;
+        }
         router.push("/unauthorized");
+        return;
       }
     }
-  }, [isLoading, isAuthenticated, user, router, pathname, fallbackUrl, roles]);
+
+    // Check specific roles if specified
+    if (roles.length > 0 && user) {
+      const roleName = user.role_name?.toLowerCase() || '';
+      const hasRequiredRole = roles.some(role => 
+        roleName.includes(role.toLowerCase())
+      );
+      if (!hasRequiredRole) {
+        if (!hasShownError.current) {
+          toast.error("You are not authenticated to access this platform. Only administrators and managers can access the portal.");
+          hasShownError.current = true;
+        }
+        router.push("/unauthorized");
+        return;
+      }
+    }
+  }, [isLoading, isAuthenticated, user, router, pathname, fallbackUrl, roles, requireAdminOrManager]);
 
   // Show loading indicator while checking authentication
   if (isLoading) {
@@ -54,12 +79,25 @@ export function ProtectedRoute({
     );
   }
 
-  // Not authenticated or doesn't have the required role
-  if (
-    !isAuthenticated ||
-    (roles.length > 0 && user && !roles.includes(user.role))
-  ) {
+  // Not authenticated
+  if (!isAuthenticated) {
     return null;
+  }
+
+  // Check admin/manager requirement
+  if (requireAdminOrManager && user && !isAdminOrManager(user)) {
+    return null;
+  }
+
+  // Check specific roles if specified
+  if (roles.length > 0 && user) {
+    const roleName = user.role_name?.toLowerCase() || '';
+    const hasRequiredRole = roles.some(role => 
+      roleName.includes(role.toLowerCase())
+    );
+    if (!hasRequiredRole) {
+      return null;
+    }
   }
 
   // User is authenticated (and has required role if specified)

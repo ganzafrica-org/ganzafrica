@@ -19,6 +19,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { useDict } from '@/context/dictionary';
+import { trackEvent, trackVideoEvent, trackPageView } from "@/components/analytics/google-analytics";
+
+// Normalize Next.js Link typing across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
 
 export default function AlumniPageContent() {
   const dict = useDict();
@@ -32,6 +37,11 @@ export default function AlumniPageContent() {
   });
   const [isAnimating, setIsAnimating] = useState(false);
   const [hasCompletedAnimation, setHasCompletedAnimation] = useState(false);
+
+  // Track page view
+  useEffect(() => {
+    trackPageView('/programs/alumni', 'Alumni Network');
+  }, []);
 
   useEffect(() => {
     const scrollElement = scrollRef.current;
@@ -154,6 +164,9 @@ export default function AlumniPageContent() {
             loop
             playsInline
             className="w-full h-full object-cover mix-blend-overlay"
+            onPlay={() => trackVideoEvent('play', 'Alumni Hero Video')}
+            onPause={() => trackVideoEvent('pause', 'Alumni Hero Video')}
+            onEnded={() => trackVideoEvent('complete', 'Alumni Hero Video')}
           >
             <source src="/videos/hero-video.mp4" type="video/mp4" />
           </video>
@@ -276,7 +289,7 @@ export default function AlumniPageContent() {
                 description:
                   dict?.alumni?.purpose?.card2Desc || "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
                 color: "#045f3c",
-                icon: <CheckCircle2 className="w-8 h-8" />,
+                icon: <CheckCircle2 className="w-8 h-8" />
               },
               {
                 title: dict?.alumni?.purpose?.card3Title || "Investing Back into the Fellowship Program",

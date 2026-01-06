@@ -314,8 +314,13 @@ const FoodSystemsMapSection = () => {
         setLoading(true);
         
         // Fetch both projects and fellows data in parallel
+        // Only fetch published projects for the website
         const [projectsResponse, fellowsResponse] = await Promise.all([
-          apiClient.get('/projects'),
+          apiClient.get('/projects', {
+            params: {
+              is_published: true
+            }
+          }),
           apiClient.get('/fellows')
         ]);
         

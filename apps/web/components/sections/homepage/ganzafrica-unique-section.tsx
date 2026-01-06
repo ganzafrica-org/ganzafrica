@@ -181,7 +181,7 @@ export default function GanzAfricaUniqueSection({
                     secondText={dict.home?.unique?.title_second || "GanzAfrica Unique"}
                   />
                 </motion.div>
-                {/* <motion.div
+                <motion.div 
                   className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"
                   variants={videoContainer}
                   whileHover={{ scale: 1.02 }}

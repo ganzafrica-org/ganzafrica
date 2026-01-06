@@ -7,6 +7,8 @@ import HeaderBelt from "@/components/layout/headerBelt";
 import WhereWeWorkSection from "@/components/sections/food-system/where-we-work-section";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
 import { useDict } from '@/context/dictionary';
+import ApproachSection from "@/components/sections/food-system/approach-section";
+import { trackEvent, trackPageView } from "@/components/analytics/google-analytics";
 
 // Animation variants
 const fadeIn = {
@@ -14,7 +16,7 @@ const fadeIn = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { 
+    transition: {
       duration: 0.6,
       ease: "easeOut",
     },
@@ -23,13 +25,23 @@ const fadeIn = {
 
 export default function OurApproachPageContent() {
   const dict = useDict();
+// Normalize Next.js Image typing across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeImage = Image as unknown as React.ComponentType<any>;
+
+const FoodSystemPage = (): JSX.Element => {
+  useEffect(() => {
+    // Track page view for Our Approach page
+    trackPageView('/our-approach', 'Our Approach to Food Systems');
+  }, []);
+
   return (
     <main className="bg-white">
       {/* Hero Section */}
       <section className="relative w-full h-[350px] sm:h-[500px] overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <Image
+          <SafeImage
             src="/images/cabbages.png"
             alt={dict?.ourApproach?.hero?.alt || "Food System"}
             fill
@@ -60,7 +72,6 @@ export default function OurApproachPageContent() {
           >
             <span className="font-normal">{dict?.ourApproach?.hero?.subtitle || 'From Farm to Fork — and Far Beyond'}</span>
           </motion.h1>
-
         </div>
       </section>
 

@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { CalendarDays, ArrowRight } from 'lucide-react';
+const SafeCalendarDays = CalendarDays as unknown as React.ComponentType<any>;
+const SafeArrowRight = ArrowRight as unknown as React.ComponentType<any>;
 import apiClient from '@/lib/api-client';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { trackEvent } from '@/components/analytics/google-analytics';
 import { useDict } from '@/context/dictionary';
 
 // Interface for the news data from the API
@@ -347,6 +350,12 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                     href={`/${locale}/newsroom/${slug}`}
                     className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
                     style={{ color: linkColor }}
+                    onClick={() => trackEvent('news_link_click', {
+                      news_title: newsItem.title,
+                      news_category: newsItem.category_name,
+                      source_page: 'homepage',
+                      link_position: index + 1
+                    })}
                   >
                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
                       {dict?.news?.read_more ?? "Read more"}
@@ -373,6 +382,9 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                 "transition-all duration-300 hover:shadow-lg",
                 "text-sm font-medium"
               )}
+              onClick={() => trackEvent('view_all_news_click', {
+                source_page: 'homepage'
+              })}
             >
               <span>{dict?.news?.view_all ?? "View All News"}</span>
               <ArrowRight size={16} />

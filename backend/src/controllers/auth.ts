@@ -6,7 +6,6 @@ import { db } from "../db/client";
 import { eq } from "drizzle-orm";
 import { roles, users } from "../db/schema";
 
-
 const logger = new Logger("AuthController");
 
 /**
@@ -37,6 +36,9 @@ const logger = new Logger("AuthController");
  *                 type: string
  *               name:
  *                 type: string
+ *               role_type:
+ *                 type: string
+ *                 description: Optional role type for the user (e.g., 'alumni'). Defaults to 'public' if not specified.
  *     responses:
  *       201:
  *         description: User created successfully
@@ -53,7 +55,7 @@ const logger = new Logger("AuthController");
  */
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, role_type } = req.body;
 
     // Check if email already exists
     try {
@@ -71,72 +73,125 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     try {
       // First, get a default role for new users
       let defaultRoleId: number;
-      
+
       try {
-        // First try to find a role with name "public"
-        const publicRole = await db.select().from(roles).where(eq(roles.name, "public")).limit(1);
-        
-        if (publicRole && publicRole.length > 0) {
-          defaultRoleId = publicRole[0].id;
-          logger.info(`Using public role with ID: ${defaultRoleId}`);
-        } else {
-          // If no "public" role, get the first available role
-          const anyRole = await db.select().from(roles).limit(1);
-          
-          if (!anyRole || anyRole.length === 0) {
-            throw new AppError("No roles found in the database. Database setup may be incomplete.", 500);
+        // Check if a specific role type was requested (e.g., 'alumni')
+        if (role_type) {
+          const requestedRole = await db
+            .select()
+            .from(roles)
+            .where(eq(roles.name, role_type))
+            .limit(1);
+
+          if (requestedRole && requestedRole.length > 0) {
+            defaultRoleId = requestedRole[0].id;
+            logger.info(
+              `Using requested role '${role_type}' with ID: ${defaultRoleId}`,
+            );
+          } else {
+            // If requested role not found, fall back to public
+            logger.warn(
+              `Requested role '${role_type}' not found, falling back to public`,
+            );
+            const publicRole = await db
+              .select()
+              .from(roles)
+              .where(eq(roles.name, "public"))
+              .limit(1);
+
+            if (publicRole && publicRole.length > 0) {
+              defaultRoleId = publicRole[0].id;
+            } else {
+              const anyRole = await db.select().from(roles).limit(1);
+              if (!anyRole || anyRole.length === 0) {
+                throw new AppError(
+                  "No roles found in the database. Database setup may be incomplete.",
+                  500,
+                );
+              }
+              defaultRoleId = anyRole[0].id;
+            }
           }
-          
-          defaultRoleId = anyRole[0].id;
-          logger.info(`Public role not found. Using alternate role with ID: ${defaultRoleId}`);
+        } else {
+          // First try to find a role with name "public"
+          const publicRole = await db
+            .select()
+            .from(roles)
+            .where(eq(roles.name, "public"))
+            .limit(1);
+
+          if (publicRole && publicRole.length > 0) {
+            defaultRoleId = publicRole[0].id;
+            logger.info(`Using public role with ID: ${defaultRoleId}`);
+          } else {
+            // If no "public" role, get the first available role
+            const anyRole = await db.select().from(roles).limit(1);
+
+            if (!anyRole || anyRole.length === 0) {
+              throw new AppError(
+                "No roles found in the database. Database setup may be incomplete.",
+                500,
+              );
+            }
+
+            defaultRoleId = anyRole[0].id;
+            logger.info(
+              `Public role not found. Using alternate role with ID: ${defaultRoleId}`,
+            );
+          }
         }
       } catch (roleError) {
         logger.error("Error accessing roles table:", roleError);
-        throw new AppError("Failed to assign a role to the new user. Database setup may be incomplete.", 500);
+        throw new AppError(
+          "Failed to assign a role to the new user. Database setup may be incomplete.",
+          500,
+        );
       }
-      
+
       // Insert the user WITH the default role_id
       const user = await db.transaction(async (tx) => {
         // Hash the password first
         const passwordHash = await authService.hashPassword(password);
-        
+
         // Use Drizzle ORM's insert method instead of raw SQL
         // This ensures proper escaping of all values including the password hash
-        const result = await tx.insert(users).values({
-          email: email,
-          password_hash: passwordHash,
-          name: name,
-          role_id: defaultRoleId,
-          is_active: true,
-          email_verified: false,
-          phone_verified: false,
-          account_locked: false,
-          failed_login_attempts: 0,
-          created_at: new Date(),
-          updated_at: new Date()
-        }).returning();
-        
+        const result = await tx
+          .insert(users)
+          .values({
+            email: email,
+            password_hash: passwordHash,
+            name: name,
+            role_id: defaultRoleId,
+            is_active: true,
+            email_verified: false,
+            phone_verified: false,
+            account_locked: false,
+            failed_login_attempts: 0,
+            created_at: new Date(),
+            updated_at: new Date(),
+          })
+          .returning();
+
         // Return the created user
         return result[0];
       });
 
-      // Send welcome email after successful user creation
-      try {
-        await emailService.sendWelcomeEmail(email, name);
-        logger.info(`Welcome email sent successfully to ${email}`);
-      } catch (emailError) {
-        logger.error("Failed to send welcome email", emailError);
-        // Don't block registration if email fails
-      }
-
+      // Send response immediately after user creation
       res.status(201).json({
         message: constants.SUCCESS_MESSAGES.USER_CREATED,
         user: {
           id: user.id,
           email: user.email,
           name: user.name,
-          email_verified: user.email_verified
-        }
+          email_verified: user.email_verified,
+        },
+      });
+
+      // Send welcome email asynchronously after response is sent (fire and forget)
+      // This prevents email sending from blocking the registration response
+      emailService.sendWelcomeEmail(email, name).catch((emailError) => {
+        logger.error("Failed to send welcome email", emailError);
+        // Email failure doesn't affect registration success
       });
     } catch (dbError) {
       logger.error("Database error during user creation:", dbError);
@@ -199,6 +254,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     try {
       user = await userService.getUserByEmail(email);
     } catch (error) {
+      // Check if error is due to user not found (404)
+      if (error instanceof AppError && error.statusCode === 404) {
+        throw new AppError(
+          "User account not found with this email. Please create an account first.",
+          404,
+        );
+      }
       throw new AppError(constants.ERROR_MESSAGES.INVALID_CREDENTIALS, 401);
     }
 
@@ -368,7 +430,6 @@ export const refreshToken = async (
   }
 };
 
-
 export const getCurrentUser = async (
   req: Request,
   res: Response,
@@ -385,14 +446,14 @@ export const getCurrentUser = async (
 
     // User information is already loaded in req.user by the authenticate middleware
     // We can directly use it without fetching from the database again
-    
+
     // Update session activity timestamp if we have session ID
     if (req.sessionId) {
       try {
         await authService.updateSessionActivity(req.sessionId);
       } catch (sessionError) {
         // Log but don't fail the request if session update fails
-        logger.warn('Failed to update session activity', sessionError);
+        logger.warn("Failed to update session activity", sessionError);
       }
     }
 
@@ -402,7 +463,7 @@ export const getCurrentUser = async (
         id: parseInt(req.user.id),
         email: req.user.email,
         name: req.user.name,
-        email_verified: req.user.email_verified
+        email_verified: req.user.email_verified,
       },
     });
   } catch (error) {

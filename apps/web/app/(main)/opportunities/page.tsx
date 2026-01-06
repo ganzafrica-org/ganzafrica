@@ -20,6 +20,30 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import apiClient from "@/lib/api-client";
 
+// Augment Window for request timing
+declare global {
+  interface Window {
+    lastAxiosRequestTime?: number;
+  }
+}
+
+// Normalize Next.js components across React type versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeImage = Image as unknown as React.ComponentType<any>;
+
+// Normalize lucide icon component types
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const DatabaseIcon = Database as unknown as SvgIconComponent;
+const LaptopIcon = Laptop as unknown as SvgIconComponent;
+const LightbulbIcon = Lightbulb as unknown as SvgIconComponent;
+const RocketIcon = Rocket as unknown as SvgIconComponent;
+const TargetIcon = Target as unknown as SvgIconComponent;
+const GraduationCapIcon = GraduationCap as unknown as SvgIconComponent;
+const SearchIcon = Search as unknown as SvgIconComponent;
+const BriefcaseIcon = Briefcase as unknown as SvgIconComponent;
+
 type Status = "published" | "closed";
 type OpportunityType = "all" | "fellowship" | "employment";
 
@@ -105,20 +129,20 @@ const throttledAxios = {
 const getOpportunityIcon = (type: string | undefined) => {
   switch (type?.toLowerCase()) {
     case 'fellowship':
-      return <GraduationCap className="w-6 h-6" />;
+      return <GraduationCapIcon className="w-6 h-6" />;
     case 'internship':
-      return <Laptop className="w-6 h-6" />;
+      return <LaptopIcon className="w-6 h-6" />;
     case 'employment':
-      return <Briefcase className="w-6 h-6" />;
+      return <BriefcaseIcon className="w-6 h-6" />;
     case 'grant':
-      return <Database className="w-6 h-6" />;
+      return <DatabaseIcon className="w-6 h-6" />;
     case 'scholarship':
-      return <Target className="w-6 h-6" />;
+      return <TargetIcon className="w-6 h-6" />;
     case 'training program':
     case 'training':
-      return <Lightbulb className="w-6 h-6" />;
+      return <LightbulbIcon className="w-6 h-6" />;
     default:
-      return <Rocket className="w-6 h-6" />;
+      return <RocketIcon className="w-6 h-6" />;
   }
 };
 
@@ -176,7 +200,7 @@ const styles = `
   }
 `;
 
-export default function OpportunitiesPage() {
+export default function OpportunitiesPage(): React.ReactElement {
   const params = useParams();
   const locale = params.locale || 'en';
   const [selectedStatus, setSelectedStatus] = useState<Status>("published");
@@ -319,7 +343,7 @@ if (selectedType !== "all") {
       <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <Image
+          <SafeImage
             src="/images/form.jpg"
             alt="Opportunities"
             fill
@@ -369,7 +393,7 @@ if (selectedType !== "all") {
                   <form onSubmit={handleSearchSubmit}>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <Search className="w-4 h-4 text-gray-500" />
+                        <SearchIcon className="w-4 h-4 text-gray-500" />
                       </div>
                       <input
                         type="text"
@@ -499,19 +523,19 @@ if (selectedType !== "all") {
                             </div>
                             
                             <div className="flex space-x-3">
-                              <Link
+                              <SafeLink
                                 href={`/${locale}/opportunities/${opportunity.id}`}
                                 className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
                               >
                                 View Details
-                              </Link>
+                              </SafeLink>
                               {opportunity.status === 'published' ? (
-                                <Link 
+                              <SafeLink 
                                   href={`/${locale}/opportunities/${opportunity.id}/apply`}
                                   className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:primary-green transition-colors"
                                 >
                                   Apply Now
-                                </Link>
+                                </SafeLink>
                               ) : (
                                 <span className="flex-1 py-2 px-4 bg-gray-300 text-gray-600 font-medium rounded-md text-center cursor-not-allowed">
                                   Applications Closed
@@ -580,19 +604,19 @@ if (selectedType !== "all") {
                             </div>
                             
                             <div className="flex space-x-3">
-                              <Link
+                              <SafeLink
                                 href={`/${locale}/opportunities/${opportunity.id}`}
                                 className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
                               >
                                 View Details
-                              </Link>
+                              </SafeLink>
                               {opportunity.status === 'published' ? (
-                                <Link 
+                              <SafeLink 
                                   href={`/${locale}/opportunities/${opportunity.id}/apply`}
                                   className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:bg-primary-green transition-colors"
                                 >
                                   Apply Now
-                                </Link>
+                                </SafeLink>
                               ) : (
                                 <span className="flex-1 py-2 px-4 bg-gray-300 text-gray-600 font-medium rounded-md text-center cursor-not-allowed">
                                   Applications Closed

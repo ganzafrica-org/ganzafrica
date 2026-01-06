@@ -6,6 +6,9 @@ import { AlertCircle, Loader, Calendar, X, UserPlus, Plus, Trash2 } from 'lucide
 import MultipleSelector, { Option } from '@workspace/ui/components/multiple-selector';
 import apiClient from "@/lib/api-client";
 
+// Force dynamic rendering to prevent build-time prerendering errors
+export const dynamic = 'force-dynamic';
+
 // Define opportunity types and their respective schemas
 const opportunityTypes = [
   { value: 'fellowship', label: 'Fellowship Program' },
@@ -544,12 +547,8 @@ const CreateOpportunityForm = () => {
         };
       }
 
-      console.log('Submitting opportunity data:', opportunityData);
-
       // Make the API call with apiClient
       const response = await apiClient.post('/opportunities', opportunityData);
-
-      console.log('Response from server:', response.data);
 
       // Success - redirect or show success message
       alert('Opportunity created successfully!');

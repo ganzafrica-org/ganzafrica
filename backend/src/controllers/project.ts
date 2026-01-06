@@ -242,6 +242,18 @@ export const createProject = async (req: Request, res: Response) => {
       });
     }
 
+    // Date validation helper function
+    const validateAndParseDate = (dateString: string | undefined, fieldName: string): Date | undefined => {
+      if (!dateString || dateString.trim() === '') {
+        return undefined;
+      }
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        throw new AppError(`Invalid ${fieldName}: The date "${dateString}" is not valid. Please use YYYY-MM-DD format.`, 400);
+      }
+      return date;
+    };
+
     // Parse dates from strings to Date objects and ensure IDs are numbers
     const projectData = {
       ...req.body,
@@ -249,17 +261,28 @@ export const createProject = async (req: Request, res: Response) => {
       outcomes,
       media,
       other_information,
-      start_date: new Date(req.body.start_date),
-      end_date: req.body.end_date ? new Date(req.body.end_date) : undefined,
+      start_date: req.body.start_date ? validateAndParseDate(req.body.start_date, "start date") : undefined,
+      end_date: req.body.end_date ? validateAndParseDate(req.body.end_date, "end date") : undefined,
       
       // Parse team member data if provided
       members: members
-        ? members.map((member: any) => ({
-            ...member,
-            team_id: Number(member.team_id),
-            start_date: new Date(member.start_date),
-            end_date: member.end_date ? new Date(member.end_date) : undefined,
-          }))
+        ? members.map((member: any, index: number) => {
+            if (!member.start_date || member.start_date.trim() === '') {
+              throw new AppError(`Member start date is required for team member ${index + 1}. Please provide a valid date in YYYY-MM-DD format.`, 400);
+            }
+            const memberStartDate = validateAndParseDate(member.start_date, `member start date for team member ${index + 1}`);
+            if (!memberStartDate) {
+              throw new AppError(`Invalid member start date for team member ${index + 1}. Please use YYYY-MM-DD format.`, 400);
+            }
+            const memberEndDate = member.end_date ? validateAndParseDate(member.end_date, `member end date for team member ${index + 1}`) : undefined;
+            
+            return {
+              ...member,
+              team_id: Number(member.team_id),
+              start_date: memberStartDate,
+              end_date: memberEndDate,
+            };
+          })
         : undefined,
         
       // Parse partners data if provided
@@ -288,6 +311,26 @@ export const createProject = async (req: Request, res: Response) => {
         message: error.message,
       });
     }
+    
+    // Check for date-related errors
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      if (errorMessage.includes('invalid time value') || errorMessage.includes('invalid date') || errorMessage.includes('rangeerror')) {
+        return res.status(400).json({
+          error: "Invalid Date Error",
+          message: "One or more dates provided are invalid. Please ensure all dates are in YYYY-MM-DD format and are valid dates.",
+        });
+      }
+      
+      // Check for validation errors from Zod
+      if (errorMessage.includes('invalid') && errorMessage.includes('date')) {
+        return res.status(400).json({
+          error: "Validation Error",
+          message: error.message || "Invalid date format. Please use YYYY-MM-DD format.",
+        });
+      }
+    }
+    
     res.status(500).json({
       error: "Project Creation Error",
       message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
@@ -638,6 +681,17 @@ export const deleteProject = async (req: Request, res: Response) => {
  */
 export const listProjects = async (req: Request, res: Response) => {
   try {
+    // Parse is_published query parameter - convert string to boolean
+    let is_published: boolean | undefined = undefined;
+    if (req.query.is_published !== undefined) {
+      const isPublishedValue = req.query.is_published;
+      if (typeof isPublishedValue === 'string') {
+        is_published = isPublishedValue.toLowerCase() === 'true';
+      } else if (typeof isPublishedValue === 'boolean') {
+        is_published = isPublishedValue;
+      }
+    }
+    
     const params = {
       page: parseInt(req.query.page as string, 10) || 1,
       limit: parseInt(req.query.limit as string, 10) || 10,
@@ -648,6 +702,7 @@ export const listProjects = async (req: Request, res: Response) => {
       team_id: req.query.team_id ? Number(req.query.team_id) : undefined,
       category_id: req.query.category_id ? Number(req.query.category_id) : undefined,
       partner_id: req.query.partner_id ? Number(req.query.partner_id) : undefined,
+      is_published: is_published,
     };
 
     // Add cache control headers to prevent caching
@@ -681,11 +736,57 @@ export const listProjects = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * @swagger
+ * /projects/{id}/publish:
+ *   post:
+ *     summary: Publish a project
+ *     tags: [Projects]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Project published successfully
+ *       404:
+ *         description: Project not found
+ *       500:
+ *         description: Server error
+ */
+export const publishProject = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    
+    const project = await projectService.publishProject(id);
+    
+    res.status(200).json({
+      message: 'Project published successfully',
+      project
+    });
+  } catch (error) {
+    logger.error(`Publish project error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: 'Project Publishing Error',
+        message: error.message
+      });
+    }
+    res.status(500).json({
+      error: 'Project Publishing Error',
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
+    });
+  }
+};
+
 // Create object to export all controller functions together
 export const projectController = {
   createProject,
   getProjectById,
   updateProject,
+  publishProject,
   deleteProject,
   listProjects
 };

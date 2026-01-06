@@ -2,7 +2,9 @@
 import { Router, Request, Response } from "express";
 import upload, { getFileSubdirectory } from "../middlewares/upload";
 import env from "../config/env";
+import { Logger } from "../config";
 
+const logger = new Logger("UploadRoute");
 const router: Router = Router();
 
 /**
@@ -86,7 +88,7 @@ router.post("/file", upload.single("file"), (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error("Error uploading file", error);
+    logger.error("Error uploading file", error);
     return res.status(500).json({
       success: false,
       message: "File upload failed"
@@ -161,7 +163,7 @@ router.post("/files", upload.array("files", 10), (req: Request, res: Response) =
       files
     });
   } catch (error) {
-    console.error("Error uploading files", error);
+    logger.error("Error uploading files", error);
     return res.status(500).json({
       success: false,
       message: "Files upload failed"

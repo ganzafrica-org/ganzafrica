@@ -24,6 +24,10 @@ import {
 import { useParams } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 
+// Normalize Next.js Link typing across React versions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SafeLink = Link as unknown as React.ComponentType<any>;
+
 // Define TypeScript interfaces for our data structures
 interface Media {
   id: string;
@@ -123,7 +127,23 @@ interface User {
   last_name?: string;
 }
 
-const ProjectDetailsPage = () => {
+// Normalize lucide icon component types across React versions
+type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+const AwardIcon = Award as unknown as SvgIconComponent;
+const CheckCircleIcon = CheckCircle as unknown as SvgIconComponent;
+const ClockIcon = Clock as unknown as SvgIconComponent;
+const AlertCircleIcon = AlertCircle as unknown as SvgIconComponent;
+const ArrowLeftIcon = ArrowLeft as unknown as SvgIconComponent;
+const ImageIconIcon = ImageIcon as unknown as SvgIconComponent;
+const CalendarIcon = Calendar as unknown as SvgIconComponent;
+const MapPinIcon = MapPin as unknown as SvgIconComponent;
+const TagIcon = Tag as unknown as SvgIconComponent;
+const TargetIcon = Target as unknown as SvgIconComponent;
+const FilmIcon = Film as unknown as SvgIconComponent;
+const FileTextIcon = FileText as unknown as SvgIconComponent;
+const BuildingIcon = Building as unknown as SvgIconComponent;
+
+const ProjectDetailsPage = (): JSX.Element => {
   const params = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,33 +168,47 @@ const ProjectDetailsPage = () => {
         setLoading(true);
         
         // Fetch categories first, before fetching the project
+        let allCategoriesData: Category[] = [];
         try {
           const categoriesResponse = await apiClient.get('/categories');
-          console.log("Categories response:", categoriesResponse.data);
           
           // Handle different possible API response formats
+          // Keep all categories first to check project category
           if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
-            setCategories(categoriesResponse.data.categories);
+            allCategoriesData = categoriesResponse.data.categories;
           } else if (Array.isArray(categoriesResponse.data)) {
-            setCategories(categoriesResponse.data);
+            allCategoriesData = categoriesResponse.data;
           } else if (categoriesResponse.data && typeof categoriesResponse.data === 'object') {
             // Handle case where response might be an object with category IDs as keys
-            const categoryArray = Object.entries(categoriesResponse.data).map(([id, data]) => {
+            allCategoriesData = Object.entries(categoriesResponse.data).map(([id, data]) => {
               const category = data as any;
               return {
                 id: Number(id),
                 name: category.name || `Category ${id}`
               };
             });
-            setCategories(categoryArray);
           }
+          
+          // Filter out "None" and "nano" categories for display
+          const filteredCategories = allCategoriesData.filter(category => {
+            const lowerName = category.name.toLowerCase().trim();
+            return lowerName !== 'none' && lowerName !== 'nano';
+          });
+          
+          setCategories(filteredCategories);
         } catch (error) {
           console.error('Error fetching categories:', error);
           // Try alternate endpoint
           try {
             const altCategoriesResponse = await apiClient.get('/project-categories');
             if (altCategoriesResponse.data && Array.isArray(altCategoriesResponse.data)) {
-              setCategories(altCategoriesResponse.data);
+              allCategoriesData = altCategoriesResponse.data;
+              // Filter out "None" and "nano" categories for display
+              const filteredCategories = allCategoriesData.filter(category => {
+                const lowerName = category.name.toLowerCase().trim();
+                return lowerName !== 'none' && lowerName !== 'nano';
+              });
+              setCategories(filteredCategories);
             }
           } catch (altError) {
             console.error('Error fetching from alternate categories endpoint:', altError);
@@ -183,19 +217,33 @@ const ProjectDetailsPage = () => {
         
         // Fetch project data
         const projectResponse = await apiClient.get(`/projects/${params.id}`);
-        console.log("API Response:", projectResponse.data);
         
         // Check if the response has a nested project object or direct data
         let projectData;
         if (projectResponse.data && projectResponse.data.project) {
-          console.log("Setting project from nested project object");
           projectData = projectResponse.data.project;
         } else if (projectResponse.data && projectResponse.data.id) {
           // Direct project object
-          console.log("Setting project from direct response");
           projectData = projectResponse.data;
         } else {
           throw new Error("Invalid project data structure");
+        }
+        
+        // Check if project is published - if not, show error
+        if (!projectData.is_published) {
+          throw new Error("Project not found or not published");
+        }
+        
+        // Check if project has category "None" or "nano" - if so, don't show it
+        if (projectData.category_id) {
+          // Find category name from all categories list (before filtering)
+          const category = allCategoriesData.find((cat: any) => cat.id === projectData.category_id);
+          if (category && category.name) {
+            const categoryName = category.name.toLowerCase().trim();
+            if (categoryName === 'none' || categoryName === 'nano') {
+              throw new Error("Project not found");
+            }
+          }
         }
         
         // Ensure members is always an array
@@ -203,7 +251,6 @@ const ProjectDetailsPage = () => {
           projectData.members = [];
         } else if (!Array.isArray(projectData.members)) {
           // If members is not an array, convert it
-          console.log("Converting members to array format");
           projectData.members = Object.values(projectData.members);
         }
         
@@ -211,13 +258,8 @@ const ProjectDetailsPage = () => {
         if (!projectData.partners) {
           projectData.partners = [];
         } else if (!Array.isArray(projectData.partners)) {
-          console.log("Converting partners to array format");
           projectData.partners = Object.values(projectData.partners);
         }
-        
-        // Debug the members data
-        console.log("Project members:", projectData.members);
-        console.log("Project partners:", projectData.partners);
         
         // Make sure goals, outcomes and media are properly initialized
         if (!projectData.goals) projectData.goals = { items: [] };
@@ -274,10 +316,7 @@ const ProjectDetailsPage = () => {
 
   // Get category name from category_id by directly inspecting the categories array
   const getCategoryName = (categoryId: number | undefined) => {
-    if (!categoryId) return 'Not specified';
-    
-    console.log("Looking for category with ID:", categoryId);
-    console.log("Available categories:", categories);
+    if (!categoryId) return '';
     
     // Try to find the category in the array with proper type handling
     if (categories && categories.length > 0) {
@@ -286,8 +325,13 @@ const ProjectDetailsPage = () => {
       );
       
       if (category) {
-        console.log("Found category:", category);
-        return category.name;
+        const categoryName = category.name;
+        // Don't display "None" or "nano" categories
+        const lowerName = categoryName.toLowerCase().trim();
+        if (lowerName === 'none' || lowerName === 'nano') {
+          return '';
+        }
+        return categoryName;
       }
     }
     
@@ -299,12 +343,11 @@ const ProjectDetailsPage = () => {
     };
     
     if (categoryId in fallbackCategories) {
-      console.log("Using fallback category name");
       return fallbackCategories[categoryId];
     }
     
-    // Last resort fallback
-    return `Category ${categoryId}`;
+    // Last resort fallback - return empty string instead of showing category ID
+    return '';
   };
 
   // Get user name from user_id
@@ -356,21 +399,21 @@ const ProjectDetailsPage = () => {
       case 'completed':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
-            <Award className="w-3 h-3 mr-1 flex-shrink-0" />
+            <AwardIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Completed</span>
           </span>
         );
       case 'planned':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap">
-            <Clock className="w-3 h-3 mr-1 flex-shrink-0" />
+            <ClockIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Planned</span>
           </span>
         );
       case 'active':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
-            <CheckCircle className="w-3 h-3 mr-1 flex-shrink-0" />
+            <CheckCircleIcon className="w-3 h-3 mr-1 flex-shrink-0" />
             <span className="truncate">Active</span>
           </span>
         );
@@ -498,37 +541,31 @@ const ProjectDetailsPage = () => {
       <div className="p-6 max-w-full">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
           <div className="flex">
-            <AlertCircle className="h-5 w-5 mr-2" />
+            <AlertCircleIcon className="h-5 w-5 mr-2" />
             <span>{error}</span>
           </div>
           <div className="mt-4">
-            <Link href="/projects" className="text-red-700 font-medium hover:underline flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Projects
-            </Link>
+            <SafeLink href="/projects" className="text-red-700 font-medium hover:underline flex items-center">
+              <ArrowLeftIcon className="w-4 h-4 mr-1" /> Back to Projects
+            </SafeLink>
           </div>
         </div>
       </div>
     );
   }
 
-  // Debug output
-  console.log("Current project state:", project);
-  console.log("Available categories:", categories);
-  console.log("Project category ID:", project?.category_id);
-  console.log("Category name display:", getCategoryName(project?.category_id));
-  
   if (!project) {
     return (
       <div className="p-6 max-w-full">
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative" role="alert">
           <div className="flex">
-            <AlertCircle className="h-5 w-5 mr-2" />
+            <AlertCircleIcon className="h-5 w-5 mr-2" />
             <span>Project not found</span>
           </div>
           <div className="mt-4">
-            <Link href="/projects" className="text-yellow-700 font-medium hover:underline flex items-center">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Back to Projects
-            </Link>
+            <SafeLink href="/projects" className="text-yellow-700 font-medium hover:underline flex items-center">
+              <ArrowLeftIcon className="w-4 h-4 mr-1" /> Back to Projects
+            </SafeLink>
           </div>
         </div>
       </div>
@@ -565,7 +602,7 @@ const ProjectDetailsPage = () => {
           <div className="w-full h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
             <div className="text-center">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-800 flex items-center justify-center">
-                <ImageIcon className="w-12 h-12 text-gray-600" />
+                <ImageIconIcon className="w-12 h-12 text-gray-600" />
               </div>
               <p className="text-gray-400 text-lg">No featured image available</p>
             </div>
@@ -576,15 +613,15 @@ const ProjectDetailsPage = () => {
         <div className="absolute inset-0 flex items-end">
           <div className="container mx-auto px-4 pb-20">
             <div className="max-w-4xl">
-              <Link
+              <SafeLink
                 href="/projects"
                 className="inline-flex items-center text-white/80 hover:text-white transition-all duration-300 mb-12 group"
               >
-                <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
+                <ArrowLeftIcon className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                 <span className="relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
                   Back to Projects
                 </span>
-              </Link>
+              </SafeLink>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight break-words">
                 {project.name}
@@ -593,22 +630,24 @@ const ProjectDetailsPage = () => {
               <div className="flex flex-wrap gap-4 text-white/90 mb-12 overflow-hidden max-w-full">
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                     <span className="truncate">{formatDate(project.start_date)} - {formatDate(project.end_date)}</span>
                   </span>
                 </div>
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                    <MapPinIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
                     <span className="truncate">{project.location || 'Not specified'}</span>
                   </span>
                 </div>
-                <div className="overflow-x-auto">
-                  <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
-                    <Tag className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                    <span className="truncate">{getCategoryName(project.category_id)}</span>
-                  </span>
-                </div>
+                {getCategoryName(project.category_id) && (
+                  <div className="overflow-x-auto">
+                    <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
+                      <TagIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
+                      <span className="truncate">{getCategoryName(project.category_id)}</span>
+                    </span>
+                  </div>
+                )}
                 <div className="overflow-x-auto">
                   <div className="bg-white/10 backdrop-blur-sm px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300">
                     {getStatusBadge(project.status)}
@@ -654,11 +693,11 @@ const ProjectDetailsPage = () => {
                       <div className="flex items-center gap-4 mb-4">
                         {goal.completed ? (
                           <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                            <CheckCircleIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
                           </div>
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <Target className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                            <TargetIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                           </div>
                         )}
                         <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{goal.title}</h3>
@@ -697,7 +736,7 @@ const ProjectDetailsPage = () => {
                             ? 'bg-[#FDB022]/10 dark:bg-[#FDB022]/20'
                             : 'bg-[#045F3C]/10 dark:bg-[#045F3C]/20'
                         }`}>
-                          <Award className={`w-8 h-8 ${
+                          <AwardIcon className={`w-8 h-8 ${
                             outcome.status === 'achieved' 
                               ? 'text-[#045F3C] dark:text-[#045F3C]/80' 
                               : outcome.status === 'in_progress' || outcome.status === 'in-progress'
@@ -794,10 +833,10 @@ const ProjectDetailsPage = () => {
                       </div>
                     ) : (
                       <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <ImageIcon className="w-16 h-16 text-gray-400" />
+                        <ImageIconIcon className="w-16 h-16 text-gray-400" />
                       </div>
                     )}
-                    {galleryMedia[activeImageIndex]?.type === 'video' && (
+                    {galleryMedia.length > 0 && activeImageIndex >= 0 && activeImageIndex < galleryMedia.length && galleryMedia[activeImageIndex] && galleryMedia[activeImageIndex]!.type === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <button 
                           className="w-20 h-20 text-primary-orange rounded-full flex items-center justify-center hover:bg-yellow-500 transition-all duration-300 hover:scale-110 transform hover:shadow-xl"
@@ -808,9 +847,9 @@ const ProjectDetailsPage = () => {
                         </button>
                       </div>
                     )}
-                    {galleryMedia[activeImageIndex]?.caption && (
+                    {galleryMedia.length > 0 && activeImageIndex >= 0 && activeImageIndex < galleryMedia.length && galleryMedia[activeImageIndex] && galleryMedia[activeImageIndex]!.caption && (
                       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent translate-y-4 transition-transform duration-300 group-hover:translate-y-0">
-                        <p className="text-white text-lg">{galleryMedia[activeImageIndex].caption}</p>
+                        <p className="text-white text-lg">{galleryMedia[activeImageIndex]!.caption}</p>
                       </div>
                     )}
                   </div>
@@ -845,12 +884,12 @@ const ProjectDetailsPage = () => {
                         ) : item.type === 'video' ? (
                           <div className="relative w-full h-full bg-gray-200 dark:bg-gray-700">
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <Film className="w-10 h-10 text-gray-400" />
+                              <FilmIcon className="w-10 h-10 text-gray-400" />
                             </div>
                           </div>
                         ) : (
                           <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <FileText className="w-8 h-8 text-gray-400" />
+                              <FileTextIcon className="w-8 h-8 text-gray-400" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300"></div>
@@ -1021,7 +1060,7 @@ const ProjectDetailsPage = () => {
                                 }}
                               />
                             ) : (
-                              <Building className="w-10 h-10 text-gray-400" />
+                              <BuildingIcon className="w-10 h-10 text-gray-400" />
                             )}
                           </div>
                           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{partnerName}</p>

@@ -1,7 +1,19 @@
 import { z } from "zod";
 
+// Date validation helper function
+const validateDateString = (val: string): Date => {
+  if (!val || val.trim() === '') {
+    throw new Error("Date is required. Please provide a valid date in YYYY-MM-DD format.");
+  }
+  const date = new Date(val);
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date format: "${val}". Please use YYYY-MM-DD format.`);
+  }
+  return date;
+};
+
 // Base project status validation
-const projectStatusEnum = z.enum(["planned", "active", "completed", "cancelled", "on_hold"]);
+const projectStatusEnum = z.enum(["planned", "active", "completed", "cancelled", "on_hold", "overdue"]);
 
 // Project member role validation
 const projectMemberRoleEnum = z.enum(["lead", "member", "supervisor", "contributor"]);
@@ -46,10 +58,25 @@ const outcomeItemSchema = z.object({
 const projectMemberSchema = z.object({
   team_id: z.number().int().positive("Team ID is required"),
   role: projectMemberRoleEnum,
-  start_date: z.string().transform((val) => new Date(val)),
+  start_date: z.string().refine(
+    (val) => {
+      if (!val || val.trim() === '') return false;
+      const date = new Date(val);
+      return !isNaN(date.getTime());
+    },
+    { message: "Invalid member start date format. Please use YYYY-MM-DD format." }
+  ).transform((val) => validateDateString(val)),
   end_date: z
     .string()
-    .transform((val) => new Date(val))
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true; // Optional field
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+      },
+      { message: "Invalid member end date format. Please use YYYY-MM-DD format." }
+    )
+    .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
     .optional(),
 });
 
@@ -105,12 +132,20 @@ export const createProjectSchema = z.object({
   body: z.object({
     name: z.string().min(1, "Project name is required"),
     description: z.string().optional(),
-    status: projectStatusEnum,
-    start_date: z.string().transform((val) => new Date(val)),
-    end_date: z
-      .string()
-      .transform((val) => new Date(val))
+    status: projectStatusEnum.optional().default("active"), // Default to 'active' when creating
+    // start_date is automatically set to current date when project is created
+    start_date: z.string()
+      .refine(
+        (val) => {
+          if (!val || val.trim() === '') return true; // Optional field
+          const date = new Date(val);
+          return !isNaN(date.getTime());
+        },
+        { message: "Invalid start date format. Please use YYYY-MM-DD format." }
+      )
+      .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
       .optional(),
+    // end_date is not set during creation - it will be set automatically when status changes to 'completed'
     category_id: z.number().int().positive("Category ID is required"),
     partner_id: z.number().int().positive().optional(),
     location: z.string().optional(),
@@ -205,11 +240,27 @@ export const updateProjectSchema = z.object({
     status: projectStatusEnum.optional(),
     start_date: z
       .string()
-      .transform((val) => new Date(val))
+      .refine(
+        (val) => {
+          if (!val || val.trim() === '') return true; // Optional field
+          const date = new Date(val);
+          return !isNaN(date.getTime());
+        },
+        { message: "Invalid start date format. Please use YYYY-MM-DD format." }
+      )
+      .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
       .optional(),
     end_date: z
       .string()
-      .transform((val) => new Date(val))
+      .refine(
+        (val) => {
+          if (!val || val.trim() === '') return true; // Optional field
+          const date = new Date(val);
+          return !isNaN(date.getTime());
+        },
+        { message: "Invalid end date format. Please use YYYY-MM-DD format." }
+      )
+      .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
       .optional()
       .nullable(),
     category_id: z.number().int().positive().optional(),
@@ -328,10 +379,27 @@ export const importProjectsSchema = z.object({
         name: z.string().min(1, "Project name is required"),
         description: z.string().optional(),
         status: projectStatusEnum,
-        start_date: z.string().transform((val) => new Date(val)),
+        start_date: z.string()
+          .refine(
+            (val) => {
+              if (!val || val.trim() === '') return false;
+              const date = new Date(val);
+              return !isNaN(date.getTime());
+            },
+            { message: "Invalid start date format. Please use YYYY-MM-DD format." }
+          )
+          .transform((val) => validateDateString(val)),
         end_date: z
           .string()
-          .transform((val) => new Date(val))
+          .refine(
+            (val) => {
+              if (!val || val.trim() === '') return true; // Optional field
+              const date = new Date(val);
+              return !isNaN(date.getTime());
+            },
+            { message: "Invalid end date format. Please use YYYY-MM-DD format." }
+          )
+          .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
           .optional(),
         category_id: z.number().int().positive("Category ID is required"),
         partner_id: z.number().int().positive().optional(),

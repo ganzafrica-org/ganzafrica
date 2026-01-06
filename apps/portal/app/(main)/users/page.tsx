@@ -15,7 +15,9 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Download
+  Download,
+  Trash2,
+  UserX
 } from 'lucide-react';
 
 // Import shadcn components
@@ -86,6 +88,7 @@ import * as z from "zod";
 // Import API client and utilities
 import apiClient from '@/lib/api-client';
 import Papa from 'papaparse';
+import { showSuccessToast, showErrorToast } from '@/components/ui/success-toast';
 
 // User schema for form validation
 const userSchema = z.object({
@@ -127,9 +130,13 @@ const UserManagement = () => {
   // State for dialogs
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [importData, setImportData] = useState([]);
   const [isImporting, setIsImporting] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   // File input ref for CSV import
   const fileInputRef = useRef(null);
@@ -193,11 +200,9 @@ const UserManagement = () => {
       } else if (Array.isArray(response.data)) {
         setRoles(response.data);
       } else {
-        console.error('Unexpected roles response format:', response.data);
         setRoles([]);
       }
     } catch (error) {
-      console.error('Error fetching roles:', error);
       setRoles([]);
     }
   };
@@ -220,11 +225,18 @@ const UserManagement = () => {
         url += `&is_active=${isActive}`;
       }
 
+      // Add cache-busting parameter to ensure fresh data
+      url += `&_t=${Date.now()}`;
+
       const response = await apiClient.get(url);
-      setUsers(response.data.users);
-      setPagination(response.data.pagination);
+      
+      // Ensure we're setting fresh data
+      if (response.data && response.data.users) {
+        setUsers(response.data.users);
+        setPagination(response.data.pagination);
+      }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      showErrorToast({ message: 'Failed to refresh user list' });
     } finally {
       setIsLoading(false);
     }
@@ -237,34 +249,134 @@ const UserManagement = () => {
       if (editingUser) {
         // Editing existing user
         await apiClient.put(`/users/${editingUser.id}`, data);
-
+        showSuccessToast({ message: `User "${data.name}" updated successfully` });
       } else {
         // Adding new user
         await apiClient.post('/users', data);
+        showSuccessToast({ message: `User "${data.name}" created successfully` });
       }
 
       setShowAddUserDialog(false);
       setEditingUser(null);
       fetchUsers(); // Refresh the user list
     } catch (error) {
-      console.error('Error saving user:', error);
+      const errorMessage = error?.response?.data?.message || 'Failed to save user. Please try again.';
+      showErrorToast({ message: errorMessage });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle user deletion
-  const handleDeleteUser = async (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      setIsLoading(true);
-      try {
-        await apiClient.delete(`/users/${id}`);
-        fetchUsers(); // Refresh the user list
-      } catch (error) {
-        console.error('Error deleting user:', error);
-      } finally {
-        setIsLoading(false);
+  // Handle activate/deactivate user
+  const handleToggleUserStatus = async (user) => {
+    setOpenDropdownId(null); // Close dropdown immediately
+    try {
+      if (user.is_active) {
+        // Deactivate user
+        await apiClient.post(`/users/${user.id}/deactivate`);
+        
+        // Update user status in the list
+        setUsers(prevUsers => 
+          prevUsers.map(u => u.id === user.id ? { ...u, is_active: false } : u)
+        );
+        
+        showSuccessToast({ message: `User "${user.name}" deactivated successfully` });
+      } else {
+        // Activate user
+        await apiClient.post(`/users/${user.id}/activate`);
+        
+        // Update user status in the list
+        setUsers(prevUsers => 
+          prevUsers.map(u => u.id === user.id ? { ...u, is_active: true } : u)
+        );
+        
+        showSuccessToast({ message: `User "${user.name}" activated successfully` });
       }
+      
+      fetchUsers(); // Refresh to ensure consistency
+    } catch (error) {
+      const action = user.is_active ? 'deactivate' : 'activate';
+      const errorMessage = error?.response?.data?.message || `Failed to ${action} user. Please try again.`;
+      showErrorToast({ message: errorMessage });
+    }
+  };
+
+  // Handle delete confirmation dialog
+  const handleDeleteClick = (user) => {
+    setOpenDropdownId(null); // Close dropdown immediately
+    setUserToDelete(user);
+    setShowDeleteDialog(true);
+  };
+
+  // Handle user deletion (hard delete)
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsDeleting(true);
+    const deletedUserId = userToDelete.id;
+    const deletedUserName = userToDelete.name;
+    
+    // Validate user ID
+    if (!deletedUserId) {
+      showErrorToast({ message: 'Invalid user ID' });
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+      return;
+    }
+    
+    try {
+      // Delete the user
+      await apiClient.delete(`/users/${deletedUserId}`);
+      
+      // Show success message
+      showSuccessToast({ message: `User "${deletedUserName}" deleted successfully` });
+      
+      // Optimistically remove user from the list
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== deletedUserId));
+      
+      // Update pagination total count
+      setPagination(prev => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1)
+      }));
+      
+      // Close dialog and reset state immediately
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+      setIsDeleting(false);
+      setOpenDropdownId(null); // Ensure dropdown is closed
+      
+      // Refresh in background to ensure database consistency
+      fetchUsers().catch(() => {
+        // Silently fail - user already removed from UI
+      });
+    } catch (error) {
+      // If user not found (404), they're already deleted - just remove from UI
+      if (error?.response?.status === 404) {
+        showSuccessToast({ message: `User "${deletedUserName}" was already deleted` });
+        
+        // Remove from list
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== deletedUserId));
+        setPagination(prev => ({
+          ...prev,
+          total: Math.max(0, prev.total - 1)
+        }));
+      } else {
+        const errorMessage = error?.response?.data?.message || error?.message || 'Failed to delete user. Please try again.';
+        showErrorToast({ message: errorMessage });
+      }
+      
+      // Always close dialog and reset state, even on error
+      setShowDeleteDialog(false);
+      setUserToDelete(null);
+      setIsDeleting(false);
+      setOpenDropdownId(null); // Ensure dropdown is closed
+      
+      // Refresh in background
+      fetchUsers().catch(() => {
+        // Silently fail - error already handled
+      });
     }
   };
 
@@ -296,8 +408,8 @@ const UserManagement = () => {
 
           setImportData(formattedData);
         },
-        error: (error) => {
-          console.error('Error parsing CSV:', error);
+        error: () => {
+          // Silently handle CSV parsing errors
         }
       });
     }
@@ -323,11 +435,13 @@ const UserManagement = () => {
     setIsImporting(true);
     try {
       await apiClient.post('/users/import', importData);
+      showSuccessToast({ message: `Successfully imported ${importData.length} user(s)` });
       setShowImportDialog(false);
       setImportData([]);
       fetchUsers(); // Refresh the user list
     } catch (error) {
-      console.error('Error importing users:', error);
+      const errorMessage = error?.response?.data?.message || 'Failed to import users. Please try again.';
+      showErrorToast({ message: errorMessage });
     } finally {
       setIsImporting(false);
     }
@@ -491,7 +605,6 @@ const UserManagement = () => {
                                 </Avatar>
                                 <div>
                                   <p className="font-medium">{user.name}</p>
-                                  <p className="text-xs text-muted-foreground">ID: {user.id}</p>
                                 </div>
                               </div>
                             </TableCell>
@@ -502,7 +615,7 @@ const UserManagement = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Badge variant={user.is_active ? "success" : "secondary"}>
+                              <Badge variant={user.is_active ? "default" : "secondary"} className={user.is_active ? "bg-green-100 text-green-800 hover:!bg-green-100" : "hover:!bg-secondary"}>
                                 {user.is_active ? "Active" : "Inactive"}
                               </Badge>
                             </TableCell>
@@ -510,7 +623,10 @@ const UserManagement = () => {
                               {new Date(user.created_at).toLocaleDateString()}
                             </TableCell>
                             <TableCell className="text-right">
-                              <DropdownMenu>
+                              <DropdownMenu 
+                                open={openDropdownId === user.id}
+                                onOpenChange={(open) => setOpenDropdownId(open ? user.id : null)}
+                              >
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                                     <span className="sr-only">Open menu</span>
@@ -519,13 +635,22 @@ const UserManagement = () => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => setEditingUser(user)}>
+                                  <DropdownMenuItem onClick={() => {
+                                    setOpenDropdownId(null);
+                                    setEditingUser(user);
+                                  }}>
                                     Edit user
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
-                                      onClick={() => handleDeleteUser(user.id)}
-                                      className="text-red-600 focus:text-red-600"
+                                      onClick={() => handleToggleUserStatus(user)}
+                                      className="text-orange-600 focus:text-orange-600 focus:bg-orange-50"
+                                  >
+                                    {user.is_active ? 'Deactivate' : 'Activate'}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                      onClick={() => handleDeleteClick(user)}
+                                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
                                   >
                                     Delete user
                                   </DropdownMenuItem>
@@ -868,6 +993,76 @@ const UserManagement = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+        {/* Delete User Confirmation Dialog */}
+        <Dialog open={showDeleteDialog} onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setShowDeleteDialog(false);
+            setUserToDelete(null);
+            setOpenDropdownId(null); // Ensure dropdown is closed
+          }
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                Delete User
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                <div className="bg-red-50 rounded-lg p-4 mt-2">
+                  <p className="font-semibold text-red-600 mb-2">⚠️ Warning: This is a dangerous action!</p>
+                  <p className="text-red-700">
+                    Are you sure you want to delete this user? This action cannot be undone and will permanently remove the user from the system.
+                  </p>
+                </div>
+              </DialogDescription>
+            </DialogHeader>
+            {userToDelete && (
+              <div className="py-4">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <Avatar>
+                    <AvatarImage src={userToDelete.avatar_url} alt={userToDelete.name} />
+                    <AvatarFallback>{getUserInitials(userToDelete.name)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-gray-900">{userToDelete.name}</p>
+                    <p className="text-sm text-gray-500">{userToDelete.email}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowDeleteDialog(false);
+                  setUserToDelete(null);
+                  setOpenDropdownId(null); // Ensure dropdown is closed
+                }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleDeleteUser}
+                disabled={isDeleting}
+                variant="destructive"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete User
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         </div>
     );
   };

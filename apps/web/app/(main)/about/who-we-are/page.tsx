@@ -54,7 +54,7 @@ interface PromiseCardProps {
 }
 
 interface PageProps {
-  params:Promise<{ locale: string }>;
+  params: { locale: string };
 }
 
 
@@ -201,12 +201,11 @@ const PromiseCard: FC<PromiseCardProps> = ({
   );
 };
 
-export default async function AboutPage(props: PageProps) {
-  const params = await props.params;
+export default async function AboutPage(
+  { params }: PageProps
+): Promise<JSX.Element> {
 
-  const {
-    locale
-  } = params;
+  const { locale } = params;
 
   const dict = await getDictionary(locale);
   
@@ -450,7 +449,7 @@ export default async function AboutPage(props: PageProps) {
                 </div>
                 <p className="text-base md:text-x  text-white">
                   {dict?.about?.aspirations?.mission_1 ||
-                    "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions"}
+                    "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions."}
                 </p>
 
                 <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />

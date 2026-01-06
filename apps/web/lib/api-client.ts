@@ -21,7 +21,6 @@ apiClient.interceptors.response.use(
 
 // Insert a request interceptor (for example, after the axios.create block) as follows:
 apiClient.interceptors.request.use((config) => {
-  console.log("Outgoing request (details):", { url: config.url, payload: config.data, headers: config.headers });
   return config;
 }, (error) => { return Promise.reject(error); });
 

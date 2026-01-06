@@ -19,6 +19,12 @@ import {
 import { Button } from "@workspace/ui/components/button";
 
 
+const SafeLink = Link as unknown as React.ComponentType<any>;
+const SafeImage = Image as unknown as React.ComponentType<any>;
+const SafeIconMenu = Menu as unknown as React.ComponentType<any>;
+const SafeIconX = X as unknown as React.ComponentType<any>;
+const SafeIconChevronDown = ChevronDown as unknown as React.ComponentType<any>;
+
 // Define types for menu items
 interface MenuItem {
   title: string;
@@ -196,9 +202,10 @@ export default function Navigation({
     return (
       <div className="fixed inset-0 z-60 bg-white w-screen h-screen overflow-y-auto md:hidden ">
         <div className="flex justify-between items-center px-4 py-4 border-b">
+          <SafeLink href={`/`} className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
           <Link href='/' className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="relative h-14 w-24">
-              <Image
+              <SafeImage
                 src="/images/logo.png"
                 alt="GanzAfrica"
                 fill
@@ -207,7 +214,7 @@ export default function Navigation({
                 priority
               />
             </div>
-          </Link>
+          </SafeLink>
           <Button
             variant="ghost"
             size="icon"
@@ -215,7 +222,7 @@ export default function Navigation({
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Close menu"
           >
-            <X className="h-6 w-6" />
+            <SafeIconX className="h-6 w-6" />
           </Button>
         </div>
         <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
@@ -226,14 +233,14 @@ export default function Navigation({
               onClick={() => toggleDropdown("mobile-about")}
             >
               {dict?.navigation?.about || "About"}
-              <ChevronDown
+              <SafeIconChevronDown
                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
               />
             </button>
             {activeDropdown === "mobile-about" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {aboutItems.map((item) => (
-                  <Link
+                  <SafeLink
                     key={item.href}
                     href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
@@ -243,7 +250,7 @@ export default function Navigation({
                     {dict?.about?.[
                       item.title.toLowerCase().replace(/ /g, "_")
                     ] || item.title}
-                  </Link>
+                  </SafeLink>
                 ))}
               </div>
             )}
@@ -252,12 +259,14 @@ export default function Navigation({
           {/* Our Approach - Direct Link */}
                   <Link
                     href={resolveHref("/our-approach")}
+          <SafeLink
+            href={`/${locale}/our-approach`}
             className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
             onClick={() => setIsMobileMenuOpen(false)}
             prefetch={true}
           >
             {dict?.navigation?.our_approach || "Our Approach"}
-          </Link>
+          </SafeLink>
 
           {/* Programs */}
           <div className="flex flex-col w-full">
@@ -266,14 +275,14 @@ export default function Navigation({
               onClick={() => toggleDropdown("mobile-programs")}
             >
               {dict?.navigation?.programs || "Programs"}
-              <ChevronDown
+              <SafeIconChevronDown
                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
               />
             </button>
             {activeDropdown === "mobile-programs" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {programsItems.map((item) => (
-                  <Link
+                  <SafeLink
                     key={item.href}
                     href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
@@ -281,7 +290,7 @@ export default function Navigation({
                     prefetch={true}
                   >
                     {item.title}
-                  </Link>
+                  </SafeLink>
                 ))}
               </div>
             )}
@@ -294,14 +303,14 @@ export default function Navigation({
               onClick={() => toggleDropdown("mobile-news")}
             >
               News & Updates
-              <ChevronDown
+              <SafeIconChevronDown
                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
               />
             </button>
             {activeDropdown === "mobile-news" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {newsItems.map((item) => (
-                  <Link
+                  <SafeLink
                     key={item.href}
                     href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
@@ -309,10 +318,22 @@ export default function Navigation({
                     prefetch={true}
                   >
                     {item.title}
-                  </Link>
+                  </SafeLink>
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Add sign in button at the bottom */}
+          <div className="mt-auto pt-6 border-t">
+            <SafeLink href={`/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+              <Button
+                size="lg"
+                className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"
+              >
+                {dict?.cta?.sign_in || "Sign In"}
+              </Button>
+            </SafeLink>
           </div>
         </nav>
       </div>
@@ -334,11 +355,14 @@ export default function Navigation({
           >
             <Link
               href={`/`}
+          <div className="min-h-full w-32 md:w-52 flex items-center p-8">
+            <SafeLink
+              href={`/${locale}`}
               className="relative z-50 flex items-center gap-2"
               prefetch={true}
             >
               <div className="relative h-14 w-24">
-                <Image
+                <SafeImage
                   src="/images/logo.png"
                   alt="GanzAfrica"
                   fill
@@ -347,7 +371,7 @@ export default function Navigation({
                   priority
                 />
               </div>
-            </Link>
+            </SafeLink>
           </div>
 
           {/* Desktop Navigation using shadcn NavigationMenu */}
@@ -401,7 +425,7 @@ export default function Navigation({
                     >
                       {dict?.navigation?.our_approach || "Our Approach"}
                     </NavigationMenuLink>
-                  </Link>
+                  </SafeLink>
                 </NavigationMenuItem>
 
                 {/* Programs Dropdown */}
@@ -482,6 +506,16 @@ export default function Navigation({
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
             <div className="flex items-center gap-2 border-3">
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+              <SafeLink href={`/${locale}/login`} className="hidden md:block">
+                <Button
+                  size="sm"
+                  className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
+                >
+                  {dict?.cta?.sign_in || "Sign In"}
+                </Button>
+              </SafeLink>
               <div className="md:hidden">
                 <Button
                   variant="ghost"
@@ -491,9 +525,9 @@ export default function Navigation({
                   aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                 >
                   {isMobileMenuOpen ? (
-                    <X className="h-6 w-6" />
+            <SafeIconX className="h-6 w-6" />
                   ) : (
-                    <Menu className="h-6 w-6" />
+                    <SafeIconMenu className="h-6 w-6" />
                   )}
                 </Button>
               </div>

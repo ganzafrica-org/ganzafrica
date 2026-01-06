@@ -17,12 +17,23 @@ import {
   Trash,
   Plus,
   Briefcase,
-  UserPlus
+  UserPlus,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
 
 const TeamsPage = () => {
   const router = useRouter();
@@ -31,7 +42,7 @@ const TeamsPage = () => {
   // States for data and UI
   const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [teamTypes, setTeamTypes] = useState<Record<string, string>>({});
+  const [teamTypes, setTeamTypes] = useState<Array<{ id: number; name: string }>>([]);
   
   // States for pagination and filtering
   const [page, setPage] = useState(1);
@@ -39,8 +50,8 @@ const TeamsPage = () => {
   const [totalTeams, setTotalTeams] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortBy, setSortBy] = useState('sort_order');
+  const [sortOrder, setSortOrder] = useState('asc');
   // Reorder mode (UI-only), local order per page
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [draggingId, setDraggingId] = useState<number | null>(null);
@@ -56,6 +67,11 @@ const TeamsPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  
+  // State for delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<number | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Normalize image URL so it works on host even if saved with localhost
   const getImageUrl = (url?: string) => {
@@ -93,23 +109,43 @@ const TeamsPage = () => {
         router.push(`/teams/${teamId}`);
         break;
       case 'delete':
-        if (window.confirm('Are you sure you want to delete this team member?')) {
-          try {
-            await apiClient.delete(`/teams/${teamId}`);
-            const updatedPage = teams.length === 1 && page > 1 ? page - 1 : page;
-            setPage(updatedPage);
-            toast.success('Team member deleted successfully');
-          } catch (error: any) {
-            console.error('Error deleting team:', error);
-            toast.error(error?.response?.data?.message || 'Failed to delete team member');
-          }
-        }
+        setTeamToDelete(teamId);
+        setIsDeleteDialogOpen(true);
         break;
       case 'update':
         router.push(`/teams/edit/${teamId}`);
         break;
       default:
         break;
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!teamToDelete) return;
+
+    try {
+      await apiClient.delete(`/teams/${teamToDelete}`);
+      
+      // Close dialog and reset state
+      setIsDeleteDialogOpen(false);
+      setTeamToDelete(null);
+      
+      // Show success toast
+      toast.success('Team member deleted successfully');
+      
+      // Trigger refresh by updating refreshTrigger
+      setRefreshTrigger(prev => prev + 1);
+      
+      // Adjust page if needed (if we deleted the last item on the page)
+      if (teams.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch (error: any) {
+      console.error('Error deleting team:', error);
+      toast.error(error?.response?.data?.message || 'Failed to delete team member');
+      setIsDeleteDialogOpen(false);
+      setTeamToDelete(null);
     }
   };
 
@@ -136,13 +172,18 @@ const TeamsPage = () => {
     };
   }, [menuRef]);
 
-  // Set default team types
+  // Load team types from backend for dynamic tabs
   useEffect(() => {
-    setTeamTypes({
-      1: 'Leadership',
-      2: 'Technical',
-      3: 'Support'
-    });
+    const fetchTypes = async () => {
+      try {
+        const res = await apiClient.get('/team-types');
+        const types: Array<{ id: number; name: string }> = res.data?.teamTypes || [];
+        setTeamTypes(types);
+      } catch (error: any) {
+        // If this fails, tabs will show only 'All'
+      }
+    };
+    fetchTypes();
   }, []);
 
   // Handle search input change with debounce
@@ -187,39 +228,39 @@ const TeamsPage = () => {
   // Get team type ID from tab name
   const getTeamTypeIdFromTab = (tabName: string): number | undefined => {
     if (tabName === 'all') return undefined;
-    
-    // Map tab names to team type IDs
-    const tabToTypeId: {[key: string]: number} = {
-      'leadership': 1,
-      'technical': 2,
-      'support': 3
-    };
-    
-    return tabToTypeId[tabName.toLowerCase()];
+    const parsed = parseInt(tabName, 10);
+    return Number.isNaN(parsed) ? undefined : parsed;
   };
 
   // Fetch tab counts
   const fetchTabCounts = async () => {
     try {
-      // Fetch all teams with limit=0 just to get count
+      // Fetch all teams to get accurate counts - use a high limit to get all teams
       const response = await apiClient.get('/teams', { 
-        params: { limit: 0 } 
+        params: { limit: 1000, page: 1 } // Get up to 1000 teams to count properly
       });
       
-      // Get the total count from the response
+      // Get the total count from the response pagination
       const allCount = parseInt(response.data.pagination?.total) || 0;
       
-      // Prepare counts object
-      const countsByType = {
+      // Prepare counts object starting with the total count for 'all'
+      const countsByType: Record<string, number> = {
         all: allCount
       };
       
+      // If we have teams data, count by team type
       if (response.data.teams && Array.isArray(response.data.teams)) {
-        // Group teams by team_type.name
+        // Initialize counts for all team types to 0
+        teamTypes.forEach(type => {
+          countsByType[String(type.id)] = 0;
+        });
+        
+        // Count teams by team_type.id
         response.data.teams.forEach((team: any) => {
-          if (team.team_type && team.team_type.name) {
-            const typeName = team.team_type.name.toLowerCase();
-            (countsByType as any)[typeName] = ((countsByType as any)[typeName] || 0) + 1;
+          const typeId = team.team_type?.id;
+          if (typeId) {
+            const key = String(typeId);
+            countsByType[key] = (countsByType[key] || 0) + 1;
           }
         });
       }
@@ -260,12 +301,8 @@ const TeamsPage = () => {
           params.team_type_id = getTeamTypeIdFromTab(activeTab);
         }
         
-        console.log('Fetching teams with params:', params);
-        
         // Make API request with apiClient
         const response = await apiClient.get('/teams', { params });
-        
-        console.log('API response:', response.data);
         
         if (response.data) {
           const fetched = response.data.teams || [];
@@ -292,13 +329,17 @@ const TeamsPage = () => {
           setTotalTeams(parseInt(pagination.total) || 0);
           setTotalPages(pagination.pages || 1);
           
-          // If we're not already tracking tab counts, also use this response to update counts
-          if (!tabCountsLoaded && response.data.teams) {
-            fetchTabCounts();
+          // Update tab counts with the total from this response
+          if (!tabCountsLoaded) {
+            // Update the 'all' count with the current total
+            setTabCounts(prev => ({
+              ...prev,
+              all: parseInt(pagination.total) || 0
+            }));
           }
         }
         
-        // If we're not already tracking tab counts, use this response to update counts
+        // Fetch detailed tab counts if not already loaded
         if (!tabCountsLoaded) {
           fetchTabCounts();
         }
@@ -312,7 +353,7 @@ const TeamsPage = () => {
     };
     
     fetchTeams();
-  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, teamTypes, refreshTrigger]);
 
   // Helpers for local ordering
   const getOrderStorageKey = (): string => {
@@ -429,20 +470,15 @@ const TeamsPage = () => {
 
   // Generate tabs based on team types found in the data
   const renderTabs = () => {
-    const tabs = [
+    const tabs: Array<{ id: string; label: string }> = [
       { id: 'all', label: 'All' }
     ];
-    
-    // Add tabs for each team type found in tabCounts
-    Object.keys(tabCounts).forEach(key => {
-      if (key !== 'all') {
-        tabs.push({
-          id: key.toLowerCase(),
-          label: key.charAt(0).toUpperCase() + key.slice(1)
-        });
-      }
+
+    // Dynamic tabs based on fetched team types (IDs as tab ids, like news page does)
+    teamTypes.forEach((t) => {
+      tabs.push({ id: String(t.id), label: t.name });
     });
-    
+
     return tabs.map(tab => (
       <button
         key={tab.id}
@@ -455,11 +491,7 @@ const TeamsPage = () => {
       >
         {tab.label}
         <span className={`ml-2 ${
-          tab.id === 'all' ? 'bg-gray-200 text-gray-800' :
-          tab.id.includes('leadership') ? 'bg-blue-100 text-blue-800' :
-          tab.id.includes('technical') ? 'bg-green-100 text-green-800' :
-          tab.id.includes('support') ? 'bg-purple-100 text-purple-800' :
-          'bg-gray-200 text-gray-800'
+          tab.id === 'all' ? 'bg-gray-200 text-gray-800' : 'bg-green-50 text-green-700'
         } px-2 py-0.5 rounded text-xs font-medium`}>
           {tabCounts[tab.id] || 0}
         </span>
@@ -545,7 +577,9 @@ const TeamsPage = () => {
 
         {/* Team list title */}
         <h2 className="text-lg font-bold mb-4">
-          {activeTab === 'all' ? 'All Team Members' : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Team`}
+          {activeTab === 'all'
+            ? 'All Team Members'
+            : `${teamTypes.find(t => String(t.id) === activeTab)?.name || 'Team'} Team`}
         </h2>
 
         {/* Search and filter */}
@@ -794,6 +828,37 @@ const TeamsPage = () => {
           </div>
         )}
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              Delete Team Member
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this team member? This action cannot be undone and will permanently delete the team member and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteDialogOpen(false);
+              setTeamToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+            >
+              Delete Team Member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

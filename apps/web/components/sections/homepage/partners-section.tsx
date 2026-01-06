@@ -130,8 +130,8 @@ export default function PartnersSection({ locale }: PartnersSectionProps) {
                 </div>
             </div>
 
-            {/* Styled JSX for animations */}
-            <style jsx>{`
+            {/* Inline styles for animations */}
+            <style>{`
         .slider-items-right {
           animation: scrollRight 25s linear infinite;
         }

@@ -9,6 +9,7 @@ import apiClient from '@/lib/api-client';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useDict } from '@/context/dictionary';
+import { trackEvent } from '@/components/analytics/google-analytics';
 
 // Type definitions
 type ProjectMedia = {
@@ -77,6 +78,7 @@ const [loading, setLoading] = useState(true);
 const [error, setError] = useState<string | null>(null);
 const [activePage, setActivePage] = useState(0);
 const [direction, setDirection] = useState(1); // 1 for right, -1 for left
+const [categories, setCategories] = useState<Record<string, string>>({});
 
 // Memoized function to get fallback projects with your specific projects
 const getFallbackProjects = useCallback((): Project[] => {
@@ -168,6 +170,32 @@ const getFallbackProjects = useCallback((): Project[] => {
 // Add a state to track if we're showing no projects message
 const [noProjects, setNoProjects] = useState(false);
 
+// Fetch categories first
+useEffect(() => {
+    const fetchCategories = async () => {
+        try {
+            const response = await apiClient.get('/categories');
+            if (response.data && Array.isArray(response.data)) {
+                const categoriesObj: Record<string, string> = {};
+                response.data.forEach((category: any) => {
+                    if (category && category.id && category.name) {
+                        const categoryName = category.name.toLowerCase().trim();
+                        // Skip "None" and "nano" categories
+                        if (categoryName !== 'none' && categoryName !== 'nano') {
+                            categoriesObj[category.id.toString()] = category.name;
+                        }
+                    }
+                });
+                setCategories(categoriesObj);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    fetchCategories();
+}, []);
+
 // Fetch projects from API with retry logic and rate limit handling
 useEffect(() => {
     const fetchProjects = async () => {
@@ -182,6 +210,7 @@ useEffect(() => {
                     page: 1,
                     sort_by: 'created_at',
                     sort_order: 'desc',
+                    is_published: true, // Only fetch published projects
                 },
                 timeout: 10000 // 10 seconds timeout
             }).catch(error => {
@@ -195,8 +224,28 @@ useEffect(() => {
             
             if (response) {
                 if (response.data.projects && response.data.projects.length > 0) {
+                    // Filter out projects with category "None" or "nano"
+                    const filteredProjects = response.data.projects.filter((project: Project) => {
+                        const catId = project.category_id;
+                        if (catId) {
+                            const catName = categories[catId.toString()];
+                            if (catName) {
+                                const lowerName = catName.toLowerCase().trim();
+                                // Exclude projects with "None" or "nano" categories
+                                if (lowerName === 'none' || lowerName === 'nano') {
+                                    return false;
+                                }
+                            } else {
+                                // If category name not found in our categories list, check if it's "None"
+                                // This handles cases where category might not be loaded yet
+                                return true; // Keep it for now, will be filtered on next render
+                            }
+                        }
+                        return true;
+                    });
+
                     // Ensure each project has the required fields and media
-                    const formattedProjects = response.data.projects.map(project => ({
+                    const formattedProjects = filteredProjects.map(project => ({
                         ...project,
                         // Ensure media items have required fields
                         media: {
@@ -235,7 +284,7 @@ useEffect(() => {
     };
 
     fetchProjects();
-}, [getFallbackProjects]);
+}, [getFallbackProjects, categories]);
 
 const changePage = useCallback((pageIndex: number) => {
     // Set direction based on which page is clicked
@@ -344,7 +393,7 @@ if (!loading && projects.length === 0) {
                         )}
                     >
                         <span>Contact Us</span>
-                        <ArrowRight size={16} />
+                        <SafeArrowRight size={16} />
                     </Link>
                 </div>
             </div>
@@ -478,11 +527,14 @@ return (
                         "overflow-hidden transition-all duration-300",
                         "hover:bg-opacity-90 hover:pl-10 hover:pr-6 "
                     )}
+                    onClick={() => trackEvent('view_all_projects_click', {
+                        source_page: 'homepage'
+                    })}
                 >
                     <span className="relative z-10">
                         {dict?.cta?.view_all_projects || "View All Projects"}
                     </span>
-                    <ArrowRight 
+                    <SafeArrowRight
                         size={16} 
                         className="ml-2 transition-all duration-300 transform group-hover:translate-x-1" 
                     />
@@ -512,7 +564,7 @@ return (
         </div>
 
         {/* Custom CSS for the perspective effect and button styling */}
-        <style jsx global>{`
+        <style>{`
             .property-card {
                 position: relative;
                 border-radius: 24px;

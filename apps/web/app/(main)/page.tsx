@@ -13,18 +13,17 @@ import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-u
 
 // Interface for page props with Promise-based params
 interface PageProps {
-  params: Promise<{ locale: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  params: { locale: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: { locale: string };
 }): Promise<Metadata> {
-  const resolvedParams = await params;
-  const locale = resolvedParams.locale;
+  const locale = params.locale;
   const dict = await getDictionary(locale);
 
   return baseGenerateMetadata({
