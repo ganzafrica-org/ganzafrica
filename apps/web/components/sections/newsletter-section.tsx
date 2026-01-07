@@ -16,7 +16,6 @@ export default function NewsletterSection({
   locale,
   dict,
 }: NewsletterSectionProps) {
-  const dict = useDict();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<

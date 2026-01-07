@@ -25,7 +25,7 @@ export default function Footer({
           <div className="flex justify-between items-center mb-1 md:hidden">
             {/* Logo */}
             <div className="flex-shrink-0">
-              <Link href={`/${locale}`} prefetch={true}>
+              <Link href={`/`} prefetch={true}>
                 <Image
                     src="/images/logo-2.png"
                     alt="GanzAfrica"
@@ -60,7 +60,7 @@ export default function Footer({
           <div className="hidden md:grid grid-cols-4 gap-1 items-center mb-1">
             {/* Logo - aligned with About GanzAfrica */}
             <div className="flex-shrink-0">
-              <Link href={`/${locale}`} prefetch={true}>
+              <Link href={`/`} prefetch={true}>
                 <Image
                     src="/images/logo-2.png"
                     alt="GanzAfrica"
@@ -104,12 +104,12 @@ export default function Footer({
               <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base">About GanzAfrica</h3>
               <ul className="space-y-0">
                 <li>
-                  <Link href={`/${locale}/faqs`} className="hover:text-secondary-yellow transition-colors text-sm">
+                  <Link href={`/faqs`} className="hover:text-secondary-yellow transition-colors text-sm">
                     {dict?.footer?.faqs || "FAQs"}
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/${locale}/contact`} className="hover:text-secondary-yellow transition-colors text-sm">
+                  <Link href={`/contact`} className="hover:text-secondary-yellow transition-colors text-sm">
                     {dict?.footer?.contact || "Contact Us"}
                   </Link>
                 </li>
@@ -121,12 +121,12 @@ export default function Footer({
               <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base">{dict?.footer?.programs || "Programs"}</h3>
               <ul className="space-y-0">
                 <li>
-                  <Link href={`/${locale}/programs/fellowship`} className="hover:text-secondary-yellow transition-colors text-sm">
+                  <Link href={`/programs/fellowship`} className="hover:text-secondary-yellow transition-colors text-sm">
                     {dict?.programs?.fellowship?.title || "Fellowship"}
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/${locale}/programs/alumni`} className="hover:text-secondary-yellow transition-colors text-sm">
+                  <Link href={`/programs/alumni`} className="hover:text-secondary-yellow transition-colors text-sm">
                     {dict?.programs?.alumni?.title || "Alumni"}
                   </Link>
                 </li>
@@ -138,7 +138,7 @@ export default function Footer({
               <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base">Our Approach</h3>
               <ul className="space-y-0">
                 <li>
-                  <Link href={`/${locale}/our_approach/food_systems`} className="hover:text-secondary-yellow transition-colors text-sm">
+                  <Link href={`/our_approach/food_systems`} className="hover:text-secondary-yellow transition-colors text-sm">
                     {dict?.our_approach?.food_systems || "Food Systems"}
                   </Link>
                 </li>
@@ -158,12 +158,12 @@ export default function Footer({
                   </a>
                 </li>
                 <li>
-                  <Link href={`/${locale}/opportunities`} className="hover:text-secondary-yellow transition-colors text-sm">
+                  <Link href={`/opportunities`} className="hover:text-secondary-yellow transition-colors text-sm">
                     {dict?.footer?.opportunities || "Opportunities"}
                   </Link>
                 </li>
                 <li>
-                  <Link href={`/${locale}/news`} className="hover:text-secondary-yellow transition-colors text-sm">
+                  <Link href={`/news`} className="hover:text-secondary-yellow transition-colors text-sm">
                     News & Updates
                   </Link>
                 </li>
@@ -199,7 +199,7 @@ export default function Footer({
               </div>
             </div>
             <div>
-              <Link href={`/${locale}/privacy-policy`} className="hover:text-secondary-yellow transition-colors">
+              <Link href={`/privacy-policy`} className="hover:text-secondary-yellow transition-colors">
                 Privacy policy
               </Link>
             </div>

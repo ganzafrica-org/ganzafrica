@@ -25,12 +25,11 @@ const fadeIn = {
 
 export default function OurApproachPageContent() {
   const dict = useDict();
-// Normalize Next.js Image typing across React versions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SafeImage = Image as unknown as React.ComponentType<any>;
+  // Normalize Next.js Image typing across React versions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const SafeImage = Image as unknown as React.ComponentType<any>;
 
-const FoodSystemPage = (): JSX.Element => {
-  useEffect(() => {
+  React.useEffect(() => {
     // Track page view for Our Approach page
     trackPageView('/our-approach', 'Our Approach to Food Systems');
   }, []);

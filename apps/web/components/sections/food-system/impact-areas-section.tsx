@@ -1130,7 +1130,7 @@ const ClimateInitiativesMapSection = () => {
                                   {location.description}
                                 </p>
                                 <SafeLink
-                                  href={`/${locale}/projects/${location.projectId}`}
+                                  href={`/projects/${location.projectId}`}
                                   className="text-xs text-yellow-600 hover:text-yellow-800 font-medium"
                                 >
                                   Learn more

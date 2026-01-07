@@ -18,7 +18,7 @@ const sharedRoutes = [
 
 // Define localized routes
 const localizedRoutes = (locale: string) =>
-  sharedRoutes.map((route) => `/${locale}${route}`);
+  sharedRoutes.map((route) => `/${route}`);
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes = [

@@ -524,14 +524,14 @@ if (selectedType !== "all") {
                             
                             <div className="flex space-x-3">
                               <SafeLink
-                                href={`/${locale}/opportunities/${opportunity.id}`}
+                                href={`/opportunities/${opportunity.id}`}
                                 className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
                               >
                                 View Details
                               </SafeLink>
                               {opportunity.status === 'published' ? (
                               <SafeLink 
-                                  href={`/${locale}/opportunities/${opportunity.id}/apply`}
+                                  href={`/opportunities/${opportunity.id}/apply`}
                                   className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:primary-green transition-colors"
                                 >
                                   Apply Now
@@ -605,14 +605,14 @@ if (selectedType !== "all") {
                             
                             <div className="flex space-x-3">
                               <SafeLink
-                                href={`/${locale}/opportunities/${opportunity.id}`}
+                                href={`/opportunities/${opportunity.id}`}
                                 className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
                               >
                                 View Details
                               </SafeLink>
                               {opportunity.status === 'published' ? (
                               <SafeLink 
-                                  href={`/${locale}/opportunities/${opportunity.id}/apply`}
+                                  href={`/opportunities/${opportunity.id}/apply`}
                                   className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:bg-primary-green transition-colors"
                                 >
                                   Apply Now

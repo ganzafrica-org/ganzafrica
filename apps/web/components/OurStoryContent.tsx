@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 const SafeImage = Image as unknown as React.ComponentType<any>;
 import SectionWithScrollAnimation from "@/components/layout/SectionWithScroll";
@@ -15,7 +17,6 @@ import VideoPlayer from "@/components/VideoPlayer";
 import { Dictionary } from "@/lib/get-dictionary";
 
 type Props = {
-    dict: Awaited<ReturnType<typeof getDictionary>>;
     isFrench: boolean;
     dict: Dictionary;
 };
@@ -180,78 +181,6 @@ export default function OurStoryContent({ isFrench, dict }: Props) {
                         </div>
                     </div>
                 </div>
-               {/* Section 4 - Fellow Success Stories */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden">
-    {/* Video - First on mobile and desktop */}
-    <div className="h-full w-full order-1 relative">
-        <div className="w-full h-full relative">
-            <video
-                ref={videoRef}
-                className="w-full h-full object-cover rounded-sm"
-                src="/videos/lysa.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                onPlay={() => trackVideoEvent('play', 'Our Story - Fellow Success Video')}
-                onPause={() => trackVideoEvent('pause', 'Our Story - Fellow Success Video')}
-                onEnded={() => trackVideoEvent('complete', 'Our Story - Fellow Success Video')}
-                onTimeUpdate={(e) => {
-                    const video = e.target as HTMLVideoElement;
-                    const progress = (video.currentTime / video.duration) * 100;
-                    if (progress >= 25 && progress < 26) {
-                        trackVideoEvent('play', 'Our Story - Fellow Success Video', 25);
-                    } else if (progress >= 50 && progress < 51) {
-                        trackVideoEvent('play', 'Our Story - Fellow Success Video', 50);
-                    } else if (progress >= 75 && progress < 76) {
-                        trackVideoEvent('play', 'Our Story - Fellow Success Video', 75);
-                    }
-                }}
-            />
-
-            {/* Video Controls */}
-<div className="absolute bottom-4 right-4 flex space-x-3">
-    <button
-        onClick={toggleMute}
-        className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
-        aria-label={isMuted ? "Unmute video" : "Mute video"}
-    >
-        {isMuted ? <AudioMutedIcon /> : <AudioUnmutedIcon />}
-    </button>
-
-    <button
-        onClick={toggleFullScreen}
-        className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
-        aria-label="View in full screen"
-    >
-        <FullscreenIcon />
-    </button>
-</div>
-        </div>
-    </div>
-
-    {/* Text content - Second on mobile and desktop */}
-    <div className="p-6 md:p-10 bg-[#FFFDEB] min-h-full lg:h-[510px] w-full rounded-sm order-2">
-        <div className="flex flex-col h-full w-full">
-            <div className="bg-primary-orange text-white w-16 h-16 flex items-center justify-center text-2xl rounded-md font-bold mb-2">
-                04
-            </div>
-            <h2 className="text-primary-orange sm:font-h5 md:font-h4 mb-2">
-                {dict?.about?.success_title || "Fellow Success Stories"}
-            </h2>
-            <div className={contentClass}>
-                <p className="text-black font-regular-small text-sm text-justify">
-                    {dict?.about?.success_text ||
-                    "We are equally proud of the individual journeys of our fellows. Many have leveraged their experience with GanzAfrica to secure meaningful and impactful roles within the public sector and beyond. Reinforcing our core belief in the power of investing in young professionals and equipping them with the skills to lead. At GanzAfrica, we see our fellows not just as participants in a program but as changemakers who will continue to drive transformation long after their time with us."}
-                </p>
-
-                {/* Added Person Icon */}
-                <div className="mt-4 flex items-center justify-center">
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
                 {/* Section 5*/}
                 <SectionWithScrollAnimation

@@ -31,7 +31,7 @@ export default function LanguageSwitcher(): JSX.Element {
     // Get current locale from pathname
     const currentLocale = pathname.split("/")[1];
 
-    // Find current language object with fallback to English
+    // Find a current language object with fallback to English
     const currentLanguage =
         languages.find((lang) => lang.code === currentLocale) ?? languages[0]!;
 
@@ -39,18 +39,18 @@ export default function LanguageSwitcher(): JSX.Element {
     const handleLanguageChange = (locale: string): void => {
         // Extract the path without the locale prefix
         const segments = pathname.split("/");
-        // Remove first segment (empty string before first slash) and the locale
+        // Remove the first segment (empty string before first slash) and the locale
         const pathWithoutLocale = segments.slice(2).join("/");
 
-        // Create new path with the new locale and trailing slash
+        // Create a new path with the new locale and trailing slash
         const newPathname =
             locale === "en"
                 ? pathWithoutLocale
-                    ? `/${locale}/${pathWithoutLocale}`
+                    ? `/${pathWithoutLocale}`
                     : "/"
                 : pathWithoutLocale
-                    ? `/${locale}/${pathWithoutLocale}`
-                    : `/${locale}/`;
+                    ? `/${pathWithoutLocale}`
+                    : "/";
 
         router.push(newPathname);
     };

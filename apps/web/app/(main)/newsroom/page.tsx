@@ -28,8 +28,8 @@ const SafeLink = Link as unknown as React.ComponentType<any>;
 const SafeImage = Image as unknown as React.ComponentType<any>;
 
 // Normalize lucide icon component types across React type versions
-type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-const ArrowUpRightIcon = ArrowUpRight as unknown as SvgIconComponent;
+// type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+// const ArrowUpRightIcon = ArrowUpRight as unknown as SvgIconComponent;
 
 // Create an axios instance with retry configuration
 const axiosInstance = axios.create({
@@ -75,7 +75,7 @@ axiosInstance.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Add request throttling mechanism
+// Add a request throttling mechanism
 const pendingRequests: Record<string, Promise<any>> = {};
 
 interface ThrottledAxiosConfig {
@@ -428,8 +428,8 @@ const NewsroomPage = () => {
   return (
       <main className="min-h-screen">
     {/* Hero Section */}
-<section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-  <div className="absolute inset-0 z-0">
+<section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden z-0">
+  <div className="absolute inset-0">
     <div className="relative w-full h-[130%]" style={{ transform: 'translateY(-18%)' }}>
       <Image
         src="/images/DSC_1430.JPG"
@@ -455,7 +455,7 @@ const NewsroomPage = () => {
   
   </div>
 </section>
-        <div className="w-full overflo-hidden">
+        <div className="w-full overflo-hidden z-10">
           <div className="flex justify-center">
             <HeaderBelt />
           </div>

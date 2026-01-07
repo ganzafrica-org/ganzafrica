@@ -3,7 +3,7 @@ import OurStoryContent from "@/components/OurStoryContent";
 
 type Params = Promise<{ locale: string }>;
 
-export default async function OurStoryPage({ params }: { params: Params }) {
+export default async function OurStoryPage({ params }: { params: Params }): Promise<JSX.Element> {
     const { locale } = await params;
     const dict = await getDictionary(locale);
     const isFrench = locale === "fr";

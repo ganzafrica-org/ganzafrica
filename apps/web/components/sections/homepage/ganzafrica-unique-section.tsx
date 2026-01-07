@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import Image from "next/image";
-import { PlayCircle, PauseCircle, ChevronRight } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { PlayCircle, PauseCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { useDict } from '@/context/dictionary';
@@ -28,9 +27,9 @@ export default function GanzAfricaUniqueSection({
   const [videoPlaying, setVideoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Get section content from dictionary with fallbacks
-  const sectionTitle =
-      dict?.unique?.title || "3 Key Elements that make GanzAfrica Unique";
+  // Get section content from the dictionary with fallbacks
+  // const sectionTitle =
+  //     dict?.unique?.title || "3 Key Elements that make GanzAfrica Unique";
 
   // Define custom SVG icons for each element
   const DataIcon = () => (
@@ -57,7 +56,7 @@ export default function GanzAfricaUniqueSection({
       </svg>
   );
 
-  // Define the key elements with content from dictionary
+  // Define the key elements with content from the dictionary
   const keyElements: KeyElement[] = [
     {
       title: dict?.unique?.elements?.data?.title || "Data and Evidence",
@@ -166,11 +165,11 @@ export default function GanzAfricaUniqueSection({
             {/* Title */}
             <div>
               <motion.div
-                className="space-y-6"
+                className="space-y-6 px-5"
                 variants={item}
               >
                 <motion.div
-                  className="space-y-2 flex justify-center  px-4"
+                  className="space-y-2 flex justify-center px-4"
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -182,7 +181,7 @@ export default function GanzAfricaUniqueSection({
                   />
                 </motion.div>
                 <motion.div 
-                  className="relative rounded-2xl overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"
+                  className="relative rounded-md overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"
                   variants={videoContainer}
                   whileHover={{ scale: 1.02 }}
                 >
@@ -231,7 +230,7 @@ export default function GanzAfricaUniqueSection({
                       )}
                     </AnimatePresence>
                   </motion.button>
-                </motion.div> */}
+                </motion.div>
               </motion.div>
             </div>
 
@@ -247,7 +246,7 @@ export default function GanzAfricaUniqueSection({
                   {keyElements.map((element, index) => (
                     <motion.div
                       key={index}
-                      className={`mb-5 md:mb-0 relative bg-white rounded-md transition-all z-0${
+                      className={`mb-5 md:mb-0 relative bg-white rounded-md transition-all px-5 z-0${
                         element.isHighlighted
                           ? "bg-amber-50 shadow-lg"
                           : "bg-slate-50 shadow-md hover:shadow-lg"

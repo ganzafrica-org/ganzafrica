@@ -188,7 +188,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
   // Function to get the best available image for a news item
   const getImageUrl = (newsItem: NewsItem): string => {
     try {
-      // First priority: Check if media.items exists and has cover image
+      // Priority: Check if media.items exists and has cover image
       if (newsItem.media?.items?.length) {
         // Try to find a cover image first
         const coverImage = newsItem.media.items.find(item => 
@@ -316,7 +316,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                     className="perspective-image" 
                     style={{ 
                       backgroundImage: `url(${getImageUrl(newsItem)})`,
-                      backgroundColor: '#117B34', // Backup color if image fails
+                      backgroundColor: '#117B34', // Backup color if the image fails
                     }}
                   >
                     {/* Category badge */}
@@ -347,7 +347,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
 
                   {/* Read more link - styled like project cards */}
                   <Link
-                    href={`/${locale}/newsroom/${slug}`}
+                    href={`/newsroom/${slug}`}
                     className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
                     style={{ color: linkColor }}
                     onClick={() => trackEvent('news_link_click', {
@@ -394,7 +394,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
       </div>
 
       {/* Custom CSS for the perspective effect and button styling */}
-      <style jsx global>{`
+      <style>{`
         .news-card {
           position: relative;
           border-radius: 5px;
@@ -421,7 +421,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
           width: 100%;
           overflow: hidden;
           transform-style: preserve-3d;
-          border-radius: 5px 5px 0 0;
+          border-radius: 0;
         }
         
         .perspective-image {
@@ -432,7 +432,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
           height: 100%;
           background-size: cover;
           background-position: center;
-          border-radius: 5px 5px 0 0;
+          border-radius: 0;
           transform: translateZ(0) rotateY(-5deg) scale(1.05);
           transform-origin: right center;
           box-shadow: -8px 5px 10px rgba(0,0,0,0.1);

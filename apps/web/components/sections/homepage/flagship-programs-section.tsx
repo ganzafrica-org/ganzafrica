@@ -55,7 +55,7 @@ export default function FlagshipProgramsSection({
                 dict?.programs?.fellowship?.description ||
                 "Our fellowship program provides young leaders with the skills and opportunities to drive sustainable change in their communities across Africa. This immersive experience helps develop essential leadership qualities and technical expertise.",
             image: "/images/amiteam.jpg",
-            link: `/${locale}/programs/fellowship`,
+            link: "/programs/fellowship",
             date: "Year-round",
             iconColor: "#073392", // primary-blue
             icon: <FellowshipIcon />
@@ -67,7 +67,7 @@ export default function FlagshipProgramsSection({
                 dict?.programs?.alumni?.description ||
                 "Building a network of skilled professionals driving Africa's transformation in land, agriculture, and environment. Our alumni continue to innovate, lead, and create positive change across the continent.",
             image: "/images/alumni_program.jpg",
-            link: `/${locale}/programs/alumni`,
+            link: "/programs/alumni",
             date: "Year-round",
             iconColor: "#F8B712", // primary-orange equivalent
             icon: <AlumniIcon />
@@ -89,7 +89,7 @@ export default function FlagshipProgramsSection({
                     {programs.map((program) => (
                         <article
                             key={program.id}
-                            className="relative w-full md:w-[350px] h-[350px] mx-0 rounded-[3px] shadow-[0_1px_4px_rgba(0,0,0,0.3)] overflow-hidden">
+                            className="relative w-full md:w-[350px] h-[350px] mx-0 rounded-[3px] shadow-[0_1px_4px_rgba(0,0,0,0.3)] overflow-hidden group">
                             <div
                                 style={{
                                     width: 'auto',
@@ -110,7 +110,7 @@ export default function FlagshipProgramsSection({
                                     background: 'white',
                                     transition: '0.4s cubic-bezier(.17,.67,.5,1.03) 0.15s'
                                 }}
-                                className="card-infos" // For hover target
+                                className="card-infos group-hover:-translate-y-[260px]"
                             >
                                 <h2
                                     style={{
@@ -160,7 +160,7 @@ export default function FlagshipProgramsSection({
                                         opacity: 1,
                                         transition: '0.5s cubic-bezier(.17,.67,.5,1.03) 0.25s'
                                     }}
-                                    className="card-txt" // For hover target
+                                    className="card-txt"
                                 >
                                     {program.description}
                                 </p>
@@ -181,15 +181,11 @@ export default function FlagshipProgramsSection({
                                         textDecoration: 'none'
                                     }}
                                     className="card-details text-[#073392]"
-                                    onClick={() => {
-                                        if (typeof window !== 'undefined' && typeof (window as any).trackEvent === 'function') {
-                                            (window as any).trackEvent('program_link_click', {
-                                                program_name: program.title,
-                                                program_id: program.id,
-                                                source_page: 'homepage'
-                                            });
-                                        }
-                                    }}
+                                    onClick={() => trackEvent('program_link_click', {
+                                        program_name: program.title,
+                                        program_id: program.id,
+                                        source_page: 'homepage'
+                                    })}
                                 >
                                     {dict?.cta?.learn_more || "Learn More"}
                                 </Link>
@@ -198,137 +194,6 @@ export default function FlagshipProgramsSection({
                     ))}
                 </div>
             </div>
-          <div className="flex flex-wrap justify-center gap-8">
-            {programs.map((program) => (
-                <article
-                    key={program.id}
-                    style={{
-                      position: 'relative',
-                      width: '350px',
-                      height: '350px',
-                      borderRadius: '3px',
-                      boxShadow: '0 1px 4px rgba(0, 0, 0, 0.3)',
-                      overflow: 'hidden',
-                      margin: '1rem'
-                    }}
-                >
-                  <div
-                      style={{
-                        width: 'auto',
-                        height: '260px',
-                        backgroundImage: `url(${program.image})`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'center',
-                        backgroundSize: 'cover',
-                        borderRadius: '3px'
-                      }}
-                  ></div>
-                  <div
-                      style={{
-                        width: 'auto',
-                        height: '350px',
-                        position: 'relative',
-                        padding: '14px 24px',
-                        background: 'white',
-                        transition: '0.4s cubic-bezier(.17,.67,.5,1.03) 0.15s'
-                      }}
-                      className="card-infos" // For hover target
-                  >
-                    <h2
-                        style={{
-                          position: 'relative',
-                          margin: '10px 0',
-                          letterSpacing: '3px',
-                          color: '#152536',
-                          fontWeight: 'bold',
-                          fontSize: '1rem',
-                          textShadow: '0 0 0px rgba(21, 37, 54, 0.2)'
-                        }}
-                    >
-                      {program.title}
-                      {/* Replaced colored div with SVG icon */}
-                      <span
-                          style={{
-                            position: 'absolute',
-                            top: '50%',
-                            right: '0',
-                            transform: 'translateY(-50%)',
-                            width: '35px',
-                            height: '35px',
-                            backgroundColor: program.iconColor,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '4px'
-                          }}
-                      >
-                    {program.icon}
-                  </span>
-                    </h2>
-                    <h3
-                        style={{
-                          marginBottom: '10px',
-                          fontSize: '0.85rem',
-                          color: 'rgba(21, 37, 54, 0.7)'
-                        }}
-                    >
-                      {program.date || "Featured Program"}
-                    </h3>
-                    <p
-                        style={{
-                          lineHeight: '2',
-                          fontSize: '0.95rem',
-                          color: 'rgba(21, 37, 54, 0.7)',
-                          opacity: 1,
-                          transition: '0.5s cubic-bezier(.17,.67,.5,1.03) 0.25s'
-                        }}
-                        className="card-txt" // For hover target
-                    >
-                      {program.description}
-                    </p>
-                    <Link
-                        href={program.link}
-                        style={{
-                          position: 'absolute',
-                          left: '0',
-                          bottom: '0',
-                          margin: '10px 0',
-                          padding: '20px 24px',
-                          letterSpacing: '1px',
-                          fontWeight: 'bold',
-                          fontSize: '0.9rem',
-                          cursor: 'pointer',
-                          opacity: 1,
-                          transition: '0.5s cubic-bezier(.17,.67,.5,1.03) 0.25s',
-                          textDecoration: 'none'
-                        }}
-                        className="card-details text-[#073392]"
-                        onClick={() => trackEvent('program_link_click', {
-                          program_name: program.title,
-                          program_id: program.id,
-                          source_page: 'homepage'
-                        })}
-                    >
-                      {dict?.cta?.learn_more || "Learn More"}
-                    </Link>
-                  </div>
-                </article>
-            ))}
-          </div>
-        </div>
-
-        {/* Inline styles for hover effects */}
-        <style jsx>{`
-        article:hover .card-infos {
-          transform: translateY(-260px);
-        }
-        
-        article:hover .card-seats,
-        article:hover .card-txt,
-        article:hover .card-details {
-          opacity: 1;
-        }
-      `}</style>
         </section>
     );
 }

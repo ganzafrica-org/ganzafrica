@@ -16,7 +16,7 @@ export default function GlobalNotFound() {
   const segments = pathname.split('/').filter(Boolean);
   const supported = ["en", "fr"];
 
-  // Normalize first segment to a string (could be undefined) and derive locale/attemptedPath
+  // Normalize the first segment to a string (could be undefined) and derive locale/attemptedPath
   const first = segments[0] ?? '';
   const locale = supported.includes(first) ? first : 'en';
 
@@ -60,7 +60,7 @@ export default function GlobalNotFound() {
 
           <div className="flex items-center gap-4 justify-center lg:justify-start">
             <button
-              onClick={() => router.push(`/${locale}/`)}
+              onClick={() => router.push("/")}
               className="border inline-flex items-center gap-2 px-6 py-3 bg-black text-white font-semibold rounded-full hover:bg-gray-800 transition-all duration-300 hover:scale-105 hover:shadow-lg group"
             >
               <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />

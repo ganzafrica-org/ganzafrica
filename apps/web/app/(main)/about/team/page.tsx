@@ -312,7 +312,7 @@ const normalizeTeamTypeName = (name: string): string => {
 };
 
 const TeamPage = (): JSX.Element => {
-  const [activeFilter, setActiveFilter] = useState<FilterCategory>('advisory board'); // Changed default to 'advisory board'
+  const [activeFilter, setActiveFilter] = useState<FilterCategory>('our team'); // Changed default to 'advisory board'
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);

@@ -58,7 +58,7 @@ const PROJECTS_PER_PAGE = 3;
 const MAX_PROJECTS = 6;
 const AUTO_SLIDE_INTERVAL = 5000; // 5 seconds
 
-// Define color scheme for project cards
+// Define the color scheme for project cards
 const CARD_COLORS = ['#f8b712', '#009758', '#073392'];
 const CARD_CATEGORIES = ['Land', 'Agriculture', 'Environment'];
 
@@ -212,11 +212,11 @@ useEffect(() => {
                     sort_order: 'desc',
                     is_published: true, // Only fetch published projects
                 },
-                timeout: 10000 // 10 seconds timeout
+                timeout: 10000 // 10-second timeout
             }).catch(error => {
                 // Check for rate limiting (429) or any other API error
                 console.warn('API error, using fallback data', error.message);
-                // Use fallback projects instead of empty array
+                // Use fallback projects instead of an empty array
                 setProjects(getFallbackProjects());
                 setLoading(false);
                 return null; // Return null to indicate we've handled it
@@ -236,9 +236,9 @@ useEffect(() => {
                                     return false;
                                 }
                             } else {
-                                // If category name not found in our categories list, check if it's "None"
-                                // This handles cases where category might not be loaded yet
-                                return true; // Keep it for now, will be filtered on next render
+                                // If category name not found in our category list, check if it's "None"
+                                // This handles cases where the category might not be loaded yet
+                                return true; // Keep it for now, will be filtered on the next render
                             }
                         }
                         return true;
@@ -267,7 +267,7 @@ useEffect(() => {
                     setError(null);
                     setNoProjects(false);
                 } else {
-                    // If API returns empty array, use fallback projects
+                    // If API returns an empty array, use fallback projects
                     console.info('No projects from API, using fallback data');
                     setProjects(getFallbackProjects());
                 }
@@ -276,7 +276,7 @@ useEffect(() => {
         } catch (err) {
             console.error('Error fetching projects:', err);
             setError('Unable to load projects');
-            // Use fallback projects instead of empty array
+            // Use fallback projects instead of an empty array
             setProjects(getFallbackProjects());
             setNoProjects(false);
             setLoading(false);
@@ -293,7 +293,7 @@ const changePage = useCallback((pageIndex: number) => {
     setActivePage(pageIndex);
 }, [activePage]);
 
-// Auto change page every 5 seconds
+// Auto-change page every 5 seconds
 useEffect(() => {
     const totalPages = Math.ceil(Math.min(projects.length, MAX_PROJECTS) / PROJECTS_PER_PAGE);
     if (totalPages <= 1) return; // Don't auto-slide if there's only one page
@@ -328,10 +328,10 @@ const truncateDescription = useCallback((description: string, maxLength = 100): 
 
 // Project URL builder
 const getProjectUrl = useCallback((projectId: number): string => {
-    return `/${locale}/projects/${projectId}`;
+    return `/projects/${projectId}`;
 }, [locale]);
 
-// Add No Projects Available message - only show if both API and fallbacks fail
+// Add a No Projects Available message - only show if both API and fallbacks fail
 if (!loading && projects.length === 0) {
     return (
         <section className="py-4 md:py-6 bg-neutral-100 relative overflow-hidden">
@@ -383,7 +383,7 @@ if (!loading && projects.length === 0) {
                 {/* Call to action - can be modified or removed if not needed when no projects */}
                 <div className="text-center mt-6">
                     <Link
-                        href={`/${locale}/contact`}
+                        href={`/contact`}
                         className={cn(
                             "inline-flex items-center gap-2",
                             "bg-primary-green hover:bg-primary-green/90",
@@ -393,7 +393,7 @@ if (!loading && projects.length === 0) {
                         )}
                     >
                         <span>Contact Us</span>
-                        <SafeArrowRight size={16} />
+                        <ArrowRight size={16} />
                     </Link>
                 </div>
             </div>
@@ -479,7 +479,7 @@ return (
                                 </div>
                             </div>
                             
-                            {/* Content - flex grow to push border to bottom */}
+                            {/* Content - flex grows to push border to bottom */}
                             <div className="p-6 flex-grow flex flex-col">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                     {project.name}
@@ -519,7 +519,7 @@ return (
                 transition={{ duration: 0.6, delay: 0.2 }}
             >
                 <Link
-                    href={`/${locale}/projects`}
+                    href={`/projects`}
                     className={cn(
                         "group relative inline-flex items-center justify-center",
                         "bg-primary-green text-white py-4 px-8 rounded-lg",
@@ -534,7 +534,7 @@ return (
                     <span className="relative z-10">
                         {dict?.cta?.view_all_projects || "View All Projects"}
                     </span>
-                    <SafeArrowRight
+                    <ArrowRight
                         size={16} 
                         className="ml-2 transition-all duration-300 transform group-hover:translate-x-1" 
                     />

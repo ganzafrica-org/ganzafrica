@@ -49,7 +49,7 @@ export default async function HomePage({ params }: PageProps) {
       <PartnersSection locale={locale} />
       <TestimonialsSection locale={locale} />
       <LatestNewsSection locale={locale} />
-      <NewsletterSection locale={locale} />
+      <NewsletterSection locale={locale} dict={undefined} />
     </main>
   );
 }

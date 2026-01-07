@@ -50,7 +50,8 @@ export default function FellowsSection({ locale }: FellowsSectionProps) {
   const [mainImageIndex, setMainImageIndex] = useState(0);
 
   const [angle, setAngle] = useState(0);
-  const animationRef = useRef<number>();
+  // @ts-ignore
+    const animationRef = useRef<number>();
 
   const ROTATION_SPEED = 0.2; // degrees per frame
   const ORBIT_RADIUS = 200; // pixels

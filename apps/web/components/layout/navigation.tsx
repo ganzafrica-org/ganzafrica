@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { Menu, X, ChevronDown, Globe } from "lucide-react";
 import { useDict } from '@/context/dictionary';
 
+import LanguageSwitcher from "./language-switcher";
+
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -197,167 +199,156 @@ export default function Navigation({
     return "text-black";
   };
 
+  const locale = ""; // Added placeholder for locale if needed, though dict usage suggests it might be handled elsewhere
+
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-60 bg-white w-screen h-screen overflow-y-auto md:hidden ">
-        <div className="flex justify-between items-center px-4 py-4 border-b">
-          <SafeLink href={`/`} className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
-          <Link href='/' className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="relative h-14 w-24">
-              <SafeImage
-                src="/images/logo.png"
-                alt="GanzAfrica"
-                fill
-                sizes="(max-width: 768px) 300px, 200px"
-                className="object-contain"
-                priority
-              />
-            </div>
-          </SafeLink>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-black hover:bg-[#F5F5F5] transition-colors"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="Close menu"
-          >
-            <SafeIconX className="h-6 w-6" />
-          </Button>
-        </div>
-        <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
-          {/* Mobile About with submenu */}
-          <div className="flex flex-col w-full">
-            <button
-              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-about")}
-            >
-              {dict?.navigation?.about || "About"}
-              <SafeIconChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-about" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {aboutItems.map((item) => (
-                  <SafeLink
-                    key={item.href}
-                    href={resolveHref(item.href)}
-                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {dict?.about?.[
-                      item.title.toLowerCase().replace(/ /g, "_")
-                    ] || item.title}
-                  </SafeLink>
-                ))}
+        <div className="fixed inset-0 z-[60] bg-white w-screen h-screen overflow-y-auto md:hidden">
+          <div className="flex justify-between items-center px-4 py-4 border-b">
+            <SafeLink href="/" className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+              <div className="relative h-14 w-24">
+                <SafeImage
+                  src="/images/logo.png"
+                  alt="GanzAfrica"
+                  fill
+                  sizes="(max-width: 768px) 300px, 200px"
+                  className="object-contain"
+                  priority
+                />
               </div>
-            )}
-          </div>
-
-          {/* Our Approach - Direct Link */}
-                  <Link
-                    href={resolveHref("/our-approach")}
-          <SafeLink
-            href={`/${locale}/our-approach`}
-            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
-            onClick={() => setIsMobileMenuOpen(false)}
-            prefetch={true}
-          >
-            {dict?.navigation?.our_approach || "Our Approach"}
-          </SafeLink>
-
-          {/* Programs */}
-          <div className="flex flex-col w-full">
-            <button
-              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-programs")}
-            >
-              {dict?.navigation?.programs || "Programs"}
-              <SafeIconChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-programs" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {programsItems.map((item) => (
-                  <SafeLink
-                    key={item.href}
-                    href={resolveHref(item.href)}
-                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </SafeLink>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* News & Updates */}
-          <div className="flex flex-col w-full">
-            <button
-              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-news")}
-            >
-              News & Updates
-              <SafeIconChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-news" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {newsItems.map((item) => (
-                  <SafeLink
-                    key={item.href}
-                    href={resolveHref(item.href)}
-                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </SafeLink>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Add sign in button at the bottom */}
-          <div className="mt-auto pt-6 border-t">
-            <SafeLink href={`/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button
-                size="lg"
-                className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"
-              >
-                {dict?.cta?.sign_in || "Sign In"}
-              </Button>
             </SafeLink>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-black hover:bg-[#F5F5F5] transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              <SafeIconX className="h-6 w-6" />
+            </Button>
           </div>
-        </nav>
-      </div>
+          <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
+            {/* Mobile About with submenu */}
+            <div className="flex flex-col w-full">
+              <button
+                className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-about")}
+              >
+                {dict?.navigation?.about || "About"}
+                <SafeIconChevronDown
+                  className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
+                />
+              </button>
+              {activeDropdown === "mobile-about" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {aboutItems.map((item) => (
+                    <SafeLink
+                      key={item.href}
+                      href={resolveHref(item.href)}
+                      className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {dict?.about?.[
+                        item.title.toLowerCase().replace(/ /g, "_")
+                      ] || item.title}
+                    </SafeLink>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Our Approach - Direct Link */}
+            <SafeLink
+              href={resolveHref("/our-approach")}
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
+              onClick={() => setIsMobileMenuOpen(false)}
+              prefetch={true}
+            >
+              {dict?.navigation?.our_approach || "Our Approach"}
+            </SafeLink>
+
+            {/* Programs */}
+            <div className="flex flex-col w-full">
+              <button
+                className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-programs")}
+              >
+                {dict?.navigation?.programs || "Programs"}
+                <SafeIconChevronDown
+                  className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
+                />
+              </button>
+              {activeDropdown === "mobile-programs" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {programsItems.map((item) => (
+                    <SafeLink
+                      key={item.href}
+                      href={resolveHref(item.href)}
+                      className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {item.title}
+                    </SafeLink>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* News & Updates */}
+            <div className="flex flex-col w-full">
+              <button
+                className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
+                onClick={() => toggleDropdown("mobile-news")}
+              >
+                News & Updates
+                <SafeIconChevronDown
+                  className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
+                />
+              </button>
+              {activeDropdown === "mobile-news" && (
+                <div className="ml-4 mt-2 flex flex-col space-y-2">
+                  {newsItems.map((item) => (
+                    <SafeLink
+                      key={item.href}
+                      href={resolveHref(item.href)}
+                      className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      prefetch={true}
+                    >
+                      {item.title}
+                    </SafeLink>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Add sign in button at the bottom */}
+            <div className="mt-auto pt-6 border-t">
+              <SafeLink href="/login" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button
+                  size="lg"
+                  className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"
+                >
+                  {dict?.cta?.sign_in || "Sign In"}
+                </Button>
+              </SafeLink>
+            </div>
+          </nav>
+        </div>
     );
   };
 
   return (
     <header ref={navRef} className={getHeaderBgClass()}>
-
       <div className="container min-w-full py-0">
         <div className="flex h-20 items-stretch justify-between relative">
           {/* Logo */}
-          <div
-            className={cn(
-              "min-h-full w-32 md:w-52 flex items-center p-8 transition-opacity duration-200",
-              isMobileMenuOpen ? "opacity-0 pointer-events-none" : "opacity-100",
-            )}
-            aria-hidden={isMobileMenuOpen}
-          >
-            <Link
-              href={`/`}
           <div className="min-h-full w-32 md:w-52 flex items-center p-8">
             <SafeLink
-              href={`/${locale}`}
+              href="/"
               className="relative z-50 flex items-center gap-2"
               prefetch={true}
             >
@@ -425,7 +416,7 @@ export default function Navigation({
                     >
                       {dict?.navigation?.our_approach || "Our Approach"}
                     </NavigationMenuLink>
-                  </SafeLink>
+                  </Link>
                 </NavigationMenuItem>
 
                 {/* Programs Dropdown */}
@@ -447,7 +438,6 @@ export default function Navigation({
                             <p className="text-sm leading-tight text-muted-foreground">
                             Innovative initiatives driving Africa’s transformation through technology, youth empowerment, and sustainable development.
                             </p>
-
                           </a>
                         </NavigationMenuLink>
                       </li>
@@ -505,10 +495,11 @@ export default function Navigation({
 
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
-            <div className="flex items-center gap-2 border-3">
             <div className="flex items-center gap-2">
-              <LanguageSwitcher />
-              <SafeLink href={`/${locale}/login`} className="hidden md:block">
+              <div className="hidden md:flex items-center gap-2">
+                <LanguageSwitcher />
+              </div>
+              <SafeLink href="/login" className="hidden md:block">
                 <Button
                   size="sm"
                   className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
@@ -525,7 +516,7 @@ export default function Navigation({
                   aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                 >
                   {isMobileMenuOpen ? (
-            <SafeIconX className="h-6 w-6" />
+                    <SafeIconX className="h-6 w-6" />
                   ) : (
                     <SafeIconMenu className="h-6 w-6" />
                   )}
