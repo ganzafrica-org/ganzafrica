@@ -86,7 +86,7 @@ export default function WhyGanzAfricaSection({
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary-green/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary-orange/5 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
       
-      <div className="container mx-auto px-5 md:px-40 relative z-10">
+      <div className="container mx-auto px-5 md:px-35.5 relative z-10">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           {/* Left side - Enhanced Content Card */}
           <div className="w-full lg:w-1/2 lg:-mr-12 relative z-20 ">

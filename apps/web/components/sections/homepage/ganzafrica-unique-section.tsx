@@ -180,57 +180,57 @@ export default function GanzAfricaUniqueSection({
                     secondText={dict.home?.unique?.title_second || "GanzAfrica Unique"}
                   />
                 </motion.div>
-                <motion.div 
-                  className="relative rounded-md overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"
-                  variants={videoContainer}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <video
-                      ref={videoRef}
-                      src="/videos/farmers-in-field.mp4"
-                      poster="/images/famer-feild.png"
-                      className="w-full h-full object-cover brightness-105"
-                      onEnded={() => setVideoPlaying(false)}
-                      onPlay={() => setVideoPlaying(true)}
-                      onPause={() => setVideoPlaying(false)}
-                      preload="auto"
-                      muted
-                      loop
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                  <motion.button
-                      onClick={handleVideoPlayback}
-                      className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-30 transition-all duration-300 hover:bg-opacity-20 focus:outline-none"
-                      aria-label={videoPlaying ? 'Pause video' : 'Play video'}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                  >
-                    <AnimatePresence mode="wait">
-                      {videoPlaying ? (
-                          <motion.div
-                            key="pause"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.2 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <PauseCircle className="w-16 h-16 text-white opacity-80 hover:opacity-100 transition-opacity" />
-                          </motion.div>
-                      ) : (
-                          <motion.div
-                            key="play"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 1.2 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <PlayCircle className="w-16 h-16 text-white opacity-80 hover:opacity-100 transition-opacity" />
-                          </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                </motion.div>
+                {/*<motion.div */}
+                {/*  className="relative rounded-md overflow-hidden aspect-video bg-gray-200 shadow-2xl transform hover:shadow-3xl transition-all duration-300 hover:-translate-y-1"*/}
+                {/*  variants={videoContainer}*/}
+                {/*  whileHover={{ scale: 1.02 }}*/}
+                {/*>*/}
+                  {/*<video*/}
+                  {/*    ref={videoRef}*/}
+                  {/*    src="/videos/farmers-in-field.mp4"*/}
+                  {/*    poster="/images/famer-feild.png"*/}
+                  {/*    className="w-full h-full object-cover brightness-105"*/}
+                  {/*    onEnded={() => setVideoPlaying(false)}*/}
+                  {/*    onPlay={() => setVideoPlaying(true)}*/}
+                  {/*    onPause={() => setVideoPlaying(false)}*/}
+                  {/*    preload="auto"*/}
+                  {/*    muted*/}
+                  {/*    loop*/}
+                  {/*>*/}
+                  {/*  Your browser does not support the video tag.*/}
+                  {/*</video>*/}
+                  {/*<motion.button*/}
+                  {/*    onClick={handleVideoPlayback}*/}
+                  {/*    className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-30 transition-all duration-300 hover:bg-opacity-20 focus:outline-none"*/}
+                  {/*    aria-label={videoPlaying ? 'Pause video' : 'Play video'}*/}
+                  {/*    whileHover={{ scale: 1.05 }}*/}
+                  {/*    whileTap={{ scale: 0.95 }}*/}
+                  {/*>*/}
+                    {/*<AnimatePresence mode="wait">*/}
+                    {/*  {videoPlaying ? (*/}
+                    {/*      <motion.div*/}
+                    {/*        key="pause"*/}
+                    {/*        initial={{ opacity: 0, scale: 0.8 }}*/}
+                    {/*        animate={{ opacity: 1, scale: 1 }}*/}
+                    {/*        exit={{ opacity: 0, scale: 1.2 }}*/}
+                    {/*        transition={{ duration: 0.2 }}*/}
+                    {/*      >*/}
+                    {/*        <PauseCircle className="w-16 h-16 text-white opacity-80 hover:opacity-100 transition-opacity" />*/}
+                    {/*      </motion.div>*/}
+                    {/*  ) : (*/}
+                    {/*      <motion.div*/}
+                    {/*        key="play"*/}
+                    {/*        initial={{ opacity: 0, scale: 0.8 }}*/}
+                    {/*        animate={{ opacity: 1, scale: 1 }}*/}
+                    {/*        exit={{ opacity: 0, scale: 1.2 }}*/}
+                    {/*        transition={{ duration: 0.2 }}*/}
+                    {/*      >*/}
+                    {/*        <PlayCircle className="w-16 h-16 text-white opacity-80 hover:opacity-100 transition-opacity" />*/}
+                    {/*      </motion.div>*/}
+                    {/*  )}*/}
+                    {/*</AnimatePresence>*/}
+                  {/*</motion.button>*/}
+                {/*</motion.div>*/}
               </motion.div>
             </div>
 

@@ -391,13 +391,13 @@ if (selectedType !== "all") {
                 {/* Search */}
                 <div className="mb-4">
                   <form onSubmit={handleSearchSubmit}>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <div className="relative border border-gray-100 rounded-md">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 rounded-md pointer-events-none">
                         <SearchIcon className="w-4 h-4 text-gray-500" />
                       </div>
                       <input
                         type="text"
-                        className="bg-gray-50 border border-gray-100 text-white text-sm rounded-md block w-full pl-10 p-2.5"
+                        className="bg-white text-sm rounded-md block w-full pl-10 p-2.5"
                         placeholder="Search opportunities"
                         value={searchTerm}
                         onChange={handleSearchChange}

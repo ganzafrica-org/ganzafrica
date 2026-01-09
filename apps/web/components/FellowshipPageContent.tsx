@@ -723,7 +723,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
               </div>
 
               <div className="relative">
-                <div className="bg-white p-6 md:p-8 rounded-lg shadow-sm min-h-[250px] flex flex-col justify-center">
+                <div className="bg-white p-6 md:p-8 rounded-lg min-h-[250px] flex flex-col justify-center">
                   <div className="text-center px-2 md:px-16">
                     <motion.div
                       key={currentTestimonial}
@@ -758,7 +758,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
 
                 <button
                   onClick={prevTestimonial}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full text-primary-orange flex items-center justify-center hover:bg-yellow-500 transition-colors -translate-x-1/2 md:-translate-x-5"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#045F3C] text-white flex items-center justify-center hover:bg-[#034830]  transition-colors -translate-x-1/2 md:-translate-x-5"
                   aria-label="Previous testimonial"
                 >
                   <ArrowLeft className="w-5 h-5 text-white" />

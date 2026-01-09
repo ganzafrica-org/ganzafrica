@@ -173,7 +173,7 @@ export default function Footer({
 
           {/* NGO Source Logo */}
           <div className="flex justify-start mb-1">
-            <Image src="/images/ngosource.png" alt="NGO Source" width={60} height={25} className="h-auto" />
+            <img src="/images/ngo-source.png" alt="NGO Source" width={60} height={25} className="h-auto w-40" />
           </div>
 
           {/* Divider */}

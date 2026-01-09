@@ -326,16 +326,16 @@ export default function Navigation({
             </div>
 
             {/* Add sign in button at the bottom */}
-            <div className="mt-auto pt-6 border-t">
-              <SafeLink href="/login" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button
-                  size="lg"
-                  className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"
-                >
-                  {dict?.cta?.sign_in || "Sign In"}
-                </Button>
-              </SafeLink>
-            </div>
+            {/*<div className="mt-auto pt-6 border-t">*/}
+            {/*  <SafeLink href="/login" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>*/}
+            {/*    <Button*/}
+            {/*      size="lg"*/}
+            {/*      className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"*/}
+            {/*    >*/}
+            {/*      {dict?.cta?.sign_in || "Sign In"}*/}
+            {/*    </Button>*/}
+            {/*  </SafeLink>*/}
+            {/*</div>*/}
           </nav>
         </div>
     );
@@ -499,14 +499,14 @@ export default function Navigation({
               <div className="hidden md:flex items-center gap-2">
                 <LanguageSwitcher />
               </div>
-              <SafeLink href="/login" className="hidden md:block">
-                <Button
-                  size="sm"
-                  className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
-                >
-                  {dict?.cta?.sign_in || "Sign In"}
-                </Button>
-              </SafeLink>
+              {/*<SafeLink href="/login" className="hidden md:block">*/}
+              {/*  <Button*/}
+              {/*    size="sm"*/}
+              {/*    className="bg-primary-green hover:bg-primary-green/90 text-white px-6"*/}
+              {/*  >*/}
+              {/*    {dict?.cta?.sign_in || "Sign In"}*/}
+              {/*  </Button>*/}
+              {/*</SafeLink>*/}
               <div className="md:hidden">
                 <Button
                   variant="ghost"
