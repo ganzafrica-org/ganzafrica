@@ -411,7 +411,7 @@ export default function Navigation({
                 {/* Our Approach - Direct Link */} 
                 <NavigationMenuItem>
                   <Link href={resolveHref("/our-approach")} passHref>
-                    <NavigationMenuLink 
+                    <NavigationMenuLink
                       className={`${getNavItemColor()} block px-0 py-2 text-base md:text-sm lg:text-base font-medium hover:text-accent-foreground`}
                     >
                       {dict?.navigation?.our_approach || "Our Approach"}
@@ -496,7 +496,7 @@ export default function Navigation({
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
             <div className="flex items-center gap-2">
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 border-3">
                 <LanguageSwitcher />
               </div>
               {/*<SafeLink href="/login" className="hidden md:block">*/}

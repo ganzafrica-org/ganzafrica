@@ -20,6 +20,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@workspace/ui/components/navigation-menu";
+import LanguageSwitcher from "@/components/layout/language-switcher";
 
 // Define types for menu items
 interface MenuItem {
@@ -480,7 +481,7 @@ export default function HomeHero({
                 alt="GanzAfrica"
                 fill
                 sizes="(max-width: 768px) 300px, 200px"
-                className="object-contain"
+                className="object-contain border"
                 priority
               />
             </div>
@@ -593,16 +594,17 @@ export default function HomeHero({
           </div>
 
           {/* Add sign in button at the bottom */}
-          {/* <div className="mt-auto pt-6 border-t"> */}
-          {/* <Link href={`/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button
-                size="lg"
-                className="w-full bg-primary-green hover:bg-primary-green/90 text-white"
-              >
-                {dict?.cta?.sign_in || "Sign In"}
-              </Button>
-            </Link> */}
-          {/* </div> */}
+          {/* <div className="mt-auto pt-6 border-t">*/}
+            {/*  <Link href={`/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>*/}
+            {/*  <Button*/}
+            {/*    size="lg"*/}
+            {/*    className="w-full bg-primary-green hover:bg-primary-green/90 text-white"*/}
+            {/*  >*/}
+            {/*    {dict?.cta?.sign_in || "Sign In"}*/}
+            {/*  </Button>*/}
+            {/*</Link>*/}
+            {/*   <LanguageSwitcher/>*/}
+           {/*</div>*/}
         </nav>
       </div>
     );
@@ -619,7 +621,7 @@ export default function HomeHero({
         <div className="container min-w-full py-0">
           <div className="flex h-20 items-stretch justify-between relative">
             {/* Logo */}
-            <div className="bg-white rounded-tr-none rounded-br-2xl  min-h-full w-32 md:w-52 flex items-center p-8">
+            <div className="bg-white rounded-tr-none rounded-br-2xl  min-h-full w-32 md:w-52 flex justify-center items-center p-8">
               <Link
                 href={`/`}
                 className="relative z-50 flex items-center gap-2"
@@ -644,7 +646,7 @@ export default function HomeHero({
             {/* Right side items */}
             <div className="bg-white rounded-tl-none rounded-bl-2xl min-h-full p-4 w-auto flex items-center">
               <div className="flex items-center gap-2">
-                {/*<GoogleTranslate />*/}
+                <LanguageSwitcher />
                 <div className="md:hidden">
                   <Button
                     variant="ghost"
