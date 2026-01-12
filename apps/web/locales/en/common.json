@@ -171,12 +171,18 @@
       ]
     }
   },
-
   "what_we_do": {
     "title": "What We Do",
     "food_systems": "Food Systems",
     "climate_change_adaptation": "Climate Change Adaptation",
     "description": "We focus on sustainable food systems and climate change adaptation to create lasting impact in Rwanda."
+  },
+  "ourApproach": {
+    "hero": {
+      "heading": "OUR APPROACH TO FOOD SYSTEMS",
+      "subtitle": "From Farm to Fork — and Far Beyond",
+      "alt": "Food System"
+    }
   },
   "programs": {
     "flagship_heading_first": "Our Flagship",
@@ -194,9 +200,155 @@
       "description": "We provide research and guidance to support sustainable policy development across Africa."
     }
   },
+  "fellowship": {
+    "hero": {
+      "title": "GanzAfrica",
+      "description": "Join our transformative fellowship program designed to empower the next generation of African leaders in sustainable development.",
+      "cta": "How to Apply"
+    },
+    "about": {
+      "firstText": "About the",
+      "secondText": "Fellowship",
+      "description": "Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.",
+      "cta": "How to Apply"
+    },
+    "discover": {
+      "firstText": "Discover tomorrow's",
+      "secondText": "leaders today",
+      "subtitle": "A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders.",
+      "description": "Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.",
+      "cta": "Meet the Fellows"
+    },
+    "benefits": {
+      "heading": "Benefits of",
+      "heading2": "Joining GanzAfrica",
+      "subtitle": "Begin your journey of impact and growth with GanzAfrica. Discover the benefits of joining our program:",
+      "tackle": {
+        "title": "Tackle Challenges",
+        "description": "Join a like-minded cohort to address major land, agricultural, and environmental challenges in Africa, making a meaningful impact in your community."
+      },
+      "global": {
+        "title": "Gain Global Experience",
+        "description": "Work on transformative projects with world-class industry specialists, be mentored by experts, and participate in the co-creation of innovative solutions in our focus areas."
+      },
+      "develop": {
+        "title": "Develop Your Skills",
+        "description": "Our fully funded program offers training, apprenticeships, and work experience to enhance your expertise and showcase your talent."
+      }
+    },
+    "promise": {
+      "title": "GanzAfrica's Promise",
+      "toText": "to",
+      "fellows": "Fellows:",
+      "description": "We are committed to providing a transformative experience that equips you with the skills, network, and opportunities to make a lasting impact in your field.",
+      "dev": {
+        "title": "Professional Development",
+        "description": "Provide up to 2 years of holistic training with a focus on data & analytics and leadership skills"
+      },
+      "community": {
+        "title": "A community of like-minded people",
+        "description": "Welcome fellows into a network of value-driven young Africans committed to leading Africa's transformation"
+      },
+      "experience": {
+        "title": "Hands-On Experience",
+        "description": "Deliver work secondments with one of our partners to apply skills learned"
+      }
+    },
+    "topics": {
+      "foodSystems": "Food Systems",
+      "dataEvidence": "Data & Evidence",
+      "coCreation": "Co-creation",
+      "foodSystems2": "Food systems",
+      "dataEvidence2": "Data & Evidence",
+      "naturalResources": "Natural Resource Management",
+      "climate": "Climate Change",
+      "agriculture": "Sustainable Agriculture"
+    },
+    "testimonials": {
+      "heading": "Checkout What Fellows",
+      "heading2": "Say about Our Fellowship"
+    },
+    "howToApply": {
+      "hero": {
+        "title": "Apply by completing our",
+        "emphasis": "online application",
+        "subtitle": "Join our fellowship program and become part of Africa's next generation of leaders in sustainable development"
+      },
+      "applicationProcessTitle": "Application",
+      "applicationProcessHighlight": "Process",
+      "steps": [
+        {
+          "title": "Fellowship Advertised",
+          "description": "GanzAfrica Fellowship opportunities are announced through our online channels and partner networks across Africa."
+        },
+        {
+          "title": "Applications Received",
+          "description": "Submit your application through our online portal. Make sure to include all required documents and information."
+        },
+        {
+          "title": "Applications Reviewed",
+          "description": "Our team carefully reviews each application, assessing qualifications, experience, and alignment with our mission."
+        },
+        {
+          "title": "Interviews Conducted",
+          "description": "Selected candidates are invited to participate in oral and written interviews to further assess their suitability."
+        },
+        {
+          "title": "Finalists Selected & Notified",
+          "description": "Successful candidates are notified and begin their journey with GanzAfrica Fellowship Program."
+        }
+      ],
+      "eligibilityTitle": "Eligibility",
+      "eligibilitySubtitle": "Requirements for the GanzAfrica Fellowship Program",
+      "eligibility": [
+        {
+          "title": "Up to 27 years old",
+          "description": "Young professionals at the start of their career journey"
+        },
+        {
+          "title": "A degree in a relevant discipline",
+          "description": "Academic background in agriculture, environmental science, data science, or related fields"
+        },
+        {
+          "title": "Commitment to leading Africa's transformation",
+          "description": "Demonstrated passion for sustainable development and positive change"
+        }
+      ],
+      "journeyTitle": "FELLOWSHIP JOURNEY",
+      "journey": [
+        "High-achieving young professionals are recruited as GanzAfrica fellows",
+        "GanzAfrica Academy provides capacity building on data-led approaches and leadership",
+        "Fellows are placed in public institutions and empowered to shape policy approaches",
+        "Fellows receive mentorship from experts, advancing their careers, leadership skills, and providing ongoing support"
+      ],
+      "applyButton": "Apply Now",
+      "connectWithUs": "Connect With Us"
+    }
+  },
   "projects": {
     "heading_first": "Our",
     "heading_second": "Projects",
+    "heroTitle": "PROJECTS",
+    "heroSubtitle": "Turning Ideas Into Action",
+    "heroAlt": "Agricultural fields",
+    "searchPlaceholder": "Search projects by name, location, or category...",
+    "filterAll": "Filter by status: All",
+    "allProjects": "All Projects",
+    "statusPlanned": "Planned",
+    "statusActive": "Active",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "statusOnHold": "On Hold",
+    "noResults": "No projects found matching your criteria",
+    "cardFallback": "A sustainable project working with local communities to improve agriculture systems.",
+    "defaultLocation": "Rwanda",
+    "na": "N/A",
+    "stats": {
+      "fellows": "Fellows",
+      "projects": "Projects",
+      "communities": "Communities",
+      "countries": "Countries"
+    },
     "items": {
       "food_systems": {
         "title": "Food Systems",
@@ -314,5 +466,99 @@
     "subtitle": "Rooted in Excellence, Growing with Agriculture",
     "section_title": "Why Food Systems Matter",
     "description": "We strengthen the agriculture value chain by empowering farmers, improving sustainability, and shaping policy for a better future."
+  },
+  "contact": {
+    "hero": {
+      "title": "Get in",
+      "highlight": "Touch",
+      "subtitle": "With Our Team",
+      "description": "We're here to help. Reach out to us for any questions, suggestions, or collaboration opportunities. Our team will respond within 24 hours."
+    },
+    "form": {
+      "title": "Send Us a Message",
+      "successTitle": "Message Sent Successfully!",
+      "successMessage": "Thank you for reaching out to us. We'll get back to you soon.",
+      "errorTitle": "Submission Failed",
+      "errorMessage": "An error occurred while sending your message. Please try again.",
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter your name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "Enter your phone number",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Enter your message",
+      "sendButton": "Send Message",
+      "sendingButton": "Sending..."
+    },
+    "newsletter": {
+      "title": "Stay Updated",
+      "description": "Subscribe to our newsletter to get the latest news and updates.",
+      "successTitle": "Subscribed Successfully!",
+      "successMessage": "You have been successfully subscribed to our newsletter.",
+      "errorTitle": "Subscription Failed",
+      "errorMessage": "An error occurred while subscribing. Please try again.",
+      "emailPlaceholder": "Enter your email",
+      "subscribeButton": "Subscribe"
+    },
+    "office": {
+      "title": "Rwanda Office",
+      "phone": "(250) 799 390 199",
+      "hours": "Mon-Fri, 8:00 AM - 5:00 PM",
+      "email": "info@ganzafrica.org",
+      "emailResponse": "Response within 24 hours",
+      "address1": "27 House, KG 594 St",
+      "address2": "Kigali, Rwanda",
+      "region": "East Africa Regional Hub",
+      "mapLabel": "Rwanda Office"
+    }
+  },
+  "alumni": {
+    "hero": {
+      "title": "ALUMNI NETWORK",
+      "subtitle": "A lifetime of",
+      "subtitle2": "Connections",
+      "opportunities": "Opportunities",
+      "and": "and",
+      "impact": "Impact"
+    },
+    "mission": {
+      "networkTitle": "Alumni Network",
+      "statement": "Mission Statement",
+      "welcome": "Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa.",
+      "quote": "To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact.",
+      "principle1": "Knowledge Sharing",
+      "principle2": "Mentorship",
+      "principle3": "Collaboration and Networking"
+    },
+    "purpose": {
+      "prefixText": "Purpose of the",
+      "title": "Alumni Network",
+      "card1Title": "Networking and Professional Development",
+      "card1Desc": "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
+      "card2Title": "Knowledge Sharing & Data and Evidence Use",
+      "card2Desc": "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
+      "card3Title": "Investing Back into the Fellowship Program",
+      "card3Desc": "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
+      "card4Title": "Co-creating and Co-implementing Solutions",
+      "card4Desc": "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact."
+    },
+    "impact": {
+      "prefix": "Alumni",
+      "title": "Impact",
+      "project1Title": "Land Governance",
+      "project1Desc": "Equitable land administration systems that strengthen tenure security and promote sustainable use",
+      "project2Title": "Sustainable Agriculture",
+      "project2Desc": "Agricultural policies balancing productivity with environmental stewardship and social inclusion",
+      "project3Title": "Climate Adaptation",
+      "project3Desc": "Climate resilience strategies helping communities adapt to changing environmental conditions",
+      "viewAllButton": "View All Projects"
+    },
+    "events": {
+      "prefix": "Alumni",
+      "title": "Events",
+      "defaultDescription": "Young professionals are at the forefront of accelerating CAADP implementation...",
+      "viewEventButton": "View Event"
+    }
   }
 }

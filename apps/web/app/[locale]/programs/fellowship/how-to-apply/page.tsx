@@ -288,7 +288,7 @@ export default function HowToApplyPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header locale={locale} dict={{}} />
+      <Header />
       <FloatingApplyButton />
 
       {/* Hero Section */}

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
+import { useDict } from '@/context/dictionary';
 
 // Animation variants
 const containerVariants = {
@@ -30,7 +31,8 @@ const itemVariants = {
   },
 };
 
-const WhereWeWorkSection = (): JSX.Element => {
+const WhereWeWorkSection = () => {
+  const dict = useDict();
   return (
     <section className="py-16 bg-white">
       <Container>
@@ -41,14 +43,10 @@ const WhereWeWorkSection = (): JSX.Element => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.7 }}
         >
-          {/* <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                        <span>Where does our </span>
-                        <span className="text-primary-green">work reside?</span>
-                    </h2> */}
-          <p className="text-gray-600 max-w-3xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 max-w-5xl mx-auto mb-4 leading-tight">
             Our holistic approach addresses challenges and leverages
             opportunities in 3 main sectors.
-          </p>
+          </h1>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
@@ -57,14 +55,15 @@ const WhereWeWorkSection = (): JSX.Element => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.7 }}
-            className="relative h-full rounded-[20px] overflow-hidden"
+            className="relative h-full rounded-md overflow-hidden"
           >
-            <SafeImage
+            <Image
               src="/images/Fellows7.jpg"
               alt="Hands holding wheat grains"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
+              unoptimized
             />
           </motion.div>
 

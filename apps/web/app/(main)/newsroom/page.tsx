@@ -28,8 +28,8 @@ const SafeLink = Link as unknown as React.ComponentType<any>;
 const SafeImage = Image as unknown as React.ComponentType<any>;
 
 // Normalize lucide icon component types across React type versions
-type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-const ArrowUpRightIcon = ArrowUpRight as unknown as SvgIconComponent;
+// type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+// const ArrowUpRightIcon = ArrowUpRight as unknown as SvgIconComponent;
 
 // Create an axios instance with retry configuration
 const axiosInstance = axios.create({
@@ -75,7 +75,7 @@ axiosInstance.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Add request throttling mechanism
+// Add a request throttling mechanism
 const pendingRequests: Record<string, Promise<any>> = {};
 
 interface ThrottledAxiosConfig {
@@ -93,10 +93,10 @@ const throttledAxios: ThrottledAxios = {
     const key = `${url}${JSON.stringify(config.params || {})}`;
 
     if (pendingRequests[key]) {
-      return pendingRequests[key] as Promise<any>;
+      return pendingRequests[key];
     }
 
-    const request: Promise<any> = axiosInstance.get(url, config)
+    const request = axiosInstance.get(url, config)
         .finally(() => {
           delete pendingRequests[key];
         });
@@ -261,7 +261,7 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
   const imageUrl = getCoverImage();
 
   return (
-      <SafeLink href={`/${locale}/newsroom/${slug}`} className="block group">
+      <Link href={`/newsroom/${slug}`} className="block group">
         <div className="relative bg-white rounded-[24px] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl border border-gray-200">
           <div className="relative aspect-[16/10]">
             {/* Image Container - Modified to push images down for better face visibility */}
@@ -297,7 +297,7 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
             {/* Arrow Button */}
             <div className="absolute top-4 right-4 z-10">
               <div className="relative w-10 h-10 rounded-full bg-[#FFB800] flex items-center justify-center cursor-pointer transform transition-all duration-300 ease-out hover:scale-110 hover:rotate-12 hover:bg-primary-green">
-                <ArrowUpRightIcon
+                <ArrowUpRight
                     className="w-5 h-5 text-white transition-transform duration-300 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                     strokeWidth={2.5}
                 />
@@ -313,7 +313,7 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
             <p className="text-gray-600 line-clamp-2">{item.content?.substring(0, 150) || item.description || "Read more about this news article."}</p>
           </div>
         </div>
-      </SafeLink>
+      </Link>
   );
 };
 
@@ -428,10 +428,10 @@ const NewsroomPage = () => {
   return (
       <main className="min-h-screen">
     {/* Hero Section */}
-<section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
-  <div className="absolute inset-0 z-0">
+<section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden z-0">
+  <div className="absolute inset-0">
     <div className="relative w-full h-[130%]" style={{ transform: 'translateY(-18%)' }}>
-      <SafeImage
+      <Image
         src="/images/DSC_1430.JPG"
         alt="Ganz Africa Newsroom"
         fill
@@ -455,7 +455,7 @@ const NewsroomPage = () => {
   
   </div>
 </section>
-        <div className="w-full overflo-hidden">
+        <div className="w-full overflo-hidden z-10">
           <div className="flex justify-center">
             <HeaderBelt />
           </div>

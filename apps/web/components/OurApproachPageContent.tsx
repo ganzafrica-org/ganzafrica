@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import HeaderBelt from "@/components/layout/headerBelt";
 import WhereWeWorkSection from "@/components/sections/food-system/where-we-work-section";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
+import { useDict } from '@/context/dictionary';
 import ApproachSection from "@/components/sections/food-system/approach-section";
 import { trackEvent, trackPageView } from "@/components/analytics/google-analytics";
 
@@ -22,12 +23,13 @@ const fadeIn = {
   },
 };
 
-// Normalize Next.js Image typing across React versions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SafeImage = Image as unknown as React.ComponentType<any>;
+export default function OurApproachPageContent() {
+  const dict = useDict();
+  // Normalize Next.js Image typing across React versions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const SafeImage = Image as unknown as React.ComponentType<any>;
 
-const FoodSystemPage = (): JSX.Element => {
-  useEffect(() => {
+  React.useEffect(() => {
     // Track page view for Our Approach page
     trackPageView('/our-approach', 'Our Approach to Food Systems');
   }, []);
@@ -40,7 +42,7 @@ const FoodSystemPage = (): JSX.Element => {
         <div className="absolute inset-0 z-0">
           <SafeImage
             src="/images/cabbages.png"
-            alt="Food System"
+            alt={dict?.ourApproach?.hero?.alt || "Food System"}
             fill
             sizes="100vw"
             className="object-cover"
@@ -49,7 +51,7 @@ const FoodSystemPage = (): JSX.Element => {
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/60 z-10"></div>
+        <div className="absolute inset-0 bg-black/60 z-0"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
@@ -59,7 +61,7 @@ const FoodSystemPage = (): JSX.Element => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
-            OUR APPROACH TO FOOD SYSTEMS
+            {dict?.ourApproach?.hero?.heading || "OUR APPROACH TO FOOD SYSTEMS"}
           </motion.h2>
           <motion.h1
             className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
@@ -67,26 +69,18 @@ const FoodSystemPage = (): JSX.Element => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <span className="font-normal">From Farm to Fork — and Far Beyond</span>
+            <span className="font-normal">{dict?.ourApproach?.hero?.subtitle || 'From Farm to Fork — and Far Beyond'}</span>
           </motion.h1>
         </div>
       </section>
 
-      {/* Banner Section */}
-      <div className="w-full overflow-hidden">
-        <div className="flex justify-center">
-          <HeaderBelt />
-        </div>
-      </div>
+      <HeaderBelt />
       
       {/* Page Content */}
       <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-        <ApproachSection />
         <WhereWeWorkSection />
         <ImpactAreasSection />
       </motion.div>
     </main>
   );
-};
-
-export default FoodSystemPage;
+}

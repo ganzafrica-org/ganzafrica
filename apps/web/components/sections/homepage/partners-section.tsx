@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DecoratedHeading } from '@/components/layout/headertext';
 import apiClient from '@/lib/api-client';
+import { useDict } from '@/context/dictionary';
 
 // Interface for the partner data from the API
 interface Partner {
@@ -23,10 +24,10 @@ interface PartnersResponse {
 // Props for the component
 interface PartnersSectionProps {
     locale: string;
-    dict: any;
 }
 
-export default function PartnersSection({ locale, dict }: PartnersSectionProps) {
+export default function PartnersSection({ locale }: PartnersSectionProps) {
+    const dict = useDict();
     const [partnerRow1, setPartnerRow1] = useState<string[]>([
         'minagri.jpg',
         'ministry-environment.jpg',

@@ -403,7 +403,7 @@ const NewsDetailsContent = () => {
     const imageUrl = getCoverImage(item);
 
     return (
-        <SafeLink href={`/${locale}/newsroom/${itemSlug}`} className="block group">
+        <SafeLink href={`/newsroom/${itemSlug}`} className="block group">
           <div className="relative bg-white rounded-lg overflow-hidden shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
             {/* Image Container */}
             <div className="relative aspect-[16/10]">
@@ -538,7 +538,7 @@ const NewsDetailsContent = () => {
             <div className="text-center">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Article Not Found</h2>
               <p className="text-gray-600 mb-8">The article you're looking for may have been removed or doesn't exist.</p>
-              <SafeLink href={`/${locale}/newsroom`} className="inline-flex items-center px-6 py-3 bg-[#00A651] text-white rounded-md hover:bg-[#008f46] transition-colors">
+              <SafeLink href={`/newsroom`} className="inline-flex items-center px-6 py-3 bg-[#00A651] text-white rounded-md hover:bg-[#008f46] transition-colors">
                 <ArrowLeftIcon className="mr-2 h-5 w-5" />
                 Back to Newsroom
               </SafeLink>
@@ -606,9 +606,9 @@ const NewsDetailsContent = () => {
           <div className="flex flex-col lg:flex-row gap-10">
             {/* Main Content Column */}
             <div className="w-full lg:w-2/3">
-              {/* Back to newsroom link */}
+              {/* Back to a newsroom link */}
               <SafeLink
-                  href={`/${locale}/newsroom`}
+                  href={`/newsroom`}
                   className="inline-flex items-center text-[#00A651] hover:text-[#008f46] mb-6 transition-colors"
               >
                 <ArrowLeftIcon className="mr-2 h-5 w-5" />
@@ -680,7 +680,7 @@ const NewsDetailsContent = () => {
 
                     <div className="mt-6 text-center">
                       <SafeLink
-                          href={`/${locale}/newsroom`}
+                          href={`/newsroom`}
                           className="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-[#00A651] border border-[#00A651] rounded-md hover:bg-[#00A651] hover:text-white transition-colors"
                       >
                         View All News

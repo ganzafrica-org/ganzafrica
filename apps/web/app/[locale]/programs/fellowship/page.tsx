@@ -386,7 +386,7 @@ export default function FellowshipPage() {
 
   return (
       <div className="min-h-screen bg-white font-sans">
-        <Header locale={locale} dict={dict} />
+        <Header />
 
         {/* Hero Section */}
        <section className="relative h-[400px] md:h-[500px]">
@@ -429,7 +429,7 @@ export default function FellowshipPage() {
                   transition={{ duration: 0.8, delay: 0.4 }}
                   className="flex items-center justify-center gap-4"
               >
-                <SafeLink href={`/${locale}/programs/fellowship/how-to-apply`} onClick={() => trackEvent('how_to_apply_click', {
+                <SafeLink href="/programs/fellowship/how-to-apply" onClick={() => trackEvent('how_to_apply_click', {
                   source_page: 'fellowship',
                   location: 'hero_section'
                 })}>
@@ -535,7 +535,7 @@ export default function FellowshipPage() {
                   Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.
                 </p>
                 
-                <SafeLink href={`/${locale}/programs/fellowship/how-to-apply`} onClick={() => trackEvent('how_to_apply_click', {
+                <SafeLink href="/programs/fellowship/how-to-apply" onClick={() => trackEvent('how_to_apply_click', {
                   source_page: 'fellowship',
                   location: 'about_section'
                 })}>
@@ -591,7 +591,7 @@ export default function FellowshipPage() {
                 <p className="text-gray-600 text-sm md:text-base mb-8">
                   Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.
                 </p>
-                <SafeLink href={`/${locale}/about/team`} onClick={() => trackEvent('meet_fellows_click', {
+                <SafeLink href={`/about/team`} onClick={() => trackEvent('meet_fellows_click', {
                   source_page: 'fellowship',
                   location: 'leaders_section'
                 })}>

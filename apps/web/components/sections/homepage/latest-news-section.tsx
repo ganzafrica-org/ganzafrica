@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/components/analytics/google-analytics';
+import { useDict } from '@/context/dictionary';
 
 // Interface for the news data from the API
 interface NewsItem {
@@ -43,7 +44,6 @@ interface NewsResponse {
 
 interface NewsSectionProps {
   locale: string;
-  dict: any;
 }
 
 // Define color scheme for "Read more" links (matching project cards)
@@ -54,7 +54,8 @@ const getLinkColor = (index: number) => {
   return LINK_COLORS[index % LINK_COLORS.length];
 };
 
-export default function NewsSection({ locale, dict }: NewsSectionProps) {
+export default function NewsSection({ locale }: NewsSectionProps) {
+  const dict = useDict();
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -187,7 +188,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
   // Function to get the best available image for a news item
   const getImageUrl = (newsItem: NewsItem): string => {
     try {
-      // First priority: Check if media.items exists and has cover image
+      // Priority: Check if media.items exists and has cover image
       if (newsItem.media?.items?.length) {
         // Try to find a cover image first
         const coverImage = newsItem.media.items.find(item => 
@@ -235,7 +236,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                 <div className="h-48 bg-gray-200 perspective-element"></div>
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-4 h-4 bg-gray-200 animate-pulse rounded-full"></div>
+                    <div className="w-4 h-4 bg-gray-200 animate-pulse rounded-md"></div>
                     <div className="w-24 h-4 bg-gray-200 animate-pulse rounded"></div>
                   </div>
                   <div className="h-6 w-3/4 bg-gray-200 animate-pulse rounded mb-3"></div>
@@ -315,12 +316,12 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                     className="perspective-image" 
                     style={{ 
                       backgroundImage: `url(${getImageUrl(newsItem)})`,
-                      backgroundColor: '#117B34', // Backup color if image fails
+                      backgroundColor: '#117B34', // Backup color if the image fails
                     }}
                   >
                     {/* Category badge */}
                     {newsItem.category_name && (
-                      <span className="absolute top-3 left-3 bg-primary-green text-white text-xs font-semibold px-2.5 py-1 rounded-full z-10">
+                      <span className="absolute top-3 left-3 bg-primary-green text-white text-xs font-semibold px-2.5 py-1 rounded-sm z-10">
                         {newsItem.category_name}
                       </span>
                     )}
@@ -330,7 +331,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
                 <div className="p-5 bg-white">
                   {/* Date */}
                   <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
-                    <SafeCalendarDays className="w-4 h-4" />
+                    <CalendarDays className="w-4 h-4" />
                     <span>{formatDate(newsItem.publish_date)}</span>
                   </div>
 
@@ -346,7 +347,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
 
                   {/* Read more link - styled like project cards */}
                   <Link
-                    href={`/${locale}/newsroom/${slug}`}
+                    href={`/newsroom/${slug}`}
                     className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
                     style={{ color: linkColor }}
                     onClick={() => trackEvent('news_link_click', {
@@ -373,7 +374,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
         {newsItems.length > 0 && (
           <div className="text-center mt-12">
             <Link
-              href={`/${locale}/newsroom`}
+              href="/newsroom"
               className={cn(
                 "inline-flex items-center gap-2",
                 "bg-primary-green hover:bg-primary-green/90",
@@ -386,7 +387,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
               })}
             >
               <span>{dict?.news?.view_all ?? "View All News"}</span>
-              <SafeArrowRight size={16} />
+              <ArrowRight size={16} />
             </Link>
           </div>
         )}
@@ -396,7 +397,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
       <style>{`
         .news-card {
           position: relative;
-          border-radius: 24px;
+          border-radius: 5px;
           background: white;
           box-shadow: 0 6px 16px rgba(0,0,0,0.08);
           overflow: hidden;
@@ -420,7 +421,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
           width: 100%;
           overflow: hidden;
           transform-style: preserve-3d;
-          border-radius: 24px 24px 0 0;
+          border-radius: 0;
         }
         
         .perspective-image {
@@ -431,7 +432,7 @@ export default function NewsSection({ locale, dict }: NewsSectionProps) {
           height: 100%;
           background-size: cover;
           background-position: center;
-          border-radius: 24px 24px 0 0;
+          border-radius: 0;
           transform: translateZ(0) rotateY(-5deg) scale(1.05);
           transform-origin: right center;
           box-shadow: -8px 5px 10px rgba(0,0,0,0.1);

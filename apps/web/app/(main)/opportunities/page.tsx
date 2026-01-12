@@ -354,7 +354,7 @@ if (selectedType !== "all") {
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70 z-10"></div>
+        <div className="absolute inset-0 bg-black/70 z-0"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
@@ -391,13 +391,13 @@ if (selectedType !== "all") {
                 {/* Search */}
                 <div className="mb-4">
                   <form onSubmit={handleSearchSubmit}>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <div className="relative border border-gray-100 rounded-md">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 rounded-md pointer-events-none">
                         <SearchIcon className="w-4 h-4 text-gray-500" />
                       </div>
-                      <input 
-                        type="text" 
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-full block w-full pl-10 p-2.5" 
+                      <input
+                        type="text"
+                        className="bg-white text-sm rounded-md block w-full pl-10 p-2.5"
                         placeholder="Search opportunities"
                         value={searchTerm}
                         onChange={handleSearchChange}
@@ -524,14 +524,14 @@ if (selectedType !== "all") {
                             
                             <div className="flex space-x-3">
                               <SafeLink
-                                href={`/${locale}/opportunities/${opportunity.id}`}
+                                href={`/opportunities/${opportunity.id}`}
                                 className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
                               >
                                 View Details
                               </SafeLink>
                               {opportunity.status === 'published' ? (
                               <SafeLink 
-                                  href={`/${locale}/opportunities/${opportunity.id}/apply`}
+                                  href={`/opportunities/${opportunity.id}/apply`}
                                   className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:primary-green transition-colors"
                                 >
                                   Apply Now
@@ -605,14 +605,14 @@ if (selectedType !== "all") {
                             
                             <div className="flex space-x-3">
                               <SafeLink
-                                href={`/${locale}/opportunities/${opportunity.id}`}
+                                href={`/opportunities/${opportunity.id}`}
                                 className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
                               >
                                 View Details
                               </SafeLink>
                               {opportunity.status === 'published' ? (
                               <SafeLink 
-                                  href={`/${locale}/opportunities/${opportunity.id}/apply`}
+                                  href={`/opportunities/${opportunity.id}/apply`}
                                   className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:bg-primary-green transition-colors"
                                 >
                                   Apply Now

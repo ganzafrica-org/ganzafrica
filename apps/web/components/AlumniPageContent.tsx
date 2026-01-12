@@ -3,12 +3,12 @@
 import { Button } from "@ui/button";
 import { AlumniCard } from "@/components/layout/AlumniCard";
 import { Badge } from "@ui/badge";
-import { 
-  PlayCircle, 
-  ArrowRight, 
-  CheckCircle2, 
-  Users, 
-  Briefcase, 
+import {
+  PlayCircle,
+  ArrowRight,
+  CheckCircle2,
+  Users,
+  Briefcase,
   Calendar,
   Sprout,
   TreePine,
@@ -18,28 +18,23 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
+import { useDict } from '@/context/dictionary';
 import { trackEvent, trackVideoEvent, trackPageView } from "@/components/analytics/google-analytics";
 
 // Normalize Next.js Link typing across React versions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SafeLink = Link as unknown as React.ComponentType<any>;
 
-// Normalize lucide icon component types across React versions
-type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
-const UsersIcon = Users as unknown as SvgIconComponent;
-const CheckCircle2Icon = CheckCircle2 as unknown as SvgIconComponent;
-const BriefcaseIcon = Briefcase as unknown as SvgIconComponent;
-const ArrowRightIcon = ArrowRight as unknown as SvgIconComponent;
-const TreePineIcon = TreePine as unknown as SvgIconComponent;
-const SproutIcon = Sprout as unknown as SvgIconComponent;
-const CloudIcon = Cloud as unknown as SvgIconComponent;
-
-
-export default function Home(): JSX.Element {
+export default function AlumniPageContent() {
+  const dict = useDict();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [animateFirst, setAnimateFirst] = useState(false);
   const [animateSecond, setAnimateSecond] = useState(false);
-  const [counters, setCounters] = useState({ fellows: 0, projects: 0, events: 0 });
+  const [counters, setCounters] = useState({
+    fellows: 0,
+    projects: 0,
+    events: 0,
+  });
   const [isAnimating, setIsAnimating] = useState(false);
   const [hasCompletedAnimation, setHasCompletedAnimation] = useState(false);
 
@@ -54,7 +49,7 @@ export default function Home(): JSX.Element {
 
     const scrollContent = scrollElement.children[0];
     if (!scrollContent) return;
-    
+
     const scrollWidth = scrollContent.scrollWidth;
     let scrollPos = 0;
 
@@ -94,17 +89,17 @@ export default function Home(): JSX.Element {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !isAnimating && !hasCompletedAnimation) {
             setIsAnimating(true);
-            
+
             // Reset counters to 0
             setCounters({ fellows: 0, projects: 0, events: 0 });
-            
+
             // Start animation after small delay
             setTimeout(() => {
               // Animate fellows counter
               let fellowsCount = 0;
               const fellowsInterval = setInterval(() => {
                 fellowsCount += 1;
-                setCounters(prev => ({ ...prev, fellows: fellowsCount }));
+                setCounters((prev) => ({ ...prev, fellows: fellowsCount }));
                 if (fellowsCount >= 27) {
                   clearInterval(fellowsInterval);
                 }
@@ -115,7 +110,7 @@ export default function Home(): JSX.Element {
                 let eventsCount = 0;
                 const eventsInterval = setInterval(() => {
                   eventsCount += 1;
-                  setCounters(prev => ({ ...prev, events: eventsCount }));
+                  setCounters((prev) => ({ ...prev, events: eventsCount }));
                   if (eventsCount >= 5) {
                     clearInterval(eventsInterval);
                     // Mark animation as completed
@@ -131,13 +126,13 @@ export default function Home(): JSX.Element {
           }
         });
       },
-      { 
+      {
         threshold: 0.2,
-        rootMargin: '0px 0px -100px 0px'
+        rootMargin: "0px 0px -100px 0px",
       }
     );
 
-    const statsSection = document.getElementById('stats-section');
+    const statsSection = document.getElementById("stats-section");
     if (statsSection) {
       observer.observe(statsSection);
     }
@@ -177,35 +172,30 @@ export default function Home(): JSX.Element {
           </video>
         </div>
 
-        
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-        <h2
-            className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8"
-          >
-            ALUMNI NETWORK
+          <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
+            {dict?.alumni?.hero?.title || "ALUMNI NETWORK"}
           </h2>
-          <h1
-            className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
-          >
-            A lifetime of <span className="font-normal">Connections</span>, Opportunities <span className="font-normal">and</span> <br/>
-            Impact
+          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
+            {dict?.alumni?.hero?.subtitle || "A lifetime of"} <span className="font-normal">{dict?.alumni?.hero?.subtitle2 || "Connections"}</span>,
+            {dict?.alumni?.hero?.opportunities || "Opportunities"} <span className="font-normal">{dict?.alumni?.hero?.and || "and"}</span> <br />
+            {dict?.alumni?.hero?.impact || "Impact"}
           </h1>
-        
         </div>
       </section>
 
       {/* Categories Bar - Full width */}
-       <div className="flex justify-center">
-               <HeaderBelt />
-             </div>
+      <div className="flex justify-center">
+        <HeaderBelt />
+      </div>
 
       {/* Content with standard page margins */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 mt-">
         {/* Mission Section */}
         <section className="py-8 relative">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0 items-center">
-            <div className="relative ml-8 -mr-24">
-              <div className="rounded-full overflow-hidden w-[340px] h-[340px] mx-auto border-4 border-primary-green shadow-xl bg-white">
+            <div className="relative ml-0 -mr-35 md:ml-5 md:-mr-45 lg:ml-5 lg:-mr-24">
+              <div className="rounded-full overflow-hidden w-[340px] h-[340px] mx-auto border-4 border-primary-green shadow-xl bg-white ">
                 <img
                   src="/images/launch event.jpg"
                   alt="Mission"
@@ -220,28 +210,34 @@ export default function Home(): JSX.Element {
                 />
               </div>
             </div>
-            <div>
+            <div className="mt-10 md:mt-5 lg:mt-0">
               <h2 className="text-3xl font-bold mb-6">
-                <span className="text-black"> Alumni Network </span>
-                <span className="text-[#045f3c]"> Mission Statement</span>
+                <span className="text-black"> {dict?.alumni?.mission?.networkTitle || "Alumni Network"} </span>
+                <span className="text-[#045f3c]"> {dict?.alumni?.mission?.statement || "Mission Statement"}</span>
               </h2>
               <p className="text-base text-gray-700 mb-6">
-                Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa.
+                {dict?.alumni?.mission?.welcome || "Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa."}
               </p>
               <p className="italic text-lg text-black font-normal mb-6 border-l-4 border-[#045f3c] pl-4">
-                "To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact."
+                "{dict?.alumni?.mission?.quote || "To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact."}"
               </p>
-              <div className="flex gap-8">
-  {["Knowledge Sharing", "Mentorship", "Collaboration and Networking"].map((principle, index) => (
-    <div key={index} className="flex items-center gap-2">
-      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#f8b712" }} />
-      <span className="text-base text-black font-normal">{principle}</span>
-    </div>
-  ))}
-</div>
-
-
-
+              <div className="flex gap-8 flex-wrap">
+                {[
+                  dict?.alumni?.mission?.principle1 || "Knowledge Sharing",
+                  dict?.alumni?.mission?.principle2 || "Mentorship",
+                  dict?.alumni?.mission?.principle3 || "Collaboration and Networking",
+                ].map((principle, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: "#f8b712" }}
+                    />
+                    <span className="text-base text-black font-normal">
+                      {principle}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -274,66 +270,73 @@ export default function Home(): JSX.Element {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">
-              <span className="text-black">Purpose of the </span>
-              <span className="text-[#045f3c]">Alumni Network</span>
+              <span className="text-black">{dict?.alumni?.purpose?.prefixText || "Purpose of the "}</span>
+              <span className="text-[#045f3c] ml-2">{dict?.alumni?.purpose?.title || "Alumni Network"}</span>
             </h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               {
-                title: "Networking and Professional Development",
-                description: "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
+                title: dict?.alumni?.purpose?.card1Title || "Networking and Professional Development",
+                description:
+                  dict?.alumni?.purpose?.card1Desc || "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
                 color: "#073392",
-                icon: <UsersIcon className="w-8 h-8" />
+                icon: <Users className="w-8 h-8" />,
               },
               {
-                title: "Knowledge Sharing & Data and Evidence Use",
-                description: "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
+                title: dict?.alumni?.purpose?.card2Title || "Knowledge Sharing & Data and Evidence Use",
+                description:
+                  dict?.alumni?.purpose?.card2Desc || "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
                 color: "#045f3c",
-                icon: <CheckCircle2Icon className="w-8 h-8" />
+                icon: <CheckCircle2 className="w-8 h-8" />
               },
               {
-                title: "Investing Back into the Fellowship Program",
-                description: "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
+                title: dict?.alumni?.purpose?.card3Title || "Investing Back into the Fellowship Program",
+                description:
+                  dict?.alumni?.purpose?.card3Desc || "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
                 color: "#F8B712",
-                icon: <BriefcaseIcon className="w-8 h-8" />
+                icon: <Briefcase className="w-8 h-8" />,
               },
               {
-                title: "Co-creating and Co-implementing Solutions",
-                description: "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
+                title: dict?.alumni?.purpose?.card4Title || "Co-creating and Co-implementing Solutions",
+                description:
+                  dict?.alumni?.purpose?.card4Desc || "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
                 color: "#F97316",
-                icon: <ArrowRightIcon className="w-8 h-8" />
-              }
+                icon: <ArrowRight className="w-8 h-8" />,
+              },
             ].map((item, index) => (
-              <div key={index} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                <div 
+              <div
+                key={index}
+                className="bg-white rounded-md p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+              >
+                <div
                   className="w-16 h-16 rounded-full flex items-center justify-center mb-4 mx-auto"
                   style={{ backgroundColor: item.color }}
                 >
-                  <div className="text-white">
-                    {item.icon}
-                  </div>
+                  <div className="text-white">{item.icon}</div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-800 mb-3 text-center">{item.title}</h3>
-                <p className="text-gray-600 text-sm text-center leading-relaxed">{item.description}</p>
+                <h3 className="text-lg font-bold text-gray-800 mb-3 text-center">
+                  {item.title}
+                </h3>
+                <p className="text-gray-600 text-sm text-center leading-relaxed">
+                  {item.description}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Projects Section */}
         <section className="py-20 relative">
           {/* Simple, elegant header */}
           <div className="text-center mb-20">
-          <h2 className="text-3xl font-bold mb-6">
-                <span className="text-black">Alumni </span>
-                <span className="text-[#045f3c]">Impact</span>
-              </h2>
+            <h2 className="text-3xl font-bold mb-6">
+              <span className="text-black">{dict?.alumni?.impact?.prefix || "Alumni "}</span>
+              <span className="text-[#045f3c] ml-2">{dict?.alumni?.impact?.title || "Impact"}</span>
+            </h2>
           </div>
 
           {/* Creative card layout */}
@@ -341,39 +344,44 @@ export default function Home(): JSX.Element {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {[
                 {
-                  title: "Land Governance",
-                  description: "Equitable land administration systems that strengthen tenure security and promote sustainable use",
-                  icon: <TreePineIcon className="w-12 h-12" />,
+                  title: dict?.alumni?.impact?.project1Title || "Land Governance",
+                  description:
+                    dict?.alumni?.impact?.project1Desc || "Equitable land administration systems that strengthen tenure security and promote sustainable use",
+                  icon: <TreePine className="w-12 h-12" />,
                   color: "#073392",
-                  lightColor: "#e8f0ff"
+                  lightColor: "#e8f0ff",
                 },
                 {
-                  title: "Sustainable Agriculture",
-                  description: "Agricultural policies balancing productivity with environmental stewardship and social inclusion",
-                  icon: <SproutIcon className="w-12 h-12" />,
+                  title: dict?.alumni?.impact?.project2Title || "Sustainable Agriculture",
+                  description:
+                    dict?.alumni?.impact?.project2Desc || "Agricultural policies balancing productivity with environmental stewardship and social inclusion",
+                  icon: <Sprout className="w-12 h-12" />,
                   color: "#005c3d",
-                  lightColor: "#e8f5f0"
+                  lightColor: "#e8f5f0",
                 },
                 {
-                  title: "Climate Adaptation",
-                  description: "Climate resilience strategies helping communities adapt to changing environmental conditions",
-                  icon: <CloudIcon className="w-12 h-12" />,
+                  title: dict?.alumni?.impact?.project3Title || "Climate Adaptation",
+                  description:
+                    dict?.alumni?.impact?.project3Desc || "Climate resilience strategies helping communities adapt to changing environmental conditions",
+                  icon: <Cloud className="w-12 h-12" />,
                   color: "#f8b712",
-                  lightColor: "#fff8e1"
-                }
+                  lightColor: "#fff8e1",
+                },
               ].map((project, index) => (
                 <div key={index} className="group cursor-pointer">
                   {/* Minimalist card design */}
-                  <div className="bg-white rounded-3xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
+                  <div className="bg-white rounded-md p-6 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100">
                     {/* Icon and title on same line */}
                     <div className="flex items-center gap-4 mb-6">
-                      <div 
+                      <div
                         className="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
                         style={{ backgroundColor: project.lightColor }}
                       >
                         <div style={{ color: project.color }}>
                           <div className="w-6 h-6">
-                            {React.cloneElement(project.icon, { className: 'w-6 h-6' })}
+                            {React.cloneElement(project.icon, {
+                              className: "w-6 h-6",
+                            })}
                           </div>
                         </div>
                       </div>
@@ -381,16 +389,16 @@ export default function Home(): JSX.Element {
                         {project.title}
                       </h3>
                     </div>
-                    
+
                     {/* Creative accent line */}
-                    <div 
+                    <div
                       className="h-1 w-12 rounded-full transition-all duration-300 group-hover:w-full mb-4"
                       style={{ backgroundColor: project.color }}
                     ></div>
-                    
+
                     <p className="text-gray-600 leading-relaxed mb-6 group-hover:text-gray-700 transition-colors">
                       {project.description}
-                    </p>                 
+                    </p>
                   </div>
 
                   {/* Creative connecting element */}
@@ -405,9 +413,9 @@ export default function Home(): JSX.Element {
           {/* Compact CTA button on right */}
           <div className="flex justify-end mt-12">
             <button className="group relative inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#045f3c] text-[#045f3c] rounded-full hover:bg-[#045f3c] hover:text-white transition-all duration-300 font-medium text-sm shadow-md hover:shadow-lg">
-              <span>View All Projects</span>
-              <ArrowRightIcon className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-              
+              <span>{dict?.alumni?.impact?.viewAllButton || "View All Projects"}</span>
+              <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+
               {/* Creative hover effect */}
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#073392] via-[#005c3d] to-[#f8b712] opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
             </button>
@@ -420,8 +428,8 @@ export default function Home(): JSX.Element {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold">
-              <span className="text-black">Alumni </span>
-              <span className="text-[#045f3c]">Events</span>
+              <span className="text-black">{dict?.alumni?.events?.prefix || "Alumni "}</span>
+              <span className="text-[#045f3c] ml-2">{dict?.alumni?.events?.title || "Events"}</span>
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -431,35 +439,25 @@ export default function Home(): JSX.Element {
                 date: "April 4, 2025",
                 type: "Event",
                 title: "Lead Intentionally: Creating Impact in All Spaces",
-                image: "/images/launch event.jpg"
+                image: "/images/launch event.jpg",
               },
               {
                 id: "lead-intentionally",
                 date: "July 12, 2025",
                 type: "Workshop",
                 title: "Lead Intentionally: Creating Impact in All Spaces",
-                image: "/images/Sustainable Agriculture Fellows(1).jpg"
+                image: "/images/Sustainable Agriculture Fellows(1).jpg",
               },
               {
                 id: "power-of-networks",
                 date: "May 12, 2025",
                 type: "Webinar",
                 title: "The Power of Networks: Turning Connections",
-                image: "/images/Sustainable Land Use Fellows.jpg"
-              }
+                image: "/images/Sustainable Land Use Fellows.jpg",
+              },
             ].map((eventItem) => (
-              <SafeLink
-                key={eventItem.id}
-                href={``}
-                onClick={() => trackEvent('alumni_event_click', {
-                  event_id: eventItem.id,
-                  event_title: eventItem.title,
-                  event_type: eventItem.type,
-                  event_date: eventItem.date,
-                  page: 'alumni'
-                })}
-              >
-                <motion.div 
+              <Link key={eventItem.id} href={``}>
+                <motion.div
                   className="news-card perspective-wrapper group"
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
                 >
@@ -483,13 +481,13 @@ export default function Home(): JSX.Element {
                       </span>
                       <span
                         className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                          eventItem.type === 'Event'
-                            ? 'bg-primary-green text-white'
-                            : eventItem.type === 'Workshop'
-                            ? 'bg-[#073392] text-white'
-                            : eventItem.type === 'Webinar'
-                            ? 'bg-primary-orange text-white'
-                            : 'bg-primary-green text-white'
+                          eventItem.type === "Event"
+                            ? "bg-primary-green text-white"
+                            : eventItem.type === "Workshop"
+                              ? "bg-[#073392] text-white"
+                              : eventItem.type === "Webinar"
+                                ? "bg-primary-orange text-white"
+                                : "bg-primary-green text-white"
                         }`}
                       >
                         {eventItem.type}
@@ -499,60 +497,72 @@ export default function Home(): JSX.Element {
                       {eventItem.title}
                     </h3>
                     <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                      Young professionals are at the forefront of accelerating CAADP implementation...
+                      {dict?.alumni?.events?.defaultDescription || "Young professionals are at the forefront of accelerating CAADP implementation..."}
                     </p>
                     <span
                       className="inline-flex items-center text-sm font-medium transition-all duration-200 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
-                      style={{ color: (
-                        eventItem.type === 'Event' ? '#005C30' :
-                        eventItem.type === 'Workshop' ? '#073392' :
-                        eventItem.type === 'Webinar' ? '#F8B712' : '#005C30'
-                      ) }}
+                      style={{
+                        color:
+                          eventItem.type === "Event"
+                            ? "#005C30"
+                            : eventItem.type === "Workshop"
+                              ? "#073392"
+                              : eventItem.type === "Webinar"
+                                ? "#F8B712"
+                                : "#005C30",
+                      }}
                     >
                       <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
-                        View Event
+                        {dict?.alumni?.events?.viewEventButton || "View Event"}
                       </span>
-                      <ArrowRightIcon className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
                     </span>
                   </div>
                 </motion.div>
-              </SafeLink>
+              </Link>
             ))}
           </div>
         </div>
 
         {/* Card styles aligned with Latest News */}
-        <style>{`
+        <style jsx global>{`
           .news-card {
             position: relative;
-            border-radius: 24px;
+            border-radius: 5px;
             background: white;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
             overflow: hidden;
             transition: all 0.3s ease;
             height: 100%;
             display: flex;
             flex-direction: column;
           }
-          .news-card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.12); }
-          .perspective-wrapper { perspective: 1000px; }
+          .news-card:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+          }
+          .perspective-wrapper {
+            perspective: 1000px;
+          }
           .perspective-element {
             position: relative;
             height: 180px;
             width: 100%;
             overflow: hidden;
             transform-style: preserve-3d;
-            border-radius: 24px 24px 0 0;
+            border-radius: 5px 5px 0 0;
           }
           .perspective-image {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-size: cover; background-position: center;
-            border-radius: 24px 24px 0 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            border-radius: 5px 5px 0 0;
             transform: translateZ(0) rotateY(-5deg) scale(1.05);
             transform-origin: right center;
-            box-shadow: -8px 5px 10px rgba(0,0,0,0.1);
+            box-shadow: -8px 5px 10px rgba(0, 0, 0, 0.1);
             transition: all 0.5s ease;
           }
           .news-card:hover .perspective-image {
@@ -563,21 +573,24 @@ export default function Home(): JSX.Element {
             align-items: center;
             justify-content: center;
             background-color: white;
-            color: #117B34;
+            color: #117b34;
             font-weight: 600;
             font-size: 14px;
             padding: 8px 16px;
             border-radius: 9999px;
-            border: 1px solid #E5E7EB;
+            border: 1px solid #e5e7eb;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
           }
           .view-news-button:hover {
-            background-color: #F9FAFB;
+            background-color: #f9fafb;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
           }
           @media (max-width: 768px) {
-            .news-card { max-width: 320px; margin: 0 auto; }
+            .news-card {
+              max-width: 100%;
+              margin: 0 auto;
+            }
           }
         `}</style>
       </section>

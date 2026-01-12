@@ -1,7 +1,6 @@
 import { getDictionary } from "@/lib/get-dictionary";
 import Image from "next/image";
 import { DecoratedHeading } from "@/components/layout/headertext";
-import LanguageSwitcher from "@/components/layout/language-switcher";
 import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSection";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { 
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { FC } from "react";
+import { TransformativePartner } from "@/components/TransformativePartner";
 
 // Types for props
 interface MissionCardProps {
@@ -50,6 +50,7 @@ interface PromiseCardProps {
   items?: string[];
   content?: string | string[];
   hasCurvedCorner?: boolean;
+  marginRight?: string;
 }
 
 interface PageProps {
@@ -137,12 +138,14 @@ const ValueCard: FC<ValueCardProps> = ({
   </div>
 );
 
+
 // Promise Card component
 const PromiseCard: FC<PromiseCardProps> = ({
   type,
   items,
   content,
   hasCurvedCorner = false,
+  marginRight = "",
 }) => {
   const bgColor = type === "partners" ? "bg-[#073392]" : "bg-green-800";
   const labelColor = type === "partners" ? "bg-primary-orange" : "bg-green-500";
@@ -151,7 +154,7 @@ const PromiseCard: FC<PromiseCardProps> = ({
   const iconBg = type === "partners" ? "bg-primary-orange" : "bg-green-600";
 
   return (
-    <div className={`${bgColor} rounded-3xl p-6 sm:p-8 relative transition-all duration-300 hover:shadow-xl hover:-translate-y-1`}>
+    <div className={`${bgColor} ${marginRight} rounded-md p-6 sm:p-8 relative transition-all duration-300 border-0 mb-5 hover:-translate-y-1`}>
       <div className="flex items-center mb-4">
         <div
           className={`${labelColor} text-white font-bold md:text-xl rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm`}
@@ -185,12 +188,12 @@ const PromiseCard: FC<PromiseCardProps> = ({
       )}
       
       {hasCurvedCorner && (
-        <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" 
+        <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" 
              style={{ borderBottomLeftRadius: "100%" }} />
       )}
       
       {type === "fellows" && (
-        <div className="absolute -top-4 -right-4 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+        <div className="absolute -top-5 -right-5 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
           <Telescope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
         </div>
       )}
@@ -302,10 +305,6 @@ export default async function AboutPage(
 
   return (
     <main className="flex flex-col min-h-screen">
-      {/* Language Switcher */}
-      <div className="flex justify-end p-4">
-        <LanguageSwitcher />
-      </div>
 
       {/* Hero Section */}
       <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
@@ -321,7 +320,7 @@ export default async function AboutPage(
         </div>
 
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black opacity-70 z-10"></div>
+        <div className="absolute inset-0 bg-black opacity-70 z-0"></div>
 
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
@@ -343,10 +342,10 @@ export default async function AboutPage(
       
       {/* A Transformative Partner Section */}
       <section className="py-8 md:py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+        {/* <div className="container mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto"> */}
             {/* Left side - Images (hidden on mobile, visible on lg screens) */}
-            <div className="hidden lg:block lg:w-1/2">
+            {/* <div className="hidden lg:block lg:w-1/2">
               <div className="relative mx-auto" style={{ width: 'fit-content' }}>
                 <div className="rounded-full overflow-hidden w-[300px] h-[300px] md:w-[400px] md:h-[400px] border-4 border-transparent">
                   <Image
@@ -368,10 +367,10 @@ export default async function AboutPage(
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
             
             {/* Right side - Text content */}
-            <div className="w-full lg:w-1/2">
+            {/* <div className="w-full lg:w-1/2">
               <div className="flex justify-left mb-4">
                 <DecoratedHeading
                   firstText={
@@ -404,9 +403,10 @@ export default async function AboutPage(
                     "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
                 </p>
               </div>
-            </div>
-          </div>
-        </div>
+            </div> */}
+          {/* </div>
+        </div> */}
+        <TransformativePartner />
       </section>
 
       {/* OUR ASPIRATIONS SECTION */}
@@ -428,19 +428,20 @@ export default async function AboutPage(
           <div className="flex flex-col md:flex-row gap-6 sm:gap-8 max-w-7xl mx-auto">
             {/* Left side - Team Image */}
             <div className="w-full md:w-1/2 mb-6 md:mb-0">
-              <div className="rounded-3xl overflow-hidden h-[80px] sm:h-[300px] md:h-[400px]">
+              <div className="rounded-md overflow-hidden h-[80px] sm:h-[300px] md:h-[400px]">
                 <Image
                   src="/images/_BAB8852.jpg"
                   alt="GanzAfrica team members"
                   width={300}
                   height={300}
                   className="w-full h-full object-cover"
+                  unoptimized
                 />
               </div>
             </div>
             {/* Right side - Mission Cards */}
             <div className="w-full md:w-1/2 flex flex-col space-y-6 sm:space-y-8">
-              <div className="bg-[#073392] rounded-3xl p-6 sm:p-8 relative">
+              <div className="bg-[#073392] rounded-md p-6 sm:p-8 relative mr-5">
                 <div className="flex items-center mb-4">
                   <div className="bg-primary-orange text-white font-bold md:text-xl  rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
                     <span className="mr-2"></span> Our Vision
@@ -450,13 +451,15 @@ export default async function AboutPage(
                   {dict?.about?.aspirations?.mission_1 ||
                     "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions."}
                 </p>
-                <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
-                <div className="absolute -top-4 -right-4 bg-primary-orange rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+
+                <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
+                
+                <div className="absolute -top-5 -right-5 bg-primary-orange rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
                   <Goal className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
               </div>
 
-              <div className="bg-green-800 rounded-3xl p-6 sm:p-8 relative">
+              <div className="bg-green-800 rounded-md p-6 sm:p-8 relative mr-5">
                 <div className="flex items-center mb-4">
                   <div className="bg-green-500 text-white md:text-xl font-bold rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm">
                     <span className="mr-2"></span> {dict?.about?.aspirations?.mission_label || "Our Mission"}
@@ -466,8 +469,8 @@ export default async function AboutPage(
                   {dict?.about?.aspirations?.mission_2 ||
                     "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."}
                 </p>
-                <div className="absolute top-0 right-0 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
-                <div className="absolute -top-4 -right-4 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
+                <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
+                <div className="absolute -top-5 -right-5 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
                   <Telescope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
               </div>
@@ -496,7 +499,7 @@ export default async function AboutPage(
           {/* Values Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
             {/* Evidence Based Card */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8">
+            <div className="bg-white rounded-md p-6 sm:p-8">
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-primary-green rounded-full flex items-center justify-center mb-6">
                   <BarChart3 className="w-8 h-8 text-white" />
@@ -512,7 +515,7 @@ export default async function AboutPage(
             </div>
 
             {/* Integrity Card */}
-            <div className="bg-primary-green rounded-2xl p-6 sm:p-8">
+            <div className="bg-primary-green rounded-md p-6 sm:p-8">
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6">
                   <ShieldCheck className="w-8 h-8 text-primary-green" />
@@ -528,7 +531,7 @@ export default async function AboutPage(
             </div>
 
             {/* Stewardship Card */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 sm:col-span-2 lg:col-span-1">
+            <div className="bg-white rounded-md p-6 sm:p-8 sm:col-span-2 lg:col-span-1">
               <div className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-primary-green rounded-full flex items-center justify-center mb-6">
                   <Leaf className="w-8 h-8 text-white" />
@@ -547,7 +550,7 @@ export default async function AboutPage(
       </section>
      
       {/* Our Promise */}
-      <section className="py-8 sm:py-12 md:py-16 bg-white text-base md:text-xl ">
+      <section className="py-8 sm:py-12 md:py-16 bg-white text-base md:text-xl">
         <div className="flex justify-center mb-6 sm:mb-10">
           <DecoratedHeading
             firstText={dict?.about?.promise?.heading_first || "Our"}
@@ -557,19 +560,20 @@ export default async function AboutPage(
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 px-6 sm:px-8 md:px-4 max-w-6xl mx-auto">
           {/* Left side - Image */}
           <div className="w-full md:w-1/2 mb-4 md:mb-0">
-            <div className="rounded-3xl overflow-hidden h-[300px] sm:h-[400px] md:h-[600px]">
+            <div className="rounded-md overflow-hidden h-[300px] sm:h-[400px] md:h-[710px] lg:h-[660px] xl:h-[612px]">
               <Image
-                src="/images/Subtract.png"
+                src="/images/_BAB8908.jpg"
                 alt="Two professionals shaking hands at Ministry of Environment event"
                 width={600}
                 height={500}
                 className="w-full h-full object-cover"
+                unoptimized
               />
             </div>
           </div>
 
           {/* Right side - Content */}
-          <div className="w-full md:w-1/2 flex flex-col space-y-4 sm:space-y-6">
+          <div className="w-full md:w-1/2 flex flex-col space-y-4 sm:space-y-6 ">
             <PromiseCard
               type="partners"
               items={
@@ -589,6 +593,7 @@ export default async function AboutPage(
                   "Deliver work secondments with one of our partners to apply skills learned",
                 ]
               }
+              marginRight="mr-5"
               hasCurvedCorner={true}
             />
           </div>
@@ -597,7 +602,6 @@ export default async function AboutPage(
 
       {/* Building Sustainable Solutions Section */}
       <BuildingSolutionsSection
-        dict={dict?.about}
         categories={categories}
         tags={tags}
       />

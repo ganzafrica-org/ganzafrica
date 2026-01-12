@@ -17,7 +17,7 @@ const server = app.listen(PORT, () => {
     }`,
   );
 
-  // Schedule weekly job scraping task - runs every Sunday at 2:00 AM
+  // Schedule weekly job-scraping task - runs every Sunday at 2:00 AM
   cron.schedule("0 2 * * 0", async () => {
     logger.info("Starting scheduled weekly job scraping task...");
     await runWeeklyJobTask();

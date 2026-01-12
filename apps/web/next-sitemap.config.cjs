@@ -42,7 +42,7 @@ module.exports = {
     // Add localized paths
     locales.forEach(locale => {
       paths.forEach(path => {
-        const localizedPath = `/${locale}${path}`
+        const localizedPath = `/${path}`
         result.push({
           loc: localizedPath,
           changefreq: 'weekly',

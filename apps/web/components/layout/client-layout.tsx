@@ -2,31 +2,35 @@
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { DictionaryProvider } from '@/context/dictionary';
 
 export default function ClientLayout({
-                                         children,
-                                         locale,
-                                         dict,
-                                     }: {
-    children: React.ReactNode;
-    locale: string;
-    dict: any;
-}): JSX.Element {
-    return (
-        <NextThemesProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-            enableColorScheme
-        >
-            <div className="relative flex min-h-screen flex-col">
-                <Header locale={locale} dict={dict} />
-                <div className="flex-1">
-                    {children}
-                </div>
-                <Footer locale={locale} dict={dict} />
-            </div>
-        </NextThemesProvider>
-    );
+  children,
+  locale,
+  dict,
+}: {
+  children: React.ReactNode;
+  locale: string;
+  dict: any;
+}) {
+
+
+  return (
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+      enableColorScheme
+    >
+      <DictionaryProvider dict={dict}>
+        <div className="relative flex min-h-screen flex-col">
+          <Header />
+
+          <div className="flex-1">{children}</div>
+          <Footer locale={locale} />
+        </div>
+      </DictionaryProvider>
+    </NextThemesProvider>
+  );
 }

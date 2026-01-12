@@ -35,21 +35,21 @@ export async function generateMetadata({
   });
 }
 
-export default async function HomePage({ params }: PageProps): Promise<JSX.Element> {
-  const locale = params.locale;
-  const dict = await getDictionary(locale);
+export default async function HomePage({ params }: PageProps) {
+  const resolvedParams = await params;
+  const locale = resolvedParams.locale;
 
   return (
     <main>
-      <FellowsSection locale={locale} dict={dict} />
-      <WhyGanzAfricaSection locale={locale} dict={dict} />
-      <GanzAfricaUniqueSection locale={locale} dict={dict} />
-      <FlagshipProgramsSection locale={locale} dict={dict} />
-      <ProjectsSection locale={locale} dict={dict} />
-      <PartnersSection locale={locale} dict={dict} />
-      <TestimonialsSection locale={locale} dict={dict} />
-      <LatestNewsSection locale={locale} dict={dict} />
-      <NewsletterSection locale={locale} dict={dict} />
+      <FellowsSection locale={locale} />
+      <WhyGanzAfricaSection locale={locale} />
+      <GanzAfricaUniqueSection locale={locale} />
+      <FlagshipProgramsSection locale={locale} dict={undefined} />
+      <ProjectsSection locale={locale} />
+      <PartnersSection locale={locale} />
+      <TestimonialsSection locale={locale} />
+      <LatestNewsSection locale={locale} />
+      <NewsletterSection locale={locale} dict={undefined} />
     </main>
   );
 }
