@@ -11,15 +11,6 @@ import { usePathname } from "next/navigation";
 // import GoogleTranslate from "@/components/google-translate";
 import { useDict } from '@/context/dictionary';
 
-// Import shadcn Navigation Menu components
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@workspace/ui/components/navigation-menu";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 
 // Define types for menu items
@@ -29,14 +20,6 @@ interface MenuItem {
   description: string;
 }
 
-// Define props for ListItem component
-interface ListItemProps {
-  className?: string;
-  title: string;
-  children: React.ReactNode;
-  href: string;
-  onClick?: () => void;
-}
 
 // Define dictionary type
 interface DictionaryType {
@@ -79,35 +62,6 @@ interface HomeHeroProps {
 
 const resolveHref = (path: string) => (path.startsWith("/") ? path : `/${path}`);
 
-// Navigation menu item component
-const ListItem = ({
-  className,
-  title,
-  children,
-  href,
-  onClick,
-}: ListItemProps) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <Link
-          href={resolveHref(href)}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className,
-          )}
-          onClick={onClick}
-          prefetch={true}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </Link>
-      </NavigationMenuLink>
-    </li>
-  );
-};
 
 export default function HomeHero({
   backgroundImage = "/images/hero-test.jpg",
@@ -127,6 +81,7 @@ export default function HomeHero({
   const [animationStarted, setAnimationStarted] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [desktopDropdown, setDesktopDropdown] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
 
   const pathname = usePathname();
@@ -134,12 +89,24 @@ export default function HomeHero({
 
   // Navigation items for shadcn navigation
   const aboutItems: MenuItem[] = [
+      {
+          title: dict.about?.who_we_are || "who we are",
+          href: "/about/who-we-are",
+          description:
+              "The journey of how we started and what inspires our work every day.",
+      },
     {
       title: dict.about?.our_story || "Our Story",
       href: "/about/our-story",
       description:
         "The journey of how we started and what inspires our work every day.",
     },
+      {
+          title: dict.about?.our_approach || "Our Approach",
+          href: "/about/our-approach",
+          description:
+              "The journey of how we started and what inspires our work every day.",
+      },
     {
       title: dict.about?.team || "Team",
       href: "/about/team",
@@ -164,16 +131,21 @@ export default function HomeHero({
   ];
 
   const newsItems: MenuItem[] = [
+      {
+          title: "Social Media Updates",
+          href: "/newsroom",
+          description: "Stay informed about our recent activities, projects, and success stories.",
+      },
     {
       title: "Opportunities",
       href: "/opportunities",
       description: "Explore current openings and ways to grow with us.",
     },
     {
-      title: "Contact Us",
-      href: "/contact",
+      title: "Blogs",
+      href: "/blogs",
       description:
-        "Get in touch with our team for inquiries, partnerships, or support.",
+        "Read our latest insights, industry updates and expert perspectives.",
     },
   ];
 
@@ -316,6 +288,15 @@ export default function HomeHero({
     setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
   };
 
+  // Handle desktop dropdown hover
+  const handleDesktopDropdownEnter = (dropdownName: string) => {
+    setDesktopDropdown(dropdownName);
+  };
+
+  const handleDesktopDropdownLeave = () => {
+    setDesktopDropdown(null);
+  };
+
   // Determine header background class based on scroll and animation state
   const getHeaderBgClass = () => {
     return cn(
@@ -339,132 +320,141 @@ export default function HomeHero({
     return "text-white bg-transparent";
   };
 
-  // Render the shadcn NavigationMenu for desktop
+  // Render simple dropdown navigation for desktop
   const renderDesktopNavigation = () => {
     const textColor = getNavItemColor();
 
     return (
       <div className="hidden md:flex justify-center items-center space-x-1 flex-1 mx-4">
-        <NavigationMenu>
-          <NavigationMenuList>
-            {/* About */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
-                {dict.navigation?.about || "About"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/about/who-we-are`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                          Who We Are
-                        </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
-                          Learn about our mission, vision, and the values that drive us.
-                        </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
+        <nav className="flex items-center space-x-1">
+          {/* About Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => handleDesktopDropdownEnter("about")}
+            onMouseLeave={handleDesktopDropdownLeave}
+          >
+            <button
+              className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+            >
+              {dict.navigation?.about || "About"}
+              <ChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "about" ? "rotate-180" : ""}`} />
+            </button>
+            {desktopDropdown === "about" && (
+              <div className="absolute left-0 top-full mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                <ul className="p-2">
                   {aboutItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-
-            {/* Our Approach - Direct Link */}
-            <NavigationMenuItem>
-              <Link href={`/our-approach`} passHref>
-                <NavigationMenuLink
-                  className={`${textColor} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
-                >
-                  {dict.navigation?.our_approach || "Our Approach"}
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-
-            {/* Programs */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
-                {dict.navigation?.programs || "Programs"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
+                    <li key={item.href}>
                       <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/projects`}
+                        href={resolveHref(item.href)}
+                        className="block p-3 rounded-md hover:bg-accent transition-colors"
+                        prefetch={true}
                       >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                          Our Projects
+                        <div className="text-sm font-medium leading-none">
+                          {dict?.about?.[
+                            item.title.toLowerCase().replace(/ /g, "_")
+                          ] || item.title}
                         </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
-                          Innovative initiatives driving Africa’s transformation through technology, youth empowerment, and sustainable development.
+                        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                          {item.description}
                         </p>
                       </Link>
-                    </NavigationMenuLink>
-                  </li>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* What we do Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => handleDesktopDropdownEnter("what-we-do")}
+            onMouseLeave={handleDesktopDropdownLeave}
+          >
+            <button
+              className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+            >
+              {dict.navigation?.what_we_do || "What we do"}
+              <ChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "what-we-do" ? "rotate-180" : ""}`} />
+            </button>
+            {desktopDropdown === "what-we-do" && (
+              <div className="absolute left-0 top-full mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                <ul className="p-2">
                   {programsItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-
-            {/* News & Updates */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
-                News & Updates
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
+                    <li key={item.href}>
                       <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/newsroom`}
+                        href={resolveHref(item.href)}
+                        className="block p-3 rounded-md hover:bg-accent transition-colors"
+                        prefetch={true}
                       >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                          News & Updates
+                        <div className="text-sm font-medium leading-none">
+                          {item.title}
                         </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
-                          Stay informed about our recent activities, projects,
-                          and success stories.
+                        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                          {item.description}
                         </p>
                       </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {newsItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                    >
-                      {item.description}
-                    </ListItem>
+                    </li>
                   ))}
                 </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+              </div>
+            )}
+          </div>
+
+          {/* Our Impact - Direct Link */}
+          <Link
+            href={resolveHref("/our-impact")}
+            className={`${textColor} text-base font-medium px-4 py-2 hover:bg-accent/50 rounded-md transition-colors`}
+            prefetch={true}
+          >
+            {dict.navigation?.our_impact || "Our Impact"}
+          </Link>
+
+          {/* News & Updates Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => handleDesktopDropdownEnter("news")}
+            onMouseLeave={handleDesktopDropdownLeave}
+          >
+            <button
+              className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+            >
+              News & Updates
+              <ChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "news" ? "rotate-180" : ""}`} />
+            </button>
+            {desktopDropdown === "news" && (
+              <div className="absolute left-0 top-full mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                <ul className="p-2">
+                  {newsItems.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={resolveHref(item.href)}
+                        className="block p-3 rounded-md hover:bg-accent transition-colors"
+                        prefetch={true}
+                      >
+                        <div className="text-sm font-medium leading-none">
+                          {item.title}
+                        </div>
+                        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                          {item.description}
+                        </p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Contact - Direct Link */}
+          <Link
+            href={resolveHref("/contact")}
+            className={`${textColor} text-base font-medium px-4 py-2 hover:bg-accent/50 rounded-md transition-colors`}
+            prefetch={true}
+          >
+            {dict.navigation?.contact || "Contact"}
+          </Link>
+        </nav>
       </div>
     );
   };
@@ -481,7 +471,7 @@ export default function HomeHero({
                 alt="GanzAfrica"
                 fill
                 sizes="(max-width: 768px) 300px, 200px"
-                className="object-contain border"
+                className="object-contain"
                 priority
               />
             </div>
@@ -527,14 +517,14 @@ export default function HomeHero({
             )}
           </div>
 
-          {/* Our Approach - Direct Link */}
+          {/* Our Imapct - Direct Link */}
           <Link
-            href={`/our-approach`}
+            href={`/our-impact`}
             className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
             onClick={() => setIsMobileMenuOpen(false)}
             prefetch={true}
           >
-            {dict.navigation?.our_approach || "Our Approach"}
+            {dict.navigation?.our_impact || "Our Impact"}
           </Link>
 
           {/* Programs */}
@@ -543,7 +533,7 @@ export default function HomeHero({
               className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-programs")}
             >
-              {dict.navigation?.programs || "Programs"}
+              {dict.navigation?.what_we_do || "what we do"}
               <ChevronDown
                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
               />
@@ -592,6 +582,16 @@ export default function HomeHero({
               </div>
             )}
           </div>
+
+          {/* Contact - Direct Link */}
+          <Link
+            href={`/contact`}
+            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            {dict.navigation?.contact || "Contact"}
+          </Link>
 
           {/* Add sign in button at the bottom */}
           {/* <div className="mt-auto pt-6 border-t">*/}
