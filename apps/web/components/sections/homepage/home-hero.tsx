@@ -9,7 +9,8 @@ import { Button } from "@workspace/ui/components/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 // import GoogleTranslate from "@/components/google-translate";
-import { useDict } from '@/context/dictionary';
+import { useDict } from "@/context/dictionary";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 // Import shadcn Navigation Menu components
 import {
@@ -77,7 +78,8 @@ interface HomeHeroProps {
   backgroundImage?: string;
 }
 
-const resolveHref = (path: string) => (path.startsWith("/") ? path : `/${path}`);
+const resolveHref = (path: string) =>
+  path.startsWith("/") ? path : `/${path}`;
 
 // Navigation menu item component
 const ListItem = ({
@@ -349,7 +351,9 @@ export default function HomeHero({
           <NavigationMenuList>
             {/* About */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
+              <NavigationMenuTrigger
+                className={`${textColor} text-base font-medium`}
+              >
                 {dict.navigation?.about || "About"}
               </NavigationMenuTrigger>
               <NavigationMenuContent>
@@ -364,7 +368,8 @@ export default function HomeHero({
                           Who We Are
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
-                          Learn about our mission, vision, and the values that drive us.
+                          Learn about our mission, vision, and the values that
+                          drive us.
                         </p>
                       </Link>
                     </NavigationMenuLink>
@@ -395,7 +400,9 @@ export default function HomeHero({
 
             {/* Programs */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
+              <NavigationMenuTrigger
+                className={`${textColor} text-base font-medium`}
+              >
                 {dict.navigation?.programs || "Programs"}
               </NavigationMenuTrigger>
               <NavigationMenuContent>
@@ -410,7 +417,9 @@ export default function HomeHero({
                           Our Projects
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
-                          Innovative initiatives driving Africa’s transformation through technology, youth empowerment, and sustainable development.
+                          Innovative initiatives driving Africa’s transformation
+                          through technology, youth empowerment, and sustainable
+                          development.
                         </p>
                       </Link>
                     </NavigationMenuLink>
@@ -430,7 +439,9 @@ export default function HomeHero({
 
             {/* News & Updates */}
             <NavigationMenuItem>
-              <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
+              <NavigationMenuTrigger
+                className={`${textColor} text-base font-medium`}
+              >
                 News & Updates
               </NavigationMenuTrigger>
               <NavigationMenuContent>
@@ -474,7 +485,11 @@ export default function HomeHero({
     return (
       <div className="fixed inset-0 z-50 bg-white w-screen h-screen overflow-y-auto md:hidden">
         <div className="flex justify-between items-center px-4 py-4 border-b">
-          <Link href={`/`} className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+          <Link
+            href={`/`}
+            className="relative z-50 flex items-center"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
             <div className="relative h-14 w-24">
               <Image
                 src="/images/logo.png"
@@ -595,16 +610,16 @@ export default function HomeHero({
 
           {/* Add sign in button at the bottom */}
           {/* <div className="mt-auto pt-6 border-t">*/}
-            {/*  <Link href={`/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>*/}
-            {/*  <Button*/}
-            {/*    size="lg"*/}
-            {/*    className="w-full bg-primary-green hover:bg-primary-green/90 text-white"*/}
-            {/*  >*/}
-            {/*    {dict?.cta?.sign_in || "Sign In"}*/}
-            {/*  </Button>*/}
-            {/*</Link>*/}
-            {/*   <LanguageSwitcher/>*/}
-           {/*</div>*/}
+          {/*  <Link href={`/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>*/}
+          {/*  <Button*/}
+          {/*    size="lg"*/}
+          {/*    className="w-full bg-primary-green hover:bg-primary-green/90 text-white"*/}
+          {/*  >*/}
+          {/*    {dict?.cta?.sign_in || "Sign In"}*/}
+          {/*  </Button>*/}
+          {/*</Link>*/}
+          {/*   <LanguageSwitcher/>*/}
+          {/*</div>*/}
         </nav>
       </div>
     );
@@ -655,7 +670,7 @@ export default function HomeHero({
                       "hover:bg-[#F5F5F5] transition-colors",
                       !animationStarted ||
                         navRef.current?.getAttribute("data-overlay-passed") !==
-                        "true"
+                          "true"
                         ? "text-white"
                         : "text-black",
                     )}
@@ -745,7 +760,7 @@ export default function HomeHero({
       {/* White overlay */}
       <div
         ref={whiteOverlayRef}
-            // className="absolute inset-0 bg-white z-30 hidden md:block"
+        // className="absolute inset-0 bg-white z-30 hidden md:block"
         className="absolute inset-0 bg-white z-30"
         style={{
           transform: "translateY(-100%)",
@@ -760,21 +775,29 @@ export default function HomeHero({
       >
         <div className="container mx-auto px-4 text-center mt-10 sm:mt-20 md:mt-20 hidden md:block">
           <h1 className="text-2xl lg:text-4xl font-bold mb-4 sm:mb-6">
-            <span className="text-primary-green">
-              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
-              <br />
+            <TranslatableText as="span" className="text-primary-green">
+              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-green">
               {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
-            </span>{" "}
-            <span className="text-primary-orange">
-              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
+            </TranslatableText>{" "}
+            <TranslatableText as="span" className="text-primary-orange">
+              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"}
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-orange">
               {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
-            </span>
+            </TranslatableText>
           </h1>
 
-          <p className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800">
+          <TranslatableText
+            as="p"
+            className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
+          >
             {dict?.home?.hero?.subtitle ||
               "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
-          </p>
+          </TranslatableText>
 
           <Link href={`/about/who-we-are`} prefetch={true}>
             <Button
@@ -788,28 +811,38 @@ export default function HomeHero({
         {/* MOBILE */}
         <div className="container mx-auto px-4 text-center block md:hidden">
           <h1 className="text-5xl lg:text-4xl font-bold mb-4 sm:mb-6">
-            <span className="text-primary-green">
-              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
-              <br />
+            <TranslatableText as="span" className="text-primary-green">
+              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-green">
               {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
-            </span>{" "}
-            <span className="text-primary-orange">
-              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
+            </TranslatableText>{" "}
+            <TranslatableText as="span" className="text-primary-orange">
+              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"}
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-orange">
               {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
-            </span>
+            </TranslatableText>
           </h1>
 
-          <p className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800">
+          <TranslatableText
+            as="p"
+            className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
+          >
             {dict?.home?.hero?.subtitle ||
               "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
-          </p>
+          </TranslatableText>
 
           <Link href={`/about/who-we-are`} prefetch={true}>
             <Button
               size="lg"
               className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
             >
-              {dict?.cta?.discover_more || "Discover More"}
+              <TranslatableText>
+                {dict?.cta?.discover_more || "Discover More"}
+              </TranslatableText>
             </Button>
           </Link>
         </div>

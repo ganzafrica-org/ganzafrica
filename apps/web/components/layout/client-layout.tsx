@@ -2,7 +2,8 @@
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { DictionaryProvider } from '@/context/dictionary';
+import { DictionaryProvider } from "@/context/dictionary";
+import { TranslationProvider } from "@/context/translation";
 
 export default function ClientLayout({
   children,
@@ -13,8 +14,6 @@ export default function ClientLayout({
   locale: string;
   dict: any;
 }) {
-
-
   return (
     <NextThemesProvider
       attribute="class"
@@ -23,14 +22,16 @@ export default function ClientLayout({
       disableTransitionOnChange
       enableColorScheme
     >
-      <DictionaryProvider dict={dict}>
-        <div className="relative flex min-h-screen flex-col">
-          <Header />
+      <TranslationProvider sourceLanguage="en">
+        <DictionaryProvider dict={dict}>
+          <div className="relative flex min-h-screen flex-col">
+            <Header />
 
-          <div className="flex-1">{children}</div>
-          <Footer locale={locale} />
-        </div>
-      </DictionaryProvider>
+            <div className="flex-1">{children}</div>
+            <Footer locale={locale} />
+          </div>
+        </DictionaryProvider>
+      </TranslationProvider>
     </NextThemesProvider>
   );
 }
