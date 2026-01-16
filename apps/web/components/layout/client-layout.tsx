@@ -3,6 +3,7 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { DictionaryProvider } from '@/context/dictionary';
+import { useLayoutEffect, useState } from 'react';
 
 export default function ClientLayout({
   children,
@@ -13,7 +14,30 @@ export default function ClientLayout({
   locale: string;
   dict: any;
 }) {
+  const [hideLayout, setHideLayout] = useState(false);
 
+  useLayoutEffect(() => {
+    // Check if we're on a not-found page by looking for the data attribute
+    const checkNotFound = () => {
+      const notFoundElement = document.querySelector('[data-not-found="true"]');
+      setHideLayout(!!notFoundElement);
+    };
+
+    // Check immediately
+    checkNotFound();
+
+    // Also use MutationObserver to catch it if it renders after
+    const observer = new MutationObserver(checkNotFound);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Fallback check after a short delay
+    const timeoutId = setTimeout(checkNotFound, 0);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   return (
     <NextThemesProvider
@@ -25,10 +49,9 @@ export default function ClientLayout({
     >
       <DictionaryProvider dict={dict}>
         <div className="relative flex min-h-screen flex-col">
-          <Header />
-
+          {!hideLayout && <Header />}
           <div className="flex-1">{children}</div>
-          <Footer locale={locale} />
+          {!hideLayout && <Footer locale={locale} />}
         </div>
       </DictionaryProvider>
     </NextThemesProvider>

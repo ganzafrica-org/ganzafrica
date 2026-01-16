@@ -3,18 +3,19 @@
   "version": "0.0.1",
   "type": "module",
   "private": true,
-    "scripts": {
-      "dev": "pnpm install && pnpm build && next dev",
-      "build": "cross-env NEXT_DISABLE_TYPE_CHECKING=true TSC_COMPILE_ON_ERROR=true next build && next-sitemap",
-      "start": "next start --port 3000",
-      "lint": "next lint",
-      "postbuild": "next-sitemap"
-    },
+  "scripts": {
+    "dev": "pnpm install && pnpm build && next dev",
+    "build": "cross-env NEXT_DISABLE_TYPE_CHECKING=true TSC_COMPILE_ON_ERROR=true next build && next-sitemap",
+    "start": "next start --port 3000",
+    "lint": "next lint",
+    "postbuild": "next-sitemap"
+  },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.6.0",
     "@next/third-parties": "^15.5.3",
     "@radix-ui/react-slot": "^1.2.0",
     "@react-jvectormap/world": "^1.1.2",
+    "@react-map/africa": "^1.0.13",
     "@trpc/client": "^10.45.2",
     "@workspace/ui": "workspace:*",
     "axios": "^1.8.4",
@@ -22,6 +23,7 @@
     "cross-env": "^7.0.3",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.5.0",
+    "google-translate-api": "^2.3.0",
     "gsap": "^3.12.7",
     "lucide-react": "0.562.0",
     "matter-js": "^0.20.0",

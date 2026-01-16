@@ -8,8 +8,6 @@ import { cn } from "@/lib/utils";
 import { Menu, X, ChevronDown, Globe } from "lucide-react";
 import { useDict } from '@/context/dictionary';
 
-import LanguageSwitcher from "./language-switcher";
-
 import { Button } from "@workspace/ui/components/button";
 
 
@@ -23,7 +21,8 @@ const SafeIconChevronDown = ChevronDown as unknown as React.ComponentType<any>;
 interface MenuItem {
   title: string;
   href: string;
-  description: string;
+  description?: string;
+  hasSubmenu?: boolean;
 }
 
 
@@ -89,19 +88,30 @@ const aboutItems: MenuItem[] = [
   },
 ];
 
+// @ts-ignore
 const programsItems: MenuItem[] = [
-  {
-    title: "Fellowship Program",
-    href: "/programs/fellowship",
-    description:
-      "Our flagship program empowering the next generation of African change-makers.",
-  },
-  {
-    title: "Alumni Network",
-    href: "/programs/alumni",
-    description:
-      "A network of graduates continuing to make an impact across the continent.",
-  },
+    {
+        title: "Program",
+        href: "/programs",
+        hasSubmenu: true, // Optional flag for future logic
+    },
+    {
+        title: "Projects",
+        href: "/projects",
+    },
+];
+
+const programSubItems: MenuItem[] = [
+    {
+        title: "Fellowship Program",
+        href: "/programs/fellowship",
+        description: "Our flagship program empowering the next generation of African change-makers.",
+    },
+    {
+        title: "Alumni Network",
+        href: "/programs/alumni",
+        description: "A network of graduates continuing to make an impact across the continent.",
+    },
 ];
 
 const newsItems: MenuItem[] = [
@@ -114,13 +124,7 @@ const newsItems: MenuItem[] = [
     title: "Opportunities",
     href: "/opportunities",
     description: "Explore current openings and ways to grow with us.",
-  },
-  {
-    title: "Blogs",
-    href: "/programs/one-event",
-    description:
-      "Read our latest insights, industry updates, and expert perspectives.",
-  },
+  }
 ];
 
 
@@ -263,32 +267,55 @@ export default function Navigation({
                   className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
                 />
               </button>
-              {activeDropdown === "mobile-programs" && (
+              {(activeDropdown === "mobile-programs" || activeDropdown === "mobile-program-submenu") && (
                 <div className="ml-4 mt-2 flex flex-col space-y-2">
-                  {programsItems.map((item) => (
-                    <SafeLink
-                      key={item.href}
-                      href={resolveHref(item.href)}
-                      className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      prefetch={true}
-                    >
-                      {item.title}
-                    </SafeLink>
-                  ))}
+                  {programsItems.map((item) => {
+                    const isSubmenuOpen = activeDropdown === "mobile-program-submenu";
+                    return (
+                      <div key={item.href} className="flex flex-col w-full">
+                        {item.hasSubmenu ? (
+                          <>
+                            <button
+                              className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700 text-left flex items-center justify-between"
+                              onClick={() => toggleDropdown("mobile-program-submenu")}
+                            >
+                              {item.title}
+                              <SafeIconChevronDown
+                                className={`h-4 w-4 transform transition-transform ${isSubmenuOpen ? "rotate-180" : ""}`}
+                              />
+                            </button>
+                            {isSubmenuOpen && (
+                              <div className="ml-4 mt-2 flex flex-col space-y-2">
+                                {programSubItems.map((subItem) => (
+                                  <SafeLink
+                                    key={subItem.href}
+                                    href={resolveHref(subItem.href)}
+                                    className="p-2 text-sm font-medium hover:bg-[#F5F5F5] rounded-md text-gray-600"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    prefetch={true}
+                                  >
+                                    {subItem.title}
+                                  </SafeLink>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <SafeLink
+                            href={resolveHref(item.href)}
+                            className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            prefetch={true}
+                          >
+                            {item.title}
+                          </SafeLink>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
-
-            {/* Our Impact - Direct Link */}
-            <SafeLink
-              href={resolveHref("/our-impact")}
-              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
-              onClick={() => setIsMobileMenuOpen(false)}
-              prefetch={true}
-            >
-              {dict?.navigation?.our_impact || "Our Impact"}
-            </SafeLink>
 
             {/* News & Updates */}
             <div className="flex flex-col w-full">
@@ -384,7 +411,7 @@ export default function Navigation({
                   <SafeIconChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "about" ? "rotate-180" : ""}`} />
                 </button>
                 {desktopDropdown === "about" && (
-                  <div className="absolute left-0 top-full mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                  <div className="absolute left-0 top-full -mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
                     <ul className="p-2">
                       {aboutItems.map((item) => (
                         <li key={item.href}>
@@ -421,38 +448,74 @@ export default function Navigation({
                   {dict?.navigation?.what_we_do || "What we do"}
                   <SafeIconChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "what-we-do" ? "rotate-180" : ""}`} />
                 </button>
-                {desktopDropdown === "what-we-do" && (
-                  <div className="absolute left-0 top-full mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                {(desktopDropdown === "what-we-do" || desktopDropdown === "program-submenu") && (
+                  <div className="absolute left-0 top-full =mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
                     <ul className="p-2">
-                      {programsItems.map((item) => (
-                        <li key={item.href}>
-                          <SafeLink
-                            href={resolveHref(item.href)}
-                            className="block p-3 rounded-md hover:bg-accent transition-colors"
-                            prefetch={true}
+                      {programsItems.map((item) => {
+                        const isSubmenuOpen = desktopDropdown === "program-submenu";
+                        return (
+                          <li 
+                            key={item.href}
+                            className="relative"
+                            onMouseEnter={() => item.hasSubmenu && handleDesktopDropdownEnter("program-submenu")}
                           >
-                            <div className="text-sm font-medium leading-none">
-                              {item.title}
-                            </div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                              {item.description}
-                            </p>
-                          </SafeLink>
-                        </li>
-                      ))}
+                            {item.hasSubmenu ? (
+                              <div className="block p-3 rounded-md hover:bg-accent transition-colors">
+                                <div className="text-sm font-medium leading-none flex items-center justify-between">
+                                  {item.title}
+                                  <SafeIconChevronDown className={`h-3 w-3 transition-transform ${isSubmenuOpen ? "rotate-180" : ""}`} />
+                                </div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                  {item.description}
+                                </p>
+                                {isSubmenuOpen && (
+                                  <div 
+                                    className="absolute left-full top-0 ml-1 w-[280px] bg-white rounded-md border shadow-lg z-50"
+                                    onMouseEnter={() => handleDesktopDropdownEnter("program-submenu")}
+                                    onMouseLeave={() => handleDesktopDropdownEnter("what-we-do")}
+                                  >
+                                    <ul className="p-2">
+                                      {programSubItems.map((subItem) => (
+                                        <li key={subItem.href}>
+                                          <SafeLink
+                                            href={resolveHref(subItem.href)}
+                                            className="block p-3 rounded-md hover:bg-accent transition-colors"
+                                            prefetch={true}
+                                          >
+                                            <div className="text-sm font-medium leading-none">
+                                              {subItem.title}
+                                            </div>
+                                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                              {subItem.description}
+                                            </p>
+                                          </SafeLink>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <SafeLink
+                                href={resolveHref(item.href)}
+                                className="block p-3 rounded-md hover:bg-accent transition-colors"
+                                prefetch={true}
+                              >
+                                <div className="text-sm font-medium leading-none">
+                                  {item.title}
+                                </div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                  {item.description}
+                                </p>
+                              </SafeLink>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
               </div>
-
-              {/* Our Impact - Direct Link */}
-              <SafeLink
-                href={resolveHref("/our-impact")}
-                className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 hover:bg-accent/50 rounded-md transition-colors`}
-                prefetch={true}
-              >
-                {dict?.navigation?.our_impact || "Our Impact"}
-              </SafeLink>
 
               {/* News & Updates Dropdown */}
               <div
@@ -467,7 +530,7 @@ export default function Navigation({
                   <SafeIconChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "news" ? "rotate-180" : ""}`} />
                 </button>
                 {desktopDropdown === "news" && (
-                  <div className="absolute left-0 top-full mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                  <div className="absolute left-0 top-full -mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
                     <ul className="p-2">
                       {newsItems.map((item) => (
                         <li key={item.href}>
@@ -504,9 +567,6 @@ export default function Navigation({
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
             <div className="flex items-center gap-2">
-              <div className="hidden md:flex items-center gap-2 border-3">
-                <LanguageSwitcher />
-              </div>
               {/*<SafeLink href="/login" className="hidden md:block">*/}
               {/*  <Button*/}
               {/*    size="sm"*/}
