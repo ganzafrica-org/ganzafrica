@@ -5,7 +5,6 @@ import { GoogleAnalyticsComponent } from "@/components/analytics/google-analytic
 import React, { Suspense } from "react";
 import "@workspace/ui/globals.css";
 
-
 // Font optimization - Using Rubik
 const fontRubik = Rubik({
   subsets: ["latin"],
@@ -14,19 +13,9 @@ const fontRubik = Rubik({
 });
 
 // Metadata generation
-export async function generateMetadata(
-  props: {
-    params: Promise<{ locale: string }>;
-  }
-) {
-  const params = await props.params;
-  // Ensure locale is one of the supported ones, fallback to 'en'
-  const locale =
-    params.locale && ["en", "fr"].includes(params.locale)
-      ? params.locale
-      : "en";
-
-  // Load dictionary based on locale
+export async function generateMetadata() {
+  // Hardcoded to English since i18n is removed
+  const locale = "en";
   const dict = await getDictionary(locale);
 
   return {
@@ -40,31 +29,17 @@ export async function generateMetadata(
     ),
     alternates: {
       canonical: "/",
-      languages: {
-        en: "/en",
-        fr: "/fr",
-      },
     },
   };
 }
 
-export default async function RootLayout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ locale: string }>;
-  }
-) {
-  const params = await props.params;
-
-  const {
-    children
-  } = props;
-
-  // Ensure locale is one of the supported ones, fallback to 'en'
-  const locale =
-    params.locale && ["en", "fr"].includes(params.locale)
-      ? params.locale
-      : "en";
+export default async function RootLayout(props: {
+  children: React.ReactNode;
+}) {
+  const { children } = props;
+  
+  // Hardcoded to English
+  const locale = "en";
   const dict = await getDictionary(locale);
 
   return (

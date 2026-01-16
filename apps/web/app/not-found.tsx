@@ -45,7 +45,7 @@ export default function GlobalNotFound() {
   const t = (supported.includes(first) ? texts[first as 'en' | 'fr'] : texts.en) as { title: string; message: string; requested: string; goHome: string; switchTo: string };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-6 py-12">
+    <div data-not-found="true" className="min-h-screen bg-black flex items-center justify-center px-6 py-12">
       <div className="max-w-6xl w-full flex flex-col lg:flex-row items-center justify-between gap-12">
         <div className={`flex-1 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
           <div className="retro-tv-container">

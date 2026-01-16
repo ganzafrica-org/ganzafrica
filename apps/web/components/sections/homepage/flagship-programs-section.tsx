@@ -8,19 +8,19 @@ import { trackEvent } from "@/components/analytics/google-analytics";
 import { TranslatableText } from "@/components/translate/TranslatableText";
 
 interface Program {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  link: string;
-  date?: string;
-  iconColor: string;
-  icon: React.ReactNode; // Added icon property
+    id: string;
+    title: string;
+    description: string;
+    image: string;
+    link: string;
+    date?: string;
+    iconColor: string;
+    icon: React.ReactNode; // Added icon property
 }
 
 interface FlagshipProgramsSectionProps {
-  locale: string;
-  dict: any;
+    locale: string;
+    dict: any;
 }
 
 export default function FlagshipProgramsSection({

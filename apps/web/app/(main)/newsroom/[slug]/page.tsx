@@ -20,10 +20,11 @@ const CalendarIcon = Calendar as unknown as SvgIconComponent;
 const ArrowLeftIcon = ArrowLeft as unknown as SvgIconComponent;
 const XIcon = X as unknown as SvgIconComponent;
 
+// Define the MediaItem type
 interface MediaItem {
   id: string;
   url: string;
-  type: "image" | "video" | "other";
+  type: 'image' | 'video' | 'other';
   cover?: boolean;
   order?: number;
   thumbnailUrl?: string;
