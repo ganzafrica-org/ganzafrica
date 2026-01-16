@@ -8,6 +8,16 @@ import { cn } from "@/lib/utils";
 import { Menu, X, ChevronDown, Globe } from "lucide-react";
 import { useDict } from '@/context/dictionary';
 
+import LanguageSwitcher from "./language-switcher";
+
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@workspace/ui/components/navigation-menu";
 import { Button } from "@workspace/ui/components/button";
 
 
@@ -224,7 +234,7 @@ export default function Navigation({
               <SafeIconX className="h-6 w-6" />
             </Button>
           </div>
-          <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full border-red-600">
+          <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
             {/* Mobile About with submenu */}
             <div className="flex flex-col w-full">
               <button
@@ -567,6 +577,9 @@ export default function Navigation({
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
             <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 border-3">
+                <LanguageSwitcher />
+              </div>
               {/*<SafeLink href="/login" className="hidden md:block">*/}
               {/*  <Button*/}
               {/*    size="sm"*/}

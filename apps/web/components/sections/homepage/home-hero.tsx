@@ -9,8 +9,18 @@ import { Button } from "@workspace/ui/components/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 // import GoogleTranslate from "@/components/google-translate";
-import { useDict } from '@/context/dictionary';
+import { useDict } from "@/context/dictionary";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
+// Import shadcn Navigation Menu components
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@workspace/ui/components/navigation-menu";
 import LanguageSwitcher from "@/components/layout/language-switcher";
 
 // Define types for menu items
@@ -21,6 +31,14 @@ interface MenuItem {
   hasSubmenu?: boolean;
 }
 
+// Define props for ListItem component
+interface ListItemProps {
+  className?: string;
+  title: string;
+  children: React.ReactNode;
+  href: string;
+  onClick?: () => void;
+}
 
 // Define dictionary type
 interface DictionaryType {
@@ -522,7 +540,7 @@ export default function HomeHero({
                 alt="GanzAfrica"
                 fill
                 sizes="(max-width: 768px) 300px, 200px"
-                className="object-contain"
+                className="object-contain border"
                 priority
               />
             </div>
@@ -834,26 +852,34 @@ export default function HomeHero({
       >
         <div className="container mx-auto px-4 text-center mt-10 sm:mt-20 md:mt-20 hidden md:block">
           <h1 className="text-2xl lg:text-4xl font-bold mb-4 sm:mb-6">
-            <span className="text-primary-green">
-              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
-              <br />
+            <TranslatableText as="span" className="text-primary-green">
+              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-green">
               {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
-            </span>{" "}
-            <span className="text-primary-orange">
-              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
+            </TranslatableText>{" "}
+            <TranslatableText as="span" className="text-primary-orange">
+              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"}
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-orange">
               {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
-            </span>
+            </TranslatableText>
           </h1>
 
-          <p className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800">
+          <TranslatableText
+            as="p"
+            className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
+          >
             {dict?.home?.hero?.subtitle ||
               "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
-          </p>
+          </TranslatableText>
 
           <Link href={`/about/who-we-are`} prefetch={true}>
             <Button
               size="lg"
-              className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base"
+              className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
             >
               {dict?.cta?.discover_more || "Discover More"}
             </Button>
@@ -862,28 +888,38 @@ export default function HomeHero({
         {/* MOBILE */}
         <div className="container mx-auto px-4 text-center block md:hidden">
           <h1 className="text-5xl lg:text-4xl font-bold mb-4 sm:mb-6">
-            <span className="text-primary-green">
-              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
-              <br />
+            <TranslatableText as="span" className="text-primary-green">
+              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-green">
               {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
-            </span>{" "}
-            <span className="text-primary-orange">
-              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
+            </TranslatableText>{" "}
+            <TranslatableText as="span" className="text-primary-orange">
+              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"}
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-orange">
               {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
-            </span>
+            </TranslatableText>
           </h1>
 
-          <p className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800">
+          <TranslatableText
+            as="p"
+            className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
+          >
             {dict?.home?.hero?.subtitle ||
               "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
-          </p>
+          </TranslatableText>
 
           <Link href={`/about/who-we-are`} prefetch={true}>
             <Button
               size="lg"
               className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
             >
-              {dict?.cta?.discover_more || "Discover More"}
+              <TranslatableText>
+                {dict?.cta?.discover_more || "Discover More"}
+              </TranslatableText>
             </Button>
           </Link>
         </div>
