@@ -1,4 +1,4 @@
-import apiClient from '../api-client';
+import apiClient from "../api-client";
 
 // Types
 export interface User {
@@ -19,16 +19,30 @@ export interface ListUsersParams {
   limit?: number;
   search?: string;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
   role_id?: number;
   is_active?: boolean;
+  exclude_alumni?: boolean;
 }
 
 // Users API
 export const usersApi = {
   // List users with pagination and filtering
   async listUsers(params?: ListUsersParams) {
-    const response = await apiClient.get('/users', { params });
+    const { exclude_alumni = true, ...apiParams } = params || {};
+    const response = await apiClient.get("/users", { params: apiParams });
+
+    // Filter out alumni users on the frontend (default: true unless explicitly set to false)
+    if (exclude_alumni && response.data.users) {
+      response.data.users = response.data.users.filter(
+        (user: User) => user.role_name?.toLowerCase() !== "alumni",
+      );
+      // Update total count
+      if (response.data.pagination) {
+        response.data.pagination.total = response.data.users.length;
+      }
+    }
+
     return response.data;
   },
 
@@ -38,4 +52,3 @@ export const usersApi = {
     return response.data;
   },
 };
-
