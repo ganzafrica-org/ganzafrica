@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 
 interface SectionProps {
   number: string;
@@ -32,7 +33,7 @@ export default function SectionWithScrollAnimation({
   contentClass,
   videoRef,
   isVideoSection = false,
-}: SectionProps) {
+}: SectionProps): JSX.Element {
   const sectionRef = useRef<HTMLDivElement>(null);
   
   // Create faster, more responsive scroll-based animation
@@ -115,7 +116,7 @@ export default function SectionWithScrollAnimation({
               className="object-cover rounded-sm w-full h-full"
             />
           ) : (
-            <Image
+            <SafeImage
               src={imageUrl}
               alt={imageAlt}
               fill

@@ -4,10 +4,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from "@/components/layout/headertext";
+import { useDict } from '@/context/dictionary';
 
 interface FellowsSectionProps {
   locale: string;
-  dict: any;
 }
 
 type ImageItem = {
@@ -16,7 +16,8 @@ type ImageItem = {
   alt: string;
 };
 
-export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
+export default function FellowsSection({ locale }: FellowsSectionProps) {
+  const dict = useDict();
 
   const [images, setImages] = useState<ImageItem[]>([
     {
@@ -49,10 +50,12 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
   const [mainImageIndex, setMainImageIndex] = useState(0);
 
   const [angle, setAngle] = useState(0);
-  const animationRef = useRef<number>();
+  // @ts-ignore
+    const animationRef = useRef<number>();
 
   const ROTATION_SPEED = 0.2; // degrees per frame
   const ORBIT_RADIUS = 200; // pixels
+  const ORBIT_RADIUS_SMALL = 120; // pixels for small screens
 
   // Setup animation
   useEffect(() => {
@@ -79,10 +82,11 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
     return () => clearInterval(interval);
   }, [images.length]);
 
-  // Function to calculate orbital positions
-  const getOrbitingImages = () => {
+  // Function to calculate orbital positions with responsive radius
+  const getOrbitingImages = (useSmallRadius = false) => {
     const orbitingImages = [];
     const totalOrbiting = images.length - 1;
+    const radius = useSmallRadius ? ORBIT_RADIUS_SMALL : ORBIT_RADIUS;
 
     // Generate orbiting images (all except the main one)
     for (let i = 0; i < images.length; i++) {
@@ -99,8 +103,8 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
       const angleInRadians = (currentAngle * Math.PI) / 180;
 
       // Calculate x and y coordinates
-      const x = Math.cos(angleInRadians) * ORBIT_RADIUS;
-      const y = Math.sin(angleInRadians) * ORBIT_RADIUS;
+      const x = Math.cos(angleInRadians) * radius;
+      const y = Math.sin(angleInRadians) * radius;
 
       orbitingImages.push({
         image: images[i],
@@ -113,14 +117,14 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
   };
 
   return (
-    <section className="pt-16 pb-6 bg-white relative overflow-hidden">
-      <div className="container mx-auto px-4">
+    <section className="pt-16 pb-6 bg-white relative overflow-hidden mb-10 md:mb-0">
+      <div className="container mx-auto px-20 md:px-4 pb-10 md:pb-0">
         <div className="relative mx-auto">
           <div className="flex flex-col-reverse lg:flex-row items-center gap-4">
             {/* Image carousel section - on the left */}
-            <div className="w-full lg:w-1/2 h-[360px] md:h-[460px] relative flex items-center justify-center">
+            <div className="w-full lg:w-1/2 lg:mr-20 xl:mr-10 h-[320px] md:h-[460px] relative flex items-center justify-center sm:mb-10">
               {/* Circle path indicator */}
-              <div className="absolute w-[340px] h-[340px] rounded-full border border-gray-200 border-dashed"></div>
+              <div className="absolute w-[240px] h-[240px] sm:w-[280px] sm:h-[280px] md:w-[340px] md:h-[340px] rounded-full border-dashed"></div>
 
               {/* Main central image */}
               <AnimatePresence mode="wait">
@@ -130,7 +134,7 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.5 }}
-                  className="absolute w-96 h-96 rounded-full overflow-hidden border-4 border-primary-green shadow-lg z-10"
+                  className="absolute w-52 h-52 sm:w-56 sm:h-56 md:w-72 md:h-72 lg:w-96 lg:h-96 rounded-full overflow-hidden shadow-lg z-10"
                 >
                   <Image
                     src={images[mainImageIndex]?.src || ""}
@@ -142,34 +146,61 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Orbiting images */}
-              {getOrbitingImages().map(({ image, position, index }) => (
-                <motion.div
-                  key={`orbit-${image?.id}`}
-                  className="absolute w-24 h-24 rounded-full overflow-hidden border-2 border-primary-orange shadow-md cursor-pointer z-20"
-                  style={{
-                    left: "50%",
-                    top: "50%",
-                    x: position.x,
-                    y: position.y,
-                    translateX: "-50%",
-                    translateY: "-50%"
-                  }}
-                  onClick={() => setMainImageIndex(index)}
-                  whileHover={{ scale: 1.1 }}
-                >
-                  <Image
-                    src={image?.src || ""}
-                    alt={image?.alt || ""}
-                    fill
-                    className="object-cover"
-                  />
-                </motion.div>
-              ))}
+              {/* Orbiting images - hidden on very small screens, shown on sm and up */}
+              <div className="hidden sm:block">
+                {getOrbitingImages(false).map(({ image, position, index }) => (
+                  <motion.div
+                    key={`orbit-${image?.id}`}
+                    className="absolute w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-2 border-primary-orange shadow-md cursor-pointer z-20"
+                    style={{
+                      left: "50%",
+                      top: "50%",
+                      x: position.x,
+                      y: position.y,
+                      translateX: "-50%",
+                      translateY: "-50%"
+                    }}
+                    onClick={() => setMainImageIndex(index)}
+                    whileHover={{ scale: 1.1 }}
+                  >
+                    <Image
+                      src={image?.src || ""}
+                      alt={image?.alt || ""}
+                      fill
+                      className="object-cover" />
+                  </motion.div>
+                ))}
+              </div>
+              
+              {/* Orbiting images for mobile - smaller radius */}
+              <div className="block sm:hidden border-2">
+                {getOrbitingImages(true).map(({ image, position, index }) => (
+                  <motion.div
+                    key={`orbit-mobile-${image?.id}`}
+                    className="absolute w-12 h-12 rounded-full overflow-hidden border-2 border-primary-orange shadow-md cursor-pointer z-20"
+                    style={{
+                      left: "50%",
+                      top: "50%",
+                      x: position.x,
+                      y: position.y,
+                      translateX: "-50%",
+                      translateY: "-50%"
+                    }}
+                    onClick={() => setMainImageIndex(index)}
+                    whileHover={{ scale: 1.1 }}
+                  >
+                    <Image
+                      src={image?.src || ""}
+                      alt={image?.alt || ""}
+                      fill
+                      className="object-cover" />
+                  </motion.div>
+                ))}
+              </div>
             </div>
 
             {/* Compact Content section - on the right */}
-            <div className="w-full lg:w-1/2 lg:pl-6 -ml-[100px]">
+            <div className="w-[100vw] px-5 md:px-20 lg:w-1/2 lg:pl-6 md:-ml-[100px] mb-10 xl:mb-0">
               <motion.div 
                 className="mb-6"
                 initial={{ opacity: 0, y: 20 }}
@@ -216,7 +247,7 @@ export default function FellowsSection({ locale, dict }: FellowsSectionProps) {
                 </motion.p>
               </motion.div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 border-3 sm:mb-10">
                 {[
                   {
                     key: 'training',

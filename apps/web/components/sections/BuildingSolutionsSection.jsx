@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import CategoriesBanner from "@/components/layout/headerBanner";
+import { useDict } from '@/context/dictionary';
 
-const BuildingSolutionsSection = ({ dict, categories, tags }) => {
+const BuildingSolutionsSection = ({ categories, tags }) => {
+  const dict = useDict();
   const sceneRef = useRef(null);
   const containerRef = useRef(null);
   

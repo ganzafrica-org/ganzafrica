@@ -111,7 +111,7 @@ interface Project {
   description: string;
   status: string;
   start_date: string;
-  end_date: string;
+  end_date: string | null;
   created_by?: number;
   category_id: number;
   location: string;
@@ -152,7 +152,6 @@ const ProjectDetailsPage = () => {
         // Fetch categories first
         try {
           const categoriesResponse = await apiClient.get('/categories');
-          console.log("Categories response:", categoriesResponse.data);
           
           // Handle different response formats
           if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
@@ -160,7 +159,6 @@ const ProjectDetailsPage = () => {
           } else if (Array.isArray(categoriesResponse.data)) {
             setCategories(categoriesResponse.data);
           } else {
-            console.log('Using fallback categories structure');
             const categoriesMap: Record<number, string> = {
               1: 'Food system',
               2: 'Climate adaptation',
@@ -182,15 +180,12 @@ const ProjectDetailsPage = () => {
         // Try to fetch project details from API
         try {
           const response = await apiClient.get(`/projects/${params.id}`);
-          console.log("API Response:", response.data);
 
           // Check if the response has a nested project object (as shown in the Swagger docs)
           if (response.data && response.data.project) {
-            console.log("Setting project from nested project object");
             setProject(response.data.project);
           } else if (response.data && response.data.id) {
             // Direct project object
-            console.log("Setting project from direct response");
             setProject(response.data);
           } else {
             throw new Error("Invalid project data structure");
@@ -213,7 +208,7 @@ const ProjectDetailsPage = () => {
   }, [params.id]);
 
   // Format date for display
-  const formatDate = (dateString: string | undefined) => {
+  const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -443,10 +438,6 @@ const ProjectDetailsPage = () => {
     );
   }
 
-  // Debug output
-  console.log("Current project state:", project);
-  console.log("Categories:", categories);
-  
   if (!project) {
     return (
       <div className="p-6 max-w-full">

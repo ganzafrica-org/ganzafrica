@@ -16,10 +16,22 @@ import {
   Edit,
   Trash,
   RefreshCw,
-  Calendar
+  Calendar,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
+import { toast } from 'sonner';
 
 
 const OpportunitiesPage = () => {
@@ -56,6 +68,11 @@ const OpportunitiesPage = () => {
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
   
+  // State for delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [opportunityToDelete, setOpportunityToDelete] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
     if (openMenuId === id) {
@@ -75,17 +92,8 @@ const OpportunitiesPage = () => {
         router.push(`/opportunities/${opportunityId}`);
         break;
       case 'delete':
-        if (window.confirm('Are you sure you want to delete this opportunity?')) {
-          try {
-            await apiClient.delete(`/opportunities/${opportunityId}`);
-            // Refresh the opportunities list after deletion
-            const updatedPage = opportunities.length === 1 && page > 1 ? page - 1 : page;
-            setPage(updatedPage);
-          } catch (error) {
-            console.error('Error deleting opportunity:', error);
-            alert('Failed to delete opportunity. Please try again.');
-          }
-        }
+        setOpportunityToDelete(opportunityId);
+        setIsDeleteDialogOpen(true);
         break;
       case 'update':
         // Navigate to update page
@@ -93,10 +101,38 @@ const OpportunitiesPage = () => {
         break;
       case 'status':
         // Open status change modal/form
-        console.log(`Change status for opportunity ${opportunityId}`);
         break;
       default:
         break;
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!opportunityToDelete) return;
+
+    try {
+      await apiClient.delete(`/opportunities/${opportunityToDelete}`);
+      
+      // Close dialog and reset state
+      setIsDeleteDialogOpen(false);
+      setOpportunityToDelete(null);
+      
+      // Show success toast
+      toast.success('Opportunity deleted successfully');
+      
+      // Trigger refresh by updating refreshTrigger
+      setRefreshTrigger(prev => prev + 1);
+      
+      // Adjust page if needed (if we deleted the last item on the page)
+      if (opportunities.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch (error: any) {
+      console.error('Error deleting opportunity:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete opportunity. Please try again.');
+      setIsDeleteDialogOpen(false);
+      setOpportunityToDelete(null);
     }
   };
 
@@ -260,12 +296,8 @@ const OpportunitiesPage = () => {
           params.status = activeTab;
         }
 
-        console.log('Fetching opportunities with params:', params);
-
         // Make API request with apiClient
         const response = await apiClient.get('/opportunities', { params });
-
-        console.log('API response:', response.data);
 
         if (response.data) {
           setOpportunities(response.data.opportunities || []);
@@ -290,7 +322,7 @@ const OpportunitiesPage = () => {
 
 
     fetchOpportunities();
-  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded]);
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, refreshTrigger]);
 
   // Get status badge
   const getStatusBadge = (status) => {
@@ -571,6 +603,37 @@ const OpportunitiesPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              Delete Opportunity
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this opportunity? This action cannot be undone and will permanently delete the opportunity and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteDialogOpen(false);
+              setOpportunityToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+            >
+              Delete Opportunity
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

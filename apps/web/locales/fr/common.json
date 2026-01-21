@@ -182,6 +182,13 @@
     "climate_change_adaptation": "Adaptation au Changement Climatique",
     "description": "Nous nous concentrons sur les systèmes alimentaires durables et l'adaptation au changement climatique pour créer un impact durable au Rwanda."
   },
+  "ourApproach": {
+    "hero": {
+      "heading": "NOTRE APPROCHE DES SYSTÈMES ALIMENTAIRES",
+      "subtitle": "De la ferme à la fourchette — et bien au-delà",
+      "alt": "Système alimentaire"
+    }
+  },
   "programs": {
     "flagship_heading_first": "Nos Programmes",
     "flagship_heading_second": "Phares",
@@ -198,9 +205,155 @@
       "description": "Nous fournissons des recherches et des orientations pour soutenir le développement de politiques durables en Afrique."
     }
   },
+  "fellowship": {
+    "hero": {
+      "title": "Bourse GanzAfrica",
+      "description": "Rejoignez notre programme de bourses transformateur conçu pour autonomiser la prochaine génération de leaders africains dans le développement durable.",
+      "cta": "Comment Postuler"
+    },
+    "about": {
+      "firstText": "À Propos de la",
+      "secondText": "Bourse",
+      "description": "Notre programme entièrement financé offre une formation, un mentorat et une expérience pratique en gouvernance foncière, gestion environnementale, systèmes agroalimentaires, finance climatique et d'autres disciplines dans nos secteurs d'intervention. Avec des mentors spécialisés vous guidant, vous acquerrez un développement professionnel et collaborerez avec des professionnels talentueux. De plus, vous aurez l'opportunité de travailler sur des projets percutants avec nos principaux partenaires mondiaux.",
+      "cta": "Comment Postuler"
+    },
+    "discover": {
+      "firstText": "Découvrez les leaders",
+      "secondText": "de demain aujourd'hui",
+      "subtitle": "Un programme d'un an pour les jeunes en début ou milieu de carrière ayant une aptitude exceptionnelle et une curiosité intellectuelle qui aspirent à devenir des leaders publics.",
+      "description": "Grâce à notre programme de bourse à temps plein, nous trouvons des personnes travaillant sur des plans pour améliorer le monde de manière significative. Ensuite, nous les aidons à devenir des leaders percutants en les connectant aux outils, ressources et communautés dont ils ont besoin pour concrétiser leurs idées.",
+      "cta": "Rencontrer les Boursiers"
+    },
+    "benefits": {
+      "heading": "Avantages de",
+      "heading2": "Rejoindre GanzAfrica",
+      "subtitle": "Commencez votre parcours d'impact et de croissance avec GanzAfrica. Découvrez les avantages de rejoindre notre programme:",
+      "tackle": {
+        "title": "Relever les Défis",
+        "description": "Rejoignez une cohorte de personnes partageant les mêmes idées pour relever les principaux défis fonciers, agricoles et environnementaux en Afrique, en créant un impact significatif dans votre communauté."
+      },
+      "global": {
+        "title": "Acquérir une Expérience Mondiale",
+        "description": "Travaillez sur des projets transformateurs avec des spécialistes de classe mondiale, soyez mentorrisé par des experts et participez à la co-création de solutions innovantes dans nos domaines d'intervention."
+      },
+      "develop": {
+        "title": "Développer Vos Compétences",
+        "description": "Notre programme entièrement financé offre une formation, des apprentissages et une expérience professionnelle pour améliorer votre expertise et mettre en valeur votre talent."
+      }
+    },
+    "promise": {
+      "title": "La Promesse de GanzAfrica",
+      "toText": "aux",
+      "fellows": "Boursiers:",
+      "description": "Nous nous engageons à offrir une expérience transformatrice qui vous équipe des compétences, du réseau et des opportunités pour avoir un impact durable dans votre domaine.",
+      "dev": {
+        "title": "Développement Professionnel",
+        "description": "Fournir jusqu'à 2 ans de formation holistique en mettant l'accent sur les données et l'analyse ainsi que les compétences en leadership"
+      },
+      "community": {
+        "title": "Une communauté de personnes partageant les mêmes idées",
+        "description": "Accueillir les boursiers dans un réseau de jeunes Africains motivés par les valeurs engagés à diriger la transformation de l'Afrique"
+      },
+      "experience": {
+        "title": "Expérience Pratique",
+        "description": "Offrir des détachements professionnels avec l'un de nos partenaires pour appliquer les compétences acquises"
+      }
+    },
+    "topics": {
+      "foodSystems": "Systèmes Alimentaires",
+      "dataEvidence": "Données et Preuves",
+      "coCreation": "Co-création",
+      "foodSystems2": "Systèmes alimentaires",
+      "dataEvidence2": "Données et Preuves",
+      "naturalResources": "Gestion des Ressources Naturelles",
+      "climate": "Changement Climatique",
+      "agriculture": "Agriculture Durable"
+    },
+    "testimonials": {
+      "heading": "Découvrez ce que les Boursiers",
+      "heading2": "Disent de Notre Bourse"
+    },
+    "howToApply": {
+      "hero": {
+        "title": "Postulez en complétant notre",
+        "emphasis": "demande en ligne",
+        "subtitle": "Rejoignez notre programme de bourses et devenez un leader de la prochaine génération d'Afrique pour le développement durable"
+      },
+      "applicationProcessTitle": "Processus de",
+      "applicationProcessHighlight": "Candidature",
+      "steps": [
+        {
+          "title": "Bourse Annoncée",
+          "description": "Les opportunités de bourse GanzAfrica sont annoncées via nos canaux en ligne et réseaux de partenaires à travers l'Afrique."
+        },
+        {
+          "title": "Candidatures Reçues",
+          "description": "Soumettez votre candidature via notre portail en ligne. Assurez-vous d'inclure tous les documents et informations requises."
+        },
+        {
+          "title": "Candidatures Examinées",
+          "description": "Notre équipe examine attentivement chaque candidature, évaluant les qualifications, l'expérience et l'alignement avec notre mission."
+        },
+        {
+          "title": "Entretiens Menés",
+          "description": "Les candidats sélectionnés sont invités à participer à des entretiens oraux et écrits pour évaluer davantage leur aptitude."
+        },
+        {
+          "title": "Finalistes Sélectionnés et Notifiés",
+          "description": "Les candidats retenus sont notifiés et commencent leur parcours avec le Programme de Bourse GanzAfrica."
+        }
+      ],
+      "eligibilityTitle": "Admissibilité",
+      "eligibilitySubtitle": "Critères d'admission au Programme de Bourse GanzAfrica",
+      "eligibility": [
+        {
+          "title": "Jusqu'à 27 ans",
+          "description": "Jeunes professionnels au début de leur parcours professionnel"
+        },
+        {
+          "title": "Un diplôme dans une discipline pertinente",
+          "description": "Formation académique en agriculture, sciences de l'environnement, sciences des données ou domaines connexes"
+        },
+        {
+          "title": "Engagement dans la transformation de l'Afrique",
+          "description": "Passion démontrée pour le développement durable et le changement positif"
+        }
+      ],
+      "journeyTitle": "PARCOURS DE BOURSE",
+      "journey": [
+        "Les jeunes professionnels exceptionnels sont recrutés en tant que boursiers GanzAfrica",
+        "L'Académie GanzAfrica assure le développement des capacités sur les approches basées sur les données et le leadership",
+        "Les boursiers sont placés dans des institutions publiques et autonomisés pour façonner les approches politiques",
+        "Les boursiers reçoivent un mentorat d'experts, avançant leur carrière, compétences en leadership et soutien continu"
+      ],
+      "applyButton": "Postuler Maintenant",
+      "connectWithUs": "Entrez en Contact"
+    }
+  },
   "projects": {
     "heading_first": "Nos",
     "heading_second": "Projets",
+    "heroTitle": "PROJETS",
+    "heroSubtitle": "Transformer les idées en action",
+    "heroAlt": "Champs agricoles",
+    "searchPlaceholder": "Rechercher des projets par nom, lieu ou catégorie...",
+    "filterAll": "Filtrer par statut : Tous",
+    "allProjects": "Tous les projets",
+    "statusPlanned": "Planifié",
+    "statusActive": "Actif",
+    "statusCompleted": "Terminé",
+    "statusCancelled": "Annulé",
+    "statusOnHold": "En attente",
+    "noResults": "Aucun projet trouvé correspondant à vos critères",
+    "cardFallback": "Un projet durable travaillant avec les communautés locales pour améliorer les systèmes agricoles.",
+    "defaultLocation": "Rwanda",
+    "na": "N/A",
+    "stats": {
+      "fellows": "Boursiers",
+      "projects": "Projets",
+      "communities": "Communautés",
+      "countries": "Pays"
+    },
     "items": {
       "food_systems": {
         "title": "Systèmes Alimentaires",
@@ -331,5 +484,99 @@
     "subtitle": "Rooted in Excellence, Growing with Agriculture 🌱",
     "section_title": "Why Food Systems Matter",
     "description": "We strengthen the agriculture value chain by empowering farmers, improving sustainability, and shaping policy for a better future."
+  },
+  "contact": {
+    "hero": {
+      "title": "Entrez en",
+      "highlight": "Contact",
+      "subtitle": "Avec Notre Équipe",
+      "description": "Nous sommes là pour vous aider. Contactez-nous pour des questions, des suggestions ou des opportunités de collaboration. Notre équipe vous répondra dans les 24 heures."
+    },
+    "form": {
+      "title": "Envoyez-nous un Message",
+      "successTitle": "Message Envoyé!",
+      "successMessage": "Merci de nous avoir contactés. Nous vous répondrons bientôt.",
+      "errorTitle": "Erreur d'Envoi",
+      "errorMessage": "Une erreur s'est produite lors de l'envoi de votre message. Veuillez réessayer.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Entrez votre nom",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Entrez votre email",
+      "phoneLabel": "Téléphone",
+      "phonePlaceholder": "Entrez votre numéro de téléphone",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Entrez votre message",
+      "sendButton": "Envoyer le Message",
+      "sendingButton": "Envoi en cours..."
+    },
+    "newsletter": {
+      "title": "Rester Informé",
+      "description": "Abonnez-vous à notre newsletter pour recevoir les dernières actualités et mises à jour.",
+      "successTitle": "Abonnement Réussi!",
+      "successMessage": "Vous avez été abonné avec succès à notre newsletter.",
+      "errorTitle": "Erreur d'Abonnement",
+      "errorMessage": "Une erreur s'est produite lors de votre abonnement. Veuillez réessayer.",
+      "emailPlaceholder": "Entrez votre email",
+      "subscribeButton": "S'Abonner"
+    },
+    "office": {
+      "title": "Bureau Rwanda",
+      "phone": "(250) 799 390 199",
+      "hours": "Lun-Ven, 8:00 AM - 5:00 PM",
+      "email": "info@ganzafrica.org",
+      "emailResponse": "Réponse dans les 24 heures",
+      "address1": "27 House, KG 594 St",
+      "address2": "Kigali, Rwanda",
+      "region": "Hub Régional d'Afrique de l'Est",
+      "mapLabel": "Bureau Rwanda"
+    }
+  },
+  "alumni": {
+    "hero": {
+      "title": "RÉSEAU DES ANCIENS",
+      "subtitle": "Une vie entière de",
+      "subtitle2": "Connexions",
+      "opportunities": "Opportunités",
+      "and": "et",
+      "impact": "Impact"
+    },
+    "mission": {
+      "networkTitle": "Réseau des Anciens",
+      "statement": "Déclaration de Mission",
+      "welcome": "Bienvenue dans le Réseau des Anciens de GanzAfrica, une plateforme dédiée à créer des liens solides entre les jeunes professionnels africains. Notre objectif est de favoriser la confiance, la collaboration et un échange dynamique d'idées pour façonner des solutions durables et transformatrices pour l'Afrique.",
+      "quote": "Cultiver une communauté des anciens dynamique qui stimule la transformation des systèmes alimentaires africains par des perspicacités fondées sur les données, du mentorat et de la collaboration—en autonomisant les boursiers actuels et en favorisant des partenariats qui créent des opportunités durables pour un impact durable.",
+      "principle1": "Partage de Connaissances",
+      "principle2": "Mentorat",
+      "principle3": "Collaboration et Réseautage"
+    },
+    "purpose": {
+      "prefixText": "Objectif du",
+      "title": "Réseau des Anciens",
+      "card1Title": "Réseautage et Développement Professionnel",
+      "card1Desc": "Renforcer les connexions professionnelles entre analystes, dans différentes industries et géographies, pour partager des opportunités et des conseils professionnels.",
+      "card2Title": "Partage de Connaissances et Utilisation des Données",
+      "card2Desc": "Partager des expériences et expertises diverses tout en promouvant la prise de décision basée sur les données pour accélérer la transformation inclusive des systèmes agroalimentaires.",
+      "card3Title": "Investir dans le Programme de Bourses",
+      "card3Desc": "Fournir un mécanisme et un pipeline permettant aux jeunes analystes en transition d'investir dans la formation de futures cohortes de boursiers.",
+      "card4Title": "Co-création et Co-implémentation de Solutions",
+      "card4Desc": "Encourager et faciliter la collaboration, la co-création et la co-implémentation de solutions pour les défis majeurs de la génération de données et d'évidences et leur synthèse pour l'impact politique."
+    },
+    "impact": {
+      "prefix": "Impact des",
+      "title": "Anciens",
+      "project1Title": "Gouvernance Foncière",
+      "project1Desc": "Des systèmes d'administration foncière équitables qui renforcent la sécurité de la tenure et promouv l'utilisation durable",
+      "project2Title": "Agriculture Durable",
+      "project2Desc": "Des politiques agricoles équilibrant la productivité avec l'intendance environnementale et l'inclusion sociale",
+      "project3Title": "Adaptation Climatique",
+      "project3Desc": "Des stratégies de résilience climatique aidant les communautés à s'adapter aux conditions environnementales changeantes",
+      "viewAllButton": "Voir Tous les Projets"
+    },
+    "events": {
+      "prefix": "Événements des",
+      "title": "Anciens",
+      "defaultDescription": "Les jeunes professionnels sont à l'avant-garde de l'accélération de la mise en œuvre du PDDAA...",
+      "viewEventButton": "Voir l'Événement"
+    }
   }
 }

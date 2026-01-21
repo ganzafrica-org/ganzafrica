@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { DecoratedHeading } from '@/components/layout/headertext';
+import { trackFormSubmission } from '@/components/analytics/google-analytics';
+import { useDict } from '@/context/dictionary';
 
 
 interface NewsletterSectionProps {
@@ -43,9 +45,16 @@ export default function NewsletterSection({
       // Simulate successful submission for now
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setSubmitStatus("success");
+
+      // Track successful newsletter subscription
+      trackFormSubmission('newsletter_subscribe', true);
+
       setEmail("");
     } catch (error) {
       setSubmitStatus("error");
+
+      // Track failed newsletter subscription
+      trackFormSubmission('newsletter_subscribe', false);
     } finally {
       setIsSubmitting(false);
 

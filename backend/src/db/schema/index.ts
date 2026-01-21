@@ -9,3 +9,7 @@ export * from "./faqs";
 export * from "./news";
 export * from "./roles";
 export * from "./common";
+export * from "./task-teams";
+export * from "./tasks";
+export * from "./reports";
+export * from "./alumni";

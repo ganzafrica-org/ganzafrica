@@ -8,6 +8,8 @@ import { ArrowRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useDict } from '@/context/dictionary';
+import { trackEvent } from '@/components/analytics/google-analytics';
 
 // Type definitions
 type ProjectMedia = {
@@ -50,14 +52,13 @@ pagination: {
 
 type ProjectsSectionProps = {
 locale: string;
-dict: Record<string, any>;
 };
 
 const PROJECTS_PER_PAGE = 3;
 const MAX_PROJECTS = 6;
 const AUTO_SLIDE_INTERVAL = 5000; // 5 seconds
 
-// Define color scheme for project cards
+// Define the color scheme for project cards
 const CARD_COLORS = ['#f8b712', '#009758', '#073392'];
 const CARD_CATEGORIES = ['Land', 'Agriculture', 'Environment'];
 
@@ -70,12 +71,14 @@ const getProjectCategory = (index: number) => {
   };
 };
 
-export default function ProjectsSection({ locale, dict }: ProjectsSectionProps): JSX.Element {
+export default function ProjectsSection({ locale }: ProjectsSectionProps): JSX.Element {
+  const dict = useDict();
 const [projects, setProjects] = useState<Project[]>([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState<string | null>(null);
 const [activePage, setActivePage] = useState(0);
 const [direction, setDirection] = useState(1); // 1 for right, -1 for left
+const [categories, setCategories] = useState<Record<string, string>>({});
 
 // Memoized function to get fallback projects with your specific projects
 const getFallbackProjects = useCallback((): Project[] => {
@@ -167,6 +170,32 @@ const getFallbackProjects = useCallback((): Project[] => {
 // Add a state to track if we're showing no projects message
 const [noProjects, setNoProjects] = useState(false);
 
+// Fetch categories first
+useEffect(() => {
+    const fetchCategories = async () => {
+        try {
+            const response = await apiClient.get('/categories');
+            if (response.data && Array.isArray(response.data)) {
+                const categoriesObj: Record<string, string> = {};
+                response.data.forEach((category: any) => {
+                    if (category && category.id && category.name) {
+                        const categoryName = category.name.toLowerCase().trim();
+                        // Skip "None" and "nano" categories
+                        if (categoryName !== 'none' && categoryName !== 'nano') {
+                            categoriesObj[category.id.toString()] = category.name;
+                        }
+                    }
+                });
+                setCategories(categoriesObj);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    fetchCategories();
+}, []);
+
 // Fetch projects from API with retry logic and rate limit handling
 useEffect(() => {
     const fetchProjects = async () => {
@@ -181,12 +210,13 @@ useEffect(() => {
                     page: 1,
                     sort_by: 'created_at',
                     sort_order: 'desc',
+                    is_published: true, // Only fetch published projects
                 },
-                timeout: 10000 // 10 seconds timeout
+                timeout: 10000 // 10-second timeout
             }).catch(error => {
                 // Check for rate limiting (429) or any other API error
                 console.warn('API error, using fallback data', error.message);
-                // Use fallback projects instead of empty array
+                // Use fallback projects instead of an empty array
                 setProjects(getFallbackProjects());
                 setLoading(false);
                 return null; // Return null to indicate we've handled it
@@ -194,8 +224,28 @@ useEffect(() => {
             
             if (response) {
                 if (response.data.projects && response.data.projects.length > 0) {
+                    // Filter out projects with category "None" or "nano"
+                    const filteredProjects = response.data.projects.filter((project: Project) => {
+                        const catId = project.category_id;
+                        if (catId) {
+                            const catName = categories[catId.toString()];
+                            if (catName) {
+                                const lowerName = catName.toLowerCase().trim();
+                                // Exclude projects with "None" or "nano" categories
+                                if (lowerName === 'none' || lowerName === 'nano') {
+                                    return false;
+                                }
+                            } else {
+                                // If category name not found in our category list, check if it's "None"
+                                // This handles cases where the category might not be loaded yet
+                                return true; // Keep it for now, will be filtered on the next render
+                            }
+                        }
+                        return true;
+                    });
+
                     // Ensure each project has the required fields and media
-                    const formattedProjects = response.data.projects.map(project => ({
+                    const formattedProjects = filteredProjects.map(project => ({
                         ...project,
                         // Ensure media items have required fields
                         media: {
@@ -217,7 +267,7 @@ useEffect(() => {
                     setError(null);
                     setNoProjects(false);
                 } else {
-                    // If API returns empty array, use fallback projects
+                    // If API returns an empty array, use fallback projects
                     console.info('No projects from API, using fallback data');
                     setProjects(getFallbackProjects());
                 }
@@ -226,7 +276,7 @@ useEffect(() => {
         } catch (err) {
             console.error('Error fetching projects:', err);
             setError('Unable to load projects');
-            // Use fallback projects instead of empty array
+            // Use fallback projects instead of an empty array
             setProjects(getFallbackProjects());
             setNoProjects(false);
             setLoading(false);
@@ -234,7 +284,7 @@ useEffect(() => {
     };
 
     fetchProjects();
-}, [getFallbackProjects]);
+}, [getFallbackProjects, categories]);
 
 const changePage = useCallback((pageIndex: number) => {
     // Set direction based on which page is clicked
@@ -243,7 +293,7 @@ const changePage = useCallback((pageIndex: number) => {
     setActivePage(pageIndex);
 }, [activePage]);
 
-// Auto change page every 5 seconds
+// Auto-change page every 5 seconds
 useEffect(() => {
     const totalPages = Math.ceil(Math.min(projects.length, MAX_PROJECTS) / PROJECTS_PER_PAGE);
     if (totalPages <= 1) return; // Don't auto-slide if there's only one page
@@ -278,10 +328,10 @@ const truncateDescription = useCallback((description: string, maxLength = 100): 
 
 // Project URL builder
 const getProjectUrl = useCallback((projectId: number): string => {
-    return `/${locale}/projects/${projectId}`;
+    return `/projects/${projectId}`;
 }, [locale]);
 
-// Add No Projects Available message - only show if both API and fallbacks fail
+// Add a No Projects Available message - only show if both API and fallbacks fail
 if (!loading && projects.length === 0) {
     return (
         <section className="py-4 md:py-6 bg-neutral-100 relative overflow-hidden">
@@ -333,7 +383,7 @@ if (!loading && projects.length === 0) {
                 {/* Call to action - can be modified or removed if not needed when no projects */}
                 <div className="text-center mt-6">
                     <Link
-                        href={`/${locale}/contact`}
+                        href={`/contact`}
                         className={cn(
                             "inline-flex items-center gap-2",
                             "bg-primary-green hover:bg-primary-green/90",
@@ -409,7 +459,7 @@ return (
                     return (
                         <motion.div 
                             key={project.id}
-                            className="group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
+                            className="group relative overflow-hidden rounded-md bg-white shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
@@ -429,7 +479,7 @@ return (
                                 </div>
                             </div>
                             
-                            {/* Content - flex grow to push border to bottom */}
+                            {/* Content - flex grows to push border to bottom */}
                             <div className="p-6 flex-grow flex flex-col">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                     {project.name}
@@ -469,7 +519,7 @@ return (
                 transition={{ duration: 0.6, delay: 0.2 }}
             >
                 <Link
-                    href={`/${locale}/projects`}
+                    href={`/projects`}
                     className={cn(
                         "group relative inline-flex items-center justify-center",
                         "bg-primary-green text-white py-4 px-8 rounded-lg",
@@ -477,11 +527,14 @@ return (
                         "overflow-hidden transition-all duration-300",
                         "hover:bg-opacity-90 hover:pl-10 hover:pr-6 "
                     )}
+                    onClick={() => trackEvent('view_all_projects_click', {
+                        source_page: 'homepage'
+                    })}
                 >
                     <span className="relative z-10">
                         {dict?.cta?.view_all_projects || "View All Projects"}
                     </span>
-                    <ArrowRight 
+                    <ArrowRight
                         size={16} 
                         className="ml-2 transition-all duration-300 transform group-hover:translate-x-1" 
                     />
@@ -511,7 +564,7 @@ return (
         </div>
 
         {/* Custom CSS for the perspective effect and button styling */}
-        <style jsx global>{`
+        <style>{`
             .property-card {
                 position: relative;
                 border-radius: 24px;

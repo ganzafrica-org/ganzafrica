@@ -25,6 +25,7 @@ import Header from "@/components/layout/header";
 import apiClient from '@/lib/api-client';
 import { motion } from "framer-motion";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
+import { trackEvent } from '@/components/analytics/google-analytics';
 
 // Register ScrollTrigger plugin for animations
 if (typeof window !== 'undefined') {
@@ -78,7 +79,13 @@ const ProjectCard: React.FC<{
   };
 
   return (
-    <Link href={`projects/${project.id}`} className="block group">
+    <Link href={`projects/${project.id}`} className="block group" onClick={() => trackEvent('project_click', {
+      project_id: project.id,
+      project_name: project.name,
+      project_status: project.status,
+      project_category: getCategoryName(project.category_id),
+      page: 'projects_listing'
+    })}>
       <div className="relative bg-white shadow-sm hover:shadow-xl transition-all duration-500 rounded-lg overflow-hidden cursor-pointer h-full transform hover:-translate-y-2">
         <div className="relative w-full overflow-hidden">
           {/* Main content container */}
@@ -265,6 +272,9 @@ const ProjectsPage = () => {
     { label: "Countries", count: 2 },
   ];
 
+  // Store all categories (including "None" and "nano") for filtering, and filtered categories for display
+  const [allCategories, setAllCategories] = useState<Record<string, string>>({});
+  
   // Update the categories state with fetched data
   useEffect(() => {
     const fetchCategories = async () => {
@@ -279,17 +289,27 @@ const ProjectsPage = () => {
             categoriesData = response.data.categories;
           }
           
-          // Transform categories array into an object
-          const categoriesObj: Record<string, string> = {};
+          // Transform categories array into objects
+          const allCategoriesObj: Record<string, string> = {};
+          const filteredCategoriesObj: Record<string, string> = {};
           
           if (Array.isArray(categoriesData)) {
             categoriesData.forEach(category => {
               if (category && category.id && category.name) {
                 const categoryId = category.id.toString();
-                categoriesObj[categoryId] = category.name;
+                const categoryName = category.name.toLowerCase().trim();
+                
+                // Store all categories for filtering
+                allCategoriesObj[categoryId] = category.name;
+                
+                // Only add to filtered categories if not "None" or "nano"
+                if (categoryName !== 'none' && categoryName !== 'nano') {
+                  filteredCategoriesObj[categoryId] = category.name;
+                }
               }
             });
-            setCategories(categoriesObj);
+            setAllCategories(allCategoriesObj); // Store all categories for filtering
+            setCategories(filteredCategoriesObj); // Store filtered categories for display
           }
         }
       } catch (error) {
@@ -307,7 +327,10 @@ const ProjectsPage = () => {
         setLoading(true);
         
         // Build query params
-        const params: { search?: string; status?: string; category_id?: string } = {};
+        const params: { search?: string; status?: string; category_id?: string; is_published?: boolean } = {};
+        
+        // Always filter to only show published projects on the website
+        params.is_published = true;
         
         // Add search term if exists
         if (searchTerm) params.search = searchTerm;
@@ -330,15 +353,31 @@ const ProjectsPage = () => {
         
         // Attempt to fetch from API
         try {
-          console.log('Fetching projects from API...');
           const response = await apiClient.get('/projects', { params });
           
           if (response.data) {
             const projectsList = response.data.projects || [];
-            console.log(`Fetched ${projectsList.length} projects from API`);
-            setAllProjects(projectsList);
             
-            // Count projects by category
+            // Filter out projects with category "None" or "nano"
+            const filteredProjects = projectsList.filter((project: any) => {
+              const catId = project.category_id;
+              if (catId) {
+                // Use allCategories to check, not filtered categories
+                const catName = allCategories[catId.toString()] || allCategories[catId];
+                if (catName) {
+                  const lowerName = catName.toLowerCase().trim();
+                  // Exclude projects with "None" or "nano" categories
+                  if (lowerName === 'none' || lowerName === 'nano') {
+                    return false;
+                  }
+                }
+              }
+              return true;
+            });
+            
+            setAllProjects(filteredProjects);
+            
+            // Count projects by category (only counting filtered projects)
             const counts: { [key: string]: number } = { all: 0 };
             
             interface CategoryCounts {
@@ -349,15 +388,19 @@ const ProjectsPage = () => {
               category_id?: string | number;
             }
 
-            projectsList.forEach((project: Project) => {
+            filteredProjects.forEach((project: Project) => {
               counts.all = (counts.all || 0) + 1;
 
-              // Count by category
+              // Count by category (excluding "None" and "nano")
               const catId = project.category_id;
               if (catId) {
                 const catName = categories[catId as keyof typeof categories];
                 if (catName) {
-                  counts[catName] = (counts[catName] || 0) + 1;
+                  const lowerName = catName.toLowerCase().trim();
+                  // Only count categories that are not "None" or "nano"
+                  if (lowerName !== 'none' && lowerName !== 'nano') {
+                    counts[catName] = (counts[catName] || 0) + 1;
+                  }
                 }
               }
             });
@@ -365,8 +408,8 @@ const ProjectsPage = () => {
             setCategoryCounts(counts);
             setTotalProjects(counts.all || 0);
             
-            // Calculate total pages
-            setTotalPages(Math.ceil(projectsList.length / projectsPerPage));
+            // Calculate total pages based on filtered projects
+            setTotalPages(Math.ceil(filteredProjects.length / projectsPerPage));
           }
         } catch (error) {
           console.error('API Error:', error);
@@ -379,7 +422,7 @@ const ProjectsPage = () => {
     };
     
     fetchProjects();
-  }, [searchTerm, activeStatus, activeCategory, categories]);
+  }, [searchTerm, activeStatus, activeCategory, categories, allCategories]);
 
   // Handle pagination
   useEffect(() => {
@@ -486,7 +529,13 @@ const ProjectsPage = () => {
 
   const getCategoryName = (categoryId: GetCategoryNameProps['categoryId']): string => {
     if (!categoryId) return '';
-    return categories[categoryId] || categories[categoryId.toString()] || '';
+    const categoryName = categories[categoryId] || categories[categoryId.toString()] || '';
+    // Don't display "None" or "nano" categories
+    const lowerName = categoryName.toLowerCase().trim();
+    if (lowerName === 'none' || lowerName === 'nano') {
+      return '';
+    }
+    return categoryName;
   };
 
   // Handle search input change
@@ -672,6 +721,11 @@ const ProjectsPage = () => {
               
               {/* Category buttons */}
               {Object.entries(categories).reduce<{ id: number; name: string; count: number }[]>((unique, [id, name]) => {
+                // Skip "None" and "nano" categories
+                const lowerName = name.toLowerCase().trim();
+                if (lowerName === 'none' || lowerName === 'nano') {
+                  return unique;
+                }
                 // Skip if this category name is already in our list
                 if (!unique.some(item => item.name === name)) {
                   unique.push({

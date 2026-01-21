@@ -1,40 +1,61 @@
 "use client";
 
 import Image from "next/image";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 import SectionWithScrollAnimation from "@/components/layout/SectionWithScroll";
 import React, { useState, useRef } from "react";
 import {getDictionary} from "@/lib/get-dictionary";
 import HeaderBelt from "@/components/layout/headerBelt";
-import { 
-    PersonIcon, 
+import {
+    PersonIcon,
     AudioMutedIcon,
     AudioUnmutedIcon,
     FullscreenIcon
 } from "@/components/ui/icons";
+import { trackVideoEvent, trackEvent } from "@/components/analytics/google-analytics";
+import VideoPlayer from "@/components/VideoPlayer";
+import { Dictionary } from "@/lib/get-dictionary";
 
 type Props = {
-    dict: Awaited<ReturnType<typeof getDictionary>>;
     isFrench: boolean;
+    dict: Dictionary;
 };
 
-export default function OurStoryContent({ dict, isFrench }: Props) {
+export default function OurStoryContent({ isFrench, dict }: Props) {
     const contentClass = isFrench ? "flex-1 overflow-y-auto pr-2" : "flex-1";
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isMuted, setIsMuted] = useState(true);
-    
+
     const toggleMute = () => {
         if (videoRef.current) {
             videoRef.current.muted = !videoRef.current.muted;
             setIsMuted(!isMuted);
+
+            // Track mute/unmute action
+            trackEvent('video_mute_toggle', {
+                video_title: 'Our Story - Fellow Success Video',
+                action: isMuted ? 'unmute' : 'mute',
+                page: 'our_story'
+            });
         }
     };
-    
+
     const toggleFullScreen = () => {
         if (videoRef.current) {
             if (document.fullscreenElement) {
                 document.exitFullscreen();
+                trackEvent('video_fullscreen_toggle', {
+                    video_title: 'Our Story - Fellow Success Video',
+                    action: 'exit_fullscreen',
+                    page: 'our_story'
+                });
             } else {
                 videoRef.current.requestFullscreen();
+                trackEvent('video_fullscreen_toggle', {
+                    video_title: 'Our Story - Fellow Success Video',
+                    action: 'enter_fullscreen',
+                    page: 'our_story'
+                });
             }
         }
     };
@@ -45,7 +66,7 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
             <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
                 {/* Background Image - Modified positioning to center on faces */}
                 <div className="absolute inset-0 z-0">
-                    <Image
+                    <SafeImage
                         src="/images/SHIR5142-Enhanced-NR.jpg"
                         alt="Agricultural fields"
                         fill
@@ -56,21 +77,21 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
                 </div>
 
                 {/* Dark overlay - Reduced opacity for better visibility */}
-                <div className="absolute inset-0 bg-black opacity-60 z-10"></div>
+                <div className="absolute inset-0 bg-black opacity-60 z-0"></div>
 
                 {/* Content */}
-                
+
                 <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-    <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-6">
-        OUR STORY
-    </h2>
-    <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-        <span className=" font-normal ">Building  Sustainable</span>{" "}
-        <span className="font-normal">Solutions With</span>
-        <br />
-        <span className=" font-normal">African Communities!</span>
-    </h1>
-</div>
+                    <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-6">
+                        OUR STORY
+                    </h2>
+                    <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
+                        <span className=" font-normal ">Building  Sustainable</span>{" "}
+                        <span className="font-normal">Solutions With</span>
+                        <br />
+                        <span className=" font-normal">African Communities!</span>
+                    </h1>
+                </div>
 
             </section>
             <HeaderBelt />
@@ -131,64 +152,35 @@ export default function OurStoryContent({ dict, isFrench }: Props) {
                     contentClass={contentClass}
                 />
 
-               {/* Section 4 - Fellow Success Stories */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden">
-    {/* Video - First on mobile and desktop */}
-    <div className="h-full w-full order-1 relative">
-        <div className="w-full h-full relative">
-            <video 
-                ref={videoRef}
-                className="w-full h-full object-cover rounded-sm"
-                src="/videos/lysa.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-            />
-            
-            {/* Video Controls */}
-<div className="absolute bottom-4 right-4 flex space-x-3">
-    <button 
-        onClick={toggleMute}
-        className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
-        aria-label={isMuted ? "Unmute video" : "Mute video"}
-    >
-        {isMuted ? <AudioMutedIcon /> : <AudioUnmutedIcon />}
-    </button>
-    
-    <button 
-        onClick={toggleFullScreen}
-        className="bg-black bg-opacity-60 hover:bg-opacity-80 text-white p-2 rounded-full transition-all"
-        aria-label="View in full screen"
-    >
-        <FullscreenIcon />
-    </button>
-</div>
-        </div>
-    </div>
-    
-    {/* Text content - Second on mobile and desktop */}
-    <div className="p-6 md:p-10 bg-[#FFFDEB] min-h-full lg:h-[510px] w-full rounded-sm order-2">
-        <div className="flex flex-col h-full w-full">
-            <div className="bg-primary-orange text-white w-16 h-16 flex items-center justify-center text-2xl rounded-md font-bold mb-2">
-                04
-            </div>
-            <h2 className="text-primary-orange sm:font-h5 md:font-h4 mb-2">
-                {dict?.about?.success_title || "Fellow Success Stories"}
-            </h2>
-            <div className={contentClass}>
-                <p className="text-black font-regular-small text-sm text-justify">
-                    {dict?.about?.success_text ||
-                    "We are equally proud of the individual journeys of our fellows. Many have leveraged their experience with GanzAfrica to secure meaningful and impactful roles within the public sector and beyond. Reinforcing our core belief in the power of investing in young professionals and equipping them with the skills to lead. At GanzAfrica, we see our fellows not just as participants in a program but as changemakers who will continue to drive transformation long after their time with us."}
-                </p>
-                
-                {/* Added Person Icon */}
-                <div className="mt-4 flex items-center justify-center">
+                {/* Section 4 - Fellow Success Stories */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden">
+                    {/* Video - First on mobile and desktop */}
+                    <div className="h-full w-full order-1 relative">
+                        <VideoPlayer src="/videos/lysa.mp4" />
+                    </div>
+
+                    {/* Text content - Second on mobile and desktop */}
+                    <div className="p-6 md:p-10 bg-[#FFFDEB] min-h-full lg:h-[510px] w-full rounded-sm order-2">
+                        <div className="flex flex-col h-full w-full">
+                            <div className="bg-primary-orange text-white w-16 h-16 flex items-center justify-center text-2xl rounded-md font-bold mb-2">
+                                04
+                            </div>
+                            <h2 className="text-primary-orange sm:font-h5 md:font-h4 mb-2">
+                                {dict?.about?.success_title || "Fellow Success Stories"}
+                            </h2>
+                            <div className={contentClass}>
+                                <p className="text-black font-regular-small text-sm text-justify">
+                                    {dict?.about?.success_text ||
+                                        "We are equally proud of the individual journeys of our fellows. Many have leveraged their experience with GanzAfrica to secure meaningful and impactful roles within the public sector and beyond. Reinforcing our core belief in the power of investing in young professionals and equipping them with the skills to lead. At GanzAfrica, we see our fellows not just as participants in a program but as changemakers who will continue to drive transformation long after their time with us."}
+                                </p>
+
+                                {/* Added Person Icon */}
+                                <div className="mt-4 flex items-center justify-center">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
 
                 {/* Section 5*/}
                 <SectionWithScrollAnimation

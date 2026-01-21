@@ -8,7 +8,8 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
-import LanguageSwitcher from "@/components/layout/language-switcher";
+// import GoogleTranslate from "@/components/google-translate";
+import { useDict } from '@/context/dictionary';
 
 // Import shadcn Navigation Menu components
 import {
@@ -19,6 +20,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@workspace/ui/components/navigation-menu";
+import LanguageSwitcher from "@/components/layout/language-switcher";
 
 // Define types for menu items
 interface MenuItem {
@@ -33,7 +35,6 @@ interface ListItemProps {
   title: string;
   children: React.ReactNode;
   href: string;
-  locale: string;
   onClick?: () => void;
 }
 
@@ -52,7 +53,7 @@ interface DictionaryType {
     team?: string;
     [key: string]: string | undefined;
   };
-  
+
   home?: {
     hero?: {
       title?: string;
@@ -73,10 +74,10 @@ interface DictionaryType {
 
 // Define HomeHero props
 interface HomeHeroProps {
-  locale: string;
-  dict: DictionaryType;
   backgroundImage?: string;
 }
+
+const resolveHref = (path: string) => (path.startsWith("/") ? path : `/${path}`);
 
 // Navigation menu item component
 const ListItem = ({
@@ -84,14 +85,13 @@ const ListItem = ({
   title,
   children,
   href,
-  locale,
   onClick,
 }: ListItemProps) => {
   return (
     <li>
       <NavigationMenuLink asChild>
         <Link
-          href={`/${locale}${href}`}
+          href={resolveHref(href)}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className,
@@ -110,10 +110,9 @@ const ListItem = ({
 };
 
 export default function HomeHero({
-  locale,
-  dict,
   backgroundImage = "/images/hero-test.jpg",
 }: HomeHeroProps) {
+  const dict = useDict();
   // Refs with proper types
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -142,7 +141,7 @@ export default function HomeHero({
         "The journey of how we started and what inspires our work every day.",
     },
     {
-      title: dict.about?.team|| "Team",
+      title: dict.about?.team || "Team",
       href: "/about/team",
       description:
         "Meet the talented individuals behind our mission. Learn about our team members, their expertise, and their contributions to our success.",
@@ -163,7 +162,7 @@ export default function HomeHero({
         "A network of graduates continuing to make an impact across the continent.",
     },
   ];
-  
+
   const newsItems: MenuItem[] = [
     {
       title: "Opportunities",
@@ -233,6 +232,9 @@ export default function HomeHero({
     )
       return;
 
+    // Check if we're on a small screen (mobile/tablet)
+    const isSmallScreen = window.innerWidth < 768;
+
     // Set initial states
     gsap.set(whiteOverlayRef.current, {
       y: "-100%",
@@ -246,6 +248,14 @@ export default function HomeHero({
       height: "100%",
       bottom: 0,
     });
+
+    // On small screens, we want the video to stay as a full background
+    // and skip the curved clipPath animation. Just fade in the final content.
+    if (isSmallScreen) {
+      navRef.current.setAttribute("data-overlay-passed", "true");
+      gsap.set(finalContentRef.current, { opacity: 1 });
+      return;
+    }
 
     // Create animation timeline
     const tl = gsap.timeline();
@@ -348,13 +358,13 @@ export default function HomeHero({
                     <NavigationMenuLink asChild>
                       <Link
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/about/who-we-are`}
+                        href={`/about/who-we-are`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
                           Who We Are
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
-                        Learn about our mission, vision, and the values that drive us.
+                          Learn about our mission, vision, and the values that drive us.
                         </p>
                       </Link>
                     </NavigationMenuLink>
@@ -364,7 +374,6 @@ export default function HomeHero({
                       key={item.href}
                       title={item.title}
                       href={item.href}
-                      locale={locale}
                     >
                       {item.description}
                     </ListItem>
@@ -375,15 +384,15 @@ export default function HomeHero({
 
             {/* Our Approach - Direct Link */}
             <NavigationMenuItem>
-              <Link href={`/${locale}/our-approach`} passHref>
-                <NavigationMenuLink 
+              <Link href={`/our-approach`} passHref>
+                <NavigationMenuLink
                   className={`${textColor} block px-4 py-2 text-base font-medium hover:text-accent-foreground`}
                 >
                   {dict.navigation?.our_approach || "Our Approach"}
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
-            
+
             {/* Programs */}
             <NavigationMenuItem>
               <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
@@ -395,14 +404,14 @@ export default function HomeHero({
                     <NavigationMenuLink asChild>
                       <Link
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/projects`}
+                        href={`/projects`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
                           Our Projects
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
-                            Innovative initiatives driving Africa’s transformation through technology, youth empowerment, and sustainable development.
-                            </p>
+                          Innovative initiatives driving Africa’s transformation through technology, youth empowerment, and sustainable development.
+                        </p>
                       </Link>
                     </NavigationMenuLink>
                   </li>
@@ -411,7 +420,6 @@ export default function HomeHero({
                       key={item.href}
                       title={item.title}
                       href={item.href}
-                      locale={locale}
                     >
                       {item.description}
                     </ListItem>
@@ -419,7 +427,7 @@ export default function HomeHero({
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>
-        
+
             {/* News & Updates */}
             <NavigationMenuItem>
               <NavigationMenuTrigger className={`${textColor} text-base font-medium`}>
@@ -431,10 +439,10 @@ export default function HomeHero({
                     <NavigationMenuLink asChild>
                       <Link
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/newsroom`}
+                        href={`/newsroom`}
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
-                         News & Updates
+                          News & Updates
                         </div>
                         <p className="text-sm leading-tight text-muted-foreground">
                           Stay informed about our recent activities, projects,
@@ -448,7 +456,6 @@ export default function HomeHero({
                       key={item.href}
                       title={item.title}
                       href={item.href}
-                      locale={locale}
                     >
                       {item.description}
                     </ListItem>
@@ -461,20 +468,20 @@ export default function HomeHero({
       </div>
     );
   };
-  
+
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
       <div className="fixed inset-0 z-50 bg-white w-screen h-screen overflow-y-auto md:hidden">
         <div className="flex justify-between items-center px-4 py-4 border-b">
-          <Link href={`/${locale}`} className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
+          <Link href={`/`} className="relative z-50 flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="relative h-14 w-24">
               <Image
                 src="/images/logo.png"
                 alt="GanzAfrica"
                 fill
                 sizes="(max-width: 768px) 300px, 200px"
-                className="object-contain"
+                className="object-contain border"
                 priority
               />
             </div>
@@ -506,7 +513,7 @@ export default function HomeHero({
                 {aboutItems.map((item) => (
                   <Link
                     key={item.href}
-                    href={`/${locale}${item.href}`}
+                    href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
@@ -522,7 +529,7 @@ export default function HomeHero({
 
           {/* Our Approach - Direct Link */}
           <Link
-            href={`/${locale}/our-approach`}
+            href={`/our-approach`}
             className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
             onClick={() => setIsMobileMenuOpen(false)}
             prefetch={true}
@@ -546,7 +553,7 @@ export default function HomeHero({
                 {programsItems.map((item) => (
                   <Link
                     key={item.href}
-                    href={`/${locale}${item.href}`}
+                    href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
@@ -574,7 +581,7 @@ export default function HomeHero({
                 {newsItems.map((item) => (
                   <Link
                     key={item.href}
-                    href={`/${locale}${item.href}`}
+                    href={resolveHref(item.href)}
                     className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
@@ -587,16 +594,17 @@ export default function HomeHero({
           </div>
 
           {/* Add sign in button at the bottom */}
-          <div className="mt-auto pt-6 border-t">
-            <Link href={`/${locale}/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
-              <Button
-                size="lg"
-                className="w-full bg-primary-green hover:bg-primary-green/90 text-white"
-              >
-                {dict?.cta?.sign_in || "Sign In"}
-              </Button>
-            </Link>
-          </div>
+          {/* <div className="mt-auto pt-6 border-t">*/}
+            {/*  <Link href={`/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>*/}
+            {/*  <Button*/}
+            {/*    size="lg"*/}
+            {/*    className="w-full bg-primary-green hover:bg-primary-green/90 text-white"*/}
+            {/*  >*/}
+            {/*    {dict?.cta?.sign_in || "Sign In"}*/}
+            {/*  </Button>*/}
+            {/*</Link>*/}
+            {/*   <LanguageSwitcher/>*/}
+           {/*</div>*/}
         </nav>
       </div>
     );
@@ -613,9 +621,9 @@ export default function HomeHero({
         <div className="container min-w-full py-0">
           <div className="flex h-20 items-stretch justify-between relative">
             {/* Logo */}
-            <div className="bg-white rounded-tr-none rounded-br-2xl  min-h-full w-32 md:w-52 flex items-center p-8">
+            <div className="bg-white rounded-tr-none rounded-br-2xl  min-h-full w-32 md:w-52 flex justify-center items-center p-8">
               <Link
-                href={`/${locale}`}
+                href={`/`}
                 className="relative z-50 flex items-center gap-2"
                 prefetch={true}
               >
@@ -639,14 +647,6 @@ export default function HomeHero({
             <div className="bg-white rounded-tl-none rounded-bl-2xl min-h-full p-4 w-auto flex items-center">
               <div className="flex items-center gap-2">
                 <LanguageSwitcher />
-                <Link href={`/${locale}/login`} className="hidden md:block">
-                  <Button
-                    size="sm"
-                    className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
-                  >
-                    {dict?.cta?.sign_in || "Sign In"}
-                  </Button>
-                </Link>
                 <div className="md:hidden">
                   <Button
                     variant="ghost"
@@ -655,7 +655,7 @@ export default function HomeHero({
                       "hover:bg-[#F5F5F5] transition-colors",
                       !animationStarted ||
                         navRef.current?.getAttribute("data-overlay-passed") !==
-                          "true"
+                        "true"
                         ? "text-white"
                         : "text-black",
                     )}
@@ -681,7 +681,8 @@ export default function HomeHero({
       {/* Video background container */}
       <div
         ref={videoContainerRef}
-        className="absolute inset-x-0 z-10 overflow-hidden"
+        // ="absolute inset-0 z-0 md:z-10 overflow-hidden"
+        className="absolute inset-x-0 z-10 overflow-hidden hidden md:block"
         style={{
           height: "100%",
           bottom: 0,
@@ -716,9 +717,9 @@ export default function HomeHero({
       {/* Initial content */}
       <div
         ref={initialContentRef}
-        className="absolute inset-0 flex items-center justify-center z-30"
+        className="absolute inset-0 flex items-center top-52 justify-center z-30 hidden md:block"
       >
-        <div className="text-center text-white mt-16">
+        <div className="text-center text-white mt-20">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
             {dict?.home?.hero?.title ||
               "Sustainable Solutions for Africa's Future"}
@@ -731,7 +732,7 @@ export default function HomeHero({
       </div>
 
       {/* SVG definitions */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 z-0 pointer-events-none bg-primary-green">
         <svg className="absolute inset-0 w-full h-full">
           <defs>
             <clipPath id="hero-clip" clipPathUnits="objectBoundingBox">
@@ -744,6 +745,7 @@ export default function HomeHero({
       {/* White overlay */}
       <div
         ref={whiteOverlayRef}
+            // className="absolute inset-0 bg-white z-30 hidden md:block"
         className="absolute inset-0 bg-white z-30"
         style={{
           transform: "translateY(-100%)",
@@ -754,30 +756,58 @@ export default function HomeHero({
       {/* Final content */}
       <div
         ref={finalContentRef}
-        className="absolute inset-0 z-40 opacity-0 pt-24"
+        className="absolute inset-0 z-40 opacity-0 pt-24 flex flex-col items-center md:items-start justify-center md:justify-start"
       >
-        <div className="container mx-auto px-4 text-center mt-12 sm:mt-16 md:mt-20">
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6">
-    <span className="text-primary-green">
-      {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
-      <br />
-      {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
-    </span>{" "}
+        <div className="container mx-auto px-4 text-center mt-10 sm:mt-20 md:mt-20 hidden md:block">
+          <h1 className="text-2xl lg:text-4xl font-bold mb-4 sm:mb-6">
+            <span className="text-primary-green">
+              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
+              <br />
+              {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
+            </span>{" "}
             <span className="text-primary-orange">
-      {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
+              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
               {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
-    </span>
+            </span>
           </h1>
 
-          <p className="text-xs sm:text-sm md:text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800">
+          <p className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800">
             {dict?.home?.hero?.subtitle ||
-                "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
+              "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
           </p>
 
-          <Link href={`/${locale}/about/who-we-are`} prefetch={true}>
+          <Link href={`/about/who-we-are`} prefetch={true}>
             <Button
-                size="lg"
-                className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base"
+              size="lg"
+              className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base"
+            >
+              {dict?.cta?.discover_more || "Discover More"}
+            </Button>
+          </Link>
+        </div>
+        {/* MOBILE */}
+        <div className="container mx-auto px-4 text-center block md:hidden">
+          <h1 className="text-5xl lg:text-4xl font-bold mb-4 sm:mb-6">
+            <span className="text-primary-green">
+              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
+              <br />
+              {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
+            </span>{" "}
+            <span className="text-primary-orange">
+              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
+              {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
+            </span>
+          </h1>
+
+          <p className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800">
+            {dict?.home?.hero?.subtitle ||
+              "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
+          </p>
+
+          <Link href={`/about/who-we-are`} prefetch={true}>
+            <Button
+              size="lg"
+              className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
             >
               {dict?.cta?.discover_more || "Discover More"}
             </Button>
@@ -787,25 +817,38 @@ export default function HomeHero({
         {/* Leaves */}
         <div className="absolute -left-1 top-1/3 transform rotate-[31.83deg] -translate-x-1/4 z-50 w-0 sm:w-[100px] md:w-[150px] lg:w-[200px] hidden sm:block aspect-square">
           <Image
-              src="/images/leaf.png"
-              alt="Decorative leaf"
-              fill
-              className="object-contain"
-              priority
+            src="/images/leaf.png"
+            alt="Decorative leaf"
+            fill
+            className="object-contain"
+            priority
           />
         </div>
 
         <div className="absolute -right-1 top-1/4 rotate-[-60deg] transform translate-x-1/4 z-50 w-0 sm:w-[100px] md:w-[150px] lg:w-[200px] hidden sm:block aspect-square overflow-hidden">
           <div className="relative w-full h-full">
             <Image
-                src="/images/leaf.png"
-                alt="Decorative leaf"
-                fill
-                className="object-contain rotate-180"
-                priority
+              src="/images/leaf.png"
+              alt="Decorative leaf"
+              fill
+              className="object-contain rotate-180"
+              priority
             />
           </div>
         </div>
+      </div>
+
+      {/* Overlay video above all content */}
+      <div className="pointer-events-none absolute inset-0 z-60">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover opacity-30"
+        >
+          <source src="/videos/hero-video.mp4" type="video/mp4" />
+        </video>
       </div>
     </section>
   );

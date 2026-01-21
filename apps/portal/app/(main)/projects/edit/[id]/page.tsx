@@ -73,6 +73,7 @@ const EditProjectPage = () => {
     end_date: '',
     category_id: '',
     location: '',
+    is_published: false,
     goals: {
       items: []
     },
@@ -141,8 +142,6 @@ const EditProjectPage = () => {
           throw new Error("Invalid project data structure");
         }
         
-        console.log('Fetched project data:', projectData);
-        
         // Transform project data into form data
         const processedFormData = {
           name: projectData.name || '',
@@ -152,6 +151,7 @@ const EditProjectPage = () => {
           end_date: projectData.end_date ? new Date(projectData.end_date).toISOString().split('T')[0] : '',
           category_id: projectData.category_id ? projectData.category_id.toString() : '',
           location: projectData.location || '',
+          is_published: projectData.is_published || false,
           goals: {
             items: Array.isArray(projectData.goals?.items) ? projectData.goals.items : []
           },
@@ -222,7 +222,6 @@ const EditProjectPage = () => {
         // Fetch partners
         try {
           const partnersResponse = await apiClient.get('/partners');
-          console.log('Partners response:', partnersResponse.data);
 
           // Extract partners array
           if (partnersResponse.data && Array.isArray(partnersResponse.data.partners)) {
@@ -241,7 +240,6 @@ const EditProjectPage = () => {
         // Fetch teams
         try {
           const teamsResponse = await apiClient.get('/teams');
-          console.log('Teams response:', teamsResponse.data);
 
           // Check the structure of the response and extract teams array
           let allTeamMembers = [];
@@ -277,7 +275,8 @@ const EditProjectPage = () => {
             };
           });
 
-          // Filter team members with team_type of "team" or "fellow" (case-insensitive)
+          // Filter team members - ONLY show "Our Team" or "Fellow/Fellows" (case-insensitive)
+          // Strict filtering: no fallback, only show matching team types
           const filtered = processedMembers.filter(member => {
             // Handle team_type as an object or string - ensure we have a string before calling toLowerCase()
             let teamTypeName = '';
@@ -288,23 +287,23 @@ const EditProjectPage = () => {
               teamTypeName = member.team_type.name;
             }
 
-            // Safely convert to lowercase if teamTypeName is a string
-            const teamTypeNameLower = typeof teamTypeName === 'string' ? teamTypeName.toLowerCase() : '';
+            // If no team_type found, exclude this member
+            if (!teamTypeName) {
+              return false;
+            }
 
-            return teamTypeNameLower === "team" || teamTypeNameLower === "fellow";
+            // Safely convert to lowercase if teamTypeName is a string
+            const teamTypeNameLower = typeof teamTypeName === 'string' ? teamTypeName.toLowerCase().trim() : '';
+
+            // Match "Our Team" or "Fellow/Fellows" (case-insensitive) - handle both singular and plural
+            return teamTypeNameLower === "our team" || 
+                   teamTypeNameLower === "fellow" || 
+                   teamTypeNameLower === "fellows";
           });
 
-          console.log('Filtered team members:', filtered);
-
-          if (filtered.length === 0) {
-            // If no filtered results, include all team members as fallback
-            console.log('No filtered team members found, using all members as fallback');
-            setFilteredTeamMembers(processedMembers);
-            setUsers(processedMembers);
-          } else {
-            setFilteredTeamMembers(filtered);
-            setUsers(filtered);
-          }
+          // Always use filtered results only - never show all members as fallback
+          setFilteredTeamMembers(filtered);
+          setUsers(filtered);
         } catch (error) {
           console.error('Error fetching teams:', error);
           setTeams([]);
@@ -1217,6 +1216,7 @@ const EditProjectPage = () => {
     end_date: string;
     category_id: number;
     location: string;
+    is_published: boolean;
     goals: {
       items: Array<{
         id: string;
@@ -1277,6 +1277,7 @@ const EditProjectPage = () => {
       const submissionData: ProjectData = {
         ...formData,
         category_id: formData.category_id ? parseInt(formData.category_id as string, 10) : 0,
+        is_published: formData.is_published || false,
         members: formData.members.map(member => ({
           ...(typeof member === 'object' && member !== null ? member : {}),
           team_id: typeof member.team_id === 'string' ? parseInt(member.team_id, 10) : member.team_id,
@@ -1285,12 +1286,9 @@ const EditProjectPage = () => {
         })),
       };
       
-      console.log('Submitting updated project data:', submissionData);
-      
       // Submit to API
       const response = await apiClient.put(`/projects/${projectId}`, submissionData);
       
-      console.log('Project updated successfully:', response.data);
       setSuccess(true);
       
       // Redirect to project detail
@@ -1802,7 +1800,6 @@ const EditProjectPage = () => {
                                   )}
                                   <span>
                                     {member.name || `Team Member ${member.id}`}
-                                    {member.position && ` - ${member.position}`}
                                   </span>
                                 </div>
                               </CommandItem>
@@ -2428,6 +2425,34 @@ const EditProjectPage = () => {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Publish Status - Moved down and made more visible */}
+        <div className="p-6 border-t border-gray-200 bg-gray-50">
+          <div className="flex justify-end">
+            <div className="max-w-2xl">
+              <div className="flex items-start space-x-3 p-4 bg-white border-2 border-gray-300 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="is_published"
+                  name="is_published"
+                  checked={formData.is_published}
+                  onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+                  className="w-5 h-5 mt-0.5 text-green-600 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                />
+                <div className="flex-1">
+                  <label htmlFor="is_published" className="cursor-pointer">
+                    <span className="text-base font-semibold text-gray-900 block mb-1">
+                      Publish to Website
+                    </span>
+                    <span className="text-sm text-gray-600 block">
+                      Uncheck to save as unpublished - project will not appear on the website
+                    </span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         </div>

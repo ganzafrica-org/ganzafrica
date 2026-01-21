@@ -1,15 +1,28 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@workspace/ui'],
+  transpilePackages: ["@workspace/ui"],
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**.digitaloceanspaces.com",
       },
       {
-        protocol: 'http',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**.ganzafrica.org",
+      },
+      {
+        protocol: "https",
+        hostname: "ganzafrica.org",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      // Allow localhost for development
+      {
+        protocol: "http",
+        hostname: "localhost",
       },
     ],
   },

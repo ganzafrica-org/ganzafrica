@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Container from "@/components/layout/container";
 import Link from "next/link";
+import { trackEvent } from "@/components/analytics/google-analytics";
+
+const SafeImage = Image as unknown as React.ComponentType<any>;
+const SafeLink = Link as unknown as React.ComponentType<any>;
 
 // Animation variants
 const fadeIn = {
@@ -43,7 +47,7 @@ const imageVariantRight = {
   },
 };
 
-const ApproachSection = () => {
+const ApproachSection = (): JSX.Element => {
   return (
     <section className="pt-16 pb-0 bg-gray-50">
       <Container>
@@ -65,7 +69,10 @@ const ApproachSection = () => {
               <br />
               We work collaboratively with local communities, governments, and private sector partners to transform fragmented value chains into integrated, resilient systems that benefit all stakeholders — especially smallholder farmers and rural communities who are often left behind.
             </p>
-            <Link href={`/${"locale"}/projects`}>
+            <SafeLink href={`/${"locale"}/projects`} onClick={() => trackEvent('projects_cta_click', {
+              source_page: 'our_approach',
+              section: 'approach_section'
+            })}>
               <motion.button
                 className="bg-primary-green hover:bg-green-700 text-white px-6 py-3 rounded-md font-medium transition-colors"
                 whileHover={{ scale: 1.05 }}
@@ -73,7 +80,7 @@ const ApproachSection = () => {
               >
                 Checkout our projects
               </motion.button>
-            </Link>
+            </SafeLink>
           </motion.div>
 
           {/* Right image - now 50% width */}
@@ -87,7 +94,7 @@ const ApproachSection = () => {
             <div className="relative h-full">
               <div className="absolute inset-2.5 rounded-[20px] border-4 border-white z-10"></div>
               <div className="relative overflow-hidden h-full rounded-[20px]">
-                <Image
+                <SafeImage
                   src="/images/harvest2.png"
                   alt="Food in hands"
                   fill

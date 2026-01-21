@@ -209,3 +209,26 @@ DROP TRIGGER IF EXISTS cleanup_expired_password_reset_tokens_trigger ON password
 CREATE TRIGGER cleanup_expired_password_reset_tokens_trigger
     AFTER UPDATE ON password_reset_tokens
 EXECUTE FUNCTION cleanup_expired_password_reset_tokens();
+
+-- Project overdue status trigger
+CREATE OR REPLACE FUNCTION update_overdue_projects_trigger()
+    RETURNS TRIGGER AS $overdue_projects_func$
+BEGIN
+    -- Update projects that are past their end date and not completed
+    UPDATE projects 
+    SET status = 'overdue', updated_at = NOW()
+    WHERE end_date < NOW() 
+      AND status != 'completed' 
+      AND status != 'overdue';
+    
+    RETURN NULL;
+END;
+$overdue_projects_func$ LANGUAGE plpgsql;
+
+-- Create a trigger that runs on a schedule (this would typically be set up as a cron job)
+-- For now, we'll create a trigger that runs on project updates
+DROP TRIGGER IF EXISTS update_overdue_projects_trigger ON projects;
+CREATE TRIGGER update_overdue_projects_trigger
+    AFTER UPDATE ON projects
+    FOR EACH STATEMENT
+EXECUTE FUNCTION update_overdue_projects_trigger();

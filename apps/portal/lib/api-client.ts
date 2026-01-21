@@ -14,6 +14,7 @@ const apiClient = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 30000, // 30 seconds timeout for requests
 });
 
 // Helper to check if token is expired
@@ -27,49 +28,19 @@ const isTokenExpired = (token: string): boolean => {
     }
 };
 
-// Helper to log token payload for debugging
-const logTokenPayload = (token: string, label = 'Token payload'): void => {
-    try {
-        const decoded = jwtDecode(token);
-        console.log(label, decoded);
-    } catch (error) {
-        console.error('Failed to decode token for logging:', error);
-    }
-};
-
 // Request interceptor for adding tokens or other common headers
 apiClient.interceptors.request.use(
     async (config) => {
         let token = localStorage.getItem('accessToken');
-        console.log('Token exists:', !!token);
-        
-        if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                if (decoded.exp) {
-                    console.log('Token expires at:', new Date(decoded.exp * 1000).toLocaleString());
-                } else {
-                    console.warn('Token does not have an expiration time.');
-                }
-                console.log('Current time:', new Date().toLocaleString());
-                console.log('Token is expired:', isTokenExpired(token));
-            } catch (error) {
-                console.error('Failed to decode token:', error);
-            }
-        }
         
         // If token exists but is expired, try to refresh it first
         if (token && isTokenExpired(token)) {
-            console.log('Attempting to refresh token...');
             // Rest of refresh logic...
         }
         
         // Add token to headers if it exists
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
-            console.log('Authorization header set to:', config.headers['Authorization']);
-        } else {
-            console.log('No token available to set Authorization header');
         }
         
         return config;
@@ -84,14 +55,11 @@ apiClient.interceptors.response.use(
         if (response.config.url?.endsWith('/login')) {
             if (response.data.token) {
                 localStorage.setItem('accessToken', response.data.token);
-                logTokenPayload(response.data.token, 'Login token payload:');
                 
                 // Store refresh token if provided
                 if (response.data.refreshToken) {
                     localStorage.setItem('refreshToken', response.data.refreshToken);
                 }
-            } else {
-                console.warn('Login response missing token:', response.data);
             }
         }
         return response;
@@ -118,5 +86,20 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
     }
 );
+
+// Profile API functions
+export const profileApi = {
+  // Get current user's profile
+  getCurrentProfile: async () => {
+    const response = await apiClient.get('/users/profile/me');
+    return response.data;
+  },
+
+  // Update current user's profile
+  updateProfile: async (profileData: any) => {
+    const response = await apiClient.put('/users/profile/me', profileData);
+    return response.data;
+  },
+};
 
 export default apiClient;

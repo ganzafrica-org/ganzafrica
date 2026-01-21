@@ -68,7 +68,6 @@ export default function TestimonialsPage() {
       const response = await apiClient.get('/testimonials');
       setTestimonials(response.data.testimonials || []);
     } catch (error: any) {
-      console.error('Error fetching testimonials:', error);
       toast.error(error.response?.data?.message || 'Failed to load testimonials');
     } finally {
       setIsLoading(false);
@@ -129,7 +128,6 @@ export default function TestimonialsPage() {
       // Show success message
       toast.success('Testimonial deleted successfully');
     } catch (error: any) {
-      console.error('Error deleting testimonial:', error);
       toast.error(error.response?.data?.message || 'Failed to delete testimonial');
     }
   };
@@ -148,7 +146,6 @@ export default function TestimonialsPage() {
 
   // Improved image error handling
   const handleImageError = (imageUrl: string) => {
-    console.error(`Failed to load image: ${imageUrl}`);
     setImageErrors(prev => ({ ...prev, [imageUrl]: true }));
   };
 

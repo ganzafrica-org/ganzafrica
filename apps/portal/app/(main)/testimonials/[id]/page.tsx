@@ -36,7 +36,6 @@ export default function TestimonialViewPage({ params }: { params: { id: string }
         const response = await apiClient.get(`/testimonials/${params.id}`);
         setTestimonial(response.data.testimonial);
       } catch (error: any) {
-        console.error('Error fetching testimonial:', error);
         toast.error(error.response?.data?.message || 'Failed to load testimonial');
         router.push('/testimonials');
       } finally {

@@ -38,6 +38,14 @@ export function getFileSubdirectory(mimetype: string): string {
   return ""; // Default case, should not happen due to file filter
 }
 
+export function getFileUrl(location: string): string {
+  if (env.DO_SPACES_CDN_URL) {
+    return location.replace(env.DO_SPACES_ENDPOINT.replace(/\/$/, ""), 
+ env.DO_SPACES_CDN_URL.replace(/\/$/, ""));
+  }
+  return location;
+}
+
 const spacesStorage = multerS3({
   s3: s3Client,
   bucket: env.DO_SPACES_BUCKET,

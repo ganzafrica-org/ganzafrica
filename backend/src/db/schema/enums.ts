@@ -28,6 +28,7 @@ export const projectStatusEnum = pgEnum("project_status", [
   "completed",
   "cancelled",
   "on_hold",
+  "overdue",
 ]);
 // Media tag enum
 export const mediaTagEnum = pgEnum("media_tag", [
@@ -166,4 +167,26 @@ export const contextTypeEnum = pgEnum("context_type", [
   "department",
   "personal_development",
   "other",
+]);
+
+// Task team enums
+export const taskTeamRoleEnum = pgEnum("task_team_role", [
+  "owner",
+  "admin",
+  "member",
+  "viewer",
+]);
+
+export const taskTeamStatusEnum = pgEnum("task_team_status", [
+  "active",
+  "inactive",
+  "archived",
+]);
+
+export const taskProjectStatusEnum = pgEnum("task_project_status", [
+  "planning",
+  "active",
+  "on_hold",
+  "completed",
+  "cancelled",
 ]);

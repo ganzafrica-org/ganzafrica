@@ -5,7 +5,7 @@ interface DecoratedHeadingProps {
   className?: string;
 }
 
-export function DecoratedHeading({ children, className = '' }: DecoratedHeadingProps) {
+export function DecoratedHeading({ children, className = '' }: DecoratedHeadingProps): JSX.Element {
   return (
     <h2 className={`text-3xl font-bold text-center mb-8 relative ${className}`}>
       <span className="relative z-10">{children}</span>

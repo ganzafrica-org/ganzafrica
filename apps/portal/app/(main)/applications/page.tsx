@@ -18,12 +18,23 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  ClipboardList
+  ClipboardList,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api-client';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@workspace/ui/components/alert-dialog";
 
 const ApplicationsPage = () => {
   const router = useRouter();
@@ -58,6 +69,11 @@ const ApplicationsPage = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [newStatus, setNewStatus] = useState('');
+  
+  // State for delete confirmation dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [applicationToDelete, setApplicationToDelete] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
@@ -120,28 +136,8 @@ const ApplicationsPage = () => {
         router.push(`/applications/${applicationId}`);
         break;
       case 'delete':
-        if (window.confirm('Are you sure you want to delete this application?')) {
-          try {
-            setLoading(true);
-            await apiClient.delete(`/applications/${applicationId}`);
-            
-            // Remove from local state
-            setApplications(prevApplications => 
-              prevApplications.filter(app => app.id !== applicationId)
-            );
-            
-            toast.success('Application deleted successfully');
-            
-            // Refresh the applications list after deletion
-            const updatedPage = applications.length === 1 && page > 1 ? page - 1 : page;
-            setPage(updatedPage);
-          } catch (error) {
-            console.error('Error deleting application:', error);
-            toast.error(`Failed to delete application: ${error.message}`);
-          } finally {
-            setLoading(false);
-          }
-        }
+        setApplicationToDelete(applicationId);
+        setIsDeleteDialogOpen(true);
         break;
       case 'update':
         // Navigate to update page
@@ -154,6 +150,38 @@ const ApplicationsPage = () => {
         break;
       default:
         break;
+    }
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!applicationToDelete) return;
+
+    try {
+      setLoading(true);
+      await apiClient.delete(`/applications/${applicationToDelete}`);
+      
+      // Close dialog and reset state
+      setIsDeleteDialogOpen(false);
+      setApplicationToDelete(null);
+      
+      // Show success toast
+      toast.success('Application deleted successfully');
+      
+      // Trigger refresh by updating refreshTrigger
+      setRefreshTrigger(prev => prev + 1);
+      
+      // Adjust page if needed (if we deleted the last item on the page)
+      if (applications.length === 1 && page > 1) {
+        setPage(page - 1);
+      }
+    } catch (error: any) {
+      console.error('Error deleting application:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete application. Please try again.');
+      setIsDeleteDialogOpen(false);
+      setApplicationToDelete(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -416,18 +444,13 @@ const ApplicationsPage = () => {
       if (searchTerm) params.search = searchTerm;
       if (activeTab !== 'all') params.type = activeTab;
 
-      console.log('Fetching applications with params:', params);
-
       // Make API request with apiClient
       const response = await apiClient.get('/applications', {
         params
       });
 
-      console.log('API response:', response.data);
-
       // Extract the applications from the response using our helper function
       const applicationsData = extractApplicationsFromResponse(response.data);
-      console.log('Extracted applications:', applicationsData);
 
       // Set the applications with processed data
       setApplications(applicationsData);
@@ -455,7 +478,7 @@ const ApplicationsPage = () => {
   // Fetch applications from API with dependency on relevant state changes
   useEffect(() => {
     fetchApplications();
-  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab]);
+  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, refreshTrigger]);
 
   const filteredApplications = getFilteredApplications();
 
@@ -855,6 +878,37 @@ const ApplicationsPage = () => {
           </div>
         </div>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              Delete Application
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this application? This action cannot be undone and will permanently delete the application and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteDialogOpen(false);
+              setApplicationToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+            >
+              Delete Application
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

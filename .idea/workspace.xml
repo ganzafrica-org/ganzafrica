@@ -5,11 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="42530edf-8064-41f4-890d-b4df3c3495f7" name="Changes" comment="[chore] set up confirm password on register form">
-      <change afterPath="$PROJECT_DIR$/apps/web/components/OurStoryContent.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/app/[locale]/about/our-story/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/app/[locale]/about/our-story/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/app/(main)/about/who-we-are/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/app/(main)/about/who-we-are/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/ContactUsContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/ContactUsContent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/FellowshipPageContent.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/FellowshipPageContent.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/TransformativePartner.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/TransformativePartner.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/google-translate.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/google-translate.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/layout/footer.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/layout/footer.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/layout/navigation.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/layout/navigation.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/sections/food-system/where-we-work-section.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/sections/food-system/where-we-work-section.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/sections/homepage/home-hero.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/sections/homepage/home-hero.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/components/sections/homepage/why-ganzafrica-section.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/components/sections/homepage/why-ganzafrica-section.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
+    <list default="true" id="42530edf-8064-41f4-890d-b4df3c3495f7" name="Changes" comment="[chore] updated upload functionalities to upload and save on digital ocean instead of local disk">
+      <change beforePath="$PROJECT_DIR$/backend/drizzle/meta/_journal.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/drizzle/meta/_journal.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,7 +29,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="feature/homepage" />
+        <entry key="$PROJECT_DIR$" value="dev" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -34,7 +43,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/ganzafrica-org/ganzafrica.git&quot;,
-    &quot;accountId&quot;: &quot;4354877d-7cfc-4765-8c54-a3094d768c60&quot;
+    &quot;accountId&quot;: &quot;3fa7a477-625e-473f-8e07-57fac712e088&quot;
   }
 }</component>
   <component name="KubernetesApiPersistence">{}</component>
@@ -50,31 +59,60 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;fix/responsiveness-404-redirect&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/PC/Desktop/HALL OF FAME/PROJECTS/GANZAFRICA/ganzafrica&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;pnpm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\PC\\Desktop\\HALL OF FAME\\PROJECTS\\GANZAFRICA\\ganzafrica\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "RunOnceActivity.GoLinterPluginOnboarding": "true",
+    "RunOnceActivity.GoLinterPluginStorageMigration": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
     "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "feature/dev-changes",
+    "git-widget-placeholder": "feature/upload-digital-ocean",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/josek/Documents/ganzafrica/apps/web/public/image",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/josek/GolandProjects/ganzafrica",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "pnpm",
     "settings.editor.selected.configurable": "preferences.keymap",
-    "ts.external.directory.path": "C:\\Users\\josek\\Documents\\ganzafrica\\node_modules\\typescript\\lib"
+    "ts.external.directory.path": "C:\\Users\\josek\\GolandProjects\\ganzafrica\\node_modules\\typescript\\lib"
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "postgresql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\josek\Documents\ganzafrica\apps\web\public\image" />
@@ -92,12 +130,52 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-d297c17c1fbd-85c80fddc9a6-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-243.23654.119" />
-        <option value="bundled-js-predefined-d6986cc7102b-822845ee3bb5-JavaScript-GO-243.23654.119" />
+        <option value="bundled-gosdk-3b128438d3f6-4b567d62c776-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-251.25410.140" />
+        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-GO-251.25410.140" />
+        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10" />
       </set>
     </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="42530edf-8064-41f4-890d-b4df3c3495f7" name="Changes" comment="[chore] set up confirm password on register form" />
+      <created>1763840275888</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1763840275888</updated>
+      <workItem from="1763840277495" duration="2729000" />
+      <workItem from="1763888513180" duration="201000" />
+      <workItem from="1764317089189" duration="5576000" />
+      <workItem from="1764324807136" duration="7206000" />
+      <workItem from="1764568261868" duration="1793000" />
+      <workItem from="1764609819267" duration="115000" />
+      <workItem from="1764657158438" duration="17279000" />
+      <workItem from="1764740890629" duration="113000" />
+      <workItem from="1764832533018" duration="18321000" />
+      <workItem from="1764600549543" duration="197000" />
+      <workItem from="1765789712352" duration="185000" />
+      <workItem from="1766067544254" duration="2531000" />
+      <workItem from="1766071109159" duration="47000" />
+      <workItem from="1766071325182" duration="1438000" />
+      <workItem from="1766257806023" duration="45000" />
+      <workItem from="1766393606020" duration="22000" />
+      <workItem from="1767598615821" duration="3145000" />
+      <workItem from="1767601842291" duration="16576000" />
+      <workItem from="1767684958326" duration="12737000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="42530edf-8064-41f4-890d-b4df3c3495f7" name="Changes" comment="[chore] set up confirm password on register form" />
+      <created>1757928031961</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1757928031961</updated>
+    </task>
+    <servers />
+  </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
@@ -120,9 +198,71 @@
     <MESSAGE value="[chore] setting up the database migration phase 5" />
     <MESSAGE value="[chore] setting up web structure with translations" />
     <MESSAGE value="[chore] set up confirm password on register form" />
-    <option name="LAST_COMMIT_MESSAGE" value="[chore] set up confirm password on register form" />
+    <MESSAGE value="[chore] updated upload functionalities to upload and save on digital ocean instead of local disk" />
+    <option name="LAST_COMMIT_MESSAGE" value="[chore] updated upload functionalities to upload and save on digital ocean instead of local disk" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/layout/navigation.tsx</url>
+          <line>203</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/ProjectsPageContent.tsx</url>
+          <line>310</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/ContactUsContent.tsx</url>
+          <line>108</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/ContactUsContent.tsx</url>
+          <line>321</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/ContactUsContent.tsx</url>
+          <line>138</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/sections/homepage/fellows-section.tsx</url>
+          <line>242</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/sections/homepage/ganzafrica-unique-section.tsx</url>
+          <line>20</line>
+          <option name="timeStamp" value="15" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/sections/homepage/fellows-section.tsx</url>
+          <line>37</line>
+          <option name="timeStamp" value="18" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/components/AlumniPageContent.tsx</url>
+          <line>422</line>
+          <option name="timeStamp" value="22" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/app/(main)/about/who-we-are/page.tsx</url>
+          <line>503</line>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/apps/web/app/(main)/about/who-we-are/page.tsx</url>
+          <line>580</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

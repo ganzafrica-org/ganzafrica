@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
 
 // Animation variants
@@ -65,7 +66,7 @@ const partnerLogos = [
   },
 ];
 
-const PartnersSection = () => {
+const PartnersSection = (): JSX.Element => {
   return (
     <section className="py-16 bg-white">
       <Container>
@@ -105,7 +106,7 @@ const PartnersSection = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Image
+                <SafeImage
                   src={logo.src}
                   alt={logo.name}
                   width={150}

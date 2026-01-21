@@ -6,23 +6,22 @@ import { Input } from "@workspace/ui/components/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Leaf, Send, CheckCircle2, Building2, AlertCircle } from "lucide-react";
 import { safeAccess } from "@/lib/utils/safeAccess";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/lib/api-client";
+import { useDict } from '@/context/dictionary';
+import { trackFormSubmission, trackVideoEvent } from "@/components/analytics/google-analytics";
 
-interface ContactUsContentProps {
-    dict: any;
-}
-
-const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
+const ContactUsContent: React.FC = () => {
+    const dict = useDict();
     const [formState, setFormState] = useState({
         name: "",
         email: "",
         phone: "",
         message: "",
-        location: "rwanda", 
+        location: "rwanda",
     });
 
-    const [showPointer, setShowPointer] = useState(true);
+    const [isPointerActive, setIsPointerActive] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [formSuccess, setFormSuccess] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
@@ -44,13 +43,17 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
         e.preventDefault();
         setSubmitting(true);
         setFormError(null);
-        
+
         try {
             // Send to the API endpoint
             const response = await apiClient.post('/contacts', formState, { timeout: 10000 });
-            
+
             // Show success message and reset form
             setFormSuccess(true);
+
+            // Track successful form submission
+            trackFormSubmission('contact_form', true);
+
             setFormState({
                 name: "",
                 email: "",
@@ -58,15 +61,19 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                 message: "",
                 location: "rwanda",
             });
-            
+
             // Reset success message after 5 seconds
             setTimeout(() => {
                 setFormSuccess(false);
             }, 5000);
-            
+
         } catch (error: any) {
             console.error("Error submitting contact form:", error);
-            
+
+            // Track failed form submission
+            trackFormSubmission('contact_form', false);
+
+
             // Set appropriate error message
             if (error.response && error.response.data && error.response.data.message) {
                 setFormError(error.response.data.message);
@@ -80,27 +87,34 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
 
     const handleNewsletterSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!newsletterEmail) return;
-        
+
         setNewsletterError(null);
-        
+
         try {
             const response = await apiClient.post('/newsletter/subscribe', {
                 email: newsletterEmail
             });
-            
+
             // Show success message and reset form
             setNewsletterSuccess(true);
+
+            // Track successful newsletter subscription
+            trackFormSubmission('newsletter_subscribe_contact', true);
+
             setNewsletterEmail("");
-            
+
             // Reset success message after 5 seconds
             setTimeout(() => {
                 setNewsletterSuccess(false);
             }, 5000);
         } catch (error: any) {
             console.error("Error subscribing to newsletter:", error);
-            
+
+            // Track failed newsletter subscription
+            trackFormSubmission('newsletter_subscribe_contact', false);
+
             // Set appropriate error message
             if (error.response && error.response.data && error.response.data.message) {
                 setNewsletterError(error.response.data.message);
@@ -108,10 +122,6 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                 setNewsletterError("Failed to subscribe. Please try again later.");
             }
         }
-    };
-
-    const handlePointerClick = () => {
-        setShowPointer(false);
     };
 
     const fadeInUp = {
@@ -137,7 +147,7 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Hero Section with Background Image */}
-            <motion.section 
+            <motion.section
                 className="relative h-[400px] md:h-[500px]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -150,6 +160,9 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                         muted
                         playsInline
                         className="w-full h-full object-cover"
+                        onPlay={() => trackVideoEvent('play', 'Contact Page Hero Video')}
+                        onPause={() => trackVideoEvent('pause', 'Contact Page Hero Video')}
+                        onEnded={() => trackVideoEvent('complete', 'Contact Page Hero Video')}
                     >
                         <source src="/videos/hero-video.mp4" type="video/mp4" />
                     </video>
@@ -157,21 +170,21 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                 </div>
                 <div className="relative z-10 h-full flex items-center justify-center">
                     <div className="container mx-auto px-4 text-center">
-                        <motion.h1 
+                        <motion.h1
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
                             className="text-3xl md:text-5xl font-bold text-white mb-4"
                         >
-                            Get in <span className="text-[#FDB022]">Touch</span> With Our Team
+                            {dict?.contact?.hero?.title || "Get in "} <span className="text-[#FDB022]">{dict?.contact?.hero?.highlight || "Touch"}</span> {dict?.contact?.hero?.subtitle || "With Our Team"}
                         </motion.h1>
-                        <motion.p 
+                        <motion.p
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
                             className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6"
                         >
-                            Have questions or want to learn more about our programs? We're here to help.
+                            {dict?.contact?.hero?.description || "Have questions or want to learn more about our programs? We're here to help."}
                         </motion.p>
                     </div>
                 </div>
@@ -179,52 +192,52 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20">
-                <motion.div 
-                    className="bg-white rounded-xl shadow-xl p-8 md:p-10"
+                <motion.div
+                    className="bg-white rounded-md shadow-xl p-8 md:p-10"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
                 >
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Contact Form */}
-                        <motion.div 
-                            className="space-y-6"
+                        <motion.div
+                            className="space-y-8 flex flex-col justify-center items-start"
                             variants={fadeInUp}
                             initial="hidden"
                             animate="visible"
                         >
-                            <motion.h2 
-                                className="text-2xl font-bold text-[#005c3d] mb-6"
+                            <motion.h2
+                                className="text-2xl font-bold text-[#005c3d] "
                                 variants={itemFadeIn}
                             >
-                                Send Us a Message
+                                {dict?.contact?.form?.title || "Send Us a Message"}
                             </motion.h2>
-                            
+
                             {/* Success Message */}
                             {formSuccess && (
                                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start">
                                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
                                     <div>
-                                        <p className="font-medium">Message sent successfully!</p>
-                                        <p className="text-sm">Thank you for contacting us. We'll get back to you as soon as possible.</p>
+                                        <p className="font-medium">{dict?.contact?.form?.successTitle || "Message sent successfully!"}</p>
+                                        <p className="text-sm">{dict?.contact?.form?.successMessage || "Thank you for contacting us. We'll get back to you as soon as possible."}</p>
                                     </div>
                                 </div>
                             )}
-                            
+
                             {/* Error Message */}
                             {formError && (
                                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
                                     <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
                                     <div>
-                                        <p className="font-medium">Submission failed</p>
+                                        <p className="font-medium">{dict?.contact?.form?.errorTitle || "Submission failed"}</p>
                                         <p className="text-sm">{formError}</p>
                                     </div>
                                 </div>
                             )}
-                            
-                            <motion.form 
-                                onSubmit={handleSubmit} 
-                                className="space-y-6"
+
+                            <motion.form
+                                onSubmit={handleSubmit}
+                                className="space-y-8 w-full"
                                 variants={staggerContainer}
                                 initial="hidden"
                                 animate="visible"
@@ -232,14 +245,14 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Name *
+                                            {dict?.contact?.form?.nameLabel || "Name"} *
                                         </label>
                                         <Input
                                             type="text"
                                             name="name"
                                             value={formState.name}
                                             onChange={handleChange}
-                                            placeholder="Enter your name"
+                                            placeholder={dict?.contact?.form?.namePlaceholder || "Enter your name"}
                                             className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                             required
                                             disabled={submitting}
@@ -247,14 +260,14 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Email *
+                                            {dict?.contact?.form?.emailLabel || "Email"} *
                                         </label>
                                         <Input
                                             type="email"
                                             name="email"
                                             value={formState.email}
                                             onChange={handleChange}
-                                            placeholder="Enter your email"
+                                            placeholder={dict?.contact?.form?.emailPlaceholder || "Enter your email"}
                                             className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                             required
                                             disabled={submitting}
@@ -263,37 +276,37 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Phone
+                                        {dict?.contact?.form?.phoneLabel || "Phone"}
                                     </label>
                                     <Input
                                         type="tel"
                                         name="phone"
                                         value={formState.phone}
                                         onChange={handleChange}
-                                        placeholder="Enter your phone number"
+                                        placeholder={dict?.contact?.form?.phonePlaceholder || "Enter your phone number"}
                                         className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                         disabled={submitting}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Message *
+                                        {dict?.contact?.form?.messageLabel || "Message"} *
                                     </label>
                                     <Textarea
                                         name="message"
                                         value={formState.message}
                                         onChange={handleChange}
-                                        placeholder="How can we help you?"
+                                        placeholder={dict?.contact?.form?.messagePlaceholder || "How can we help you?"}
                                         className="w-full h-40 bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                         required
                                         disabled={submitting}
                                     />
                                 </div>
                                 {/* Hidden input for location value */}
-                                <input 
-                                    type="hidden" 
-                                    name="location" 
-                                    value={formState.location} 
+                                <input
+                                    type="hidden"
+                                    name="location"
+                                    value={formState.location}
                                 />
                                 <Button
                                     type="submit"
@@ -306,11 +319,11 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
-                                            Sending...
+                                            {dict?.contact?.form?.sendingButton || "Sending..."}
                                         </>
                                     ) : (
                                         <>
-                                            Send Message
+                                            {dict?.contact?.form?.sendButton || "Send Message"}
                                             <Send className="h-4 w-4" />
                                         </>
                                     )}
@@ -319,50 +332,50 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                         </motion.div>
 
                         {/* Contact Information */}
-                        <motion.div 
+                        <motion.div
                             className="space-y-8"
                             variants={fadeInUp}
                             initial="hidden"
                             animate="visible"
                             transition={{ delay: 0.3 }}
                         >
-                            <motion.div 
+                            <motion.div
                                 className="bg-[#FFFDEB] rounded-lg p-8"
                                 variants={itemFadeIn}
                             >
                                 <h3 className="text-xl font-bold text-[#005c3d] mb-4">
-                                    Stay Updated
+                                    {dict?.contact?.newsletter?.title || "Stay Updated"}
                                 </h3>
                                 <p className="text-gray-600 mb-6">
-                                    Subscribe to our newsletter to receive updates about our programs, events, and opportunities.
+                                    {dict?.contact?.newsletter?.description || "Subscribe to our newsletter to receive updates about our programs, events, and opportunities."}
                                 </p>
-                                
+
                                 {/* Newsletter Success Message */}
                                 {newsletterSuccess && (
                                     <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start mb-4">
                                         <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
                                         <div>
-                                            <p className="font-medium">Subscribed successfully!</p>
-                                            <p className="text-sm">Thank you for subscribing to our newsletter.</p>
+                                            <p className="font-medium">{dict?.contact?.newsletter?.successTitle || "Subscribed successfully!"}</p>
+                                            <p className="text-sm">{dict?.contact?.newsletter?.successMessage || "Thank you for subscribing to our newsletter."}</p>
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Newsletter Error Message */}
                                 {newsletterError && (
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start mb-4">
                                         <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
                                         <div>
-                                            <p className="font-medium">Subscription failed</p>
+                                            <p className="font-medium">{dict?.contact?.newsletter?.errorTitle || "Subscription failed"}</p>
                                             <p className="text-sm">{newsletterError}</p>
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 <form onSubmit={handleNewsletterSubmit} className="space-y-4">
                                     <Input
                                         type="email"
-                                        placeholder="Enter your email"
+                                        placeholder={dict?.contact?.newsletter?.emailPlaceholder || "Enter your email"}
                                         value={newsletterEmail}
                                         onChange={(e) => setNewsletterEmail(e.target.value)}
                                         className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
@@ -372,13 +385,13 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                         type="submit"
                                         className="w-full bg-[#FDB022] hover:bg-[#E69B1E] text-white px-8 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
                                     >
-                                        Subscribe
+                                        {dict?.contact?.newsletter?.subscribeButton || "Subscribe"}
                                     </Button>
                                 </form>
                             </motion.div>
 
                             {/* Rwanda Office Information */}
-                            <motion.div 
+                            <motion.div
                                 className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden"
                                 variants={itemFadeIn}
                             >
@@ -386,45 +399,51 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                                 <div className="bg-[#005c3d] px-6 py-4">
                                     <div className="flex items-center gap-2 text-white">
                                         <Building2 className="h-5 w-5" />
-                                        <span className="text-sm font-medium">Rwanda Office</span>
+                                        <span className="text-sm font-medium">{dict?.contact?.office?.title || "Rwanda Office"}</span>
                                     </div>
                                 </div>
 
                                 {/* Content */}
                                 <div className="p-6">
                                     <div className="space-y-4">
-                                        <div className="bg-[#005c3d]/5 rounded-lg p-4">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="flex items-center space-x-3 border-r border-gray-200 pr-4">
+                                        <div className="bg-[#005c3d]/5 rounded-md p-4">
+                                            <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-4 ">
+                                                <div className="flex items-center space-x-3 border-0 md:border-r md:border-gray-200 pr-4">
                                                     <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
                                                         <Phone className="h-5 w-5 text-[#005c3d]" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-gray-600">(250) 799 390 199</p>
-                                                        <p className="text-xs text-gray-500">Mon-Fri, 8:00 AM - 5:00 PM</p>
+                                                        <p className="text-gray-600">{dict?.contact?.office?.phone || "(250) 799 390 199"}</p>
+                                                        <p className="text-xs text-gray-500">{dict?.contact?.office?.hours || "Mon-Fri, 8:00 AM - 5:00 PM"}</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center space-x-3 pl-4">
+                                                <div className="bg-red-500 flex items-center space-x-3 pl-0 md:pl-4">
                                                     <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
                                                         <Mail className="h-5 w-5 text-[#005c3d]" />
                                                     </div>
-                                                    <div>
-                                                        <p className="text-gray-600">info@ganzafrica.org</p>
-                                                        <p className="text-xs text-gray-500">Response within 24 hours</p>
+
+                                                    <div className="min-w-0 flex-1 break-words">
+                                                        <p className="text-gray-600 break-words">
+                                                            {dict?.contact?.office?.email || "info@ganzafrica.org"}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 break-words">
+                                                            {dict?.contact?.office?.emailResponse || "Response within 24 hours"}
+                                                        </p>
                                                     </div>
                                                 </div>
+
                                             </div>
                                         </div>
 
-                                        <div className="bg-[#005c3d]/5 rounded-lg p-4">
+                                        <div className="bg-[#005c3d]/5 rounded-md p-4">
                                             <div className="flex items-center space-x-3">
                                                 <div className="flex-shrink-0 bg-[#005c3d]/10 p-2 rounded-full">
                                                     <MapPin className="h-5 w-5 text-[#005c3d]" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-gray-600">27 House, KG 594 St</p>
-                                                    <p className="text-gray-600">Kigali, Rwanda</p>
-                                                    <p className="text-xs text-gray-500">East Africa Regional Hub</p>
+                                                    <p className="text-gray-600">{dict?.contact?.office?.address1 || "27 House, KG 594 St"}</p>
+                                                    <p className="text-gray-600">{dict?.contact?.office?.address2 || "Kigali, Rwanda"}</p>
+                                                    <p className="text-xs text-gray-500">{dict?.contact?.office?.region || "East Africa Regional Hub"}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -436,14 +455,14 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                 </motion.div>
 
                 {/* Map Section */}
-                <motion.div 
+                <motion.div
                     className="mt-8 mb-16"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                 >
-                    <motion.div 
-                        className="h-[400px] w-full rounded-lg overflow-hidden border-2 border-gray-200 relative shadow-lg"
+                    <motion.div
+                        className="h-[400px] w-full rounded-md overflow-hidden border-2 border-gray-200 relative shadow-lg"
                         whileHover={{ scale: 1.01 }}
                         transition={{ duration: 0.3 }}
                     >
@@ -457,36 +476,48 @@ const ContactUsContent: React.FC<ContactUsContentProps> = ({ dict }) => {
                             referrerPolicy="no-referrer-when-downgrade"
                             title="GanzAfrica Rwanda Location"
                         ></iframe>
-                        {showPointer && (
-                            <motion.div 
-                                className="absolute top-[48%] left-[48%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-opacity duration-300"
-                                onClick={handlePointerClick}
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.8, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <motion.div 
-                                    className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-4 border-2 border-[#005c3d] hover:scale-105 transition-transform duration-300"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <div className="flex flex-col items-center space-y-2">
-                                        <div className="flex-shrink-0 bg-white p-2">
-                                            <img 
-                                                src="/images/logo.png" 
-                                                alt="GanzAfrica Logo" 
-                                                className="h-12 w-auto object-contain"
-                                            />
+                        <div className="absolute inset-0 pointer-events-none">
+                            <div
+                                className="absolute top-[38%] left-[52%] w-16 h-16 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+                                onMouseEnter={() => setIsPointerActive(true)}
+                                onMouseLeave={() => setIsPointerActive(false)}
+                                onFocus={() => setIsPointerActive(true)}
+                                onBlur={() => setIsPointerActive(false)}
+                                tabIndex={0}
+                                aria-label={dict?.contact?.office?.mapLabel || "Rwanda Office location"}
+                            />
+
+                            <AnimatePresence>
+                                {isPointerActive && (
+                                    <motion.div
+                                        key="pointer-card"
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="absolute top-[28%] left-[51%] -translate-x-1/2 -translate-y-full pointer-events-none"
+                                    >
+                                        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-4 border-2 border-[#005c3d] w-48 text-center">
+                                            <div className="flex flex-col items-center space-y-2">
+                                                <div className="flex-shrink-0 bg-white p-2">
+                                                    <img
+                                                        src="/images/logo.png"
+                                                        alt="GanzAfrica Logo"
+                                                        className="h-12 w-auto object-contain"
+                                                    />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-medium text-[#005c3d]">
+                                                        {dict?.contact?.office?.mapLabel || "Rwanda Office"}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="text-center">
-                                            <p className="text-sm font-medium text-[#005c3d]">Rwanda Office</p>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                                <div className="w-4 h-4 bg-[#005c3d] rotate-45 mx-auto -mt-2"></div>
-                            </motion.div>
-                        )}
+                                        {/* <div className="w-4 h-4 bg-[#005c3d] rotate-45 mx-auto -mt-2 border-2 border-white"></div> */}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </motion.div>
                 </motion.div>
             </div>

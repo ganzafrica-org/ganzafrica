@@ -42,6 +42,12 @@ router.put(
    projectController.updateProject,
 );
 
+router.post(
+  "/:id/publish",
+  validate(projectValidation.getProjectSchema),
+  projectController.publishProject,
+);
+
 router.delete(
   "/:id",
   validate(projectValidation.deleteProjectSchema),
