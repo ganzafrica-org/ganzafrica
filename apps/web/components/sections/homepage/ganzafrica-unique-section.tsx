@@ -5,6 +5,7 @@ import { PlayCircle, PauseCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { useDict } from '@/context/dictionary';
+import {TranslatableText} from "@/components/translate";
 
 
 interface KeyElement {
@@ -267,12 +268,12 @@ export default function GanzAfricaUniqueSection({
                       <div className="pt-12 px-8 pb-8">
                         {/* Title */}
                         <h3 className="mb-4 text-xl font-bold" style={{ color: element.color }}>
-                          {element.title}
+                            <TranslatableText>{element.title}</TranslatableText>
                         </h3>
 
                         {/* Description */}
                         <p className="mb-6 text-sm text-gray-700 leading-relaxed">
-                          {element.description}
+                            <TranslatableText>{element.description}</TranslatableText>
                         </p>
                       </div>
                     </motion.div>

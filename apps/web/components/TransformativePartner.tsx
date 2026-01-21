@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 export const TransformativePartner = () => {
     return (
@@ -9,18 +10,18 @@ export const TransformativePartner = () => {
               <div className="space-y-8">
                 <div>
                   <h2 className="font-h4 md:font-h3 whitespace-normal font-black text-black">
-                    A transformative <span className="text-primary-green">Partner</span>
+                    <TranslatableText>A transformative</TranslatableText> <span className="text-primary-green"><TranslatableText>Partner</TranslatableText></span>
                   </h2>
                 </div>
                 <div className="space-y-4 text-black">
                   <p className="text-lg">
-                  GanzAfrica runs a holistic program that combines training, mentorship, and work placements to prepare African youth for careers in transforming agriculture and land management.
+                  <TranslatableText>GanzAfrica runs a holistic program that combines training, mentorship, and work placements to prepare African youth for careers in transforming agriculture and land management.</TranslatableText>
                   </p>
                   <p>
-                  Its curriculum blends agriculture, environment, sustainable land use, and land rights, with a strong focus on data literacy and analytical skills so graduates can support evidence-based decisions in public and private institutions.
+                  <TranslatableText>Its curriculum blends agriculture, environment, sustainable land use, and land rights, with a strong focus on data literacy and analytical skills so graduates can support evidence-based decisions in public and private institutions.</TranslatableText>
                   </p>
                   <p>
-                  Fellows join a community of mentors, gain real-world experience in government and non-government roles, and build professional networks that help them secure meaningful careers contributing to a healthy, prosperous future for Africa.
+                  <TranslatableText>Fellows join a community of mentors, gain real-world experience in government and non-government roles, and build professional networks that help them secure meaningful careers contributing to a healthy, prosperous future for Africa.</TranslatableText>
                   </p>
                 </div>
               </div>
@@ -41,7 +42,7 @@ export const TransformativePartner = () => {
                     <div className="aspect-[4/3] rounded-md bg-primary-green/10 p-6 flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-4xl font-bold text-primary-green mb-2">15</div>
-                        <div className="text-sm font-medium">Fellows Trained</div>
+                        <div className="text-sm font-medium"><TranslatableText>Fellows Trained</TranslatableText></div>
                       </div>
                     </div>
                   </div>
@@ -49,7 +50,7 @@ export const TransformativePartner = () => {
                     <div className="aspect-[4/3] rounded-md bg-primary-orange/5 p-6 flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-4xl font-bold text-primary-green mb-2">25</div>
-                        <div className="text-sm font-medium">Alumni</div>
+                        <div className="text-sm font-medium"><TranslatableText>Alumni</TranslatableText></div>
                       </div>
                     </div>
                     <div className="aspect-square rounded-md overflow-hidden shadow-xl">

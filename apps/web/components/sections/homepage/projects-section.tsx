@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useDict } from '@/context/dictionary';
 import { trackEvent } from '@/components/analytics/google-analytics';
+import {TranslatableText} from "@/components/translate";
 
 // Type definitions
 type ProjectMedia = {
@@ -375,9 +376,7 @@ if (!loading && projects.length === 0) {
                         </svg>
                     </div>
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">No Projects Available</h3>
-                    <p className="text-gray-600 max-w-md mx-auto">
-                        We don't have any projects running at the moment. Please check back later for upcoming properties.
-                    </p>
+                    <p className="text-gray-600 max-w-md mx-auto">We don't have any projects running at the moment. Please check back later for upcoming properties.</p>
                 </div>
                 
                 {/* Call to action - can be modified or removed if not needed when no projects */}
@@ -475,18 +474,26 @@ return (
                                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                                    <span className="text-white font-medium text-lg">{project.name}</span>
+                                    <span className="text-white font-medium text-lg">
+                                       <TranslatableText>
+                                           {project.name}
+                                       </TranslatableText>
+                                    </span>
                                 </div>
                             </div>
                             
                             {/* Content - flex grows to push border to bottom */}
                             <div className="p-6 flex-grow flex flex-col">
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                    {project.name}
+                                    <TranslatableText>
+                                        {project.name}
+                                    </TranslatableText>
                                 </h3>
                                 
                                 <p className="text-gray-600 mb-4 line-clamp-3 flex-grow">
-                                    {truncateDescription(project.description, 120)}
+                                  <TranslatableText>
+                                      {truncateDescription(project.description, 120)}
+                                  </TranslatableText>
                                 </p>
                                 
                                 <Link
@@ -495,7 +502,7 @@ return (
                                     style={{ color }}
                                 >
                                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
-                                        Learn more
+                                        <TranslatableText>Learn More</TranslatableText>
                                     </span>
                                     <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -532,7 +539,9 @@ return (
                     })}
                 >
                     <span className="relative z-10">
-                        {dict?.cta?.view_all_projects || "View All Projects"}
+                         <TranslatableText>
+                             {dict?.cta?.view_all_projects || "View All Projects"}
+                         </TranslatableText>
                     </span>
                     <ArrowRight
                         size={16} 

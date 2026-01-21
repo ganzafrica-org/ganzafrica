@@ -20,6 +20,7 @@ import { motion } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { useDict } from '@/context/dictionary';
 import { trackEvent, trackVideoEvent, trackPageView } from "@/components/analytics/google-analytics";
+import {TranslatableText} from "@/components/translate";
 
 // Normalize Next.js Link typing across React versions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -174,12 +175,32 @@ export default function AlumniPageContent() {
 
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
           <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
-            {dict?.alumni?.hero?.title || "ALUMNI NETWORK"}
+            <TranslatableText>
+              {dict?.alumni?.hero?.title || "ALUMNI NETWORK"}
+            </TranslatableText>
           </h2>
           <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-            {dict?.alumni?.hero?.subtitle || "A lifetime of"} <span className="font-normal">{dict?.alumni?.hero?.subtitle2 || "Connections"}</span>,
-            {dict?.alumni?.hero?.opportunities || "Opportunities"} <span className="font-normal">{dict?.alumni?.hero?.and || "and"}</span> <br />
-            {dict?.alumni?.hero?.impact || "Impact"}
+            <TranslatableText>
+              {dict?.alumni?.hero?.subtitle || "A lifetime of"}
+            </TranslatableText>{" "}
+            <span className="font-normal">
+              <TranslatableText>
+                {dict?.alumni?.hero?.subtitle2 || "Connections"}
+              </TranslatableText>
+            </span>
+            ,{" "}
+            <TranslatableText>
+              {dict?.alumni?.hero?.opportunities || "Opportunities"}
+            </TranslatableText>{" "}
+            <span className="font-normal">
+              <TranslatableText>
+                {dict?.alumni?.hero?.and || "and"}
+              </TranslatableText>
+            </span>{" "}
+            <br />
+            <TranslatableText>
+              {dict?.alumni?.hero?.impact || "Impact"}
+            </TranslatableText>
           </h1>
         </div>
       </section>
@@ -490,11 +511,11 @@ export default function AlumniPageContent() {
                                 : "bg-primary-green text-white"
                         }`}
                       >
-                        {eventItem.type}
+                        <TranslatableText>{eventItem.type}</TranslatableText>
                       </span>
                     </div>
                     <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2">
-                      {eventItem.title}
+                      <TranslatableText>{eventItem.title}</TranslatableText>
                     </h3>
                     <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                       {dict?.alumni?.events?.defaultDescription || "Young professionals are at the forefront of accelerating CAADP implementation..."}

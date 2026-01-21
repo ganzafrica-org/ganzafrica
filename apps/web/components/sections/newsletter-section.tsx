@@ -5,6 +5,7 @@ import Image from "next/image";
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { trackFormSubmission } from '@/components/analytics/google-analytics';
 import { useDict } from '@/context/dictionary';
+import {TranslatableText} from "@/components/translate";
 
 
 interface NewsletterSectionProps {
@@ -114,8 +115,10 @@ export default function NewsletterSection({
           </div>
 
           <p className="text-gray-600 mb-8">
-            Receive timely updates on GanzAfrica's programs, success stories,
-            and upcoming opportunities.
+              <TranslatableText>
+                  Receive timely updates on GanzAfrica's programs, success stories,
+                  and upcoming opportunities.
+              </TranslatableText>
           </p>
 
           <form
@@ -137,19 +140,25 @@ export default function NewsletterSection({
               className={`px-6 py-3 bg-primary-orange text-primary-green font-medium rounded-md hover:bg-primary-orange/90 transition-colors ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""}`}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Subscribing..." : "Subscribe"}
+                <TranslatableText>
+                    {isSubmitting ? "Subscribing..." : "Subscribe"}
+                </TranslatableText>
             </button>
           </form>
 
           {/* Status messages */}
           {submitStatus === "success" && (
             <p className="mt-4 text-primary-green">
-              Thank you for subscribing to our newsletter!
+                <TranslatableText>
+                    Thank you for subscribing to our newsletter!
+                </TranslatableText>
             </p>
           )}
           {submitStatus === "error" && (
             <p className="mt-4 text-red-500">
-              There was an error with your subscription. Please try again.
+                <TranslatableText>
+                    There was an error with your subscription. Please try again.
+                </TranslatableText>
             </p>
           )}
         </div>

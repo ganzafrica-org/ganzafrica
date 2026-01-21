@@ -5,7 +5,7 @@ import BuildingSolutionsSection from "@/components/sections/BuildingSolutionsSec
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { 
   Goal, 
-  Telescope, 
+  Telescope,
   BarChart3, 
   ShieldCheck, 
   Leaf, 
@@ -14,6 +14,7 @@ import {
 
 import { FC } from "react";
 import { TransformativePartner } from "@/components/TransformativePartner";
+import {TranslatableText} from "@/components/translate";
 
 // Types for props
 interface MissionCardProps {
@@ -127,13 +128,17 @@ const ValueCard: FC<ValueCardProps> = ({
     <h3
       className={`text-xl sm:text-2xl font-bold text-center ${titleColor} mb-3 sm:mb-4 transition-colors duration-300 hover:text-yellow-500`}
     >
-      {title}
+        <TranslatableText>
+            {title}
+        </TranslatableText>
     </h3>
 
     <p
       className={`${textColor} text-center text-sm sm:text-base transition-all duration-300 hover:font-medium`}
     >
-      {description}
+        <TranslatableText>
+            {description}
+        </TranslatableText>
     </p>
   </div>
 );
@@ -159,7 +164,10 @@ const PromiseCard: FC<PromiseCardProps> = ({
         <div
           className={`${labelColor} text-white font-bold md:text-xl rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm`}
         >
-          <span className="mr-2"></span> {label}
+          <span className="mr-2"></span>
+            <TranslatableText>
+                {label}
+            </TranslatableText>
         </div>
       </div>
 
@@ -169,7 +177,9 @@ const PromiseCard: FC<PromiseCardProps> = ({
             <li key={index} className="flex items-start">
               <span className={`${textColor} mr-2 sm:mr-3 mt-1 `}>•</span>
               <span className={`${textColor} text-sm sm:text-base`}>
-                {item}
+                  <TranslatableText>
+                      {item}
+                  </TranslatableText>
               </span>
             </li>
           ))}
@@ -180,7 +190,9 @@ const PromiseCard: FC<PromiseCardProps> = ({
             <li key={index} className="flex items-start">
               <span className={`${textColor} mr-2 sm:mr-3 mt-1`}>•</span>
               <span className={`${textColor} text-sm sm:text-base`}>
-                {item}
+                  <TranslatableText>
+                      {item}
+                  </TranslatableText>
               </span>
             </li>
           ))}
@@ -305,7 +317,6 @@ export default async function AboutPage(
 
   return (
     <main className="flex flex-col min-h-screen">
-
       {/* Hero Section */}
       <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
         {/* Background Image */}
@@ -325,13 +336,27 @@ export default async function AboutPage(
         {/* Content */}
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
     <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-6">
-    WHO WE ARE
+        <TranslatableText>
+            WHO WE ARE
+        </TranslatableText>
     </h2>
     <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-        <span className=" font-normal ">Empowering  Africa's Future</span>{" "}
-        <span className="font-normal"> Food System</span>
+        <span className=" font-normal ">
+            <TranslatableText>
+                Empowering  Africa's Future
+            </TranslatableText>
+        </span>{" "}
+        <span className="font-normal">
+            <TranslatableText>
+                Food System
+            </TranslatableText>
+        </span>
         <br />
-        <span className=" font-normal">Leaders</span>
+        <span className=" font-normal">
+            <TranslatableText>
+                Leaders
+            </TranslatableText>
+        </span>
     </h1>
 </div>
 
@@ -444,12 +469,17 @@ export default async function AboutPage(
               <div className="bg-[#073392] rounded-md p-6 sm:p-8 relative mr-5">
                 <div className="flex items-center mb-4">
                   <div className="bg-primary-orange text-white font-bold md:text-xl  rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-medium">
-                    <span className="mr-2"></span> Our Vision
+                    <span className="mr-2"></span>
+                      <TranslatableText>
+                          Our Vision
+                      </TranslatableText>
                   </div>
                 </div>
                 <p className="text-base md:text-x  text-white">
-                  {dict?.about?.aspirations?.mission_1 ||
-                    "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions."}
+                    <TranslatableText>
+                        {dict?.about?.aspirations?.mission_1 ||
+                            "To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions."}
+                    </TranslatableText>
                 </p>
 
                 <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
@@ -462,12 +492,17 @@ export default async function AboutPage(
               <div className="bg-green-800 rounded-md p-6 sm:p-8 relative mr-5">
                 <div className="flex items-center mb-4">
                   <div className="bg-green-500 text-white md:text-xl font-bold rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm">
-                    <span className="mr-2"></span> {dict?.about?.aspirations?.mission_label || "Our Mission"}
+                    <span className="mr-2"></span>
+                      <TranslatableText>
+                          {dict?.about?.aspirations?.mission_label || "Our Mission"}
+                      </TranslatableText>
                   </div>
                 </div>
                 <p className="text-base md:text-x  text-gray-900 text-white">
-                  {dict?.about?.aspirations?.mission_2 ||
-                    "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."}
+                    <TranslatableText>
+                        {dict?.about?.aspirations?.mission_2 ||
+                            "To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems."}
+                    </TranslatableText>
                 </p>
                 <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
                 <div className="absolute -top-5 -right-5 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
@@ -491,8 +526,10 @@ export default async function AboutPage(
               />
             </div>
             <p className="text-gray-600 text-base sm:text-lg mx-auto">
-              At GanzAfrica, our values shape everything we do. They guide our decisions, 
-              influence our actions, and define our relationships with partners and communities.
+                <TranslatableText>
+                    At GanzAfrica, our values shape everything we do. They guide our decisions,
+                    influence our actions, and define our relationships with partners and communities.
+                </TranslatableText>
             </p>
           </div>
 
@@ -505,11 +542,15 @@ export default async function AboutPage(
                   <BarChart3 className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  {dict?.about?.values?.evidence_title || "Evidence based"}
+                    <TranslatableText>
+                        {dict?.about?.values?.evidence_title || "Evidence based"}
+                    </TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  {dict?.about?.values?.evidence_description ||
-                    "In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes."}
+                    <TranslatableText>
+                        {dict?.about?.values?.evidence_description ||
+                            "In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes."}
+                    </TranslatableText>
                 </p>
               </div>
             </div>
@@ -521,11 +562,15 @@ export default async function AboutPage(
                   <ShieldCheck className="w-8 h-8 text-primary-green" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-4">
-                  {dict?.about?.values?.integrity_title || "Integrity"}
+                    <TranslatableText>
+                        {dict?.about?.values?.integrity_title || "Integrity"}
+                    </TranslatableText>
                 </h3>
                 <p className="text-white/90 text-sm sm:text-base">
-                  {dict?.about?.values?.integrity_description ||
-                    "We work with authenticity and transparency. We are collaborative but not subject to influence or partiality."}
+                    <TranslatableText>
+                        {dict?.about?.values?.integrity_description ||
+                            "We work with authenticity and transparency. We are collaborative but not subject to influence or partiality."}
+                    </TranslatableText>
                 </p>
               </div>
             </div>
@@ -537,11 +582,15 @@ export default async function AboutPage(
                   <Leaf className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  {dict?.about?.values?.stewardship_title || "Stewardship"}
+                    <TranslatableText>
+                        {dict?.about?.values?.stewardship_title || "Stewardship"}
+                    </TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-sm sm:text-base">
-                  {dict?.about?.values?.stewardship_description ||
-                    "We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future."}
+                    <TranslatableText>
+                        {dict?.about?.values?.stewardship_description ||
+                            "We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future."}
+                    </TranslatableText>
                 </p>
               </div>
             </div>

@@ -19,6 +19,7 @@ import type { AxiosRequestConfig } from 'axios';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import apiClient from "@/lib/api-client";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 // Augment Window for request timing
 declare global {
@@ -364,7 +365,7 @@ if (selectedType !== "all") {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
-            OPPORTUNITIES
+            <TranslatableText>OPPORTUNITIES</TranslatableText>
           </motion.h1>
           <motion.h2
             className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
@@ -372,7 +373,7 @@ if (selectedType !== "all") {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            Be part of a <span className=" font-normal">dynamic team</span> driving transformation
+            <TranslatableText>Be part of a</TranslatableText> <span className=" font-normal"><TranslatableText>dynamic team</TranslatableText></span> <TranslatableText>driving transformation</TranslatableText>
           </motion.h2>
           
         </div>
@@ -408,7 +409,7 @@ if (selectedType !== "all") {
                 
                 {/* Status Filter */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Filter by Status</h4>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-3"><TranslatableText>Filter by Status</TranslatableText></h4>
                   <div className="flex flex-col gap-2">
                     {["published", "closed"].map((status) => (
                       <button
@@ -428,7 +429,7 @@ if (selectedType !== "all") {
 
                 {/* Type Filter */}
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Filter by Type</h4>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-3"><TranslatableText>Filter by Type</TranslatableText></h4>
                   <div className="flex flex-col gap-2">
                     {["all", "fellowship", "employment"].map((type) => (
                       <button
@@ -441,7 +442,7 @@ if (selectedType !== "all") {
                         }`}
                       >
                         {type === "all" 
-                          ? "All Types" 
+                          ? <TranslatableText>All Types</TranslatableText>
                           : type.charAt(0).toUpperCase() + type.slice(1)}
                       </button>
                     ))}
@@ -459,12 +460,12 @@ if (selectedType !== "all") {
               </div>
             ) : error ? (
               <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg text-center">
-                {error}
+                {error && <TranslatableText>{error}</TranslatableText>}
               </div>
             ) : filteredOpportunities.length === 0 ? (
               <div className="bg-white rounded-lg shadow-sm p-8 text-center border border-gray-200">
-                <div className="text-gray-500 text-lg">No current openings, please check back later</div>
-                <p className="text-gray-400 mt-2">We also list opportunities on our social media platforms.</p>
+                <div className="text-gray-500 text-lg"><TranslatableText>No current openings, please check back later</TranslatableText></div>
+                <p className="text-gray-400 mt-2"><TranslatableText>We also list opportunities on our social media platforms.</TranslatableText></p>
               </div>
             ) : (
               <div className="space-y-16">
@@ -473,8 +474,8 @@ if (selectedType !== "all") {
                   <section id="fellowship" className="mb-16">
                     <div className="text-center mb-12">
                       <h2 className="text-3xl font-bold">
-                        <span className="text-black">Fellowship </span>
-                        <span className="text-[#045f3c]">Programs</span>
+                        <span className="text-black"><TranslatableText>Fellowship</TranslatableText> </span>
+                        <span className="text-[#045f3c]"><TranslatableText>Programs</TranslatableText></span>
                       </h2>
                     </div>
 
@@ -499,16 +500,16 @@ if (selectedType !== "all") {
                               </span>
                             </div>
                             
-                            <p className="text-gray-600 mb-6 line-clamp-3">{opportunity.description || 'No description available'}</p>
+                            <p className="text-gray-600 mb-6 line-clamp-3"><TranslatableText>{opportunity.description || 'No description available'}</TranslatableText></p>
                             
                             <div className="mb-6">
-                              <h4 className="text-sm font-semibold text-gray-700 mb-2">Requirements:</h4>
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2"><TranslatableText>Requirements:</TranslatableText></h4>
                               <ul className="text-sm text-gray-600 space-y-1 pl-5 list-disc">
                                 {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || ['No specific requirements listed']).slice(0, 3).map((req, index) => (
                                   <li key={index}>{req}</li>
                                 ))}
                                 {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || []).length > 3 && (
-                                  <li>And more...</li>
+                                  <li><TranslatableText>And more...</TranslatableText></li>
                                 )}
                               </ul>
                             </div>
@@ -527,18 +528,18 @@ if (selectedType !== "all") {
                                 href={`/opportunities/${opportunity.id}`}
                                 className="flex-1 py-2 px-4 bg-white border border-primary-green text-primary-green font-medium rounded-md text-center hover:bg-[#2563eb]/5 transition-colors"
                               >
-                                View Details
+                                <TranslatableText>View Details</TranslatableText>
                               </SafeLink>
                               {opportunity.status === 'published' ? (
                               <SafeLink 
                                   href={`/opportunities/${opportunity.id}/apply`}
                                   className="flex-1 py-2 px-4 bg-primary-green text-white font-medium rounded-md text-center hover:primary-green transition-colors"
                                 >
-                                  Apply Now
+                                  <TranslatableText>Apply Now</TranslatableText>
                                 </SafeLink>
                               ) : (
                                 <span className="flex-1 py-2 px-4 bg-gray-300 text-gray-600 font-medium rounded-md text-center cursor-not-allowed">
-                                  Applications Closed
+                                  <TranslatableText>Applications Closed</TranslatableText>
                                 </span>
                               )}
                             </div>
@@ -554,8 +555,8 @@ if (selectedType !== "all") {
                   <section id="employment" className="mb-16">
                     <div className="text-center mb-12">
                       <h2 className="text-3xl font-bold">
-                        <span className="text-black">Employment </span>
-                        <span className="text-primary-green">Opportunities</span>
+                        <span className="text-black"><TranslatableText>Employment</TranslatableText> </span>
+                        <span className="text-primary-green"><TranslatableText>Opportunities</TranslatableText></span>
                       </h2>
                     </div>
 
@@ -580,16 +581,16 @@ if (selectedType !== "all") {
                               </span>
                             </div>
                             
-                            <p className="text-gray-600 mb-6 line-clamp-3">{opportunity.description || 'No description available'}</p>
+                            <p className="text-gray-600 mb-6 line-clamp-3"><TranslatableText>{opportunity.description || 'No description available'}</TranslatableText></p>
                             
                             <div className="mb-6">
-                              <h4 className="text-sm font-semibold text-gray-700 mb-2">Requirements:</h4>
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2"><TranslatableText>Requirements:</TranslatableText></h4>
                               <ul className="text-sm text-gray-600 space-y-1 pl-5 list-disc">
                                 {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || ['No specific requirements listed']).slice(0, 3).map((req, index) => (
                                   <li key={index}>{req}</li>
                                 ))}
                                 {(opportunity.eligibility_criteria?.requirements?.split('\n').filter(req => req.trim()) || []).length > 3 && (
-                                  <li>And more...</li>
+                                  <li><TranslatableText>And more...</TranslatableText></li>
                                 )}
                               </ul>
                             </div>

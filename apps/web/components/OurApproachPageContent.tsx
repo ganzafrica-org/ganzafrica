@@ -9,6 +9,7 @@ import ImpactAreasSection from "@/components/sections/food-system/impact-areas-s
 import { useDict } from '@/context/dictionary';
 import ApproachSection from "@/components/sections/food-system/approach-section";
 import { trackEvent, trackPageView } from "@/components/analytics/google-analytics";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 // Animation variants
 const fadeIn = {
@@ -61,7 +62,7 @@ export default function OurApproachPageContent() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
-            {dict?.ourApproach?.hero?.heading || "OUR APPROACH TO FOOD SYSTEMS"}
+            <TranslatableText>{dict?.ourApproach?.hero?.heading || "OUR APPROACH TO FOOD SYSTEMS"}</TranslatableText>
           </motion.h2>
           <motion.h1
             className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
@@ -69,7 +70,7 @@ export default function OurApproachPageContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
           >
-            <span className="font-normal">{dict?.ourApproach?.hero?.subtitle || 'From Farm to Fork — and Far Beyond'}</span>
+            <span className="font-normal"><TranslatableText>{dict?.ourApproach?.hero?.subtitle || 'From Farm to Fork — and Far Beyond'}</TranslatableText></span>
           </motion.h1>
         </div>
       </section>

@@ -15,6 +15,7 @@ import {
 import { trackVideoEvent, trackEvent } from "@/components/analytics/google-analytics";
 import VideoPlayer from "@/components/VideoPlayer";
 import { Dictionary } from "@/lib/get-dictionary";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 type Props = {
     isFrench: boolean;
@@ -83,13 +84,13 @@ export default function OurStoryContent({ isFrench, dict }: Props) {
 
                 <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
                     <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-6">
-                        OUR STORY
+                        <TranslatableText>OUR STORY</TranslatableText>
                     </h2>
                     <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-bold mb-2 leading-tight">
-                        <span className=" font-normal ">Building  Sustainable</span>{" "}
-                        <span className="font-normal">Solutions With</span>
+                        <span className=" font-normal "><TranslatableText>Building  Sustainable</TranslatableText></span>{" "}
+                        <span className="font-normal"><TranslatableText>Solutions With</TranslatableText></span>
                         <br />
-                        <span className=" font-normal">African Communities!</span>
+                        <span className=" font-normal"><TranslatableText>African Communities!</TranslatableText></span>
                     </h1>
                 </div>
 
@@ -166,12 +167,16 @@ export default function OurStoryContent({ isFrench, dict }: Props) {
                                 04
                             </div>
                             <h2 className="text-primary-orange sm:font-h5 md:font-h4 mb-2">
-                                {dict?.about?.success_title || "Fellow Success Stories"}
+                                <TranslatableText>
+                                    {dict?.about?.success_title || "Fellow Success Stories"}
+                                </TranslatableText>
                             </h2>
                             <div className={contentClass}>
                                 <p className="text-black font-regular-small text-sm text-justify">
-                                    {dict?.about?.success_text ||
-                                        "We are equally proud of the individual journeys of our fellows. Many have leveraged their experience with GanzAfrica to secure meaningful and impactful roles within the public sector and beyond. Reinforcing our core belief in the power of investing in young professionals and equipping them with the skills to lead. At GanzAfrica, we see our fellows not just as participants in a program but as changemakers who will continue to drive transformation long after their time with us."}
+                                    <TranslatableText>
+                                        {dict?.about?.success_text ||
+                                            "We are equally proud of the individual journeys of our fellows. Many have leveraged their experience with GanzAfrica to secure meaningful and impactful roles within the public sector and beyond. Reinforcing our core belief in the power of investing in young professionals and equipping them with the skills to lead. At GanzAfrica, we see our fellows not just as participants in a program but as changemakers who will continue to drive transformation long after their time with us."}
+                                    </TranslatableText>
                                 </p>
 
                                 {/* Added Person Icon */}

@@ -23,6 +23,7 @@ import apiClient from '@/lib/api-client';
 import { motion } from "framer-motion";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
 import { useDict } from '@/context/dictionary';
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
@@ -65,7 +66,9 @@ const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName 
         <div className="relative w-full overflow-hidden">
           <div className="relative">
             <div className="absolute top-3 left-3 z-10 bg-white py-1 px-2 rounded-full text-xs font-medium shadow-md transform transition-transform duration-300 group-hover:scale-110">
-              {project.status || dict?.projects?.statusActive || 'Active'}
+              <TranslatableText>
+                {project.status || dict?.projects?.statusActive || 'Active'}
+              </TranslatableText>
             </div>
             <div className="absolute top-3 right-3 z-10">
               <div className="w-8 h-8 rounded-full text-primary-orange flex items-center justify-center transition-all duration-500 shadow-lg transform group-hover:rotate-90">
@@ -97,7 +100,11 @@ const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName 
        <div className="px-4 py-3 flex justify-between items-center bg-white">
           <div className="flex items-center text-green-700 group-hover:text-green-600 transition-colors">
             <MapPin className="w-4 h-4 mr-1" />
-            <span className="font-medium text-sm">{project.location || dict?.projects?.defaultLocation || 'Rwanda'}</span>
+              <span className="font-medium text-sm">
+                <TranslatableText>
+                  {project.location || dict?.projects?.defaultLocation || 'Rwanda'}
+                </TranslatableText>
+              </span>
           </div>
           
           <div className="flex items-center text-green-700 group-hover:text-green-600 transition-colors">
@@ -342,8 +349,14 @@ export default function ProjectsPageContent() {
         </div>
         <div className="absolute inset-0 bg-black/70 z-0"></div>
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-          <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">{dict?.projects?.heroTitle || 'PROJECTS'}</h2>
-          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"><span>{dict?.projects?.heroSubtitle || 'Turning Ideas Into Action'}</span></h1>
+          <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
+            <TranslatableText>{dict?.projects?.heroTitle || 'PROJECTS'}</TranslatableText>
+          </h2>
+          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
+            <span>
+              <TranslatableText>{dict?.projects?.heroSubtitle || 'Turning Ideas Into Action'}</TranslatableText>
+            </span>
+          </h1>
         </div>
       </section>
 

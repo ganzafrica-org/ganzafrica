@@ -6,6 +6,7 @@ import Image from "next/image";
 const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
 import { useDict } from '@/context/dictionary';
+import {TranslatableText} from "@/components/translate";
 
 // Animation variants
 const containerVariants = {
@@ -44,8 +45,10 @@ const WhereWeWorkSection = () => {
           transition={{ duration: 0.7 }}
         >
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 max-w-5xl mx-auto mb-4 leading-tight">
-            Our holistic approach addresses challenges and leverages
-            opportunities in 3 main sectors.
+              <TranslatableText>
+                  Our holistic approach addresses challenges and leverages
+                  opportunities in 3 main sectors.
+              </TranslatableText>
           </h1>
         </motion.div>
 
@@ -84,16 +87,20 @@ const WhereWeWorkSection = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-primary-green mb-3">
-                  Land Management
+                    <TranslatableText>
+                        Land Management
+                    </TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-justify">
-                  Sustainable land use is vital for food security, environmental
-                  resilience, and economic growth. GanzAfrica advocates for
-                  equitable land policies to empower youth, farmers, and
-                  marginalized communities, promotes responsible land management
-                  to prevent degradation and enhance productivity, and equips
-                  young leaders with data literacy and analytical skills to
-                  influence land governance policies.
+                    <TranslatableText>
+                        Sustainable land use is vital for food security, environmental
+                        resilience, and economic growth. GanzAfrica advocates for
+                        equitable land policies to empower youth, farmers, and
+                        marginalized communities, promotes responsible land management
+                        to prevent degradation and enhance productivity, and equips
+                        young leaders with data literacy and analytical skills to
+                        influence land governance policies.
+                    </TranslatableText>
                 </p>
               </div>
             </motion.div>
@@ -108,16 +115,20 @@ const WhereWeWorkSection = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-primary-green mb-3">
-                  Agriculture
+                    <TranslatableText>
+                        Agriculture
+                    </TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-justify">
-                  Agriculture is the largest employer in Africa, and GanzAfrica
-                  is leading efforts to make it more productive, innovative, and
-                  inclusive. We provide hands-on training in modern,
-                  technology-driven farming techniques, support value chain
-                  development to improve market access and food production
-                  efficiency, and introduce smart farming technologies to
-                  optimize production while minimizing environmental impact.
+                    <TranslatableText>
+                        Agriculture is the largest employer in Africa, and GanzAfrica
+                        is leading efforts to make it more productive, innovative, and
+                        inclusive. We provide hands-on training in modern,
+                        technology-driven farming techniques, support value chain
+                        development to improve market access and food production
+                        efficiency, and introduce smart farming technologies to
+                        optimize production while minimizing environmental impact.
+                    </TranslatableText>
                 </p>
               </div>
             </motion.div>
@@ -132,13 +143,17 @@ const WhereWeWorkSection = () => {
               <div>
               
                 <h3 className="text-xl font-bold mb-3" style={{ color: ' #005c3d' }}>
-                  Environment
+                    <TranslatableText>
+                        Environment
+                    </TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-justify">
-                  GanzAfrica promotes environmental sustainability by training
-                  youth in climate resilience, sustainable land and water
-                  management, and ecosystem restoration to build a greener, more
-                  resilient Africa.
+                    <TranslatableText>
+                        GanzAfrica promotes environmental sustainability by training
+                        youth in climate resilience, sustainable land and water
+                        management, and ecosystem restoration to build a greener, more
+                        resilient Africa.
+                    </TranslatableText>
                 </p>
               </div>
             </motion.div>

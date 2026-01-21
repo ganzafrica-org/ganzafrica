@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/components/analytics/google-analytics';
 import { useDict } from '@/context/dictionary';
+import {TranslatableText} from "@/components/translate";
 
 // Interface for the news data from the API
 interface NewsItem {
@@ -273,9 +274,15 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No News Available</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                <TranslatableText>
+                    No News Available
+                </TranslatableText>
+            </h3>
             <p className="text-gray-600 max-w-md mx-auto">
-              We don't have any news articles at the moment. Please check back later for updates.
+                <TranslatableText>
+                    We don't have any news articles at the moment. Please check back later for updates.
+                </TranslatableText>
             </p>
           </div>
         </div>
@@ -296,7 +303,11 @@ export default function NewsSection({ locale }: NewsSectionProps) {
 
         {/* Error message */}
         {error && (
-          <div className="text-center text-red-500 mb-8" role="alert">{error}</div>
+          <div className="text-center text-red-500 mb-8" role="alert">
+              <TranslatableText>
+                  {error}
+              </TranslatableText>
+          </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -322,7 +333,9 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                     {/* Category badge */}
                     {newsItem.category_name && (
                       <span className="absolute top-3 left-3 bg-primary-green text-white text-xs font-semibold px-2.5 py-1 rounded-sm z-10">
-                        {newsItem.category_name}
+                          <TranslatableText>
+                              {newsItem.category_name}
+                          </TranslatableText>
                       </span>
                     )}
                   </div>
@@ -332,17 +345,25 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                   {/* Date */}
                   <div className="flex items-center gap-2 text-gray-500 text-sm mb-3">
                     <CalendarDays className="w-4 h-4" />
-                    <span>{formatDate(newsItem.publish_date)}</span>
+                    <span>
+                        <TranslatableText>
+                            {formatDate(newsItem.publish_date)}
+                        </TranslatableText>
+                    </span>
                   </div>
 
                   {/* Title */}
                   <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2">
-                    {newsItem.title}
+                      <TranslatableText>
+                          {newsItem.title}
+                      </TranslatableText>
                   </h3>
 
                   {/* Summary or truncated content */}
                   <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                    {newsItem.summary || truncateText(newsItem.content)}
+                      <TranslatableText>
+                          {newsItem.summary || truncateText(newsItem.content)}
+                      </TranslatableText>
                   </p>
 
                   {/* Read more link - styled like project cards */}
@@ -358,7 +379,9 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                     })}
                   >
                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
-                      {dict?.news?.read_more ?? "Read more"}
+                        <TranslatableText>
+                            {dict?.news?.read_more ?? "Read more"}
+                        </TranslatableText>
                     </span>
                     <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -386,7 +409,11 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                 source_page: 'homepage'
               })}
             >
-              <span>{dict?.news?.view_all ?? "View All News"}</span>
+              <span>
+                  <TranslatableText>
+                      {dict?.news?.view_all ?? "View All News"}
+                  </TranslatableText>
+              </span>
               <ArrowRight size={16} />
             </Link>
           </div>

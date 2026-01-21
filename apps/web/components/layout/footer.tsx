@@ -5,6 +5,7 @@ import { Home, Phone, Mail } from "lucide-react";
 import { LinkedInIcon, TwitterIcon } from "@/components/ui/icons";
 import { Button } from "@workspace/ui/components/button";
 import { useDict } from '@/context/dictionary';
+import { TranslatableText } from '@/components/translate/TranslatableText';
 
 export default function Footer({
                                  locale,
@@ -101,16 +102,16 @@ export default function Footer({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-0 mb-1 md:space-x-4">
             {/* About GanzAfrica */}
             <div>
-              <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base">About GanzAfrica</h3>
+              <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base"><TranslatableText>About GanzAfrica</TranslatableText></h3>
               <ul className="space-y-0">
                 <li>
                   <Link href={`/faqs`} className="hover:text-secondary-yellow transition-colors text-sm">
-                    {dict?.footer?.faqs || "FAQs"}
+                    <TranslatableText>{dict?.footer?.faqs || "FAQs"}</TranslatableText>
                   </Link>
                 </li>
                 <li>
                   <Link href={`/contact`} className="hover:text-secondary-yellow transition-colors text-sm">
-                    {dict?.footer?.contact || "Contact Us"}
+                    <TranslatableText>{dict?.footer?.contact || "Contact Us"}</TranslatableText>
                   </Link>
                 </li>
               </ul>
@@ -118,16 +119,16 @@ export default function Footer({
 
             {/* Programs */}
             <div>
-              <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base">{dict?.footer?.programs || "Programs"}</h3>
+              <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base"><TranslatableText>{dict?.footer?.programs || "Programs"}</TranslatableText></h3>
               <ul className="space-y-0">
                 <li>
                   <Link href={`/programs/fellowship`} className="hover:text-secondary-yellow transition-colors text-sm">
-                    {dict?.programs?.fellowship?.title || "Fellowship"}
+                    <TranslatableText>{dict?.programs?.fellowship?.title || "Fellowship"}</TranslatableText>
                   </Link>
                 </li>
                 <li>
                   <Link href={`/programs/alumni`} className="hover:text-secondary-yellow transition-colors text-sm">
-                    {dict?.programs?.alumni?.title || "Alumni"}
+                    <TranslatableText>{dict?.programs?.alumni?.title || "Alumni"}</TranslatableText>
                   </Link>
                 </li>
               </ul>
@@ -135,11 +136,11 @@ export default function Footer({
 
             {/* Our Approach */}
             <div>
-              <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base">Our Approach</h3>
+              <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base"><TranslatableText>Our Approach</TranslatableText></h3>
               <ul className="space-y-0">
                 <li>
                   <Link href={`/our_approach/food_systems`} className="hover:text-secondary-yellow transition-colors text-sm">
-                    {dict?.our_approach?.food_systems || "Food Systems"}
+                    <TranslatableText>{dict?.our_approach?.food_systems || "Food Systems"}</TranslatableText>
                   </Link>
                 </li>
               </ul>
@@ -147,24 +148,24 @@ export default function Footer({
 
             {/* Explore */}
             <div>
-              <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base">{dict?.footer?.explore || "Explore"}</h3>
+              <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base"><TranslatableText>{dict?.footer?.explore || "Explore"}</TranslatableText></h3>
               <ul className="space-y-0">
                 <li>
                   <a
                       href={`${process.env.LOGIN_URL}`}
                       className="hover:text-secondary-yellow transition-colors text-sm"
                   >
-                    Member Login
+                    <TranslatableText>Member Login</TranslatableText>
                   </a>
                 </li>
                 <li>
                   <Link href={`/opportunities`} className="hover:text-secondary-yellow transition-colors text-sm">
-                    {dict?.footer?.opportunities || "Opportunities"}
+                    <TranslatableText>{dict?.footer?.opportunities || "Opportunities"}</TranslatableText>
                   </Link>
                 </li>
                 <li>
                   <Link href={`/news`} className="hover:text-secondary-yellow transition-colors text-sm">
-                    News & Updates
+                    <TranslatableText>News & Updates</TranslatableText>
                   </Link>
                 </li>
               </ul>
@@ -182,7 +183,7 @@ export default function Footer({
           {/* Bottom Section */}
           <div className="flex flex-col md:flex-row justify-between items-center text-sm">
             <div className="mb-0.5 md:mb-0">
-              <p>© {year} All Rights Reserved GanzAfrica</p>
+              <p><TranslatableText>© {year} All Rights Reserved GanzAfrica</TranslatableText></p>
             </div>
             <div className="flex flex-col md:flex-row items-center space-y-0 md:space-y-0 md:space-x-6 mb-0.5 md:mb-0">
               <div className="flex items-center">
@@ -200,7 +201,7 @@ export default function Footer({
             </div>
             <div>
               <Link href={`/privacy-policy`} className="hover:text-secondary-yellow transition-colors">
-                Privacy policy
+                <TranslatableText>Privacy policy</TranslatableText>
               </Link>
             </div>
           </div>

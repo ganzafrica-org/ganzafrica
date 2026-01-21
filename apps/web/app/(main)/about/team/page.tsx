@@ -7,6 +7,7 @@ import { ArrowUpRight, X, Linkedin, Mail, Leaf } from 'lucide-react';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import apiClient from '@/lib/api-client';
 import { trackEvent } from '@/components/analytics/google-analytics';
+import {TranslatableText} from "@/components/translate";
 
 // Normalize lucide icon component types across React type versions
 type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -85,10 +86,14 @@ const TeamMemberModal = ({
           {/* User Info */}
           <div className="flex-1 pt-2">
             <h2 className="text-[24px] font-bold text-[#111827] leading-tight mb-2">
-              {member.name}
+                <TranslatableText>
+                    {member.name}
+                </TranslatableText>
             </h2>
             <p className="text-[15px] text-[#6B7280] tracking-wide">
-              {member.position}
+                <TranslatableText>
+                    {member.position}
+                </TranslatableText>
             </p>
           </div>
         </div>
@@ -98,7 +103,9 @@ const TeamMemberModal = ({
           {/* About Section - With conditional scrolling */}
           <div className="py-5 border-t border-[#E5E7EB]">
             <h3 className="text-[18px] font-bold text-[#111827] mb-4 relative inline-block">
-              About
+                <TranslatableText>
+                    About
+                </TranslatableText>
               <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
             </h3>
             <div 
@@ -106,14 +113,20 @@ const TeamMemberModal = ({
                 shouldScroll ? 'max-h-[200px] overflow-y-auto custom-scrollbar pr-2' : ''
               }`}
             >
-              <p className="whitespace-normal break-words">{member.bio}</p>
+              <p className="whitespace-normal break-words">
+                  <TranslatableText>
+                      {member.bio}
+                  </TranslatableText>
+              </p>
             </div>
           </div>
 
           {/* Get In Touch Section */}
           <div className="py-5 border-t border-[#E5E7EB]">
             <h3 className="text-[18px] font-bold text-[#111827] mb-4 relative inline-block">
-              Get In Touch
+                <TranslatableText>
+                    Get In Touch
+                </TranslatableText>
               <div className="absolute -bottom-1 left-0 w-12 h-0.5 bg-primary-green rounded-full"></div>
             </h3>
             <div className="flex items-center gap-4">
@@ -229,7 +242,9 @@ const TeamMemberCard = ({ member, onOpenModal }: { member: TeamMember; onOpenMod
                   {member.name}
                 </h3>
                 <p className="text-gray-600 text-sm mt-0.5">
-                  {member.position}
+                    <TranslatableText>
+                        {member.position}
+                    </TranslatableText>
                 </p>
               </div>
             </div>
@@ -262,7 +277,7 @@ const FilterButton = ({
         : 'border-primary-green text-primary-green hover:bg-[#E8F5E9]'
     }`}
   >
-    {label}
+      <TranslatableText>{label}</TranslatableText>
   </button>
 );
 
@@ -480,7 +495,9 @@ const TeamPage = (): JSX.Element => {
               <div className="relative bg-white p-4 -ml-4 rounded-br-3xl">
                 <div className="flex items-center">
                   <LeafIcon className="h-8 w-8 text-emerald-600" />
-                  <span className="ml-2 text-xl font-bold text-emerald-600">GanzAfrica</span>
+                  <span className="ml-2 text-xl font-bold text-emerald-600">
+                      <TranslatableText>GanzAfrica</TranslatableText>
+                  </span>
                 </div>
               </div>
             </div>
@@ -515,7 +532,9 @@ const TeamPage = (): JSX.Element => {
             {/* Filters Sidebar */}
             <div className="lg:w-[280px] flex-shrink-0">
               <div className="lg:sticky lg:top-24">
-                <h2 className="font-medium text-gray-600 mb-6">Filter by Team</h2>
+                <h2 className="font-medium text-gray-600 mb-6">
+                    <TranslatableText>Filter by Team</TranslatableText>
+                </h2>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                   {/* Dynamic filters based on team types from API */}
                   {Array.isArray(teamTypes) && teamTypes.map((type) => (
@@ -556,7 +575,9 @@ const TeamPage = (): JSX.Element => {
                   {/* Empty State */}
                   {filteredMembers.length === 0 && (
                     <div className="text-center py-12">
-                      <p className="text-gray-500 text-lg">No team members found in this category.</p>
+                      <p className="text-gray-500 text-lg">
+                          <TranslatableText>No team members found in this category.</TranslatableText>
+                      </p>
                     </div>
                   )}
                 </div>

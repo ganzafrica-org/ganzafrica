@@ -2,6 +2,7 @@
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { TranslationProvider } from "@/context/translation";
 import { DictionaryProvider } from '@/context/dictionary';
 import { useLayoutEffect, useState } from 'react';
 
@@ -47,13 +48,15 @@ export default function ClientLayout({
       disableTransitionOnChange
       enableColorScheme
     >
-      <DictionaryProvider dict={dict}>
-        <div className="relative flex min-h-screen flex-col">
-          {!hideLayout && <Header />}
+      <TranslationProvider sourceLanguage="en">
+        <DictionaryProvider dict={dict}>
+          <div className="relative flex min-h-screen flex-col">
+            {!hideLayout && <Header />}
           <div className="flex-1">{children}</div>
           {!hideLayout && <Footer locale={locale} />}
-        </div>
-      </DictionaryProvider>
+          </div>
+        </DictionaryProvider>
+      </TranslationProvider>
     </NextThemesProvider>
   );
 }

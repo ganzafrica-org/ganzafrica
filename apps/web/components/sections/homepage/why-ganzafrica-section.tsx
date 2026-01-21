@@ -9,6 +9,7 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import { CircleCheck } from "lucide-react";
 import { useDict } from '@/context/dictionary';
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 // Custom CheckCircle component with color fill
 const ColoredCheckCircle = ({
@@ -93,12 +94,12 @@ export default function WhyGanzAfricaSection({
             <div className="bg-white/95 backdrop-blur-sm rounded-md p-3 sm:p-4 md:p-5 lg:p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 h-auto sm:h-[450px] lg:h-[550px] flex flex-col">
               {/* Enhanced Heading */}
               <div className="mb-2 sm:mb-3 lg:mb-4">
-                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-1 sm:mb-2">
-                  <span className="text-gray-900">
-                    {dict.home?.why_section?.heading_first || "Why"}{" "}
-                  </span>
+                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-1 sm:mb-2 mr-1">
+                  {/*<spa className="text-gray-900">*/}
+                      <TranslatableText>Why </TranslatableText>
+                  {/*</spa>*/}
                   <span className="bg-gradient-to-r from-primary-green to-secondary-green bg-clip-text text-transparent">
-                    {dict.home?.why_section?.heading_second || "GanzAfrica?"}
+                    <TranslatableText> GanzAfrica?</TranslatableText>
                   </span>
                 </h2>
                 {/* <div className="w-10 sm:w-12 h-0.5 sm:h-1 bg-gradient-to-r from-primary-green to-primary-orange rounded-full"></div> */}
@@ -131,12 +132,14 @@ export default function WhyGanzAfricaSection({
                       onMouseEnter={(e) => e.target.style.color = "  #f8b712"}
                       onMouseLeave={(e) => e.target.style.color = "#111827"}
                     >
-                      {dict.home?.why_section?.point1_title ||
-                        "We train and inspire future leaders"}
+                        <TranslatableText>{dict.home?.why_section?.point1_title ||
+                         "We train and inspire future leaders"}
+                        </TranslatableText>
                     </h4>
                     <p className="text-sm text-gray-600 leading-tight">
-                      {dict.home?.why_section?.point1_desc ||
-                        "Create, connect, and develop a pool of committed and value-driven young Africans who can adapt new and emerging technologies in land, agriculture, and environment sub-sectors."}
+                        <TranslatableText>
+                          Create, connect, and develop a pool of committed and value-driven young Africans who can adapt new and emerging technologies in land, agriculture, and environment sub-sectors.
+                        </TranslatableText>
                     </p>
                   </div>
                 </div>
@@ -166,12 +169,15 @@ export default function WhyGanzAfricaSection({
                       onMouseEnter={(e) => e.target.style.color = "#073392"}
                       onMouseLeave={(e) => e.target.style.color = "#111827"}
                     >
-                      {dict.home?.why_section?.point2_title ||
-                        "We drive continental collaboration"}
+                        <TranslatableText>{dict.home?.why_section?.point2_title ||
+                           "We drive continental collaboration"}
+                        </TranslatableText>
                     </h4>
                     <p className="text-sm text-gray-600 leading-tight">
-                      {dict.home?.why_section?.point2_desc ||
-                        "Build a continental coalition of informed and empowered young experts who can innovate, co-create and scale solutions in land, agriculture, and environment sub-sectors."}
+                           <TranslatableText>
+                              {dict.home?.why_section?.point2_desc ||
+                              "Build a continental coalition of informed and empowered young experts who can innovate, co-create and scale solutions in land, agriculture, and environment sub-sectors."}
+                            </TranslatableText>
                     </p>
                   </div>
                 </div>
@@ -201,12 +207,14 @@ export default function WhyGanzAfricaSection({
                       onMouseEnter={(e) => e.target.style.color = "#FFD700"}
                       onMouseLeave={(e) => e.target.style.color = "#111827"}
                     >
-                      {dict.home?.why_section?.point3_title ||
-                        "We create intergenerational links"}
+                            <TranslatableText>
+                                {dict.home?.why_section?.point3_title || "We create intergenerational links"}
+                            </TranslatableText>
                     </h4>
                     <p className="text-sm text-gray-600 leading-tight">
-                      {dict.home?.why_section?.point3_desc ||
-                        "Enhance cross-generational linkages between experienced and retired professionals and young practitioners, enhancing the co-creation of blended solutions combining novel and traditional ideals."}
+                            <TranslatableText>
+                                 {dict.home?.why_section?.point3_desc || "Enhance cross-generational linkages between experienced and retired professionals and young practitioners, enhancing the co-creation of blended solutions combining novel and traditional ideals."}
+                            </TranslatableText>
                     </p>
                   </div>
                 </div>
@@ -236,12 +244,14 @@ export default function WhyGanzAfricaSection({
                       onMouseEnter={(e) => e.target.style.color = "#073392"}
                       onMouseLeave={(e) => e.target.style.color = "#111827"}
                     >
-                      {dict.home?.why_section?.point4_title ||
-                        "We promote innovative solutions"}
+                            <TranslatableText>
+                               {dict.home?.why_section?.point4_title || "We promote innovative solutions"}
+                            </TranslatableText>
                     </h4>
                     <p className="text-sm text-gray-600 leading-tight">
-                      {dict.home?.why_section?.point4_desc ||
-                        "Support the development of innovative, scalable solutions that address critical challenges in food systems, climate resilience, and sustainable agricultural practices across the continent."}
+                            <TranslatableText>
+                                {dict.home?.why_section?.point4_desc || "Support the development of innovative, scalable solutions that address critical challenges in food systems, climate resilience, and sustainable agricultural practices across the continent."}
+                            </TranslatableText>
                     </p>
                   </div>
                 </div>

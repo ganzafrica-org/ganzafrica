@@ -7,7 +7,18 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Menu, X, ChevronDown, Globe } from "lucide-react";
 import { useDict } from '@/context/dictionary';
+import { TranslatableText } from '@/components/translate/TranslatableText';
 
+import LanguageSwitcher from "./language-switcher";
+
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@workspace/ui/components/navigation-menu";
 import { Button } from "@workspace/ui/components/button";
 
 
@@ -219,19 +230,19 @@ export default function Navigation({
               size="icon"
               className="text-black hover:bg-[#F5F5F5] transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
-              aria-label="Close menu"
+              aria-label={dict?.navigation?.close_menu || "Close menu"}
             >
               <SafeIconX className="h-6 w-6" />
             </Button>
           </div>
-          <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full border-red-600">
+          <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
             {/* Mobile About with submenu */}
             <div className="flex flex-col w-full">
               <button
                 className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
                 onClick={() => toggleDropdown("mobile-about")}
               >
-                {dict?.navigation?.about || "About"}
+                <TranslatableText>{dict?.navigation?.about || "About"}</TranslatableText>
                 <SafeIconChevronDown
                   className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
                 />
@@ -246,9 +257,9 @@ export default function Navigation({
                       onClick={() => setIsMobileMenuOpen(false)}
                       prefetch={true}
                     >
-                      {dict?.about?.[
+                      <TranslatableText>{dict?.about?.[
                         item.title.toLowerCase().replace(/ /g, "_")
-                      ] || item.title}
+                      ] || item.title}</TranslatableText>
                     </SafeLink>
                   ))}
                 </div>
@@ -262,7 +273,7 @@ export default function Navigation({
                 className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
                 onClick={() => toggleDropdown("mobile-programs")}
               >
-                {dict?.navigation?.what_we_do || "What we do"}
+                <TranslatableText>{dict?.navigation?.what_we_do || "What we do"}</TranslatableText>
                 <SafeIconChevronDown
                   className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
                 />
@@ -279,7 +290,7 @@ export default function Navigation({
                               className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700 text-left flex items-center justify-between"
                               onClick={() => toggleDropdown("mobile-program-submenu")}
                             >
-                              {item.title}
+                              <TranslatableText>{item.title}</TranslatableText>
                               <SafeIconChevronDown
                                 className={`h-4 w-4 transform transition-transform ${isSubmenuOpen ? "rotate-180" : ""}`}
                               />
@@ -294,7 +305,7 @@ export default function Navigation({
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     prefetch={true}
                                   >
-                                    {subItem.title}
+                                    <TranslatableText>{subItem.title}</TranslatableText>
                                   </SafeLink>
                                 ))}
                               </div>
@@ -307,7 +318,7 @@ export default function Navigation({
                             onClick={() => setIsMobileMenuOpen(false)}
                             prefetch={true}
                           >
-                            {item.title}
+                            <TranslatableText>{item.title}</TranslatableText>
                           </SafeLink>
                         )}
                       </div>
@@ -323,7 +334,7 @@ export default function Navigation({
                 className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
                 onClick={() => toggleDropdown("mobile-news")}
               >
-                News & Updates
+                <TranslatableText>News & Updates</TranslatableText>
                 <SafeIconChevronDown
                   className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
                 />
@@ -338,7 +349,7 @@ export default function Navigation({
                       onClick={() => setIsMobileMenuOpen(false)}
                       prefetch={true}
                     >
-                      {item.title}
+                      <TranslatableText>{item.title}</TranslatableText>
                     </SafeLink>
                   ))}
                 </div>
@@ -352,7 +363,7 @@ export default function Navigation({
               onClick={() => setIsMobileMenuOpen(false)}
               prefetch={true}
             >
-              {dict?.navigation?.contact || "Contact"}
+              <TranslatableText>{dict?.navigation?.contact || "Contact"}</TranslatableText>
             </SafeLink>
 
             {/* Add sign in button at the bottom */}
@@ -407,7 +418,7 @@ export default function Navigation({
                 <button
                   className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
                 >
-                  {dict?.navigation?.about || "About"}
+                  <TranslatableText>{dict?.navigation?.about || "About"}</TranslatableText>
                   <SafeIconChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "about" ? "rotate-180" : ""}`} />
                 </button>
                 {desktopDropdown === "about" && (
@@ -421,12 +432,12 @@ export default function Navigation({
                             prefetch={true}
                           >
                             <div className="text-sm font-medium leading-none">
-                              {dict?.about?.[
+                              <TranslatableText>{dict?.about?.[
                                 item.title.toLowerCase().replace(/ /g, "_")
-                              ] || item.title}
+                              ] || item.title}</TranslatableText>
                             </div>
                             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                              {item.description}
+                              {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
                             </p>
                           </SafeLink>
                         </li>
@@ -445,7 +456,7 @@ export default function Navigation({
                 <button
                   className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
                 >
-                  {dict?.navigation?.what_we_do || "What we do"}
+                  <TranslatableText>{dict?.navigation?.what_we_do || "What we do"}</TranslatableText>
                   <SafeIconChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "what-we-do" ? "rotate-180" : ""}`} />
                 </button>
                 {(desktopDropdown === "what-we-do" || desktopDropdown === "program-submenu") && (
@@ -462,11 +473,11 @@ export default function Navigation({
                             {item.hasSubmenu ? (
                               <div className="block p-3 rounded-md hover:bg-accent transition-colors">
                                 <div className="text-sm font-medium leading-none flex items-center justify-between">
-                                  {item.title}
+                                  <TranslatableText>{item.title}</TranslatableText>
                                   <SafeIconChevronDown className={`h-3 w-3 transition-transform ${isSubmenuOpen ? "rotate-180" : ""}`} />
                                 </div>
                                 <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                                  {item.description}
+                                  {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
                                 </p>
                                 {isSubmenuOpen && (
                                   <div 
@@ -483,10 +494,10 @@ export default function Navigation({
                                             prefetch={true}
                                           >
                                             <div className="text-sm font-medium leading-none">
-                                              {subItem.title}
+                                              <TranslatableText>{subItem.title}</TranslatableText>
                                             </div>
                                             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                                              {subItem.description}
+                                              {/*<TranslatableText>{subItem.description || ""}</TranslatableText>*/}
                                             </p>
                                           </SafeLink>
                                         </li>
@@ -502,10 +513,10 @@ export default function Navigation({
                                 prefetch={true}
                               >
                                 <div className="text-sm font-medium leading-none">
-                                  {item.title}
+                                  <TranslatableText>{item.title}</TranslatableText>
                                 </div>
                                 <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                                  {item.description}
+                                  {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
                                 </p>
                               </SafeLink>
                             )}
@@ -526,7 +537,7 @@ export default function Navigation({
                 <button
                   className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
                 >
-                  News & Updates
+                  <TranslatableText>News & Updates</TranslatableText>
                   <SafeIconChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "news" ? "rotate-180" : ""}`} />
                 </button>
                 {desktopDropdown === "news" && (
@@ -540,10 +551,10 @@ export default function Navigation({
                             prefetch={true}
                           >
                             <div className="text-sm font-medium leading-none">
-                              {item.title}
+                              <TranslatableText>{item.title}</TranslatableText>
                             </div>
                             <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                              {item.description}
+                              {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
                             </p>
                           </SafeLink>
                         </li>
@@ -559,7 +570,7 @@ export default function Navigation({
                 className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 hover:bg-accent/50 rounded-md transition-colors`}
                 prefetch={true}
               >
-                {dict?.navigation?.contact || "Contact"}
+                <TranslatableText>{dict?.navigation?.contact || "Contact"}</TranslatableText>
               </SafeLink>
             </nav>
           </div>
@@ -567,6 +578,9 @@ export default function Navigation({
           {/* Right side items */}
           <div className="min-h-full p-4 w-auto flex items-center">
             <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 border-3">
+                <LanguageSwitcher />
+              </div>
               {/*<SafeLink href="/login" className="hidden md:block">*/}
               {/*  <Button*/}
               {/*    size="sm"*/}
@@ -581,7 +595,7 @@ export default function Navigation({
                   size="icon"
                   className="text-black hover:bg-[#F5F5F5] transition-colors"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                  aria-label={isMobileMenuOpen ? (dict?.navigation?.close_menu || "Close menu") : (dict?.navigation?.open_menu || "Open menu")}
                 >
                   {isMobileMenuOpen ? (
                     <SafeIconX className="h-6 w-6" />

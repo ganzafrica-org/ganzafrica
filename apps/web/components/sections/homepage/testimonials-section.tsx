@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Container from '@/components/layout/container';
 import apiClient from '@/lib/api-client';
 import { useDict } from '@/context/dictionary';
+import {TranslatableText} from "@/components/translate";
 
 // Interface for the testimonial data from the API
 interface Testimonial {
@@ -181,16 +182,22 @@ export default function TestimonialsSection({ locale }: TestimonialsSectionProps
             <Container>
                 <div className="text-center mb-6 md:mb-8">
                     <h2 className="text-3xl md:text-4xl font-bold mb-2">
-                        {dict?.fellowship?.testimonials?.heading || "Checkout What Fellows"}
+                        <TranslatableText>
+                            {dict?.fellowship?.testimonials?.heading || "Checkout What Fellows"}
+                        </TranslatableText>
                     </h2>
                     <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8">
-                        {dict?.fellowship?.testimonials?.heading2 || "Say about Our Fellowship"}
+                        <TranslatableText>
+                            {dict?.fellowship?.testimonials?.heading2 || "Say about Our Fellowship"}
+                        </TranslatableText>
                     </h3>
                 </div>
 
                 {error && (
                     <div className="text-center text-red-500 mb-8 px-4 max-w-2xl mx-auto">
-                        {error}
+                        <TranslatableText>
+                            {error}
+                        </TranslatableText>
                     </div>
                 )}
 
@@ -243,7 +250,9 @@ export default function TestimonialsSection({ locale }: TestimonialsSectionProps
                                     className="min-h-[120px] md:min-h-[150px] flex items-center justify-center mb-4 md:mb-6"
                                 >
                                     <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl mx-auto text-white">
-                                        {testimonials[currentTestimonial]?.description}
+                                        <TranslatableText>
+                                            {testimonials[currentTestimonial]?.description}
+                                        </TranslatableText>
                                     </p>
                                 </motion.div>
 
@@ -258,9 +267,7 @@ export default function TestimonialsSection({ locale }: TestimonialsSectionProps
                                     <h4 className="text-lg md:text-xl font-bold mb-1 md:mb-2 text-yellow-400">
                                         {testimonials[currentTestimonial]?.author_name}
                                     </h4>
-                                    <p className="text-gray-600 text-xs md:text-sm text-white">
-                                        {testimonials[currentTestimonial]?.position}
-                                    </p>
+                                    <p className="text-gray-600 text-xs md:text-sm text-white">{testimonials[currentTestimonial]?.position}</p>
                                 </motion.div>
                             </div>
                         </div>
