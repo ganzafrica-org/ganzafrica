@@ -190,7 +190,7 @@ const ContactUsContent: React.FC = () => {
                             className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6"
                         >
                             <TranslatableText>
-                              {dict?.contact?.hero?.description || "Have questions or want to learn more about our programs? We're here to help."}
+                                {dict?.contact?.hero?.description || "Have questions or want to learn more about our programs? We're here to help."}
                             </TranslatableText>
                         </motion.p>
                     </div>
@@ -226,7 +226,7 @@ const ContactUsContent: React.FC = () => {
                                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
                                     <div>
                                         <p className="font-medium">
-                                            
+
                                             <TranslatableText>{dict?.contact?.form?.successTitle || "Message sent successfully!"}</TranslatableText>
                                             <TranslatableText>
                                                 {dict?.contact?.form?.successMessage || "Thank you for contacting us. We'll get back to you as soon as possible."}
@@ -349,7 +349,7 @@ const ContactUsContent: React.FC = () => {
                                         </>
                                     ) : (
                                         <>
-                                            
+
                                             <TranslatableText>{dict?.contact?.form?.sendButton || "Send Message"}</TranslatableText>
                                         </>
                                     )}
@@ -373,7 +373,7 @@ const ContactUsContent: React.FC = () => {
                                     <TranslatableText>{dict?.contact?.newsletter?.title || "Stay Updated"}</TranslatableText>
                                 </h3>
                                 <p className="text-gray-600 mb-6">
-                                    <TranslatableText>{dict?.contact?.newsletter?.description || "Subscribe to our newsletter to receive updates about our programs, events, and opportunities."}</TranslatableText>    
+                                    <TranslatableText>{dict?.contact?.newsletter?.description || "Subscribe to our newsletter to receive updates about our programs, events, and opportunities."}</TranslatableText>
                                 </p>
 
                                 {/* Newsletter Success Message */}
@@ -464,10 +464,10 @@ const ContactUsContent: React.FC = () => {
 
                                                     <div className="min-w-0 flex-1 break-words">
                                                         <p className="text-gray-600 break-words">
-                                                            <TranslatableText>{dict?.contact?.office?.email || "info@ganzafrica.org"}</TranslatableText>        
+                                                            <TranslatableText>{dict?.contact?.office?.email || "info@ganzafrica.org"}</TranslatableText>
                                                         </p>
                                                         <p className="text-xs text-gray-500 break-words">
-                                                            <TranslatableText>{dict?.contact?.office?.emailResponse || "Response within 24 hours"}</TranslatableText>   
+                                                            <TranslatableText>{dict?.contact?.office?.emailResponse || "Response within 24 hours"}</TranslatableText>
                                                         </p>
                                                     </div>
                                                 </div>
