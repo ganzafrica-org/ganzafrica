@@ -1,12 +1,5 @@
-import { getDictionary } from "@/lib/get-dictionary";
 
-export default async function ProgramsPage(
-  { params }: { params: { locale: string } }
-): Promise<JSX.Element> {
-  const locale = params.locale;
-
-  const dict = await getDictionary(locale);
-
+export default async function ProgramsPage(): Promise<JSX.Element> {
   return (
     <main>
       <div className="bg-muted py-16">

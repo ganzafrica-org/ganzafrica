@@ -1,10 +1,8 @@
 import { Rubik } from "next/font/google";
-import { getDictionary } from "@/lib/get-dictionary";
 import ClientLayout from "@/components/layout/client-layout";
 import { GoogleAnalyticsComponent } from "@/components/analytics/google-analytics";
 import React, { Suspense } from "react";
 import "@workspace/ui/globals.css";
-
 
 // Font optimization - Using Rubik
 const fontRubik = Rubik({
@@ -14,62 +12,29 @@ const fontRubik = Rubik({
 });
 
 // Metadata generation
-export async function generateMetadata(
-  props: {
-    params: Promise<{ locale: string }>;
-  }
-) {
-  const params = await props.params;
-  // Ensure locale is one of the supported ones, fallback to 'en'
-  const locale =
-    params.locale && ["en", "fr"].includes(params.locale)
-      ? params.locale
-      : "en";
-
-  // Load dictionary based on locale
-  const dict = await getDictionary(locale);
-
+export async function generateMetadata() {
   return {
     title: {
-      default: dict.site.name,
-      template: `%s | ${dict.site.name}`,
+      default: "GanzAfrica",
+      template: `%s | GanzAfrica`,
     },
-    description: dict.site.description,
+    description: "GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands.",
     metadataBase: new URL(
       process.env.NEXT_PUBLIC_APP_URL || "https://ganzafrica.org",
     ),
     alternates: {
       canonical: "/",
-      languages: {
-        en: "/en",
-        fr: "/fr",
-      },
     },
   };
 }
 
-export default async function RootLayout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ locale: string }>;
-  }
-) {
-  const params = await props.params;
-
-  const {
-    children
-  } = props;
-
-  // Ensure locale is one of the supported ones, fallback to 'en'
-  const locale =
-    params.locale && ["en", "fr"].includes(params.locale)
-      ? params.locale
-      : "en";
-  const dict = await getDictionary(locale);
+export default async function RootLayout(props: {
+  children: React.ReactNode;
+}) {
+  const { children } = props;
 
   return (
     <html
-      lang={locale}
       className={`${fontRubik.variable} light`}
       suppressHydrationWarning
     >
@@ -79,7 +44,7 @@ export default async function RootLayout(
             <GoogleAnalyticsComponent gaId={process.env.NEXT_PUBLIC_GA_ID} />
           </Suspense>
         )}
-        <ClientLayout locale={locale} dict={dict}>
+        <ClientLayout>
           {children}
         </ClientLayout>
       </body>

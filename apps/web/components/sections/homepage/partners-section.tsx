@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { DecoratedHeading } from '@/components/layout/headertext';
 import apiClient from '@/lib/api-client';
-import { useDict } from '@/context/dictionary';
 
 // Interface for the partner data from the API
 interface Partner {
@@ -21,13 +20,7 @@ interface PartnersResponse {
     partners: Partner[];
 }
 
-// Props for the component
-interface PartnersSectionProps {
-    locale: string;
-}
-
-export default function PartnersSection({ locale }: PartnersSectionProps) {
-    const dict = useDict();
+export default function PartnersSection() {
     const [partnerRow1, setPartnerRow1] = useState<string[]>([
         'minagri.jpg',
         'ministry-environment.jpg',
@@ -85,8 +78,8 @@ export default function PartnersSection({ locale }: PartnersSectionProps) {
             <div className="container mx-auto px-4 mb-7">
                 <div className="text-center mb-10">
                     <DecoratedHeading
-                        firstText={dict?.partners?.heading_first ?? dict?.about?.partners?.heading_first ?? "Our"}
-                        secondText={dict?.partners?.heading_second ?? dict?.about?.partners?.heading_second ?? "Partners"}
+                        firstText="Our"
+                        secondText="Partners"
                         className="mx-auto"
                     />
                 </div>
