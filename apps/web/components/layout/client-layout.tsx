@@ -3,17 +3,12 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { TranslationProvider } from "@/context/translation";
-import { DictionaryProvider } from '@/context/dictionary';
 import { useLayoutEffect, useState } from 'react';
 
 export default function ClientLayout({
                                          children,
-                                         locale,
-                                         dict,
                                      }: {
     children: React.ReactNode;
-    locale: string;
-    dict: any;
 }) {
     const [hideLayout, setHideLayout] = useState(false);
 
@@ -49,13 +44,11 @@ export default function ClientLayout({
             enableColorScheme
         >
             <TranslationProvider sourceLanguage="en">
-                <DictionaryProvider dict={dict}>
                     <div className="relative flex min-h-screen flex-col">
                         {!hideLayout && <Header />}
                         <div className="flex-1">{children}</div>
-                        {!hideLayout && <Footer locale={locale} />}
+                        {!hideLayout && <Footer />}
                     </div>
-                </DictionaryProvider>
             </TranslationProvider>
         </NextThemesProvider>
     );

@@ -18,15 +18,7 @@ interface Program {
     icon: React.ReactNode; // Added icon property
 }
 
-interface FlagshipProgramsSectionProps {
-    locale: string;
-    dict: any;
-}
-
-export default function FlagshipProgramsSection({
-                                                    locale,
-                                                    dict,
-                                                }: FlagshipProgramsSectionProps) {
+export default function FlagshipProgramsSection() {
     // Define SVG icons for each program
     const FellowshipIcon = () => (
         <svg
@@ -83,14 +75,12 @@ export default function FlagshipProgramsSection({
         </svg>
     );
 
-    // Get programs from dictionary or use defaults
+    // Get defaults programs
     const programs: Program[] = [
         {
             id: "fellowship",
-            title: dict?.programs?.fellowship?.title || "Fellowship Program",
-            description:
-                dict?.programs?.fellowship?.description ||
-                "Our fellowship program provides young leaders with the skills and opportunities to drive sustainable change in their communities across Africa. This immersive experience helps develop essential leadership qualities and technical expertise.",
+            title: "Fellowship Program",
+            description: "Our fellowship program provides young leaders with the skills and opportunities to drive sustainable change in their communities across Africa. This immersive experience helps develop essential leadership qualities and technical expertise.",
             image: "/images/amiteam.jpg",
             link: "/programs/fellowship",
             date: "Year-round",
@@ -99,10 +89,8 @@ export default function FlagshipProgramsSection({
         },
         {
             id: "alumni",
-            title: dict?.programs?.alumni?.title || "Alumni Program",
-            description:
-                dict?.programs?.alumni?.description ||
-                "Building a network of skilled professionals driving Africa's transformation in land, agriculture, and environment. Our alumni continue to innovate, lead, and create positive change across the continent.",
+            title: "Alumni Program",
+            description: "Building a network of skilled professionals driving Africa's transformation in land, agriculture, and environment. Our alumni continue to innovate, lead, and create positive change across the continent.",
             image: "/images/alumni_program.jpg",
             link: "/programs/alumni",
             date: "Year-round",
@@ -117,8 +105,8 @@ export default function FlagshipProgramsSection({
                 <div className="text-center mb-16">
                     <TranslatableText>
                         <DecoratedHeading
-                            firstText={dict?.programs?.flagship_heading_first || "Our Flagship"}
-                            secondText={dict?.programs?.flagship_heading_second || "Programs"}
+                            firstText= "Our Flagship"
+                            secondText= "Programs"
                             className="mx-auto"
                         />
                     </TranslatableText>
@@ -229,7 +217,7 @@ export default function FlagshipProgramsSection({
                                         })
                                     }
                                 >
-                                    <TranslatableText>{dict?.cta?.learn_more || "Learn More"}</TranslatableText>
+                                    <TranslatableText>Learn More</TranslatableText>
                                 </Link>
                             </div>
                         </article>

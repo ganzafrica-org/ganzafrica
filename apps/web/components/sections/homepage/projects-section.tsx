@@ -8,7 +8,6 @@ import { ArrowRight } from 'lucide-react';
 import apiClient from '@/lib/api-client';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { useDict } from '@/context/dictionary';
 import { trackEvent } from '@/components/analytics/google-analytics';
 import {TranslatableText} from "@/components/translate";
 
@@ -51,10 +50,6 @@ pagination: {
 };
 };
 
-type ProjectsSectionProps = {
-locale: string;
-};
-
 const PROJECTS_PER_PAGE = 3;
 const MAX_PROJECTS = 6;
 const AUTO_SLIDE_INTERVAL = 5000; // 5 seconds
@@ -72,8 +67,7 @@ const getProjectCategory = (index: number) => {
   };
 };
 
-export default function ProjectsSection({ locale }: ProjectsSectionProps): JSX.Element {
-  const dict = useDict();
+export default function ProjectsSection(): JSX.Element {
 const [projects, setProjects] = useState<Project[]>([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState<string | null>(null);
@@ -330,7 +324,7 @@ const truncateDescription = useCallback((description: string, maxLength = 100): 
 // Project URL builder
 const getProjectUrl = useCallback((projectId: number): string => {
     return `/projects/${projectId}`;
-}, [locale]);
+}, []);
 
 // Add a No Projects Available message - only show if both API and fallbacks fail
 if (!loading && projects.length === 0) {
@@ -362,8 +356,8 @@ if (!loading && projects.length === 0) {
             <div className="container mx-auto px-4 max-w-6xl relative z-10">
                 <div className="text-center mb-8">
                     <DecoratedHeading
-                        firstText={dict?.projects?.heading_first ?? "Featured"}
-                        secondText={dict?.projects?.heading_second ?? "Properties"}
+                        firstText="Featured"
+                        secondText="Properties"
                         className="mx-auto"
                     />
                 </div>
@@ -436,8 +430,8 @@ return (
         <div className="container mx-auto px-4 max-w-7xl relative z-10">
         <div className="text-center mb-16">
             <DecoratedHeading
-                firstText={dict?.programs?.heading_first || "Featured"}
-                secondText={dict?.programs?.heading_second || "Projects"}
+                firstText="Featured"
+                secondText="Projects"
                 className="mx-auto"
             />
           </div>
@@ -539,9 +533,7 @@ return (
                     })}
                 >
                     <span className="relative z-10">
-                         <TranslatableText>
-                             {dict?.cta?.view_all_projects || "View All Projects"}
-                         </TranslatableText>
+                         <TranslatableText>View All Projects</TranslatableText>
                     </span>
                     <ArrowRight
                         size={16} 

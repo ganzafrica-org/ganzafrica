@@ -18,7 +18,6 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
-import { useDict } from '@/context/dictionary';
 import { trackEvent, trackVideoEvent, trackPageView } from "@/components/analytics/google-analytics";
 import {TranslatableText} from "@/components/translate";
 
@@ -27,7 +26,6 @@ import {TranslatableText} from "@/components/translate";
 const SafeLink = Link as unknown as React.ComponentType<any>;
 
 export default function AlumniPageContent() {
-    const dict = useDict();
     const scrollRef = useRef<HTMLDivElement>(null);
     const [animateFirst, setAnimateFirst] = useState(false);
     const [animateSecond, setAnimateSecond] = useState(false);
@@ -175,32 +173,20 @@ export default function AlumniPageContent() {
 
                 <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
                     <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
-                        <TranslatableText>
-                            {dict?.alumni?.hero?.title || "ALUMNI NETWORK"}
-                        </TranslatableText>
+                        <TranslatableText>ALUMNI NETWORK</TranslatableText>
                     </h2>
                     <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-                        <TranslatableText>
-                            {dict?.alumni?.hero?.subtitle || "A lifetime of"}
-                        </TranslatableText>{" "}
+                        <TranslatableText>A lifetime of</TranslatableText>{" "}
                         <span className="font-normal">
-              <TranslatableText>
-                {dict?.alumni?.hero?.subtitle2 || "Connections"}
-              </TranslatableText>
+              <TranslatableText>Connections</TranslatableText>
             </span>
                         ,{" "}
-                        <TranslatableText>
-                            {dict?.alumni?.hero?.opportunities || "Opportunities"}
-                        </TranslatableText>{" "}
+                        <TranslatableText>Opportunities</TranslatableText>{" "}
                         <span className="font-normal">
-              <TranslatableText>
-                {dict?.alumni?.hero?.and || "and"}
-              </TranslatableText>
+              <TranslatableText>and</TranslatableText>
             </span>{" "}
                         <br />
-                        <TranslatableText>
-                            {dict?.alumni?.hero?.impact || "Impact"}
-                        </TranslatableText>
+                        <TranslatableText>Impact</TranslatableText>
                     </h1>
                 </div>
             </section>
@@ -233,20 +219,18 @@ export default function AlumniPageContent() {
                         </div>
                         <div className="mt-10 md:mt-5 lg:mt-0">
                             <h2 className="text-3xl font-bold mb-6">
-                                <span className="text-black"> {dict?.alumni?.mission?.networkTitle || "Alumni Network"} </span>
-                                <span className="text-[#045f3c]"> {dict?.alumni?.mission?.statement || "Mission Statement"}</span>
+                                <span className="text-black">Alumni Network</span>
+                                <span className="text-[#045f3c]">Mission Statement</span>
                             </h2>
-                            <p className="text-base text-gray-700 mb-6">
-                                {dict?.alumni?.mission?.welcome || "Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa."}
-                            </p>
+                            <p className="text-base text-gray-700 mb-6">Welcome to the GanzAfrica Alumni Network, a platform dedicated to creating strong bonds among young African professionals. Our goal is to foster trust, collaboration, and a vibrant exchange of ideas to shape sustainable and transformative solutions for Africa.</p>
                             <p className="italic text-lg text-black font-normal mb-6 border-l-4 border-[#045f3c] pl-4">
-                                "{dict?.alumni?.mission?.quote || "To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact."}"
+                                To cultivate a vibrant alumni community that drives the transformation of African food systems through evidence-based insights, mentorship, and collaboration—empowering current fellows and fostering partnerships that create lasting opportunities for sustainable impact.
                             </p>
                             <div className="flex gap-8 flex-wrap">
                                 {[
-                                    dict?.alumni?.mission?.principle1 || "Knowledge Sharing",
-                                    dict?.alumni?.mission?.principle2 || "Mentorship",
-                                    dict?.alumni?.mission?.principle3 || "Collaboration and Networking",
+                                    "Knowledge Sharing",
+                                    "Mentorship",
+                                    "Collaboration and Networking",
                                 ].map((principle, index) => (
                                     <div key={index} className="flex items-center gap-2">
                                         <div
@@ -291,38 +275,38 @@ export default function AlumniPageContent() {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl font-bold mb-4">
-                            <span className="text-black">{dict?.alumni?.purpose?.prefixText || "Purpose of the "}</span>
-                            <span className="text-[#045f3c] ml-2">{dict?.alumni?.purpose?.title || "Alumni Network"}</span>
+                            <span className="text-black">Purpose of the</span>
+                            <span className="text-[#045f3c] ml-2">Alumni Network</span>
                         </h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {[
                             {
-                                title: dict?.alumni?.purpose?.card1Title || "Networking and Professional Development",
+                                title: "Networking and Professional Development",
                                 description:
-                                    dict?.alumni?.purpose?.card1Desc || "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
+                                    "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
                                 color: "#073392",
                                 icon: <Users className="w-8 h-8" />,
                             },
                             {
-                                title: dict?.alumni?.purpose?.card2Title || "Knowledge Sharing & Data and Evidence Use",
+                                title: "Knowledge Sharing & Data and Evidence Use",
                                 description:
-                                    dict?.alumni?.purpose?.card2Desc || "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
+                                    "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
                                 color: "#045f3c",
                                 icon: <CheckCircle2 className="w-8 h-8" />
                             },
                             {
-                                title: dict?.alumni?.purpose?.card3Title || "Investing Back into the Fellowship Program",
+                                title: "Investing Back into the Fellowship Program",
                                 description:
-                                    dict?.alumni?.purpose?.card3Desc || "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
+                                    "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
                                 color: "#F8B712",
                                 icon: <Briefcase className="w-8 h-8" />,
                             },
                             {
-                                title: dict?.alumni?.purpose?.card4Title || "Co-creating and Co-implementing Solutions",
+                                title: "Co-creating and Co-implementing Solutions",
                                 description:
-                                    dict?.alumni?.purpose?.card4Desc || "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
+                                    "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
                                 color: "#F97316",
                                 icon: <ArrowRight className="w-8 h-8" />,
                             },
@@ -355,8 +339,8 @@ export default function AlumniPageContent() {
                     {/* Simple, elegant header */}
                     <div className="text-center mb-20">
                         <h2 className="text-3xl font-bold mb-6">
-                            <span className="text-black">{dict?.alumni?.impact?.prefix || "Alumni "}</span>
-                            <span className="text-[#045f3c] ml-2">{dict?.alumni?.impact?.title || "Impact"}</span>
+                            <span className="text-black">Alumni</span>
+                            <span className="text-[#045f3c] ml-2">Impact</span>
                         </h2>
                     </div>
 
@@ -365,25 +349,25 @@ export default function AlumniPageContent() {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             {[
                                 {
-                                    title: dict?.alumni?.impact?.project1Title || "Land Governance",
+                                    title: "Land Governance",
                                     description:
-                                        dict?.alumni?.impact?.project1Desc || "Equitable land administration systems that strengthen tenure security and promote sustainable use",
+                                        "Equitable land administration systems that strengthen tenure security and promote sustainable use",
                                     icon: <TreePine className="w-12 h-12" />,
                                     color: "#073392",
                                     lightColor: "#e8f0ff",
                                 },
                                 {
-                                    title: dict?.alumni?.impact?.project2Title || "Sustainable Agriculture",
+                                    title: "Sustainable Agriculture",
                                     description:
-                                        dict?.alumni?.impact?.project2Desc || "Agricultural policies balancing productivity with environmental stewardship and social inclusion",
+                                        "Agricultural policies balancing productivity with environmental stewardship and social inclusion",
                                     icon: <Sprout className="w-12 h-12" />,
                                     color: "#005c3d",
                                     lightColor: "#e8f5f0",
                                 },
                                 {
-                                    title: dict?.alumni?.impact?.project3Title || "Climate Adaptation",
+                                    title: "Climate Adaptation",
                                     description:
-                                        dict?.alumni?.impact?.project3Desc || "Climate resilience strategies helping communities adapt to changing environmental conditions",
+                                        "Climate resilience strategies helping communities adapt to changing environmental conditions",
                                     icon: <Cloud className="w-12 h-12" />,
                                     color: "#f8b712",
                                     lightColor: "#fff8e1",
@@ -434,7 +418,7 @@ export default function AlumniPageContent() {
                     {/* Compact CTA button on right */}
                     <div className="flex justify-end mt-12">
                         <button className="group relative inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-[#045f3c] text-[#045f3c] rounded-full hover:bg-[#045f3c] hover:text-white transition-all duration-300 font-medium text-sm shadow-md hover:shadow-lg">
-                            <span>{dict?.alumni?.impact?.viewAllButton || "View All Projects"}</span>
+                            <span>View All Projects</span>
                             <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
 
                             {/* Creative hover effect */}
@@ -449,8 +433,8 @@ export default function AlumniPageContent() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-8">
                         <h2 className="text-3xl font-bold">
-                            <span className="text-black">{dict?.alumni?.events?.prefix || "Alumni "}</span>
-                            <span className="text-[#045f3c] ml-2">{dict?.alumni?.events?.title || "Events"}</span>
+                            <span className="text-black">Alumni</span>
+                            <span className="text-[#045f3c] ml-2">Events</span>
                         </h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -518,7 +502,7 @@ export default function AlumniPageContent() {
                                             <TranslatableText>{eventItem.title}</TranslatableText>
                                         </h3>
                                         <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                                            {dict?.alumni?.events?.defaultDescription || "Young professionals are at the forefront of accelerating CAADP implementation..."}
+                                            Young professionals are at the forefront of accelerating CAADP implementation...
                                         </p>
                                         <span
                                             className="inline-flex items-center text-sm font-medium transition-all duration-200 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0"
@@ -534,7 +518,7 @@ export default function AlumniPageContent() {
                                             }}
                                         >
                       <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
-                        {dict?.alumni?.events?.viewEventButton || "View Event"}
+                        View Event
                       </span>
                       <ArrowRight className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
                     </span>

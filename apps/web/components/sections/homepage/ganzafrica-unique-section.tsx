@@ -5,7 +5,6 @@ import React, { useState, useRef } from "react";
 import { PlayCircle, PauseCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from '@/components/layout/headertext';
-import { useDict } from '@/context/dictionary';
 import {TranslatableText} from "@/components/translate";
 
 
@@ -18,21 +17,12 @@ interface KeyElement {
     isHighlighted?: boolean;
 }
 
-interface GanzAfricaUniqueSectionProps {
-    locale: string;
-}
-
-export default function GanzAfricaUniqueSection({
-                                                    locale,
-                                                }: GanzAfricaUniqueSectionProps) {
-    const dict = useDict();
+export default function GanzAfricaUniqueSection() {
     const [videoPlaying, setVideoPlaying] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
 
-    // Get section content from the dictionary with fallbacks
-    // const sectionTitle =
-    //     dict?.unique?.title || "3 Key Elements that make GanzAfrica Unique";
-
+    // Get section content with fallbacks
+    // const sectionTitle ="3 Key Elements that make GanzAfrica Unique";
     // Define custom SVG icons for each element
     const DataIcon = () => (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -58,33 +48,26 @@ export default function GanzAfricaUniqueSection({
         </svg>
     );
 
-    // Define the key elements with content from the dictionary
+    // Define the key elements with content
     const keyElements: KeyElement[] = [
         {
-            title: dict?.unique?.elements?.data?.title || "Data and Evidence",
-            description:
-                dict?.unique?.elements?.data?.description ||
-                "We champion a data & evidence-based approach, equipping our fellows with key skills in data analytics to support evidence-informed decisions and policies.",
+            title: "Data and Evidence",
+            description: "We champion a data & evidence-based approach, equipping our fellows with key skills in data analytics to support evidence-informed decisions and policies.",
             icon: <DataIcon />,
             color: "#166534", // Deep amber
             imageUrl: "/images/Fellows3.jpeg",
         },
         {
-            title: dict?.unique?.elements?.implementation?.title || "Implementation",
-            description:
-                dict?.unique?.elements?.implementation?.description ||
-                "We go beyond ideas, cultivating a generation of young african leaders with the skills and resources to translate their vision into reality, implementing solutions to improve community livelihoods in Africa.",
+            title: "Implementation",
+            description: "We go beyond ideas, cultivating a generation of young african leaders with the skills and resources to translate their vision into reality, implementing solutions to improve community livelihoods in Africa.",
             icon: <ImplementationIcon />,
             color: "#FFB800", // Deep blue
             imageUrl: "/images/Fellows1.jpeg",
             isHighlighted: true,
         },
         {
-            title:
-                dict?.unique?.elements?.public_sector?.title || "The Public Sector",
-            description:
-                dict?.unique?.elements?.public_sector?.description ||
-                "We aim to solve endemic and important public sector challenges, based on the belief that only solutions at this level lead to large-scale and long-lasting impact in agriculture and food systems.",
+            title: "The Public Sector",
+            description: "We aim to solve endemic and important public sector challenges, based on the belief that only solutions at this level lead to large-scale and long-lasting impact in agriculture and food systems.",
             icon: <PublicSectorIcon />,
             color: "#073392",// Deep green
             imageUrl: "/images/amiteam.jpg",
@@ -178,8 +161,8 @@ export default function GanzAfricaUniqueSection({
                                 transition={{ duration: 0.6 }}
                             >
                                 <DecoratedHeading
-                                    firstText={dict.home?.unique?.title_first || "3 Key Elements that make"}
-                                    secondText={dict.home?.unique?.title_second || "GanzAfrica Unique"}
+                                    firstText= "3 Key Elements that make"
+                                    secondText= "GanzAfrica Unique"
                                 />
                             </motion.div>
                             {/*<motion.div */}

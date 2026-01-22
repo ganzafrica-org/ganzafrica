@@ -12,12 +12,7 @@ import { motion } from 'framer-motion';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import { AudioMutedIcon, AudioUnmutedIcon, FullscreenIcon } from "@/components/ui/icons";
 import apiClient from '@/lib/api-client';
-import { useDict } from '@/context/dictionary';
 import {TranslatableText} from "@/components/translate";
-
-interface FellowshipPageContentProps {
-    locale: string;
-}
 
 type Opportunity = {
     id: string;
@@ -110,22 +105,21 @@ const fallbackTestimonials: Testimonial[] = [
     }
 ];
 
-export default function FellowshipPageContent({ locale }: FellowshipPageContentProps) {
-    const dict = useDict();
+export default function FellowshipPageContent() {
     const benefits = [
         {
-            title: dict?.fellowship?.benefits?.tackle?.title || "Tackle Challenges",
-            description: dict?.fellowship?.benefits?.tackle?.description || "Join a like-minded cohort to address major land, agricultural, and environmental challenges in Africa, making a meaningful impact in your community.",
+            title: "Tackle Challenges",
+            description: "Join a like-minded cohort to address major land, agricultural, and environmental challenges in Africa, making a meaningful impact in your community.",
             image: "/images/SHIR5142-Enhanced-NR.jpg"
         },
         {
-            title: dict?.fellowship?.benefits?.global?.title || "Gain Global Experience",
-            description: dict?.fellowship?.benefits?.global?.description || "Work on transformative projects with world-class industry specialists, be mentored by experts, and participate in the co-creation of innovative solutions in our focus areas.",
+            title: "Gain Global Experience",
+            description: "Work on transformative projects with world-class industry specialists, be mentored by experts, and participate in the co-creation of innovative solutions in our focus areas.",
             image: "/images/Mico(Trainer).jpeg"
         },
         {
-            title: dict?.fellowship?.benefits?.develop?.title || "Develop Your Skills",
-            description: dict?.fellowship?.benefits?.develop?.description || "Our fully funded program offers training, apprenticeships, and work experience to enhance your expertise and showcase your talent.",
+            title: "Develop Your Skills",
+            description: "Our fully funded program offers training, apprenticeships, and work experience to enhance your expertise and showcase your talent.",
             image: "/images/ganzafrica-fellows.jpg"
         }
     ];
@@ -133,33 +127,33 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
     const promises = [
         {
             number: "01",
-            title: dict?.fellowship?.promise?.dev?.title || "Professional Development",
-            description: dict?.fellowship?.promise?.dev?.description || "Provide up to 2 years of holistic training with a focus on data & analytics and leadership skills",
+            title: "Professional Development",
+            description: "Provide up to 2 years of holistic training with a focus on data & analytics and leadership skills",
             color: "bg-[#00A15D]"
         },
         {
             number: "02",
-            title: dict?.fellowship?.promise?.community?.title || "A community of like-minded people",
-            description: dict?.fellowship?.promise?.community?.description || "Welcome fellows into a network of value-driven young Africans committed to leading Africa's transformation",
+            title: "A community of like-minded people",
+            description: "Welcome fellows into a network of value-driven young Africans committed to leading Africa's transformation",
             color: "bg-[#FDB022]"
         },
         {
             number: "03",
-            title: dict?.fellowship?.promise?.experience?.title || "Hands-On Experience",
-            description: dict?.fellowship?.promise?.experience?.description || "Deliver work secondments with one of our partners to apply skills learned",
+            title: "Hands-On Experience",
+            description: "Deliver work secondments with one of our partners to apply skills learned",
             color: "bg-[#073392]"
         }
     ];
 
     const topics = [
-        dict?.fellowship?.topics?.foodSystems || "Food Systems",
-        dict?.fellowship?.topics?.dataEvidence || "Data & Evidence",
-        dict?.fellowship?.topics?.coCreation || "Co-creation",
-        dict?.fellowship?.topics?.foodSystems2 || "Food systems",
-        dict?.fellowship?.topics?.dataEvidence2 || "Data & Evidence",
-        dict?.fellowship?.topics?.naturalResources || "Natural Resource Management",
-        dict?.fellowship?.topics?.climate || "Climate Change",
-        dict?.fellowship?.topics?.agriculture || "Sustainable Agriculture"
+        "Food Systems",
+        "Data & Evidence",
+        "Co-creation",
+        "Food systems",
+        "Data & Evidence",
+        "Natural Resource Management",
+        "Climate Change",
+        "Sustainable Agriculture"
     ];
 
     const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -324,7 +318,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                             className="text-3xl md:text-5xl font-bold text-white mb-4"
                         >
                <span className="text-primary-orange">
-                <TranslatableText>{dict?.fellowship?.hero?.title || "Fellowship"}</TranslatableText>
+                <TranslatableText>Fellowship</TranslatableText>
             </span>
                         </motion.h1>
                         <motion.p
@@ -333,9 +327,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                             transition={{ duration: 0.8, delay: 0.2 }}
                             className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6"
                         >
-                            <TranslatableText>
-                                {dict?.fellowship?.hero?.description || "Join our transformative fellowship program designed to empower the next generation of African leaders in sustainable development."}
-                            </TranslatableText>
+                            <TranslatableText>Join our transformative fellowship program designed to empower the next generation of African leaders in sustainable development.</TranslatableText>
                         </motion.p>
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -345,9 +337,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                         >
                             <Link href="/what-we-do/fellowship/how-to-apply">
                                 <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
-                                    <TranslatableText>
-                                        {dict?.fellowship?.hero?.cta || "How to Apply"}
-                                    </TranslatableText>
+                                    <TranslatableText>How to Apply</TranslatableText>
                                 </Button>
                             </Link>
                         </motion.div>
@@ -433,14 +423,12 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                             className="w-full md:absolute md:top-12 md:right-0 md:w-[50%] bg-white p-4 sm:p-6 rounded-md shadow-lg"
                         >
                             <DecoratedHeading
-                                firstText={dict?.fellowship?.about?.firstText || "About the"}
-                                secondText={dict?.fellowship?.about?.secondText || "Fellowship"}
+                                firstText= "About the"
+                                secondText= "Fellowship"
                                 className='mb-4 sm:mb-5'
                             />
                             <p className="text-gray-600 text-sm sm:text-base mb-6 sm:mb-8">
-                                <TranslatableText>
-                                    {dict?.fellowship?.about?.description || "Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners."}
-                                </TranslatableText>
+                                <TranslatableText>Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.</TranslatableText>
                             </p>
 
                             <Link href="/programs/fellowship/how-to-apply">
@@ -449,9 +437,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <TranslatableText>
-                                        {dict?.fellowship?.about?.cta || "How to Apply"}
-                                    </TranslatableText>
+                                    <TranslatableText>How to Apply</TranslatableText>
                                 </motion.button>
                             </Link>
                         </motion.div>
@@ -489,18 +475,14 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                             className="order-1 md:order-2"
                         >
                             <DecoratedHeading
-                                firstText={dict?.fellowship?.discover?.firstText || "Discover tomorrow's"}
-                                secondText={dict?.fellowship?.discover?.secondText || "leaders today"}
+                                firstText= "Discover tomorrow's"
+                                secondText= "leaders today"
                             />
                             <p className="text-gray-600 text-sm md:text-base mb-6">
-                                <TranslatableText>
-                                    {dict?.fellowship?.discover?.subtitle || "A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders."}
-                                </TranslatableText>
+                                <TranslatableText>A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders.</TranslatableText>
                             </p>
                             <p className="text-gray-600 text-sm md:text-base mb-8">
-                                <TranslatableText>
-                                    {dict?.fellowship?.discover?.description || "Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life."}
-                                </TranslatableText>
+                                <TranslatableText>Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.</TranslatableText>
                             </p>
                             <Link href="/about/team">
                                 <motion.button
@@ -508,7 +490,7 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <TranslatableText>{dict?.fellowship?.discover?.cta || "Meet the Fellows"}</TranslatableText>
+                                    <TranslatableText>Meet the Fellows</TranslatableText>
                                 </motion.button>
                             </Link>
                         </motion.div>
@@ -532,11 +514,11 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                         className="text-center max-w-2xl mx-auto mb-8"
                     >
                         <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                            <TranslatableText>{dict?.fellowship?.benefits?.heading || "Benefits of"}</TranslatableText>
-                            <span className="text-[#045F3C]"><TranslatableText>{dict?.fellowship?.benefits?.heading2 || "Joining GanzAfrica"}</TranslatableText></span>
+                            <TranslatableText>Benefits of</TranslatableText>
+                            <span className="text-[#045F3C]"><TranslatableText>Joining GanzAfrica</TranslatableText></span>
                         </h2>
                         <p className="text-gray-600 text-base">
-                            <TranslatableText>{dict?.fellowship?.benefits?.subtitle || "Begin your journey of impact and growth with GanzAfrica. Discover the benefits of joining our program:"}</TranslatableText>
+                            <TranslatableText>Begin your journey of impact and growth with GanzAfrica. Discover the benefits of joining our program:</TranslatableText>
                         </p>
                     </motion.div>
 
@@ -636,18 +618,14 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
                             className="max-w-xl"
                         >
                             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                                <TranslatableText>{dict?.fellowship?.promise?.title || "GanzAfrica's Promise"}</TranslatableText>
-                                <span className="text-[#00A15D]"><TranslatableText>{dict?.fellowship?.promise?.toText || "to"}</TranslatableText><br /></span>
+                                <TranslatableText>GanzAfrica's Promise</TranslatableText>
+                                <span className="text-[#00A15D]"><TranslatableText>to</TranslatableText><br /></span>
                                 <span className="text-[#FDB022]">
-                    <TranslatableText>
-                        {dict?.fellowship?.promise?.fellows || "Fellows:"}
-                    </TranslatableText>
+                    <TranslatableText>Fellows:</TranslatableText>
                 </span>
                             </h2>
                             <p className="text-white/90 text-lg">
-                                <TranslatableText>
-                                    {dict?.fellowship?.promise?.description || "We are committed to providing a transformative experience that equips you with the skills, network, and opportunities to make a lasting impact in your field."}
-                                </TranslatableText>
+                                <TranslatableText>We are committed to providing a transformative experience that equips you with the skills, network, and opportunities to make a lasting impact in your field.</TranslatableText>
                             </p>
                         </motion.div>
 
@@ -691,11 +669,9 @@ export default function FellowshipPageContent({ locale }: FellowshipPageContentP
             >
                 <Container>
                     <div className="text-center mb-6 md:mb-8">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-2"><TranslatableText>{dict?.fellowship?.testimonials?.heading || "Checkout What Fellows"}</TranslatableText></h2>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-2"><TranslatableText>Checkout What Fellows</TranslatableText></h2>
                         <h3 className="text-2xl md:text-3xl font-bold text-[#045F3C] mb-6 md:mb-8">
-                            <TranslatableText>
-                                {dict?.fellowship?.testimonials?.heading2 || "Say about Our Fellowship"}
-                            </TranslatableText>
+                            <TranslatableText>Say about Our Fellowship</TranslatableText>
                         </h3>
                     </div>
 

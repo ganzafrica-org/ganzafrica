@@ -8,68 +8,66 @@ import { Users, Blocks, Briefcase, Users2, ArrowRight, Globe } from 'lucide-reac
 import { useParams } from 'next/navigation';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import Link from 'next/link';
-import { useDict } from '@/context/dictionary';
 import { TranslatableText } from "./translate";
 
 export default function HowToApplyPageContent() {
-    const params = useParams<{ locale: string }>();
-    const dict = useDict();
+    const params = useParams();
 
-    const heroTitle = dict?.fellowship?.howToApply?.hero?.title || "Apply by completing our";
-    const heroEmphasis = dict?.fellowship?.howToApply?.hero?.emphasis || "online application";
-    const heroSubtitle = dict?.fellowship?.howToApply?.hero?.subtitle || "Join our fellowship program and become part of Africa's next generation of leaders in sustainable development";
+    const heroTitle = "Apply by completing our";
+    const heroEmphasis = "online application";
+    const heroSubtitle = "Join our fellowship program and become part of Africa's next generation of leaders in sustainable development";
 
     const defaultSteps = [
         {
             id: 1,
-            title: dict?.fellowship?.howToApply?.steps?.[0]?.title || "Fellowship Advertised",
-            description: dict?.fellowship?.howToApply?.steps?.[0]?.description || "GanzAfrica Fellowship opportunities are announced through our online channels and partner networks across Africa.",
+            title: "Fellowship Advertised",
+            description: "GanzAfrica Fellowship opportunities are announced through our online channels and partner networks across Africa.",
             image: "/images/fellowship-advertised.png"
         },
         {
             id: 2,
-            title: dict?.fellowship?.howToApply?.steps?.[1]?.title || "Applications Received",
-            description: dict?.fellowship?.howToApply?.steps?.[1]?.description || "Submit your application through our online portal. Make sure to include all required documents and information.",
+            title: "Applications Received",
+            description: "Submit your application through our online portal. Make sure to include all required documents and information.",
             image: "/images/application-received.png"
         },
         {
             id: 3,
-            title: dict?.fellowship?.howToApply?.steps?.[2]?.title || "Applications Reviewed",
-            description: dict?.fellowship?.howToApply?.steps?.[2]?.description || "Our team carefully reviews each application, assessing qualifications, experience, and alignment with our mission.",
+            title: "Applications Reviewed",
+            description: "Our team carefully reviews each application, assessing qualifications, experience, and alignment with our mission.",
             image: "/images/application-review.png"
         },
         {
             id: 4,
-            title: dict?.fellowship?.howToApply?.steps?.[3]?.title || "Interviews Conducted",
-            description: dict?.fellowship?.howToApply?.steps?.[3]?.description || "Selected candidates are invited to participate in oral and written interviews to further assess their suitability.",
+            title: "Interviews Conducted",
+            description: "Selected candidates are invited to participate in oral and written interviews to further assess their suitability.",
             image: "/images/interviews-conducted.png"
         },
         {
             id: 5,
-            title: dict?.fellowship?.howToApply?.steps?.[4]?.title || "Finalists Selected & Notified",
-            description: dict?.fellowship?.howToApply?.steps?.[4]?.description || "Successful candidates are notified and begin their journey with GanzAfrica Fellowship Program.",
+            title: "Finalists Selected & Notified",
+            description: "Successful candidates are notified and begin their journey with GanzAfrica Fellowship Program.",
             image: "/images/fellows-notified.png"
         }
     ];
 
-    const applicationSteps = dict?.fellowship?.howToApply?.steps ?? defaultSteps;
+    const applicationSteps = defaultSteps;
 
     const defaultEligibility = [
         {
-            title: dict?.fellowship?.howToApply?.eligibility?.[0]?.title || "Up to 27 years old",
-            description: dict?.fellowship?.howToApply?.eligibility?.[0]?.description || "Young professionals at the start of their career journey"
+            title: "Up to 27 years old",
+            description: "Young professionals at the start of their career journey"
         },
         {
-            title: dict?.fellowship?.howToApply?.eligibility?.[1]?.title || "A degree in a relevant discipline",
-            description: dict?.fellowship?.howToApply?.eligibility?.[1]?.description || "Academic background in agriculture, environmental science, data science, or related fields"
+            title: "A degree in a relevant discipline",
+            description: "Academic background in agriculture, environmental science, data science, or related fields"
         },
         {
-            title: dict?.fellowship?.howToApply?.eligibility?.[2]?.title || "Commitment to leading Africa's transformation",
-            description: dict?.fellowship?.howToApply?.eligibility?.[2]?.description || "Demonstrated passion for sustainable development and positive change"
+            title: "Commitment to leading Africa's transformation",
+            description: "Demonstrated passion for sustainable development and positive change"
         }
     ];
 
-    const eligibilityCriteria = dict?.fellowship?.howToApply?.eligibility ?? defaultEligibility;
+    const eligibilityCriteria = defaultEligibility;
 
     const FloatingApplyButton = () => {
         const buttonRef = useRef<HTMLDivElement>(null);
@@ -80,7 +78,7 @@ export default function HowToApplyPageContent() {
         useEffect(() => {
             const findFooterSection = () => {
                 const headings = Array.from(document.querySelectorAll('h2, h3, h4, h5, h6'));
-                const connectSection = headings.find(el => el.textContent?.trim().toLowerCase().includes((dict?.common?.connectWithUs || 'connect with us')));
+                const connectSection = headings.find(el => el.textContent?.trim().toLowerCase().includes('connect with us'));
                 if (connectSection) {
                     const parentSection = connectSection.closest('section, footer, [class*="footer"], [class*="Footer"]') as HTMLElement;
                     return parentSection || document.querySelector('footer') as HTMLElement;
@@ -153,9 +151,9 @@ export default function HowToApplyPageContent() {
                 if (footerSectionRef.current) observer.unobserve(footerSectionRef.current);
                 observer.disconnect();
             };
-        }, [isVisible, dict]);
+        }, [isVisible]);
 
-        const applyLabel = dict?.fellowship?.howToApply?.applyButton || 'Apply Now';
+        const applyLabel = 'Apply Now';
 
         return (
             <AnimatePresence>
@@ -221,10 +219,8 @@ export default function HowToApplyPageContent() {
                 <Container className="relative">
                     <div className="max-w-4xl mx-auto">
                         <h2 className="text-3xl font-bold text-center mb-16">
-                            <TranslatableText>
-                                {dict?.fellowship?.howToApply?.applicationProcessTitle || 'Application'}
-                            </TranslatableText>
-                            <TranslatableText>{dict?.fellowship?.howToApply?.applicationProcessHighlight || 'Process'}</TranslatableText>
+                            <TranslatableText>Application</TranslatableText>
+                            <TranslatableText>Process</TranslatableText>
                             <span className='text-primary-green'></span></h2>
                         <div className="relative">
                             <div className="absolute left-[28px] top-0 bottom-0 w-1 bg-gradient-to-b from-[#FDB022] to-[#045F3C]"></div>
@@ -247,8 +243,8 @@ export default function HowToApplyPageContent() {
                 <Container className="relative">
                     <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-4xl mx-auto">
                         <div className="text-center mb-16">
-                            <h2 className="text-4xl font-bold mb-4"><TranslatableText>{dict?.fellowship?.howToApply?.eligibilityTitle || 'Eligibility'}</TranslatableText></h2>
-                            <p className="text-gray-600 text-lg"><TranslatableText>{dict?.fellowship?.howToApply?.eligibilitySubtitle || 'Requirements for the GanzAfrica Fellowship Program'}</TranslatableText></p>
+                            <h2 className="text-4xl font-bold mb-4"><TranslatableText>Eligibility</TranslatableText></h2>
+                            <p className="text-gray-600 text-lg"><TranslatableText>Requirements for the GanzAfrica Fellowship Program</TranslatableText></p>
                         </div>
                         <div className="bg-white rounded-2xl p-10 shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow duration-300">
                             <div className="space-y-8">
@@ -269,27 +265,27 @@ export default function HowToApplyPageContent() {
 
             <div className="bg-[#FFF9DB] py-20">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="mb-12"><h2 className="text-5xl font-bold text-[#045F3C] relative inline-block tracking-tight"><TranslatableText>{dict?.fellowship?.howToApply?.journeyTitle || 'FELLOWSHIP JOURNEY'}</TranslatableText><div className="absolute -bottom-4 left-0 w-[90%] h-1.5 bg-[#FDB022]"></div></h2></div>
+                    <div className="mb-12"><h2 className="text-5xl font-bold text-[#045F3C] relative inline-block tracking-tight"><TranslatableText>FELLOWSHIP JOURNEY</TranslatableText><div className="absolute -bottom-4 left-0 w-[90%] h-1.5 bg-[#FDB022]"></div></h2></div>
 
                     <div className="relative mt-24">
                         <div className="max-w-7xl grid grid-cols-1 lg:grid-cols-4 gap-x-4 gap-y-16 relative">
                             <motion.div className="flex flex-col items-center gap-5" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0 }}>
-                                <motion.p className="text-[#045F3C] text-center mb-8 h-20 text-md max-w-[280px] font-medium" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }}><TranslatableText>{dict?.fellowship?.howToApply?.journey?.[0] || 'High-achieving young professionals are recruited as GanzAfrica fellows'}</TranslatableText></motion.p>
+                                <motion.p className="text-[#045F3C] text-center mb-8 h-20 text-md max-w-[280px] font-medium" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.2 }}><TranslatableText>High-achieving young professionals are recruited as GanzAfrica fellows</TranslatableText></motion.p>
                                 <motion.div className="w-28 h-28 rounded-full bg-[#FDB022] flex items-center justify-center relative z-10 shadow-lg" initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.4 }}><Users2 className="w-14 h-14 text-white" /></motion.div>
                             </motion.div>
 
                             <motion.div className="flex flex-col items-center gap-5 " initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
-                                <motion.p className="text-[#045F3C] text-center mb-8 h-20 text-md max-w-[280px] font-medium" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }}><TranslatableText>{dict?.fellowship?.howToApply?.journey?.[1] || 'GanzAfrica Academy provides capacity building on data-led approaches and leadership'}</TranslatableText></motion.p>
+                                <motion.p className="text-[#045F3C] text-center mb-8 h-20 text-md max-w-[280px] font-medium" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.5 }}><TranslatableText>GanzAfrica Academy provides capacity building on data-led approaches and leadership</TranslatableText></motion.p>
                                 <motion.div className="w-28 h-28 rounded-full bg-[#0000CC] flex items-center justify-center relative z-10 shadow-lg" initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.7 }}><Blocks className="w-14 h-14 text-white" /></motion.div>
                             </motion.div>
 
                             <motion.div className="flex flex-col items-center gap-5 " initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.6 }}>
-                                <motion.p className="text-[#045F3C] text-center mb-8 h-20 text-md max-w-[280px] font-medium" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.8 }}><TranslatableText>{dict?.fellowship?.howToApply?.journey?.[2] || 'Fellows are placed in public institutions and empowered to shape policy approaches'}</TranslatableText></motion.p>
+                                <motion.p className="text-[#045F3C] text-center mb-8 h-20 text-md max-w-[280px] font-medium" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.8 }}><TranslatableText>Fellows are placed in public institutions and empowered to shape policy approaches</TranslatableText></motion.p>
                                 <motion.div className="w-28 h-28 rounded-full bg-[#00A15D] flex items-center justify-center relative z-10 shadow-lg" initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 20, delay: 1 }}><Briefcase className="w-14 h-14 text-white" /></motion.div>
                             </motion.div>
 
                             <motion.div className="flex flex-col items-center gap-5 " initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.9 }}>
-                                <motion.p className="text-[#045F3C] text-center mb-8 h-20 text-md max-w-[280px] font-medium" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.1 }}><TranslatableText>{dict?.fellowship?.howToApply?.journey?.[3] || 'Fellows receive mentorship from experts, advancing their careers, leadership skills, and providing ongoing support'}</TranslatableText></motion.p>
+                                <motion.p className="text-[#045F3C] text-center mb-8 h-20 text-md max-w-[280px] font-medium" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.1 }}><TranslatableText>Fellows receive mentorship from experts, advancing their careers, leadership skills, and providing ongoing support</TranslatableText></motion.p>
                                 <motion.div className="w-28 h-28 rounded-full bg-[#045F3C] flex items-center justify-center relative z-10 shadow-lg" initial={{ scale: 0 }} whileInView={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 20, delay: 1.3 }}><Users className="w-14 h-14 text-white" /></motion.div>
                             </motion.div>
 

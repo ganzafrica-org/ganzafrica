@@ -6,7 +6,6 @@ import Image from "next/image";
 import HeaderBelt from "@/components/layout/headerBelt";
 import WhereWeWorkSection from "@/components/sections/food-system/where-we-work-section";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
-import { useDict } from '@/context/dictionary';
 import ApproachSection from "@/components/sections/food-system/approach-section";
 import { trackEvent, trackPageView } from "@/components/analytics/google-analytics";
 import { TranslatableText } from "@/components/translate/TranslatableText";
@@ -25,7 +24,6 @@ const fadeIn = {
 };
 
 export default function OurApproachPageContent() {
-    const dict = useDict();
     // Normalize Next.js Image typing across React versions
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SafeImage = Image as unknown as React.ComponentType<any>;
@@ -43,7 +41,7 @@ export default function OurApproachPageContent() {
                 <div className="absolute inset-0 z-0">
                     <SafeImage
                         src="/images/cabbages.png"
-                        alt={dict?.ourApproach?.hero?.alt || "Food System"}
+                        alt="Food System"
                         fill
                         sizes="100vw"
                         className="object-cover"
@@ -62,7 +60,7 @@ export default function OurApproachPageContent() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.7, delay: 0.4 }}
                     >
-                        <TranslatableText>{dict?.ourApproach?.hero?.heading || "OUR APPROACH TO FOOD SYSTEMS"}</TranslatableText>
+                        <TranslatableText>OUR APPROACH TO FOOD SYSTEMS</TranslatableText>
                     </motion.h2>
                     <motion.h1
                         className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight"
@@ -70,7 +68,7 @@ export default function OurApproachPageContent() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, delay: 0.2 }}
                     >
-                        <span className="font-normal"><TranslatableText>{dict?.ourApproach?.hero?.subtitle || 'From Farm to Fork — and Far Beyond'}</TranslatableText></span>
+                        <span className="font-normal"><TranslatableText>From Farm to Fork — and Far Beyond</TranslatableText></span>
                     </motion.h1>
                 </div>
             </section>

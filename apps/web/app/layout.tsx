@@ -1,5 +1,4 @@
 import { Rubik } from "next/font/google";
-import { getDictionary } from "@/lib/get-dictionary";
 import ClientLayout from "@/components/layout/client-layout";
 import { GoogleAnalyticsComponent } from "@/components/analytics/google-analytics";
 import React, { Suspense } from "react";
@@ -14,16 +13,12 @@ const fontRubik = Rubik({
 
 // Metadata generation
 export async function generateMetadata() {
-  // Hardcoded to English since i18n is removed
-  const locale = "en";
-  const dict = await getDictionary(locale);
-
   return {
     title: {
-      default: dict.site.name,
-      template: `%s | ${dict.site.name}`,
+      default: "GanzAfrica",
+      template: `%s | GanzAfrica`,
     },
-    description: dict.site.description,
+    description: "GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands.",
     metadataBase: new URL(
       process.env.NEXT_PUBLIC_APP_URL || "https://ganzafrica.org",
     ),
@@ -37,14 +32,9 @@ export default async function RootLayout(props: {
   children: React.ReactNode;
 }) {
   const { children } = props;
-  
-  // Hardcoded to English
-  const locale = "en";
-  const dict = await getDictionary(locale);
 
   return (
     <html
-      lang={locale}
       className={`${fontRubik.variable} light`}
       suppressHydrationWarning
     >
@@ -54,7 +44,7 @@ export default async function RootLayout(props: {
             <GoogleAnalyticsComponent gaId={process.env.NEXT_PUBLIC_GA_ID} />
           </Suspense>
         )}
-        <ClientLayout locale={locale} dict={dict}>
+        <ClientLayout>
           {children}
         </ClientLayout>
       </body>

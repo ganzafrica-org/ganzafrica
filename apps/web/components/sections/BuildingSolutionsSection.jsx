@@ -2,11 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import CategoriesBanner from "@/components/layout/headerBanner";
-import { useDict } from '@/context/dictionary';
 import {TranslatableText} from "@/components/translate/index.ts";
 
 const BuildingSolutionsSection = ({ categories, tags }) => {
-    const dict = useDict();
     const sceneRef = useRef(null);
     const containerRef = useRef(null);
 
@@ -320,20 +318,14 @@ const BuildingSolutionsSection = ({ categories, tags }) => {
             <div className="container mx-auto px-4 mb-2">
                 <h2 className="text-4xl font-bold text-center">
           <span className="text-green-800">
-              <TranslatableText>
-                  {dict?.building_solutions?.heading_1 || "Building Sustainable "}
-              </TranslatableText>
+              <TranslatableText>Building Sustainable</TranslatableText>
           </span>
                     <span className="text-primary-orange">
-              <TranslatableText>
-                  {dict?.building_solutions?.heading_2 || "Solutions With"}
-              </TranslatableText>
+              <TranslatableText>Solutions With</TranslatableText>
           </span>
                     <br />
                     <span className="text-primary-orange">
-              <TranslatableText>
-                  {dict?.building_solutions?.heading_3 || "African Communities!"}
-              </TranslatableText>
+              <TranslatableText>African Communities!</TranslatableText>
           </span>
                 </h2>
             </div>

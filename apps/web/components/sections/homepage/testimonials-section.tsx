@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Container from '@/components/layout/container';
 import apiClient from '@/lib/api-client';
-import { useDict } from '@/context/dictionary';
 import {TranslatableText} from "@/components/translate";
 
 // Interface for the testimonial data from the API
@@ -31,8 +30,7 @@ interface TestimonialsResponse {
     testimonials: Testimonial[];
 }
 
-export default function TestimonialsSection({ locale }: TestimonialsSectionProps) {
-    const dict = useDict();
+export default function TestimonialsSection({}) {
     const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
     const [currentTestimonial, setCurrentTestimonial] = useState(0);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -83,8 +81,8 @@ export default function TestimonialsSection({ locale }: TestimonialsSectionProps
                     {
                         id: 1,
                         author_name: "Madge Jennings",
-                        position: dict?.testimonials?.roles?.fellow || "Fellow",
-                        description: dict?.testimonials?.comments?.comment1 || "My experience with GanzAfrica has been transformative. The training and mentorship helped me develop crucial skills in agriculture and land management that I now apply daily in my work.",
+                        position: "Fellow",
+                        description: "My experience with GanzAfrica has been transformative. The training and mentorship helped me develop crucial skills in agriculture and land management that I now apply daily in my work.",
                         image: "/images/1.jpg",
                         company: "GA",
                         occupation: "fellow",
@@ -101,7 +99,7 @@ export default function TestimonialsSection({ locale }: TestimonialsSectionProps
         };
 
         fetchTestimonials();
-    }, [dict?.testimonials?.roles?.fellow, dict?.testimonials?.comments?.comment1]);
+    }, []);
 
     // Auto-play functionality - matches your original timing
     useEffect(() => {
@@ -182,14 +180,10 @@ export default function TestimonialsSection({ locale }: TestimonialsSectionProps
             <Container>
                 <div className="text-center mb-6 md:mb-8">
                     <h2 className="text-3xl md:text-4xl font-bold mb-2">
-                        <TranslatableText>
-                            {dict?.fellowship?.testimonials?.heading || "Checkout What Fellows"}
-                        </TranslatableText>
+                        <TranslatableText>Checkout What Fellows</TranslatableText>
                     </h2>
                     <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8">
-                        <TranslatableText>
-                            {dict?.fellowship?.testimonials?.heading2 || "Say about Our Fellowship"}
-                        </TranslatableText>
+                        <TranslatableText>Say about Our Fellowship</TranslatableText>
                     </h3>
                 </div>
 
@@ -294,9 +288,4 @@ export default function TestimonialsSection({ locale }: TestimonialsSectionProps
             </Container>
         </motion.section>
     );
-}
-
-// Props interface
-interface TestimonialsSectionProps {
-    locale: string;
 }

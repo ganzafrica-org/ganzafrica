@@ -6,9 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import { TranslatableText } from "@/components/translate/TranslatableText";
 
-interface FellowsSectionProps {
-    locale: string;
-}
 
 type ImageItem = {
     id: number;
@@ -16,7 +13,7 @@ type ImageItem = {
     alt: string;
 };
 
-export default function FellowsSection({ locale }: FellowsSectionProps) {
+export default function FellowsSection() {
     const [images, setImages] = useState<ImageItem[]>([
         {
             id: 1,

@@ -22,7 +22,6 @@ import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import apiClient from '@/lib/api-client';
 import { motion } from "framer-motion";
 import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
-import { useDict } from '@/context/dictionary';
 import { TranslatableText } from "@/components/translate/TranslatableText";
 
 if (typeof window !== 'undefined') {
@@ -43,16 +42,15 @@ const fadeIn = {
 
 // Project Card Component (localized strings used where appropriate)
 const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName }) => {
-    const dict = useDict();
     const truncateDescription = (text: string | undefined): string => {
-        if (!text) return dict?.projects?.cardFallback || "A sustainable project working with local communities to improve agriculture systems.";
+        if (!text) return "A sustainable project working with local communities to improve agriculture systems.";
         const words = text.split(' ');
         if (words.length <= 30) return text;
         return words.slice(0, 30).join(' ') + '...';
     };
 
     const formatDate = (dateString: string | null | undefined): string => {
-        if (!dateString) return dict?.projects?.na || 'N/A';
+        if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'long',
@@ -67,7 +65,7 @@ const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName 
                     <div className="relative">
                         <div className="absolute top-3 left-3 z-10 bg-white py-1 px-2 rounded-full text-xs font-medium shadow-md transform transition-transform duration-300 group-hover:scale-110">
                             <TranslatableText>
-                                {project.status || dict?.projects?.statusActive || 'Active'}
+                                {project.status || 'Active'}
                             </TranslatableText>
                         </div>
                         <div className="absolute top-3 right-3 z-10">
@@ -102,7 +100,7 @@ const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName 
                         <MapPin className="w-4 h-4 mr-1" />
                         <span className="font-medium text-sm">
                 <TranslatableText>
-                  {project.location || dict?.projects?.defaultLocation || 'Rwanda'}
+                  {project.location || 'Rwanda'}
                 </TranslatableText>
               </span>
                     </div>
@@ -193,7 +191,6 @@ interface Project {
 }
 
 export default function ProjectsPageContent() {
-    const dict = useDict();
     const router = useRouter();
     const [projects, setProjects] = useState<Project[]>([]);
     const [allProjects, setAllProjects] = useState<any[]>([]);
@@ -211,10 +208,10 @@ export default function ProjectsPageContent() {
     const [totalPages, setTotalPages] = useState(1);
 
     const stats = [
-        { label: dict?.projects?.stats?.fellows || "Fellows", count: 20 },
-        { label: dict?.projects?.stats?.projects || "Projects", count: "20+" },
-        { label: dict?.projects?.stats?.communities || "Communities", count: 15 },
-        { label: dict?.projects?.stats?.countries || "Countries", count: 2 },
+        { label: "Fellows", count: 20 },
+        { label: "Projects", count: "20+" },
+        { label: "Communities", count: 15 },
+        { label: "Countries", count: 2 },
     ];
 
     useEffect(() => {
@@ -252,7 +249,7 @@ export default function ProjectsPageContent() {
                 const params: { search?: string; status?: string; category_id?: string } = {};
                 if (searchTerm) params.search = searchTerm;
                 if (activeStatus !== 'all') params.status = activeStatus;
-                if (activeCategory !== 'all' && activeCategory !== (dict?.projects?.allProjects || 'All Projects')) {
+                if (activeCategory !== 'all' && activeCategory !== 'All Projects') {
                     const categoryId = Object.keys(categories).find(key => categories[key] === activeCategory);
                     if (categoryId) params.category_id = categoryId;
                 }
@@ -345,16 +342,16 @@ export default function ProjectsPageContent() {
             <HeaderBelt />
             <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
                 <div className="absolute inset-0 z-0">
-                    <Image src="/images/news/maize.avif" alt={dict?.projects?.heroAlt || 'Agricultural fields'} fill sizes="100vw" className="object-cover" priority />
+                    <Image src="/images/news/maize.avif" alt='Agricultural fields' fill sizes="100vw" className="object-cover" priority />
                 </div>
                 <div className="absolute inset-0 bg-black/70 z-0"></div>
                 <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
                     <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
-                        <TranslatableText>{dict?.projects?.heroTitle || 'PROJECTS'}</TranslatableText>
+                        <TranslatableText>PROJECTS</TranslatableText>
                     </h2>
                     <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
             <span>
-              <TranslatableText>{dict?.projects?.heroSubtitle || 'Turning Ideas Into Action'}</TranslatableText>
+              <TranslatableText>Turning Ideas Into Action</TranslatableText>
             </span>
                     </h1>
                 </div>
@@ -374,18 +371,18 @@ export default function ProjectsPageContent() {
                         <div className="flex flex-col md:flex-row gap-4 mb-8">
                             <div className="w-full md:w-2/3 relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="h-5 w-5 text-gray-400" /></div>
-                                <input type="text" placeholder={dict?.projects?.searchPlaceholder || 'Search projects by name, location, or category...'} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 bg-white" value={searchTerm} onChange={handleSearchChange} />
+                                <input type="text" placeholder= "Search projects by name, location, or category..." className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 bg-white" value={searchTerm} onChange={handleSearchChange} />
                             </div>
                             <div className="w-full md:w-1/3 flex items-center">
                                 <div className="relative w-full">
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Filter className="h-5 w-5 text-gray-400" /></div>
                                     <select className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600 appearance-none bg-white" value={activeStatus} onChange={handleStatusChange}>
-                                        <option value="all">{dict?.projects?.filterAll || 'Filter by status: All'}</option>
-                                        <option value="planned">{dict?.projects?.statusPlanned || 'Planned'}</option>
-                                        <option value="active">{dict?.projects?.statusActive || 'Active'}</option>
-                                        <option value="completed">{dict?.projects?.statusCompleted || 'Completed'}</option>
-                                        <option value="cancelled">{dict?.projects?.statusCancelled || 'Cancelled'}</option>
-                                        <option value="on_hold">{dict?.projects?.statusOnHold || 'On Hold'}</option>
+                                        <option value="all">Filter by status: All</option>
+                                        <option value="planned">Planned</option>
+                                        <option value="active">Active</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="on_hold">On Hold</option>
                                     </select>
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                                         <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
@@ -397,7 +394,7 @@ export default function ProjectsPageContent() {
                         <div className="flex flex-col lg:flex-row gap-8">
                             <div className="lg:w-1/4 space-y-3">
                                 <div className="category-button">
-                                    <CategoryButton name={dict?.projects?.allProjects || 'All Projects'} icon={<ArrowRight className="w-5 h-5" />} count={totalProjects} isActive={activeCategory === 'all'} onClick={() => handleCategoryClick('all')} />
+                                    <CategoryButton name='All Projects' icon={<ArrowRight className="w-5 h-5" />} count={totalProjects} isActive={activeCategory === 'all'} onClick={() => handleCategoryClick('all')} />
                                 </div>
                                 {Object.entries(categories).reduce<any[]>((unique, [id, name]) => {
                                     if (!unique.some(item => item.name === name)) { unique.push({ id: parseInt(id), name, count: categoryCounts[name] || 0 }); }
@@ -414,7 +411,7 @@ export default function ProjectsPageContent() {
                             <div className="lg:w-3/4">
                                 {projects.length === 0 ? (
                                     <div className="text-center py-12 bg-gray-50 rounded-lg">
-                                        <p className="text-gray-500">{dict?.projects?.noResults || 'No projects found matching your criteria'}</p>
+                                        <p className="text-gray-500"><TranslatableText>No projects found matching your criteria</TranslatableText></p>
                                     </div>
                                 ) : (
                                     <>

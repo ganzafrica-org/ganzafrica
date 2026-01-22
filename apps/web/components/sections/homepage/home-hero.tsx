@@ -9,7 +9,6 @@ import { Button } from "@workspace/ui/components/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 // import GoogleTranslate from "@/components/google-translate";
-import { useDict } from "@/context/dictionary";
 import { TranslatableText } from "@/components/translate/TranslatableText";
 
 // Import shadcn Navigation Menu components
@@ -40,40 +39,6 @@ interface ListItemProps {
     onClick?: () => void;
 }
 
-// Define dictionary type
-interface DictionaryType {
-    navigation?: {
-        about?: string;
-        our_approach?: string;
-        programs?: string;
-        projects?: string;
-        opportunities?: string;
-    };
-    about?: {
-        who_we_are?: string;
-        our_story?: string;
-        team?: string;
-        [key: string]: string | undefined;
-    };
-
-    home?: {
-        hero?: {
-            title?: string;
-            subtitle?: string;
-            title_after?: {
-                line1?: string;
-                line2?: string;
-                line3?: string;
-                line4?: string;
-            };
-        };
-    };
-    cta?: {
-        sign_in?: string;
-        discover_more?: string;
-    };
-}
-
 // Define HomeHero props
 interface HomeHeroProps {
     backgroundImage?: string;
@@ -85,7 +50,6 @@ const resolveHref = (path: string) => (path.startsWith("/") ? path : `/${path}`)
 export default function HomeHero({
                                      backgroundImage = "/images/hero-test.jpg",
                                  }: HomeHeroProps) {
-    const dict = useDict();
     // Refs with proper types
     const sectionRef = useRef<HTMLElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -109,25 +73,25 @@ export default function HomeHero({
     // Navigation items for shadcn navigation
     const aboutItems: MenuItem[] = [
         {
-            title: dict.about?.who_we_are || "who we are",
+            title: "who we are",
             href: "/about/who-we-are",
             description:
                 "The journey of how we started and what inspires our work every day.",
         },
         {
-            title: dict.about?.our_story || "Our Story",
+            title: "Our Story",
             href: "/about/our-story",
             description:
                 "The journey of how we started and what inspires our work every day.",
         },
         {
-            title: dict.about?.our_approach || "Our Approach",
+            title: "Our Approach",
             href: "/about/our-approach",
             description:
                 "The journey of how we started and what inspires our work every day.",
         },
         {
-            title: dict.about?.team || "Team",
+            title: "Team",
             href: "/about/team",
             description:
                 "Meet the talented individuals behind our mission. Learn about our team members, their expertise, and their contributions to our success.",
@@ -361,7 +325,7 @@ export default function HomeHero({
                         <button
                             className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
                         >
-                            <TranslatableText>{dict.navigation?.about || "About"}</TranslatableText>
+                            <TranslatableText>About</TranslatableText>
                             <ChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "about" ? "rotate-180" : ""}`} />
                         </button>
                         {desktopDropdown === "about" && (
@@ -375,7 +339,7 @@ export default function HomeHero({
                                                 prefetch={true}
                                             >
                                                 <div className="text-sm font-medium leading-none">
-                                                    <TranslatableText>{dict?.about?.[item.title.toLowerCase().replace(/ /g, "_")] || item.title}</TranslatableText>
+                                                    <TranslatableText>{item.title.toLowerCase().replace(/ /g, " ") || item.title}</TranslatableText>
                                                 </div>
                                                 {item.description && (
                                                     <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
@@ -399,7 +363,7 @@ export default function HomeHero({
                         <button
                             className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
                         >
-                            <TranslatableText>{dict.navigation?.what_we_do || "What we do"}</TranslatableText>
+                            <TranslatableText>What we do</TranslatableText>
                             <ChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "what-we-do" ? "rotate-180" : ""}`} />
                         </button>
                         {(desktopDropdown === "what-we-do" || desktopDropdown === "program-submenu") && (
@@ -486,7 +450,7 @@ export default function HomeHero({
                         <button
                             className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
                         >
-                            <TranslatableText>{dict?.navigation?.news_updates || "News & Updates"}</TranslatableText>
+                            <TranslatableText>News & Updates</TranslatableText>
                             <ChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "news" ? "rotate-180" : ""}`} />
                         </button>
                         {desktopDropdown === "news" && (
@@ -519,7 +483,7 @@ export default function HomeHero({
                         className={`${textColor} text-base font-medium px-4 py-2 hover:bg-accent/50 rounded-md transition-colors`}
                         prefetch={true}
                     >
-                        <TranslatableText>{dict.navigation?.contact || "Contact"}</TranslatableText>
+                        <TranslatableText>Contact</TranslatableText>
                     </Link>
                 </nav>
             </div>
@@ -538,7 +502,7 @@ export default function HomeHero({
                                 alt="GanzAfrica"
                                 fill
                                 sizes="(max-width: 768px) 300px, 200px"
-                                className="object-contain border"
+                                className="object-contain"
                                 priority
                             />
                         </div>
@@ -560,7 +524,7 @@ export default function HomeHero({
                             className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
                             onClick={() => toggleDropdown("mobile-about")}
                         >
-                            <TranslatableText>{dict.navigation?.about || "About"}</TranslatableText>
+                            <TranslatableText>About</TranslatableText>
                             <ChevronDown
                                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
                             />
@@ -575,9 +539,7 @@ export default function HomeHero({
                                         onClick={() => setIsMobileMenuOpen(false)}
                                         prefetch={true}
                                     >
-                                        <TranslatableText>{dict?.about?.[
-                                            item.title.toLowerCase().replace(/ /g, "_")
-                                            ] || item.title}</TranslatableText>
+                                        <TranslatableText>{item.title.toLowerCase().replace(/ /g, " ") || item.title}</TranslatableText>
                                     </Link>
                                 ))}
                             </div>
@@ -590,7 +552,7 @@ export default function HomeHero({
                             className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
                             onClick={() => toggleDropdown("mobile-programs")}
                         >
-                            <TranslatableText>{dict.navigation?.what_we_do || "what we do"}</TranslatableText>
+                            <TranslatableText>what we do</TranslatableText>
                             <ChevronDown
                                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
                             />
@@ -651,7 +613,7 @@ export default function HomeHero({
                             className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
                             onClick={() => toggleDropdown("mobile-news")}
                         >
-                            <TranslatableText>{dict?.navigation?.news_updates || "News & Updates"}</TranslatableText>
+                            <TranslatableText>News & Updates</TranslatableText>
                             <ChevronDown
                                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
                             />
@@ -680,7 +642,7 @@ export default function HomeHero({
                         onClick={() => setIsMobileMenuOpen(false)}
                         prefetch={true}
                     >
-                        <TranslatableText>{dict.navigation?.contact || "Contact"}</TranslatableText>
+                        <TranslatableText>Contact</TranslatableText>
                     </Link>
 
                     {/* Add sign in button at the bottom */}
@@ -690,7 +652,7 @@ export default function HomeHero({
                     {/*    size="lg"*/}
                     {/*    className="w-full bg-primary-green hover:bg-primary-green/90 text-white"*/}
                     {/*  >*/}
-                    {/*    {dict?.cta?.sign_in || "Sign In"}*/}
+                    {/*    "Sign In"*/}
                     {/*  </Button>*/}
                     {/*</Link>*/}
                     {/*   <LanguageSwitcher/>*/}
@@ -811,10 +773,10 @@ export default function HomeHero({
             >
                 <div className="text-center text-white mt-20">
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
-                        <TranslatableText>{dict?.home?.hero?.title || "Sustainable Solutions for Africa's Future"}</TranslatableText>
+                        <TranslatableText>"Sustainable Solutions for Africa's Future"</TranslatableText>
                     </h1>
                     <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-                        <TranslatableText>{dict?.home?.hero?.subtitle ||"Empowering youth to address agri-food systems challenges in Africa"}</TranslatableText>
+                        <TranslatableText>"Empowering youth to address agri-food systems challenges in Africa"</TranslatableText>
                     </p>
                 </div>
             </div>
@@ -849,35 +811,32 @@ export default function HomeHero({
                 <div className="container mx-auto px-4 text-center mt-10 sm:mt-20 md:mt-20 hidden md:block">
                     <h1 className="text-2xl lg:text-4xl font-bold mb-4 sm:mb-6">
                         <TranslatableText as="span" className="text-primary-green">
-                            {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}
+                            "A PROSPEROUS AND"
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-green">
-                            {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
+                            "SUSTAINABLE"
                         </TranslatableText>{" "}
                         <TranslatableText as="span" className="text-primary-orange">
-                            {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"}
+                            "FUTURE FOR"
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-orange">
-                            {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
+                            "AFRICA"
                         </TranslatableText>
                     </h1>
 
                     <TranslatableText
                         as="p"
                         className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
-                    >
-                        {dict?.home?.hero?.subtitle ||
-                            "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
-                    </TranslatableText>
+                    >"Empowering youth through sustainable land management, agriculture, and environmental initiatives"</TranslatableText>
 
                     <Link href={`/about/who-we-are`} prefetch={true}>
                         <Button
                             size="lg"
                             className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
                         >
-                            <TranslatableText>{dict?.cta?.discover_more || "Discover More"}</TranslatableText>
+                            <TranslatableText>"Discover More"</TranslatableText>
                         </Button>
                     </Link>
                 </div>
@@ -885,37 +844,32 @@ export default function HomeHero({
                 <div className="container mx-auto px-4 text-center block md:hidden">
                     <h1 className="text-5xl lg:text-4xl font-bold mb-4 sm:mb-6">
                         <TranslatableText as="span" className="text-primary-green">
-                            {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}
+                            "A PROSPEROUS AND"
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-green">
-                            {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
+                            "SUSTAINABLE"
                         </TranslatableText>{" "}
                         <TranslatableText as="span" className="text-primary-orange">
-                            {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"}
+                            "FUTURE FOR"
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-orange">
-                            {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
+                            "AFRICA"
                         </TranslatableText>
                     </h1>
 
                     <TranslatableText
                         as="p"
                         className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
-                    >
-                        {dict?.home?.hero?.subtitle ||
-                            "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
-                    </TranslatableText>
+                    >"Empowering youth through sustainable land management, agriculture, and environmental initiatives"</TranslatableText>
 
                     <Link href={`/about/who-we-are`} prefetch={true}>
                         <Button
                             size="lg"
                             className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
                         >
-                            <TranslatableText>
-                                {dict?.cta?.discover_more || "Discover More"}
-                            </TranslatableText>
+                            <TranslatableText>"Discover More"</TranslatableText>
                         </Button>
                     </Link>
                 </div>

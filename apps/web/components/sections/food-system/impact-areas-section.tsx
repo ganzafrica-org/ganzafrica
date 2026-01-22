@@ -11,7 +11,6 @@ import apiClient from "@/lib/api-client";
 import Link from 'next/link';
 const SafeLink = Link as unknown as React.ComponentType<any>;
 import { useParams } from 'next/navigation';
-import { useDict } from '@/context/dictionary';
 import {TranslatableText} from "@/components/translate";
 
 
@@ -224,10 +223,8 @@ const statItemVariants = {
 };
 
 const ClimateInitiativesMapSection = () => {
-    const dict = useDict();
     // Get the locale from URL params
     const params = useParams();
-    const locale = params.locale || 'en';
 
     const [selectedProject, setSelectedProject] = useState<string | null>(null);
     const [mapDimensions, setMapDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });

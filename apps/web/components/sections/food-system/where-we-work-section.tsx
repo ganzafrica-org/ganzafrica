@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
-import { useDict } from '@/context/dictionary';
 import {TranslatableText} from "@/components/translate";
 
 // Animation variants
@@ -33,7 +32,6 @@ const itemVariants = {
 };
 
 const WhereWeWorkSection = () => {
-    const dict = useDict();
     return (
         <section className="py-16 bg-white">
             <Container>

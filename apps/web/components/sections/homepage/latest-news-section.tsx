@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/components/analytics/google-analytics';
-import { useDict } from '@/context/dictionary';
 import {TranslatableText} from "@/components/translate";
 
 // Interface for the news data from the API
@@ -43,10 +42,6 @@ interface NewsResponse {
     };
 }
 
-interface NewsSectionProps {
-    locale: string;
-}
-
 // Define color scheme for "Read more" links (matching project cards)
 const LINK_COLORS = ['#f8b712', '#009758', '#073392'];
 
@@ -55,8 +50,7 @@ const getLinkColor = (index: number) => {
     return LINK_COLORS[index % LINK_COLORS.length];
 };
 
-export default function NewsSection({ locale }: NewsSectionProps) {
-    const dict = useDict();
+export default function NewsSection() {
     const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -261,8 +255,8 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                 <div className="container mx-auto px-4 max-w-6xl">
                     <div className="text-center mb-16">
                         <DecoratedHeading
-                            firstText={dict?.news?.heading_first ?? "Latest"}
-                            secondText={dict?.news?.heading_second ?? "News"}
+                            firstText= "Latest"
+                            secondText= "News"
                             className="mx-auto"
                         />
                     </div>
@@ -295,8 +289,8 @@ export default function NewsSection({ locale }: NewsSectionProps) {
             <div className="container mx-auto px-4 max-w-6xl">
                 <div className="text-center mb-16">
                     <DecoratedHeading
-                        firstText={dict?.news?.heading_first ?? "Latest"}
-                        secondText={dict?.news?.heading_second ?? "News"}
+                        firstText= "Latest"
+                        secondText= "News"
                         className="mx-auto"
                     />
                 </div>
@@ -379,9 +373,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                                         })}
                                     >
                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
-                        <TranslatableText>
-                            {dict?.news?.read_more ?? "Read more"}
-                        </TranslatableText>
+                        <TranslatableText>Read more</TranslatableText>
                     </span>
                                         <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
@@ -410,9 +402,7 @@ export default function NewsSection({ locale }: NewsSectionProps) {
                             })}
                         >
               <span>
-                  <TranslatableText>
-                      {dict?.news?.view_all ?? "View All News"}
-                  </TranslatableText>
+                  <TranslatableText>View All News</TranslatableText>
               </span>
                             <ArrowRight size={16} />
                         </Link>

@@ -4,19 +4,10 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { DecoratedHeading } from '@/components/layout/headertext';
 import { trackFormSubmission } from '@/components/analytics/google-analytics';
-import { useDict } from '@/context/dictionary';
 import {TranslatableText} from "@/components/translate";
 
 
-interface NewsletterSectionProps {
-    locale: string;
-    dict: any;
-}
-
-export default function NewsletterSection({
-                                              locale,
-                                              dict,
-                                          }: NewsletterSectionProps) {
+export default function NewsletterSection() {
     const [email, setEmail] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<
@@ -108,8 +99,8 @@ export default function NewsletterSection({
                 <div className="max-w-2xl mx-auto text-center">
                     <div className="text-center mb-16">
                         <DecoratedHeading
-                            firstText={dict?.programs?.heading_first || "Subscribe to"}
-                            secondText={dict?.programs?.heading_second || "Our Newsletter"}
+                            firstText= "Subscribe to"
+                            secondText= "Our Newsletter"
                             className="mx-auto"
                         />
                     </div>

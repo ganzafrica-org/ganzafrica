@@ -1,4 +1,3 @@
-import { getDictionary } from "@/lib/get-dictionary";
 import FellowsSection from "@/components/sections/homepage/fellows-section";
 import WhyGanzAfricaSection from "@/components/sections/homepage/why-ganzafrica-section";
 import FlagshipProgramsSection from "@/components/sections/homepage/flagship-programs-section";
@@ -21,16 +20,14 @@ interface PageProps {
 export async function generateMetadata({
   params,
 }: {
-  params: { locale: string };
+  params: {};
 }): Promise<Metadata> {
-  const locale = params.locale;
-  const dict = await getDictionary(locale);
-
   return baseGenerateMetadata({
-    params: { locale },
-    title: dict.site.name,
-    description: dict.site.description,
-    locale,
+    params: {
+        locale: "/"
+    },
+    title: "GanzAfrica",
+    description: "GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands.",
     imagePath: "/images/og/home.jpg",
   });
 }
@@ -41,19 +38,15 @@ export default async function HomePage({ params }: PageProps) {
 
   return (
     <main>
-      <FellowsSection locale={locale} />
-      <WhyGanzAfricaSection locale={locale} />
-      <GanzAfricaUniqueSection locale={locale} />
-      <FlagshipProgramsSection locale={locale} dict={undefined} />
-      <ProjectsSection locale={locale} />
-      <PartnersSection locale={locale} />
-      <TestimonialsSection locale={locale} />
-      <LatestNewsSection locale={locale} />
-      <NewsletterSection locale={locale} dict={undefined} />
+      <FellowsSection />
+      <WhyGanzAfricaSection />
+      <GanzAfricaUniqueSection />
+      <FlagshipProgramsSection />
+      <ProjectsSection />
+      <PartnersSection />
+      <TestimonialsSection />
+      <LatestNewsSection />
+      <NewsletterSection />
     </main>
   );
-}
-
-export async function generateStaticParams() {
-  return [{ locale: "en" }, { locale: "fr" }];
 }
