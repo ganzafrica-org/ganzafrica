@@ -3,10 +3,19 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Layout, ListTodo, Layers, CalendarDays, BarChart3, X, LayoutDashboard } from "lucide-react";
+import dynamic from 'next/dynamic';
 import { Task, TeamMember } from "@/lib/types";
 import { isCurrentUserAdminOrManager, isCurrentUserAdminOrManagerAsync } from "@/lib/auth-utils";
 import { useSidebar } from "./sidebar-provider";
+
+// Dynamically import icons to prevent hydration mismatches
+const Layout = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Layout })), { ssr: false });
+const ListTodo = dynamic(() => import('lucide-react').then(mod => ({ default: mod.ListTodo })), { ssr: false });
+const Layers = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Layers })), { ssr: false });
+const CalendarDays = dynamic(() => import('lucide-react').then(mod => ({ default: mod.CalendarDays })), { ssr: false });
+const BarChart3 = dynamic(() => import('lucide-react').then(mod => ({ default: mod.BarChart3 })), { ssr: false });
+const X = dynamic(() => import('lucide-react').then(mod => ({ default: mod.X })), { ssr: false });
+const LayoutDashboard = dynamic(() => import('lucide-react').then(mod => ({ default: mod.LayoutDashboard })), { ssr: false });
 
 export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; tasks: Task[]; collapsed?: boolean }): React.JSX.Element {
   const pathname = usePathname();

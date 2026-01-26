@@ -909,7 +909,13 @@ export default function BoardPage(): React.JSX.Element {
                             : message || 'The request was invalid. Please check the task details and try again.';
                         } else if (status === 403) {
                           errorTitle = 'Permission Denied';
-                          errorMessage = 'You do not have permission to update this task.';
+                          if (message?.includes('due date')) {
+                            errorMessage = 'You cannot update the date of your task. Only managers can do that.';
+                          } else if (message?.includes('title')) {
+                            errorMessage = 'You cannot update the title of this task. Only managers and the task creator can do that.';
+                          } else {
+                            errorMessage = 'You do not have permission to update this task.';
+                          }
                         } else if (status === 404) {
                           errorTitle = 'Task Not Found';
                           errorMessage = 'The task could not be found. It may have been deleted.';
