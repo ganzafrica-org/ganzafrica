@@ -1,28 +1,55 @@
 import {Metadata} from "next";
 import OpportunitiesPage from "@/components/OpportunitiesContent";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org";
+
 export const metadata: Metadata = {
-    title: "Opportunities | GanzAfrica Careers",
-    description: "Career opportunities, fellowships, and training programs in agriculture, sustainable land management, and data analytics for African youth.",
+    metadataBase: new URL(baseUrl),
+    title: "Opportunities | GanzAfrica - Careers, Fellowships & Training Programs",
+    description: "Discover career opportunities, fellowships, and training programs in agriculture, sustainable land management, and data analytics for African youth at GanzAfrica.",
     keywords: [
         "GanzAfrica opportunities",
         "agriculture jobs Africa",
         "fellowship opportunities",
-        "sustainable land careers"
+        "sustainable land careers",
+        "agriculture training programs",
+        "career opportunities Africa",
+        "agriculture fellowships"
     ],
     openGraph: {
-        title: "Career Opportunities at GanzAfrica",
-        description: "Agriculture fellowships, training programs, and career placements for African youth.",
-        siteName: "web.ganzafrica.org",
+        title: "Opportunities | GanzAfrica - Careers, Fellowships & Training Programs",
+        description: "Explore career opportunities, fellowships, and training programs in agriculture and sustainability for African youth.",
+        siteName: "GanzAfrica",
         type: "website",
-        url: "https://web.ganzafrica.org/opportunities"
+        url: `${baseUrl}/opportunities`,
+        images: [{
+            url: `${baseUrl}/images/og/opportunities.jpg`,
+            width: 1200,
+            height: 630,
+            alt: "GanzAfrica Opportunities"
+        }]
     },
     twitter: {
         card: "summary_large_image",
-        title: "GanzAfrica Opportunities",
-        description: "Agriculture fellowships and career training programs open now."
+        title: "Opportunities | GanzAfrica",
+        description: "Discover career opportunities, fellowships, and training programs at GanzAfrica.",
+        creator: "@GanzAfrica",
+        images: [`${baseUrl}/images/og/opportunities.jpg`]
     },
-    robots: { index: true, follow: true }
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            "max-snippet": -1,
+            "max-image-preview": "large",
+            "max-video-preview": -1,
+        },
+    },
+    alternates: {
+        canonical: `${baseUrl}/opportunities`
+    }
 };
 
 export default async function OurStoryPage(): Promise<JSX.Element> {

@@ -14,9 +14,21 @@ import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-u
 export async function generateMetadata(): Promise<Metadata> {
     return baseGenerateMetadata({
         params: "",
-        title: "GanzAfrica",
-        description: "GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands.",
-        imagePath: "/images/og/home.jpg"
+        title: "GanzAfrica - Empowering Africa's Food System Leaders",
+        description: "GanzAfrica offers innovative training, mentorship, and work placement programs preparing African youth for careers in agriculture, sustainable land management, and data-driven decision-making. Join us in transforming Africa's food systems.",
+        imagePath: "/images/og/home.jpg",
+        keywords: [
+            "GanzAfrica",
+            "agriculture training Africa",
+            "sustainable farming",
+            "fellowship program Africa",
+            "food systems transformation",
+            "youth empowerment Africa",
+            "agriculture mentorship",
+            "sustainable land management",
+            "data-driven agriculture"
+        ],
+        url: process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org"
     });
 }
 

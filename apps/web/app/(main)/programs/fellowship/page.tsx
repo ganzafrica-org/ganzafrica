@@ -2,41 +2,44 @@ import React from "react";
 import FellowshipPageContent from "@/components/FellowshipPageContent";
 import {Metadata} from "next";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org";
+
 export const metadata: Metadata = {
-    title: "Our Approach | GanzAfrica",
-    description: "Discover GanzAfrica's holistic training, mentorship, and work placements preparing African youth for careers in agriculture, sustainable land management, environment, and data-driven decision-making.",
+    metadataBase: new URL(baseUrl),
+    title: "Fellowship Program | GanzAfrica - Agriculture Training Fellowship",
+    description: "Join GanzAfrica's fellowship program: comprehensive agriculture training, mentorship, and work placements for African youth in sustainable land management and data-driven decision-making.",
     keywords: [
-        "GanzAfrica approach",
-        "agriculture training Africa",
-        "sustainable land management",
-        "environmental careers youth",
-        "fellowship program Africa",
-        "data literacy agriculture"
+        "GanzAfrica fellowship",
+        "agriculture fellowship program",
+        "fellowship training Africa",
+        "agriculture mentorship",
+        "sustainable farming fellowship",
+        "agriculture career training",
+        "fellowship opportunities Africa"
     ],
     openGraph: {
-        title: "Our Approach to Training Africa's Future Leaders | GanzAfrica",
-        description: "GanzAfrica runs holistic programs combining training, mentorship, and placements for youth in agriculture, land rights, environment, and data analytics to build prosperous African futures.",
-        siteName: "ganzafrica.org",
+        title: "Fellowship Program | GanzAfrica - Agriculture Training Fellowship",
+        description: "Join GanzAfrica's comprehensive fellowship program combining agriculture training, mentorship, and work placements for African youth.",
+        siteName: "GanzAfrica",
         type: "website",
-        url: "https://web.ganzafrica.org/about/our-approach"
+        url: `${baseUrl}/programs/fellowship`,
+        images: [{
+            url: `${baseUrl}/images/og/fellowship.jpg`,
+            width: 1200,
+            height: 630,
+            alt: "GanzAfrica Fellowship Program"
+        }]
     },
     twitter: {
         card: "summary_large_image",
-        title: "GanzAfrica's Approach: Training Youth for Agri-Food Transformation",
-        description: "Join GanzAfrica's fellowship: training, mentorship, and placements in agriculture, sustainable land use, environment, data skills for impactful careers across Africa.",
-        images: [
-            {
-                url: "https://ganzafrica.org/og-our-approach.jpg", // Add a 1200x630 image
-                width: 1200,
-                height: 630,
-                alt: "GanzAfrica fellowship program"
-            }
-        ]
+        title: "Fellowship Program | GanzAfrica",
+        description: "Join GanzAfrica's agriculture fellowship program for comprehensive training and mentorship.",
+        creator: "@GanzAfrica",
+        images: [`${baseUrl}/images/og/fellowship.jpg`]
     },
     robots: {
         index: true,
         follow: true,
-        nocache: false,
         googleBot: {
             index: true,
             follow: true,
@@ -45,6 +48,9 @@ export const metadata: Metadata = {
             "max-video-preview": -1,
         },
     },
+    alternates: {
+        canonical: `${baseUrl}/programs/fellowship`
+    }
 };
 
 type Params = Promise<string>;

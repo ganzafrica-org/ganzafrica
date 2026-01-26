@@ -3,41 +3,44 @@ import Header from "@/components/layout/header";
 import OurApproachPageContent from "@/components/OurApproachPageContent";
 import {Metadata} from "next";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org";
+
 export const metadata: Metadata = {
-    title: "Our Approach | GanzAfrica",
-    description: "Discover GanzAfrica's holistic training, mentorship, and work placements preparing African youth for careers in agriculture, sustainable land management, environment, and data-driven decision-making.",
+    metadataBase: new URL(baseUrl),
+    title: "Our Approach | GanzAfrica - Holistic Training Methodology",
+    description: "Discover GanzAfrica's holistic approach: combining training, mentorship, and work placements to prepare African youth for careers in agriculture, sustainable land management, and data-driven decision-making.",
     keywords: [
         "GanzAfrica approach",
-        "agriculture training Africa",
-        "sustainable land management",
-        "environmental careers youth",
-        "fellowship program Africa",
-        "data literacy agriculture"
+        "agriculture training methodology",
+        "holistic training approach",
+        "sustainable land management training",
+        "mentorship programs",
+        "work placement programs",
+        "data-driven agriculture"
     ],
     openGraph: {
-        title: "Our Approach to Training Africa's Future Leaders | GanzAfrica",
-        description: "GanzAfrica runs holistic programs combining training, mentorship, and placements for youth in agriculture, land rights, environment, and data analytics to build prosperous African futures.",
-        siteName: "web.ganzafrica.org",
+        title: "Our Approach | GanzAfrica - Holistic Training Methodology",
+        description: "Learn about GanzAfrica's comprehensive approach combining training, mentorship, and placements for African youth in agriculture and sustainability.",
+        siteName: "GanzAfrica",
         type: "website",
-        url: "https://web.ganzafrica.org/about/our-approach"
+        url: `${baseUrl}/our-approach`,
+        images: [{
+            url: `${baseUrl}/images/og/our-approach.jpg`,
+            width: 1200,
+            height: 630,
+            alt: "GanzAfrica Approach"
+        }]
     },
     twitter: {
         card: "summary_large_image",
-        title: "GanzAfrica's Approach: Training Youth for Agri-Food Transformation",
-        description: "Join GanzAfrica's fellowship: training, mentorship, and placements in agriculture, sustainable land use, environment, data skills for impactful careers across Africa.",
-        images: [
-            {
-                url: "https://ganzafrica.org/og-our-approach.jpg", // Add a 1200x630 image
-                width: 1200,
-                height: 630,
-                alt: "GanzAfrica fellowship program"
-            }
-        ]
+        title: "Our Approach | GanzAfrica",
+        description: "Discover GanzAfrica's holistic training approach for African youth in agriculture and sustainability.",
+        creator: "@GanzAfrica",
+        images: [`${baseUrl}/images/og/our-approach.jpg`]
     },
     robots: {
         index: true,
         follow: true,
-        nocache: false,
         googleBot: {
             index: true,
             follow: true,
@@ -46,6 +49,9 @@ export const metadata: Metadata = {
             "max-video-preview": -1,
         },
     },
+    alternates: {
+        canonical: `${baseUrl}/our-approach`
+    }
 };
 
 type Params = { locale: string };
