@@ -18,6 +18,7 @@ import Link from "next/link";
 import HeaderBelt from "@/components/layout/headerBelt";
 import axios from 'axios';
 import { useParams } from "next/navigation";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 // Normalize Next.js Link typing across React type versions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -276,7 +277,7 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
                   </div>
               ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-400">No image</span>
+                    <span className="text-gray-400"><TranslatableText>No image</TranslatableText></span>
                   </div>
               )}
             </div>
@@ -308,9 +309,9 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
           {/* Content */}
           <div className="p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-              {item.title}
+                <TranslatableText>{item.title}</TranslatableText>
             </h3>
-            <p className="text-gray-600 line-clamp-2">{item.content?.substring(0, 150) || item.description || "Read more about this news article."}</p>
+            <p className="text-gray-600 line-clamp-2"><TranslatableText>{item.content?.substring(0, 150) || item.description || "Read more about this news article."}</TranslatableText></p>
           </div>
         </div>
       </Link>
@@ -447,10 +448,10 @@ const NewsroomPage = () => {
   {/* Content */}
   <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
   <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
-      NEWS &UPDATES
+      <TranslatableText>NEWS &UPDATES</TranslatableText>
     </h2>
     <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-    Sharing Our Progress and  Transformative Impact  
+    <TranslatableText>Sharing Our Progress and  Transformative Impact</TranslatableText>
     </h1>
   
   </div>
@@ -465,7 +466,7 @@ const NewsroomPage = () => {
           {/* Navigation */}
           <nav className="mb-12 flex items-center justify-center space-x-12 overflow-x-auto pb-4 scrollbar-hide">
             <NavigationItem
-                label="All"
+                label={<TranslatableText>All</TranslatableText>}
                 isActive={activeFilter === "all"}
                 onClick={() => setActiveFilter("all")}
                 count={tagCounts.all}
@@ -488,13 +489,13 @@ const NewsroomPage = () => {
               </div>
           ) : error ? (
               <div className="text-center py-12">
-                <h3 className="text-2xl font-bold text-gray-800">Unable to load news</h3>
-                <p className="text-gray-600 mt-2">We're experiencing technical difficulties. Please try again later.</p>
+                <h3 className="text-2xl font-bold text-gray-800"><TranslatableText>Unable to load news</TranslatableText></h3>
+                <p className="text-gray-600 mt-2"><TranslatableText>We're experiencing technical difficulties. Please try again later.</TranslatableText></p>
               </div>
           ) : filteredNews.length === 0 ? (
               <div className="text-center py-12">
-                <h3 className="text-2xl font-bold text-gray-800">No news articles found</h3>
-                <p className="text-gray-600 mt-2">Please check back later for updates or try another category.</p>
+                <h3 className="text-2xl font-bold text-gray-800"><TranslatableText>No news articles found</TranslatableText></h3>
+                <p className="text-gray-600 mt-2"><TranslatableText>Please check back later for updates or try another category.</TranslatableText></p>
               </div>
           ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -11,7 +11,7 @@ import apiClient from "@/lib/api-client";
 import Link from 'next/link';
 const SafeLink = Link as unknown as React.ComponentType<any>;
 import { useParams } from 'next/navigation';
-import { useDict } from '@/context/dictionary';
+import {TranslatableText} from "@/components/translate";
 
 
 // --- DUMMY DATA FOR TESTING ---
@@ -223,10 +223,8 @@ const statItemVariants = {
 };
 
 const ClimateInitiativesMapSection = () => {
-    const dict = useDict();
     // Get the locale from URL params
     const params = useParams();
-    const locale = params.locale || 'en';
 
     const [selectedProject, setSelectedProject] = useState<string | null>(null);
     const [mapDimensions, setMapDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
@@ -989,13 +987,15 @@ const ClimateInitiativesMapSection = () => {
                     className="text-center mb-10"
                 >
                     <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                        <span>Where we </span>
-                        <span className="text-primary-green"> work</span>
+                        <span><TranslatableText>Where we</TranslatableText></span>
+                        <span className="text-primary-green"><TranslatableText> work</TranslatableText></span>
                     </h2>
                     <p className="text-gray-600 max-w-3xl mx-auto">
-                        GanzAfrica operates across Africa, equipping young professionals with the skills and
-                        opportunities to drive meaningful change in Africa&apos;s agri-food systems.
-                        We currently have projects in {statsData.countries} {statsData.countries === 1 ? 'country' : 'countries'}.
+                        <TranslatableText>
+                            GanzAfrica operates across Africa, equipping young professionals with the skills and
+                            opportunities to drive meaningful change in Africa&apos;s agri-food systems.
+                            We currently have projects in 2 countries.
+                        </TranslatableText>
                     </p>
                 </motion.div>
 
@@ -1012,9 +1012,13 @@ const ClimateInitiativesMapSection = () => {
                     >
                         <motion.div className="text-center" variants={statItemVariants}>
                             <p className="text-3xl font-bold text-green-700">
-                                {isLoading ? '...' : statsData.projects}
+                                <TranslatableText>
+                                    {isLoading ? '...' : statsData.projects}
+                                </TranslatableText>
                             </p>
-                            <p className="text-sm text-gray-600">Projects</p>
+                            <p className="text-sm text-gray-600">
+                                <TranslatableText>Projects</TranslatableText>
+                            </p>
                         </motion.div>
                         {/* <motion.div className="text-center" variants={statItemVariants}>
               <p className="text-3xl font-bold text-green-700">
@@ -1026,7 +1030,9 @@ const ClimateInitiativesMapSection = () => {
                             <p className="text-3xl font-bold text-green-700">
                                 {isLoading ? '...' : statsData.countries}
                             </p>
-                            <p className="text-sm text-gray-600">Countries</p>
+                            <p className="text-sm text-gray-600">
+                                <TranslatableText>Countries</TranslatableText>
+                            </p>
                         </motion.div>
                     </motion.div>
                 </div>
@@ -1057,7 +1063,9 @@ const ClimateInitiativesMapSection = () => {
                         </div>
                     </motion.div>
                     <button className="bg-primary-green hover:bg-green-700 text-white px-4 py-3 rounded-md text-sm font-medium transition-colors">
-                        Highlights of our work
+                        <TranslatableText>
+                            Highlights of our work
+                        </TranslatableText>
                     </button>
                 </div>
 
@@ -1072,12 +1080,24 @@ const ClimateInitiativesMapSection = () => {
                 >
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full bg-gray-100">
-                            <p className="text-gray-500">Loading map...</p>
+                            <p className="text-gray-500">
+                                <TranslatableText>
+                                    Loading map...
+                                </TranslatableText>
+                            </p>
                         </div>
                     ) : filteredLocations.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full bg-gray-100">
-                            <p className="text-gray-700 font-medium text-lg mb-2">No Projects Yet</p>
-                            <p className="text-gray-500">We don&apos;t have any projects in {selectedCountry.charAt(0).toUpperCase() + selectedCountry.slice(1)} yet.</p>
+                            <p className="text-gray-700 font-medium text-lg mb-2">
+                                <TranslatableText>
+                                    No Projects Yet
+                                </TranslatableText>
+                            </p>
+                            <p className="text-gray-500">
+                                <TranslatableText>
+                                    We don&apos;t have any projects in {selectedCountry.charAt(0).toUpperCase() + selectedCountry.slice(1)} yet.
+                                </TranslatableText>
+                            </p>
                         </div>
                     ) : (
                         <>
@@ -1323,8 +1343,10 @@ const ClimateInitiativesMapSection = () => {
 
                 {/* Instructions */}
                 <div className="mt-4 text-center text-sm text-gray-600">
-                    Hover over a project marker to view details. Click a marker to focus the map on that location.
-                    Use the + and - buttons to adjust zoom level. Numbers on markers indicate multiple projects in that location.
+                    <TranslatableText>
+                        Hover over a project marker to view details. Click a marker to focus the map on that location.
+                        Use the + and - buttons to adjust zoom level. Numbers on markers indicate multiple projects in that location.
+                    </TranslatableText>
                 </div>
             </Container>
         </section>

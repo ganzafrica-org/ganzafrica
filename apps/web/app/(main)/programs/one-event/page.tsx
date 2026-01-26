@@ -82,7 +82,7 @@ export default function EventPage(): JSX.Element {
         </div>
         <div className="absolute inset-0 flex items-center">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <SafeLink href="/programs/alumni" className="inline-flex items-center text-white mb-6 hover:text-[#F8B712] transition-colors">
+            <SafeLink href="/what-we-do/alumni" className="inline-flex items-center text-white mb-6 hover:text-[#F8B712] transition-colors">
               <ChevronLeft className="w-5 h-5 mr-2" />
               Back to Events
             </SafeLink>

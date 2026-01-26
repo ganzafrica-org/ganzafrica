@@ -21,6 +21,11 @@ import { isCurrentUserAdminOrManager, isCurrentUserAdminOrManagerAsync, getCurre
 import { useToast, ToastContainer } from "@/components/toast";
 
 export default function BoardPage(): React.JSX.Element {
+  const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({});
+
+  const toggleColExpand = (colId: string) => {
+    setExpandedCols(prev => ({ ...prev, [colId]: !prev[colId] }));
+  };
   const [tasks, setTasks] = useState<Task[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -269,6 +274,15 @@ export default function BoardPage(): React.JSX.Element {
       ? tasks 
       : tasks.filter(task => (task.assignees || []).some(a => a != null && a.toString() === selectedMember));
 
+    // Exclude tasks that are overdue by more than 2 weeks
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14); // 14 days = 2 weeks
+    filtered = filtered.filter(task => {
+      if (!task.dueDate) return true; // Include tasks without due dates
+      const taskDueDate = new Date(task.dueDate);
+      return taskDueDate >= twoWeeksAgo; // Only include tasks not overdue by more than 2 weeks
+    });
+
     // Apply search filtering
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
@@ -393,15 +407,7 @@ export default function BoardPage(): React.JSX.Element {
        const task = tasks.find(t => t.id === id);
        if (task) {
          const taskData = {
-           title: task.title,
-           description: task.description,
-           deliverables: task.deliverables,
-           status: task.status,
            priority: priority,
-           due_date: task.dueDate ? new Date(task.dueDate) : null,
-           labels: task.labels || [],
-           attachments: task.attachments || [],
-           assignees: task.assignees.map(id => parseInt(id)),
          };
          
          // Use fallback method for task updates
@@ -413,7 +419,23 @@ export default function BoardPage(): React.JSX.Element {
        setTasks(tasks);
        
        // Show user-friendly error message
-       const errorMessage = err.message || 'Failed to update task priority. Please try again.';
+       let errorMessage = 'Failed to update task priority. Please try again.';
+       
+       if (err.response?.status === 403) {
+         const backendMessage = err.response?.data?.message;
+         if (backendMessage?.includes('due date')) {
+           errorMessage = 'You cannot update the date of your task. Only managers can do that.';
+         } else if (backendMessage?.includes('title')) {
+           errorMessage = 'You cannot update the title of this task. Only managers and the task creator can do that.';
+         } else {
+           errorMessage = 'You do not have permission to update this task.';
+         }
+       } else if (err.response?.data?.message) {
+         errorMessage = err.response.data.message;
+       } else if (err.message) {
+         errorMessage = err.message;
+       }
+       
        setError(errorMessage);
        setTimeout(() => setError(null), 5000); // Clear error after 5 seconds
      }
@@ -724,10 +746,29 @@ export default function BoardPage(): React.JSX.Element {
                   </div>
                   <div className="rounded-2xl border border-black/5 bg-white/60 backdrop-blur min-h-[60vh] p-3 space-y-3 flex flex-col">
                     <div className="flex-1 space-y-3">
-                      {tasksByPriority[col.id].map(t => (
-                        <TaskCard key={t.id} task={t} members={members} onClick={() => setActiveTask(t)} hidePriority={true} />
-                      ))}
-                    </div>
+                        {(() => {
+                          const colTasks = tasksByPriority[col.id] || [];
+                          const isExpanded = !!expandedCols[col.id];
+                          const visibleTasks = isExpanded ? colTasks : colTasks.slice(0, 10);
+                          return (
+                            <>
+                              {visibleTasks.map(t => (
+                                <TaskCard key={t.id} task={t} members={members} onClick={() => setActiveTask(t)} hidePriority={true} />
+                              ))}
+                              {colTasks.length > 10 && (
+                                <div className="mt-2 text-center">
+                                  <button
+                                    onClick={() => toggleColExpand(col.id)}
+                                    className="text-sm text-blue-600 hover:underline"
+                                  >
+                                    {isExpanded ? 'Show less' : `View more (${colTasks.length - 10})`}
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
                   </div>
                 </div>
               ))}

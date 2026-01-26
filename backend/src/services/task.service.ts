@@ -685,17 +685,7 @@ export const getTaskTeamProjects = async (userId?: number) => {
  */
 export const updateTask = async (taskId: number, input: UpdateTaskInput, userId: number) => {
   try {
-    // Validate due date is not in the past (if being updated)
-    if (input.due_date) {
-      const dueDate = new Date(input.due_date);
-      const now = new Date();
-      
-      if (dueDate < now) {
-        throw new AppError("Cannot update task with past due date. Please select today or a future date.", 400);
-      }
-    }
-    
-    // Get the task first to check permissions
+    // Get the task first to check permissions and current status
     const [existingTask] = await db
       .select()
       .from(tasks)
@@ -706,13 +696,8 @@ export const updateTask = async (taskId: number, input: UpdateTaskInput, userId:
       throw new AppError("Task not found", 404);
     }
 
-    // Check if user is a manager (can edit all tasks)
+    // Check if user is a manager (can edit all tasks and update title/due_date)
     const isManager = await isUserManager(userId);
-    
-    // Prevent non-managers from updating overdue tasks
-    if (existingTask.status === 'overdue' && !isManager) {
-      throw new AppError("Only managers can update tasks that are in Overdue status. Please contact a manager to update this task.", 403);
-    }
     
     // Check if user is the task creator
     const isTaskCreator = existingTask.created_by === userId;
@@ -739,6 +724,40 @@ export const updateTask = async (taskId: number, input: UpdateTaskInput, userId:
       throw new AppError("You don't have permission to update this task. Only managers, task creators, or assigned users can edit tasks.", 403);
     }
 
+    // Restrict due_date updates to managers only (only if actually changing)
+    if (input.due_date !== undefined) {
+      const existingDueDate = existingTask.due_date ? new Date(existingTask.due_date).toISOString() : null;
+      const newDueDate = input.due_date ? new Date(input.due_date).toISOString() : null;
+
+      // Only check permissions if the due date is actually being changed
+      if (existingDueDate !== newDueDate && !isManager) {
+        throw new AppError("Only managers can update task due date. Please contact a manager to make these changes.", 403);
+      }
+    }
+
+    // Restrict title updates to managers or task creators (only if actually changing)
+    if (input.title !== undefined) {
+      // Only check permissions if the title is actually being changed
+      if (input.title !== existingTask.title && !isManager && !isTaskCreator) {
+        throw new AppError("Only managers and task creators can update task title. Please contact a manager to make these changes.", 403);
+      }
+    }
+
+    // Validate due date is not in the past (if being updated)
+    if (input.due_date) {
+      const dueDate = new Date(input.due_date);
+      const now = new Date();
+      
+      if (dueDate < now) {
+        throw new AppError("Cannot update task with past due date. Please select today or a future date.", 400);
+      }
+    }
+    
+    // Prevent non-managers from updating overdue tasks
+    if (existingTask.status === 'overdue' && !isManager) {
+      throw new AppError("Only managers can update tasks that are in Overdue status. Please contact a manager to update this task.", 403);
+    }
+
     const updateData: any = {};
     
     if (input.title !== undefined) updateData.title = input.title;
@@ -750,6 +769,15 @@ export const updateTask = async (taskId: number, input: UpdateTaskInput, userId:
     if (input.labels !== undefined) updateData.labels = input.labels;
     if (input.attachments !== undefined) {
       updateData.attachments = input.attachments;
+    }
+    
+    // Automatic status change: if task is overdue and due_date is being updated to future, change to todo
+    if (existingTask.status === 'overdue' && input.due_date) {
+      const newDueDate = new Date(input.due_date);
+      const now = new Date();
+      if (newDueDate >= now) {
+        updateData.status = 'todo';
+      }
     }
     
     updateData.updated_at = new Date();

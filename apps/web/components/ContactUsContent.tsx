@@ -8,11 +8,10 @@ import { MapPin, Phone, Mail, Leaf, Send, CheckCircle2, Building2, AlertCircle }
 import { safeAccess } from "@/lib/utils/safeAccess";
 import { motion, AnimatePresence } from "framer-motion";
 import apiClient from "@/lib/api-client";
-import { useDict } from '@/context/dictionary';
 import { trackFormSubmission, trackVideoEvent } from "@/components/analytics/google-analytics";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 const ContactUsContent: React.FC = () => {
-    const dict = useDict();
     const [formState, setFormState] = useState({
         name: "",
         email: "",
@@ -176,7 +175,11 @@ const ContactUsContent: React.FC = () => {
                             transition={{ duration: 0.8 }}
                             className="text-3xl md:text-5xl font-bold text-white mb-4"
                         >
-                            {dict?.contact?.hero?.title || "Get in "} <span className="text-[#FDB022]">{dict?.contact?.hero?.highlight || "Touch"}</span> {dict?.contact?.hero?.subtitle || "With Our Team"}
+                            <TranslatableText>Get in</TranslatableText>{" "}
+                            <span className="text-[#FDB022]">
+                              <TranslatableText>Touch</TranslatableText>
+                            </span>{" "}
+                            <TranslatableText>With Our Team</TranslatableText>
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, y: 20 }}
@@ -184,7 +187,9 @@ const ContactUsContent: React.FC = () => {
                             transition={{ duration: 0.8, delay: 0.2 }}
                             className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6"
                         >
-                            {dict?.contact?.hero?.description || "Have questions or want to learn more about our programs? We're here to help."}
+                            <TranslatableText>
+                                Have questions or want to learn more about our programs? We're here to help.
+                            </TranslatableText>
                         </motion.p>
                     </div>
                 </div>
@@ -210,7 +215,7 @@ const ContactUsContent: React.FC = () => {
                                 className="text-2xl font-bold text-[#005c3d] "
                                 variants={itemFadeIn}
                             >
-                                {dict?.contact?.form?.title || "Send Us a Message"}
+                                <TranslatableText>Send Us a Message</TranslatableText>
                             </motion.h2>
 
                             {/* Success Message */}
@@ -218,8 +223,14 @@ const ContactUsContent: React.FC = () => {
                                 <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start">
                                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
                                     <div>
-                                        <p className="font-medium">{dict?.contact?.form?.successTitle || "Message sent successfully!"}</p>
-                                        <p className="text-sm">{dict?.contact?.form?.successMessage || "Thank you for contacting us. We'll get back to you as soon as possible."}</p>
+                                        <p className="font-medium">
+
+                                            <TranslatableText>Message sent successfully!</TranslatableText>
+                                            <TranslatableText>Thank you for contacting us. We'll get back to you as soon as possible.</TranslatableText>
+                                        </p>
+                                        <p className="text-sm">
+                                            <TranslatableText>Thank you for contacting us. We'll get back to you as soon as possible.</TranslatableText>
+                                        </p>
                                     </div>
                                 </div>
                             )}
@@ -229,8 +240,15 @@ const ContactUsContent: React.FC = () => {
                                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
                                     <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
                                     <div>
-                                        <p className="font-medium">{dict?.contact?.form?.errorTitle || "Submission failed"}</p>
-                                        <p className="text-sm">{formError}</p>
+                                        <p className="font-medium">
+                                            Submission failed
+                                            <TranslatableText>An error occurred while submitting the form. Please try again later.</TranslatableText>
+                                        </p>
+                                        <p className="text-sm">
+                                            <TranslatableText>
+                                                {formError}
+                                            </TranslatableText>
+                                        </p>
                                     </div>
                                 </div>
                             )}
@@ -245,14 +263,14 @@ const ContactUsContent: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            {dict?.contact?.form?.nameLabel || "Name"} *
+                                            <TranslatableText>Name</TranslatableText> *
                                         </label>
                                         <Input
                                             type="text"
                                             name="name"
                                             value={formState.name}
                                             onChange={handleChange}
-                                            placeholder={dict?.contact?.form?.namePlaceholder || "Enter your name"}
+                                            placeholder="Enter your name"
                                             className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                             required
                                             disabled={submitting}
@@ -260,14 +278,14 @@ const ContactUsContent: React.FC = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            {dict?.contact?.form?.emailLabel || "Email"} *
+                                            <TranslatableText>Email</TranslatableText> *
                                         </label>
                                         <Input
                                             type="email"
                                             name="email"
                                             value={formState.email}
                                             onChange={handleChange}
-                                            placeholder={dict?.contact?.form?.emailPlaceholder || "Enter your email"}
+                                            placeholder="Enter your email"
                                             className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                             required
                                             disabled={submitting}
@@ -276,27 +294,27 @@ const ContactUsContent: React.FC = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        {dict?.contact?.form?.phoneLabel || "Phone"}
+                                        <TranslatableText>Phone</TranslatableText>
                                     </label>
                                     <Input
                                         type="tel"
                                         name="phone"
                                         value={formState.phone}
                                         onChange={handleChange}
-                                        placeholder={dict?.contact?.form?.phonePlaceholder || "Enter your phone number"}
+                                        placeholder="Enter your phone number"
                                         className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                         disabled={submitting}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        {dict?.contact?.form?.messageLabel || "Message"} *
+                                        <TranslatableText>Message</TranslatableText> *
                                     </label>
                                     <Textarea
                                         name="message"
                                         value={formState.message}
                                         onChange={handleChange}
-                                        placeholder={dict?.contact?.form?.messagePlaceholder || "How can we help you?"}
+                                        placeholder="How can we help you?"
                                         className="w-full h-40 bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
                                         required
                                         disabled={submitting}
@@ -319,12 +337,12 @@ const ContactUsContent: React.FC = () => {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
-                                            {dict?.contact?.form?.sendingButton || "Sending..."}
+                                            <TranslatableText>Sending...</TranslatableText>
                                         </>
                                     ) : (
                                         <>
-                                            {dict?.contact?.form?.sendButton || "Send Message"}
-                                            <Send className="h-4 w-4" />
+
+                                            <TranslatableText>Send Message</TranslatableText>
                                         </>
                                     )}
                                 </Button>
@@ -344,10 +362,10 @@ const ContactUsContent: React.FC = () => {
                                 variants={itemFadeIn}
                             >
                                 <h3 className="text-xl font-bold text-[#005c3d] mb-4">
-                                    {dict?.contact?.newsletter?.title || "Stay Updated"}
+                                    <TranslatableText>Stay Updated</TranslatableText>
                                 </h3>
                                 <p className="text-gray-600 mb-6">
-                                    {dict?.contact?.newsletter?.description || "Subscribe to our newsletter to receive updates about our programs, events, and opportunities."}
+                                    <TranslatableText>Subscribe to our newsletter to receive updates about our programs, events, and opportunities.</TranslatableText>
                                 </p>
 
                                 {/* Newsletter Success Message */}
@@ -355,8 +373,12 @@ const ContactUsContent: React.FC = () => {
                                     <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-start mb-4">
                                         <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 mt-0.5" />
                                         <div>
-                                            <p className="font-medium">{dict?.contact?.newsletter?.successTitle || "Subscribed successfully!"}</p>
-                                            <p className="text-sm">{dict?.contact?.newsletter?.successMessage || "Thank you for subscribing to our newsletter."}</p>
+                                            <p className="font-medium">
+                                                <TranslatableText>Subscribed successfully!</TranslatableText>
+                                            </p>
+                                            <p className="text-sm">
+                                                <TranslatableText>Thank you for subscribing to our newsletter.</TranslatableText>
+                                            </p>
                                         </div>
                                     </div>
                                 )}
@@ -366,8 +388,12 @@ const ContactUsContent: React.FC = () => {
                                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start mb-4">
                                         <AlertCircle className="w-5 h-5 text-red-500 mr-3 mt-0.5" />
                                         <div>
-                                            <p className="font-medium">{dict?.contact?.newsletter?.errorTitle || "Subscription failed"}</p>
-                                            <p className="text-sm">{newsletterError}</p>
+                                            <p className="font-medium">
+                                                <TranslatableText>Subscription failed</TranslatableText>
+                                            </p>
+                                            <p className="text-sm">
+                                                <TranslatableText>{newsletterError}</TranslatableText>
+                                            </p>
                                         </div>
                                     </div>
                                 )}
@@ -375,7 +401,7 @@ const ContactUsContent: React.FC = () => {
                                 <form onSubmit={handleNewsletterSubmit} className="space-y-4">
                                     <Input
                                         type="email"
-                                        placeholder={dict?.contact?.newsletter?.emailPlaceholder || "Enter your email"}
+                                        placeholder="Enter your email"
                                         value={newsletterEmail}
                                         onChange={(e) => setNewsletterEmail(e.target.value)}
                                         className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#005c3d] focus:border-[#005c3d]"
@@ -385,7 +411,7 @@ const ContactUsContent: React.FC = () => {
                                         type="submit"
                                         className="w-full bg-[#FDB022] hover:bg-[#E69B1E] text-white px-8 py-3 rounded-lg font-medium transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
                                     >
-                                        {dict?.contact?.newsletter?.subscribeButton || "Subscribe"}
+                                        <TranslatableText>Subscribe</TranslatableText>
                                     </Button>
                                 </form>
                             </motion.div>
@@ -399,7 +425,9 @@ const ContactUsContent: React.FC = () => {
                                 <div className="bg-[#005c3d] px-6 py-4">
                                     <div className="flex items-center gap-2 text-white">
                                         <Building2 className="h-5 w-5" />
-                                        <span className="text-sm font-medium">{dict?.contact?.office?.title || "Rwanda Office"}</span>
+                                        <span className="text-sm font-medium">
+                                            <TranslatableText>Rwanda Office</TranslatableText>
+                                        </span>
                                     </div>
                                 </div>
 
@@ -413,8 +441,12 @@ const ContactUsContent: React.FC = () => {
                                                         <Phone className="h-5 w-5 text-[#005c3d]" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-gray-600">{dict?.contact?.office?.phone || "(250) 799 390 199"}</p>
-                                                        <p className="text-xs text-gray-500">{dict?.contact?.office?.hours || "Mon-Fri, 8:00 AM - 5:00 PM"}</p>
+                                                        <p className="text-gray-600">
+                                                            <TranslatableText>(250) 799 390 199</TranslatableText>
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            <TranslatableText>Mon-Fri, 8:00 AM - 5:00 PM</TranslatableText>
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <div className="bg-red-500 flex items-center space-x-3 pl-0 md:pl-4">
@@ -424,10 +456,10 @@ const ContactUsContent: React.FC = () => {
 
                                                     <div className="min-w-0 flex-1 break-words">
                                                         <p className="text-gray-600 break-words">
-                                                            {dict?.contact?.office?.email || "info@ganzafrica.org"}
+                                                            <TranslatableText>info@ganzafrica.org"</TranslatableText>
                                                         </p>
                                                         <p className="text-xs text-gray-500 break-words">
-                                                            {dict?.contact?.office?.emailResponse || "Response within 24 hours"}
+                                                            <TranslatableText>Response within 24 hours</TranslatableText>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -441,9 +473,15 @@ const ContactUsContent: React.FC = () => {
                                                     <MapPin className="h-5 w-5 text-[#005c3d]" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-gray-600">{dict?.contact?.office?.address1 || "27 House, KG 594 St"}</p>
-                                                    <p className="text-gray-600">{dict?.contact?.office?.address2 || "Kigali, Rwanda"}</p>
-                                                    <p className="text-xs text-gray-500">{dict?.contact?.office?.region || "East Africa Regional Hub"}</p>
+                                                    <p className="text-gray-600">
+                                                        <TranslatableText>27 House, KG 594 St</TranslatableText>
+                                                    </p>
+                                                    <p className="text-gray-600">
+                                                        <TranslatableText>Kigali, Rwanda</TranslatableText>
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        <TranslatableText>East Africa Regional Hub</TranslatableText>
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -484,7 +522,7 @@ const ContactUsContent: React.FC = () => {
                                 onFocus={() => setIsPointerActive(true)}
                                 onBlur={() => setIsPointerActive(false)}
                                 tabIndex={0}
-                                aria-label={dict?.contact?.office?.mapLabel || "Rwanda Office location"}
+                                aria-label="Rwanda Office location"
                             />
 
                             <AnimatePresence>
@@ -507,9 +545,7 @@ const ContactUsContent: React.FC = () => {
                                                     />
                                                 </div>
                                                 <div className="text-center">
-                                                    <p className="text-sm font-medium text-[#005c3d]">
-                                                        {dict?.contact?.office?.mapLabel || "Rwanda Office"}
-                                                    </p>
+                                                    <p className="text-sm font-medium text-[#005c3d]">Rwanda Office</p>
                                                 </div>
                                             </div>
                                         </div>

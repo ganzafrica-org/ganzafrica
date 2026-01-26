@@ -604,7 +604,7 @@ const ProjectDetailsPage = (): JSX.Element => {
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-800 flex items-center justify-center">
                 <ImageIconIcon className="w-12 h-12 text-gray-600" />
               </div>
-              <p className="text-gray-400 text-lg">No featured image available</p>
+              <p className="text-gray-400 text-lg"><TranslatableText>No featured image available</TranslatableText></p>
             </div>
           </div>
         )}

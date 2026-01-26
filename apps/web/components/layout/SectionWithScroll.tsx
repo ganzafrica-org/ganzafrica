@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
+import {TranslatableText} from "@/components/translate";
 const SafeImage = Image as unknown as React.ComponentType<any>;
 
 interface SectionProps {
@@ -79,11 +80,15 @@ export default function SectionWithScrollAnimation({
             transition={{ duration: 0.25, delay: 0.2 }}
             viewport={{ once: false }}
           >
-            {title}
+              <TranslatableText>
+                  {title}
+              </TranslatableText>
           </motion.h2>
           <div className={contentClass}>
             <p className="text-black font-regular-small text-sm text-justify">
-              {text}
+                <TranslatableText>
+                    {text}
+                </TranslatableText>
             </p>
           </div>
         </div>

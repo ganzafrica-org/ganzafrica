@@ -1,12 +1,25 @@
 "use client";
 
-import { Bell, Plus, Search, User, BellOff, Settings, HelpCircle, LogOut, ChevronRight, ChevronDown, AlignJustify } from "lucide-react";
+import dynamic from 'next/dynamic';
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Task } from "@/lib/types";
 import { useAuth } from "./auth-provider";
 import { useProfile } from "@/contexts/profile-context";
+
+// Dynamically import icons to prevent hydration mismatches
+const Bell = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Bell })), { ssr: false });
+const Plus = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Plus })), { ssr: false });
+const Search = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Search })), { ssr: false });
+const User = dynamic(() => import('lucide-react').then(mod => ({ default: mod.User })), { ssr: false });
+const BellOff = dynamic(() => import('lucide-react').then(mod => ({ default: mod.BellOff })), { ssr: false });
+const Settings = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Settings })), { ssr: false });
+const HelpCircle = dynamic(() => import('lucide-react').then(mod => ({ default: mod.HelpCircle })), { ssr: false });
+const LogOut = dynamic(() => import('lucide-react').then(mod => ({ default: mod.LogOut })), { ssr: false });
+const ChevronRight = dynamic(() => import('lucide-react').then(mod => ({ default: mod.ChevronRight })), { ssr: false });
+const ChevronDown = dynamic(() => import('lucide-react').then(mod => ({ default: mod.ChevronDown })), { ssr: false });
+const AlignJustify = dynamic(() => import('lucide-react').then(mod => ({ default: mod.AlignJustify })), { ssr: false });
 
 interface NavbarProps {
   tasks: Task[];

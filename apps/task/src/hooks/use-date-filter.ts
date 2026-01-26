@@ -5,6 +5,15 @@ export function useDateFilter(tasks: Task[], dateFilter: string, customDateRange
   const filteredTasks = useMemo(() => {
     let filtered = tasks;
 
+    // Exclude tasks that are overdue by more than 2 weeks
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14); // 14 days = 2 weeks
+    filtered = filtered.filter(task => {
+      if (!task.dueDate) return true; // Include tasks without due dates
+      const taskDueDate = new Date(task.dueDate);
+      return taskDueDate >= twoWeeksAgo; // Only include tasks not overdue by more than 2 weeks
+    });
+
     // Apply date filtering based on task deadlines
     if (dateFilter === 'week') {
       const now = new Date();

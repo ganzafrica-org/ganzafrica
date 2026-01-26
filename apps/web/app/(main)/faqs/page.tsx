@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Leaf, Plus, Minus } from 'lucide-react';
 import apiClient from '@/lib/api-client';
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 // Normalize lucide icon component types across React type versions
 type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -191,8 +192,8 @@ export default function FAQPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, delay: 0.2 }}
                     >
-                      Clear <span className="text-primary-orange">Answers</span> to Help You<br />
-                      Get Started
+                      <TranslatableText>Clear</TranslatableText> <span className="text-primary-orange"><TranslatableText>Answers</TranslatableText></span> <TranslatableText>to Help You</TranslatableText><br />
+                      <TranslatableText>Get Started</TranslatableText>
                     </motion.h1>
                     <motion.h2
                         className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-primary-orange tracking-wider mt-6"
@@ -200,7 +201,7 @@ export default function FAQPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.7, delay: 0.4 }}
                     >
-                      FAQs
+                      <TranslatableText>FAQs</TranslatableText>
                     </motion.h2>
                   </div>
                 </div>
@@ -212,16 +213,16 @@ export default function FAQPage() {
                 <div className="marquee-container overflow-hidden w-full max-w-2xl mx-auto">
                   <div className="marquee-content flex whitespace-nowrap animate-marquee">
                     <div className="flex space-x-8 px-4 mx-4">
-                      <span className="text-base font-medium">• Food Systems</span>
-                      <span className="text-base font-medium">• Data & Evidence</span>
-                      <span className="text-base font-medium">• Co-creation</span>
-                      <span className="text-base font-medium">• Data & Evidence</span>
+                      <span className="text-base font-medium">• <TranslatableText>Food Systems</TranslatableText></span>
+                      <span className="text-base font-medium">• <TranslatableText>Data & Evidence</TranslatableText></span>
+                      <span className="text-base font-medium">• <TranslatableText>Co-creation</TranslatableText></span>
+                      <span className="text-base font-medium">• <TranslatableText>Data & Evidence</TranslatableText></span>
                     </div>
                     <div className="flex space-x-8 px-4 mx-4">
-                      <span className="text-base font-medium">• Food Systems</span>
-                      <span className="text-base font-medium">• Data & Evidence</span>
-                      <span className="text-base font-medium">• Co-creation</span>
-                      <span className="text-base font-medium">• Data & Evidence</span>
+                      <span className="text-base font-medium">• <TranslatableText>Food Systems</TranslatableText></span>
+                      <span className="text-base font-medium">• <TranslatableText>Data & Evidence</TranslatableText></span>
+                      <span className="text-base font-medium">• <TranslatableText>Co-creation</TranslatableText></span>
+                      <span className="text-base font-medium">• <TranslatableText>Data & Evidence</TranslatableText></span>
                     </div>
                   </div>
                 </div>
@@ -248,10 +249,10 @@ export default function FAQPage() {
                   </>
               ) : (
                   <>
-                    <h2 className="text-2xl font-bold text-emerald-600 mb-4">General FAQs</h2>
+                    <h2 className="text-2xl font-bold text-emerald-600 mb-4"><TranslatableText>General FAQs</TranslatableText></h2>
                     <p className="text-gray-600 mb-8">
-                      Everything you need to know about GanzAfrica and how it works.
-                      Can't find an answer? Chat with our team.
+                      <TranslatableText>Everything you need to know about GanzAfrica and how it works.</TranslatableText>
+                      <TranslatableText> Can't find an answer? Chat with our team.</TranslatableText>
                     </p>
                   </>
               )}
@@ -273,14 +274,14 @@ export default function FAQPage() {
               {/* Error state */}
               {error && (
                   <div className="text-red-500 py-4">
-                    {error}. Please try refreshing the page.
+                    {error}. <TranslatableText>Please try refreshing the page.</TranslatableText>
                   </div>
               )}
 
               {/* FAQs from API */}
               {!loading && !error && faqs.length === 0 && (
                   <div className="text-gray-600 py-4">
-                    No FAQs available at the moment.
+                    <TranslatableText>No FAQs available at the moment.</TranslatableText>
                   </div>
               )}
 

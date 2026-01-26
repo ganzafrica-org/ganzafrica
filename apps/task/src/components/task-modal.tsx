@@ -858,18 +858,40 @@ export function TaskModal({
       try {
         // If this is an existing task with a valid numeric ID, save changes to the database
         if (draft.id && isValidTaskId(draft.id)) {
-          const updateData = {
-            title: draft.title,
-            description: draft.description,
-            deliverables: draft.deliverables,
-            status: draft.status,
-            priority: draft.priority,
-            due_date: draft.dueDate ? new Date(draft.dueDate) : null,
-            labels: draft.labels,
-            attachments: draft.attachments,
-            assignees: draft.assignees.map(id => parseInt(id)).filter(id => !isNaN(id)),
-            project_id: draft.projectId // Preserve project_id to maintain team association
-          };
+          // Build update data by comparing with original task to only send changed fields
+          const updateData: any = {};
+
+          if (draft.title !== task?.title) updateData.title = draft.title;
+          if (draft.description !== task?.description) updateData.description = draft.description;
+          if (draft.deliverables !== task?.deliverables) updateData.deliverables = draft.deliverables;
+          if (draft.status !== task?.status) updateData.status = draft.status;
+          if (draft.priority !== task?.priority) updateData.priority = draft.priority;
+
+          // Compare due dates (handle null/undefined cases)
+          const originalDueDate = task?.dueDate ? new Date(task.dueDate).toISOString() : null;
+          const newDueDate = draft.dueDate ? new Date(draft.dueDate).toISOString() : null;
+          if (originalDueDate !== newDueDate) updateData.due_date = draft.dueDate ? new Date(draft.dueDate) : null;
+
+          if (JSON.stringify(draft.labels) !== JSON.stringify(task?.labels)) updateData.labels = draft.labels;
+
+          // Compare attachments
+          if (JSON.stringify(draft.attachments) !== JSON.stringify(task?.attachments)) {
+            updateData.attachments = draft.attachments.map(a => ({
+              id: a.id,
+              filename: a.filename,
+              url: '',
+            }));
+          }
+
+          // Compare assignees
+          const originalAssignees = task?.assignees || [];
+          const newAssignees = draft.assignees.map(id => parseInt(id)).filter(id => !isNaN(id));
+          if (JSON.stringify(originalAssignees.sort()) !== JSON.stringify(newAssignees.sort())) {
+            updateData.assignees = newAssignees;
+          }
+
+          // Always include project_id to maintain team association
+          updateData.project_id = draft.projectId;
 
           const numericId = parseInt(draft.id);
 
@@ -891,7 +913,35 @@ export function TaskModal({
           // The parent will update the task with the real ID from API response
         }
       } catch (error) {
-        setToast({ type: 'error', message: 'Failed to save task' });
+        let errorMessage = 'Failed to save task';
+
+        // Handle specific error types
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+          const status = axiosError.response?.status;
+          const backendMessage = axiosError.response?.data?.message;
+
+          if (status === 403) {
+            // Permission denied - provide user-friendly message
+            if (backendMessage?.includes('due date')) {
+              errorMessage = 'You cannot update the date of your task. Only managers can do that.';
+            } else if (backendMessage?.includes('title')) {
+              errorMessage = 'You cannot update the title of this task. Only managers and the task creator can do that.';
+            } else {
+              errorMessage = 'You do not have permission to make this change. Please contact a manager.';
+            }
+          } else if (backendMessage) {
+            errorMessage = backendMessage;
+          } else if (status) {
+            errorMessage = `Request failed with status ${status}`;
+          }
+        } else {
+          // Fallback to logger for other error types
+          const { logger } = await import('@/lib/logger');
+          errorMessage = logger.getErrorMessage(error) || errorMessage;
+        }
+
+        setToast({ type: 'error', message: errorMessage });
         setTimeout(() => setToast(null), 2500);
       } finally {
         setIsSaving(false);

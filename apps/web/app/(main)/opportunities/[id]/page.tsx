@@ -25,6 +25,7 @@ import {
   Target
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import {TranslatableText} from "@/components/translate";
 
 // Normalize Next.js Link typing across React type versions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -191,32 +192,32 @@ const OpportunityDetailsPage = () => {
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
             <CheckCircleIcon className="w-3 h-3 mr-1 flex-shrink-0" />
-            <span className="truncate">Published</span>
+            <span className="truncate"><TranslatableText>Published</TranslatableText></span>
           </span>
         );
       case 'draft':
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap">
             <ClockIcon className="w-3 h-3 mr-1 flex-shrink-0" />
-            <span className="truncate">Draft</span>
+            <span className="truncate"><TranslatableText>Draft</TranslatableText></span>
           </span>
         );
       case 'archived':
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 whitespace-nowrap">
             <BookIcon className="w-3 h-3 mr-1 flex-shrink-0" />
-            <span className="truncate">Archived</span>
+            <span className="truncate"><TranslatableText>Archived</TranslatableText></span>
           </span>
         );
       case 'closed':
         return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 whitespace-nowrap">
             <AwardIcon className="w-3 h-3 mr-1 flex-shrink-0" />
-            <span className="truncate">Closed</span>
+            <span className="truncate"><TranslatableText>Closed</TranslatableText></span>
           </span>
         );
       default:
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 truncate max-w-[100px]">• {status}</span>;
+        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 truncate max-w-[100px]">• <TranslatableText>{status}</TranslatableText></span>;
     }
   };
 
@@ -225,7 +226,7 @@ const OpportunityDetailsPage = () => {
       <div className="p-6 max-w-full flex items-center justify-center min-h-[80vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-700 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading opportunity details...</p>
+          <p className="mt-4 text-gray-600"><TranslatableText>Loading opportunity details</TranslatableText>...</p>
         </div>
       </div>
     );
@@ -241,7 +242,7 @@ const OpportunityDetailsPage = () => {
           </div>
           <div className="mt-4">
             <SafeLink href="/opportunities" className="text-red-700 font-medium hover:underline flex items-center">
-              <ArrowLeftIcon className="w-4 h-4 mr-1" /> Back to Opportunities
+              <ArrowLeftIcon className="w-4 h-4 mr-1" /> <TranslatableText>Back to Opportunities</TranslatableText>
             </SafeLink>
           </div>
         </div>
@@ -258,11 +259,11 @@ const OpportunityDetailsPage = () => {
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative" role="alert">
           <div className="flex">
             <AlertCircleIcon className="h-5 w-5 mr-2" />
-            <span>Opportunity not found</span>
+            <span><TranslatableText>Opportunity not found</TranslatableText></span>
           </div>
           <div className="mt-4">
             <SafeLink href="/opportunities" className="text-yellow-700 font-medium hover:underline flex items-center">
-              <ArrowLeftIcon className="w-4 h-4 mr-1" /> Back to Opportunities
+              <ArrowLeftIcon className="w-4 h-4 mr-1" /> <TranslatableText>Back to Opportunities</TranslatableText>
             </SafeLink>
           </div>
         </div>
@@ -299,38 +300,38 @@ const OpportunityDetailsPage = () => {
               >
                 <ArrowLeftIcon className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                 <span className="relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-white after:transition-all after:duration-300 group-hover:after:w-full">
-                  Back to Opportunities
+                  <TranslatableText>Back to Opportunities</TranslatableText>
                 </span>
               </SafeLink>
               
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6 leading-tight break-words">
-                {opportunity.title}
+                  <TranslatableText>{opportunity.title}</TranslatableText>
               </h1>
               
               <div className="flex flex-wrap gap-4 text-white/90 mb-8 overflow-hidden max-w-full">
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
                     <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">Deadline: {formatDate(opportunity.application_deadline)}</span>
+                    <span className="truncate"><TranslatableText>Deadline: </TranslatableText>{formatDate(opportunity.application_deadline)}</span>
                   </span>
                 </div>
                 {opportunity.location && (
                   <div className="overflow-x-auto">
                     <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
                       <MapPinIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-                      <span className="truncate">{opportunity.location}</span>
+                      <span className="truncate"><TranslatableText>{opportunity.location}</TranslatableText></span>
                     </span>
                   </div>
                 )}
                 <div className="overflow-x-auto">
                   <span className="flex items-center bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300 whitespace-nowrap">
                     <TagIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span className="truncate">{opportunityTypes[opportunity.type] || opportunity.type}</span>
+                    <span className="truncate"><TranslatableText>{opportunityTypes[opportunity.type] || opportunity.type}</TranslatableText></span>
                   </span>
                 </div>
                 <div className="overflow-x-auto">
                   <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300">
-                    {getStatusBadge(opportunity.status)}
+                      <TranslatableText>{getStatusBadge(opportunity.status)}</TranslatableText>
                   </div>
                 </div>
               </div>
@@ -348,11 +349,11 @@ const OpportunityDetailsPage = () => {
             <div className="space-y-8">
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">About the Opportunity</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words"><TranslatableText>About the Opportunity</TranslatableText></h2>
               </div>
               <div className="break-words bg-white p-6 rounded-lg border border-gray-200">
                 <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed w-full whitespace-pre-line">
-                  {opportunity.description || 'No description provided.'}
+                    <TranslatableText>{opportunity.description || 'No description provided.'}</TranslatableText>
                 </p>
               </div>
             </div>
@@ -362,28 +363,28 @@ const OpportunityDetailsPage = () => {
               <div className="space-y-8">
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Eligibility Criteria</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words"><TranslatableText>Eligibility Criteria</TranslatableText></h2>
                 </div>
                 <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-6">
                   {/* Education level */}
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-3">
                       <GraduationCapIcon className="w-5 h-5 text-green-700 mr-2" />
-                      <h3 className="font-medium">Minimum Education Required</h3>
+                      <h3 className="font-medium"><TranslatableText>Minimum Education Required</TranslatableText></h3>
                     </div>
-                    <p className="ml-7">{opportunity.eligibility_criteria.min_education_level || 'No specific education requirements'}</p>
+                    <p className="ml-7"><TranslatableText>{opportunity.eligibility_criteria.min_education_level || 'No specific education requirements'}</TranslatableText></p>
                   </div>
                   
                   {/* Experience */}
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-3">
                       <BriefcaseIcon className="w-5 h-5 text-green-700 mr-2" />
-                      <h3 className="font-medium">Experience Required</h3>
+                      <h3 className="font-medium"><TranslatableText>Experience Required</TranslatableText></h3>
                     </div>
                     <p className="ml-7">
-                      {opportunity.eligibility_criteria.experience_years ?
+                        <TranslatableText>{opportunity.eligibility_criteria.experience_years ?
                         `${opportunity.eligibility_criteria.experience_years} year${opportunity.eligibility_criteria.experience_years !== 1 ? 's' : ''} of experience required` :
-                        'No specific experience requirements'}
+                        'No specific experience requirements'}</TranslatableText>
                     </p>
                   </div>
                   
@@ -392,13 +393,13 @@ const OpportunityDetailsPage = () => {
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-3">
                         <GlobeIcon className="w-5 h-5 text-green-700 mr-2" />
-                        <h3 className="font-medium">Eligible Countries</h3>
+                        <h3 className="font-medium"><TranslatableText>Eligible Countries</TranslatableText></h3>
                       </div>
                       <div className="ml-7">
                         <div className="flex flex-wrap gap-2">
                           {opportunity.eligibility_criteria.countries.map((country, index) => (
                             <span key={index} className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
-                              {country}
+                              <TranslatableText>{country}</TranslatableText>
                             </span>
                           ))}
                         </div>
@@ -411,13 +412,13 @@ const OpportunityDetailsPage = () => {
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-3">
                         <CodeIcon className="w-5 h-5 text-green-700 mr-2" />
-                        <h3 className="font-medium">Required Skills</h3>
+                        <h3 className="font-medium"><TranslatableText>Required Skills</TranslatableText></h3>
                       </div>
                       <div className="ml-7">
                         <div className="flex flex-wrap gap-2">
                           {opportunity.eligibility_criteria.skills_required.map((skill, index) => (
                             <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
-                              {skill}
+                              <TranslatableText>{skill}</TranslatableText>
                             </span>
                           ))}
                         </div>
@@ -430,11 +431,11 @@ const OpportunityDetailsPage = () => {
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-3">
                         <ListChecksIcon className="w-5 h-5 text-green-700 mr-2" />
-                        <h3 className="font-medium">Other Requirements</h3>
+                        <h3 className="font-medium"><TranslatableText>Other Requirements</TranslatableText></h3>
                       </div>
                       <ul className="ml-7 list-disc pl-5 space-y-1">
                         {opportunity.eligibility_criteria.other_requirements.map((req, index) => (
-                          <li key={index}>{req}</li>
+                          <li key={index}><TranslatableText>{req}</TranslatableText></li>
                         ))}
                       </ul>
                     </div>
@@ -448,17 +449,17 @@ const OpportunityDetailsPage = () => {
               <div className="space-y-8">
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Program Structure</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words"><TranslatableText>Program Structure</TranslatableText></h2>
                 </div>
                 <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-8">
                   {/* Learning outcomes */}
                   {opportunity.fellowship_details.learning_outcomes && opportunity.fellowship_details.learning_outcomes.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-medium mb-4">Learning Outcomes</h3>
+                      <h3 className="text-lg font-medium mb-4"><TranslatableText>Learning Outcomes</TranslatableText></h3>
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <ul className="list-disc pl-5 space-y-2">
                           {opportunity.fellowship_details.learning_outcomes.map((outcome, index) => (
-                            <li key={index} className="text-gray-700">{outcome}</li>
+                            <li key={index} className="text-gray-700"><TranslatableText>{outcome}</TranslatableText></li>
                           ))}
                         </ul>
                       </div>
@@ -470,17 +471,17 @@ const OpportunityDetailsPage = () => {
                    opportunity.fellowship_details.program_structure.phases && 
                    opportunity.fellowship_details.program_structure.phases.length > 0 && (
                     <div>
-                      <h3 className="text-lg font-medium mb-4">Program Phases</h3>
+                      <h3 className="text-lg font-medium mb-4"><TranslatableText>Program Phases</TranslatableText></h3>
                       <div className="space-y-4">
                         {opportunity.fellowship_details.program_structure.phases.map((phase, index) => (
                           <div key={index} className="p-4 bg-gray-50 rounded-lg border-l-4 border-green-700">
                             <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium">{phase.name}</h4>
+                              <h4 className="font-medium"><TranslatableText>{phase.name}</TranslatableText></h4>
                               <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
                                 {phase.duration_weeks} week{phase.duration_weeks !== 1 ? 's' : ''}
                               </span>
                             </div>
-                            <p className="text-gray-600">{phase.description}</p>
+                            <p className="text-gray-600"><TranslatableText>{phase.description}</TranslatableText></p>
                           </div>
                         ))}
                       </div>
@@ -498,7 +499,7 @@ const OpportunityDetailsPage = () => {
                           {opportunity.fellowship_details.program_structure.activities.map((activity, index) => (
                             <div key={index} className="flex items-center">
                               <CheckCircleIcon className="w-5 h-5 text-green-600 mr-2" />
-                              <span>{activity}</span>
+                              <span><TranslatableText>{activity}</TranslatableText></span>
                             </div>
                           ))}
                         </div>
@@ -514,11 +515,11 @@ const OpportunityDetailsPage = () => {
               <div className="space-y-8">
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Application Form</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words"><TranslatableText>Application Form</TranslatableText></h2>
                 </div>
                 <div className="bg-white p-6 rounded-lg border border-gray-200">
                   <p className="text-gray-700 mb-6">
-                    Below are the custom questions that applicants will need to answer when applying for this opportunity.
+                      <TranslatableText>Below are the custom questions that applicants will need to answer when applying for this opportunity.</TranslatableText>
                   </p>
                   
                   <div className="space-y-6">
@@ -530,25 +531,25 @@ const OpportunityDetailsPage = () => {
                               Q{index + 1}
                             </span>
                             <div>
-                              <h3 className="font-medium">{question.question}</h3>
+                              <h3 className="font-medium"><TranslatableText>{question.question}</TranslatableText></h3>
                               <p className="text-xs text-gray-500 mt-1">
-                                Field type: <span className="font-semibold capitalize">{question.field_type}</span>
-                                {question.is_required && <span className="ml-2 text-red-600">Required</span>}
-                                {question.max_length && <span className="ml-2">Max length: {question.max_length} characters</span>}
+                                Field type: <span className="font-semibold capitalize"><TranslatableText>{question.field_type}</TranslatableText></span>
+                                {question.is_required && <span className="ml-2 text-red-600"><TranslatableText>Required</TranslatableText></span>}
+                                {question.max_length && <span className="ml-2"><TranslatableText>Max length:</TranslatableText> {question.max_length} <TranslatableText>characters</TranslatableText></span>}
                               </p>
                             </div>
                           </div>
-                          <span className="text-xs text-gray-500">Order: {question.order}</span>
+                          <span className="text-xs text-gray-500"><TranslatableText>Order:</TranslatableText> {question.order}</span>
                         </div>
                         
                         {/* Show options for multi-select or single-select questions */}
                         {(question.field_type === 'multiselect' || question.field_type === 'select') && question.options && (
                           <div className="mt-3 pl-8">
-                            <p className="text-sm font-medium mb-2">Options:</p>
+                            <p className="text-sm font-medium mb-2"><TranslatableText>Options:</TranslatableText></p>
                             <div className="flex flex-wrap gap-2">
                               {question.options.map((option, optIndex) => (
                                 <span key={optIndex} className="px-2 py-1 bg-gray-200 text-gray-800 rounded text-sm">
-                                  {option}
+                                  <TranslatableText>{option}</TranslatableText>
                                 </span>
                               ))}
                             </div>
@@ -571,7 +572,7 @@ const OpportunityDetailsPage = () => {
   href={`${opportunity.id}/apply`} 
   className="w-full block text-center px-4 py-3 bg-green-700 rounded-lg text-sm font-medium text-white hover:bg-green-800 transition-colors"
 >
-  Apply to Opportunity
+                  <TranslatableText>Apply to Opportunity</TranslatableText>
 </SafeLink>
               </div>
 
@@ -579,15 +580,15 @@ const OpportunityDetailsPage = () => {
               <div className="space-y-8">
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Opportunity Information</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words"><TranslatableText>Opportunity Information</TranslatableText></h2>
                 </div>
                 <div className="space-y-4 w-full overflow-hidden bg-white rounded-lg border border-gray-200 p-6">
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
                       <TagIcon className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Type</span>
+                      <span className="text-sm text-gray-500"><TranslatableText>Type</TranslatableText></span>
                     </div>
-                    <p className="font-medium capitalize">{opportunityTypes[opportunity.type] || opportunity.type}</p>
+                    <p className="font-medium capitalize"><TranslatableText>{opportunityTypes[opportunity.type] || opportunity.type}</TranslatableText></p>
                   </div>
                   
                   <div className="p-4 bg-gray-50 rounded-lg">
@@ -595,21 +596,21 @@ const OpportunityDetailsPage = () => {
                       <TagIcon className="w-4 h-4 text-gray-500 mr-2" />
                       <span className="text-sm text-gray-500">Category</span>
                     </div>
-                    <p className="font-medium">{getCategoryName(opportunity.category_id)}</p>
+                    <p className="font-medium"><TranslatableText>{getCategoryName(opportunity.category_id)}</TranslatableText></p>
                   </div>
                   
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
                       <MapPinIcon className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Location</span>
+                      <span className="text-sm text-gray-500"><TranslatableText>Location</TranslatableText></span>
                     </div>
-                    <p className="font-medium">{opportunity.location || 'Not specified'}</p>
+                    <p className="font-medium"><TranslatableText>{opportunity.location || 'Not specified'}</TranslatableText></p>
                   </div>
                   
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
                       <LaptopIcon className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Location Type</span>
+                      <span className="text-sm text-gray-500"><TranslatableText>Location Type</TranslatableText></span>
                     </div>
                     <p className="font-medium capitalize">{opportunity.location_type || 'Not specified'}</p>
                   </div>
@@ -617,7 +618,7 @@ const OpportunityDetailsPage = () => {
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
                       <CalendarIcon className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Application Deadline</span>
+                      <span className="text-sm text-gray-500"><TranslatableText>Application Deadline</TranslatableText></span>
                     </div>
                     <p className="font-medium">{formatDate(opportunity.application_deadline)}</p>
                   </div>
@@ -625,9 +626,9 @@ const OpportunityDetailsPage = () => {
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center mb-2">
                       <ClockIcon className="w-4 h-4 text-gray-500 mr-2" />
-                      <span className="text-sm text-gray-500">Status</span>
+                      <span className="text-sm text-gray-500"><TranslatableText>Status</TranslatableText></span>
                     </div>
-                    <p className="font-medium capitalize">{opportunity.status || 'Draft'}</p>
+                    <p className="font-medium capitalize"><TranslatableText>{opportunity.status || 'Draft'}</TranslatableText></p>
                   </div>
                 </div>
               </div>
@@ -637,15 +638,15 @@ const OpportunityDetailsPage = () => {
                 <div className="space-y-8">
                   <div className="flex items-center gap-4 flex-wrap">
                     <div className="h-0.5 w-12 bg-green-700 flex-shrink-0"></div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words">Fellowship Details</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white break-words"><TranslatableText>Fellowship Details</TranslatableText></h2>
                   </div>
                   <div className="space-y-4 w-full overflow-hidden bg-white rounded-lg border border-gray-200 p-6">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-2">
                         <GraduationCapIcon className="w-4 h-4 text-gray-500 mr-2" />
-                        <span className="text-sm text-gray-500">Program Name</span>
+                        <span className="text-sm text-gray-500"><TranslatableText>Program Name</TranslatableText></span>
                       </div>
-                      <p className="font-medium">{opportunity.fellowship_details.program_name || 'Not specified'}</p>
+                      <p className="font-medium"><TranslatableText>{opportunity.fellowship_details.program_name || 'Not specified'}</TranslatableText></p>
                     </div>
                     
                     <div className="p-4 bg-gray-50 rounded-lg">
@@ -653,24 +654,24 @@ const OpportunityDetailsPage = () => {
                         <UsersIcon className="w-4 h-4 text-gray-500 mr-2" />
                         <span className="text-sm text-gray-500">Cohort</span>
                       </div>
-                      <p className="font-medium">{opportunity.fellowship_details.cohort || 'Not specified'}</p>
+                      <p className="font-medium"><TranslatableText>{opportunity.fellowship_details.cohort || 'Not specified'}</TranslatableText></p>
                     </div>
                     
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center mb-2">
                         <BookIcon className="w-4 h-4 text-gray-500 mr-2" />
-                        <span className="text-sm text-gray-500">Fellowship Type</span>
+                        <span className="text-sm text-gray-500"><TranslatableText>Fellowship Type</TranslatableText></span>
                       </div>
-                      <p className="font-medium capitalize">{opportunity.fellowship_details.fellowship_type || 'Not specified'}</p>
+                      <p className="font-medium capitalize"><TranslatableText>{opportunity.fellowship_details.fellowship_type || 'Not specified'}</TranslatableText></p>
                     </div>
                     
                     {opportunity.fellowship_details.duration && (
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center mb-2">
                           <ClockIcon className="w-4 h-4 text-gray-500 mr-2" />
-                          <span className="text-sm text-gray-500">Duration</span>
+                          <span className="text-sm text-gray-500"><TranslatableText>Duration</TranslatableText></span>
                         </div>
-                        <p className="font-medium">{opportunity.fellowship_details.duration || 'Not specified'}</p>
+                        <p className="font-medium"><TranslatableText>{opportunity.fellowship_details.duration || 'Not specified'}</TranslatableText></p>
                       </div>
                     )}
 
@@ -678,9 +679,9 @@ const OpportunityDetailsPage = () => {
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center mb-2">
                           <CalendarIcon className="w-4 h-4 text-gray-500 mr-2" />
-                          <span className="text-sm text-gray-500">Start Date</span>
+                          <span className="text-sm text-gray-500"><TranslatableText>Start Date</TranslatableText></span>
                         </div>
-                        <p className="font-medium">{formatDate(opportunity.fellowship_details.start_date)}</p>
+                        <p className="font-medium"><TranslatableText>{formatDate(opportunity.fellowship_details.start_date)}</TranslatableText></p>
                       </div>
                     )}
                   </div>
