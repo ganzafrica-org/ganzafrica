@@ -1,3 +1,4 @@
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { Rubik } from "next/font/google";
 import ClientLayout from "@/components/layout/client-layout";
 import { GoogleAnalyticsComponent } from "@/components/analytics/google-analytics";
@@ -20,7 +21,7 @@ export async function generateMetadata() {
     },
     description: "GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands.",
     metadataBase: new URL(
-      process.env.NEXT_PUBLIC_APP_URL || "https://ganzafrica.org",
+      process.env.NEXT_PUBLIC_APP_URL || "https://web.ganzafrica.org",
     ),
     alternates: {
       canonical: "/",
@@ -47,6 +48,7 @@ export default async function RootLayout(props: {
         <ClientLayout>
           {children}
         </ClientLayout>
+        <GoogleAnalytics gaId= "G-F2YBDRRV32" />
       </body>
     </html>
   );

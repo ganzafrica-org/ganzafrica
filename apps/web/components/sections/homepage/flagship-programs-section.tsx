@@ -194,6 +194,7 @@ export default function FlagshipProgramsSection() {
                                 </p>
                                 <Link
                                     href={program.link}
+                                    aria-label="Learn more about the Ganzafrica programs"
                                     style={{
                                         position: "absolute",
                                         left: "0",

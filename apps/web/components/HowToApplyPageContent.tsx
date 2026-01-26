@@ -170,7 +170,7 @@ export default function HowToApplyPageContent() {
                             opacity: { duration: 0.15 }
                         }}
                     >
-                        <Link href={`/${params.locale}/programs/fellowship/apply`}>
+                        <Link href={`/programs/fellowship/apply`} aria-label="Know more on how to apply for fellowship program">
                             <Button
                                 className="bg-primary-orange hover:bg-primary-orange/90 text-white font-semibold px-6 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
                                 style={{ boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}

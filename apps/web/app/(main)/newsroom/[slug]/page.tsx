@@ -12,6 +12,8 @@ import {
     trackVideoEvent,
 } from "@/components/analytics/google-analytics";
 import { TranslatableText } from "@/components/translate/TranslatableText";
+import {useTranslationContext} from "@/context/translation";
+import {TranslateArticleButton} from "@/components/translate";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SafeLink = Link as unknown as React.ComponentType<any>;
@@ -437,7 +439,7 @@ const NewsDetailsContent = () => {
         const imageUrl = getCoverImage(item);
 
         return (
-            <SafeLink href={`/newsroom/${itemSlug}`} className="block group">
+            <SafeLink href={`/newsroom/${itemSlug}`} aria-label="More about Ganza's news and updates" className="block group">
                 <div className="relative bg-white rounded-lg overflow-hidden shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
                     {/* Image Container */}
                     <div className="relative aspect-[16/10]">
@@ -608,6 +610,7 @@ const NewsDetailsContent = () => {
                         </p>
                         <SafeLink
                             href={`/newsroom`}
+                            aria-label="Back to the list  of all news and updates"
                             className="inline-flex items-center px-6 py-3 bg-[#00A651] text-white rounded-md hover:bg-[#008f46] transition-colors"
                         >
                             <ArrowLeftIcon className="mr-2 h-5 w-5" />
@@ -736,6 +739,7 @@ const NewsDetailsContent = () => {
                         {/* Back to a newsroom link */}
                         <SafeLink
                             href={`/newsroom`}
+                            aria-label="Back to the list  of all news and updates"
                             className="inline-flex items-center text-[#00A651] hover:text-[#008f46] mb-6 transition-colors"
                         >
                             <ArrowLeftIcon className="mr-2 h-5 w-5" />
@@ -875,6 +879,7 @@ const NewsDetailsContent = () => {
                                 <div className="mt-6 text-center">
                                     <SafeLink
                                         href={`/newsroom`}
+                                        aria-label="View all news and updates"
                                         className="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-[#00A651] border border-[#00A651] rounded-md hover:bg-[#00A651] hover:text-white transition-colors"
                                     >
                                         <TranslatableText>View All News</TranslatableText>

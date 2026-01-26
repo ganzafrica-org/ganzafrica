@@ -493,6 +493,7 @@ return (
                                 <Link
                                     href={getProjectUrl(project.id)}
                                     className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
+                                    aria-label="Learn more about this Ganzafrica's project"
                                     style={{ color }}
                                 >
                                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">

@@ -363,6 +363,7 @@ export default function NewsSection() {
                                     {/* Read more link - styled like project cards */}
                                     <Link
                                         href={`/newsroom/${slug}`}
+                                        aria-label="Know more on this article"
                                         className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
                                         style={{ color: linkColor }}
                                         onClick={() => trackEvent('news_link_click', {

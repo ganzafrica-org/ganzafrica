@@ -412,13 +412,14 @@ const ClimateInitiavesMapSection = () => {
                                                         <div className="text-xs text-gray-600 mb-3">
                                                             Contact: {location.contactPerson}
                                                         </div>
-                                                        <a
+                                                        <Link
                                                             href={location.url}
+                                                            aria-label="Learn more about our project's location"
                                                             className="text-xs text-yellow-600 hover:text-yellow-800 font-medium inline-flex items-center"
                                                         >
                                                             Learn more
                                                             <ChevronRight className="ml-1 w-3 h-3" />
-                                                        </a>
+                                                        </Link>
                                                     </>
                                                 ) : (
                                                     <>

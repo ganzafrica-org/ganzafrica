@@ -9,6 +9,9 @@ import { Input } from '@workspace/ui/components/input';
 import { Textarea } from '@workspace/ui/components/textarea';
 import { useRouter } from 'next/navigation';
 import apiClient from "@/lib/api-client";
+import {Metadata} from "next";
+
+
 
 // Normalize lucide icon component types across React versions
 type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;

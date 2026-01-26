@@ -5,13 +5,11 @@ export function generateMetadata({
                                    params,
                                    title,
                                    description,
-                                   locale = "en",
                                    imagePath,
                                  }: {
-  params: { locale: string };
+  params: string;
   title: string;
   description: string;
-  locale?: string;
   imagePath?: string;
 }): Metadata {
   const siteName = "GanzAfrica";
@@ -26,7 +24,6 @@ export function generateMetadata({
     description,
     openGraph: {
       type: "website",
-      locale: params.locale,
       url: baseUrl,
       siteName,
       title,
@@ -48,10 +45,6 @@ export function generateMetadata({
     },
     alternates: {
       canonical: `${baseUrl}`,
-      languages: {
-        en: `${baseUrl}/en`,
-        fr: `${baseUrl}/fr`,
-      },
     },
   };
 }

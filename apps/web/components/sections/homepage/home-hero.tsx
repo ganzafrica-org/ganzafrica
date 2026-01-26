@@ -756,6 +756,7 @@ export default function HomeHero({
                 <video
                     ref={videoRef}
                     autoPlay
+                    poster={backgroundImage}
                     muted
                     loop
                     playsInline
@@ -898,18 +899,19 @@ export default function HomeHero({
                 </div>
             </div>
 
-            {/* Overlay video above all content */}
-            <div className="pointer-events-none absolute inset-0 z-60">
-                <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="w-full h-full object-cover opacity-30"
-                >
-                    <source src="/videos/hero-video.mp4" type="video/mp4" />
-                </video>
-            </div>
+            {/*/!* Overlay video above all content *!/*/}
+            {/*<div className="pointer-events-none absolute inset-0 z-60">*/}
+            {/*    <video*/}
+            {/*        autoPlay*/}
+            {/*        muted*/}
+            {/*        loop*/}
+            {/*        playsInline*/}
+            {/*        className="w-full h-full object-cover opacity-30"*/}
+            {/*        preload="auto"*/}
+            {/*    >*/}
+            {/*        <source src="/videos/hero-video.mp4" type="video/mp4" />*/}
+            {/*    </video>*/}
+            {/*</div>*/}
         </section>
     );
 }

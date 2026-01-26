@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import {TranslatableText} from "@/components/translate";
+import {Metadata} from "next";
+
+
 
 // Normalize Next.js Link typing across React type versions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

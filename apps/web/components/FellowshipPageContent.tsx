@@ -335,7 +335,7 @@ export default function FellowshipPageContent() {
                             transition={{ duration: 0.8, delay: 0.4 }}
                             className="flex items-center justify-center gap-4"
                         >
-                            <Link href="/what-we-do/fellowship/how-to-apply">
+                            <Link href="/what-we-do/fellowship/how-to-apply" aria-label="Know more on how to apply">
                                 <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
                                     <TranslatableText>How to Apply</TranslatableText>
                                 </Button>
@@ -431,7 +431,7 @@ export default function FellowshipPageContent() {
                                 <TranslatableText>Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.</TranslatableText>
                             </p>
 
-                            <Link href="/programs/fellowship/how-to-apply">
+                            <Link href="/programs/fellowship/how-to-apply"  aria-label="Know more on how to apply">
                                 <motion.button
                                     className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white px-6 py-3 rounded-md font-medium transition-colors"
                                     whileHover={{ scale: 1.05 }}
@@ -484,7 +484,7 @@ export default function FellowshipPageContent() {
                             <p className="text-gray-600 text-sm md:text-base mb-8">
                                 <TranslatableText>Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.</TranslatableText>
                             </p>
-                            <Link href="/about/team">
+                            <Link href="/about/team" aria-label="Know more on our team">
                                 <motion.button
                                     className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
                                     whileHover={{ scale: 1.05 }}
