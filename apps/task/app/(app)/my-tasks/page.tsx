@@ -400,7 +400,7 @@ export default function BoardPage(): React.JSX.Element {
   const loadAllUsers = async () => {
     try {
       setLoadingUsers(true);
-      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true });
+      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true, exclude_alumni: false });
       setAllUsers(usersResponse.users || []);
     } catch (error: any) {
       // Error loading users

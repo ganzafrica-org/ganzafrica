@@ -277,7 +277,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
   const loadAllUsers = async () => {
     try {
       setLoadingUsers(true);
-      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true });
+      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true, exclude_alumni: false });
       setAllUsers(usersResponse.users || []);
     } catch (error: any) {
       console.error('Error loading users:', error);
