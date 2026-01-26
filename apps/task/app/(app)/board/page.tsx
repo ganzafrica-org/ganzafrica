@@ -274,6 +274,15 @@ export default function BoardPage(): React.JSX.Element {
       ? tasks 
       : tasks.filter(task => (task.assignees || []).some(a => a != null && a.toString() === selectedMember));
 
+    // Exclude tasks that are overdue by more than 2 weeks
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14); // 14 days = 2 weeks
+    filtered = filtered.filter(task => {
+      if (!task.dueDate) return true; // Include tasks without due dates
+      const taskDueDate = new Date(task.dueDate);
+      return taskDueDate >= twoWeeksAgo; // Only include tasks not overdue by more than 2 weeks
+    });
+
     // Apply search filtering
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
