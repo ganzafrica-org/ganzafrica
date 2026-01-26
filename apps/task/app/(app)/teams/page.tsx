@@ -17,10 +17,13 @@ import { isCurrentUserAdminOrManager, getCurrentUserRole } from "@/lib/auth-util
 export default function TeamsPage(): React.JSX.Element {
   const router = useRouter();
   
+  // State to track admin/manager status (set after hydration to avoid SSR mismatch)
+  const [isUserAdminOrManager, setIsUserAdminOrManager] = useState(false);
+  
   // Check if current user can edit a specific team
   const canEditTeam = (team: TaskTeam): boolean => {
     // Only Admin/Manager can edit teams
-    return isCurrentUserAdminOrManager();
+    return isUserAdminOrManager;
   };
 
   // Check if current user is assigned to a team
@@ -28,7 +31,7 @@ export default function TeamsPage(): React.JSX.Element {
     if (!team.members) return false;
     
     // Admin and Manager can always manage teams
-    if (isCurrentUserAdminOrManager()) return true;
+    if (isUserAdminOrManager) return true;
     
     // Get current user ID from localStorage
     try {
@@ -106,12 +109,17 @@ export default function TeamsPage(): React.JSX.Element {
     loadPortalData();
   }, []);
 
+  // Set admin/manager status after hydration to avoid SSR mismatch
+  useEffect(() => {
+    setIsUserAdminOrManager(isCurrentUserAdminOrManager());
+  }, []);
+
   const loadPortalData = async () => {
     try {
       setLoadingData(true);
       
       // Get users from the system
-      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true });
+      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true, exclude_alumni: false });
       setUsers(usersResponse.users || []);
       
       // Get all projects
@@ -166,7 +174,7 @@ export default function TeamsPage(): React.JSX.Element {
 
   const handleCreateTeam = async () => {
     // Check if user can create teams
-    if (!isCurrentUserAdminOrManager()) {
+    if (!isUserAdminOrManager) {
       setErrorModal({
         isOpen: true,
         title: 'Access Denied',
@@ -287,7 +295,7 @@ export default function TeamsPage(): React.JSX.Element {
 
   const confirmDelete = async () => {
     // Check if user can delete teams
-    if (!isCurrentUserAdminOrManager()) {
+    if (!isUserAdminOrManager) {
       setErrorModal({
         isOpen: true,
         title: 'Access Denied',
@@ -322,7 +330,7 @@ export default function TeamsPage(): React.JSX.Element {
     }
 
     // Check if user can edit this team
-    if (!isCurrentUserAdminOrManager()) {
+    if (!isUserAdminOrManager) {
       setErrorModal({
         isOpen: true,
         title: 'Access Denied',
@@ -358,7 +366,7 @@ export default function TeamsPage(): React.JSX.Element {
   const loadAllUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await usersApi.listUsers();
+      const response = await usersApi.listUsers({ exclude_alumni: false });
       setAllUsers(response.users || []);
     } catch (error) {
       console.error('Error loading users:', error);
@@ -566,7 +574,7 @@ export default function TeamsPage(): React.JSX.Element {
       tasks={[]} 
       title="Teams"
       headerAction={
-        isCurrentUserAdminOrManager() ? (
+        isUserAdminOrManager ? (
         <Button
           variant="primary"
           size="md"
@@ -611,7 +619,7 @@ export default function TeamsPage(): React.JSX.Element {
             }}
           >
             {/* Three Dots Menu - Only show for admin/manager users */}
-            {isCurrentUserAdminOrManager() && (
+            {isUserAdminOrManager && (
             <div className="absolute top-3 right-3 z-50">
               <button
                 onClick={(e) => {
@@ -955,7 +963,7 @@ export default function TeamsPage(): React.JSX.Element {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {!isEditingTeam && !loadingTeamDetails && selectedTeamForDetails && isCurrentUserAdminOrManager() && (
+                {!isEditingTeam && !loadingTeamDetails && selectedTeamForDetails && isUserAdminOrManager && (
                   <button
                     onClick={() => {
                       setEditTeamData({

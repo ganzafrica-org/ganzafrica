@@ -44,6 +44,13 @@ export function KanbanBoard({
   const [loadingTask, setLoadingTask] = useState(false);
   const { toasts, removeToast, showError } = useToast();
 
+  // Track which columns are expanded (show all cards) vs collapsed (show first 10)
+  const [expandedCols, setExpandedCols] = useState<Record<Status, boolean>>({});
+
+  const toggleColumnExpand = (colId: Status) => {
+    setExpandedCols(prev => ({ ...prev, [colId]: !prev[colId] }));
+  };
+
   const grouped = useMemo(() => {
     const m: Record<Status, Task[]> = { todo: [], inprogress: [], review: [], done: [], overdue: [], backlog: [] };
     // Use a Set to track seen task IDs to prevent duplicates
@@ -205,15 +212,40 @@ export function KanbanBoard({
                 }}
               >
                 <div className="flex-1 space-y-2 sm:space-y-3">
-                  {grouped[col.id].map(t => (
-                    <TaskCard 
-                      key={t.id} 
-                      task={t} 
-                      members={members} 
-                      onClick={() => handleTaskClick(t)}
-                      isManager={isManager}
-                    />
-                  ))}
+                  {
+                    // Show only first 10 cards unless column is expanded
+                    (() => {
+                      const colTasks = grouped[col.id] || [];
+                      const isExpanded = !!expandedCols[col.id];
+                      const visible = isExpanded ? colTasks : colTasks.slice(0, 10);
+
+                      return (
+                        <>
+                          {visible.map(t => (
+                            <TaskCard
+                              key={t.id}
+                              task={t}
+                              members={members}
+                              onClick={() => handleTaskClick(t)}
+                              isManager={isManager}
+                            />
+                          ))}
+
+                          {colTasks.length > 10 && (
+                            <div className="flex justify-center mt-2">
+                              <button
+                                type="button"
+                                className="text-sm text-blue-600 hover:underline"
+                                onClick={() => toggleColumnExpand(col.id)}
+                              >
+                                {isExpanded ? 'Show less' : `View more (${colTasks.length - 10})`}
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()
+                  }
                 </div>
               </div>
             </div>

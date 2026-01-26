@@ -1,0 +1,2 @@
+# Make sure all text files use LF
+* text=auto eol=lf
