@@ -366,7 +366,7 @@ export default function TeamsPage(): React.JSX.Element {
   const loadAllUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await usersApi.listUsers({ exclude_alumni: false });
+      const response = await usersApi.listUsers({ exclude_alumni: true });
       setAllUsers(response.users || []);
     } catch (error) {
       console.error('Error loading users:', error);
