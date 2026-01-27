@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: "Meet GanzAfrica's alumni network: successful graduates of our agriculture fellowship program making an impact in sustainable farming, land management, and food systems across Africa.",
     keywords: [
         "GanzAfrica alumni",
-        "fellowship alumni",
+        "alumni network",
         "agriculture program graduates",
         "GanzAfrica success stories",
         "fellowship alumni network",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         type: "website",
         url: `${baseUrl}/programs/alumni`,
         images: [{
-            url: `${baseUrl}/images/og/alumni.jpg`,
+            url: `${baseUrl}/images/hero-background.png`,
             width: 1200,
             height: 630,
             alt: "GanzAfrica Alumni"
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
         title: "Alumni | GanzAfrica",
         description: "Meet GanzAfrica's alumni network and discover success stories from our fellowship program.",
         creator: "@GanzAfrica",
-        images: [`${baseUrl}/images/og/alumni.jpg`]
+        images: [`${baseUrl}/images/hero-background.png`]
     },
     robots: {
         index: true,
@@ -53,9 +53,7 @@ export const metadata: Metadata = {
     }
 };
 
-type Params = Promise<{ locale: string }>;
-
-export default async function AlumniPage({ params }: { params: Params }) {
+export default async function AlumniPage() {
 
   return <AlumniPageContent />;
 }

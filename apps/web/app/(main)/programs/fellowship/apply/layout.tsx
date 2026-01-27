@@ -9,7 +9,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
-        const response = await apiClient.get(`/fellowships/${params.id}`);
+        const response = await apiClient.get(`/fellowships/apply`);
         const fellowship = response.data?.fellowship || response.data;
         const title = fellowship.title || fellowship.name || "Fellowship";
 
@@ -28,9 +28,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 description: `Application open for ${title} fellowship. Join GanzAfrica's agriculture training program.`,
                 siteName: "GanzAfrica",
                 type: "website",
-                url: `${baseUrl}/programs/fellowship/${params.id}/apply`,
+                url: `${baseUrl}/programs/fellowship/apply`,
                 images: [{
-                    url: `${baseUrl}/images/og/fellowship-apply.jpg`,
+                    url: `${baseUrl}/images/GroupMico.jpeg`,
                     width: 1200,
                     height: 630,
                     alt: `Apply to ${title}`
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 title: `Apply to ${title} | GanzAfrica`,
                 description: `Applications open for ${title} fellowship.`,
                 creator: "@GanzAfrica",
-                images: [`${baseUrl}/images/og/fellowship-apply.jpg`]
+                images: [`${baseUrl}/images/GroupMico.jpeg`]
             },
             robots: {
                 index: true,
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 },
             },
             alternates: {
-                canonical: `${baseUrl}/programs/fellowship/${params.id}/apply`
+                canonical: `${baseUrl}/programs/fellowship/apply`
             }
         };
     } catch (error) {
@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             title: "Apply to Fellowship | GanzAfrica",
             description: "Apply for GanzAfrica's fellowship program.",
             alternates: {
-                canonical: `${baseUrl}/programs/fellowship/${params.id}/apply`
+                canonical: `${baseUrl}/programs/fellowship/apply`
             }
         };
     }

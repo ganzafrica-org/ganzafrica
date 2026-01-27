@@ -23,7 +23,7 @@ export const metadata: Metadata = {
         type: "website",
         url: `${baseUrl}/about/our-story`,
         images: [{
-            url: `${baseUrl}/images/og/our-story.jpg`,
+            url: `${baseUrl}/images/SHIR5142-Enhanced-NR.jpg`,
             width: 1200,
             height: 630,
             alt: "GanzAfrica origin story"
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
         title: "GanzAfrica's Story: From Vision to Impact",
         description: "How GanzAfrica built a fellowship transforming African youth into agriculture and sustainability leaders through training and mentorship.",
         creator: "@GanzAfrica",
-        images: [`${baseUrl}/images/og/our-story.jpg`]
+        images: [`${baseUrl}/images/SHIR5142-Enhanced-NR.jpg`]
     },
     robots: {
         index: true,

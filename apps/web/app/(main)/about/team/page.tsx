@@ -3,7 +3,10 @@ import Header from "@/components/layout/header";
 import TeamPageContent from "@/components/TeamPageContent";
 import { Metadata } from "next";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org";
+
 export const metadata: Metadata = {
+    metadataBase: new URL(baseUrl),
     title: "Our Team | GanzAfrica - Agriculture Experts",
     description: "Meet GanzAfrica's expert team driving African youth empowerment through agriculture training, sustainable land management, and data-driven solutions.",
     keywords: [
@@ -18,23 +21,22 @@ export const metadata: Metadata = {
     openGraph: {
         title: "Meet GanzAfrica's Leadership Team",
         description: "Our experts in agriculture, sustainability, and youth training are transforming Africa's agri-food future through GanzAfrica's fellowship programs.",
-        siteName: "web.ganzafrica.org",
+        siteName: "GanzAfrica",
         type: "website",
-        url: "https://web.ganzafrica.org/about/team"
+        url: "https://web.ganzafrica.org/about/team",
+        images: [{
+            url: `${baseUrl}/images/maize.avif`,
+            width: 1200,
+            height: 630,
+            alt: "GanzAfrica team"
+        }]
     },
     twitter: {
         card: "summary_large_image",
         title: "GanzAfrica Team: Leading Africa's Agri-Revolution",
         description: "Discover the experts behind GanzAfrica's mission to train African youth for sustainable agriculture and land management careers.",
         creator: "@GanzAfrica",
-        images: [
-            {
-                url: "https://ganzafrica.org/og-team.jpg",
-                width: 1200,
-                height: 630,
-                alt: "GanzAfrica leadership team"
-            }
-        ]
+        images: [`${baseUrl}/images/maize.avif`]
     },
     robots: {
         index: true,

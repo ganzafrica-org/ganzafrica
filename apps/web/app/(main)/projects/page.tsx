@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         type: "website",
         url: `${baseUrl}/projects`,
         images: [{
-            url: `${baseUrl}/images/og/projects.jpg`,
+            url: `${baseUrl}/images/maize.avif`,
             width: 1200,
             height: 630,
             alt: "GanzAfrica Projects"
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
         title: "Projects | GanzAfrica",
         description: "Explore GanzAfrica's impactful agriculture and sustainability projects across Africa.",
         creator: "@GanzAfrica",
-        images: [`${baseUrl}/images/og/projects.jpg`]
+        images: [`${baseUrl}/images/maize.avif`]
     },
     robots: {
         index: true,

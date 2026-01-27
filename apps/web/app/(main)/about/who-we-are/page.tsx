@@ -39,7 +39,7 @@ export const metadata: Metadata = {
         type: "website",
         url: `${baseUrl}/about/who-we-are`,
         images: [{
-            url: `${baseUrl}/images/og/who-we-are.jpg`,
+            url: `${baseUrl}/images/SHIR5142-Enhanced-NR.jpg`,
             width: 1200,
             height: 630,
             alt: "GanzAfrica - Who We Are"
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
         title: "Who We Are | GanzAfrica",
         description: "Empowering African youth through agriculture training, sustainable land management, and data literacy programs.",
         creator: "@GanzAfrica",
-        images: [`${baseUrl}/images/og/who-we-are.jpg`]
+        images: [`${baseUrl}/images/SHIR5142-Enhanced-NR.jpg`]
     },
     robots: {
         index: true,

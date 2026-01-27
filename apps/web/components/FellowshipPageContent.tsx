@@ -335,7 +335,7 @@ export default function FellowshipPageContent() {
                             transition={{ duration: 0.8, delay: 0.4 }}
                             className="flex items-center justify-center gap-4"
                         >
-                            <Link href="/what-we-do/fellowship/how-to-apply" aria-label="Know more on how to apply">
+                            <Link href="/programs/fellowship/how-to-apply" aria-label="Know more on how to apply">
                                 <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
                                     <TranslatableText>How to Apply</TranslatableText>
                                 </Button>

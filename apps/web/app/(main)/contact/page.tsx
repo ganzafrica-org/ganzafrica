@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         type: "website",
         url: `${baseUrl}/contact`,
         images: [{
-            url: `${baseUrl}/images/og/contact.jpg`,
+            url: `${baseUrl}/images/_BAB8852.jpg`,
             width: 1200,
             height: 630,
             alt: "Contact GanzAfrica"
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
         title: "Contact Us | GanzAfrica",
         description: "Reach out about agriculture training, fellowships, and sustainable development programs.",
         creator: "@GanzAfrica",
-        images: [`${baseUrl}/images/og/contact.jpg`]
+        images: [`${baseUrl}/images/_BAB8852.jpg`]
     },
     robots: {
         index: true,

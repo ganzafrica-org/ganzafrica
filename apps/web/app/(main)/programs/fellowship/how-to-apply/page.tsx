@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         type: "website",
         url: `${baseUrl}/programs/fellowship/how-to-apply`,
         images: [{
-            url: `${baseUrl}/images/og/how-to-apply.jpg`,
+            url: `${baseUrl}/images/Welcoming.jpg`,
             width: 1200,
             height: 630,
             alt: "GanzAfrica How to Apply"
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
         title: "How to Apply | GanzAfrica Fellowship",
         description: "Step-by-step guide to applying for GanzAfrica's fellowship program.",
         creator: "@GanzAfrica",
-        images: [`${baseUrl}/images/og/how-to-apply.jpg`]
+        images: [`${baseUrl}/images/Welcoming.jpg`]
     },
     robots: {
         index: true,
@@ -52,11 +52,7 @@ export const metadata: Metadata = {
         canonical: `${baseUrl}/programs/fellowship/how-to-apply`
     }
 };
-
-type Params = { locale: string };
-
-export default async function HowToApplyPage({ params }: { params: Params }) {
-  const { locale } = params;
+export default async function HowToApplyPage() {
 
   return (
     <>

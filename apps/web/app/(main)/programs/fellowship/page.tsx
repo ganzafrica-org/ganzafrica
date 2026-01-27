@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         type: "website",
         url: `${baseUrl}/programs/fellowship`,
         images: [{
-            url: `${baseUrl}/images/og/fellowship.jpg`,
+            url: `${baseUrl}/images/GroupMico.jpeg`,
             width: 1200,
             height: 630,
             alt: "GanzAfrica Fellowship Program"
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
         title: "Fellowship Program | GanzAfrica",
         description: "Join GanzAfrica's agriculture fellowship program for comprehensive training and mentorship.",
         creator: "@GanzAfrica",
-        images: [`${baseUrl}/images/og/fellowship.jpg`]
+        images: [`${baseUrl}/images/GroupMico.jpeg`]
     },
     robots: {
         index: true,
