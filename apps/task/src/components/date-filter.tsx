@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { CalendarDays, Filter, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface DateFilterProps {
   dateFilter: string;
@@ -52,7 +53,7 @@ export function DateFilter({
         setDateFilter('custom');
         setShowCustomDateModal(false); // Close the modal
       } else {
-        alert('Start date cannot be after end date');
+        toast.error('Start date cannot be after end date');
       }
     }
   };

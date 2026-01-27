@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/button';
+import { toast } from 'sonner';
 
 interface ImageUploadProps {
   onImageChange: (file: File | null) => void;
@@ -28,13 +29,13 @@ export function ImageUpload({
   const validateFile = (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file (JPG, PNG, or GIF)');
+      toast.error('Please upload an image file (JPG, PNG, or GIF)');
       return false;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      toast.error('Image size should be less than 5MB');
       return false;
     }
 

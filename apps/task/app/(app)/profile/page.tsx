@@ -8,6 +8,7 @@ import { Button } from "@/components/button";
 import { ImageUpload } from "@/components/image-upload";
 import { profileApi } from "@/lib/api-client";
 import { useProfile } from "@/contexts/profile-context";
+import { toast } from "sonner";
 
 // User data interface matching API response
 interface UserData {
@@ -98,7 +99,7 @@ export default function ProfilePage(): React.JSX.Element {
       }
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
+      toast.error('Failed to upload image. Please try again.');
       return null;
     } finally {
       setIsUploadingImage(false);
@@ -155,7 +156,7 @@ export default function ProfilePage(): React.JSX.Element {
       // Update global profile context
       updateCurrentUserProfile(updatedProfile);
       
-      console.log('Profile updated successfully');
+      toast.success('Profile updated successfully');
     } catch (error: any) {
       console.error('Failed to update profile:', error);
       console.error('Error response data:', error.response?.data);
@@ -164,13 +165,13 @@ export default function ProfilePage(): React.JSX.Element {
       if (error.response?.status === 400 && error.response?.data?.details) {
         const validationErrors = error.response.data.details;
         const errorMessages = validationErrors.map((err: any) => `${err.path}: ${err.message}`).join('\n');
-        alert(`Validation Error:\n${errorMessages}`);
+        toast.error(`Validation Error: ${errorMessages}`);
       } else if (error.response?.data?.message) {
-        alert(`Error: ${error.response.data.message}`);
+        toast.error(error.response.data.message);
       } else if (error.response?.data?.error) {
-        alert(`Error: ${error.response.data.error}`);
+        toast.error(error.response.data.error);
       } else {
-        alert('Failed to update profile. Please try again.');
+        toast.error('Failed to update profile. Please try again.');
       }
     } finally {
       setSaving(false);
@@ -185,24 +186,24 @@ export default function ProfilePage(): React.JSX.Element {
 
   const handleChangePassword = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('New passwords do not match');
+      toast.error('New passwords do not match');
       return;
     }
     if (passwordData.newPassword.length < 8) {
-      alert('Password must be at least 8 characters long');
+      toast.error('Password must be at least 8 characters long');
       return;
     }
     
     console.log('Password changed successfully');
     setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
     setShowChangePassword(false);
-    alert('Password changed successfully!');
+    toast.success('Password changed successfully!');
   };
 
   const handleEnable2FA = () => {
     console.log('2FA enabled');
     setShow2FA(false);
-    alert('Two-Factor Authentication has been enabled!');
+    toast.success('Two-Factor Authentication has been enabled!');
   };
 
   const handleViewSessions = () => {
