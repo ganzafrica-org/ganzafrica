@@ -11,6 +11,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
 import { taskApi } from "@/lib/api-client";
 import { canEditTask, isCurrentUserAdminOrManager } from "@/lib/auth-utils";
+import { toast } from "sonner";
 
 export function TaskModal({
   open,
@@ -56,7 +57,6 @@ export function TaskModal({
   const [editCommentInitial, setEditCommentInitial] = useState("");
   const [editCommentId, setEditCommentId] = useState<string | null>(null);
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
@@ -825,8 +825,7 @@ export function TaskModal({
       
       // Require due date for task creation
       if (!draft.dueDate) {
-        setToast({ type: 'error', message: 'Due date is required. Please select a due date for the task.' });
-        setTimeout(() => setToast(null), 3000);
+        toast.error('Due date is required. Please select a due date for the task.');
         return;
       }
       
@@ -836,8 +835,7 @@ export function TaskModal({
         const now = new Date();
         
         if (dueDate < now) {
-          setToast({ type: 'error', message: 'Cannot create task with past due date. Please select today or a future date.' });
-          setTimeout(() => setToast(null), 3000);
+          toast.error('Cannot create task with past due date. Please select today or a future date.');
           return;
         }
       }
@@ -848,7 +846,7 @@ export function TaskModal({
         const pendingUploads = (draft.attachments || []).filter(a => !a.url || a.url.trim() === '');
         
         if (pendingUploads.length > 0) {
-          alert('Please wait for file uploads to complete before saving the task.');
+          toast.error('Please wait for file uploads to complete before saving the task.');
           return;
         }
       }
@@ -902,7 +900,7 @@ export function TaskModal({
             await taskApi.updateTask(numericId, updateData);
           }
 
-          setToast({ type: 'success', message: 'Task updated successfully' });
+          toast.success('Task updated successfully');
           onChange(draft);
           onOpenChange(false);
         } else {
@@ -941,8 +939,7 @@ export function TaskModal({
           errorMessage = logger.getErrorMessage(error) || errorMessage;
         }
 
-        setToast({ type: 'error', message: errorMessage });
-        setTimeout(() => setToast(null), 2500);
+        toast.error(errorMessage);
       } finally {
         setIsSaving(false);
       }
@@ -1101,7 +1098,7 @@ export function TaskModal({
 
   const handleAddLink = () => {
     if (!linkUrl.trim()) {
-      setToast({ type: 'error', message: 'Please enter a valid URL' });
+      toast.error('Please enter a valid URL');
       return;
     }
 
@@ -1114,7 +1111,7 @@ export function TaskModal({
     try {
       new URL(validUrl); // Validate URL format
     } catch (error) {
-      setToast({ type: 'error', message: 'Please enter a valid URL' });
+      toast.error('Please enter a valid URL');
       return;
     }
 
@@ -1138,7 +1135,7 @@ export function TaskModal({
     // Clear input and hide
     setLinkUrl("");
     setShowLinkInput(false);
-    setToast({ type: 'success', message: 'Link added successfully' });
+    toast.success('Link added successfully');
 
     // If task exists, save to database
     if (draft?.id && isValidTaskId(draft.id)) {
@@ -1199,7 +1196,7 @@ export function TaskModal({
             uploadedAt: new Date().toISOString(),
           });
         } else {
-          alert(`Failed to upload ${file.name}. Response: ${JSON.stringify(response.data)}`);
+          toast.error(`Failed to upload ${file.name}${response.data?.message ? `. ${response.data.message}` : ''}`);
         }
       }
 
@@ -1213,6 +1210,10 @@ export function TaskModal({
       // Update local state with only attachments that have URLs
       update({ attachments: attachmentsWithUrls });
 
+      if (uploadedFiles.length > 0) {
+        toast.success(uploadedFiles.length === 1 ? 'File uploaded successfully' : `${uploadedFiles.length} files uploaded successfully`);
+      }
+
       // If task exists, also save to database immediately
       if (draft.id) {
         const { tasksApi } = await import('@/lib/api/tasks');
@@ -1225,8 +1226,7 @@ export function TaskModal({
         
         // Validate task ID before updating
         if (!isValidTaskId(draft.id)) {
-          setToast({ type: 'error', message: 'Please save the task before uploading attachments' });
-          setTimeout(() => setToast(null), 3000);
+          toast.error('Please save the task before uploading attachments');
           return;
         }
         const numericId = parseInt(draft.id);
@@ -1262,8 +1262,9 @@ export function TaskModal({
         } catch (error) {
         }
       }
-    } catch (error) {
-      alert('Failed to upload files. Please try again. Check console for details.');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.response?.data?.error || 'Failed to upload files. Please try again.';
+      toast.error(msg);
     }
     
     // Reset file input
@@ -1281,12 +1282,6 @@ export function TaskModal({
         className="bg-white rounded-none sm:rounded-xl w-full h-full sm:h-auto sm:w-full sm:max-w-4xl sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" 
         onClick={e => e.stopPropagation()}
       >
-        {/* Inline toast */}
-        {toast && (
-          <div className="absolute top-2 right-2 sm:top-4 sm:right-4 px-3 py-2 text-xs sm:text-sm rounded-md shadow z-10" style={{ backgroundColor: toast.type === 'success' ? '#DCFCE7' : '#FEE2E2', color: toast.type === 'success' ? '#065F46' : '#991B1B' }}>
-            {toast.message}
-          </div>
-        )}
         {/* Modal Header */}
         <div 
           className="p-4 sm:p-6 flex items-center justify-between"
@@ -1684,7 +1679,7 @@ export function TaskModal({
                                   window.open(fullUrl, '_blank');
                                 }
                               } else {
-                                alert('URL not available. This attachment may not have been uploaded yet.');
+                                toast.error('URL not available. This attachment may not have been uploaded yet.');
                               }
                             }}
                           >
@@ -2068,13 +2063,13 @@ export function TaskModal({
           
           // Validate task and comment IDs
           if (!isValidTaskId(draft.id as string)) {
-            setToast({ type: 'error', message: 'Invalid task ID' });
+            toast.error('Invalid task ID');
             return;
           }
           const taskNumericId = parseInt(draft.id as string);
           const commentNumericId = parseInt(editCommentId as string);
           if (isNaN(commentNumericId) || commentNumericId <= 0) {
-            setToast({ type: 'error', message: 'Invalid task or comment ID' });
+            toast.error('Invalid task or comment ID');
             return;
           }
           
@@ -2089,14 +2084,13 @@ export function TaskModal({
               createdAt: c.created_at,
             }));
             update({ comments: updated });
-            setToast({ type: 'success', message: 'Comment updated' });
+            toast.success('Comment updated');
           } catch (e) {
-            setToast({ type: 'error', message: 'Failed to update comment' });
+            toast.error('Failed to update comment');
           } finally {
             setShowEditCommentDialog(false);
             setEditCommentId(null);
             setEditCommentInitial("");
-            setTimeout(() => setToast(null), 2500);
           }
         }}
         title="Edit Comment"
@@ -2115,25 +2109,24 @@ export function TaskModal({
           
           // Validate task and comment IDs
           if (!isValidTaskId(draft.id as string)) {
-            setToast({ type: 'error', message: 'Invalid task ID' });
+            toast.error('Invalid task ID');
             return;
           }
           const taskNumericId = parseInt(draft.id as string);
           const commentNumericId = parseInt(deleteCommentId as string);
           if (isNaN(commentNumericId) || commentNumericId <= 0) {
-            setToast({ type: 'error', message: 'Invalid task or comment ID' });
+            toast.error('Invalid task or comment ID');
             return;
           }
           
           try {
             await taskApi.deleteTaskComment(taskNumericId, commentNumericId);
             update({ comments: (draft.comments || []).filter(c => c.id !== deleteCommentId) });
-            setToast({ type: 'success', message: 'Comment deleted' });
+            toast.success('Comment deleted');
           } catch (e) {
-            setToast({ type: 'error', message: 'Failed to delete comment' });
+            toast.error('Failed to delete comment');
           } finally {
             setDeleteCommentId(null);
-            setTimeout(() => setToast(null), 2500);
           }
         }}
         title="Delete Comment"
@@ -2151,7 +2144,7 @@ export function TaskModal({
           
           // Validate task ID
           if (!isValidTaskId(draft.id)) {
-            setToast({ type: 'error', message: 'Invalid task ID' });
+            toast.error('Invalid task ID');
             return;
           }
           const numericId = parseInt(draft.id);
@@ -2160,12 +2153,11 @@ export function TaskModal({
             await taskApi.deleteTask(numericId);
             onDelete(draft.id);
             onOpenChange(false);
-            setToast({ type: 'success', message: 'Task deleted successfully' });
+            toast.success('Task deleted successfully');
           } catch (error) {
-            setToast({ type: 'error', message: 'Failed to delete task' });
+            toast.error('Failed to delete task');
           } finally {
             setShowDeleteConfirm(false);
-            setTimeout(() => setToast(null), 2500);
           }
         }}
         title="Delete Task"

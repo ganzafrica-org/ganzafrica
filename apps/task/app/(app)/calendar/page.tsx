@@ -457,7 +457,7 @@ export default function CalendarPage(): React.JSX.Element {
       const message = errorMessage 
         ? `Failed to connect Google Calendar: ${decodeURIComponent(errorMessage)}`
         : 'Failed to connect Google Calendar. Please try again.';
-      alert(message);
+      toast.error(message);
       // Google Calendar connection error
       // Remove query parameter from URL
       window.history.replaceState({}, '', window.location.pathname);
