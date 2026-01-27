@@ -362,11 +362,12 @@ export default function TeamsPage(): React.JSX.Element {
     }
   };
 
-  // Load all users for member selection
+  // Load all users for member selection (exclude alumni, include all active users)
   const loadAllUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await usersApi.listUsers({ exclude_alumni: true });
+      // Fetch a large page of active, non-alumni users so all potential members are available
+      const response = await usersApi.listUsers({ limit: 1000, is_active: true, exclude_alumni: true });
       setAllUsers(response.users || []);
     } catch (error) {
       console.error('Error loading users:', error);
