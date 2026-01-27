@@ -16,7 +16,7 @@ import VideoPlayer from "@/components/VideoPlayer";
 import { TranslatableText } from "@/components/translate/TranslatableText";
 
 
-export default function OurStoryContent({ }) {
+    export default function OurStoryContent({ }) {
     const contentClass = "flex-1 overflow-y-auto pr-2";
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isMuted, setIsMuted] = useState(true);

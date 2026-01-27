@@ -844,10 +844,10 @@ export default function HomeHero({
             >
                 <div className="text-center text-white mt-20">
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
-                        <TranslatableText>"Sustainable Solutions for Africa's Future"</TranslatableText>
+                        <TranslatableText>Sustainable Solutions for Africa's Future</TranslatableText>
                     </h1>
                     <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-                        <TranslatableText>"Empowering youth to address agri-food systems challenges in Africa"</TranslatableText>
+                        <TranslatableText>Empowering youth to address agri-food systems challenges in Africa</TranslatableText>
                     </p>
                 </div>
             </div>
@@ -882,32 +882,32 @@ export default function HomeHero({
                 <div className="container mx-auto px-4 text-center mt-10 sm:mt-20 md:mt-20 hidden md:block">
                     <h1 className="text-2xl lg:text-4xl font-bold mb-4 sm:mb-6">
                         <TranslatableText as="span" className="text-primary-green">
-                            "A PROSPEROUS AND"
+                            A PROSPEROUS AND
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-green">
-                            "SUSTAINABLE"
+                            SUSTAINABLE
                         </TranslatableText>{" "}
                         <TranslatableText as="span" className="text-primary-orange">
-                            "FUTURE FOR"
+                            FUTURE FOR
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-orange">
-                            "AFRICA"
+                            AFRICA
                         </TranslatableText>
                     </h1>
 
                     <TranslatableText
                         as="p"
                         className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
-                    >"Empowering youth through sustainable land management, agriculture, and environmental initiatives"</TranslatableText>
+                    >Empowering youth through sustainable land management, agriculture, and environmental initiatives</TranslatableText>
 
                     <Link href={`/about/who-we-are`} prefetch={true}>
                         <Button
                             size="lg"
                             className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
                         >
-                            <TranslatableText>"Discover More"</TranslatableText>
+                            <TranslatableText>Discover More</TranslatableText>
                         </Button>
                     </Link>
                 </div>
@@ -915,32 +915,32 @@ export default function HomeHero({
                 <div className="container mx-auto px-4 text-center block md:hidden">
                     <h1 className="text-5xl lg:text-4xl font-bold mb-4 sm:mb-6">
                         <TranslatableText as="span" className="text-primary-green">
-                            "A PROSPEROUS AND"
+                            A PROSPEROUS AND
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-green">
-                            "SUSTAINABLE"
+                            SUSTAINABLE
                         </TranslatableText>{" "}
                         <TranslatableText as="span" className="text-primary-orange">
-                            "FUTURE FOR"
+                            FUTURE FOR
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-orange">
-                            "AFRICA"
+                            AFRICA
                         </TranslatableText>
                     </h1>
 
                     <TranslatableText
                         as="p"
                         className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
-                    >"Empowering youth through sustainable land management, agriculture, and environmental initiatives"</TranslatableText>
+                    >Empowering youth through sustainable land management, agriculture, and environmental initiatives</TranslatableText>
 
                     <Link href={`/about/who-we-are`} prefetch={true}>
                         <Button
                             size="lg"
                             className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
                         >
-                            <TranslatableText>"Discover More"</TranslatableText>
+                            <TranslatableText>Discover More</TranslatableText>
                         </Button>
                     </Link>
                 </div>

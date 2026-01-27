@@ -200,7 +200,7 @@ interface NewsItem {
   };
 }
 
-const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
+const NewsCard = ({ item }: { item: NewsItem }) => {
   const slug = generateSlug(item.title);
 
   // Format date - using publish_date field
@@ -262,7 +262,7 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
 
   return (
       <Link href={`/newsroom/${slug}`} className="block group">
-        <div className="relative bg-white rounded-[24px] overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl border border-gray-200">
+        <div className="relative bg-white rounded-md overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl border border-gray-200">
           <div className="relative aspect-[16/10]">
             {/* Image Container - Modified to push images down for better face visibility */}
             <div className="w-full h-full overflow-hidden">
@@ -319,9 +319,8 @@ const NewsCard = ({ item, locale }: { item: NewsItem; locale: string }) => {
 
 // Updated component - instead of receiving props directly, use hooks to get necessary data
 const NewsroomPage = () => {
-  // Use useParams to get the locale from the URL
-  const params = useParams<{ locale: string }>();
-  const locale = params.locale as string;
+  // Use useParams from the URL
+  const params = useParams();
 
   // Could add dictionary loading here if needed
   // const dict = {} // Replace with your dictionary loading logic
@@ -499,7 +498,7 @@ const NewsroomPage = () => {
           ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredNews.map((item) => (
-                    <NewsCard key={item.id} item={item} locale={locale} />
+                    <NewsCard key={item.id} item={item} />
                 ))}
               </div>
           )}

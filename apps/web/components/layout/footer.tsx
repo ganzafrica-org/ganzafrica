@@ -101,12 +101,12 @@ export default function Footer({}: {
                         <ul className="space-y-0">
                             <li>
                                 <Link href={`/faqs`} className="hover:text-secondary-yellow transition-colors text-sm">
-                                    <TranslatableText>"FAQs"</TranslatableText>
+                                    <TranslatableText>FAQs</TranslatableText>
                                 </Link>
                             </li>
                             <li>
                                 <Link href={`/contact`} className="hover:text-secondary-yellow transition-colors text-sm">
-                                    <TranslatableText>"Contact Us"</TranslatableText>
+                                    <TranslatableText>Contact Us</TranslatableText>
                                 </Link>
                             </li>
                         </ul>
@@ -114,16 +114,16 @@ export default function Footer({}: {
 
                     {/* Programs */}
                     <div>
-                        <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base"><TranslatableText>"Programs"</TranslatableText></h3>
+                        <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base"><TranslatableText>Programs</TranslatableText></h3>
                         <ul className="space-y-0">
                             <li>
                                 <Link href={`/programs/fellowship`} className="hover:text-secondary-yellow transition-colors text-sm">
-                                    <TranslatableText>"Fellowship"</TranslatableText>
+                                    <TranslatableText>Fellowship</TranslatableText>
                                 </Link>
                             </li>
                             <li>
                                 <Link href={`/programs/alumni`} className="hover:text-secondary-yellow transition-colors text-sm">
-                                    <TranslatableText>"Alumni"</TranslatableText>
+                                    <TranslatableText>Alumni</TranslatableText>
                                 </Link>
                             </li>
                         </ul>
@@ -135,7 +135,7 @@ export default function Footer({}: {
                         <ul className="space-y-0">
                             <li>
                                 <Link href={`/our_approach/food_systems`} className="hover:text-secondary-yellow transition-colors text-sm">
-                                    <TranslatableText>"Food Systems"</TranslatableText>
+                                    <TranslatableText>Food Systems</TranslatableText>
                                 </Link>
                             </li>
                         </ul>
@@ -143,7 +143,7 @@ export default function Footer({}: {
 
                     {/* Explore */}
                     <div>
-                        <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base"><TranslatableText>"Explore"</TranslatableText></h3>
+                        <h3 className="font-semibold text-secondary-yellow mb-0.5 text-base"><TranslatableText>Explore</TranslatableText></h3>
                         <ul className="space-y-0">
                             <li>
                                 <a
@@ -155,7 +155,7 @@ export default function Footer({}: {
                             </li>
                             <li>
                                 <Link href={`/opportunities`} className="hover:text-secondary-yellow transition-colors text-sm">
-                                    <TranslatableText>"Opportunities"</TranslatableText>
+                                    <TranslatableText>Opportunities</TranslatableText>
                                 </Link>
                             </li>
                             <li>
