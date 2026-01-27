@@ -121,20 +121,23 @@ interface MulterFile {
 interface MulterRequest extends Express.Request {}
 
 const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterCallback): void => {
+  // NOTE: If production shows "Only images, videos, PDF, DOC, and DOCX" the deployed
+  // backend is outdated. Run: cd backend && npm run build && restart the server.
   console.log('File upload attempt:', {
     originalname: file.originalname,
     mimetype: file.mimetype,
     allowedTypes: allowedFileTypes.length
   });
 
-  // Allow if mimetype is in allowed list
-  if (allowedFileTypes.includes(file.mimetype)) {
+  // Allow if mimetype is in allowed list (handle undefined/empty from some proxies)
+  const mimetype = file.mimetype || '';
+  if (mimetype && allowedFileTypes.includes(mimetype)) {
     cb(null, true);
     return;
   }
 
   // Special handling for generic binary types - check file extension
-  if (file.mimetype === 'application/octet-stream' || file.mimetype === 'application/x-binary') {
+  if (mimetype === 'application/octet-stream' || mimetype === 'application/x-binary') {
     const extension = file.originalname.toLowerCase().split('.').pop();
     const allowedExtensions = [
       'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'rtf',
@@ -159,13 +162,13 @@ const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterC
   ];
 
   if (extension && commonExtensions.includes(extension)) {
-    console.log('Allowed file based on extension:', extension, 'despite mimetype:', file.mimetype);
+    console.log('Allowed file based on extension:', extension, 'despite mimetype:', mimetype);
     cb(null, true);
     return;
   }
 
-  console.log('Rejected file type:', file.mimetype, 'for file:', file.originalname);
-  cb(new Error("Invalid file type. Only images, videos, documents, spreadsheets, presentations, archives, and common file formats are allowed."));
+  console.log('Rejected file type:', mimetype, 'for file:', file.originalname);
+  cb(new Error("Invalid file type. Allowed: images, videos, PDF, DOC, DOCX, XLS, XLSX, and other common formats."));
 };
 
 const upload = multer({ 
