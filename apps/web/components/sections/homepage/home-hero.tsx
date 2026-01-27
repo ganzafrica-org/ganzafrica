@@ -50,7 +50,7 @@ interface HomeHeroProps {
 const resolveHref = (path: string) => (path.startsWith("/") ? path : `/${path}`);
 
 // Polyfill for requestIdleCallback
-const requestIdleCallback = (typeof window !== 'undefined' && window.requestIdleCallback) || 
+const requestIdleCallback = (typeof window !== 'undefined' && window.requestIdleCallback) ||
     ((cb: IdleRequestCallback) => {
         const start = Date.now();
         return setTimeout(() => {

@@ -51,10 +51,10 @@ export const metadata: Metadata = {
 
 export default async function OurApproachPage() {
 
-  return (
-    <>
-      <Header />
-      <OurApproachPageContent />
-    </>
-  );
+    return (
+        <>
+            <Header />
+            <OurApproachPageContent />
+        </>
+    );
 }

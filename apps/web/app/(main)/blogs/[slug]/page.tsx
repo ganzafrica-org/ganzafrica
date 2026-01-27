@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
         // Try to fetch blog post data from API
         const response = await apiClient.get(`/blogs/${params.slug}`);
         const post = response.data?.blog || response.data?.post || response.data;
-        
+
         const title = post.title || `Blog Post - ${params.slug}`;
         const description = post.description || post.excerpt || post.content?.substring(0, 160) || "Read our latest insights on sustainable agriculture and land management.";
 

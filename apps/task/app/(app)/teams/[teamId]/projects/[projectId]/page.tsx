@@ -277,7 +277,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
   const loadAllUsers = async () => {
     try {
       setLoadingUsers(true);
-      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true });
+      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true, exclude_alumni: false });
       setAllUsers(usersResponse.users || []);
     } catch (error: any) {
       console.error('Error loading users:', error);
@@ -489,10 +489,30 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ teamId
       loadTasks(); // Reload tasks
     } catch (error: any) {
       console.error('Error updating task:', error);
+      
+      let errorMessage = 'Failed to update task. Please try again.';
+      let errorTitle = 'Error Updating Task';
+      
+      if (error.response?.status === 403) {
+        const backendMessage = error.response?.data?.message;
+        if (backendMessage?.includes('due date')) {
+          errorMessage = 'You cannot update the date of your task. Only managers can do that.';
+          errorTitle = 'Permission Denied';
+        } else if (backendMessage?.includes('title')) {
+          errorMessage = 'You cannot update the title of this task. Only managers and the task creator can do that.';
+          errorTitle = 'Permission Denied';
+        } else {
+          errorMessage = backendMessage || 'You do not have permission to update this task.';
+          errorTitle = 'Permission Denied';
+        }
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       setErrorModal({
         isOpen: true,
-        title: 'Error Updating Task',
-        message: error.response?.data?.message || 'Failed to update task. Please try again.',
+        title: errorTitle,
+        message: errorMessage,
       });
     }
   };
