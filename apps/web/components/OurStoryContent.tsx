@@ -68,6 +68,7 @@ import { TranslatableText } from "@/components/translate/TranslatableText";
                         className="object-cover object-center"
                         style={{ objectPosition: "center 30%" }}
                         priority
+                        fetchPriority="high"
                     />
                 </div>
 

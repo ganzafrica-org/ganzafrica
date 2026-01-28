@@ -218,7 +218,9 @@ export default function FlagshipProgramsSection() {
                                         })
                                     }
                                 >
-                                    <TranslatableText>Learn More</TranslatableText>
+                                    <TranslatableText>
+                                        {`Learn more about ${program.title}`}
+                                    </TranslatableText>
                                 </Link>
                             </div>
                         </article>

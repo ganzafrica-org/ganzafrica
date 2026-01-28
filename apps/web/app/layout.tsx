@@ -2,6 +2,7 @@ import { GoogleAnalytics } from '@next/third-parties/google'
 import { Rubik } from "next/font/google";
 import ClientLayout from "@/components/layout/client-layout";
 import { GoogleAnalyticsComponent } from "@/components/analytics/google-analytics";
+import Script from "next/script";
 import React, { Suspense } from "react";
 import "@workspace/ui/globals.css";
 import {Metadata} from "next";
@@ -83,6 +84,12 @@ export default async function RootLayout(props: {
       className={`${fontRubik.variable} light`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="preconnect" href="https://www.google-analytics.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className="min-h-screen font-sans antialiased">
         {process.env.NEXT_PUBLIC_GA_ID && (
           <Suspense fallback={null}>

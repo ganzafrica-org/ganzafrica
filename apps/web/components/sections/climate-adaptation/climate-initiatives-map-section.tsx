@@ -180,14 +180,27 @@ const ClimateInitiavesMapSection = () => {
     useEffect(() => {
         const updateMapDimensions = () => {
             if (mapRef.current) {
+                // Batch DOM reads to avoid forced reflow
+                requestAnimationFrame(() => {
+                    if (mapRef.current) {
+                        setMapDimensions({
+                            width: mapRef.current.offsetWidth,
+                            height: mapRef.current.offsetHeight
+                        });
+                    }
+                });
+            }
+        };
+
+        // Initial read - use requestAnimationFrame to batch with other DOM reads
+        requestAnimationFrame(() => {
+            if (mapRef.current) {
                 setMapDimensions({
                     width: mapRef.current.offsetWidth,
                     height: mapRef.current.offsetHeight
                 });
             }
-        };
-
-        updateMapDimensions();
+        });
         window.addEventListener('resize', updateMapDimensions);
 
         return () => {
