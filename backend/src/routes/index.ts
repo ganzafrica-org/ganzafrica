@@ -26,6 +26,7 @@ import achievementsRoutes from "./achievements.routes";
 import resourcesRoutes from "./resources.routes";
 import eventsRoutes from "./events.routes";
 import googleCalendarRoutes from "./google-calendar.routes";
+import payrollRoutes from "./payroll";
 
 const router: Router = Router();
 
@@ -57,5 +58,6 @@ router.use("/achievements", achievementsRoutes);
 router.use("/resources", resourcesRoutes);
 router.use("/events", eventsRoutes);
 router.use("/google-calendar", googleCalendarRoutes);
+router.use("/payroll", payrollRoutes);
 
 export default router;
