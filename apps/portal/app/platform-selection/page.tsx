@@ -25,6 +25,7 @@ import {
   User,
   Globe,
   GraduationCap,
+  Briefcase,
 } from "lucide-react";
 import { toast } from "sonner";
 import apiClient from "@/lib/api-client";
@@ -35,6 +36,16 @@ function isAlumni(user: any): boolean {
   if (!user) return false;
   const roleName = user.role_name?.toLowerCase() || "";
   return roleName.includes("alumni");
+}
+
+// Helper to check if user is authorized for internal app
+function isInternalAuthorized(user: any): boolean {
+  if (!user || !user.email) return false;
+  const authorizedEmails =
+    process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(",").map((e) =>
+      e.trim(),
+    ) || [];
+  return authorizedEmails.includes(user.email);
 }
 
 function PlatformSelectionContent(): React.JSX.Element {
@@ -192,7 +203,7 @@ function PlatformSelectionContent(): React.JSX.Element {
   };
 
   const handlePlatformSelect = (
-    platform: "portal" | "task" | "website" | "alumni",
+    platform: "portal" | "task" | "website" | "alumni" | "internal",
   ) => {
     if (platform === "portal") {
       // Check if user is admin or manager before allowing portal access
@@ -264,6 +275,45 @@ function PlatformSelectionContent(): React.JSX.Element {
       setTimeout(() => {
         window.location.href = websiteUrl;
       }, 300);
+    } else if (platform === "internal") {
+      // Pass authentication data to internal app
+      const token = localStorage.getItem("accessToken");
+      const userData = localStorage.getItem("user");
+
+      if (!token) {
+        toast.error("Authentication token not found. Please log in again.");
+        router.push("/login");
+        return;
+      }
+
+      // Check if user is authorized for internal app
+      if (!isInternalAuthorized(user)) {
+        toast.error("You are not authorized to access the Internal Platform.");
+        return;
+      }
+
+      // Use environment variable for internal app URL, fallback to localhost for development
+      const internalAppUrl =
+        process.env.NEXT_PUBLIC_INTERNAL_URL || "http://localhost:3005";
+
+      try {
+        const internalUrl = new URL(`${internalAppUrl}/auth-callback`);
+        if (token) {
+          internalUrl.searchParams.set("token", token);
+        }
+        if (userData) {
+          internalUrl.searchParams.set("user", encodeURIComponent(userData));
+        }
+
+        // Show loading message
+        toast.info("Redirecting to HR & Finance...", { duration: 2000 });
+
+        // Redirect immediately without delay
+        window.location.href = internalUrl.toString();
+      } catch (error) {
+        console.error("Error constructing redirect URL:", error);
+        toast.error("Failed to redirect. Please try again.");
+      }
     }
   };
 
@@ -284,12 +334,15 @@ function PlatformSelectionContent(): React.JSX.Element {
   const showAlumni = isAlumni(user) || isAdminOrManager(user);
   // Alumni users (not admin/manager) should NOT see Task Management - only Alumni + Website
   const showTask = !isAlumni(user);
+  // Show Internal (HR & Finance) card only to authorized users
+  const showInternal = isInternalAuthorized(user);
 
   // Calculate grid columns based on visible cards
   let visibleCards = 1; // Website is always visible
   if (showPortal) visibleCards++;
   if (showAlumni) visibleCards++;
   if (showTask) visibleCards++;
+  if (showInternal) visibleCards++;
 
   const gridClass =
     visibleCards <= 2
@@ -297,18 +350,21 @@ function PlatformSelectionContent(): React.JSX.Element {
       : visibleCards === 3
         ? "max-w-6xl md:grid-cols-2 lg:grid-cols-3"
         : "max-w-7xl md:grid-cols-2 lg:grid-cols-4";
-  
+
   // Add class to center 4th card when there are exactly 4 cards in 2-column layout
   const centerFourthCard = visibleCards === 4 ? "center-fourth-card" : "";
 
   return (
     <div className="min-h-screen flex flex-col relative bg-[#F5F7FA] overflow-y-auto">
       <div className="flex-1 relative flex items-center justify-center overflow-y-auto bg-[#F5F7FA] min-h-screen py-8 md:py-12">
-        <div className="hidden md:block absolute bottom-0 left-0 right-0 h-[25vh] min-h-[180px] bg-[#045F3C] z-[1]" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q50 20 100 0 T100 100 Q50 80 0 100 Z' fill='%23000000' fill-opacity='0.1'/%3E%3C/svg%3E")`,
-          backgroundSize: '200px 200px',
-        }}></div>
-        
+        <div
+          className="hidden md:block absolute bottom-0 left-0 right-0 h-[25vh] min-h-[180px] bg-[#045F3C] z-[1]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 Q50 20 100 0 T100 100 Q50 80 0 100 Z' fill='%23000000' fill-opacity='0.1'/%3E%3C/svg%3E")`,
+            backgroundSize: "200px 200px",
+          }}
+        ></div>
+
         <div className="w-full max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8 relative z-[2] py-2 sm:py-3 md:py-4">
           <div className="fixed top-2 right-2 sm:top-2 sm:right-4 md:top-3 md:right-5 lg:top-3 lg:right-6 flex items-center gap-2 z-[9999] bg-[#F5F7FA] sm:bg-transparent rounded-lg sm:rounded-none p-1 sm:p-0">
             <button
@@ -351,83 +407,89 @@ function PlatformSelectionContent(): React.JSX.Element {
 
           {/* Header - Centered - Below Profile/Logout */}
           <div className="text-center mb-6 sm:mb-8 md:mb-12 lg:mb-16 xl:mb-20 mt-12 sm:mt-16 md:mt-20 lg:mt-24 xl:mt-28">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 leading-tight px-2 sm:px-4" style={{ color: '#1e293b' }}>
+            <h1
+              className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 leading-tight px-2 sm:px-4"
+              style={{ color: "#1e293b" }}
+            >
               Choose the platform to continue
             </h1>
           </div>
 
           {/* Profile Modal */}
-          <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+          <Dialog
+            open={isProfileModalOpen}
+            onOpenChange={setIsProfileModalOpen}
+          >
             <DialogContent className="w-[90%] max-w-[90%] sm:max-w-md mx-auto">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Profile Information
-                  </DialogTitle>
-                  <DialogDescription>Your account details</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="flex items-center justify-center mb-4">
-                    <div
-                      className="w-20 h-20 rounded-full overflow-hidden"
-                      style={{
-                        border: "2px solid rgba(4, 95, 60, 0.3)",
-                        backgroundColor: "#045F3C",
-                      }}
-                    >
-                      {user?.avatar_url && !modalAvatarError ? (
-                        <img
-                          src={
-                            user.avatar_url.startsWith("http")
-                              ? user.avatar_url
-                              : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api"}${user.avatar_url}`
-                          }
-                          alt={user.name || "Profile"}
-                          className="w-full h-full object-cover"
-                          onError={() => setModalAvatarError(true)}
-                        />
-                      ) : (
-                        <div
-                          className="w-full h-full flex items-center justify-center text-white text-2xl font-semibold"
-                          style={{ backgroundColor: "#045F3C" }}
-                        >
-                          {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Name
-                      </label>
-                      <p className="text-base font-semibold text-gray-900 mt-1">
-                        {user?.name || "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Email
-                      </label>
-                      <p className="text-base font-semibold text-gray-900 mt-1">
-                        {user?.email || "N/A"}
-                      </p>
-                    </div>
-                    {user?.role_name && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">
-                          Role
-                        </label>
-                        <p className="text-base font-semibold text-gray-900 mt-1">
-                          <span className="px-2 py-1 bg-gray-100 rounded-full text-sm">
-                            {user.role_name}
-                          </span>
-                        </p>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Profile Information
+                </DialogTitle>
+                <DialogDescription>Your account details</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="flex items-center justify-center mb-4">
+                  <div
+                    className="w-20 h-20 rounded-full overflow-hidden"
+                    style={{
+                      border: "2px solid rgba(4, 95, 60, 0.3)",
+                      backgroundColor: "#045F3C",
+                    }}
+                  >
+                    {user?.avatar_url && !modalAvatarError ? (
+                      <img
+                        src={
+                          user.avatar_url.startsWith("http")
+                            ? user.avatar_url
+                            : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api"}${user.avatar_url}`
+                        }
+                        alt={user.name || "Profile"}
+                        className="w-full h-full object-cover"
+                        onError={() => setModalAvatarError(true)}
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center text-white text-2xl font-semibold"
+                        style={{ backgroundColor: "#045F3C" }}
+                      >
+                        {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                       </div>
                     )}
                   </div>
                 </div>
-              </DialogContent>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">
+                      Name
+                    </label>
+                    <p className="text-base font-semibold text-gray-900 mt-1">
+                      {user?.name || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">
+                      Email
+                    </label>
+                    <p className="text-base font-semibold text-gray-900 mt-1">
+                      {user?.email || "N/A"}
+                    </p>
+                  </div>
+                  {user?.role_name && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">
+                        Role
+                      </label>
+                      <p className="text-base font-semibold text-gray-900 mt-1">
+                        <span className="px-2 py-1 bg-gray-100 rounded-full text-sm">
+                          {user.role_name}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </DialogContent>
           </Dialog>
 
           {/* Platform Cards - Centered */}
@@ -435,107 +497,175 @@ function PlatformSelectionContent(): React.JSX.Element {
             <div
               className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 xl:gap-10 w-full max-w-7xl relative z-[3]`}
             >
-            {/* Portal Platform - Only visible to Admin and Manager */}
-            {showPortal && (
-              <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
-                {/* Large circular icon extending beyond card */}
-                <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10" style={{ backgroundColor: "#045F3C" }}>
-                  <Users className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
-                </div>
-                <div className="text-center flex flex-col flex-grow">
-                  <h3 className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2" style={{ color: '#1e293b' }}>
-                    Portal
-                  </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                    Access your organization's main portal with projects, teams, and content management.
-                  </p>
-                  <div className="mt-auto">
-                    <button
-                      onClick={() => handlePlatformSelect("portal")}
-                      className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
-                    >
-                      Connect to Portal <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Alumni Platform - Only visible to Alumni users */}
-            {showAlumni && (
-              <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
-                {/* Large circular icon extending beyond card */}
-                <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10" style={{ backgroundColor: "#045F3C" }}>
-                  <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
-                </div>
-                <div className="text-center flex flex-col flex-grow">
-                  <h3 className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2" style={{ color: '#1e293b' }}>
-                    Alumni Network
-                  </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                    Connect with fellow alumni, find mentors, and explore career opportunities. Build your professional network.
-                  </p>
-                  <div className="mt-auto">
-                    <button
-                      onClick={() => handlePlatformSelect("alumni")}
-                      className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
-                    >
-                      Connect to Alumni Network <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Website Platform */}
-            <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
-              {/* Large circular icon extending beyond card */}
-              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10" style={{ backgroundColor: "#045F3C" }}>
-                <Globe className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
-              </div>
-              <div className="text-center flex flex-col flex-grow">
-                <h3 className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2" style={{ color: '#1e293b' }}>
-                  Website
-                </h3>
-                <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                  Visit the public-facing website to explore programs, news, and opportunities. Discover what we offer.
-                </p>
-                <div className="mt-auto">
-                  <button
-                    onClick={() => handlePlatformSelect("website")}
-                    className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
+              {/* Portal Platform - Only visible to Admin and Manager */}
+              {showPortal && (
+                <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
+                  {/* Large circular icon extending beyond card */}
+                  <div
+                    className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10"
+                    style={{ backgroundColor: "#045F3C" }}
                   >
-                    Connect to Website <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                  </button>
+                    <Users className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                  </div>
+                  <div className="text-center flex flex-col flex-grow">
+                    <h3
+                      className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2"
+                      style={{ color: "#1e293b" }}
+                    >
+                      Portal
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                      Access your organization's main portal with projects,
+                      teams, and content management.
+                    </p>
+                    <div className="mt-auto">
+                      <button
+                        onClick={() => handlePlatformSelect("portal")}
+                        className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
+                      >
+                        Connect to Portal{" "}
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              )}
 
-            {/* Task Management Platform - Hidden for Alumni users */}
-            {showTask && (
-              <div className={`group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6 ${visibleCards === 4 ? 'sm:col-span-2 sm:col-start-1 md:col-span-1 md:col-start-2 md:justify-self-center lg:col-start-auto lg:justify-self-auto xl:col-start-auto xl:justify-self-auto' : ''}`}>
+              {/* Alumni Platform - Only visible to Alumni users */}
+              {showAlumni && (
+                <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
+                  {/* Large circular icon extending beyond card */}
+                  <div
+                    className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10"
+                    style={{ backgroundColor: "#045F3C" }}
+                  >
+                    <GraduationCap className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                  </div>
+                  <div className="text-center flex flex-col flex-grow">
+                    <h3
+                      className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2"
+                      style={{ color: "#1e293b" }}
+                    >
+                      Alumni Network
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                      Connect with fellow alumni, find mentors, and explore
+                      career opportunities. Build your professional network.
+                    </p>
+                    <div className="mt-auto">
+                      <button
+                        onClick={() => handlePlatformSelect("alumni")}
+                        className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
+                      >
+                        Connect to Alumni Network{" "}
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Website Platform */}
+              <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
                 {/* Large circular icon extending beyond card */}
-                <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10" style={{ backgroundColor: "#045F3C" }}>
-                  <CheckSquare className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                <div
+                  className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10"
+                  style={{ backgroundColor: "#045F3C" }}
+                >
+                  <Globe className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
                 </div>
                 <div className="text-center flex flex-col flex-grow">
-                  <h3 className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2" style={{ color: '#1e293b' }}>
-                    Task Management
+                  <h3
+                    className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2"
+                    style={{ color: "#1e293b" }}
+                  >
+                    Website
                   </h3>
                   <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                    Manage tasks, track progress, and collaborate with your team. Stay organized and productive.
+                    Visit the public-facing website to explore programs, news,
+                    and opportunities. Discover what we offer.
                   </p>
                   <div className="mt-auto">
                     <button
-                      onClick={() => handlePlatformSelect("task")}
+                      onClick={() => handlePlatformSelect("website")}
                       className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
                     >
-                      Connect to Task Management <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      Connect to Website{" "}
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                     </button>
                   </div>
                 </div>
               </div>
-            )}
+
+              {/* Internal (HR & Finance) Platform - Only visible to authorized users */}
+              {showInternal && (
+                <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
+                  {/* Large circular icon extending beyond card */}
+                  <div
+                    className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10"
+                    style={{ backgroundColor: "#045F3C" }}
+                  >
+                    <Briefcase className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                  </div>
+                  <div className="text-center flex flex-col flex-grow">
+                    <h3
+                      className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2"
+                      style={{ color: "#1e293b" }}
+                    >
+                      HR & Finance
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                      Access HR and finance tools including payroll, payslips,
+                      and employee management.
+                    </p>
+                    <div className="mt-auto">
+                      <button
+                        onClick={() => handlePlatformSelect("internal")}
+                        className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
+                      >
+                        Connect to HR & Finance{" "}
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Task Management Platform - Hidden for Alumni users */}
+              {showTask && (
+                <div
+                  className={`group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6 ${visibleCards === 4 ? "sm:col-span-2 sm:col-start-1 md:col-span-1 md:col-start-2 md:justify-self-center lg:col-start-auto lg:justify-self-auto xl:col-start-auto xl:justify-self-auto" : ""}`}
+                >
+                  {/* Large circular icon extending beyond card */}
+                  <div
+                    className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10"
+                    style={{ backgroundColor: "#045F3C" }}
+                  >
+                    <CheckSquare className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                  </div>
+                  <div className="text-center flex flex-col flex-grow">
+                    <h3
+                      className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2"
+                      style={{ color: "#1e293b" }}
+                    >
+                      Task Management
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                      Manage tasks, track progress, and collaborate with your
+                      team. Stay organized and productive.
+                    </p>
+                    <div className="mt-auto">
+                      <button
+                        onClick={() => handlePlatformSelect("task")}
+                        className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
+                      >
+                        Connect to Task Management{" "}
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

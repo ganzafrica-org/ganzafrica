@@ -13,3 +13,4 @@ export * from "./task-teams";
 export * from "./tasks";
 export * from "./reports";
 export * from "./alumni";
+export * from "./payroll";
