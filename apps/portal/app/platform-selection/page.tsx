@@ -294,7 +294,7 @@ function PlatformSelectionContent(): React.JSX.Element {
 
       // Use environment variable for internal app URL, fallback to localhost for development
       const internalAppUrl =
-        process.env.NEXT_PUBLIC_INTERNAL_URL || "http://localhost:3006";
+        process.env.NEXT_PUBLIC_INTERNAL_URL || "http://localhost:3005";
 
       try {
         const internalUrl = new URL(`${internalAppUrl}/auth-callback`);

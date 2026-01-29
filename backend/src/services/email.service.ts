@@ -8,24 +8,37 @@ const logger = new Logger("EmailService");
 const isEmailConfigured = () => {
   // Use EMAIL_PORT if SMTP_PORT is not set
   const smtpPort = env.SMTP_PORT ?? env.EMAIL_PORT;
-  
+
   // Check if values are actually set (not null/undefined)
-  const hasEmailFrom = env.EMAIL_FROM && typeof env.EMAIL_FROM === 'string' && env.EMAIL_FROM.trim() !== "";
-  const hasPassword = env.EMAIL_PASSWORD && typeof env.EMAIL_PASSWORD === 'string' && env.EMAIL_PASSWORD.trim() !== "";
-  const hasHost = env.SMTP_HOST && typeof env.SMTP_HOST === 'string' && env.SMTP_HOST.trim() !== "";
+  const hasEmailFrom =
+    env.EMAIL_FROM &&
+    typeof env.EMAIL_FROM === "string" &&
+    env.EMAIL_FROM.trim() !== "";
+  const hasPassword =
+    env.EMAIL_PASSWORD &&
+    typeof env.EMAIL_PASSWORD === "string" &&
+    env.EMAIL_PASSWORD.trim() !== "";
+  const hasHost =
+    env.SMTP_HOST &&
+    typeof env.SMTP_HOST === "string" &&
+    env.SMTP_HOST.trim() !== "";
   const hasPort = smtpPort !== undefined && smtpPort !== null;
-  
+
   // Validate email format if EMAIL_FROM is provided
-  if (hasEmailFrom && env.EMAIL_FROM && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.EMAIL_FROM)) {
+  if (
+    hasEmailFrom &&
+    env.EMAIL_FROM &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.EMAIL_FROM)
+  ) {
     logger.warn(`Invalid email format for EMAIL_FROM: ${env.EMAIL_FROM}`);
     return false;
   }
-  
+
   return !!(hasEmailFrom && hasPassword && hasHost && hasPort);
 };
 
 // Create a nodemailer transporter (only if email is configured)
-const transporter = isEmailConfigured() 
+const transporter = isEmailConfigured()
   ? nodemailer.createTransport({
       host: env.SMTP_HOST!,
       port: (env.SMTP_PORT ?? env.EMAIL_PORT)!,
@@ -40,10 +53,12 @@ const transporter = isEmailConfigured()
 // Verify SMTP connection on application startup
 async function verifyEmailConnection() {
   if (!isEmailConfigured()) {
-    logger.warn("Email configuration not provided. Email functionality will be disabled.");
+    logger.warn(
+      "Email configuration not provided. Email functionality will be disabled.",
+    );
     return false;
   }
-  
+
   if (!transporter) {
     return false;
   }
@@ -59,9 +74,11 @@ async function verifyEmailConnection() {
 }
 
 // Generic function to send emails
-async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(to: string, subject: string, html: string) {
   if (!isEmailConfigured() || !transporter) {
-    logger.warn(`Email not configured. Skipping email send to ${to} with subject: ${subject}`);
+    logger.warn(
+      `Email not configured. Skipping email send to ${to} with subject: ${subject}`,
+    );
     return null;
   }
 
