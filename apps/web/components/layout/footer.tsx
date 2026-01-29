@@ -5,6 +5,7 @@ import { Home, Phone, Mail } from "lucide-react";
 import { LinkedInIcon, TwitterIcon } from "@/components/ui/icons";
 import { Button } from "@workspace/ui/components/button";
 import { TranslatableText } from '@/components/translate/TranslatableText';
+import { trackOutboundLink } from "@/components/analytics/google-analytics";
 
 export default function Footer({}: {
 }) {
@@ -37,10 +38,20 @@ export default function Footer({}: {
                         <Link href="/" aria-label="Home" className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity">
                             <Home className="h-3.5 w-3.5 text-primary-green" />
                         </Link>
-                        <Link href="https://linkedin.com/company/ganzafrica" aria-label="LinkedIn" className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity">
+                        <Link
+                            href="https://linkedin.com/company/ganzafrica"
+                            aria-label="LinkedIn"
+                            className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity"
+                            onClick={() => trackOutboundLink("https://linkedin.com/company/ganzafrica", "LinkedIn")}
+                        >
                             <LinkedInIcon className="h-3.5 w-3.5" />
                         </Link>
-                        <Link href="https://twitter.com/ganzafrica" aria-label="Twitter" className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity">
+                        <Link
+                            href="https://twitter.com/ganzafrica"
+                            aria-label="Twitter"
+                            className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity"
+                            onClick={() => trackOutboundLink("https://twitter.com/ganzafrica", "Twitter")}
+                        >
                             <TwitterIcon className="h-3.5 w-3.5" />
                         </Link>
                         <Link href="tel:+250799390199" aria-label="Phone" className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity">
@@ -78,10 +89,20 @@ export default function Footer({}: {
                         <Link href="/" aria-label="Home" className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity">
                             <Home className="h-3.5 w-3.5 text-primary-green" />
                         </Link>
-                        <Link href="https://linkedin.com/company/ganzafrica" aria-label="LinkedIn" className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity">
+                        <Link
+                            href="https://linkedin.com/company/ganzafrica"
+                            aria-label="LinkedIn"
+                            className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity"
+                            onClick={() => trackOutboundLink("https://linkedin.com/company/ganzafrica", "LinkedIn")}
+                        >
                             <LinkedInIcon className="h-3.5 w-3.5" />
                         </Link>
-                        <Link href="https://twitter.com/ganzafrica" aria-label="Twitter" className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity">
+                        <Link
+                            href="https://twitter.com/ganzafrica"
+                            aria-label="Twitter"
+                            className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity"
+                            onClick={() => trackOutboundLink("https://twitter.com/ganzafrica", "Twitter")}
+                        >
                             <TwitterIcon className="h-3.5 w-3.5" />
                         </Link>
                         <Link href="tel:+250799390199" aria-label="Phone" className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity">

@@ -6,7 +6,7 @@ import { DecoratedHeading } from "@/components/layout/headertext";
 import { ArrowUpRight, X, Linkedin, Mail, Leaf } from 'lucide-react';
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import apiClient from '@/lib/api-client';
-import { trackEvent } from '@/components/analytics/google-analytics';
+import { trackEvent, trackPageView, trackOutboundLink } from '@/components/analytics/google-analytics';
 import {TranslatableText} from "@/components/translate";
 
 
@@ -138,12 +138,15 @@ const TeamMemberModal = ({
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="group"
-                                    onClick={() => trackEvent('team_member_social_click', {
-                                        member_name: member.name,
-                                        member_position: member.position,
-                                        member_team: member.team_type.name,
-                                        social_platform: 'linkedin'
-                                    })}
+                                    onClick={() => {
+                                        trackOutboundLink(member.profile_link!, `LinkedIn - ${member.name}`);
+                                        trackEvent('team_member_social_click', {
+                                            member_name: member.name,
+                                            member_position: member.position,
+                                            member_team: member.team_type.name,
+                                            social_platform: 'linkedin'
+                                        });
+                                    }}
                                 >
                                     <div className="w-10 h-10 rounded-full bg-primary-orange flex items-center justify-center transition-all duration-300 ease-out group-hover:shadow-lg group-hover:shadow-[#0A66C2]/25 group-hover:-translate-y-0.5">
                                         <LinkedinIcon className="w-5 h-5 text-white" />
@@ -334,6 +337,11 @@ const TeamPage = (): JSX.Element => {
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [teamTypes, setTeamTypes] = useState<TeamType[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Track page view
+    useEffect(() => {
+        trackPageView('/about/team', 'Our Team');
+    }, []);
 
     // Fetch team types for filters
     useEffect(() => {

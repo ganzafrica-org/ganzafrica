@@ -27,6 +27,7 @@ import {
 import { useParams } from 'next/navigation';
 import {TranslatableText} from "@/components/translate";
 import {Metadata} from "next";
+import { trackApplicationStart, trackProgramView } from "@/components/analytics/google-analytics";
 
 
 
@@ -103,6 +104,7 @@ const OpportunityDetailsPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [categories, setCategories] = useState<Record<string | number, string>>({});
     const [activeTab, setActiveTab] = useState('details');
+    const [hasTrackedView, setHasTrackedView] = useState(false);
 
     // Types of opportunities for display
     const opportunityTypes = {
@@ -165,6 +167,16 @@ const OpportunityDetailsPage = () => {
 
         fetchOpportunityData();
     }, [params.id]);
+
+    // Track opportunity view once when data is loaded
+    useEffect(() => {
+        if (!opportunity || hasTrackedView) return;
+
+        const programType = opportunity.type || getCategoryName(opportunity.category_id);
+        trackProgramView(opportunity.title, programType);
+        setHasTrackedView(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [opportunity, hasTrackedView]);
 
     // Format date for display
     const formatDate = (dateString: string | number | Date | undefined) => {
@@ -574,6 +586,12 @@ const OpportunityDetailsPage = () => {
                                 <SafeLink
                                     href={`${opportunity.id}/apply`}
                                     className="w-full block text-center px-4 py-3 bg-green-700 rounded-lg text-sm font-medium text-white hover:bg-green-800 transition-colors"
+                                    onClick={() =>
+                                        trackApplicationStart(
+                                            opportunity.title,
+                                            opportunity.id
+                                        )
+                                    }
                                 >
                                     <TranslatableText>Apply to Opportunity</TranslatableText>
                                 </SafeLink>

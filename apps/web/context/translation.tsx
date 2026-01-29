@@ -8,6 +8,7 @@ import React, {
   useRef,
   useEffect,
 } from "react";
+import { trackTranslation } from "@/components/analytics/google-analytics";
 
 // Supported languages (all supported by LibreTranslate)
 export const SUPPORTED_LANGUAGES = [
@@ -169,6 +170,14 @@ export function TranslationProvider({
       setTargetLanguageState(lang);
       setIsTranslated(lang !== sourceLanguage);
       setError(null);
+
+       if (lang !== targetLanguage) {
+         trackTranslation({
+           source_language: sourceLanguage,
+           target_language: lang,
+           scope: "page",
+         });
+       }
 
       // Save preference
       if (typeof window !== "undefined") {

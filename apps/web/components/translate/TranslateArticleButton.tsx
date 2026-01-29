@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Languages, Loader2, RotateCcw } from "lucide-react";
 import { SUPPORTED_LANGUAGES, type LanguageCode } from "@/context/translation";
+import { trackTranslation } from "@/components/analytics/google-analytics";
 
 interface TranslateArticleButtonProps {
   /** The original article content (can be HTML) */
@@ -91,6 +92,11 @@ export function TranslateArticleButton({
       );
 
       onTranslate(contentToTranslate, translatedTitle);
+      trackTranslation({
+        source_language: sourceLanguage,
+        target_language: selectedLanguage,
+        scope: "article",
+      });
       setIsOpen(false);
     } catch (err) {
       console.error("Translation failed:", err);

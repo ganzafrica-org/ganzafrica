@@ -18,6 +18,7 @@ import HeaderBelt from "@/components/layout/headerBelt";
 import axios from 'axios';
 import { useParams } from "next/navigation";
 import { TranslatableText } from "@/components/translate/TranslatableText";
+import { trackPageView, trackEvent } from "@/components/analytics/google-analytics";
 
 // Normalize Next.js Link typing across React type versions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -333,6 +334,10 @@ const NewsroomPage = () => {
   const [tagCounts, setTagCounts] = useState<Record<string, number>>({});
   const [error, setError] = useState(false);
 
+  // Track page view
+  useEffect(() => {
+    trackPageView('/newsroom', 'Newsroom');
+  }, []);
 
   // Fetch tags
   useEffect(() => {
@@ -466,7 +471,10 @@ const NewsroomPage = () => {
             <NavigationItem
                 label={<TranslatableText>All</TranslatableText>}
                 isActive={activeFilter === "all"}
-                onClick={() => setActiveFilter("all")}
+                onClick={() => {
+                    setActiveFilter("all");
+                    trackEvent('newsroom_filter_change', { filter: 'all' });
+                }}
                 count={tagCounts.all}
             />
             {tags.map(tag => (
@@ -474,7 +482,10 @@ const NewsroomPage = () => {
                     key={tag.id}
                     label={tag.name}
                     isActive={activeFilter === tag.id.toString()}
-                    onClick={() => setActiveFilter(tag.id.toString())}
+                    onClick={() => {
+                        setActiveFilter(tag.id.toString());
+                        trackEvent('newsroom_filter_change', { filter: tag.name });
+                    }}
                     count={tagCounts[tag.id] || 0}
                 />
             ))}

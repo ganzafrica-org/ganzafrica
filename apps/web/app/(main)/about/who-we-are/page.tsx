@@ -15,6 +15,7 @@ import { FC } from "react";
 import { TransformativePartner } from "@/components/TransformativePartner";
 import {TranslatableText} from "@/components/translate";
 import { Metadata } from "next";
+import WhoWeArePageContent from "@/components/WhoWeArePageContent";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org";
 
@@ -365,6 +366,7 @@ export default async function AboutPage(
     ];
 
     return (
+        <WhoWeArePageContent>
         <main className="flex flex-col min-h-screen">
             {/* Hero Section */}
             <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
@@ -697,5 +699,6 @@ export default async function AboutPage(
                 tags={tags}
             />
         </main>
+        </WhoWeArePageContent>
     );
 }
