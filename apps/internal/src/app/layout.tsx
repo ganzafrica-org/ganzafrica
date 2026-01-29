@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/lib/auth/auth-provider";
 import "./globals.css";
 import React from "react";
 
@@ -49,10 +50,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <TooltipProvider>
-          <Toaster position="top-right" />
-          {children}
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster position="top-right" />
+            {children}
+          </TooltipProvider>
+        </AuthProvider>
       </body>
     </html>
   );
