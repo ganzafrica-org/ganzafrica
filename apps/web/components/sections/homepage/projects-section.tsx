@@ -493,10 +493,13 @@ return (
                                 <Link
                                     href={getProjectUrl(project.id)}
                                     className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
+                                    aria-label={`Learn more about the ${project.name} project`}
                                     style={{ color }}
                                 >
                                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
-                                        <TranslatableText>Learn More</TranslatableText>
+                                        <TranslatableText>
+                                            {`Learn more about ${project.name}`}
+                                        </TranslatableText>
                                     </span>
                                     <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />

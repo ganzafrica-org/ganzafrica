@@ -1,6 +1,3 @@
-import OpportunitiesPage from "@/components/OpportunitiesContent";
-import {Metadata} from "next";
-
 import { Metadata } from "next";
 import apiClient from "@/lib/api-client";
 
@@ -14,38 +11,40 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
         const response = await apiClient.get(`/opportunities/${params.id}`);
         const opportunity = response.data?.opportunity || response.data;
+        
         const title = opportunity.title || "Opportunity";
+        const description = opportunity.description?.substring(0, 160) || "Discover this opportunity at GanzAfrica.";
 
         return {
             metadataBase: new URL(baseUrl),
-            title: `Apply to ${title} | GanzAfrica`,
-            description: `Apply for ${title} at GanzAfrica. ${opportunity.description?.substring(0, 120) || "Join our agriculture training and fellowship program."}`,
+            title: `${title} | GanzAfrica Opportunities`,
+            description,
             keywords: [
-                "GanzAfrica apply",
-                "agriculture fellowship application",
-                "apply agriculture training",
-                "fellowship application Africa",
+                "GanzAfrica opportunities",
+                "agriculture opportunities",
+                opportunity.type || "fellowship",
+                "sustainable farming",
                 title
             ],
             openGraph: {
-                title: `Apply to ${title} | GanzAfrica`,
-                description: `Application open for ${title}. Join GanzAfrica's agriculture training and fellowship program.`,
+                title: `${title} | GanzAfrica`,
+                description,
                 siteName: "GanzAfrica",
                 type: "website",
-                url: `${baseUrl}/opportunities/${params.id}/apply`,
+                url: `${baseUrl}/opportunities/${params.id}`,
                 images: [{
-                    url: `${baseUrl}/images/og/apply.jpg`,
+                    url: `${baseUrl}/images/og/opportunities.jpg`,
                     width: 1200,
                     height: 630,
-                    alt: `Apply to ${title}`
+                    alt: title
                 }]
             },
             twitter: {
                 card: "summary_large_image",
-                title: `Apply to ${title} | GanzAfrica`,
-                description: `Applications open for ${title} at GanzAfrica.`,
+                title: `${title} | GanzAfrica`,
+                description,
                 creator: "@GanzAfrica",
-                images: [`${baseUrl}/images/og/apply.jpg`]
+                images: [`${baseUrl}/images/og/opportunities.jpg`]
             },
             robots: {
                 index: true,
@@ -59,21 +58,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 },
             },
             alternates: {
-                canonical: `${baseUrl}/opportunities/${params.id}/apply`
+                canonical: `${baseUrl}/opportunities/${params.id}`
             }
         };
     } catch (error) {
         return {
             metadataBase: new URL(baseUrl),
-            title: "Apply | GanzAfrica",
-            description: "Apply for GanzAfrica's agriculture fellowship and training programs.",
+            title: "Opportunity Details | GanzAfrica",
+            description: "Discover this opportunity at GanzAfrica.",
             alternates: {
-                canonical: `${baseUrl}/opportunities/${params.id}/apply`
+                canonical: `${baseUrl}/opportunities/${params.id}`
             }
         };
     }
 }
 
-export default async function OurStoryPage(): Promise<JSX.Element> {
-    return <OpportunitiesPage/>;
+export default function OpportunityLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return <>{children}</>;
 }
+
+

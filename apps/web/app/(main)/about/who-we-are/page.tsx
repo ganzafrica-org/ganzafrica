@@ -14,6 +14,60 @@ import {
 import { FC } from "react";
 import { TransformativePartner } from "@/components/TransformativePartner";
 import {TranslatableText} from "@/components/translate";
+import { Metadata } from "next";
+import WhoWeArePageContent from "@/components/WhoWeArePageContent";
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org";
+
+export const metadata: Metadata = {
+    metadataBase: new URL(baseUrl),
+    title: "Who We Are | GanzAfrica - Empowering Africa's Food System Leaders",
+    description: "Learn about GanzAfrica's mission to empower African youth through agriculture training, sustainable land management, and data literacy programs. Discover our vision, values, and transformative approach.",
+    keywords: [
+        "GanzAfrica who we are",
+        "GanzAfrica mission",
+        "GanzAfrica vision",
+        "African agriculture training",
+        "sustainable land management Africa",
+        "youth empowerment Africa",
+        "food systems transformation",
+        "agriculture fellowship Africa"
+    ],
+    openGraph: {
+        title: "Who We Are | GanzAfrica - Empowering Africa's Food System Leaders",
+        description: "GanzAfrica empowers African youth through holistic training, mentorship, and work placements in agriculture, sustainable land management, and data-driven decision-making.",
+        siteName: "GanzAfrica",
+        type: "website",
+        url: `${baseUrl}/about/who-we-are`,
+        images: [{
+            url: `${baseUrl}/images/SHIR5142-Enhanced-NR.jpg`,
+            width: 1200,
+            height: 630,
+            alt: "GanzAfrica - Who We Are"
+        }]
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Who We Are | GanzAfrica",
+        description: "Empowering African youth through agriculture training, sustainable land management, and data literacy programs.",
+        creator: "@GanzAfrica",
+        images: [`${baseUrl}/images/SHIR5142-Enhanced-NR.jpg`]
+    },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            "max-snippet": -1,
+            "max-image-preview": "large",
+            "max-video-preview": -1,
+        },
+    },
+    alternates: {
+        canonical: `${baseUrl}/about/who-we-are`
+    }
+};
 
 // Types for props
 interface MissionCardProps {
@@ -53,7 +107,9 @@ interface PromiseCardProps {
     marginRight?: string;
 }
 
-interface PageProps {}
+interface PageProps {
+    params: { locale: string };
+}
 
 
 const MissionCard: FC<MissionCardProps> = ({
@@ -214,6 +270,7 @@ export default async function AboutPage(
     { params }: PageProps
 ): Promise<JSX.Element> {
 
+
     // Tag data with translations
     const tags = [
         // Yellow
@@ -300,9 +357,16 @@ export default async function AboutPage(
     ];
 
     // Categories for the banner with translations
-    const categories = ["Environment", "Agriculture", "Land", "Food system", "Climate"];
+    const categories = [
+        "Environment",
+        "Agriculture",
+        "Land",
+        "Food system",
+        "Climate",
+    ];
 
     return (
+        <WhoWeArePageContent>
         <main className="flex flex-col min-h-screen">
             {/* Hero Section */}
             <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden">
@@ -385,25 +449,34 @@ export default async function AboutPage(
                 {/* <div className="w-full lg:w-1/2">
               <div className="flex justify-left mb-4">
                 <DecoratedHeading
-                  firstText="A Transformative"
-                  secondText="Partner"
+                  firstText={
+                    dict?.about?.transformative_partner?.heading_first ||
+                    "A Transformative"
+                  }
+                  secondText={
+                    dict?.about?.transformative_partner?.heading_second || "Partner"
+                  }
                 />
               </div>
               <div className="max-w-full lg:max-w-xl space-y-4 text-justify">
                 <p className="text-gray-700 text-sm sm:text-base">
-                  Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."
+                  {dict?.about?.transformative_partner?.paragraph_1 ||
+                    "Africa is a young, fast-growing continent with almost boundless potential. To take full advantage of the opportunities ahead, African leaders need to address several priorities, including creating impactful jobs for youth and improving agriculture, which employs more Africans than any other sector. GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands."}
                 </p>
 
                 <p className="text-gray-700 text-sm sm:text-base">
-                  "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."
+                  {dict?.about?.transformative_partner?.paragraph_2 ||
+                    "GanzAfrica provides holistic career preparation for transformative food systems leaders. Our curriculum integrates best practices around agriculture, the environment, sustainable land management, and land rights to break siloed patterns of thinking and unlock opportunities at the intersections of these fields. We stress data literacy and analytical capabilities to equip youth with the necessary skills to provide the right support to state and non-state organizations to make evidence-based decisions."}
                 </p>
 
                 <p className="text-gray-700 text-sm sm:text-base">
-                  "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."
+                  {dict?.about?.transformative_partner?.paragraph_3 ||
+                    "Our program also connects fellows to a rich community of mentors and places them in government and non-government sector jobs where they gain both real-world experience and the beginnings of a professional network."}
                 </p>
 
                 <p className="text-gray-700 text-sm sm:text-base">
-                  "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."
+                  {dict?.about?.transformative_partner?.paragraph_4 ||
+                    "In the end, GanzAfrica connects youth to fulfilling careers that draw on their passion and skills to deliver on the promise of a healthy, prosperous future for the continent."}
                 </p>
               </div>
             </div> */}
@@ -418,8 +491,8 @@ export default async function AboutPage(
                     <div className="relative inline-block">
                         <div className="flex justify-center">
                             <DecoratedHeading
-                                firstText="Our"
-                                secondText="Aspirations"
+                                firstText= "Our"
+                                secondText= "Aspirations"
                             />
                         </div>
                     </div>
@@ -452,7 +525,9 @@ export default async function AboutPage(
                                     </div>
                                 </div>
                                 <p className="text-base md:text-x  text-white">
-                                    <TranslatableText>To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions.</TranslatableText>
+                                    <TranslatableText>
+                                        To advance a prosperous and sustainable food systems transformation in Africa through locally driven, system-focused solutions.
+                                    </TranslatableText>
                                 </p>
 
                                 <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
@@ -466,11 +541,15 @@ export default async function AboutPage(
                                 <div className="flex items-center mb-4">
                                     <div className="bg-green-500 text-white md:text-xl font-bold rounded-full px-3 py-1 sm:px-4 sm:py-2 flex items-center justify-center text-xs sm:text-sm">
                                         <span className="mr-2"></span>
-                                        <TranslatableText>Our Mission</TranslatableText>
+                                        <TranslatableText>
+                                            Our Mission
+                                        </TranslatableText>
                                     </div>
                                 </div>
                                 <p className="text-base md:text-x  text-gray-900 text-white">
-                                    <TranslatableText>To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems.</TranslatableText>
+                                    <TranslatableText>
+                                        To strengthen institutions, and the individuals who will shape and lead them, by equipping and placing youth with data-driven, systems-focused skills for improving food systems.
+                                    </TranslatableText>
                                 </p>
                                 <div className="absolute -top-1 -right-1 w-16 h-16 sm:w-24 sm:h-24 bg-white" style={{ borderBottomLeftRadius: "100%" }} />
                                 <div className="absolute -top-5 -right-5 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
@@ -489,8 +568,8 @@ export default async function AboutPage(
                     <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
                         <div className="mb-6">
                             <DecoratedHeading
-                                firstText="Our"
-                                secondText="Values"
+                                firstText= "Our"
+                                secondText= "Values"
                             />
                         </div>
                         <p className="text-gray-600 text-base sm:text-lg mx-auto">
@@ -510,10 +589,14 @@ export default async function AboutPage(
                                     <BarChart3 className="w-8 h-8 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 mb-4">
-                                    <TranslatableText>Evidence based</TranslatableText>
+                                    <TranslatableText>
+                                        Evidence based
+                                    </TranslatableText>
                                 </h3>
                                 <p className="text-gray-600 text-sm sm:text-base">
-                                    <TranslatableText>In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes.</TranslatableText>
+                                    <TranslatableText>
+                                        In-depth research and data-driven insights shape the solutions we co-create, leveraging local knowledge and building analytical expertise to ensure the best possible outcomes.
+                                    </TranslatableText>
                                 </p>
                             </div>
                         </div>
@@ -525,10 +608,14 @@ export default async function AboutPage(
                                     <ShieldCheck className="w-8 h-8 text-primary-green" />
                                 </div>
                                 <h3 className="text-xl font-bold text-white mb-4">
-                                    <TranslatableText>Integrity</TranslatableText>
+                                    <TranslatableText>
+                                        Integrity
+                                    </TranslatableText>
                                 </h3>
                                 <p className="text-white/90 text-sm sm:text-base">
-                                    <TranslatableText>We work with authenticity and transparency. We are collaborative but not subject to influence or partiality.</TranslatableText>
+                                    <TranslatableText>
+                                        We work with authenticity and transparency. We are collaborative but not subject to influence or partiality.
+                                    </TranslatableText>
                                 </p>
                             </div>
                         </div>
@@ -540,10 +627,14 @@ export default async function AboutPage(
                                     <Leaf className="w-8 h-8 text-white" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 mb-4">
-                                    <TranslatableText>Stewardship</TranslatableText>
+                                    <TranslatableText>
+                                        Stewardship
+                                    </TranslatableText>
                                 </h3>
                                 <p className="text-gray-600 text-sm sm:text-base">
-                                    <TranslatableText>We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future.</TranslatableText>
+                                    <TranslatableText>
+                                        We pattern the highest respect for human, financial, and natural resources and diligence in their utilization. The solutions we co-create enshrine this, alongside equality of access to resources now and for the future.
+                                    </TranslatableText>
                                 </p>
                             </div>
                         </div>
@@ -555,7 +646,7 @@ export default async function AboutPage(
             <section className="py-8 sm:py-12 md:py-16 bg-white text-base md:text-xl">
                 <div className="flex justify-center mb-6 sm:mb-10">
                     <DecoratedHeading
-                        firstText="Our"
+                        firstText= "Our"
                         secondText="Promise"
                     />
                 </div>
@@ -608,5 +699,6 @@ export default async function AboutPage(
                 tags={tags}
             />
         </main>
+        </WhoWeArePageContent>
     );
 }

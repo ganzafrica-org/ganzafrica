@@ -363,6 +363,7 @@ export default function NewsSection() {
                                     {/* Read more link - styled like project cards */}
                                     <Link
                                         href={`/newsroom/${slug}`}
+                                        aria-label={`Read the full article: ${newsItem.title}`}
                                         className="inline-flex items-center text-sm font-medium group transition-opacity duration-300"
                                         style={{ color: linkColor }}
                                         onClick={() => trackEvent('news_link_click', {
@@ -373,7 +374,9 @@ export default function NewsSection() {
                                         })}
                                     >
                     <span className="border-b border-transparent group-hover:border-current transition-all duration-300">
-                        <TranslatableText>Read more</TranslatableText>
+                        <TranslatableText>
+                            {`Read more about ${newsItem.title}`}
+                        </TranslatableText>
                     </span>
                                         <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />

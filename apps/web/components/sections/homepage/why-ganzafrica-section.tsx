@@ -124,7 +124,7 @@ export default function WhyGanzAfricaSection({}) {
                                             onMouseEnter={(e) => e.target.style.color = "  #f8b712"}
                                             onMouseLeave={(e) => e.target.style.color = "#111827"}
                                         >
-                                            <TranslatableText>"We train and inspire future leaders"</TranslatableText>
+                                            <TranslatableText>We train and inspire future leaders</TranslatableText>
                                         </h4>
                                         <p className="text-sm text-gray-600 leading-tight">
                                             <TranslatableText>
@@ -159,10 +159,10 @@ export default function WhyGanzAfricaSection({}) {
                                             onMouseEnter={(e) => e.target.style.color = "#073392"}
                                             onMouseLeave={(e) => e.target.style.color = "#111827"}
                                         >
-                                            <TranslatableText>"We drive continental collaboration"</TranslatableText>
+                                            <TranslatableText>We drive continental collaboration</TranslatableText>
                                         </h4>
                                         <p className="text-sm text-gray-600 leading-tight">
-                                            <TranslatableText>"Build a continental coalition of informed and empowered young experts who can innovate, co-create and scale solutions in land, agriculture, and environment sub-sectors."</TranslatableText>
+                                            <TranslatableText>Build a continental coalition of informed and empowered young experts who can innovate, co-create and scale solutions in land, agriculture, and environment sub-sectors.</TranslatableText>
                                         </p>
                                     </div>
                                 </div>
@@ -192,10 +192,10 @@ export default function WhyGanzAfricaSection({}) {
                                             onMouseEnter={(e) => e.target.style.color = "#FFD700"}
                                             onMouseLeave={(e) => e.target.style.color = "#111827"}
                                         >
-                                            <TranslatableText>"We create intergenerational links"</TranslatableText>
+                                            <TranslatableText>We create intergenerational links</TranslatableText>
                                         </h4>
                                         <p className="text-sm text-gray-600 leading-tight">
-                                            <TranslatableText>"Enhance cross-generational linkages between experienced and retired professionals and young practitioners, enhancing the co-creation of blended solutions combining novel and traditional ideals."</TranslatableText>
+                                            <TranslatableText>Enhance cross-generational linkages between experienced and retired professionals and young practitioners, enhancing the co-creation of blended solutions combining novel and traditional ideals.</TranslatableText>
                                         </p>
                                     </div>
                                 </div>
@@ -225,10 +225,10 @@ export default function WhyGanzAfricaSection({}) {
                                             onMouseEnter={(e) => e.target.style.color = "#073392"}
                                             onMouseLeave={(e) => e.target.style.color = "#111827"}
                                         >
-                                            <TranslatableText>"We promote innovative solutions"</TranslatableText>
+                                            <TranslatableText>We promote innovative solutions</TranslatableText>
                                         </h4>
                                         <p className="text-sm text-gray-600 leading-tight">
-                                            <TranslatableText>"Support the development of innovative, scalable solutions that address critical challenges in food systems, climate resilience, and sustainable agricultural practices across the continent."</TranslatableText>
+                                            <TranslatableText>Support the development of innovative, scalable solutions that address critical challenges in food systems, climate resilience, and sustainable agricultural practices across the continent.</TranslatableText>
                                         </p>
                                     </div>
                                 </div>

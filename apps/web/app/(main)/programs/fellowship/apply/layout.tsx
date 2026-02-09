@@ -1,6 +1,3 @@
-import OpportunitiesPage from "@/components/OpportunitiesContent";
-import {Metadata} from "next";
-
 import { Metadata } from "next";
 import apiClient from "@/lib/api-client";
 
@@ -12,29 +9,28 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     try {
-        const response = await apiClient.get(`/opportunities/${params.id}`);
-        const opportunity = response.data?.opportunity || response.data;
-        const title = opportunity.title || "Opportunity";
+        const response = await apiClient.get(`/fellowships/apply`);
+        const fellowship = response.data?.fellowship || response.data;
+        const title = fellowship.title || fellowship.name || "Fellowship";
 
         return {
             metadataBase: new URL(baseUrl),
-            title: `Apply to ${title} | GanzAfrica`,
-            description: `Apply for ${title} at GanzAfrica. ${opportunity.description?.substring(0, 120) || "Join our agriculture training and fellowship program."}`,
+            title: `Apply to ${title} | GanzAfrica Fellowship`,
+            description: `Apply for ${title} fellowship at GanzAfrica. ${fellowship.description?.substring(0, 120) || "Join our comprehensive agriculture training and mentorship program."}`,
             keywords: [
-                "GanzAfrica apply",
+                "GanzAfrica fellowship apply",
                 "agriculture fellowship application",
-                "apply agriculture training",
-                "fellowship application Africa",
+                "fellowship application",
                 title
             ],
             openGraph: {
                 title: `Apply to ${title} | GanzAfrica`,
-                description: `Application open for ${title}. Join GanzAfrica's agriculture training and fellowship program.`,
+                description: `Application open for ${title} fellowship. Join GanzAfrica's agriculture training program.`,
                 siteName: "GanzAfrica",
                 type: "website",
-                url: `${baseUrl}/opportunities/${params.id}/apply`,
+                url: `${baseUrl}/programs/fellowship/apply`,
                 images: [{
-                    url: `${baseUrl}/images/og/apply.jpg`,
+                    url: `${baseUrl}/images/GroupMico.jpeg`,
                     width: 1200,
                     height: 630,
                     alt: `Apply to ${title}`
@@ -43,9 +39,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             twitter: {
                 card: "summary_large_image",
                 title: `Apply to ${title} | GanzAfrica`,
-                description: `Applications open for ${title} at GanzAfrica.`,
+                description: `Applications open for ${title} fellowship.`,
                 creator: "@GanzAfrica",
-                images: [`${baseUrl}/images/og/apply.jpg`]
+                images: [`${baseUrl}/images/GroupMico.jpeg`]
             },
             robots: {
                 index: true,
@@ -59,21 +55,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 },
             },
             alternates: {
-                canonical: `${baseUrl}/opportunities/${params.id}/apply`
+                canonical: `${baseUrl}/programs/fellowship/apply`
             }
         };
     } catch (error) {
         return {
             metadataBase: new URL(baseUrl),
-            title: "Apply | GanzAfrica",
-            description: "Apply for GanzAfrica's agriculture fellowship and training programs.",
+            title: "Apply to Fellowship | GanzAfrica",
+            description: "Apply for GanzAfrica's fellowship program.",
             alternates: {
-                canonical: `${baseUrl}/opportunities/${params.id}/apply`
+                canonical: `${baseUrl}/programs/fellowship/apply`
             }
         };
     }
 }
 
-export default async function OurStoryPage(): Promise<JSX.Element> {
-    return <OpportunitiesPage/>;
+export default function FellowshipApplyLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return <>{children}</>;
 }
+
+

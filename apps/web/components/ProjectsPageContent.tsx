@@ -59,7 +59,7 @@ const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName 
     };
 
     return (
-        <Link href={`projects/${project.id}`} className="block group">
+        <Link href={`projects/${project.id}`} aria-label="Know more on this project" className="block group">
             <div className="relative bg-white shadow-sm hover:shadow-xl transition-all duration-500 rounded-lg overflow-hidden cursor-pointer h-full transform hover:-translate-y-2">
                 <div className="relative w-full overflow-hidden">
                     <div className="relative">

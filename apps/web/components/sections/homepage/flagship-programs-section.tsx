@@ -194,6 +194,7 @@ export default function FlagshipProgramsSection() {
                                 </p>
                                 <Link
                                     href={program.link}
+                                    aria-label="Learn more about the Ganzafrica programs"
                                     style={{
                                         position: "absolute",
                                         left: "0",
@@ -217,7 +218,9 @@ export default function FlagshipProgramsSection() {
                                         })
                                     }
                                 >
-                                    <TranslatableText>Learn More</TranslatableText>
+                                    <TranslatableText>
+                                        {`Learn more about ${program.title}`}
+                                    </TranslatableText>
                                 </Link>
                             </div>
                         </article>
