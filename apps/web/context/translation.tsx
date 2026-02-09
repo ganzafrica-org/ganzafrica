@@ -14,12 +14,12 @@ import { trackTranslation } from "@/components/analytics/google-analytics";
 export const SUPPORTED_LANGUAGES = [
   { code: "en", name: "English", flag: "/images/flags/en.svg" },
   { code: "fr", name: "Français", flag: "/images/flags/fr.svg" },
-  { code: "es", name: "Español", flag: "/images/flags/es.svg" },
-  { code: "de", name: "Deutsch", flag: "/images/flags/de.svg" },
-  { code: "pt", name: "Português", flag: "/images/flags/pt.svg" },
-  { code: "ar", name: "العربية", flag: "/images/flags/ar.svg" },
-  { code: "zh", name: "中文", flag: "/images/flags/zh.svg" },
-  { code: "it", name: "Italiano", flag: "/images/flags/it.svg" },
+  // { code: "es", name: "Español", flag: "/images/flags/es.svg" },
+  // { code: "de", name: "Deutsch", flag: "/images/flags/de.svg" },
+  // { code: "pt", name: "Português", flag: "/images/flags/pt.svg" },
+  // { code: "ar", name: "العربية", flag: "/images/flags/ar.svg" },
+  // { code: "zh", name: "中文", flag: "/images/flags/zh.svg" },
+  // { code: "it", name: "Italiano", flag: "/images/flags/it.svg" },
 ] as const;
 
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
