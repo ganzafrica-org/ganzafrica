@@ -1,15 +1,18 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { gsap } from "gsap";
+import dynamic from "next/dynamic";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 // import GoogleTranslate from "@/components/google-translate";
 import { TranslatableText } from "@/components/translate/TranslatableText";
+
+// Dynamically import GSAP to reduce initial bundle size
+const loadGSAP = () => import("gsap");
 
 // Import shadcn Navigation Menu components
 import {
@@ -46,6 +49,18 @@ interface HomeHeroProps {
 
 const resolveHref = (path: string) => (path.startsWith("/") ? path : `/${path}`);
 
+// Polyfill for requestIdleCallback
+const requestIdleCallback = (typeof window !== 'undefined' && window.requestIdleCallback) ||
+    ((cb: IdleRequestCallback) => {
+        const start = Date.now();
+        return setTimeout(() => {
+            cb({
+                didTimeout: false,
+                timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+            });
+        }, 1);
+    });
+
 
 export default function HomeHero({
                                      backgroundImage = "/images/hero-test.jpg",
@@ -70,8 +85,8 @@ export default function HomeHero({
     const pathname = usePathname();
     const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Navigation items for shadcn navigation
-    const aboutItems: MenuItem[] = [
+    // Memoize navigation items to prevent re-creation on every render
+    const aboutItems: MenuItem[] = useMemo(() => [
         {
             title: "who we are",
             href: "/about/who-we-are",
@@ -96,9 +111,9 @@ export default function HomeHero({
             description:
                 "Meet the talented individuals behind our mission. Learn about our team members, their expertise, and their contributions to our success.",
         },
-    ];
+    ], []);
 
-    const programsItems: MenuItem[] = [
+    const programsItems: MenuItem[] = useMemo(() => [
         {
             title: "Program",
             href: "/programs",
@@ -108,9 +123,9 @@ export default function HomeHero({
             title: "Projects",
             href: "/projects",
         },
-    ];
+    ], []);
 
-    const programSubItems: MenuItem[] = [
+    const programSubItems: MenuItem[] = useMemo(() => [
         {
             title: "Fellowship Program",
             href: "/programs/fellowship",
@@ -123,9 +138,9 @@ export default function HomeHero({
             description:
                 "A network of graduates continuing to make an impact across the continent.",
         },
-    ];
+    ], []);
 
-    const newsItems: MenuItem[] = [
+    const newsItems: MenuItem[] = useMemo(() => [
         {
             title: "Social Media Updates",
             href: "/newsroom",
@@ -136,50 +151,82 @@ export default function HomeHero({
             href: "/opportunities",
             description: "Explore current openings and ways to grow with us.",
         }
-    ];
+    ], []);
 
-    // Add scroll detection for header styling
+    // Optimized scroll detection with throttling
     useEffect(() => {
+        let ticking = false;
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    setIsScrolled(window.scrollY > 50);
+                    ticking = false;
+                });
+                ticking = true;
+            }
         };
 
-        window.addEventListener("scroll", handleScroll);
+        window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Handle video loading
+    // Optimized video loading - defer and lazy load
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
 
+        // Use intersection observer to only load video when visible
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        // Only load video source when in viewport
+                        if (!video.src) {
+                            const source = video.querySelector("source");
+                            if (source && !source.src) {
+                                source.src = "/videos/hero-video.mp4";
+                                video.load();
+                            }
+                        }
+                    }
+                });
+            },
+            { rootMargin: "50px" }
+        );
+
+        observer.observe(video);
+
         const handleCanPlay = () => {
             setVideoLoaded(true);
+            // Defer animation start to avoid blocking
             if (!animationStarted) {
-                startTransition();
+                requestIdleCallback(() => {
+                    startTransition();
+                }, { timeout: 2000 });
             }
         };
 
-        if (video.readyState >= 3) {
-            handleCanPlay();
-        } else {
-            video.addEventListener("canplay", handleCanPlay);
-        }
+        // Use loadeddata instead of canplay for faster detection
+        video.addEventListener("loadeddata", handleCanPlay, { once: true });
 
+        // Fallback timeout with longer delay to reduce blocking
         const timeoutId = setTimeout(() => {
             if (!animationStarted) {
-                startTransition();
+                requestIdleCallback(() => {
+                    startTransition();
+                }, { timeout: 2000 });
             }
-        }, 5000);
+        }, 3000);
 
         return () => {
-            video.removeEventListener("canplay", handleCanPlay);
+            observer.disconnect();
+            video.removeEventListener("loadeddata", handleCanPlay);
             clearTimeout(timeoutId);
         };
     }, [animationStarted]);
 
-    // Function to start the transition
-    const startTransition = () => {
+    // Optimized transition function with lazy GSAP loading
+    const startTransition = useCallback(async () => {
         if (animationStarted) return;
         setAnimationStarted(true);
 
@@ -195,6 +242,9 @@ export default function HomeHero({
 
         // Check if we're on a small screen (mobile/tablet)
         const isSmallScreen = window.innerWidth < 768;
+
+        // Lazy load GSAP only when needed
+        const { gsap } = await loadGSAP();
 
         // Set initial states
         gsap.set(whiteOverlayRef.current, {
@@ -218,20 +268,27 @@ export default function HomeHero({
             return;
         }
 
-        // Create animation timeline
-        const tl = gsap.timeline();
+        // Create animation timeline with reduced duration for better performance
+        const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
 
         // Set nav color to black right before the animation starts
         navRef.current.setAttribute("data-overlay-passed", "true");
 
+        // Use will-change for better performance
+        if (whiteOverlayRef.current) {
+            whiteOverlayRef.current.style.willChange = "transform, clip-path";
+        }
+        if (videoContainerRef.current) {
+            videoContainerRef.current.style.willChange = "clip-path, height";
+        }
+
         tl.to(initialContentRef.current, {
             opacity: 0,
-            duration: 2.5,
+            duration: 1.5, // Reduced from 2.5
         })
             .to(whiteOverlayRef.current, {
                 y: "0%",
-                duration: 1.2,
-                ease: "power2.inOut",
+                duration: 0.8, // Reduced from 1.2
                 clipPath: "url(#hero-clip)",
             })
             .to(
@@ -240,16 +297,24 @@ export default function HomeHero({
                     clipPath: "url(#hero-clip-inverted)",
                     height: "35%",
                     bottom: 0,
-                    duration: 1.2,
-                    ease: "power2.inOut",
+                    duration: 0.8, // Reduced from 1.2
                 },
                 "<",
             )
             .to(finalContentRef.current, {
                 opacity: 1,
-                duration: 0.8,
+                duration: 0.5, // Reduced from 0.8
+                onComplete: () => {
+                    // Remove will-change after animation
+                    if (whiteOverlayRef.current) {
+                        whiteOverlayRef.current.style.willChange = "auto";
+                    }
+                    if (videoContainerRef.current) {
+                        videoContainerRef.current.style.willChange = "auto";
+                    }
+                }
             });
-    };
+    }, [animationStarted]);
 
     // Dropdown handling functions for mobile
     const handleDropdownOpen = (dropdownName: string) => {
@@ -501,9 +566,10 @@ export default function HomeHero({
                                 src="/images/logo.png"
                                 alt="GanzAfrica"
                                 fill
-                                sizes="(max-width: 768px) 300px, 200px"
+                                sizes="(max-width: 768px) 96px, 128px"
                                 className="object-contain"
                                 priority
+                                quality={90}
                             />
                         </div>
                     </Link>
@@ -684,9 +750,10 @@ export default function HomeHero({
                                         src="/images/logo.png"
                                         alt="GanzAfrica"
                                         fill
-                                        sizes="(max-width: 768px) 300px, 200px"
+                                        sizes="(max-width: 768px) 96px, 128px"
                                         className="object-contain"
                                         priority
+                                        quality={90}
                                     />
                                 </div>
                             </Link>
@@ -750,17 +817,22 @@ export default function HomeHero({
                         priority
                         quality={75}
                         className="object-cover"
+                        sizes="100vw"
+                        placeholder="blur"
+                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                        fetchPriority="high"
                     />
                 </div>
 
                 <video
                     ref={videoRef}
                     autoPlay
+                    poster={backgroundImage}
                     muted
                     loop
                     playsInline
                     className="absolute inset-0 w-full h-full object-cover"
-                    preload="auto"
+                    preload="metadata"
                 >
                     <source src="/videos/hero-video.mp4" type="video/mp4" />
                 </video>
@@ -773,10 +845,10 @@ export default function HomeHero({
             >
                 <div className="text-center text-white mt-20">
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
-                        <TranslatableText>"Sustainable Solutions for Africa's Future"</TranslatableText>
+                        <TranslatableText>Sustainable Solutions for Africa's Future</TranslatableText>
                     </h1>
                     <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-                        <TranslatableText>"Empowering youth to address agri-food systems challenges in Africa"</TranslatableText>
+                        <TranslatableText>Empowering youth to address agri-food systems challenges in Africa</TranslatableText>
                     </p>
                 </div>
             </div>
@@ -811,32 +883,32 @@ export default function HomeHero({
                 <div className="container mx-auto px-4 text-center mt-10 sm:mt-20 md:mt-20 hidden md:block">
                     <h1 className="text-2xl lg:text-4xl font-bold mb-4 sm:mb-6">
                         <TranslatableText as="span" className="text-primary-green">
-                            "A PROSPEROUS AND"
+                            A PROSPEROUS AND
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-green">
-                            "SUSTAINABLE"
+                            SUSTAINABLE
                         </TranslatableText>{" "}
                         <TranslatableText as="span" className="text-primary-orange">
-                            "FUTURE FOR"
+                            FUTURE FOR
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-orange">
-                            "AFRICA"
+                            AFRICA
                         </TranslatableText>
                     </h1>
 
                     <TranslatableText
                         as="p"
                         className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
-                    >"Empowering youth through sustainable land management, agriculture, and environmental initiatives"</TranslatableText>
+                    >Empowering youth through sustainable land management, agriculture, and environmental initiatives</TranslatableText>
 
                     <Link href={`/about/who-we-are`} prefetch={true}>
                         <Button
                             size="lg"
                             className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
                         >
-                            <TranslatableText>"Discover More"</TranslatableText>
+                            <TranslatableText>Discover More</TranslatableText>
                         </Button>
                     </Link>
                 </div>
@@ -844,44 +916,46 @@ export default function HomeHero({
                 <div className="container mx-auto px-4 text-center block md:hidden">
                     <h1 className="text-5xl lg:text-4xl font-bold mb-4 sm:mb-6">
                         <TranslatableText as="span" className="text-primary-green">
-                            "A PROSPEROUS AND"
+                            A PROSPEROUS AND
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-green">
-                            "SUSTAINABLE"
+                            SUSTAINABLE
                         </TranslatableText>{" "}
                         <TranslatableText as="span" className="text-primary-orange">
-                            "FUTURE FOR"
+                            FUTURE FOR
                         </TranslatableText>{" "}
                         <br />
                         <TranslatableText as="span" className="text-primary-orange">
-                            "AFRICA"
+                            AFRICA
                         </TranslatableText>
                     </h1>
 
                     <TranslatableText
                         as="p"
                         className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
-                    >"Empowering youth through sustainable land management, agriculture, and environmental initiatives"</TranslatableText>
+                    >Empowering youth through sustainable land management, agriculture, and environmental initiatives</TranslatableText>
 
                     <Link href={`/about/who-we-are`} prefetch={true}>
                         <Button
                             size="lg"
                             className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
                         >
-                            <TranslatableText>"Discover More"</TranslatableText>
+                            <TranslatableText>Discover More</TranslatableText>
                         </Button>
                     </Link>
                 </div>
 
-                {/* Leaves */}
+                {/* Leaves - Lazy loaded for better performance */}
                 <div className="absolute -left-1 top-1/3 transform rotate-[31.83deg] -translate-x-1/4 z-50 w-0 sm:w-[100px] md:w-[150px] lg:w-[200px] hidden sm:block aspect-square">
                     <Image
                         src="/images/leaf.png"
                         alt="Decorative leaf"
                         fill
                         className="object-contain"
-                        priority
+                        loading="lazy"
+                        quality={75}
+                        sizes="(max-width: 640px) 0px, (max-width: 768px) 100px, (max-width: 1024px) 150px, 200px"
                     />
                 </div>
 
@@ -892,24 +966,27 @@ export default function HomeHero({
                             alt="Decorative leaf"
                             fill
                             className="object-contain rotate-180"
-                            priority
+                            loading="lazy"
+                            quality={75}
+                            sizes="(max-width: 640px) 0px, (max-width: 768px) 100px, (max-width: 1024px) 150px, 200px"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Overlay video above all content */}
-            <div className="pointer-events-none absolute inset-0 z-60">
-                <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="w-full h-full object-cover opacity-30"
-                >
-                    <source src="/videos/hero-video.mp4" type="video/mp4" />
-                </video>
-            </div>
+            {/*/!* Overlay video above all content *!/*/}
+            {/*<div className="pointer-events-none absolute inset-0 z-60">*/}
+            {/*    <video*/}
+            {/*        autoPlay*/}
+            {/*        muted*/}
+            {/*        loop*/}
+            {/*        playsInline*/}
+            {/*        className="w-full h-full object-cover opacity-30"*/}
+            {/*        preload="auto"*/}
+            {/*    >*/}
+            {/*        <source src="/videos/hero-video.mp4" type="video/mp4" />*/}
+            {/*    </video>*/}
+            {/*</div>*/}
         </section>
     );
 }

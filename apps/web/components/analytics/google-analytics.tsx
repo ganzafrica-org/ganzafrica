@@ -1,7 +1,7 @@
 'use client'
 
 import { GoogleAnalytics } from '@next/third-parties/google'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import CookieConsent from 'react-cookie-consent'
 
@@ -13,6 +13,7 @@ export function GoogleAnalyticsComponent({ gaId }: GoogleAnalyticsComponentProps
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [cookieAccepted, setCookieAccepted] = useState(false)
+  const hasInitializedScrollTracking = useRef(false)
 
   useEffect(() => {
     // Check if cookies were already accepted
@@ -23,10 +24,18 @@ export function GoogleAnalyticsComponent({ gaId }: GoogleAnalyticsComponentProps
   }, [])
 
   useEffect(() => {
-    if (cookieAccepted && typeof window !== 'undefined' && window.gtag) {
-      window.gtag('config', gaId, {
-        page_path: pathname + (searchParams.toString() ? `?${searchParams.toString()}` : ''),
-      })
+    if (!cookieAccepted || typeof window === 'undefined' || !window.gtag) return
+
+    const pagePath =
+      pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '')
+
+    // Standard GA4 page_view tracking for all pages
+    trackPageView(pagePath)
+
+    // Initialize global scroll-depth tracking once per session
+    if (!hasInitializedScrollTracking.current) {
+      initGlobalScrollDepthTracking()
+      hasInitializedScrollTracking.current = true
     }
   }, [pathname, searchParams, gaId, cookieAccepted])
 
@@ -96,6 +105,70 @@ export function GoogleAnalyticsComponent({ gaId }: GoogleAnalyticsComponentProps
   )
 }
 
+/**
+ * Global scroll-depth tracking
+ * - Fires at 25%, 50%, 75% and 100% of page scroll
+ * - Resets when the pathname changes
+ * - Throttled with requestAnimationFrame
+ */
+const SCROLL_THRESHOLDS = [25, 50, 75, 100]
+
+const initGlobalScrollDepthTracking = () => {
+  if (typeof window === 'undefined' || !window.gtag) return
+
+  let ticking = false
+  let lastPathname = window.location.pathname
+  let firedThresholds = new Set<number>()
+
+  const resetForNewPath = () => {
+    firedThresholds = new Set<number>()
+  }
+
+  const handleScroll = () => {
+    if (ticking) return
+    ticking = true
+
+    window.requestAnimationFrame(() => {
+      try {
+        const { scrollY, innerHeight } = window
+        const { scrollHeight } = document.documentElement
+
+        if (scrollHeight <= innerHeight) {
+          ticking = false
+          return
+        }
+
+        const maxScrollable = scrollHeight - innerHeight
+        const percent = Math.min(
+          100,
+          Math.max(0, (scrollY / maxScrollable) * 100)
+        )
+
+        const currentPath = window.location.pathname
+        if (currentPath !== lastPathname) {
+          lastPathname = currentPath
+          resetForNewPath()
+        }
+
+        for (const threshold of SCROLL_THRESHOLDS) {
+          if (!firedThresholds.has(threshold) && percent >= threshold) {
+            firedThresholds.add(threshold)
+
+            window.gtag('event', 'scroll_depth', {
+              percent_scrolled: threshold,
+              page_path: currentPath,
+            })
+          }
+        }
+      } finally {
+        ticking = false
+      }
+    })
+  }
+
+  window.addEventListener('scroll', handleScroll, { passive: true })
+}
+
 // Event tracking utilities
 export const trackEvent = (eventName: string, parameters?: Record<string, any>) => {
   if (typeof window !== 'undefined' && window.gtag) {
@@ -120,17 +193,24 @@ export const trackVideoEvent = (action: 'play' | 'pause' | 'complete', videoTitl
   })
 }
 
-export const trackDownload = (fileName: string, fileType: string) => {
-  trackEvent('file_download', {
-    file_name: fileName,
-    file_type: fileType,
-  })
-}
-
 export const trackFormSubmission = (formName: string, success: boolean = true) => {
   trackEvent('form_submit', {
     form_name: formName,
     success: success,
+  })
+}
+
+export const trackTranslation = (params: {
+  source_language: string
+  target_language: string
+  scope: 'article' | 'page' | 'ui'
+  content_id?: string
+}) => {
+  trackEvent('translation', {
+    source_language: params.source_language,
+    target_language: params.target_language,
+    translation_scope: params.scope,
+    content_id: params.content_id,
   })
 }
 
@@ -165,15 +245,16 @@ export const trackProgramView = (programName: string, programType?: string) => {
   })
 }
 
-export const trackJobApplicationStart = (jobTitle: string, jobId: string) => {
+// For future use
+export const trackApplicationStart = (jobTitle: string, jobId: string) => {
   trackEvent('begin_checkout', {
     item_name: jobTitle,
     item_id: jobId,
     content_type: 'job_application',
   })
 }
-
-export const trackJobApplicationComplete = (jobTitle: string, jobId: string) => {
+// For future use
+export const trackApplicationComplete = (jobTitle: string, jobId: string) => {
   trackEvent('purchase', {
     item_name: jobTitle,
     item_id: jobId,

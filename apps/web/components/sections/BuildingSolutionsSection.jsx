@@ -63,8 +63,9 @@ const BuildingSolutionsSection = ({ categories, tags }) => {
                 engine.world.gravity.y = 0.3;
 
                 // Setup canvas size - reduced height further
+                // Batch DOM reads to avoid forced reflow
                 const canvasSize = {
-                    width: sceneRef.current.clientWidth,
+                    width: sceneRef.current ? sceneRef.current.clientWidth : 1200,
                     height: 200
                 };
 
@@ -134,10 +135,16 @@ const BuildingSolutionsSection = ({ categories, tags }) => {
                     return tagElement;
                 });
 
+                // Batch all DOM reads first to avoid forced reflows
+                // Read all geometric properties before any writes
+                const elementDimensions = wordElements.map((elemRef) => ({
+                    elem: elemRef,
+                    width: elemRef.offsetWidth || 100,
+                    height: elemRef.offsetHeight || 40
+                }));
+
                 // Create physics bodies for tags with modified properties for slower movement
-                const wordBodies = wordElements.map((elemRef) => {
-                    const width = elemRef.offsetWidth;
-                    const height = elemRef.offsetHeight;
+                const wordBodies = elementDimensions.map(({ elem: elemRef, width, height }) => {
                     return {
                         body: Bodies.rectangle(
                             // Start all tags in the center with slight random offset
@@ -156,10 +163,12 @@ const BuildingSolutionsSection = ({ categories, tags }) => {
                             }
                         ),
                         elem: elemRef,
+                        width: width,
+                        height: height,
                         render() {
                             const { x, y } = this.body.position;
-                            this.elem.style.top = `${y - height/2}px`;
-                            this.elem.style.left = `${x - width/2}px`;
+                            this.elem.style.top = `${y - this.height/2}px`;
+                            this.elem.style.left = `${x - this.width/2}px`;
                             this.elem.style.transform = `rotate(${this.body.angle}rad)`;
                         }
                     };
@@ -233,25 +242,30 @@ const BuildingSolutionsSection = ({ categories, tags }) => {
 
                 // Handle window resize to keep physics working correctly
                 const handleResize = () => {
-                    // Update canvas size
-                    const newWidth = sceneRef.current.clientWidth;
-                    render.options.width = newWidth;
-                    render.canvas.width = newWidth;
+                    // Batch DOM reads to avoid forced reflow
+                    if (!sceneRef.current) return;
+                    
+                    // Use requestAnimationFrame to batch resize operations
+                    requestAnimationFrame(() => {
+                        const newWidth = sceneRef.current ? sceneRef.current.clientWidth : 1200;
+                        render.options.width = newWidth;
+                        render.canvas.width = newWidth;
 
-                    // Update boundary positions
-                    Matter.Body.setPosition(floor, {
-                        x: newWidth / 2,
-                        y: canvasSize.height
-                    });
+                        // Update boundary positions
+                        Matter.Body.setPosition(floor, {
+                            x: newWidth / 2,
+                            y: canvasSize.height
+                        });
 
-                    Matter.Body.setPosition(wall2, {
-                        x: newWidth,
-                        y: canvasSize.height / 2
-                    });
+                        Matter.Body.setPosition(wall2, {
+                            x: newWidth,
+                            y: canvasSize.height / 2
+                        });
 
-                    Matter.Body.setPosition(top, {
-                        x: newWidth / 2,
-                        y: 0
+                        Matter.Body.setPosition(top, {
+                            x: newWidth / 2,
+                            y: 0
+                        });
                     });
                 };
 

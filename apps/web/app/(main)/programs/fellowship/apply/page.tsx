@@ -4,11 +4,15 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, FileText, Upload, CheckCircle2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Textarea } from '@workspace/ui/components/textarea';
+import { Button } from '@ui/button';
+import { Input } from '@ui/input';
+import { Textarea } from '@ui/textarea';
 import { useRouter } from 'next/navigation';
 import apiClient from "@/lib/api-client";
+import {Metadata} from "next";
+import { trackFormSubmission, trackApplicationComplete, trackApplicationStart } from "@/components/analytics/google-analytics";
+
+
 
 // Normalize lucide icon component types across React versions
 type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -156,6 +160,7 @@ export default function FellowshipApplyPage() {
   const [direction, setDirection] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [hasTrackedStart, setHasTrackedStart] = useState(false);
   
   // Opportunity ID (if applying to a specific opportunity)
   // This could be passed as a URL parameter
@@ -341,6 +346,11 @@ export default function FellowshipApplyPage() {
   
       // Application was submitted successfully
       toast.success('Application submitted successfully!');
+      trackFormSubmission("fellowship_application", true);
+      trackApplicationComplete(
+        opportunityId ? `Opportunity ${opportunityId}` : "Fellowship Application",
+        opportunityId ?? "fellowship_general"
+      );
       
       // Redirect after success
       setTimeout(() => {
@@ -348,6 +358,7 @@ export default function FellowshipApplyPage() {
       }, 1500);
     } catch (error) {
       console.error('Application submission error:', error);
+      trackFormSubmission("fellowship_application", false);
       
       // Handle error response from the API
       if (error instanceof Error && (error as any).response && (error as any).response.data) {
@@ -373,6 +384,13 @@ export default function FellowshipApplyPage() {
   const nextStep = () => {
     if (!validateStep()) return;
     setDirection(1);
+    if (!hasTrackedStart) {
+      trackApplicationStart(
+        "Fellowship Application",
+        opportunityId ?? "fellowship_general"
+      );
+      setHasTrackedStart(true);
+    }
     setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
   };
 

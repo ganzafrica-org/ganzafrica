@@ -10,43 +10,40 @@ import LatestNewsSection from "@/components/sections/homepage/latest-news-sectio
 import NewsletterSection from "@/components/sections/newsletter-section";
 import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-unique-section";
 
-// Interface for page props with Promise-based params
-interface PageProps {
-  params: { locale: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+// Simplified Metadata generation
+export async function generateMetadata(): Promise<Metadata> {
+    return baseGenerateMetadata({
+        params: "",
+        title: "GanzAfrica - Empowering Africa's Food System Leaders",
+        description: "GanzAfrica offers innovative training, mentorship, and work placement programs preparing African youth for careers in agriculture, sustainable land management, and data-driven decision-making. Join us in transforming Africa's food systems.",
+        imagePath: "/images/og/home.jpg",
+        keywords: [
+            "GanzAfrica",
+            "agriculture training Africa",
+            "sustainable farming",
+            "fellowship program Africa",
+            "food systems transformation",
+            "youth empowerment Africa",
+            "agriculture mentorship",
+            "sustainable land management",
+            "data-driven agriculture"
+        ],
+        url: process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org"
+    });
 }
 
-// Generate metadata for SEO
-export async function generateMetadata({
-  params,
-}: {
-  params: {};
-}): Promise<Metadata> {
-  return baseGenerateMetadata({
-    params: {
-        locale: "/"
-    },
-    title: "GanzAfrica",
-    description: "GanzAfrica offers an innovative training, mentorship, and work placement program that meets both pressing needs at once—and prepares African youth to take the future in their hands.",
-    imagePath: "/images/og/home.jpg",
-  });
-}
-
-export default async function HomePage({ params }: PageProps) {
-  const resolvedParams = await params;
-  const locale = resolvedParams.locale;
-
-  return (
-    <main>
-      <FellowsSection />
-      <WhyGanzAfricaSection />
-      <GanzAfricaUniqueSection />
-      <FlagshipProgramsSection />
-      <ProjectsSection />
-      <PartnersSection />
-      <TestimonialsSection />
-      <LatestNewsSection />
-      <NewsletterSection />
-    </main>
-  );
+export default function HomePage() {
+    return (
+        <main>
+            <FellowsSection />
+            <WhyGanzAfricaSection />
+            <GanzAfricaUniqueSection />
+            <FlagshipProgramsSection />
+            <ProjectsSection />
+            <PartnersSection />
+            <TestimonialsSection />
+            <LatestNewsSection />
+            <NewsletterSection />
+        </main>
+    );
 }

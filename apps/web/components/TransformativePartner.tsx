@@ -48,8 +48,8 @@ export const TransformativePartner = () => {
                                 </div>
                                 <div className="space-y-4 mt-8">
                                     <div className="aspect-[4/3] rounded-md bg-primary-orange/5 p-6 flex items-center justify-center">
-                                        <div className="text-center">
-                                            <div className="text-4xl font-bold text-primary-green mb-2">25</div>
+                                        <div className="text-center text-primary-orange">
+                                            <div className="text-4xl font-bold mb-2">25</div>
                                             <div className="text-sm font-medium"><TranslatableText>Alumni</TranslatableText></div>
                                         </div>
                                     </div>

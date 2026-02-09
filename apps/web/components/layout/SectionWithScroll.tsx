@@ -57,7 +57,7 @@ export default function SectionWithScrollAnimation({
       className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden"
     >
       <motion.div
-        className={`p-10 ${bgColor} min-h-full lg:h-[510px] w-full rounded-sm ${contentOrder}`}
+        className={`p-10 ${bgColor} min-h-full lg:h-[520px] w-full rounded-sm ${contentOrder}`}
         initial={{ opacity: 0, x: contentInitialX }}
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}

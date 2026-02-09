@@ -11,15 +11,19 @@ import {
     AudioUnmutedIcon,
     FullscreenIcon
 } from "@/components/ui/icons";
-import { trackVideoEvent, trackEvent } from "@/components/analytics/google-analytics";
+import { trackVideoEvent, trackEvent, trackPageView } from "@/components/analytics/google-analytics";
 import VideoPlayer from "@/components/VideoPlayer";
 import { TranslatableText } from "@/components/translate/TranslatableText";
 
 
-export default function OurStoryContent({ }) {
+    export default function OurStoryContent({ }) {
     const contentClass = "flex-1 overflow-y-auto pr-2";
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isMuted, setIsMuted] = useState(true);
+
+    React.useEffect(() => {
+        trackPageView('/about/our-story', 'Our Story');
+    }, []);
 
     const toggleMute = () => {
         if (videoRef.current) {
@@ -68,6 +72,7 @@ export default function OurStoryContent({ }) {
                         className="object-cover object-center"
                         style={{ objectPosition: "center 30%" }}
                         priority
+                        fetchPriority="high"
                     />
                 </div>
 
