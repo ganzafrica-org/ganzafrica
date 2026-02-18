@@ -22,15 +22,14 @@ import {
 import {
   Upload,
   RefreshCw,
-  Plus,
   Mail,
   CheckCircle,
   XCircle,
   Search,
-  Filter,
   FileText,
   AlertCircle,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
@@ -50,8 +49,11 @@ interface Payroll {
   email: string;
   payroll_period: string;
   date_of_payment: string;
-  basic_salary: string;
+  basic_salary: string | null;
   net_salary: string;
+  net_salary_usd: string | null;
+  currency: string | null;
+  payroll_type: string | null;
   email_sent: boolean;
   email_sent_at: string | null;
   created_at: string;
@@ -78,6 +80,10 @@ export default function PayslipsPage() {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [sendingBulkEmails, setSendingBulkEmails] = useState(false);
+
+  // Delete confirmation
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Filters and pagination from URL
   const page = parseInt(searchParams.get("page") || "1");
@@ -171,11 +177,23 @@ export default function PayslipsPage() {
     updateParams({ limit: value, page: "1" });
   };
 
-  const formatCurrency = (value: string) => {
-    return new Intl.NumberFormat("en-RW", {
-      style: "currency",
-      currency: "RWF",
-    }).format(parseFloat(value));
+  const formatCurrency = (value: string | null | undefined, currency = "RWF") => {
+    const num = parseFloat(value || "");
+    if (isNaN(num)) return "—";
+    // XOF and RWF don't use decimal places by convention
+    const decimals = currency === "USD" ? 2 : 0;
+    return `${currency} ${num.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+  };
+
+  const getDisplayCurrency = (payroll: Payroll) => payroll.currency || "RWF";
+
+  const getDisplayNetSalary = (payroll: Payroll) => {
+    const currency = getDisplayCurrency(payroll);
+    // For USD employees (rwf_usd, wop_usd) show net_salary_usd
+    if ((payroll.payroll_type === "rwf_usd" || payroll.payroll_type === "wop_usd") && payroll.net_salary_usd) {
+      return formatCurrency(payroll.net_salary_usd, "USD");
+    }
+    return formatCurrency(payroll.net_salary, currency);
   };
 
   const formatDate = (dateString: string) => {
@@ -354,6 +372,31 @@ export default function PayslipsPage() {
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    try {
+      setDeleting(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/payroll/${deleteId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        },
+      );
+      if (!response.ok) throw new Error("Failed to delete payroll");
+      toast.success("Payroll deleted");
+      setDeleteId(null);
+      fetchPayrolls();
+    } catch (error) {
+      console.error("Error deleting payroll:", error);
+      toast.error("Failed to delete payroll");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -500,10 +543,10 @@ export default function PayslipsPage() {
                   <TableCell>{payroll.payroll_period}</TableCell>
                   <TableCell>{formatDate(payroll.date_of_payment)}</TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(payroll.basic_salary)}
+                    {formatCurrency(payroll.basic_salary, getDisplayCurrency(payroll))}
                   </TableCell>
                   <TableCell className="text-right">
-                    {formatCurrency(payroll.net_salary)}
+                    {getDisplayNetSalary(payroll)}
                   </TableCell>
                   <TableCell>
                     {payroll.email_sent ? (
@@ -533,15 +576,19 @@ export default function PayslipsPage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleSendEmail(payroll.id)}
-                        disabled={payroll.email_sent}
                         className="cursor-pointer"
-                        title={
-                          payroll.email_sent
-                            ? "Email already sent"
-                            : "Send payslip email"
-                        }
+                        title="Send payslip email"
                       >
                         <Mail className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setDeleteId(payroll.id)}
+                        className="cursor-pointer text-red-500 hover:text-red-700"
+                        title="Delete payroll"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -558,8 +605,8 @@ export default function PayslipsPage() {
           <DialogHeader>
             <DialogTitle>Upload Payroll CSV</DialogTitle>
             <DialogDescription>
-              Upload a CSV file with payroll data. The system will validate
-              emails against the database.
+              Upload a CSV file with payroll data. The format will be detected
+              automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -684,6 +731,31 @@ export default function PayslipsPage() {
                 </Button>
               </>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Payroll</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this payroll record? This action
+              cannot be undone. You can upload and resend a new one after.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
