@@ -9,11 +9,9 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import env from "../config/env";
 import { Logger } from "../config";
-import { getFileUrl } from "../middlewares/upload";
 
 const logger = new Logger("PDFService");
 
-// Create S3 client for Digital Ocean Spaces
 const s3Client = new S3Client({
   endpoint: env.DO_SPACES_ENDPOINT,
   region: env.DO_SPACES_REGION,
@@ -24,16 +22,22 @@ const s3Client = new S3Client({
   forcePathStyle: false,
 });
 
-interface PayslipData {
+export interface PayslipData {
   name: string;
   email: string;
   payroll_period: string;
   date_of_payment: string;
   employee_id?: string;
   employee_tin_number?: string;
-  basic_salary: string;
-  gross_salary: string;
-  net_salary: string;
+  // Format type determines layout
+  payroll_type?: string; // 'rwf' | 'rwf_usd' | 'wop_usd' | 'xof' | 'rwf_wop'
+  currency?: string;
+  // Format 1 (RWF / RWF-USD)
+  basic_salary?: string;
+  gross_salary?: string;
+  net_salary?: string;
+  net_salary_usd?: string;
+  exchange_rate_used?: string;
   deductions?: {
     medical_employee?: string;
     csr_employee?: string;
@@ -41,233 +45,250 @@ interface PayslipData {
     tpr?: string;
     cbhi?: string;
   };
+  // Format 2 (WOP/USD international)
+  gross_usd?: string;
+  wop_usd?: string;
+  wop_rwf?: string;
+  // Format 3 (Burkina Faso XOF)
+  housing_allowance?: string;
+  function_allowance?: string;
+  transport_allowance?: string;
+  // Format 4 (RWF withholding)
+  wop_rwf_only?: string;
+}
+
+// Brand colours
+const GREEN = "#045F3C";
+const ORANGE = "#EA580C";
+const YELLOW = "#F59E0B";
+
+function fmt(value: string | undefined | null, currency = "RWF"): string {
+  const num = parseFloat(value || "0");
+  if (isNaN(num)) return `${currency} 0.00`;
+  return `${currency} ${num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function drawHeader(doc: PDFKit.PDFDocument, period: string) {
+  try {
+    const logoPath = path.join(process.cwd(), "public", "images", "log.png");
+    if (fs.existsSync(logoPath)) {
+      doc.image(logoPath, 50, 45, { width: 120 });
+    }
+  } catch {
+    logger.warn("Logo not found, skipping");
+  }
+
+  doc.fontSize(22).fillColor(GREEN).text("GANZAFRICA", 200, 50, { align: "right" });
+  doc.fontSize(10).fillColor("#666666").text("info@ganzafrica.org", 200, 75, { align: "right" });
+  doc.fontSize(18).fillColor(ORANGE).text("PAYSLIP", 200, 95, { align: "right" });
+
+  doc.moveTo(50, 130).lineTo(550, 130).strokeColor(GREEN).lineWidth(2).stroke();
+  doc.y = 150;
+}
+
+function drawEmployeeInfo(
+  doc: PDFKit.PDFDocument,
+  data: PayslipData,
+) {
+  doc.fontSize(14).fillColor(GREEN).text("Employee Information", 50);
+  doc.moveDown(0.5);
+  doc.fontSize(11).fillColor("#000000");
+  doc.text(`Name: ${data.name}`, 50);
+  doc.text(`Email: ${data.email}`, 50);
+  if (data.employee_id) doc.text(`Employee ID: ${data.employee_id}`, 50);
+  if (data.employee_tin_number) doc.text(`TIN Number: ${data.employee_tin_number}`, 50);
+  doc.text(`Period: ${data.payroll_period}`, 50);
+  if (data.date_of_payment) {
+    const d = new Date(data.date_of_payment);
+    if (!isNaN(d.getTime())) {
+      doc.text(`Payment Date: ${d.toLocaleDateString()}`, 50);
+    }
+  }
+  doc.moveDown(1.5);
+}
+
+function drawRow(
+  doc: PDFKit.PDFDocument,
+  label: string,
+  value: string,
+) {
+  const y = doc.y;
+  doc.fontSize(11).fillColor("#000000").text(label, 50, y);
+  doc.text(value, 400, y, { width: 150, align: "right" });
+}
+
+function drawSectionTitle(doc: PDFKit.PDFDocument, title: string, color = GREEN) {
+  doc.fontSize(14).fillColor(color).text(title, 50);
+  doc.moveDown(0.5);
+}
+
+function drawNetBox(doc: PDFKit.PDFDocument, label: string, value: string) {
+  doc.moveDown(1.5);
+  doc.rect(50, doc.y, 500, 40).fillAndStroke(GREEN, GREEN);
+  doc.fontSize(16).fillColor("#FFFFFF").text(label, 60, doc.y + 10);
+  doc.fontSize(18).fillColor(YELLOW).text(value, 400, doc.y - 25, { width: 140, align: "right" });
+}
+
+function drawFooter(doc: PDFKit.PDFDocument) {
+  doc.fontSize(9).fillColor("#999999").text(
+    "This is a computer-generated payslip. No signature required.",
+    50,
+    doc.page.height - 100,
+    { align: "center" },
+  );
+  doc.fontSize(9).text(
+    "For inquiries, contact: info@ganzafrica.org",
+    50,
+    doc.page.height - 85,
+    { align: "center" },
+  );
+  doc.moveTo(50, doc.page.height - 70).lineTo(550, doc.page.height - 70).strokeColor(GREEN).lineWidth(1).stroke();
+  doc.fontSize(8).fillColor("#CCCCCC").text(
+    `Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
+    50,
+    doc.page.height - 60,
+    { align: "center" },
+  );
 }
 
 /**
- * Generate payslip PDF
+ * Generate payslip PDF — routes to correct layout based on payroll_type
  */
 export async function generatePayslipPDF(data: PayslipData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: "A4", margin: 50 });
       const chunks: Buffer[] = [];
-
       doc.on("data", (chunk) => chunks.push(chunk));
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
-      // Brand colors
-      const GREEN = "#045F3C";
-      const ORANGE = "#EA580C";
-      const YELLOW = "#F59E0B";
+      const type = data.payroll_type || "rwf";
 
-      // Header with logo and company info
-      try {
-        // Try to load logo - adjust path based on your setup
-        const logoPath = path.join(
-          process.cwd(),
-          "public",
-          "images",
-          "log.png",
-        );
-        if (fs.existsSync(logoPath)) {
-          doc.image(logoPath, 50, 45, { width: 120 });
-        }
-      } catch (err) {
-        logger.warn("Logo not found, skipping");
+      drawHeader(doc, data.payroll_period);
+      drawEmployeeInfo(doc, data);
+
+      if (type === "rwf" || type === "rwf_usd") {
+        renderFormat1(doc, data, type === "rwf_usd");
+      } else if (type === "wop_usd") {
+        renderFormat2(doc, data);
+      } else if (type === "xof") {
+        renderFormat3(doc, data);
+      } else if (type === "rwf_wop") {
+        renderFormat4(doc, data);
+      } else {
+        renderFormat1(doc, data, false);
       }
 
-      // Company name and payslip title on the right
-      doc
-        .fontSize(22)
-        .fillColor(GREEN)
-        .text("GANZAFRICA", 200, 50, { align: "right" });
-
-      doc
-        .fontSize(10)
-        .fillColor("#666666")
-        .text("info@ganzafrica.org", 200, 75, { align: "right" });
-
-      doc
-        .fontSize(18)
-        .fillColor(ORANGE)
-        .text("PAYSLIP", 200, 95, { align: "right" });
-
-      // Horizontal line
-      doc
-        .moveTo(50, 130)
-        .lineTo(550, 130)
-        .strokeColor(GREEN)
-        .lineWidth(2)
-        .stroke();
-
-      doc.moveDown(3);
-
-      // Employee Details Box
-      doc.y = 150;
-      doc.fontSize(14).fillColor(GREEN).text("Employee Information", 50);
-
-      doc.moveDown(0.5);
-      doc.fontSize(11).fillColor("#000000");
-
-      doc.text(`Name: ${data.name}`, 50);
-      doc.text(`Email: ${data.email}`, 50);
-      if (data.employee_id) doc.text(`Employee ID: ${data.employee_id}`, 50);
-      if (data.employee_tin_number)
-        doc.text(`TIN Number: ${data.employee_tin_number}`, 50);
-      doc.text(`Period: ${data.payroll_period}`, 50);
-      doc.text(
-        `Payment Date: ${new Date(data.date_of_payment).toLocaleDateString()}`,
-        50,
-      );
-
-      doc.moveDown(1.5);
-
-      // Salary Details
-      doc.fontSize(14).fillColor(GREEN).text("Salary Breakdown", 50);
-
-      doc.moveDown(0.5);
-
-      // Format currency helper
-      const formatCurrency = (value: string) => {
-        return `RWF ${parseFloat(value).toLocaleString("en-RW", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`;
-      };
-
-      // Salary table
-      doc.fontSize(11).fillColor("#000000");
-
-      const startY = doc.y;
-      doc.text("Basic Salary:", 50, startY);
-      doc.text(formatCurrency(data.basic_salary), 400, startY, {
-        width: 150,
-        align: "right",
-      });
-
-      doc.text("Gross Salary:", 50);
-      doc.text(formatCurrency(data.gross_salary), 400, doc.y - 13, {
-        width: 150,
-        align: "right",
-      });
-
-      // Deductions
-      if (data.deductions) {
-        doc.moveDown(1);
-        doc.fontSize(14).fillColor(ORANGE).text("Deductions", 50);
-        doc.moveDown(0.5);
-        doc.fontSize(11).fillColor("#000000");
-
-        if (data.deductions.medical_employee) {
-          const y = doc.y;
-          doc.text("Medical (Employee 7.5%):", 50, y);
-          doc.text(formatCurrency(data.deductions.medical_employee), 400, y, {
-            width: 150,
-            align: "right",
-          });
-        }
-
-        if (data.deductions.csr_employee) {
-          const y = doc.y;
-          doc.text("CSR (Employee 6%):", 50, y);
-          doc.text(formatCurrency(data.deductions.csr_employee), 400, y, {
-            width: 150,
-            align: "right",
-          });
-        }
-
-        if (data.deductions.maternity_employee) {
-          const y = doc.y;
-          doc.text("Maternity (Employee 0.3%):", 50, y);
-          doc.text(formatCurrency(data.deductions.maternity_employee), 400, y, {
-            width: 150,
-            align: "right",
-          });
-        }
-
-        if (data.deductions.tpr) {
-          const y = doc.y;
-          doc.text("TPR (30%):", 50, y);
-          doc.text(formatCurrency(data.deductions.tpr), 400, y, {
-            width: 150,
-            align: "right",
-          });
-        }
-
-        if (data.deductions.cbhi) {
-          const y = doc.y;
-          doc.text("CBHI (0.5%):", 50, y);
-          doc.text(formatCurrency(data.deductions.cbhi), 400, y, {
-            width: 150,
-            align: "right",
-          });
-        }
-      }
-
-      doc.moveDown(1.5);
-
-      // Net Salary - highlighted
-      doc.rect(50, doc.y, 500, 40).fillAndStroke(GREEN, GREEN);
-
-      doc
-        .fontSize(16)
-        .fillColor("#FFFFFF")
-        .text("Net Salary:", 60, doc.y + 10);
-
-      doc
-        .fontSize(18)
-        .fillColor(YELLOW)
-        .text(formatCurrency(data.net_salary), 400, doc.y - 25, {
-          width: 140,
-          align: "right",
-        });
-
-      // Footer
-      doc
-        .moveDown(3)
-        .fontSize(9)
-        .fillColor("#999999")
-        .text(
-          "This is a computer-generated payslip. No signature required.",
-          50,
-          doc.page.height - 100,
-          { align: "center" },
-        );
-
-      doc
-        .fontSize(9)
-        .text(
-          "For inquiries, contact: info@ganzafrica.org",
-          50,
-          doc.page.height - 85,
-          { align: "center" },
-        );
-
-      // Footer line
-      doc
-        .moveTo(50, doc.page.height - 70)
-        .lineTo(550, doc.page.height - 70)
-        .strokeColor(GREEN)
-        .lineWidth(1)
-        .stroke();
-
-      doc
-        .fontSize(8)
-        .fillColor("#CCCCCC")
-        .text(
-          `Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`,
-          50,
-          doc.page.height - 60,
-          { align: "center" },
-        );
-
+      drawFooter(doc);
       doc.end();
     } catch (error) {
       logger.error("Error generating PDF:", error);
       reject(error);
     }
   });
+}
+
+/**
+ * Format 1: Rwanda RWF staff (or RWF with USD net for USD employees)
+ */
+function renderFormat1(
+  doc: PDFKit.PDFDocument,
+  data: PayslipData,
+  isUsd: boolean,
+) {
+  drawSectionTitle(doc, "Salary Breakdown");
+
+  drawRow(doc, "Basic Salary:", fmt(data.basic_salary, "RWF"));
+  drawRow(doc, "Gross Salary:", fmt(data.gross_salary, "RWF"));
+
+  if (data.deductions) {
+    doc.moveDown(1);
+    drawSectionTitle(doc, "Deductions", ORANGE);
+
+    if (data.deductions.medical_employee)
+      drawRow(doc, "Medical (Employee 7.5%):", fmt(data.deductions.medical_employee, "RWF"));
+    if (data.deductions.csr_employee)
+      drawRow(doc, "CSR (Employee 6%):", fmt(data.deductions.csr_employee, "RWF"));
+    if (data.deductions.maternity_employee)
+      drawRow(doc, "Maternity (Employee 0.3%):", fmt(data.deductions.maternity_employee, "RWF"));
+    if (data.deductions.tpr)
+      drawRow(doc, "TPR (30%):", fmt(data.deductions.tpr, "RWF"));
+    if (data.deductions.cbhi)
+      drawRow(doc, "CBHI (0.5%):", fmt(data.deductions.cbhi, "RWF"));
+  }
+
+  if (isUsd && data.exchange_rate_used) {
+    doc.moveDown(1);
+    drawSectionTitle(doc, "Exchange Rate Info");
+    drawRow(doc, "NCBA Rate Used:", `1 USD = RWF ${parseFloat(data.exchange_rate_used).toLocaleString()}`);
+    drawNetBox(doc, "Net Salary:", fmt(data.net_salary_usd, "USD"));
+  } else {
+    drawNetBox(doc, "Net Salary:", fmt(data.net_salary, "RWF"));
+  }
+}
+
+/**
+ * Format 2: International WOP, USD net
+ * Shows: USD Total (gross), WOP USD, WOP RWF, Rate used, Net USD
+ */
+function renderFormat2(doc: PDFKit.PDFDocument, data: PayslipData) {
+  drawSectionTitle(doc, "Salary Breakdown");
+
+  drawRow(doc, "Gross (USD):", fmt(data.gross_usd, "USD"));
+
+  doc.moveDown(1);
+  drawSectionTitle(doc, "Withholding Tax (WOP)", ORANGE);
+  drawRow(doc, "WOP (USD):", fmt(data.wop_usd, "USD"));
+  drawRow(doc, "WOP (RWF):", fmt(data.wop_rwf, "RWF"));
+
+  if (data.exchange_rate_used) {
+    doc.moveDown(1);
+    drawSectionTitle(doc, "Exchange Rate");
+    drawRow(doc, "Rate Used:", `1 USD = RWF ${parseFloat(data.exchange_rate_used).toLocaleString()}`);
+  }
+
+  drawNetBox(doc, "Net Salary:", fmt(data.net_salary, "USD"));
+}
+
+/**
+ * Format 3: Burkina Faso XOF
+ * Shows: Basic (XOF), Housing allowance, Function allowance, Transport allowance, Gross = Net (XOF)
+ */
+function renderFormat3(doc: PDFKit.PDFDocument, data: PayslipData) {
+  drawSectionTitle(doc, "Salary Breakdown");
+
+  drawRow(doc, "Basic Salary:", fmt(data.basic_salary, "XOF"));
+
+  doc.moveDown(1);
+  drawSectionTitle(doc, "Allowances");
+  if (data.housing_allowance)
+    drawRow(doc, "Housing Allowance (20%):", fmt(data.housing_allowance, "XOF"));
+  if (data.function_allowance)
+    drawRow(doc, "Function Allowance (5%):", fmt(data.function_allowance, "XOF"));
+  if (data.transport_allowance)
+    drawRow(doc, "Transport Allowance (5%):", fmt(data.transport_allowance, "XOF"));
+
+  drawNetBox(doc, "Gross / Net Salary:", fmt(data.gross_salary, "XOF"));
+}
+
+/**
+ * Format 4: Rwanda RWF with withholding tax
+ * Shows: Gross (RWF), WOP/Withholding (RWF), Net (RWF)
+ */
+function renderFormat4(doc: PDFKit.PDFDocument, data: PayslipData) {
+  drawSectionTitle(doc, "Salary Breakdown");
+
+  drawRow(doc, "Gross Salary:", fmt(data.gross_salary, "RWF"));
+
+  doc.moveDown(1);
+  drawSectionTitle(doc, "Deductions", ORANGE);
+  drawRow(doc, "Withholding Tax (WOP):", fmt(data.wop_rwf, "RWF"));
+
+  drawNetBox(doc, "Net Salary:", fmt(data.net_salary, "RWF"));
 }
 
 /**
@@ -279,13 +300,9 @@ export async function uploadPayslipToSpaces(
   period: string,
 ): Promise<{ url: string; key: string }> {
   try {
-    // Clean employee name for file path
     const cleanName = employeeName.replace(/[^a-zA-Z0-9]/g, "_");
-
-    // Extract month from period (e.g., "01-31.12.25" -> "12-25")
     const monthMatch = period.match(/(\d{2})\.(\d{2})$/);
-    const month = monthMatch ? `${monthMatch[1]}-${monthMatch[2]}` : period;
-
+    const month = monthMatch ? `${monthMatch[1]}-${monthMatch[2]}` : period.replace(/[^a-zA-Z0-9-]/g, "_");
     const key = `hr/${cleanName}/${month}/payslip.pdf`;
 
     const command = new PutObjectCommand({
@@ -303,11 +320,8 @@ export async function uploadPayslipToSpaces(
 
     await s3Client.send(command);
 
-    // Store the permanent key, not a signed URL
     const permanentUrl = `${env.DO_SPACES_ENDPOINT.replace(/\/$/, "")}/${env.DO_SPACES_BUCKET}/${key}`;
-
     logger.info(`Payslip uploaded to Spaces: ${key}`);
-
     return { url: permanentUrl, key };
   } catch (error) {
     logger.error("Error uploading payslip to Spaces:", error);
@@ -317,21 +331,17 @@ export async function uploadPayslipToSpaces(
 
 /**
  * Generate a signed URL for accessing a private payslip
- * @param key - The S3 key of the payslip file
- * @param expiresIn - Expiration time in seconds (default: 7 days)
  */
 export async function generateSignedPayslipUrl(
   key: string,
-  expiresIn: number = 30 * 24 * 60 * 60, // 30 days default
+  expiresIn: number = 30 * 24 * 60 * 60,
 ): Promise<string> {
   try {
     const command = new GetObjectCommand({
       Bucket: env.DO_SPACES_BUCKET,
       Key: key,
     });
-
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
-
     logger.info(`Generated signed URL for ${key}, expires in ${expiresIn}s`);
     return signedUrl;
   } catch (error) {
@@ -341,7 +351,7 @@ export async function generateSignedPayslipUrl(
 }
 
 /**
- * Generate and upload payslip
+ * Generate and upload payslip PDF
  */
 export async function generateAndUploadPayslip(data: PayslipData) {
   try {
@@ -351,7 +361,6 @@ export async function generateAndUploadPayslip(data: PayslipData) {
       data.name,
       data.payroll_period,
     );
-
     return { url, key, buffer: pdfBuffer };
   } catch (error) {
     logger.error("Error generating and uploading payslip:", error);

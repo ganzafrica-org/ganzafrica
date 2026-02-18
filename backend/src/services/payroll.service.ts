@@ -7,7 +7,7 @@ import { Logger } from "../config";
 const logger = new Logger("PayrollService");
 
 export interface CreatePayrollData {
-  user_id: number;
+  user_id?: number | null;
   payroll_period: string;
   date_of_payment: string; // Format: "YYYY-MM-DD"
   name: string;
@@ -17,9 +17,13 @@ export interface CreatePayrollData {
   employee_id?: string;
   employee_rssb_no?: string;
   program?: string;
-  basic_salary: string;
+  // Format type determines how the payslip is rendered
+  payroll_type?: string; // 'rwf' | 'rwf_usd' | 'wop_usd' | 'xof' | 'rwf_wop'
+  currency?: string; // 'RWF' | 'USD' | 'XOF'
+  // Format 1 fields
+  basic_salary?: string;
   other?: string;
-  gross_salary: string;
+  gross_salary?: string;
   medical_employer?: string;
   csr_employer?: string;
   maternity_employer?: string;
@@ -28,7 +32,7 @@ export interface CreatePayrollData {
   csr_employee?: string;
   maternity_employee?: string;
   tpr?: string;
-  net_salary_before_cbhi: string;
+  net_salary_before_cbhi?: string;
   cbhi?: string;
   net_salary: string;
   total_rra_rssb_cost?: string;
@@ -38,6 +42,14 @@ export interface CreatePayrollData {
   difference_due_to_exchange?: string;
   difference_in_rwf?: string;
   basic_salary_adjustment?: string;
+  // Format 2 fields (WOP/USD international)
+  gross_usd?: string;
+  wop_usd?: string;
+  wop_rwf?: string;
+  // Format 3 fields (Burkina Faso XOF allowances)
+  housing_allowance?: string;
+  function_allowance?: string;
+  transport_allowance?: string;
   uploaded_by: number;
   source_filename?: string;
 }

@@ -115,7 +115,7 @@ export async function generateAndSendPayslip(
     let payslipKey = payroll.payslip_file_key;
 
     if (!payslipUrl) {
-      // Generate PDF
+      // Generate PDF — pass all fields so the correct format is rendered
       const pdfData = {
         name: payroll.name,
         email: payroll.email,
@@ -123,9 +123,14 @@ export async function generateAndSendPayslip(
         date_of_payment: payroll.date_of_payment.toString(),
         employee_id: payroll.employee_id || undefined,
         employee_tin_number: payroll.employee_tin_number || undefined,
-        basic_salary: payroll.basic_salary,
-        gross_salary: payroll.gross_salary,
+        payroll_type: (payroll as any).payroll_type || "rwf",
+        currency: (payroll as any).currency || "RWF",
+        // Format 1
+        basic_salary: payroll.basic_salary || undefined,
+        gross_salary: payroll.gross_salary || undefined,
         net_salary: payroll.net_salary,
+        net_salary_usd: payroll.net_salary_usd || undefined,
+        exchange_rate_used: payroll.exchange_rate_used || undefined,
         deductions: {
           medical_employee: payroll.medical_employee || undefined,
           csr_employee: payroll.csr_employee || undefined,
@@ -133,6 +138,14 @@ export async function generateAndSendPayslip(
           tpr: payroll.tpr || undefined,
           cbhi: payroll.cbhi || undefined,
         },
+        // Format 2
+        gross_usd: (payroll as any).gross_usd || undefined,
+        wop_usd: (payroll as any).wop_usd || undefined,
+        wop_rwf: (payroll as any).wop_rwf || undefined,
+        // Format 3
+        housing_allowance: (payroll as any).housing_allowance || undefined,
+        function_allowance: (payroll as any).function_allowance || undefined,
+        transport_allowance: (payroll as any).transport_allowance || undefined,
       };
 
       const result = await pdfService.generateAndUploadPayslip(pdfData);
