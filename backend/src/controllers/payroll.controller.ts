@@ -44,13 +44,14 @@ function parsePayrollCSV(filePath: string): Promise<any[]> {
 function detectFormat(
   headers: string[],
 ): "format1" | "format2" | "format3" | "format4" {
-  const h = headers.map((x) => x.toLowerCase());
+  const h = headers.map((x) => x.toLowerCase().trim());
   const has = (substr: string) => h.some((col) => col.includes(substr));
 
-  if (has("housing allowance")) return "format3";
-  if (has("usd total") || has("wop usd")) return "format2";
+  if (has("housing allowance") || has("housing allowances")) return "format3";
+  if (has("gross fees") || has("wop usd") || has("consultant id")) return "format2";
   if (has("basic salary") || has("basic_salary")) return "format1";
-  if (has("wop") && has("net usd")) return "format4";
+  // Format 4: has WOP column but no "wop usd", no "basic salary", no "housing"
+  if (has("wop")) return "format4";
   return "format1"; // fallback
 }
 
@@ -102,6 +103,11 @@ function parseDate(value: any): string | undefined {
 
 /**
  * Format 1: Rwanda RWF staff (some employees get USD net)
+ * Columns: Payroll Period, Employee No., Date of payment, Name, Employees ID, Email address,
+ *   Program, Basic Salary, Gross Salary, CSR 6% /Employer contribution/RSSB,
+ *   Employer_ Occupational Hazards contribution (2%), MATERNITY 0.3% /Employer contribution,
+ *   CSR 6%/Employee contribution/RSSB, MATERNITY 0.3% /Employee contribution,
+ *   TPR 30%, Net Salary before CBHI, CBHI 0.5%, Net Salary, Date of BNR rate, NCBA Rate, Net Salary Paid in USD
  */
 function processFormat1Row(
   row: any,
@@ -109,19 +115,12 @@ function processFormat1Row(
   uploadedBy: number,
   filename: string,
 ): any | null {
-  const email = (
-    row["Email address"] ||
-    row.Email ||
-    row.email ||
-    ""
-  ).trim();
+  const email = (row["Email address"] || row.Email || row.email || "").trim();
   const name = (row.Name || row.name || "").trim();
   if (!email || !name) return null;
 
   const dateOfPayment = parseDate(
-    row["Date of payment"] ||
-      row["date_of_payment"] ||
-      row["Date of Payment"],
+    row["Date of payment"] || row["date_of_payment"] || row["Date of Payment"],
   );
   if (!dateOfPayment) return null;
 
@@ -133,90 +132,36 @@ function processFormat1Row(
     date_of_payment: dateOfPayment,
     name,
     email,
-    staff_fellow_number:
-      (row["Staff/Fellows Numbers"] || row["staff_fellow_number"] || "").trim() ||
-      undefined,
-    employee_tin_number:
-      (row["Employee Tin Number"] || row["employee_tin_number"] || "").trim() ||
-      undefined,
-    employee_id:
-      (row["Employees ID"] || row["employee_id"] || "").trim() || undefined,
-    employee_rssb_no:
-      (row["Employee RSSB NO"] || row["employee_rssb_no"] || "").trim() ||
-      undefined,
+    staff_fellow_number: (row["Employee No."] || row["Employee No"] || row["staff_fellow_number"] || "").trim() || undefined,
+    employee_id: (row["Employees ID"] || row["employee_id"] || "").trim() || undefined,
     program: (row.Program || row.program || "").trim() || undefined,
     payroll_type: isUsdEmployee ? "rwf_usd" : "rwf",
     currency: "RWF",
     basic_salary: parseNumber(row["Basic Salary"] || row["basic_salary"]),
-    other: parseNumber(row.Other || row.other),
     gross_salary: parseNumber(row["Gross Salary"] || row["gross_salary"]),
-    medical_employer: parseNumber(
-      row["MEDICAL 7.5% /employer contribution"] || row["medical_employer"],
-    ),
-    csr_employer: parseNumber(
-      row["CSR 6% /Employer contribution/RSSB"] ||
-        row["CSR 8% /Employer contribution/RSSB"] ||
-        row["csr_employer"],
-    ),
-    maternity_employer: parseNumber(
-      row["MATERNITY 0.3% /Employer contribution"] || row["maternity_employer"],
-    ),
-    total_employer_expenditure: parseNumber(
-      row["TOTAL EXPENDITURE (EMPLOYER)"] || row["total_employer_expenditure"],
-    ),
-    medical_employee: parseNumber(
-      row["MEDICAL 7.5%/Employee contribution/"] || row["medical_employee"],
-    ),
-    csr_employee: parseNumber(
-      row["CSR 6%/Employee contribution/RSSB"] || row["csr_employee"],
-    ),
-    maternity_employee: parseNumber(
-      row["MATERNITY 0.3% /Employee contribution"] || row["maternity_employee"],
-    ),
+    csr_employer: parseNumber(row["CSR 6% /Employer contribution/RSSB"] || row["csr_employer"]),
+    occupational_hazards: parseNumber(row["Employer_ Occupational Hazards contribution   (2%)"] || row["Employer_ Occupational Hazards contribution (2%)"] || row["occupational_hazards"]),
+    maternity_employer: parseNumber(row["MATERNITY 0.3% /Employer contribution"] || row["maternity_employer"]),
+    csr_employee: parseNumber(row["CSR 6%/Employee contribution/RSSB"] || row["csr_employee"]),
+    maternity_employee: parseNumber(row["MATERNITY 0.3% /Employee contribution"] || row["maternity_employee"]),
     tpr: parseNumber(row["TPR 30%"] || row.tpr),
-    net_salary_before_cbhi: parseNumber(
-      row["Net Salary before CBHI"] || row["net_salary_before_cbhi"],
-    ),
+    net_salary_before_cbhi: parseNumber(row["Net Salary before CBHI"] || row["net_salary_before_cbhi"]),
     cbhi: parseNumber(row["CBHI 0.5%"] || row.cbhi),
-    // USD employees: net_salary stores the USD amount; others store RWF
-    net_salary: isUsdEmployee
-      ? parseNumber(row["Net Salary Paid in USD"] || row["net_salary_usd"])
-      : parseNumber(row["Net Salary"] || row["net_salary"]),
+    net_salary: parseNumber(row["Net Salary"] || row["net_salary"]),
     net_salary_usd: isUsdEmployee
       ? parseNumber(row["Net Salary Paid in USD"] || row["net_salary_usd"])
       : undefined,
-    total_rra_rssb_cost: parseNumber(
-      row["Total RRA/RSSB cost"] || row["total_rra_rssb_cost"],
-    ),
-    bnr_exchange_rate_date: parseDate(
-      row["Date of BNR rate"] || row["BNR Date of Exchange Rate"],
-    ),
-    exchange_rate_used:
-      parseNumber(
-        row["NCBA Rate"] ||
-          row["Exchange Rate Used"] ||
-          row["exchange_rate_used"],
-      ) || undefined,
-    difference_due_to_exchange:
-      parseNumber(
-        row["Difference due to EXchange"] || row["difference_due_to_exchange"],
-      ) || undefined,
-    difference_in_rwf:
-      parseNumber(row["Defference in RWF"] || row["difference_in_rwf"]) ||
-      undefined,
-    basic_salary_adjustment:
-      parseNumber(
-        row["Basic salary adjustment due to Exchange rate"] ||
-          row["basic_salary_adjustment"],
-      ) || undefined,
+    bnr_exchange_rate_date: parseDate(row["Date of BNR rate"] || row["bnr_exchange_rate_date"]),
+    exchange_rate_used: parseNumber(row["NCBA Rate"] || row["exchange_rate_used"]) || undefined,
     uploaded_by: uploadedBy,
     source_filename: filename,
   };
 }
 
 /**
- * Format 2: International WOP, USD net
- * Columns: Payroll Period, Program name (=name), Employee ID, USD total, WOP USD, Net fees (USD), Gross RWF, WOP RWF, NET FEES RWF, Email
+ * Format 2: International WOP/USD
+ * Columns: Payroll Period, Date of payment, Program name (=name), Consultant ID,
+ *   Gross fees, WOP USD, Date rate, NCBA Rate Used, WOP RWF, Net payments, Gross (RWF), Email
  */
 function processFormat2Row(
   row: any,
@@ -228,31 +173,20 @@ function processFormat2Row(
   const name = (row["Program name"] || row.Name || row.name || "").trim();
   if (!email || !name) return null;
 
-  const period = (
-    row["Payroll Period"] ||
-    row["payroll_period"] ||
-    ""
-  ).trim();
+  const period = (row["Payroll Period"] || row["payroll_period"] || "").trim();
   if (!period) return null;
-
-  const wopUsd = parseNumber(row["WOP USD"] || row["wop_usd"]);
-  const wopRwf = parseNumber(
-    row["WOP RWF (1,457)"] || row["WOP RWF"] || row["wop_rwf"],
-  );
-  const grossUsd = parseNumber(row["USD total"] || row["gross_usd"]);
-  const netUsd = parseNumber(row["Net fees"] || row["net_usd"]);
-
-  // Derive rate from wop_rwf / wop_usd
-  const wopUsdNum = parseFloat(wopUsd);
-  const wopRwfNum = parseFloat(wopRwf);
-  const exchangeRate =
-    wopUsdNum > 0 && wopRwfNum > 0
-      ? (wopRwfNum / wopUsdNum).toFixed(4)
-      : undefined;
 
   const dateOfPayment = parseDate(
     row["Date of payment"] || row["Date of Payment"] || row["date_of_payment"],
   );
+
+  const grossUsd = parseNumber(row["Gross fees"] || row["gross_usd"]);
+  const wopUsd = parseNumber(row["WOP USD"] || row["wop_usd"]);
+  const wopRwf = parseNumber(row["WOP RWF"] || row["wop_rwf"]);
+  const netUsd = parseNumber(row["Net payments"] || row["net_usd"]);
+  const grossRwf = parseNumber(row["Gross"] || row["gross_rwf"]);
+  const ncbaRate = parseNumber(row["NCBA Rate Used"] || row["exchange_rate_used"]) || undefined;
+  const dateRate = parseDate(row["Date rate"] || row["date_rate"]);
 
   return {
     user_id: userId,
@@ -260,16 +194,17 @@ function processFormat2Row(
     date_of_payment: dateOfPayment || period,
     name,
     email,
-    employee_id:
-      (row["Employee ID"] || row["employee_id"] || "").trim() || undefined,
+    staff_fellow_number: (row["Consultant ID"] || row["staff_fellow_number"] || "").trim() || undefined,
     payroll_type: "wop_usd",
     currency: "USD",
     gross_usd: grossUsd,
     wop_usd: wopUsd,
+    date_rate: dateRate,
+    exchange_rate_used: ncbaRate,
     wop_rwf: wopRwf,
-    exchange_rate_used: exchangeRate,
     net_salary: netUsd,
     net_salary_usd: netUsd,
+    gross_rwf: grossRwf,
     uploaded_by: uploadedBy,
     source_filename: filename,
   };
@@ -277,7 +212,8 @@ function processFormat2Row(
 
 /**
  * Format 3: Burkina Faso XOF
- * Columns: Payroll Period, Name, Basic, Housing allowances 20%, Function allowance 5%, Transport allowance 5%, Gross, RATE, BF JAs Salary in USD, Email
+ * Columns: Payroll Period, Date of payment, ID Number, Name,
+ *   Basic, Housing allowances 20%, Function allowance 5%, Transport allowance 5%, Gross, Email
  */
 function processFormat3Row(
   row: any,
@@ -289,17 +225,13 @@ function processFormat3Row(
   const name = (row.Name || row.name || "").trim();
   if (!email || !name) return null;
 
-  const period = (
-    row["Payroll Period"] ||
-    row["payroll_period"] ||
-    ""
-  ).trim();
+  const period = (row["Payroll Period"] || row["payroll_period"] || "").trim();
   if (!period) return null;
 
-  const gross = parseNumber(row.Gross || row.gross_salary);
   const dateOfPayment = parseDate(
     row["Date of payment"] || row["Date of Payment"] || row["date_of_payment"],
   );
+  const gross = parseNumber(row.Gross || row.gross_salary);
 
   return {
     user_id: userId,
@@ -307,26 +239,15 @@ function processFormat3Row(
     date_of_payment: dateOfPayment || period,
     name,
     email,
+    employee_id: (row["ID Number"] || row["employee_id"] || "").trim() || undefined,
     payroll_type: "xof",
     currency: "XOF",
     basic_salary: parseNumber(row.Basic || row.basic_salary),
-    housing_allowance: parseNumber(
-      row["Housing allowances 20%"] ||
-        row["Housing allowances"] ||
-        row["housing_allowance"],
-    ),
-    function_allowance: parseNumber(
-      row["Function allowance 5%"] ||
-        row["Function allowance"] ||
-        row["function_allowance"],
-    ),
-    transport_allowance: parseNumber(
-      row["Transport allowance 5%"] ||
-        row[" Transport allowance 5% "] ||
-        row["transport_allowance"],
-    ),
+    housing_allowance: parseNumber(row["Housing allowances 20%"] || row["Housing allowances"] || row["housing_allowance"]),
+    function_allowance: parseNumber(row["Function allowance 5%"] || row["Function allowance"] || row["function_allowance"]),
+    transport_allowance: parseNumber(row[" Transport allowance 5% "] || row["Transport allowance 5%"] || row["transport_allowance"]),
     gross_salary: gross,
-    net_salary: gross, // no deductions for BF fellows
+    net_salary: gross,
     uploaded_by: uploadedBy,
     source_filename: filename,
   };
@@ -334,7 +255,7 @@ function processFormat3Row(
 
 /**
  * Format 4: Rwanda RWF with withholding tax (WOP)
- * Columns: Payroll Period, Employee Id, Name, Gross, WOP, Net, Net USD, Email
+ * Columns: Payroll Period, Date of payment, Employee Id, Name, Gross, WOP, Net, Email
  */
 function processFormat4Row(
   row: any,
@@ -346,11 +267,7 @@ function processFormat4Row(
   const name = (row.Name || row.name || "").trim();
   if (!email || !name) return null;
 
-  const period = (
-    row["Payroll Period"] ||
-    row["payroll_period"] ||
-    ""
-  ).trim();
+  const period = (row["Payroll Period"] || row["payroll_period"] || "").trim();
   if (!period) return null;
 
   const dateOfPayment = parseDate(
@@ -363,13 +280,7 @@ function processFormat4Row(
     date_of_payment: dateOfPayment || period,
     name,
     email,
-    employee_id:
-      (
-        row["Employee Id"] ||
-        row["Employee ID"] ||
-        row["employee_id"] ||
-        ""
-      ).trim() || undefined,
+    employee_id: (row["Employee Id"] || row["Employee ID"] || row["employee_id"] || "").trim() || undefined,
     payroll_type: "rwf_wop",
     currency: "RWF",
     gross_salary: parseNumber(row.Gross || row.gross_salary),
