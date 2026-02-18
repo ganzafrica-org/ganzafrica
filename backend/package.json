@@ -20,6 +20,7 @@
     "db:set-admin": "tsx scripts/set-admin-user.ts",
     "db:add-published": "tsx src/db/migrations/add-is-published.ts",
     "db:migrate:payroll-formats": "tsx src/db/migrations/migrate-payroll-formats.ts",
+    "db:migrate:payroll-cleanup": "tsx src/db/migrations/migrate-payroll-cleanup.ts",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
     "swagger:generate": "tsx src/swagger/generate.ts",
