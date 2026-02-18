@@ -132,6 +132,17 @@ function drawNetBox(doc: PDFKit.PDFDocument, label: string, value: string) {
   doc.fontSize(18).fillColor(YELLOW).text(value, 400, doc.y - 25, { width: 140, align: "right" });
 }
 
+// Shows primary amount (USD) large and RWF equivalent smaller below — for dual-currency employees
+function drawDualNetBox(doc: PDFKit.PDFDocument, primaryValue: string, secondaryValue: string) {
+  doc.moveDown(1.5);
+  const boxY = doc.y;
+  doc.rect(50, boxY, 500, 55).fillAndStroke(GREEN, GREEN);
+  doc.fontSize(14).fillColor("#FFFFFF").text("Net Salary:", 60, boxY + 8);
+  doc.fontSize(18).fillColor(YELLOW).text(primaryValue, 300, boxY + 5, { width: 240, align: "right" });
+  doc.fontSize(11).fillColor("#CCFFCC").text(`≈ ${secondaryValue}`, 300, boxY + 30, { width: 240, align: "right" });
+  doc.y = boxY + 60;
+}
+
 function drawFooter(doc: PDFKit.PDFDocument) {
   doc.fontSize(9).fillColor("#999999").text(
     "This is a computer-generated payslip. No signature required.",
@@ -225,7 +236,10 @@ function renderFormat1(
     doc.moveDown(1);
     drawSectionTitle(doc, "Exchange Rate Info");
     drawRow(doc, "NCBA Rate Used:", `1 USD = RWF ${parseFloat(data.exchange_rate_used).toLocaleString()}`);
-    drawNetBox(doc, "Net Salary:", fmt(data.net_salary_usd, "USD"));
+    // net_salary holds RWF equivalent, net_salary_usd holds USD amount
+    const netRwf = data.net_salary;
+    const netUsd = data.net_salary_usd;
+    drawDualNetBox(doc, fmt(netUsd, "USD"), fmt(netRwf, "RWF"));
   } else {
     drawNetBox(doc, "Net Salary:", fmt(data.net_salary, "RWF"));
   }
@@ -251,7 +265,16 @@ function renderFormat2(doc: PDFKit.PDFDocument, data: PayslipData) {
     drawRow(doc, "Rate Used:", `1 USD = RWF ${parseFloat(data.exchange_rate_used).toLocaleString()}`);
   }
 
-  drawNetBox(doc, "Net Salary:", fmt(data.net_salary, "USD"));
+  // Compute RWF equivalent: net_usd × rate
+  const netUsd = parseFloat(data.net_salary || "0");
+  const rate = parseFloat(data.exchange_rate_used || "0");
+  const netRwf = rate > 0 ? (netUsd * rate).toFixed(2) : undefined;
+
+  if (netRwf) {
+    drawDualNetBox(doc, fmt(data.net_salary, "USD"), fmt(netRwf, "RWF"));
+  } else {
+    drawNetBox(doc, "Net Salary:", fmt(data.net_salary, "USD"));
+  }
 }
 
 /**
