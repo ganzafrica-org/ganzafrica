@@ -285,15 +285,15 @@ function drawEarningsDeductionsTable(doc: PDFKit.PDFDocument, data: PayslipData)
       dedRows.push({ label: "Employer Contributions", value: "", isGroupTitle: true });
       if (n(data.csr_employer)) {
         dedRows.push({ label: "CSR 6% (RSSB)", value: fmt(data.csr_employer, "RWF"), indent: indentPx });
-        totalDeductions += n(data.csr_employer);
+        // employer — NOT added to total
       }
       if (n(data.occupational_hazards)) {
         dedRows.push({ label: "Occupational Hazards 2%", value: fmt(data.occupational_hazards, "RWF"), indent: indentPx });
-        totalDeductions += n(data.occupational_hazards);
+        // employer — NOT added to total
       }
       if (n(data.maternity_employer)) {
         dedRows.push({ label: "Maternity 0.3%", value: fmt(data.maternity_employer, "RWF"), indent: indentPx });
-        totalDeductions += n(data.maternity_employer);
+        // employer — NOT added to total
       }
     }
     const hasEmployee = n(data.csr_employee) || n(data.maternity_employee) || n(data.tpr) || n(data.cbhi);
@@ -328,7 +328,7 @@ function drawEarningsDeductionsTable(doc: PDFKit.PDFDocument, data: PayslipData)
   }
   if (totalDeductions > 0) {
     const dedCur = type === "wop_usd" ? "USD" : cur;
-    dedRows.push({ label: "Total Statutory Deductions", value: fmtNum(totalDeductions, dedCur) });
+    dedRows.push({ label: "Total Employee Deductions", value: fmtNum(totalDeductions, dedCur) });
   }
 
   // ── Draw two-column table ────────────────────────────────
@@ -365,7 +365,7 @@ function drawEarningsDeductionsTable(doc: PDFKit.PDFDocument, data: PayslipData)
     const rowY = bodyY + i * rh + 4;
     if (row.isGroupTitle) {
       cell(doc, row.label, rightX + 4, rowY, rightW - 8, { bold: true, color: GREEN, size: 9 });
-    } else if (row.label === "Total Statutory Deductions") {
+    } else if (row.label === "Total Employee Deductions") {
       cell(doc, row.label, rightX + 4, rowY, rightW / 2 - 8, { bold: true, color: "#111111", size: 9 });
       cell(doc, row.value, rightX + rightW / 2, rowY, rightW / 2 - 4, { bold: true, color: ORANGE, size: 9, align: "right" });
     } else {
