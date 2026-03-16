@@ -115,24 +115,44 @@ export async function generateAndSendPayslip(
     let payslipKey = payroll.payslip_file_key;
 
     if (!payslipUrl) {
-      // Generate PDF
+      // Generate PDF — pass all fields so the correct format is rendered
+      const payrollType = payroll.payroll_type || "rwf";
       const pdfData = {
         name: payroll.name,
         email: payroll.email,
         payroll_period: payroll.payroll_period,
         date_of_payment: payroll.date_of_payment.toString(),
+        staff_fellow_number: payroll.staff_fellow_number || undefined,
         employee_id: payroll.employee_id || undefined,
-        employee_tin_number: payroll.employee_tin_number || undefined,
-        basic_salary: payroll.basic_salary,
-        gross_salary: payroll.gross_salary,
-        net_salary: payroll.net_salary,
-        deductions: {
-          medical_employee: payroll.medical_employee || undefined,
-          csr_employee: payroll.csr_employee || undefined,
-          maternity_employee: payroll.maternity_employee || undefined,
-          tpr: payroll.tpr || undefined,
-          cbhi: payroll.cbhi || undefined,
-        },
+        program: payroll.program || undefined,
+        payroll_type: payrollType,
+        currency: payroll.currency || "RWF",
+        // Format 1 earnings
+        basic_salary: payroll.basic_salary || undefined,
+        gross_salary: payroll.gross_salary || undefined,
+        csr_employer: payroll.csr_employer || undefined,
+        occupational_hazards: (payroll as any).occupational_hazards || undefined,
+        maternity_employer: payroll.maternity_employer || undefined,
+        csr_employee: payroll.csr_employee || undefined,
+        maternity_employee: payroll.maternity_employee || undefined,
+        tpr: payroll.tpr || undefined,
+        net_salary_before_cbhi: payroll.net_salary_before_cbhi || undefined,
+        cbhi: payroll.cbhi || undefined,
+        // net_salary: RWF amount for rwf/rwf_usd; USD net for wop_usd; RWF for others
+        net_salary: payroll.net_salary || undefined,
+        net_salary_usd: payroll.net_salary_usd || undefined,
+        exchange_rate_used: payroll.exchange_rate_used || undefined,
+        bnr_exchange_rate_date: payroll.bnr_exchange_rate_date?.toString() || undefined,
+        // Format 2
+        gross_usd: payroll.gross_usd || undefined,
+        wop_usd: payroll.wop_usd || undefined,
+        date_rate: (payroll as any).date_rate?.toString() || undefined,
+        wop_rwf: payroll.wop_rwf || undefined,
+        gross_rwf: (payroll as any).gross_rwf || undefined,
+        // Format 3
+        housing_allowance: payroll.housing_allowance || undefined,
+        function_allowance: payroll.function_allowance || undefined,
+        transport_allowance: payroll.transport_allowance || undefined,
       };
 
       const result = await pdfService.generateAndUploadPayslip(pdfData);

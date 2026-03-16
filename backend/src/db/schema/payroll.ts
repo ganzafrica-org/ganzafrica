@@ -14,103 +14,67 @@ import { users } from "./users";
 export const payrolls = pgTable("payrolls", {
   id: serial("id").primaryKey(),
 
-  // User reference - must match user in database by email
-  user_id: integer("user_id")
-    .notNull()
-    .references(() => users.id),
+  // User reference - optional, as some employees may not yet be in the system
+  user_id: integer("user_id").references(() => users.id),
 
   // Period and Payment Info
-  payroll_period: text("payroll_period").notNull(), // e.g., "01-31.12.25"
+  payroll_period: text("payroll_period").notNull(),
   date_of_payment: date("date_of_payment").notNull(),
 
-  // Employee Details from CSV
-  name: text("name").notNull(), // For display and matching
-  email: text("email").notNull(), // From CSV - used to match with users table
-  staff_fellow_number: text("staff_fellow_number"),
-  employee_tin_number: text("employee_tin_number"),
-  employee_id: text("employee_id"),
-  employee_rssb_no: text("employee_rssb_no"),
-  program: text("program"), // e.g., HF, ABF, SFA, BF
+  // Employee Details (common across formats)
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  staff_fellow_number: text("staff_fellow_number"), // Format1: "Employee No." / Format2: "Consultant ID"
+  employee_id: text("employee_id"),                 // Format1: "Employees ID" / Format3: "ID Number" / Format4: "Employee Id"
+  program: text("program"),                          // Format1: "Program" / Format2: used as name
 
-  // Salary Information
-  basic_salary: decimal("basic_salary", { precision: 15, scale: 2 }).notNull(),
-  other: decimal("other", { precision: 15, scale: 2 }).default("0"),
-  gross_salary: decimal("gross_salary", { precision: 15, scale: 2 }).notNull(),
+  // Format type and currency
+  payroll_type: text("payroll_type").default("rwf"), // 'rwf' | 'rwf_usd' | 'wop_usd' | 'xof' | 'rwf_wop'
+  currency: text("currency").default("RWF"),
 
-  // Employer Contributions
-  medical_employer: decimal("medical_employer", {
-    precision: 15,
-    scale: 2,
-  }).default("0"),
-  csr_employer: decimal("csr_employer", { precision: 15, scale: 2 }).default(
-    "0",
-  ),
-  maternity_employer: decimal("maternity_employer", {
-    precision: 15,
-    scale: 2,
-  }).default("0"),
-  total_employer_expenditure: decimal("total_employer_expenditure", {
-    precision: 15,
-    scale: 2,
-  }).default("0"),
-
-  // Employee Contributions
-  medical_employee: decimal("medical_employee", {
-    precision: 15,
-    scale: 2,
-  }).default("0"),
-  csr_employee: decimal("csr_employee", { precision: 15, scale: 2 }).default(
-    "0",
-  ),
-  maternity_employee: decimal("maternity_employee", {
-    precision: 15,
-    scale: 2,
-  }).default("0"),
-  tpr: decimal("tpr", { precision: 15, scale: 2 }).default("0"),
-
-  // Net Salary Calculations
-  net_salary_before_cbhi: decimal("net_salary_before_cbhi", {
-    precision: 15,
-    scale: 2,
-  }).notNull(),
-  cbhi: decimal("cbhi", { precision: 15, scale: 2 }).default("0"),
+  // Format 1: Rwanda RWF/USD staff
+  basic_salary: decimal("basic_salary", { precision: 15, scale: 2 }),
+  gross_salary: decimal("gross_salary", { precision: 15, scale: 2 }),
+  // Employer contributions
+  csr_employer: decimal("csr_employer", { precision: 15, scale: 2 }),
+  occupational_hazards: decimal("occupational_hazards", { precision: 15, scale: 2 }), // "Employer_ Occupational Hazards contribution (2%)"
+  maternity_employer: decimal("maternity_employer", { precision: 15, scale: 2 }),
+  // Employee deductions
+  csr_employee: decimal("csr_employee", { precision: 15, scale: 2 }),
+  maternity_employee: decimal("maternity_employee", { precision: 15, scale: 2 }),
+  tpr: decimal("tpr", { precision: 15, scale: 2 }),
+  net_salary_before_cbhi: decimal("net_salary_before_cbhi", { precision: 15, scale: 2 }),
+  cbhi: decimal("cbhi", { precision: 15, scale: 2 }),
   net_salary: decimal("net_salary", { precision: 15, scale: 2 }).notNull(),
-
-  // Other Financial Info
-  total_rra_rssb_cost: decimal("total_rra_rssb_cost", {
-    precision: 15,
-    scale: 2,
-  }).default("0"),
+  // USD employees (Format 1 rwf_usd)
   bnr_exchange_rate_date: date("bnr_exchange_rate_date"),
-  exchange_rate_used: decimal("exchange_rate_used", {
-    precision: 10,
-    scale: 4,
-  }),
+  exchange_rate_used: decimal("exchange_rate_used", { precision: 10, scale: 4 }),
   net_salary_usd: decimal("net_salary_usd", { precision: 15, scale: 2 }),
-  difference_due_to_exchange: decimal("difference_due_to_exchange", {
-    precision: 15,
-    scale: 2,
-  }),
-  difference_in_rwf: decimal("difference_in_rwf", { precision: 15, scale: 2 }),
-  basic_salary_adjustment: decimal("basic_salary_adjustment", {
-    precision: 15,
-    scale: 2,
-  }),
 
-  // Payslip File Storage - stored as hr/{name}/{month}/payslip.pdf
-  payslip_file_url: text("payslip_file_url"), // CDN URL to the generated PDF payslip
-  payslip_file_key: text("payslip_file_key"), // Storage key in Digital Ocean Spaces
+  // Format 2: International WOP/USD
+  gross_usd: decimal("gross_usd", { precision: 15, scale: 2 }),   // "Gross fees" in USD
+  wop_usd: decimal("wop_usd", { precision: 15, scale: 2 }),        // "WOP USD"
+  date_rate: date("date_rate"),                                      // "Date rate"
+  wop_rwf: decimal("wop_rwf", { precision: 15, scale: 2 }),        // "WOP RWF"
+  gross_rwf: decimal("gross_rwf", { precision: 15, scale: 2 }),    // "Gross" (RWF equivalent)
+
+  // Format 3: Burkina Faso XOF allowances
+  housing_allowance: decimal("housing_allowance", { precision: 15, scale: 2 }),
+  function_allowance: decimal("function_allowance", { precision: 15, scale: 2 }),
+  transport_allowance: decimal("transport_allowance", { precision: 15, scale: 2 }),
+
+  // Payslip File Storage
+  payslip_file_url: text("payslip_file_url"),
+  payslip_file_key: text("payslip_file_key"),
 
   // Email Tracking
   email_sent: boolean("email_sent").notNull().default(false),
   email_sent_at: timestamp("email_sent_at"),
-  email_error: text("email_error"), // Store any email sending errors
+  email_error: text("email_error"),
 
   // Upload/Creation Tracking
-  uploaded_by: integer("uploaded_by")
-    .notNull()
-    .references(() => users.id),
-  source_filename: text("source_filename"), // Original CSV filename if uploaded
+  uploaded_by: integer("uploaded_by").notNull().references(() => users.id),
+  source_filename: text("source_filename"),
 
   ...timestampFields,
 });

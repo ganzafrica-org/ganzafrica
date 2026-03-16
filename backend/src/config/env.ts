@@ -44,27 +44,25 @@ const envSchema = z.object({
   ACCESS_TOKEN_EXPIRY: z.string().default("24h"),
   REFRESH_TOKEN_EXPIRY: z.string().default("30d"),
 
+  // Payroll - comma-separated emails that receive net salary in USD (Format 1 USD employees)
+  USD_SALARY_EMAILS: z.string().optional().default(""),
+
   // Email (optional - only required if email functionality is used)
+  RESEND_API_KEY: z.string().nullish(),
   EMAIL_FROM: z.string().nullish(),
   EMAIL_PASSWORD: z.string().nullish(),
   SMTP_HOST: z.string().nullish(),
-  SMTP_PORT: z.preprocess(
-    (val) => {
-      if (val === undefined || val === null || val === "") return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    },
-    z.number().nullish()
-  ),
+  SMTP_PORT: z.preprocess((val) => {
+    if (val === undefined || val === null || val === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? undefined : num;
+  }, z.number().nullish()),
   // Support EMAIL_PORT as alias for SMTP_PORT (can be used instead of SMTP_PORT)
-  EMAIL_PORT: z.preprocess(
-    (val) => {
-      if (val === undefined || val === null || val === "") return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    },
-    z.number().nullish()
-  ),
+  EMAIL_PORT: z.preprocess((val) => {
+    if (val === undefined || val === null || val === "") return undefined;
+    const num = Number(val);
+    return isNaN(num) ? undefined : num;
+  }, z.number().nullish()),
 
   // Security
   CORS_ORIGINS: z.string().transform((val) => val.split(",")),

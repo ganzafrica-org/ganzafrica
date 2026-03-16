@@ -9,6 +9,7 @@ import { generateMetadata as baseGenerateMetadata } from "@/lib/metadata";
 import LatestNewsSection from "@/components/sections/homepage/latest-news-section";
 import NewsletterSection from "@/components/sections/newsletter-section";
 import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-unique-section";
+import {WhyGanza} from "@/components/WhyGanza";
 
 // Simplified Metadata generation
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,7 +37,8 @@ export default function HomePage() {
     return (
         <main>
             <FellowsSection />
-            <WhyGanzAfricaSection />
+            {/*<WhyGanzAfricaSection />*/}
+            <WhyGanza/>
             <GanzAfricaUniqueSection />
             <FlagshipProgramsSection />
             <ProjectsSection />

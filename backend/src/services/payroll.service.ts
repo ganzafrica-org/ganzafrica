@@ -3,41 +3,46 @@ import { payrolls, users } from "../db/schema";
 import { eq, and, desc, asc, sql, ilike, or } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
+import { deletePayslipFromSpaces } from "./pdf.service";
 
 const logger = new Logger("PayrollService");
 
 export interface CreatePayrollData {
-  user_id: number;
+  user_id?: number | null;
   payroll_period: string;
   date_of_payment: string; // Format: "YYYY-MM-DD"
   name: string;
   email: string;
-  staff_fellow_number?: string;
-  employee_tin_number?: string;
-  employee_id?: string;
-  employee_rssb_no?: string;
+  staff_fellow_number?: string; // Format1: Employee No. / Format2: Consultant ID
+  employee_id?: string;         // Format1: Employees ID / Format3: ID Number / Format4: Employee Id
   program?: string;
-  basic_salary: string;
-  other?: string;
-  gross_salary: string;
-  medical_employer?: string;
+  payroll_type?: string; // 'rwf' | 'rwf_usd' | 'wop_usd' | 'xof' | 'rwf_wop'
+  currency?: string;     // 'RWF' | 'USD' | 'XOF'
+  // Format 1: Rwanda RWF/USD staff
+  basic_salary?: string;
+  gross_salary?: string;
   csr_employer?: string;
+  occupational_hazards?: string;
   maternity_employer?: string;
-  total_employer_expenditure?: string;
-  medical_employee?: string;
   csr_employee?: string;
   maternity_employee?: string;
   tpr?: string;
-  net_salary_before_cbhi: string;
+  net_salary_before_cbhi?: string;
   cbhi?: string;
   net_salary: string;
-  total_rra_rssb_cost?: string;
-  bnr_exchange_rate_date?: string; // Format: "YYYY-MM-DD"
+  bnr_exchange_rate_date?: string;
   exchange_rate_used?: string;
   net_salary_usd?: string;
-  difference_due_to_exchange?: string;
-  difference_in_rwf?: string;
-  basic_salary_adjustment?: string;
+  // Format 2: International WOP/USD
+  gross_usd?: string;
+  wop_usd?: string;
+  date_rate?: string;
+  wop_rwf?: string;
+  gross_rwf?: string;
+  // Format 3: Burkina Faso XOF
+  housing_allowance?: string;
+  function_allowance?: string;
+  transport_allowance?: string;
   uploaded_by: number;
   source_filename?: string;
 }
@@ -361,6 +366,13 @@ export async function deletePayroll(id: number) {
 
     if (!payroll) {
       throw new AppError("Payroll not found", 404);
+    }
+
+    // Also delete the PDF from Spaces if it exists
+    if (payroll.payslip_file_key) {
+      await deletePayslipFromSpaces(payroll.payslip_file_key).catch((err) => {
+        logger.warn(`Could not delete payslip file from Spaces for payroll ${id}: ${err.message}`);
+      });
     }
 
     logger.info(`Payroll ${id} deleted`);

@@ -1,97 +1,39 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { env, Logger } from "../config";
 import { AppError } from "../middlewares";
 
 const logger = new Logger("EmailService");
 
-// Check if email configuration is available
-const isEmailConfigured = () => {
-  // Use EMAIL_PORT if SMTP_PORT is not set
-  const smtpPort = env.SMTP_PORT ?? env.EMAIL_PORT;
+const FROM_ADDRESS = "no-reply@ganzafrica.org";
 
-  // Check if values are actually set (not null/undefined)
-  const hasEmailFrom =
-    env.EMAIL_FROM &&
-    typeof env.EMAIL_FROM === "string" &&
-    env.EMAIL_FROM.trim() !== "";
-  const hasPassword =
-    env.EMAIL_PASSWORD &&
-    typeof env.EMAIL_PASSWORD === "string" &&
-    env.EMAIL_PASSWORD.trim() !== "";
-  const hasHost =
-    env.SMTP_HOST &&
-    typeof env.SMTP_HOST === "string" &&
-    env.SMTP_HOST.trim() !== "";
-  const hasPort = smtpPort !== undefined && smtpPort !== null;
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
-  // Validate email format if EMAIL_FROM is provided
-  if (
-    hasEmailFrom &&
-    env.EMAIL_FROM &&
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.EMAIL_FROM)
-  ) {
-    logger.warn(`Invalid email format for EMAIL_FROM: ${env.EMAIL_FROM}`);
-    return false;
-  }
-
-  return !!(hasEmailFrom && hasPassword && hasHost && hasPort);
-};
-
-// Create a nodemailer transporter (only if email is configured)
-const transporter = isEmailConfigured()
-  ? nodemailer.createTransport({
-      host: env.SMTP_HOST!,
-      port: (env.SMTP_PORT ?? env.EMAIL_PORT)!,
-      secure: (env.SMTP_PORT ?? env.EMAIL_PORT) === 465, // true for 465, false for other ports
-      auth: {
-        user: env.EMAIL_FROM!,
-        pass: env.EMAIL_PASSWORD!,
-      },
-    })
-  : null;
-
-// Verify SMTP connection on application startup
-async function verifyEmailConnection() {
-  if (!isEmailConfigured()) {
-    logger.warn(
-      "Email configuration not provided. Email functionality will be disabled.",
-    );
-    return false;
-  }
-
-  if (!transporter) {
-    return false;
-  }
-
-  try {
-    await transporter.verify();
-    logger.info("SMTP connection verified successfully");
-    return true;
-  } catch (error) {
-    logger.error("SMTP connection failed", error);
-    return false;
-  }
-}
+const isEmailConfigured = () => !!resend;
 
 // Generic function to send emails
 export async function sendEmail(to: string, subject: string, html: string) {
-  if (!isEmailConfigured() || !transporter) {
+  if (!resend) {
     logger.warn(
-      `Email not configured. Skipping email send to ${to} with subject: ${subject}`,
+      `Resend not configured (missing RESEND_API_KEY). Skipping email to ${to} with subject: ${subject}`,
     );
     return null;
   }
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Ganzafrica" <${env.EMAIL_FROM}>`,
+    const { data, error } = await resend.emails.send({
+      from: `GanzAfrica <${FROM_ADDRESS}>`,
       to,
       subject,
       html,
     });
 
-    logger.info(`Email sent: ${info.messageId}`);
-    return info;
+    if (error) {
+      logger.error("Resend error:", error);
+      throw new AppError(`Failed to send email: ${error.message}`, 500);
+    }
+
+    logger.info(`Email sent via Resend: ${data?.id}`);
+    return data;
   } catch (error) {
     logger.error("Failed to send email", error);
     throw new AppError("Failed to send email", 500);
@@ -173,4 +115,12 @@ export async function sendWelcomeEmail(to: string, name: string) {
   return sendEmail(to, "Welcome to Ganzafrica", html);
 }
 
-export { verifyEmailConnection };
+// Kept for compatibility — no-op with Resend (connection is stateless)
+export async function verifyEmailConnection() {
+  if (!resend) {
+    logger.warn("Resend not configured. Email functionality will be disabled.");
+    return false;
+  }
+  logger.info("Resend email client initialized");
+  return true;
+}
