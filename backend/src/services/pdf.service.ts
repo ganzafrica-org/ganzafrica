@@ -557,7 +557,7 @@ export async function generateSignedPayslipUrl(
 ): Promise<string> {
   try {
     const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
-    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+    const signedUrl = await getSignedUrl(s3Client as any, command as any, { expiresIn });
     logger.info(`Generated signed URL for ${key}, expires in ${expiresIn}s`);
     return signedUrl;
   } catch (error) {
