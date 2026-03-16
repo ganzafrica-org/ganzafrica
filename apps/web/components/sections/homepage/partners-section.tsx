@@ -22,9 +22,9 @@ interface PartnersResponse {
 
 export default function PartnersSection() {
     const [partnerRow1, setPartnerRow1] = useState<string[]>([
-        'minagri.jpg',
+        // 'minagri.jpg',
         'ministry-environment.jpg',
-        'nla.jpg',
+        // 'nla.jpg',
         'AMI 1.jpg',
         'Skillsbuilder 1.jpg',
         'aubreybarkerfund 1.jpg'

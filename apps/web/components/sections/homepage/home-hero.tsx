@@ -88,7 +88,7 @@ export default function HomeHero({
     // Memoize navigation items to prevent re-creation on every render
     const aboutItems: MenuItem[] = useMemo(() => [
         {
-            title: "who we are",
+            title: "Who We Are",
             href: "/about/who-we-are",
             description:
                 "The journey of how we started and what inspires our work every day.",
@@ -404,7 +404,7 @@ export default function HomeHero({
                                                 prefetch={true}
                                             >
                                                 <div className="text-sm font-medium leading-none">
-                                                    <TranslatableText>{item.title.toLowerCase().replace(/ /g, " ") || item.title}</TranslatableText>
+                                                    <TranslatableText>{item.title}</TranslatableText>
                                                 </div>
                                                 {item.description && (
                                                     <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
@@ -605,7 +605,7 @@ export default function HomeHero({
                                         onClick={() => setIsMobileMenuOpen(false)}
                                         prefetch={true}
                                     >
-                                        <TranslatableText>{item.title.toLowerCase().replace(/ /g, " ") || item.title}</TranslatableText>
+                                        <TranslatableText>{item.title}</TranslatableText>
                                     </Link>
                                 ))}
                             </div>

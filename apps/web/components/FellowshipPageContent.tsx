@@ -133,7 +133,7 @@ export default function FellowshipPageContent() {
         },
         {
             number: "02",
-            title: "A community of like-minded people",
+            title: "A Community Of Like-minded People",
             description: "Welcome fellows into a network of value-driven young Africans committed to leading Africa's transformation",
             color: "bg-[#FDB022]"
         },
@@ -337,7 +337,7 @@ export default function FellowshipPageContent() {
                         >
                             <Link href="/programs/fellowship/how-to-apply" aria-label="Know more on how to apply">
                                 <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
-                                    <TranslatableText>How to Apply</TranslatableText>
+                                    <TranslatableText>How To Apply</TranslatableText>
                                 </Button>
                             </Link>
                         </motion.div>
@@ -423,7 +423,7 @@ export default function FellowshipPageContent() {
                             className="w-full md:absolute md:top-12 md:right-0 md:w-[50%] bg-white p-4 sm:p-6 rounded-md shadow-lg"
                         >
                             <DecoratedHeading
-                                firstText= "About the"
+                                firstText= "About The"
                                 secondText= "Fellowship"
                                 className='mb-4 sm:mb-5'
                             />
@@ -437,7 +437,7 @@ export default function FellowshipPageContent() {
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <TranslatableText>How to Apply</TranslatableText>
+                                    <TranslatableText>How To Apply</TranslatableText>
                                 </motion.button>
                             </Link>
                         </motion.div>
@@ -475,8 +475,8 @@ export default function FellowshipPageContent() {
                             className="order-1 md:order-2"
                         >
                             <DecoratedHeading
-                                firstText= "Discover tomorrow's"
-                                secondText= "leaders today"
+                                firstText= "Discover Tomorrow's"
+                                secondText= "Leaders Today"
                             />
                             <p className="text-gray-600 text-sm md:text-base mb-6">
                                 <TranslatableText>A one-year program for those in early to mid career with exceptional ability and intellectual curiosity who aspire to become public leaders.</TranslatableText>
@@ -490,7 +490,7 @@ export default function FellowshipPageContent() {
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
-                                    <TranslatableText>Meet the Fellows</TranslatableText>
+                                    <TranslatableText>Meet The Fellows</TranslatableText>
                                 </motion.button>
                             </Link>
                         </motion.div>
@@ -514,7 +514,7 @@ export default function FellowshipPageContent() {
                         className="text-center max-w-2xl mx-auto mb-8"
                     >
                         <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                            <TranslatableText>Benefits of</TranslatableText>
+                            <TranslatableText>Benefits Of</TranslatableText>
                             <span className="text-[#045F3C]"><TranslatableText> Joining GanzAfrica</TranslatableText></span>
                         </h2>
                         <p className="text-gray-600 text-base">
@@ -619,7 +619,7 @@ export default function FellowshipPageContent() {
                         >
                             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
                                 <TranslatableText>GanzAfrica's Promise</TranslatableText>
-                                <span className="text-[#00A15D]"><TranslatableText> to</TranslatableText><br /></span>
+                                <span className="text-[#00A15D]"><TranslatableText> To</TranslatableText><br /></span>
                                 <span className="text-[#FDB022]">
                     <TranslatableText>Fellows:</TranslatableText>
                 </span>
@@ -669,7 +669,7 @@ export default function FellowshipPageContent() {
             >
                 <Container>
                     <div className="text-center mb-6 md:mb-8">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-2 text-[#00A15D]"><TranslatableText>Checkout What <span className="text-[#00A15D]">Fellows Say about</span></TranslatableText></h2>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-2 text-[#00A15D]"><TranslatableText>Checkout What <span className="text-[#00A15D]">Fellows Say About</span></TranslatableText></h2>
                         <h3 className="text-2xl md:text-3xl font-bold text-[#FDB022] mb-6 md:mb-8">
                             <TranslatableText> Our Fellowship</TranslatableText>
                         </h3>

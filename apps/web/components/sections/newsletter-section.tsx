@@ -99,7 +99,7 @@ export default function NewsletterSection() {
                 <div className="max-w-2xl mx-auto text-center">
                     <div className="text-center mb-16">
                         <DecoratedHeading
-                            firstText= "Subscribe to"
+                            firstText= "Subscribe To"
                             secondText= "Our Newsletter"
                             className="mx-auto"
                         />

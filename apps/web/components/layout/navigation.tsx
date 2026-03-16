@@ -54,7 +54,7 @@ const resolveHref = (path: string) => {
 // Menu items with descriptions for rich dropdowns
 const aboutItems: MenuItem[] = [
     {
-        title: "who we are",
+        title: "Who We Are",
         href: "/about/who-we-are",
         description: "Learn about our mission, vision, and the values that drive us."
     },
@@ -234,9 +234,7 @@ export default function Navigation({
                                         onClick={() => setIsMobileMenuOpen(false)}
                                         prefetch={true}
                                     >
-                                        <TranslatableText>{
-                                            item.title.toLowerCase().replace(/ /g, " ")
-                                            || item.title}</TranslatableText>
+                                        <TranslatableText>{item.title}</TranslatableText>
                                     </SafeLink>
                                 ))}
                             </div>
@@ -250,7 +248,7 @@ export default function Navigation({
                             className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
                             onClick={() => toggleDropdown("mobile-programs")}
                         >
-                            <TranslatableText>What we do</TranslatableText>
+                            <TranslatableText>What We Do</TranslatableText>
                             <SafeIconChevronDown
                                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
                             />
@@ -409,9 +407,7 @@ export default function Navigation({
                                                         prefetch={true}
                                                     >
                                                         <div className="text-sm font-medium leading-none">
-                                                            <TranslatableText>{
-                                                                item.title.toLowerCase().replace(/ /g, " ")
-                                                                || item.title}</TranslatableText>
+                                                            <TranslatableText>{item.title}</TranslatableText>
                                                         </div>
                                                         <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
                                                             {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
@@ -433,7 +429,7 @@ export default function Navigation({
                                 <button
                                     className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
                                 >
-                                    <TranslatableText>What we do</TranslatableText>
+                                    <TranslatableText>What We Do</TranslatableText>
                                     <SafeIconChevronDown className={`h-4 w-4 transition-transform ${desktopDropdown === "what-we-do" ? "rotate-180" : ""}`} />
                                 </button>
                                 {(desktopDropdown === "what-we-do" || desktopDropdown === "program-submenu") && (

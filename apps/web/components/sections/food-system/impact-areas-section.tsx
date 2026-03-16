@@ -1000,8 +1000,8 @@ const ClimateInitiativesMapSection = () => {
                     className="text-center mb-10"
                 >
                     <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                        <span><TranslatableText>Where we</TranslatableText></span>
-                        <span className="text-primary-green"><TranslatableText> work</TranslatableText></span>
+                        <span><TranslatableText>Where We</TranslatableText></span>
+                        <span className="text-primary-green"><TranslatableText> Work</TranslatableText></span>
                     </h2>
                     <p className="text-gray-600 max-w-3xl mx-auto">
                         <TranslatableText>

@@ -517,9 +517,9 @@ const TeamPage = (): JSX.Element => {
                 <div className="relative z-10 flex items-center justify-center h-full text-center mt-[-50px]">
                     <div className="space-y-8">
                         <div className="text-6xl font-bold text-primary-orange">{getDynamicHeaderText(activeFilter)}</div>
-                        <h1 className="text-3xl md:text-5xl text-white"
-                            dangerouslySetInnerHTML={{ __html: getSubtitle(activeFilter) }}>
-                        </h1>
+                        {/*<h1 className="text-3xl md:text-5xl text-white"*/}
+                        {/*    dangerouslySetInnerHTML={{ __html: getSubtitle(activeFilter) }}>*/}
+                        {/*</h1>*/}
                     </div>
                 </div>
             </div>
@@ -542,7 +542,7 @@ const TeamPage = (): JSX.Element => {
                         <div className="lg:w-[280px] flex-shrink-0">
                             <div className="lg:sticky lg:top-24">
                                 <h2 className="font-medium text-gray-600 mb-6">
-                                    <TranslatableText>Filter by Team</TranslatableText>
+                                    <TranslatableText>Filter By Team</TranslatableText>
                                 </h2>
                                 <div className="grid grid-cols-2 gap-x-3 gap-y-4">
                                     {/* Dynamic filters based on team types from API */}

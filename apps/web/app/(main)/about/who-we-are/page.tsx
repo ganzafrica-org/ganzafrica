@@ -100,7 +100,7 @@ interface FloatingTagProps {
 }
 
 interface PromiseCardProps {
-    type: "partners" | "fellows";
+    type: "Partners" | "Fellows";
     items?: string[];
     content?: string | string[];
     hasCurvedCorner?: boolean;
@@ -205,11 +205,11 @@ const PromiseCard: FC<PromiseCardProps> = ({
                                                hasCurvedCorner = false,
                                                marginRight = "",
                                            }) => {
-    const bgColor = type === "partners" ? "bg-[#073392]" : "bg-green-800";
-    const labelColor = type === "partners" ? "bg-primary-orange" : "bg-green-500";
-    const textColor = type === "partners" ? "text-white" : "text-white";
-    const label = `Promise to ${type}`;
-    const iconBg = type === "partners" ? "bg-primary-orange" : "bg-green-600";
+    const bgColor = type === "Partners" ? "bg-[#073392]" : "bg-green-800";
+    const labelColor = type === "Partners" ? "bg-primary-orange" : "bg-green-500";
+    const textColor = type === "Partners" ? "text-white" : "text-white";
+    const label = `Promise To ${type}`;
+    const iconBg = type === "Partners" ? "bg-primary-orange" : "bg-green-600";
 
     return (
         <div className={`${bgColor} ${marginRight} rounded-md p-6 sm:p-8 relative transition-all duration-300 border-0 mb-5 hover:-translate-y-1`}>
@@ -257,7 +257,7 @@ const PromiseCard: FC<PromiseCardProps> = ({
                      style={{ borderBottomLeftRadius: "100%" }} />
             )}
 
-            {type === "fellows" && (
+            {type === "Fellows" && (
                 <div className="absolute -top-5 -right-5 bg-green-600 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center shadow-lg">
                     <Telescope className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                 </div>
@@ -590,7 +590,7 @@ export default async function AboutPage(
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-900 mb-4">
                                     <TranslatableText>
-                                        Evidence based
+                                        Evidence Based
                                     </TranslatableText>
                                 </h3>
                                 <p className="text-gray-600 text-sm sm:text-base">
@@ -668,7 +668,7 @@ export default async function AboutPage(
                     {/* Right side - Content */}
                     <div className="w-full md:w-1/2 flex flex-col space-y-4 sm:space-y-6 ">
                         <PromiseCard
-                            type="partners"
+                            type="Partners"
                             items={
                                 [
                                     "Create a pipeline of highly motivated GanzAfrica fellows with land, climate, and agricultural training, leadership skills, and analytical capabilities.",
@@ -678,7 +678,7 @@ export default async function AboutPage(
                         />
 
                         <PromiseCard
-                            type="fellows"
+                            type="Fellows"
                             content={
                                 [
                                     "Provide up to 2 years of holistic training with a focus on data & analytics and leadership skills",

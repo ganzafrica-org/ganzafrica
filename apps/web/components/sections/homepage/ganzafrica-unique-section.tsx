@@ -161,7 +161,7 @@ export default function GanzAfricaUniqueSection() {
                                 transition={{ duration: 0.6 }}
                             >
                                 <DecoratedHeading
-                                    firstText= "3 Key Elements that make"
+                                    firstText= "3 Key Elements That Make"
                                     secondText= "GanzAfrica Unique"
                                 />
                             </motion.div>

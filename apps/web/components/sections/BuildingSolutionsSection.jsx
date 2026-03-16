@@ -332,7 +332,7 @@ const BuildingSolutionsSection = ({ categories, tags }) => {
             <div className="container mx-auto px-4 mb-2">
                 <h2 className="text-4xl font-bold text-center">
           <span className="text-green-800">
-              <TranslatableText>Building Sustainable</TranslatableText>
+              <TranslatableText>Building Sustainable </TranslatableText>
           </span>
                     <span className="text-primary-orange">
               <TranslatableText>Solutions With</TranslatableText>

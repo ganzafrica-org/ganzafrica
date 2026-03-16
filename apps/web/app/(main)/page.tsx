@@ -1,6 +1,7 @@
 import FellowsSection from "@/components/sections/homepage/fellows-section";
 import WhyGanzAfricaSection from "@/components/sections/homepage/why-ganzafrica-section";
 import FlagshipProgramsSection from "@/components/sections/homepage/flagship-programs-section";
+import ProgramSection from "@/components/sections/homepage/program-section";
 import ProjectsSection from "@/components/sections/homepage/projects-section";
 import TestimonialsSection from "@/components/sections/homepage/testimonials-section";
 import PartnersSection from "@/components/sections/homepage/partners-section";
@@ -10,6 +11,7 @@ import LatestNewsSection from "@/components/sections/homepage/latest-news-sectio
 import NewsletterSection from "@/components/sections/newsletter-section";
 import GanzAfricaUniqueSection from "@/components/sections/homepage/ganzafrica-unique-section";
 import {WhyGanza} from "@/components/WhyGanza";
+import TestSection from "@/components/sections/homepage/test-section";
 
 // Simplified Metadata generation
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,7 +42,8 @@ export default function HomePage() {
             {/*<WhyGanzAfricaSection />*/}
             <WhyGanza/>
             <GanzAfricaUniqueSection />
-            <FlagshipProgramsSection />
+            <ProgramSection />
+            {/*<TestSection/>*/}
             <ProjectsSection />
             <PartnersSection />
             <TestimonialsSection />

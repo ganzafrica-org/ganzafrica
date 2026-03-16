@@ -68,7 +68,7 @@ export default function OurApproachPageContent() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, delay: 0.2 }}
                     >
-                        <span className="font-normal"><TranslatableText>From Farm to Fork — and Far Beyond</TranslatableText></span>
+                        <span className="font-normal"><TranslatableText>From Farm To Fork — And Far Beyond</TranslatableText></span>
                     </motion.h1>
                 </div>
             </section>

@@ -66,7 +66,7 @@ export function GoogleAnalyticsComponent({ gaId }: GoogleAnalyticsComponentProps
         onAccept={handleAcceptCookies}
         onDecline={handleDeclineCookies}
         style={{
-          background: "rgba(0, 0, 0, 0.95)",
+          background: "#22c55e",
           color: "#fff",
           fontSize: "14px",
           textAlign: "left",
@@ -82,12 +82,11 @@ export function GoogleAnalyticsComponent({ gaId }: GoogleAnalyticsComponentProps
           cursor: "pointer",
         }}
         declineButtonStyle={{
-          backgroundColor: "transparent",
-          color: "#94a3b8",
+          backgroundColor: "#ffff",
+          color: "#22c55e",
           fontSize: "14px",
           borderRadius: "6px",
           padding: "10px 20px",
-          border: "1px solid #94a3b8",
           cursor: "pointer",
           marginRight: "10px",
         }}

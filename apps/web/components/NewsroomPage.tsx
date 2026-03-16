@@ -127,51 +127,17 @@ const NavigationItem = ({
                           onClick,
                           count,
                         }: {
-  label: string;
+  label: any;
   isActive: boolean;
   onClick: () => void;
   count?: number;
 }) => (
     <button
         onClick={onClick}
-        className={`relative group flex items-center gap-2 px-4 py-2 font-bold text-lg transition-colors duration-300 ${
-            isActive ? "text-black" : "text-gray-600 hover:text-black"
+        className={`relative group flex items-center gap-2 px-4 py-2 font-bold text-lg transition-colors duration-300 whitespace-nowrap ${
+            isActive ? "text-[#FFB800]" : "text-gray-600 hover:text-black"
         }`}
     >
-      {label !== "All" && (
-          <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-                d="M4.16669 10H15.8334M15.8334 10L10.8334 5M15.8334 10L10.8334 15"
-                stroke="currentColor"
-                strokeWidth="1.67"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-          </svg>
-      )}
-      {label === "All" && (
-          <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-                d="M4.16669 10H15.8334M15.8334 10L10.8334 5M15.8334 10L10.8334 15"
-                stroke="#FFB800"
-                strokeWidth="1.67"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-          </svg>
-      )}
       {label}
       {count !== undefined && (
           <span className={`ml-1 px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -295,15 +261,6 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
               {getFirstTag(item.tags)}
             </div>
 
-            {/* Arrow Button */}
-            <div className="absolute top-4 right-4 z-10">
-              <div className="relative w-10 h-10 rounded-full bg-[#FFB800] flex items-center justify-center cursor-pointer transform transition-all duration-300 ease-out hover:scale-110 hover:rotate-12 hover:bg-primary-green">
-                <ArrowUpRight
-                    className="w-5 h-5 text-white transition-transform duration-300 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    strokeWidth={2.5}
-                />
-              </div>
-            </div>
           </div>
 
           {/* Content */}
@@ -454,7 +411,7 @@ const NewsroomPage = () => {
       <TranslatableText>NEWS &UPDATES</TranslatableText>
     </h2>
     <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-    <TranslatableText>Sharing Our Progress and  Transformative Impact</TranslatableText>
+    <TranslatableText>Sharing Our Progress And  Transformative Impact</TranslatableText>
     </h1>
 
   </div>
@@ -467,7 +424,7 @@ const NewsroomPage = () => {
 
         <Container className="py-12">
           {/* Navigation */}
-          <nav className="mb-12 flex items-center justify-center space-x-12 overflow-x-auto pb-4 scrollbar-hide">
+          <nav className="mb-12 flex items-center sm:justify-center space-x-4 sm:space-x-12 overflow-x-auto pb-4 scrollbar-hide px-4 sm:px-0">
             <NavigationItem
                 label={<TranslatableText>All</TranslatableText>}
                 isActive={activeFilter === "all"}
