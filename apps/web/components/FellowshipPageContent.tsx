@@ -19,6 +19,7 @@ type Opportunity = {
     title: string;
 };
 
+
 interface Testimonial {
     id: number;
     author_name: string;
@@ -104,6 +105,7 @@ const fallbackTestimonials: Testimonial[] = [
         updated_at: new Date().toISOString(),
     }
 ];
+
 
 export default function FellowshipPageContent() {
     const benefits = [
@@ -329,18 +331,18 @@ export default function FellowshipPageContent() {
                         >
                             <TranslatableText>Join our transformative fellowship program designed to empower the next generation of African leaders in sustainable development.</TranslatableText>
                         </motion.p>
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, delay: 0.4 }}
-                            className="flex items-center justify-center gap-4"
-                        >
-                            <Link href="/programs/fellowship/how-to-apply" aria-label="Know more on how to apply">
+                        {/*<motion.div*/}
+                        {/*    initial={{ opacity: 0, y: 20 }}*/}
+                        {/*    animate={{ opacity: 1, y: 0 }}*/}
+                        {/*    transition={{ duration: 0.8, delay: 0.4 }}*/}
+                        {/*    className="flex items-center justify-center gap-4"*/}
+                        {/*>*/}
+                            <a className="flex items-center justify-center gap-4" href="/programs/fellowship/how-to-apply" aria-label="Know more on how to apply">
                                 <Button className="bg-primary-orange hover:bg-primary-orange text-white font-semibold px-6 py-4 text-base">
-                                    <TranslatableText>How to Apply</TranslatableText>
+                                    <TranslatableText>How To Apply</TranslatableText>
                                 </Button>
-                            </Link>
-                        </motion.div>
+                            </a>
+                        {/*</motion.div>*/}
                     </div>
                 </div>
             </section>
@@ -431,15 +433,15 @@ export default function FellowshipPageContent() {
                                 <TranslatableText>Our fully-funded program provides training, mentorship, and hands-on work experience in land governance, environmental management, agrifood systems, climate finance and other disciplines across our focus sectors. With specialized mentors guiding you, you'll gain professional development and collaborate with talented professionals. Plus, you'll have the opportunity to work on impactful projects with key global partners.</TranslatableText>
                             </p>
 
-                            <Link href="/programs/fellowship/how-to-apply"  aria-label="Know more on how to apply">
-                                <motion.button
-                                    className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white px-6 py-3 rounded-md font-medium transition-colors"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                            {/*<motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block">*/}
+                                <a
+                                    href="/programs/fellowship/how-to-apply"
+                                    aria-label="Know more on how to apply"
+                                    className="bg-[#045F3C] hover:bg-[#045F3C]/90 text-white px-6 py-3 rounded-md font-medium transition-colors inline-block"
                                 >
-                                    <TranslatableText>How to Apply</TranslatableText>
-                                </motion.button>
-                            </Link>
+                                    <TranslatableText>How To Apply</TranslatableText>
+                                </a>
+                            {/*</motion.div>*/}
                         </motion.div>
                     </div>
                 </div>
@@ -484,15 +486,15 @@ export default function FellowshipPageContent() {
                             <p className="text-gray-600 text-sm md:text-base mb-8">
                                 <TranslatableText>Through our full-time Fellowship, we find people working on plans to make the world better in a big way. Then we help them become impactful leaders by connecting them with the tools, resources, and communities they need to bring their ideas to life.</TranslatableText>
                             </p>
-                            <Link href="/about/team" aria-label="Know more on our team">
-                                <motion.button
-                                    className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                            {/*<motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block">*/}
+                                <a
+                                    href="/about/team"
+                                    aria-label="Know more on our team"
+                                    className="bg-primary-orange hover:bg-yellow-500 text-white px-8 py-3 rounded-md font-medium transition-colors inline-block"
                                 >
                                     <TranslatableText>Meet the Fellows</TranslatableText>
-                                </motion.button>
-                            </Link>
+                                </a>
+                            {/*</motion.div>*/}
                         </motion.div>
                     </div>
                 </div>
