@@ -275,7 +275,7 @@ export default function AlumniPageContent() {
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl font-bold mb-4">
-                            <span className="text-black">Purpose of the</span>
+                            <span className="text-black">Purpose Of The</span>
                             <span className="text-[#045f3c] ml-2">Alumni Network</span>
                         </h2>
                     </div>
@@ -283,28 +283,28 @@ export default function AlumniPageContent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {[
                             {
-                                title: "Networking and Professional Development",
+                                title: "Networking And Professional Development",
                                 description:
                                     "Enhancing professional connections among analysts, across industries and geographies, to share opportunities and professional advice.",
                                 color: "#073392",
                                 icon: <Users className="w-8 h-8" />,
                             },
                             {
-                                title: "Knowledge Sharing & Data and Evidence Use",
+                                title: "Knowledge Sharing & Data And Evidence Use",
                                 description:
                                     "Sharing diverse experiences and expertise while championing data-driven decision-making to accelerate inclusive agri-food systems transformation.",
                                 color: "#045f3c",
                                 icon: <CheckCircle2 className="w-8 h-8" />
                             },
                             {
-                                title: "Investing Back into the Fellowship Program",
+                                title: "Investing Back Into The Fellowship Program",
                                 description:
                                     "Providing a mechanism and pipeline for transitioned young analysts to invest into the training of successive cohorts of fellows.",
                                 color: "#F8B712",
                                 icon: <Briefcase className="w-8 h-8" />,
                             },
                             {
-                                title: "Co-creating and Co-implementing Solutions",
+                                title: "Co-creating And Co-implementing Solutions",
                                 description:
                                     "Encouraging and facilitating the collaboration, co-creation and co-implementation of solutions to major challenges in data and evidence generation and synthesis for policy impact.",
                                 color: "#F97316",

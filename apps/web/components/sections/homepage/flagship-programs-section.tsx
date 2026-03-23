@@ -103,13 +103,14 @@ export default function FlagshipProgramsSection() {
         <section className="flagship-programs-section py-16 md:py-24 bg-white relative border-t border-b border-gray-100">
             <div className="container mx-auto px-4">
                 <div className="text-center mb-16">
-                    <TranslatableText>
-                        <DecoratedHeading
-                            firstText= "Our Flagship"
-                            secondText= "Programs"
-                            className="mx-auto"
-                        />
-                    </TranslatableText>
+                    <h2 className="font-h4 md:font-h3 flex flex-col items-center">
+                        <span className="text-primary-green">
+                          <TranslatableText>Our Flag</TranslatableText>
+                        </span>
+                        <span className="text-primary-orange">
+                          <TranslatableText>ship Programs</TranslatableText>
+                        </span>
+                    </h2>
                 </div>
 
                 <div className="flex flex-col md:flex-row justify-center items-center gap-8">

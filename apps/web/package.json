@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.6.0",
-    "@next/third-parties": "^15.5.9",
+    "@next/third-parties": "latest",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-slot": "^1.2.0",
     "@react-jvectormap/world": "^1.1.2",

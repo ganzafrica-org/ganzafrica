@@ -70,7 +70,7 @@ const ProjectCard: React.FC<any> = ({ project, getFeatureImage, getCategoryName 
                         </div>
                         <div className="absolute top-3 right-3 z-10">
                             <div className="w-8 h-8 rounded-full text-primary-orange flex items-center justify-center transition-all duration-500 shadow-lg transform group-hover:rotate-90">
-                                <ArrowRight className="w-4 h-4 text-white" />
+                                {/*<ArrowRight className="w-4 h-4 text-white" />*/}
                             </div>
                         </div>
 
@@ -121,7 +121,7 @@ const CategoryButton: React.FC<any> = ({ name, icon, count, isActive, onClick })
             onClick={onClick}
             className={`flex items-center justify-between px-4 py-3 rounded-lg w-full transition-all duration-300 ${
                 isActive
-                    ? 'bg-green-700 text-white shadow-md'
+                    ? 'bg-green-700 text-[#FFB800] shadow-md'
                     : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-700'
             }`}
         >
@@ -133,7 +133,7 @@ const CategoryButton: React.FC<any> = ({ name, icon, count, isActive, onClick })
                 </div>
                 <span className="font-medium">{name}</span>
             </div>
-            <span className={`text-sm ${isActive ? 'bg-white text-green-700' : 'bg-gray-200 text-gray-700'} px-2 py-0.5 rounded-full`}>
+            <span className={`text-sm ${isActive ? 'bg-white text-[#FFB800]' : 'bg-gray-200 text-gray-700'} px-2 py-0.5 rounded-full`}>
         {count}
       </span>
         </button>
@@ -392,8 +392,8 @@ export default function ProjectsPageContent() {
                         </div>
 
                         <div className="flex flex-col lg:flex-row gap-8">
-                            <div className="lg:w-1/4 space-y-3">
-                                <div className="category-button">
+                            <div className="lg:w-1/4 flex lg:flex-col gap-3 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide lg:border-none border-b lg:space-y-3">
+                                <div className="category-button min-w-[200px] lg:min-w-0">
                                     <CategoryButton name='All Projects' icon={<ArrowRight className="w-5 h-5" />} count={totalProjects} isActive={activeCategory === 'all'} onClick={() => handleCategoryClick('all')} />
                                 </div>
                                 {Object.entries(categories).reduce<any[]>((unique, [id, name]) => {
@@ -401,7 +401,7 @@ export default function ProjectsPageContent() {
                                     return unique;
                                 }, []).map((category, index) => (
                                     category && (
-                                        <div key={category.id} className="category-button">
+                                        <div key={category.id} className="category-button min-w-[200px] lg:min-w-0">
                                             <CategoryButton name={category.name} icon={getCategoryIcon(category.name, index)} count={category.count} isActive={activeCategory === category.name} onClick={() => handleCategoryClick(category.name)} />
                                         </div>
                                     )

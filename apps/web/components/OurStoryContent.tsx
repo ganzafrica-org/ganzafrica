@@ -100,7 +100,7 @@ import { TranslatableText } from "@/components/translate/TranslatableText";
                 {/* Section01 */}
                 <SectionWithScrollAnimation
                     number="01"
-                    title="Origin and Inspiration (Before 2022)"
+                    title="Origin And Inspiration (Before 2022)"
                     text="Nearly three years ago, I established GanzAfrica with a clear mission: to build local human capital to champion the use of data and evidence to support public services and development agencies in decision-making, as they deliver essential programs to enhance people's standard of living, health, climate and environment, all critical food systems sectors. This initiative stemmed from many years of learning and experience gained working closely with public institutions and policy implementing partners. Over time, I noticed significant gaps in local capacity, efficiency and innovation potential, which resulted in slow progress and below-par developmental outcomes—especially within food systems sectors. Although GanzAfrica was officially founded in 2022, its roots go back much further. The ideas germinated from years of observing how well-meaning policies often fell short in implementation, primarily due to a lack of capacity. This has hampered progress across many African countries, where even good solutions have also been ineffective due to their application without contextual consideration."
                     imageUrl="/images/thiery.png"
                     imageAlt="GanzAfrica lessons"
@@ -114,7 +114,7 @@ import { TranslatableText } from "@/components/translate/TranslatableText";
                 {/* Section 2: The Vision and Approach - Yellow background */}
                 <SectionWithScrollAnimation
                     number="02"
-                    title="The Vision and Approach"
+                    title="The Vision And Approach"
                     text="I realized that bridging these gaps would require a unique approach, one that involved equipping young, talented graduates with the tools to support impactful initiatives. These professionals would need to be embedded within very institutions that needed transformation. The GanzAfrica program embodies this vision. It identifies promising young professionals with the right attitudes and equips them with the skills to support mandated institutions, make evidence-based decisions, adopt systems thinking, and drive sustainable change. Fellows are strategically placed as change agents in partner public institutions, where they gain invaluable real-world experience while contributing fresh ideas. The interplay between personal skills, theoretical training and practical application is at the heart of what makes GanzAfrica unique and impactful."
                     imageUrl="/images/SHIR5183-Enhanced-NR.jpg"
                     imageAlt="GanzAfrica team"
@@ -128,7 +128,7 @@ import { TranslatableText } from "@/components/translate/TranslatableText";
                 {/* Section 3 */}
                 <SectionWithScrollAnimation
                     number="03"
-                    title="Progress and Impact (2022-2024)"
+                    title="Progress And Impact (2022-2024)"
                     text="In just over two years since our first cohort of fellows joined public institutions, we have witnessed tangible results. Not only have our fellows brought fresh perspectives and innovative approaches to their roles, but they also facilitated operational efficiencies that are supporting institutional decision-makers to yield better outcomes within these institutions. Their contributions range from analyzing data sets, providing policy insights, and fostering a culture of accountability. Importantly, their work is starting to have a lasting impact on how institutions in the broader East African food systems, ensuring they are more sustainable, inclusive, and responsive to the needs of the population. Yet all this could not be achieved without the collaborative efforts of dedicated partners in these institutions, whose support has played a crucial role in making GA a reality. Their commitment and belief in our mission have been instrumental in driving the success of GanzAfrica."
                     imageUrl="/images/_BAB8914.jpg"
                     imageAlt="GanzAfrica lessons"
@@ -171,7 +171,7 @@ import { TranslatableText } from "@/components/translate/TranslatableText";
                 {/* Section 5*/}
                 <SectionWithScrollAnimation
                     number="05"
-                    title="Lessons Learned and Adaptation"
+                    title="Lessons Learned And Adaptation"
                     text="As we reflect on our first two years of implementation, we remain steadfast in our commitment to continuous learning and adaptation. Each challenge and lesson shapes our strategy for the future. For instance, we have learned the importance of tailoring our training to address the specific needs of the institutions we partner with. We have also seen the value of fostering strong relationships with these organizations to ensure that the placement of fellows leads to long-term, systemic change rather than temporary solutions."
                     imageUrl="/images/Fellows3.jpeg"
                     imageAlt="GanzAfrica lessons"
@@ -185,7 +185,7 @@ import { TranslatableText } from "@/components/translate/TranslatableText";
                 {/* Section 6 */}
                 <SectionWithScrollAnimation
                     number="06"
-                    title="Future Vision and Expansion"
+                    title="Future Vision And Expansion"
                     text="Looking ahead, we are excited about expanding the reach and impact of the GanzAfrica program. Our goal is to continue driving meaningful change, scale our operations, and build a growing network of technically skilled, innovative leaders who are passionate about transforming food systems and addressing other critical societal challenges. The journey has just begun, but we are already witnessing the positive impact of our work across the region. Together with our partners, fellows, and host institutions, we are committed to continued growth, shaping a sustainable future for Africa with innovation, efficiency, and excellence."
                     imageUrl="/images/_BAB8908.jpg"
                     imageAlt="GanzAfrica team members"

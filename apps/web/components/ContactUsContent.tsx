@@ -175,7 +175,7 @@ const ContactUsContent: React.FC = () => {
                             transition={{ duration: 0.8 }}
                             className="text-3xl md:text-5xl font-bold text-white mb-4"
                         >
-                            <TranslatableText>Get in</TranslatableText>{" "}
+                            <TranslatableText>Get In</TranslatableText>{" "}
                             <span className="text-[#FDB022]">
                               <TranslatableText>Touch</TranslatableText>
                             </span>{" "}
@@ -215,7 +215,7 @@ const ContactUsContent: React.FC = () => {
                                 className="text-2xl font-bold text-[#005c3d] "
                                 variants={itemFadeIn}
                             >
-                                <TranslatableText>Send Us a Message</TranslatableText>
+                                <TranslatableText>Send Us A Message</TranslatableText>
                             </motion.h2>
 
                             {/* Success Message */}

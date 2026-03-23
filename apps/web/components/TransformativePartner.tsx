@@ -10,7 +10,7 @@ export const TransformativePartner = () => {
                         <div className="space-y-8">
                             <div>
                                 <h2 className="font-h4 md:font-h3 whitespace-normal font-black text-black">
-                                    <TranslatableText>A transformative</TranslatableText> <span className="text-primary-green"><TranslatableText>Partner</TranslatableText></span>
+                                    <TranslatableText>A Transformative</TranslatableText> <span className="text-primary-green"><TranslatableText>Partner</TranslatableText></span>
                                 </h2>
                             </div>
                             <div className="space-y-4 text-black">

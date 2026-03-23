@@ -11,9 +11,6 @@ import {
     trackNewsArticleView,
     trackVideoEvent,
 } from "@/components/analytics/google-analytics";
-import { TranslatableText } from "@/components/translate/TranslatableText";
-import {useTranslationContext} from "@/context/translation";
-import {TranslateArticleButton} from "@/components/translate";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SafeLink = Link as unknown as React.ComponentType<any>;
@@ -272,17 +269,6 @@ const NewsDetailsContent = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [relatedArticles, setRelatedArticles] = useState<RelatedArticle[]>([]);
-    const [translatedContent, setTranslatedContent] = useState<string | null>(null);
-    const [translatedTitle, setTranslatedTitle] = useState<string | null>(null);
-    const [isTranslating, setIsTranslating] = useState(false);
-
-    // Context hook
-    const {
-        targetLanguage,
-        sourceLanguage,
-        translateText,
-        isTranslated: isGloballyTranslated,
-    } = useTranslationContext();
 
     // Get API base URL
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
@@ -337,35 +323,6 @@ const NewsDetailsContent = () => {
             fetchArticleBySlug();
         }
     }, [slug, API_BASE_URL]);
-
-    useEffect(() => {
-        const translateArticle = async () => {
-            if (!article) return;
-
-            if (targetLanguage === sourceLanguage) {
-                setTranslatedContent(null);
-                setTranslatedTitle(null);
-                return;
-            }
-
-            setIsTranslating(true);
-            try {
-                const originalContent = article.content || article.description || "";
-                const [newTitle, newContent] = await Promise.all([
-                    translateText(article.title),
-                    translateText(originalContent),
-                ]);
-                setTranslatedTitle(newTitle);
-                setTranslatedContent(newContent);
-            } catch (error) {
-                console.error("Failed to translate article:", error);
-            } finally {
-                setIsTranslating(false);
-            }
-        };
-
-        translateArticle();
-    }, [targetLanguage, sourceLanguage, article, translateText]);
 
     // Loading and Error states - NOW SAFE after all hooks
     if (loading) {
@@ -484,25 +441,12 @@ const NewsDetailsContent = () => {
         setSelectedMedia(null);
     };
 
-    const handleTranslate = (content: string, title: string) => {
-        setTranslatedContent(content);
-        setTranslatedTitle(title);
-    };
-
-    const handleRestoreOriginal = () => {
-        setTranslatedContent(null);
-        setTranslatedTitle(null);
-    };
-
     // Derived values
     const mainImageUrl = getCoverImage(article);
     const allMediaItems = getMediaItems(article);
-    const isTranslated = !!(targetLanguage !== sourceLanguage && (translatedTitle || translatedContent));
-    const displayTitle = isTranslated && translatedTitle ? translatedTitle : article.title;
+    const displayTitle = article.title;
     const displayContent =
-        isTranslated && translatedContent
-            ? translatedContent
-            : article.content || article.description || "No content available for this article.";
+        article.content || article.description || "No content available for this article.";
 
     return (
         <main className="bg-gray-50 min-h-screen">
@@ -547,29 +491,6 @@ const NewsDetailsContent = () => {
                         </SafeLink>
 
                         <div className="bg-white rounded-xl shadow-sm p-6 md:p-8">
-                            <div className="flex justify-end mb-4">
-                                <TranslateArticleButton
-                                    originalContent={article.content || article.description || ""}
-                                    originalTitle={article.title}
-                                    onTranslate={handleTranslate}
-                                    onRestore={handleRestoreOriginal}
-                                    isTranslated={isTranslated}
-                                    sourceLanguage="en"
-                                />
-                            </div>
-
-                            {isTranslating && (
-                                <div className="mb-4 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700 flex items-center gap-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-yellow-500 border-t-transparent"></div>
-                                    Translating article...
-                                </div>
-                            )}
-                            {isTranslated && !isTranslating && (
-                                <div className="mb-4 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-                                    This article has been translated. Use the language selector in the navigation to change language.
-                                </div>
-                            )}
-
                             <div
                                 className="prose prose-lg max-w-none prose-headings:mb-6 prose-headings:mt-8 prose-p:my-4 prose-p:leading-relaxed prose-img:my-8 prose-img:rounded-lg prose-hr:my-10"
                                 dangerouslySetInnerHTML={{
@@ -620,7 +541,7 @@ const NewsDetailsContent = () => {
                                         href={`/newsroom`}
                                         className="inline-flex items-center justify-center px-5 py-2 text-sm font-medium text-[#00A651] border border-[#00A651] rounded-md hover:bg-[#00A651] hover:text-white transition-colors"
                                     >
-                                        <TranslatableText>View All News</TranslatableText>
+                                        View All News
                                     </SafeLink>
                                 </div>
                             </div>
