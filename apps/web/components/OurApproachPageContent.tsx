@@ -9,6 +9,7 @@ import ImpactAreasSection from "@/components/sections/food-system/impact-areas-s
 import ApproachSection from "@/components/sections/food-system/approach-section";
 import { trackEvent, trackPageView } from "@/components/analytics/google-analytics";
 import { TranslatableText } from "@/components/translate/TranslatableText";
+import ImpactAreaSection from "@/components/sections/food-system/impact-areas-section";
 
 // Animation variants
 const fadeIn = {
@@ -78,7 +79,7 @@ export default function OurApproachPageContent() {
             {/* Page Content */}
             <motion.div initial="hidden" animate="visible" variants={fadeIn}>
                 <WhereWeWorkSection />
-                <ImpactAreasSection />
+                <ImpactAreaSection />
             </motion.div>
         </main>
     );
