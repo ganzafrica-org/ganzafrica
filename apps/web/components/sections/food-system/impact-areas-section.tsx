@@ -65,7 +65,7 @@ const DATA_POINTS = [
         id: "proj-16", lat: 12.4604, lng: -3.4605, country: "Burkina Faso", city: "Dédougou", short: "bf", percentage: 45,
         name: "Dédougou Sorghum Research Station", community: "Boucle du Mouhoun Region", contactPerson: "Dr. Oumarou Zongo",
         description: "Research and development center for drought-resistant sorghum varieties adapted to Sahel conditions.",
-        current: { value: "560", percent: "9.3", isGrown: false }, previous: { value: "190", percent: "9.8", isGrown: false },
+        current: { value: "560", percent: "9.3", isGrown: true }, previous: { value: "190", percent: "9.8", isGrown: true },
     },
 ];
 
