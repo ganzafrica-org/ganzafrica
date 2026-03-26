@@ -21,8 +21,8 @@ import { DecoratedHeading } from "@/components/layout/headertext";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import apiClient from '@/lib/api-client';
 import { motion } from "framer-motion";
-import ImpactAreasSection from "@/components/sections/food-system/impact-areas-section";
 import { TranslatableText } from "@/components/translate/TranslatableText";
+import ImpactAreaSection from "@/components/sections/food-system/impact-areas-section";
 
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(ScrollTrigger);
@@ -431,7 +431,7 @@ export default function ProjectsPageContent() {
                 )}
             </div>
             <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-                <ImpactAreasSection />
+                <ImpactAreaSection />
             </motion.div>
         </div>
     );

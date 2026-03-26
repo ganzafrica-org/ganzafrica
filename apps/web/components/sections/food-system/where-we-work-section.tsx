@@ -45,7 +45,7 @@ const WhereWeWorkSection = () => {
                     <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 max-w-5xl mx-auto mb-4 leading-tight">
                         <TranslatableText>
                             Our Holistic Approach Addresses Challenges And Leverages
-                            Opportunities In 3 main Sectors.
+                            Opportunities.
                         </TranslatableText>
                     </h1>
                 </motion.div>
