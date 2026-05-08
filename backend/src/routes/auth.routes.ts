@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { authController } from "../controllers";
-import { validate, authenticate } from "@/middlewares";
+import { validate, authenticate, requireRole } from "@/middlewares";
 import { authValidation } from "../validations";
+import * as hrAuthController from "../controllers/hr-auth.controller";
+import * as hrAuthValidation from "@/validations/hr-auth.validation";
 
 const router: Router = Router();
 
@@ -47,5 +49,31 @@ router.post(
 // Protected routes
 router.post("/logout", authenticate, authController.logout);
 router.get("/me", authenticate, authController.getCurrentUser);
+
+// HR system additions (added only; no changes to existing routes above) ***
+router.post(
+  "/hr/generate-otp",
+  authenticate,
+  requireRole("IT"),
+  validate(hrAuthValidation.generateOtpSchema),
+  hrAuthController.generateOtp,
+);
+router.post(
+  "/hr/register",
+  validate(hrAuthValidation.registerSchema),
+  hrAuthController.register,
+);
+router.post(
+  "/hr/login",
+  validate(hrAuthValidation.loginSchema),
+  hrAuthController.login,
+);
+router.post(
+  "/hr/refresh",
+  validate(hrAuthValidation.refreshSchema),
+  hrAuthController.refresh,
+);
+router.post("/hr/logout", authenticate, hrAuthController.logout);
+router.get("/hr/me", authenticate, hrAuthController.me);
 
 export default router;

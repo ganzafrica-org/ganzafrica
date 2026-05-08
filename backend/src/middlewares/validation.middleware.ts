@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AnyZodObject, ZodError } from "zod";
-import { AppError } from "./error.middleware";
+// import { AppError } from "./error.middleware";
 import Logger from "../config/logger";
 
 const logger = new Logger("ValidationMiddleware");
@@ -21,17 +21,20 @@ export const validate = (schema: AnyZodObject) => {
       return next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedErrors = error.errors.map((err) => ({
-          path: err.path.join("."),
-          message: err.message,
-        }));
+        const formattedErrors = error.errors.map((err) => {
+          const path = err.path.join(".");
+          return {
+            path: path.length ? path : undefined,
+            message: err.message,
+          };
+        });
 
         logger.debug("Validation error", formattedErrors);
 
-        return res.status(400).json({
-          error: "Validation Error",
-          message: "Invalid request data",
-          details: formattedErrors,
+        return res.status(422).json({
+          success: false,
+          message: "Validation failed",
+          errors: formattedErrors,
         });
       }
 

@@ -9,3 +9,4 @@ export * from "./faqs";
 export * from "./news";
 export * from "./roles";
 export * from "./common";
+export * from "./hr";

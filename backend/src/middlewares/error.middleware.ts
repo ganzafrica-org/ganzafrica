@@ -23,7 +23,7 @@ export const handleZodError = (err: ZodError) => {
   const message = err.errors
     .map((e) => `${e.path.join(".")}: ${e.message}`)
     .join(", ");
-  return new AppError(message, 400);
+  return new AppError(message, 422); // Unprocessable Entity (request is valid but cannot be processed, it's against the rules)
 };
 
 // Handle database errors
@@ -36,10 +36,18 @@ export const handleDatabaseError = (err: any) => {
     // Unique violation
     message = "A record with this data already exists";
     statusCode = 409; // Conflict
+  } else if (err.code === "23502") {
+    // Not null violation
+    message = "Missing required field";
+    statusCode = 400;
   } else if (err.code === "23503") {
     // Foreign key violation
     message = "Referenced record does not exist";
     statusCode = 400; // Bad request
+  } else if (err.code === "22P02") {
+    // invalid_text_representation
+    message = "Invalid input format";
+    statusCode = 400;
   }
 
   return new AppError(message, statusCode);
@@ -52,13 +60,16 @@ export const errorHandler = (
   res: Response,
   next: NextFunction,
 ) => {
-  let error = { ...err };
-  error.message = err.message;
+  let error: unknown = err;
+  const messageFromErr =
+    err && typeof err === "object" && "message" in err
+      ? String((err as { message: unknown }).message)
+      : "Unknown error";
 
   // Log the error
-  logger.error(`${req.method} ${req.path} - ${error.message}`, {
-    stack: err.stack,
-    statusCode: err.statusCode,
+  logger.error(`${req.method} ${req.path} - ${messageFromErr}`, {
+    stack: err?.stack,
+    statusCode: err?.statusCode,
   });
 
   // Handle specific error types
@@ -71,26 +82,33 @@ export const errorHandler = (
     error = handleDatabaseError(err);
   }
 
-  // Send response
-  const statusCode = error.statusCode || 500;
-  const message =
-    error.message || constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR;
+  // Normalize to AppError
+  const normalized: AppError =
+    error instanceof AppError
+      ? error
+      : error instanceof ZodError
+        ? handleZodError(error)
+        : new AppError(constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR, 500);
+
+  const statusCode = normalized.statusCode || 500;
+  const message = normalized.message || constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR;
 
   res.status(statusCode).json({
-    error: statusCode >= 500 ? "Internal Server Error" : "Request Error",
+    success: false,
     message:
       statusCode >= 500 && env.NODE_ENV === "production"
         ? constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
         : message,
-    // Include stack trace in development mode
-    ...(env.NODE_ENV === "development" && { stack: err.stack }),
+    ...(env.NODE_ENV === "development" && err?.stack
+      ? { stack: err.stack }
+      : {}),
   });
 };
 
 // 404 Not Found middleware
 export const notFoundHandler = (req: Request, res: Response) => {
   res.status(404).json({
-    error: "Not Found",
+    success: false,
     message: `Resource not found: ${req.originalUrl}`,
   });
 };

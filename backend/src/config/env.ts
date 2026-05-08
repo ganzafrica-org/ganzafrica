@@ -43,6 +43,21 @@ const envSchema = z.object({
   ACCESS_TOKEN_EXPIRY: z.string().default("15m"),
   REFRESH_TOKEN_EXPIRY: z.string().default("7d"),
 
+  // Development/testing auth bypass (optional)
+  AUTH_BYPASS: z
+    .enum(["true", "false"])
+    .optional()
+    .default("false")
+    .transform((v) => v === "true"),
+  AUTH_BYPASS_USER_ID: z.string().optional().default("2"),
+  AUTH_BYPASS_EMAIL: z.string().optional().default("test@example.com"),
+  AUTH_BYPASS_BASE_ROLE: z.string().optional().default("applicant"),
+  AUTH_BYPASS_ROLES: z
+    .string()
+    .optional()
+    .default("admin")
+    .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
+
   // Email
   EMAIL_FROM: z.string().email(),
   EMAIL_PASSWORD: z.string(),

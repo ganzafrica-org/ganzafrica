@@ -5,6 +5,7 @@ import {
 } from "./auth.middleware";
 import { errorHandler, notFoundHandler, AppError } from "./error.middleware";
 import { validate, makeRateLimiter } from "./validation.middleware";
+import { requireRole } from "./role.middleware";
 
 export {
   authenticate,
@@ -15,4 +16,5 @@ export {
   AppError,
   validate,
   makeRateLimiter,
+  requireRole,
 };

@@ -1,6 +1,11 @@
 import { Router } from "express";
 import authRoutes from "./auth.routes";
 import userRoutes from "./user.routes";
+import employeeRoutes from "./employees.routes";
+import assetRoutes from "./assets.routes";
+import leaveRoutes from "./leave.routes";
+import policyRoutes from "./policy.routes";
+import helpdeskRoutes from "./helpdesk.routes";
 import projectRoutes from "./project.routes";
 import categoryRoutes from "./categories";
 import roleRoutes from "./roles.routes";
@@ -15,6 +20,11 @@ import opportunity from "./opportunity";
 const router: Router = Router();
 
 router.use("/auth", authRoutes);
+router.use("/employees", employeeRoutes);
+router.use("/assets", assetRoutes);
+router.use("/leave", leaveRoutes);
+router.use("/policy", policyRoutes);
+router.use("/helpdesk", helpdeskRoutes);
 router.use("/users", userRoutes);
 router.use("/projects", projectRoutes);
 router.use("/categories", categoryRoutes);
