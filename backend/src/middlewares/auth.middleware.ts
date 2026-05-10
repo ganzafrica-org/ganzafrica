@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { constants, Logger } from '../config';
+import * as jwt from 'jsonwebtoken';
+import { constants, Logger, env } from '../config';
 import { verifyToken } from '../services/auth.service';
 import { db } from '../db/client';
-import { users, roles, user_roles } from '../db/schema';
+import { users, roles, user_roles, hr_users } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 
 const logger = new Logger('AuthMiddleware');
@@ -54,6 +55,8 @@ declare global {
                 name: string;
                 email: string;
                 role_id: number;
+                /** HR portal JWT role (`EMPLOYEE` | `IT` | `HR`) when using `authenticateHr` */
+                role?: string;
                 role_name?: string;
                 roles?: string[];
                 avatar_url?: string;
@@ -190,6 +193,82 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
+const HR_ROLES = new Set(['EMPLOYEE', 'IT', 'HR']);
+
+/**
+ * Verifies an HR portal access JWT and attaches the HR user to `req.user`.
+ */
+export const authenticateHr = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token =
+            req.cookies?.[constants.AUTH_COOKIE_NAME] ||
+            (req.headers.authorization?.startsWith('Bearer ')
+                ? req.headers.authorization.substring(7)
+                : null);
+
+        if (!token) {
+            return res.status(401).json({
+                error: 'Unauthorized',
+                message: 'Authentication token is required',
+            });
+        }
+
+        let decoded: jwt.JwtPayload;
+        try {
+            decoded = jwt.verify(token, env.JWT_SECRET) as jwt.JwtPayload;
+        } catch {
+            return res.status(401).json({
+                error: 'Unauthorized',
+                message: 'Invalid token',
+            });
+        }
+
+        if (decoded.type !== 'access' || typeof decoded.id !== 'string') {
+            return res.status(401).json({
+                error: 'Unauthorized',
+                message: 'Invalid token',
+            });
+        }
+
+        const role = decoded.role;
+        if (typeof role !== 'string' || !HR_ROLES.has(role)) {
+            return res.status(401).json({
+                error: 'Unauthorized',
+                message: 'Invalid token',
+            });
+        }
+
+        const rows = await db.select().from(hr_users).where(eq(hr_users.id, decoded.id)).limit(1);
+        if (!rows.length) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'User not found',
+            });
+        }
+
+        const u = rows[0];
+        req.user = {
+            id: u.id,
+            name: `${u.first_name} ${u.last_name}`.trim(),
+            email: u.email,
+            role_id: -1,
+            role,
+            role_name: role,
+            roles: [role],
+            avatar_url: undefined,
+            email_verified: true,
+        };
+
+        next();
+    } catch (error) {
+        logger.error('HR authentication error:', error);
+        return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'Authentication failed',
+        });
+    }
+};
+
 /**
  * Authorization middleware factory that checks if the user has any of the required roles
  * @param {string[]} allowedRoles - List of roles that have access
@@ -211,10 +290,13 @@ export const authorize = (allowedRoles: string[]) => {
             }
 
             // Get user roles - either from the req.user.roles array or by fetching from db
-            let userRoles: string[] = req.user.roles || [];
-            
+            let userRoles: string[] = [...(req.user.roles || [])];
+            if (userRoles.length === 0 && req.user.role) {
+                userRoles = [req.user.role];
+            }
+
             // If roles weren't loaded in authenticate middleware, load them now
-            if (userRoles.length === 0) {
+            if (userRoles.length === 0 && req.user.role_id >= 0) {
                 // First, add the primary role from user.role_id
                 const primaryRole = await db.query.roles.findFirst({
                     where: eq(roles.id, req.user.role_id)
@@ -275,6 +357,9 @@ export const isAdmin = authorize(['admin']);
  * Middleware to check if user has team role or admin role
  */
 export const isTeamOrAdmin = authorize(['admin', 'team']);
+
+/** Shorthand for `authorize([...roles])` (e.g. HR portal `requireRole("IT", "HR")`). */
+export const requireRole = (...allowedRoles: string[]) => authorize(allowedRoles);
 
 /**
  * Set database context middleware
