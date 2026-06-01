@@ -442,7 +442,7 @@ const ContactUsContent: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <p className="text-gray-600">
-                                                            <TranslatableText>(250) 799 390 199</TranslatableText>
+                                                            <TranslatableText>(250) 793 901 990</TranslatableText>
                                                         </p>
                                                         <p className="text-xs text-gray-500">
                                                             <TranslatableText>Mon-Fri, 8:00 AM - 5:00 PM</TranslatableText>
