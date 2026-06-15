@@ -90,10 +90,10 @@ export default function Footer({}: {
                             <Home className="h-3.5 w-3.5 text-primary-green" />
                         </Link>
                         <Link
-                            href="https://linkedin.com/company/ganzafrica"
+                            href="https://www.linkedin.com/in/ganzafrica-foundation-87b998274/"
                             aria-label="LinkedIn"
                             className="bg-white rounded-full p-1 hover:opacity-90 transition-opacity"
-                            onClick={() => trackOutboundLink("https://linkedin.com/company/ganzafrica", "LinkedIn")}
+                            onClick={() => trackOutboundLink("https://www.linkedin.com/in/ganzafrica-foundation-87b998274/", "LinkedIn")}
                         >
                             <LinkedInIcon className="h-3.5 w-3.5" />
                         </Link>
