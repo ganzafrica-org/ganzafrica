@@ -37,6 +37,7 @@ export const ERROR_MESSAGES = {
   ACCOUNT_LOCKED: "Account locked",
   INVALID_TOKEN: "Invalid token",
   PASSWORD_RESET_EXPIRED: "Password reset token expired",
+  TOO_MANY_REQUESTS: "Too many requests, please try again later",
   FORBIDDEN: "You do not have permission to perform this action",
   USER_NOT_FOUND: "User not found",
   INVALID_PASSWORD: "Invalid password",
