@@ -1,0 +1,36 @@
+import { httpClient } from "@/services/http.service"
+import type { CreateEmployeeRequest, Employee, EmployeeStats, Leave, PaginatedResponse, UpdateEmployeeRequest } from "@/types/api"
+
+export const employeesService = {
+    async getEmployees(params?: { search?: string; status?: string; department?: string; country?: string; page?: number; limit?: number }) {
+        const response = await httpClient.get<PaginatedResponse<Employee>>("/employees", { params })
+        return response.data
+    },
+    async getEmployeeById(id: string) {
+        const response = await httpClient.get<Employee>(`/employees/${id}`)
+        return response.data
+    },
+    async getEmployeeStats() {
+        const response = await httpClient.get<EmployeeStats>("/employees/stats")
+        return response.data
+    },
+    async getMe() {
+        const response = await httpClient.get<Employee>("/employees/me")
+        return response.data
+    },
+    async getEmployeeLeaves(employeeId: string) {
+        const response = await httpClient.get<Leave[]>(`/employees/${employeeId}/leaves`)
+        return response.data
+    },
+    async createEmployee(payload: CreateEmployeeRequest) {
+        const response = await httpClient.post<Employee>("/employees", payload)
+        return response.data
+    },
+    async updateEmployee(id: string, payload: UpdateEmployeeRequest) {
+        const response = await httpClient.patch<Employee>(`/employees/${id}`, payload)
+        return response.data
+    },
+    async deleteEmployee(id: string) {
+        await httpClient.delete(`/employees/${id}`)
+    },
+}
