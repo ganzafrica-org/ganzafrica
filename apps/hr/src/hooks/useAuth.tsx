@@ -69,7 +69,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(true);
         try {
             const response = await authService.login(data);
-            
             // Store tokens in localStorage as requested
             localStorage.setItem("accessToken", response.accessToken);
             localStorage.setItem("refreshToken", response.refreshToken);
