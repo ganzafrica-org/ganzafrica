@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,7 @@ import {
     Plus,
     Search,
     Filter,
+    SlidersHorizontal,
     Download,
     Eye,
     Edit,
@@ -24,15 +25,12 @@ import {
     Image,
     Video,
     Archive,
-    Users,
     Lock,
     Share,
     MoreVertical,
     Folder,
-    FolderPlus,
-    CheckCircle,
     TrendingUp,
-    Building, Clock
+    Clock
 } from 'lucide-react'
 import {
     DropdownMenu,
@@ -41,6 +39,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import {
     Dialog,
@@ -59,230 +58,12 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { StatsHeader } from '@/components/sections/header'
-import { TimeOffStats } from '@/data/Header-data'
-
-const documentCategories = [
-    {
-        id: 'policies',
-        name: 'Policies & Procedures',
-        description: 'Company policies, procedures, and guidelines',
-        icon: FileText,
-        color: 'bg-blue-100 text-blue-800',
-        documents: 23,
-        restricted: false
-    },
-    {
-        id: 'contracts',
-        name: 'Contract Templates',
-        description: 'Employment contracts and legal templates',
-        icon: File,
-        color: 'bg-green-100 text-green-800',
-        documents: 12,
-        restricted: true
-    },
-    {
-        id: 'forms',
-        name: 'Forms & Applications',
-        description: 'Standard forms and application templates',
-        icon: FileText,
-        color: 'bg-purple-100 text-purple-800',
-        documents: 18,
-        restricted: false
-    },
-    {
-        id: 'onboarding',
-        name: 'Onboarding Materials',
-        description: 'Welcome guides, checklists, and orientation materials',
-        icon: Users,
-        color: 'bg-orange-100 text-orange-800',
-        documents: 15,
-        restricted: false
-    },
-    {
-        id: 'compliance',
-        name: 'Compliance & Legal',
-        description: 'Legal documents, compliance requirements',
-        icon: Lock,
-        color: 'bg-red-100 text-red-800',
-        documents: 8,
-        restricted: true
-    },
-    {
-        id: 'training',
-        name: 'Training Materials',
-        description: 'Training guides, presentations, and resources',
-        icon: Archive,
-        color: 'bg-yellow-100 text-yellow-800',
-        documents: 31,
-        restricted: false
-    }
-]
-
-const documents = [
-    {
-        id: 1,
-        name: 'Employee Handbook 2024',
-        description: 'Comprehensive guide for all employees covering policies, benefits, and procedures',
-        category: 'policies',
-        type: 'pdf',
-        size: '2.4 MB',
-        version: '3.2',
-        uploadedBy: 'Sarah Johnson',
-        uploadedDate: '2024-12-01',
-        lastModified: '2024-12-05',
-        downloads: 156,
-        views: 423,
-        status: 'published',
-        restricted: false,
-        requiresSignature: false,
-        tags: ['handbook', 'policies', 'general'],
-        departments: ['All']
-    },
-    {
-        id: 2,
-        name: 'Standard Employment Contract',
-        description: 'Template for full-time employment contracts',
-        category: 'contracts',
-        type: 'docx',
-        size: '156 KB',
-        version: '2.1',
-        uploadedBy: 'Michael Brown',
-        uploadedDate: '2024-11-15',
-        lastModified: '2024-11-20',
-        downloads: 45,
-        views: 89,
-        status: 'published',
-        restricted: true,
-        requiresSignature: true,
-        tags: ['contract', 'employment', 'legal'],
-        departments: ['HR', 'Legal']
-    },
-    {
-        id: 3,
-        name: 'Fellowship Agreement Template',
-        description: 'Contract template for fellowship positions',
-        category: 'contracts',
-        type: 'docx',
-        size: '142 KB',
-        version: '1.5',
-        uploadedBy: 'Grace Mukamana',
-        uploadedDate: '2024-11-10',
-        lastModified: '2024-11-25',
-        downloads: 23,
-        views: 67,
-        status: 'published',
-        restricted: true,
-        requiresSignature: true,
-        tags: ['fellowship', 'contract', 'legal'],
-        departments: ['HR', 'Fellowship']
-    },
-    {
-        id: 4,
-        name: 'Code of Conduct',
-        description: 'Ethical guidelines and behavioral expectations',
-        category: 'policies',
-        type: 'pdf',
-        size: '890 KB',
-        version: '1.0',
-        uploadedBy: 'Jean Baptiste Mukamana',
-        uploadedDate: '2024-10-20',
-        lastModified: '2024-10-20',
-        downloads: 234,
-        views: 567,
-        status: 'published',
-        restricted: false,
-        requiresSignature: true,
-        tags: ['ethics', 'conduct', 'policies'],
-        departments: ['All']
-    },
-    {
-        id: 5,
-        name: 'New Employee Checklist',
-        description: 'Complete checklist for onboarding new employees',
-        category: 'onboarding',
-        type: 'pdf',
-        size: '245 KB',
-        version: '2.0',
-        uploadedBy: 'Alice Uwimana',
-        uploadedDate: '2024-12-03',
-        lastModified: '2024-12-03',
-        downloads: 78,
-        views: 145,
-        status: 'published',
-        restricted: false,
-        requiresSignature: false,
-        tags: ['onboarding', 'checklist', 'new-hire'],
-        departments: ['HR', 'All Managers']
-    },
-    {
-        id: 6,
-        name: 'Data Protection Policy',
-        description: 'Guidelines for handling personal and sensitive data',
-        category: 'compliance',
-        type: 'pdf',
-        size: '1.2 MB',
-        version: '1.3',
-        uploadedBy: 'David Nshimiyimana',
-        uploadedDate: '2024-11-30',
-        lastModified: '2024-12-02',
-        downloads: 89,
-        views: 201,
-        status: 'published',
-        restricted: true,
-        requiresSignature: true,
-        tags: ['data-protection', 'privacy', 'compliance'],
-        departments: ['All']
-    }
-]
-
-const onboardingTemplates = [
-    {
-        id: 'general-onboarding',
-        name: 'General Employee Onboarding',
-        description: 'Standard onboarding template for all employees',
-        documents: [
-            { name: 'Employee Handbook', required: true, signature: true },
-            { name: 'Code of Conduct', required: true, signature: true },
-            { name: 'IT Usage Policy', required: true, signature: true },
-            { name: 'Emergency Contacts Form', required: true, signature: false },
-            { name: 'Bank Details Form', required: true, signature: false },
-            { name: 'Benefits Overview', required: false, signature: false }
-        ],
-        departments: ['All'],
-        estimatedTime: '2-3 hours'
-    },
-    {
-        id: 'technical-onboarding',
-        name: 'Technical Role Onboarding',
-        description: 'Enhanced onboarding for technical positions',
-        documents: [
-            { name: 'Employee Handbook', required: true, signature: true },
-            { name: 'Code of Conduct', required: true, signature: true },
-            { name: 'IT Usage Policy', required: true, signature: true },
-            { name: 'Data Protection Policy', required: true, signature: true },
-            { name: 'Technical Guidelines', required: true, signature: false },
-            { name: 'Equipment Checklist', required: true, signature: false },
-            { name: 'Software Licenses Agreement', required: true, signature: true }
-        ],
-        departments: ['IT', 'Agriculture', 'Environment'],
-        estimatedTime: '3-4 hours'
-    },
-    {
-        id: 'fellowship-onboarding',
-        name: 'Fellowship Onboarding',
-        description: 'Specialized onboarding for fellows',
-        documents: [
-            { name: 'Fellowship Agreement', required: true, signature: true },
-            { name: 'Program Guidelines', required: true, signature: false },
-            { name: 'Code of Conduct', required: true, signature: true },
-            { name: 'Mentor Assignment', required: false, signature: false },
-            { name: 'Project Guidelines', required: true, signature: false }
-        ],
-        departments: ['Fellowship'],
-        estimatedTime: '1-2 hours'
-    }
-]
+import { ReusableSheet } from '@/components/sections/sheets/sheet-component'
+import { DataTable, ColumnDef } from "@/components/sections/table-component"
+import { DocumentSheet } from '@/components/sections/sheets/document-sheet'
+import {documentCategories, documents} from "@/data/documents-data";
+import {StatsHeader} from "@/components/sections/header";
+import {DocumentStats} from "@/data/Header-data";
 
 export default function DocumentManagementPage() {
     const [searchTerm, setSearchTerm] = useState("")
@@ -292,6 +73,129 @@ export default function DocumentManagementPage() {
     const [showUploadDialog, setShowUploadDialog] = useState(false)
     const [showNewTemplateDialog, setShowNewTemplateDialog] = useState(false)
     const [scrolled, setScrolled] = useState(false)
+    const [hidden, setHidden] = useState<Set<string>>(new Set())
+    const [selectedDocument, setSelectedDocument] = useState<any>(null)
+    const [isViewing, setIsViewing] = useState(false)
+
+    const documentColumns: ColumnDef<any>[] = [
+        {
+            key: "name",
+            header: "Document",
+            sortable: true,
+            render: (_, doc) => (
+                <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-center w-8 h-8 bg-slate-100 rounded">
+                        {getFileIcon(doc.type)}
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-medium">{doc.name}</span>
+                            {doc.restricted && <Lock className="h-3 w-3 text-amber-500" />}
+                            {doc.requiresSignature && <FileText className="h-3 w-3 text-blue-500" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{doc.size}</p>
+                    </div>
+                </div>
+            )
+        },
+        {
+            key: "category",
+            header: "Category",
+            sortable: true,
+            render: (category) => (
+                <Badge variant="outline" className="capitalize">
+                    {documentCategories.find(c => c.id === category)?.name}
+                </Badge>
+            )
+        },
+        {
+            key: "version",
+            header: "Version",
+            sortable: true,
+            render: (v) => <span className="text-sm font-medium">v{v}</span>
+        },
+        {
+            key: "lastModified",
+            header: "Modified",
+            sortable: true,
+            render: (date) => <span className="text-sm">{new Date(date).toLocaleDateString()}</span>
+        },
+        {
+            key: "downloads",
+            header: "Downloads",
+            sortable: true,
+            render: (downloads) => (
+                <div className="flex items-center gap-1">
+                    <Download className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-sm font-medium">{downloads}</span>
+                </div>
+            )
+        },
+        {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            render: (status) => getStatusBadge(status)
+        },
+        {
+            key: "actions",
+            header: "Actions",
+            render: (_, doc) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                            setSelectedDocument(doc)
+                            setIsViewing(true)
+                            setShowUploadDialog(true)
+                        }}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                            setSelectedDocument(doc)
+                            setIsViewing(false)
+                            setShowUploadDialog(true)
+                        }}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <Share className="mr-2 h-4 w-4" />
+                            Share
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )
+        }
+    ];
+
+    const toggleColumn = (key: string) => {
+        setHidden(prev => {
+            const next = new Set(prev)
+            if (next.has(key)) next.delete(key)
+            else next.add(key)
+            return next
+        })
+    }
+
+    const visibleColumns = useMemo(() => 
+        documentColumns.filter(col => !hidden.has(col.key)), 
+        [hidden]
+    )
 
     const filteredDocuments = documents.filter(doc => {
         const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -359,14 +263,14 @@ export default function DocumentManagementPage() {
     }, [])
 
     return (
-        <div className="min-h-screen p-6">
-            <div className="flex flex-col gap-6 w-full">
+        <div className="min-h-screen flex flex-col w-full bg-[#f6f8fb] dark:bg-slate-950 text-slate-900 dark:text-white">
+            <div className="space-y-6">
 
                 <StatsHeader
-                    title="Time Off"
-                    subtitle="Manage GanzAfrica Leaves"
+                    title="Documents"
+                    subtitle="Manage GanzAfrica Documents"
                     scrolled={scrolled}
-                    stats={TimeOffStats}
+                    stats={DocumentStats}
                     ClassName="w-full"
                 />
                 <Tabs defaultValue="documents" className="w-full flex flex-col">
@@ -395,7 +299,7 @@ export default function DocumentManagementPage() {
                     </TabsList>
 
                     <TabsContent value="documents" className="space-y-4">
-                        <Card>
+                        <Card className="rounded-lg">
                             <CardContent className="p-6">
                                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                                     <div className="flex flex-col sm:flex-row gap-3 flex-1">
@@ -432,108 +336,62 @@ export default function DocumentManagementPage() {
                                                 <SelectItem value="archived">Archived</SelectItem>
                                             </SelectContent>
                                         </Select>
+
+                                        {/* Column visibility dropdown */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" size="sm" className="gap-2 h-9 ml-auto">
+                                                    <SlidersHorizontal className="h-4 w-4" />
+                                                    Columns
+                                                    {hidden.size > 0 && (
+                                                        <Badge variant="secondary" className="px-1.5 text-xs">
+                                                            {hidden.size}
+                                                        </Badge>
+                                                    )}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-44">
+                                                <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {documentColumns.map(col => (
+                                                    <DropdownMenuCheckboxItem
+                                                        key={col.key}
+                                                        checked={!hidden.has(col.key)}
+                                                        onCheckedChange={() => toggleColumn(col.key)}
+                                                        className="capitalize"
+                                                    >
+                                                        {col.header}
+                                                    </DropdownMenuCheckboxItem>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
-                                    <Button variant="outline">
-                                        <Filter className="h-4 w-4" />
-                                        More Filters
-                                    </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white h-full py-3"
+                                            onClick={() => {
+                                                setSelectedDocument(null)
+                                                setIsViewing(false)
+                                                setShowUploadDialog(true)
+                                            }}
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                            Add Document
+                                        </Button>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card className="shadow-sm">
-                            <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-lg border-b">
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <Archive className="h-5 w-5 text-blue-600" />
-                                    Document Library
-                                </CardTitle>
-                                <CardDescription>
-                                    Browse and manage all organizational documents
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Document</TableHead>
-                                            <TableHead>Category</TableHead>
-                                            <TableHead>Version</TableHead>
-                                            <TableHead>Modified</TableHead>
-                                            <TableHead>Downloads</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead className="w-[70px]">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredDocuments.map((doc) => (
-                                            <TableRow key={doc.id} className="hover:bg-slate-50">
-                                                <TableCell>
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="flex items-center justify-center w-8 h-8 bg-slate-100 rounded">
-                                                            {getFileIcon(doc.type)}
-                                                        </div>
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-medium">{doc.name}</span>
-                                                                {doc.restricted && <Lock className="h-3 w-3 text-amber-500" />}
-                                                                {doc.requiresSignature && <FileText className="h-3 w-3 text-blue-500" />}
-                                                            </div>
-                                                            <p className="text-xs text-muted-foreground">{doc.size}</p>
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline" className="capitalize">
-                                                        {documentCategories.find(c => c.id === doc.category)?.name}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-sm font-medium">v{doc.version}</TableCell>
-                                                <TableCell className="text-sm">{new Date(doc.lastModified).toLocaleDateString()}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-1">
-                                                        <Download className="h-3 w-3 text-muted-foreground" />
-                                                        <span className="text-sm font-medium">{doc.downloads}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{getStatusBadge(doc.status)}</TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem>
-                                                                <Eye className="mr-2 h-4 w-4" />
-                                                                View
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <Download className="mr-2 h-4 w-4" />
-                                                                Download
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <Share className="mr-2 h-4 w-4" />
-                                                                Share
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem className="text-red-600">
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
+                        <DataTable
+                            columns={visibleColumns}
+                            data={filteredDocuments}
+                            onRowClick={(doc) => {
+                                setSelectedDocument(doc)
+                                setIsViewing(true)
+                                setShowUploadDialog(true)
+                            }}
+                            searchable={false}
+                        />
                     </TabsContent>
 
                     <TabsContent value="categories" className="space-y-4">
@@ -541,16 +399,16 @@ export default function DocumentManagementPage() {
                             {documentCategories.map((category) => {
                                 const Icon = category.icon
                                 return (
-                                    <Card key={category.id} className="hover:shadow-md transition-all duration-300">
-                                        <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50">
+                                    <Card key={category.id} className="hover:shadow-md transition-all duration-300 rounded-lg">
+                                        <CardHeader>
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center space-x-3">
                                                     <div className={`p-3 rounded-lg ${category.color} shadow-sm`}>
                                                         <Icon className="h-6 w-6" />
                                                     </div>
                                                     <div>
-                                                        <CardTitle className="text-lg">{category.name}</CardTitle>
-                                                        <CardDescription className="text-sm mt-1">
+                                                        <CardTitle className="text-lg font-bold">{category.name}</CardTitle>
+                                                        <CardDescription className="text-sm mt-1 text-slate-800">
                                                             {category.description}
                                                         </CardDescription>
                                                     </div>
@@ -569,9 +427,8 @@ export default function DocumentManagementPage() {
                                                     <FileText className="h-4 w-4" />
                                                     <span className="font-medium">{category.documents}</span> documents
                                                 </div>
-                                                <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                                                <Button variant="outline" size="sm" className="rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50">
                                                     <Eye className="mr-1 h-3 w-3" />
-                                                    View All
                                                 </Button>
                                             </div>
                                         </CardContent>
@@ -583,13 +440,13 @@ export default function DocumentManagementPage() {
 
                     <TabsContent value="analytics" className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Card className="shadow-sm">
-                                <CardHeader className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-t-lg border-b">
+                            <Card className="shadow-sm rounded-lg">
+                                <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <TrendingUp className="h-5 w-5 text-emerald-600" />
-                                        Document Usage
+                                        <p className="text-lg font-bold">Document Usage</p>
                                     </CardTitle>
-                                    <CardDescription>Most accessed documents this month</CardDescription>
+                                    <CardDescription className="text-slate-700">Most accessed documents this month</CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-6">
                                     <div className="space-y-4">
@@ -620,13 +477,13 @@ export default function DocumentManagementPage() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="shadow-sm">
-                                <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-t-lg border-b">
+                            <Card className="shadow-sm rounded-lg">
+                                <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <Archive className="h-5 w-5 text-purple-600" />
-                                        Category Distribution
+                                        <p className="text-lg font-bold">Category Distribution</p>
                                     </CardTitle>
-                                    <CardDescription>Documents by category</CardDescription>
+                                    <CardDescription className="text-slate-700">Documents by category</CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-6">
                                     <div className="space-y-4">
@@ -657,13 +514,13 @@ export default function DocumentManagementPage() {
                             </Card>
                         </div>
 
-                        <Card className="shadow-sm">
-                            <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-lg border-b">
+                        <Card className="shadow-sm rounded-lg">
+                            <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Clock className="h-5 w-5 text-amber-600" />
-                                    Recent Activity
+                                    <p className="text-lg font-bold">Recent Activity</p>
                                 </CardTitle>
-                                <CardDescription>Latest document activities</CardDescription>
+                                <CardDescription className="text-slate-700">Latest document activities</CardDescription>
                             </CardHeader>
                             <CardContent className="p-6">
                                 <div className="space-y-4">
@@ -683,7 +540,7 @@ export default function DocumentManagementPage() {
                                             <div className="flex-1">
                                                 <p className="text-sm">
                                                     <span className="font-medium">{activity.user}</span> {activity.action}{' '}
-                                                    <span className="font-medium">"{activity.document}"</span>
+                                                    <span className="font-medium">{activity.document}</span>
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">{activity.time}</p>
                                             </div>
@@ -695,128 +552,134 @@ export default function DocumentManagementPage() {
                     </TabsContent>
                 </Tabs>
 
-                <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-                    <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                                <Upload className="h-5 w-5 text-blue-600" />
-                                Upload New Document
-                            </DialogTitle>
-                            <DialogDescription>
-                                Add a new document to the knowledge base
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-6">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="docName" className="text-sm font-medium">Document Name *</Label>
-                                    <Input id="docName" placeholder="e.g., Employee Handbook 2024" className="border-slate-200 focus:border-blue-400" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="version" className="text-sm font-medium">Version</Label>
-                                    <Input id="version" placeholder="e.g., 1.0" className="border-slate-200 focus:border-blue-400" />
-                                </div>
+                {showUploadDialog && (
+                    <ReusableSheet
+                        open={showUploadDialog}
+                        onOpenChange={setShowUploadDialog}
+                        title={isViewing ? "View Document Details" : selectedDocument ? "Edit Document" : "Upload New Document"}
+                        footer={
+                            <div className="flex w-full gap-3">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 border-slate-200 text-slate-600 hover:bg-white"
+                                    onClick={() => setShowUploadDialog(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                {!isViewing && (
+                                    <Button className="flex-1 bg-gradient-to-r from-green-primary to-green-secondary hover:from-green-600 hover:to-green-700 text-white shadow-md">
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        {selectedDocument ? "Save Changes" : "Upload Document"}
+                                    </Button>
+                                )}
                             </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-                                <Textarea
-                                    id="description"
-                                    placeholder="Brief description of the document..."
-                                    rows={3}
-                                    className="border-slate-200 focus:border-blue-400"
-                                />
-                            </div>
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="category" className="text-sm font-medium">Category *</Label>
-                                    <Select>
-                                        <SelectTrigger className="border-slate-200">
-                                            <SelectValue placeholder="Select category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {documentCategories.map((category) => (
-                                                <SelectItem key={category.id} value={category.id}>
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="departments" className="text-sm font-medium">Departments</Label>
-                                    <Select>
-                                        <SelectTrigger className="border-slate-200">
-                                            <SelectValue placeholder="Select departments" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="all">All Departments</SelectItem>
-                                            <SelectItem value="hr">HR</SelectItem>
-                                            <SelectItem value="agriculture">Agriculture</SelectItem>
-                                            <SelectItem value="environment">Environment</SelectItem>
-                                            <SelectItem value="fellowship">Fellowship</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label className="text-sm font-medium">Tags</Label>
-                                <Input placeholder="Enter tags separated by commas" className="border-slate-200 focus:border-blue-400" />
-                            </div>
-
-
-                            <div className="space-y-2">
-                                <Label className="text-sm font-medium">Document File *</Label>
-                                <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50">
-                                    <Upload className="h-12 w-12 mx-auto mb-4 text-blue-400" />
-                                    <div className="text-sm">
-                                        <label className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium">
-                                            Click to upload
-                                        </label>
-                                        <span className="text-gray-500"> or drag and drop</span>
+                        }
+                    >
+                        {isViewing && selectedDocument ? (
+                            <DocumentSheet documentName={selectedDocument.name} revisions={selectedDocument.revisions || []} />
+                        ) : (
+                            <div className="p-6 space-y-6">
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="docName" className="text-sm font-medium">Document Name *</Label>
+                                        <Input id="docName" defaultValue={selectedDocument?.name} placeholder="e.g., Employee Handbook 2024" className="border-slate-200 focus:border-blue-400" />
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">PDF, DOC, DOCX, XLS, XLSX (max. 25MB)</p>
-                                </div>
-                            </div>
-
-
-                            <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
-                                <h4 className="font-medium text-slate-700">Document Settings</h4>
-                                <div className="space-y-3">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox id="restricted" />
-                                        <Label htmlFor="restricted" className="text-sm">
-                                            Restricted access (only specific roles can view)
-                                        </Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox id="signature" />
-                                        <Label htmlFor="signature" className="text-sm">
-                                            Requires digital signature
-                                        </Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox id="onboarding" />
-                                        <Label htmlFor="onboarding" className="text-sm">
-                                            Include in onboarding templates
-                                        </Label>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="version" className="text-sm font-medium">Version</Label>
+                                        <Input id="version" defaultValue={selectedDocument?.version} placeholder="e.g., 1.0" className="border-slate-200 focus:border-blue-400" />
                                     </div>
                                 </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="description" className="text-sm font-medium">Description</Label>
+                                    <Textarea
+                                        id="description"
+                                        defaultValue={selectedDocument?.description}
+                                        placeholder="Brief description of the document..."
+                                        rows={3}
+                                        className="border-slate-200 focus:border-blue-400"
+                                    />
+                                </div>
+
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="category" className="text-sm font-medium">Category *</Label>
+                                        <Select defaultValue={selectedDocument?.category}>
+                                            <SelectTrigger className="border-slate-200">
+                                                <SelectValue placeholder="Select category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {documentCategories.map((category) => (
+                                                    <SelectItem key={category.id} value={category.id}>
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="departments" className="text-sm font-medium">Departments</Label>
+                                        <Select>
+                                            <SelectTrigger className="border-slate-200">
+                                                <SelectValue placeholder="Select departments" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Departments</SelectItem>
+                                                <SelectItem value="hr">HR</SelectItem>
+                                                <SelectItem value="agriculture">Agriculture</SelectItem>
+                                                <SelectItem value="environment">Environment</SelectItem>
+                                                <SelectItem value="fellowship">Fellowship</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Tags</Label>
+                                    <Input defaultValue={selectedDocument?.tags?.join(', ')} placeholder="Enter tags separated by commas" className="border-slate-200 focus:border-blue-400" />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Document File *</Label>
+                                    <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50">
+                                        <Upload className="h-12 w-12 mx-auto mb-4 text-blue-400" />
+                                        <div className="text-sm">
+                                            <label className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium">
+                                                Click to upload
+                                            </label>
+                                            <span className="text-gray-500"> or drag and drop</span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">PDF, DOC, DOCX, XLS, XLSX (max. 25MB)</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                                    <h4 className="font-medium text-slate-700">Document Settings</h4>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox id="restricted" defaultChecked={selectedDocument?.restricted} />
+                                            <Label htmlFor="restricted" className="text-sm">
+                                                Restricted access (only specific roles can view)
+                                            </Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox id="signature" defaultChecked={selectedDocument?.requiresSignature} />
+                                            <Label htmlFor="signature" className="text-sm">
+                                                Requires digital signature
+                                            </Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox id="onboarding" />
+                                            <Label htmlFor="onboarding" className="text-sm">
+                                                Include in onboarding templates
+                                            </Label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-                                Cancel
-                            </Button>
-                            <Button className="bg-gradient-to-r from-green-primary to-green-secondary hover:from-green-600 hover:to-green-700 text-white">
-                                <Upload className="mr-2 h-4 w-4" />
-                                Upload Document
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                        )}
+                    </ReusableSheet>
+                )}
             </div>
         </div>
     )

@@ -74,7 +74,7 @@ export function Navbar() {
             return [
                 { id: "home", label: "Home", href: "/" },
                 { id: "employees", label: "Employees", href: "/employees" },
-                { id: "calendar", label: "Calendar", href: "/calendar" },
+                { id: "document", label: "Documents", href: "/documents" },
                 { id: "assets", label: "Assets", href: "/asset" },
                 { id: "help-desk", label: "Help Desk", href: "/help-desk" },
             ]
@@ -84,7 +84,7 @@ export function Navbar() {
             return [
                 { id: "home", label: "Home", href: "/" },
                 { id: "employees", label: "Employees", href: "/employees" },
-                { id: "calendar", label: "Calendar", href: "/calendar" },
+                { id: "document", label: "Documents", href: "/documents" },
                 { id: "assets", label: "Assets", href: "/asset" },
                 { id: "help-desk", label: "Help Desk", href: "/help-desk" },
             ]

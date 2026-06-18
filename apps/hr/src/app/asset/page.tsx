@@ -46,24 +46,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts"
+import { CartesianGrid, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { StatsHeader } from "@/components/sections/header"
 import { TimeOffStats } from "@/data/Header-data"
 import { assetsData, assetRequests, assetCategoryData, assetConditionData, monthlyAssetData, AssetStatus } from "@/data/assets-data"
 import { getStatusBadge, getConditionBadge, getRequestStatusBadge, getUrgencyBadge, getCategoryIcon, formatCurrency } from "@/lib/helpers/assets-util"
 import { AssetSheet } from "@/components/sections/sheets/asset-sheet"
-import { ReusableSheet } from "@/components/sections/sheets/sheet-component"
-
-export const chartConfig = {
+import { DataTable, ColumnDef } from "@/components/sections/table-component"
+import {ReusableSheet} from "@/components/sections/sheets/sheet-component";
+const chartConfig = {
     count: {
         label: "Count",
         color: "#10b981",
@@ -115,6 +107,213 @@ export default function AssetsPage() {
             window.removeEventListener("scroll", onScroll)
         }
     }, [])
+
+    const [isEditing, setIsEditing] = useState(false)
+    const [editForm, setEditForm] = useState<any>(null)
+
+    const assetColumns: ColumnDef<any>[] = [
+        {
+            key: "name",
+            header: "Asset",
+            sortable: true,
+            render: (_, asset) => (
+                <div className="flex items-center space-x-3">
+                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg">
+                        {getCategoryIcon(asset.category)}
+                    </div>
+                    <div>
+                        <div className="font-medium">{asset.name}</div>
+                        <div className="text-sm text-muted-foreground">{asset.assetTag}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            key: "assignedTo",
+            header: "Assigned To",
+            sortable: true,
+            render: (assignedTo, asset) => (
+                assignedTo ? (
+                    <div className="flex items-center space-x-2">
+                        <Avatar className="h-8 w-8">
+                            <AvatarFallback className="bg-green-100 text-green-600 text-xs">
+                                {assignedTo.split(' ').map((n: string) => n[0]).join('')}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <div className="text-sm font-medium">{assignedTo}</div>
+                            <div className="text-xs text-muted-foreground">{asset.department}</div>
+                        </div>
+                    </div>
+                ) : (
+                    <span className="text-muted-foreground">-</span>
+                )
+            )
+        },
+        {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            render: (status) => getStatusBadge(status as AssetStatus)
+        },
+        {
+            key: "condition",
+            header: "Condition",
+            sortable: true,
+            render: (condition) => getConditionBadge(condition)
+        },
+        {
+            key: "location",
+            header: "Location",
+            sortable: true,
+            render: (location) => (
+                <div className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-sm">{location}</span>
+                </div>
+            )
+        },
+        {
+            key: "currentValue",
+            header: "Value",
+            sortable: true,
+            render: (val) => <span className="font-medium">{formatCurrency(val)}</span>
+        },
+        {
+            key: "actions",
+            header: "Actions",
+            render: (_, asset) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => {
+                            setSelectedAsset(asset)
+                            setShowAssetDialog(true)
+                            setIsEditing(false)
+                        }}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                            setSelectedAsset(asset)
+                            setShowAssetDialog(true)
+                            setIsEditing(true)
+                            setEditForm(asset)
+                        }}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit Asset
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            <User className="mr-2 h-4 w-4" />
+                            Assign/Unassign
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                            <AlertTriangle className="mr-2 h-4 w-4" />
+                            Report Issue
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )
+        }
+    ];
+
+    const requestColumns: ColumnDef<any>[] = [
+        {
+            key: "employeeName",
+            header: "Employee",
+            sortable: true,
+            render: (name, request) => (
+                <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                            {name.split(' ').map((n: string) => n[0]).join('')}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <div className="font-medium">{name}</div>
+                        <div className="text-sm text-muted-foreground">{request.department}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            key: "requestType",
+            header: "Request Type",
+            sortable: true,
+            render: (type) => (
+                <Badge variant="outline" className="capitalize">
+                    {type}
+                </Badge>
+            )
+        },
+        {
+            key: "assetCategory",
+            header: "Asset Category",
+            sortable: true,
+            render: (category) => (
+                <div className="flex items-center gap-2">
+                    {getCategoryIcon(category)}
+                    <span className="capitalize">{category}</span>
+                </div>
+            )
+        },
+        {
+            key: "urgency",
+            header: "Urgency",
+            sortable: true,
+            render: (urgency) => getUrgencyBadge(urgency)
+        },
+        {
+            key: "budget",
+            header: "Budget",
+            sortable: true,
+            render: (budget) => <span className="font-medium">{formatCurrency(budget)}</span>
+        },
+        {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            render: (status) => getRequestStatusBadge(status)
+        },
+        {
+            key: "actions",
+            header: "Actions",
+            render: (_, request) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Request
+                        </DropdownMenuItem>
+                        {request.status === 'pending' && (
+                            <>
+                                <DropdownMenuItem className="text-green-600">
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Approve
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-600">
+                                    <AlertTriangle className="mr-2 h-4 w-4" />
+                                    Reject
+                                </DropdownMenuItem>
+                            </>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )
+        }
+    ];
 
     const filteredAssets = assetsData.filter(asset => {
         const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -198,7 +397,7 @@ export default function AssetsPage() {
                                         </div>
                                         {/* align the button to the right */}
                                         <div className="flex justify-end w-[20%]">
-                                            <Button variant="outline" className="text-brand-accent bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white h-full">
+                                            <Button variant="outline" className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white h-full">
                                                 <Plus className="h-4 w-4" />
                                                 Add Asset
                                             </Button>
@@ -208,180 +407,25 @@ export default function AssetsPage() {
                             </CardContent>
                         </Card>
 
-
-                        <Card className="rounded-lg">
-                            <CardContent className="p-6">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Asset</TableHead>
-                                            <TableHead>Assigned To</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Condition</TableHead>
-                                            <TableHead>Location</TableHead>
-                                            <TableHead>Value</TableHead>
-                                            <TableHead>Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredAssets.map((asset) => (
-                                            <TableRow key={asset.id} className="hover:bg-slate-50">
-                                                <TableCell>
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg">
-                                                            {getCategoryIcon(asset.category)}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-medium">{asset.name}</div>
-                                                            <div className="text-sm text-muted-foreground">{asset.assetTag}</div>
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {asset.assignedTo ? (
-                                                        <div className="flex items-center space-x-2">
-                                                            <Avatar className="h-8 w-8">
-                                                                <AvatarFallback className="bg-green-100 text-green-600 text-xs">
-                                                                    {asset.assignedTo.split(' ').map(n => n[0]).join('')}
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                            <div>
-                                                                <div className="text-sm font-medium">{asset.assignedTo}</div>
-                                                                <div className="text-xs text-muted-foreground">{asset.department}</div>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-muted-foreground">-</span>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>{getStatusBadge(asset.status as AssetStatus)}</TableCell>
-                                                <TableCell>{getConditionBadge(asset.condition)}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-1">
-                                                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                                                        <span className="text-sm">{asset.location}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="font-medium">{formatCurrency(asset.currentValue)}</TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem onClick={() => {
-                                                                setSelectedAsset(asset)
-                                                                setShowAssetDialog(true)
-                                                            }}>
-                                                                <Eye className="mr-2 h-4 w-4" />
-                                                                View Details
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <Edit className="mr-2 h-4 w-4" />
-                                                                Edit Asset
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <User className="mr-2 h-4 w-4" />
-                                                                Assign/Unassign
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem>
-                                                                <AlertTriangle className="mr-2 h-4 w-4" />
-                                                                Report Issue
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
+                        <DataTable
+                            columns={assetColumns}
+                            data={filteredAssets}
+                            onRowClick={(asset) => {
+                                setSelectedAsset(asset)
+                                setShowAssetDialog(true)
+                                setIsEditing(false)
+                            }}
+                            searchable={false} // We already have a search bar above
+                        />
                     </TabsContent>
 
                     <TabsContent value="requests" className="space-y-4">
-                        <Card className="rounded-lg">
-                            <CardContent className="p-6">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Employee</TableHead>
-                                            <TableHead>Request Type</TableHead>
-                                            <TableHead>Asset Category</TableHead>
-                                            <TableHead>Urgency</TableHead>
-                                            <TableHead>Budget</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {assetRequests.map((request) => (
-                                            <TableRow key={request.id} className="hover:bg-slate-50">
-                                                <TableCell>
-                                                    <div className="flex items-center space-x-3">
-                                                        <Avatar className="h-8 w-8">
-                                                            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                                                                {request.employeeName.split(' ').map(n => n[0]).join('')}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <div className="font-medium">{request.employeeName}</div>
-                                                            <div className="text-sm text-muted-foreground">{request.department}</div>
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline" className="capitalize">
-                                                        {request.requestType}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        {getCategoryIcon(request.assetCategory)}
-                                                        <span className="capitalize">{request.assetCategory}</span>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>{getUrgencyBadge(request.urgency)}</TableCell>
-                                                <TableCell className="font-medium">{formatCurrency(request.budget)}</TableCell>
-                                                <TableCell>{getRequestStatusBadge(request.status)}</TableCell>
-                                                <TableCell>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                            <DropdownMenuItem>
-                                                                <Eye className="mr-2 h-4 w-4" />
-                                                                View Request
-                                                            </DropdownMenuItem>
-                                                            {request.status === 'pending' && (
-                                                                <>
-                                                                    <DropdownMenuItem className="text-green-600">
-                                                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                                                        Approve
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem className="text-red-600">
-                                                                        <AlertTriangle className="mr-2 h-4 w-4" />
-                                                                        Reject
-                                                                    </DropdownMenuItem>
-                                                                </>
-                                                            )}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </CardContent>
-                        </Card>
+                        <DataTable
+                            columns={requestColumns}
+                            data={assetRequests}
+                            searchable={true}
+                            searchPlaceholder="Search requests..."
+                        />
                     </TabsContent>
 
                     <TabsContent value="maintenance" className="space-y-4">
@@ -465,15 +509,46 @@ export default function AssetsPage() {
                 </Tabs>
 
                 {showAssetDialog && selectedAsset && (
-                    <AssetSheet
-                        assetDialogDraft={selectedAsset}
-                        setAssetDialogDraft={setSelectedAsset}
-                        isView={true}
-                        assetDialogOpen={showAssetDialog}
+                    <ReusableSheet
+                        open={showAssetDialog}
                         onOpenChange={setShowAssetDialog}
-                        assetDialogMode="view"
-                        defaultDraft={selectedAsset}
-                    />
+                        title={`Asset Details - ${selectedAsset.name}`}
+                        description={`Complete information for ${selectedAsset.assetTag}`}
+                        footer={
+                            <div className="flex w-full gap-3">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 border-slate-200 text-slate-600 hover:bg-white"
+                                    onClick={() => {
+                                        if (isEditing) {
+                                            setIsEditing(false)
+                                        } else {
+                                            setShowAssetDialog(false)
+                                        }
+                                    }}
+                                >
+                                    {isEditing ? "Cancel" : "Close"}
+                                </Button>
+                                <Button
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200"
+                                    onClick={() => {
+                                        if (isEditing) {
+                                            // handleSaveEdit() // Not implemented in original but added for UI consistency
+                                            setIsEditing(false)
+                                        } else {
+                                            console.log("Secondary action")
+                                        }
+                                    }}
+                                >
+                                    {isEditing ? "Save Changes" : "Download PDF"}
+                                </Button>
+                            </div>
+                        }
+                    >
+                        <AssetSheet
+                            assetDialogDraft={isEditing ? editForm : selectedAsset}
+                        />
+                    </ReusableSheet>
                 )}
             </div>
         </div>

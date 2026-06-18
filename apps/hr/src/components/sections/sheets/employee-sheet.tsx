@@ -239,7 +239,7 @@ export const EmployeeSheet = ({
                     <div className="space-y-4">
                         <h4 className="text-sm font-bold">Skills</h4>
                         <div className="flex flex-wrap gap-2">
-                            {selectedEmployee.skills.map((skill: string, index: number) => (
+                            {selectedEmployee?.skills?.map((skill: string, index: number) => (
                                 <Badge key={index} variant="secondary" className="bg-slate-100 text-slate-600 border-none font-normal text-xs px-3 py-1">
                                     {skill}
                                 </Badge>
