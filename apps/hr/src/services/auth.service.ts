@@ -5,15 +5,16 @@ export const authService = {
     async login(data: LoginRequest): Promise<LoginResponse> {
         const response = await httpClient.post<LoginResponse>("/auth/login", data);
 
-        const authData = response.data.data; // ✅ holds all tokens + user
-        const { accessToken, refreshToken } = authData;
+        const fullResponse = response.data;
+        const { accessToken, refreshToken } = fullResponse.data;
 
         if (typeof window !== 'undefined') {
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
         }
+        console.log("HHHHHHHHHHHHHHHHH", fullResponse);
 
-        return authData;
+        return fullResponse;
     },
 
     async refreshToken(token: string): Promise<{ accessToken: string }> {
@@ -21,7 +22,7 @@ export const authService = {
             refreshToken: token,
         });
 
-        const authData = response.data.data; // ✅ same pattern
+        const authData = response.data; // ✅ same pattern
 
         if (typeof window !== 'undefined') {
             localStorage.setItem("accessToken", authData.accessToken);
