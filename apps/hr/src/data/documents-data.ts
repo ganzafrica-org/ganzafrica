@@ -1,5 +1,5 @@
 
-import {File, FileText, Archive, Users, LockKeyhole } from "lucide-react";
+import {File, FileText, Archive, Users, LockKeyhole, Lock} from "lucide-react";
 
 export const documentCategories = [
     {
@@ -42,7 +42,7 @@ export const documentCategories = [
         id: 'compliance',
         name: 'Compliance & Legal',
         description: 'Legal documents, compliance requirements',
-        icon: LockKeyhole,
+        icon: Lock,
         color: 'bg-red-100 text-red-800',
         documents: 8,
         restricted: true
@@ -172,5 +172,53 @@ export const documents = [
         requiresSignature: true,
         tags: ['data-protection', 'privacy', 'compliance'],
         departments: ['All']
+    }
+]
+
+export const onboardingTemplates = [
+    {
+        id: 'general-onboarding',
+        name: 'General Employee Onboarding',
+        description: 'Standard onboarding template for all employees',
+        documents: [
+            { name: 'Employee Handbook', required: true, signature: true },
+            { name: 'Code of Conduct', required: true, signature: true },
+            { name: 'IT Usage Policy', required: true, signature: true },
+            { name: 'Emergency Contacts Form', required: true, signature: false },
+            { name: 'Bank Details Form', required: true, signature: false },
+            { name: 'Benefits Overview', required: false, signature: false }
+        ],
+        departments: ['All'],
+        estimatedTime: '2-3 hours'
+    },
+    {
+        id: 'technical-onboarding',
+        name: 'Technical Role Onboarding',
+        description: 'Enhanced onboarding for technical positions',
+        documents: [
+            { name: 'Employee Handbook', required: true, signature: true },
+            { name: 'Code of Conduct', required: true, signature: true },
+            { name: 'IT Usage Policy', required: true, signature: true },
+            { name: 'Data Protection Policy', required: true, signature: true },
+            { name: 'Technical Guidelines', required: true, signature: false },
+            { name: 'Equipment Checklist', required: true, signature: false },
+            { name: 'Software Licenses Agreement', required: true, signature: true }
+        ],
+        departments: ['IT', 'Agriculture', 'Environment'],
+        estimatedTime: '3-4 hours'
+    },
+    {
+        id: 'fellowship-onboarding',
+        name: 'Fellowship Onboarding',
+        description: 'Specialized onboarding for fellows',
+        documents: [
+            { name: 'Fellowship Agreement', required: true, signature: true },
+            { name: 'Program Guidelines', required: true, signature: false },
+            { name: 'Code of Conduct', required: true, signature: true },
+            { name: 'Mentor Assignment', required: false, signature: false },
+            { name: 'Project Guidelines', required: true, signature: false }
+        ],
+        departments: ['Fellowship'],
+        estimatedTime: '1-2 hours'
     }
 ]

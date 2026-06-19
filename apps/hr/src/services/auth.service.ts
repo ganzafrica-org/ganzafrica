@@ -4,26 +4,31 @@ import type { LoginRequest, LoginResponse, User } from "@/types/api";
 export const authService = {
     async login(data: LoginRequest): Promise<LoginResponse> {
         const response = await httpClient.post<LoginResponse>("/auth/login", data);
-        const { accessToken, refreshToken } = response.data;
-        
+
+        const fullResponse = response.data;
+        const { accessToken, refreshToken } = fullResponse.data;
+
         if (typeof window !== 'undefined') {
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
         }
-        
-        return response.data;
+        console.log("HHHHHHHHHHHHHHHHH", fullResponse);
+
+        return fullResponse;
     },
 
     async refreshToken(token: string): Promise<{ accessToken: string }> {
         const response = await httpClient.post<{ accessToken: string }>("/auth/refresh", {
             refreshToken: token,
         });
-        
+
+        const authData = response.data; // ✅ same pattern
+
         if (typeof window !== 'undefined') {
-            localStorage.setItem("accessToken", response.data.accessToken);
+            localStorage.setItem("accessToken", authData.accessToken);
         }
-        
-        return response.data;
+
+        return authData;
     },
 
     async logout(): Promise<void> {

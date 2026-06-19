@@ -27,10 +27,12 @@ import resourcesRoutes from "./resources.routes";
 import eventsRoutes from "./events.routes";
 import googleCalendarRoutes from "./google-calendar.routes";
 import payrollRoutes from "./payroll";
+import hrRoutes from "./hr";
 
 const router: Router = Router();
 
 router.use("/auth", authRoutes);
+router.use("/hr", hrRoutes);
 router.use("/users", userRoutes);
 router.use("/projects", projectRoutes);
 router.use("/categories", categoryRoutes);

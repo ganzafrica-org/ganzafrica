@@ -14,4 +14,4 @@ export * from "./tasks";
 export * from "./reports";
 export * from "./alumni";
 export * from "./payroll";
-export * from "./hr";
+export * from "./hr/index";

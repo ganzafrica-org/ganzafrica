@@ -30,7 +30,8 @@ import {
     LayoutDashboard,
     Contact,
     CreditCard,
-    MoreHorizontal
+    MoreHorizontal,
+    Plus
 } from "lucide-react"
 import {
     Table,
@@ -50,7 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { ReusableSheet } from '@/components/sections/sheets/sheet-component'
-import {departmentStats, employees_table_data} from "@/data/employee-data";
+import { departmentStats, employees_table_data } from "@/data/employee-data";
 
 const getStatusBadge = (status: string) => {
     switch (status) {
@@ -88,12 +89,11 @@ const OrganizationChart = ({ setSelectedEmployee, setShowDetailsDialog, setIsEdi
         return (
             <div key={employee.id} className="flex flex-col items-center">
                 <div className={`relative ${isRoot ? 'mb-8' : 'mb-4'}`}>
-                    <Card className={`hover:shadow-lg transition-all duration-300 ${
-                        isRoot ? 'border-2 border-blue-500 bg-gradient-to-r from-blue-50 to-emerald-50' :
+                    <Card className={`hover:shadow-lg transition-all duration-300 ${isRoot ? 'border-2 border-blue-500 bg-gradient-to-r from-blue-50 to-emerald-50' :
                             employee.level === 1 ? 'border-green-300 bg-green-50' :
                                 employee.level === 2 ? 'border-blue-300 bg-blue-50' :
                                     'border-gray-300'
-                    }`}>
+                        }`}>
                         <CardContent
                             className="p-4 text-center min-w-[200px] cursor-pointer"
                             onClick={() => {
@@ -295,57 +295,65 @@ export default function EmployeesPage() {
 
                     <TabsContent value="employees" className="space-y-6">
 
-                        <Card >
+                        <Card className="rounded-lg">
                             <CardContent className="p-6">
                                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                                     <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                                        <div className="relative flex-1 max-w-sm">
-                                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                placeholder="Search employees..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                className="pl-10 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400"
-                                            />
+                                        <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                                            <div className="relative flex-1 max-w-sm w-[80%]">
+                                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="Search employees..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    className="pl-10 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400"
+                                                />
+                                            </div>
+                                            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                                <SelectTrigger className="w-[130px] border-slate-200">
+                                                    <SelectValue placeholder="Status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All Status</SelectItem>
+                                                    <SelectItem value="active">Active</SelectItem>
+                                                    <SelectItem value="on_leave">On Leave</SelectItem>
+                                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                                                <SelectTrigger className="w-[160px] border-slate-200">
+                                                    <SelectValue placeholder="Department" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All Departments</SelectItem>
+                                                    <SelectItem value="Agriculture">Agriculture</SelectItem>
+                                                    <SelectItem value="Environment">Environment</SelectItem>
+                                                    <SelectItem value="Land Management">Land Management</SelectItem>
+                                                    <SelectItem value="Human Resources">Human Resources</SelectItem>
+                                                    <SelectItem value="Fellowship Program">Fellowship Program</SelectItem>
+                                                    <SelectItem value="East Africa Operations">East Africa Ops</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Select value={countryFilter} onValueChange={setCountryFilter}>
+                                                <SelectTrigger className="w-[140px] border-slate-200">
+                                                    <SelectValue placeholder="Country" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="all">All Countries</SelectItem>
+                                                    {countries.map(country => (
+                                                        <SelectItem key={country} value={country}>
+                                                            {getCountryFlag(country)} {country}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
-                                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                            <SelectTrigger className="w-[130px] border-slate-200">
-                                                <SelectValue placeholder="Status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Status</SelectItem>
-                                                <SelectItem value="active">Active</SelectItem>
-                                                <SelectItem value="on_leave">On Leave</SelectItem>
-                                                <SelectItem value="inactive">Inactive</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                                            <SelectTrigger className="w-[160px] border-slate-200">
-                                                <SelectValue placeholder="Department" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Departments</SelectItem>
-                                                <SelectItem value="Agriculture">Agriculture</SelectItem>
-                                                <SelectItem value="Environment">Environment</SelectItem>
-                                                <SelectItem value="Land Management">Land Management</SelectItem>
-                                                <SelectItem value="Human Resources">Human Resources</SelectItem>
-                                                <SelectItem value="Fellowship Program">Fellowship Program</SelectItem>
-                                                <SelectItem value="East Africa Operations">East Africa Ops</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <Select value={countryFilter} onValueChange={setCountryFilter}>
-                                            <SelectTrigger className="w-[140px] border-slate-200">
-                                                <SelectValue placeholder="Country" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Countries</SelectItem>
-                                                {countries.map(country => (
-                                                    <SelectItem key={country} value={country}>
-                                                        {getCountryFlag(country)} {country}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="flex justify-end w-[20%]">
+                                            <Button variant="outline" className="text-brand-accent bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white h-full">
+                                                <Plus className="h-4 w-4" />
+                                                Add Asset
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>
@@ -539,10 +547,10 @@ export default function EmployeesPage() {
                                 <CardDescription>Visual representation of organizational hierarchy and reporting structure</CardDescription>
                             </CardHeader>
                             <CardContent className="p-6">
-                                <OrganizationChart 
-                                    setSelectedEmployee={setSelectedEmployee} 
-                                    setShowDetailsDialog={setShowDetailsDialog} 
-                                    setIsEditing={setIsEditing} 
+                                <OrganizationChart
+                                    setSelectedEmployee={setSelectedEmployee}
+                                    setShowDetailsDialog={setShowDetailsDialog}
+                                    setIsEditing={setIsEditing}
                                 />
                             </CardContent>
                         </Card>
@@ -551,8 +559,8 @@ export default function EmployeesPage() {
 
 
                 {showDetailsDialog && selectedEmployee && (
-                    <ReusableSheet 
-                        open={showDetailsDialog} 
+                    <ReusableSheet
+                        open={showDetailsDialog}
                         onOpenChange={setShowDetailsDialog}
                         footer={
                             <div className="flex w-full gap-3">

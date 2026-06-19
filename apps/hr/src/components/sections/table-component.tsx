@@ -187,35 +187,6 @@ export function DataTable<T extends Record<string, any>>({
                             )}
                         </div>
                     )}
-
-                    {/* Column visibility dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2 h-9 ml-auto">
-                                <SlidersHorizontal className="h-4 w-4" />
-                                Columns
-                                {hidden.size > 0 && (
-                                    <Badge variant="secondary" className="px-1.5 text-xs">
-                                        {hidden.size}
-                                    </Badge>
-                                )}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {columns.map(col => (
-                                <DropdownMenuCheckboxItem
-                                    key={col.key}
-                                    checked={!hidden.has(col.key)}
-                                    onCheckedChange={() => toggleColumn(col.key)}
-                                    className="capitalize"
-                                >
-                                    {col.header}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             )}
 

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
-import type { User, LoginRequest } from "@/types/api";
+import {User, LoginRequest, LoginResponse} from "@/types/api";
 
 type AuthContextType = {
     user: User | null;
@@ -68,15 +68,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (data: LoginRequest) => {
         setIsLoading(true);
         try {
-            const response = await authService.login(data);
-            
+            const response:LoginResponse = await authService.login(data);
             // Store tokens in localStorage as requested
-            localStorage.setItem("accessToken", response.accessToken);
-            localStorage.setItem("refreshToken", response.refreshToken);
+            localStorage.setItem("accessToken", response.data.accessToken);
+            localStorage.setItem("refreshToken", response.data.refreshToken);
 
             // Try to decode token to ensure we have the most up-to-date role/user info
             try {
-                const base64Url = response.accessToken.split('.')[1];
+                const base64Url = response.data.accessToken.split('.')[1];
                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                 const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
@@ -85,18 +84,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 
                 // Merge decoded info with response.user
                 const mergedUser: User = {
-                    ...response.user,
-                    role: decoded.role || response.user.role || "EMPLOYEE"
+                    ...response.data.user,
+                    role: decoded.role || response.data.user.role || "EMPLOYEE"
                 };
                 setUser(mergedUser);
             } catch (e) {
-                setUser(response.user);
+                setUser(response.data.user);
             }
             
             // Set session cookie for middleware
             await fetch("/api/set-session", {
                 method: "POST",
-                body: JSON.stringify({ accessToken: response.accessToken }),
+                body: JSON.stringify({ accessToken: response.data.accessToken }),
             });
 
             router.push("/");

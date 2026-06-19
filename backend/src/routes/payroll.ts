@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import * as payrollController from "../controllers/payroll.controller";
+import * as payrollController from "../controllers/hr/payroll.controller";
 import { authenticate } from "../middlewares";
 
 const router = express.Router();

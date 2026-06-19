@@ -176,7 +176,7 @@ export const DocumentStats: HeaderStat[] = [
     },
     {
         icon: Calendar,
-        label: "Documents",
+        label: "Downloads",
         value: "14",
         comparison: "Total Downloads",
     },

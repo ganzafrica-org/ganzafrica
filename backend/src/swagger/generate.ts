@@ -224,6 +224,8 @@ const options = {
   apis: [
     path.resolve(__dirname, "../routes/*.ts"),
     path.resolve(__dirname, "../controllers/*.ts"),
+    path.resolve(__dirname, "../controllers/hr/*.ts"),
+    path.resolve(__dirname, "../swagger/hr.schemas.ts"),
   ],
 };
 

@@ -2,7 +2,8 @@ import { Badge } from "@/components/ui/badge"
 import {
     Laptop,
     Monitor,
-    Smartphone
+    Smartphone,
+    Package
 } from "lucide-react"
 import {AssetStatus} from "@/data/assets-data";
 
@@ -62,4 +63,63 @@ export const getAntivirusExpiryValue = (hasAntivirus: AssetStatus, antivirusExpi
 export const getOfficeExpiryValue = (hasMicrosoftOffice: AssetStatus, officeExpiry: string) => {
     if (hasMicrosoftOffice === "no") return "N/A"
     return officeExpiry ? officeExpiry : "No expiry"
+}
+
+
+// NEW ASSET PAGE HELPERS
+
+export const getConditionBadge = (condition: string) => {
+    switch (condition) {
+        case 'excellent':
+            return <Badge className="bg-green-100 text-green-800">Excellent</Badge>
+        case 'good':
+            return <Badge className="bg-blue-100 text-blue-800">Good</Badge>
+        case 'fair':
+            return <Badge className="bg-yellow-100 text-yellow-800">Fair</Badge>
+        case 'poor':
+            return <Badge className="bg-red-100 text-red-800">Poor</Badge>
+        default:
+            return <Badge variant="outline">{condition}</Badge>
+    }
+}
+
+export const getRequestStatusBadge = (status: string) => {
+    switch (status) {
+        case 'pending':
+            return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+        case 'approved':
+            return <Badge className="bg-green-100 text-green-800">Approved</Badge>
+        case 'rejected':
+            return <Badge className="bg-red-100 text-red-800">Rejected</Badge>
+        case 'fulfilled':
+            return <Badge className="bg-blue-100 text-blue-800">Fulfilled</Badge>
+        default:
+            return <Badge variant="outline">{status}</Badge>
+    }
+}
+
+export const getUrgencyBadge = (urgency: string) => {
+    switch (urgency) {
+        case 'high':
+            return <Badge className="bg-red-100 text-red-800">High</Badge>
+        case 'medium':
+            return <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>
+        case 'low':
+            return <Badge className="bg-green-100 text-green-800">Low</Badge>
+        default:
+            return <Badge variant="outline">{urgency}</Badge>
+    }
+}
+
+export const getCategoryIcon = (category: string) => {
+    switch (category) {
+        case 'laptop':
+            return <Laptop className="h-4 w-4" />
+        case 'phone':
+            return <Smartphone className="h-4 w-4" />
+        case 'monitor':
+            return <Monitor className="h-4 w-4" />
+        default:
+            return <Package className="h-4 w-4" />
+    }
 }
