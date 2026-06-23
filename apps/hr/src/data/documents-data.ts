@@ -186,7 +186,7 @@ export const onboardingTemplates = [
             { name: 'IT Usage Policy', required: true, signature: true },
             { name: 'Emergency Contacts Form', required: true, signature: false },
             { name: 'Bank Details Form', required: true, signature: false },
-            { name: 'Benefits Overview', required: false, signature: false }
+            { name: 'Benefits ViewEmployeeContents', required: false, signature: false }
         ],
         departments: ['All'],
         estimatedTime: '2-3 hours'

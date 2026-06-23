@@ -34,33 +34,36 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
+                                       children,
+                                   }: Readonly<{
+    children: React.ReactNode;
 }>) {
-  return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={cn("h-full", "antialiased", inter.variable, bagoss.variable)}
-    >
-      <body className="min-h-full flex flex-col transition-colors duration-300">
-        <PrimeReactProvider>
-        <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            enableColorScheme
-            disableTransitionOnChange
+    return (
+        <html
+            lang="en"
+            suppressHydrationWarning
+            className={cn("h-full", "antialiased", inter.variable, bagoss.variable)}
         >
-          <AppProvider>
-            <TooltipProvider>
-              <ConditionalAppShell>{children}</ConditionalAppShell>
-            </TooltipProvider>
-          </AppProvider>
-        </ThemeProvider>
+        <body
+            className="min-h-full flex flex-col transition-colors duration-300"
+            suppressHydrationWarning // <-- Add this attribute directly to the body tag
+        >
+        <PrimeReactProvider>
+            <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                enableColorScheme
+                disableTransitionOnChange
+            >
+                <AppProvider>
+                    <TooltipProvider>
+                        <ConditionalAppShell>{children}</ConditionalAppShell>
+                    </TooltipProvider>
+                </AppProvider>
+            </ThemeProvider>
         </PrimeReactProvider>
-      </body>
-    </html>
-  );
+        </body>
+        </html>
+    );
 }

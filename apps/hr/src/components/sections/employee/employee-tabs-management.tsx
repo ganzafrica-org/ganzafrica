@@ -1,5 +1,18 @@
 import React from "react";
-import { Search, Users, Building, FileText, Mail, MoreVertical, Eye, Edit, Trash2, UserX, UserCheck } from "lucide-react";
+import {
+    Search,
+    Users,
+    Building,
+    FileText,
+    Mail,
+    MoreVertical,
+    Eye,
+    Edit,
+    Trash2,
+    UserX,
+    UserCheck,
+    Plus
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -78,6 +91,16 @@ export const EmployeeManagementContent = ({
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="ml-auto">
+                        <Button
+                            onClick={() => setShowAddSheet(true)}
+                            variant="outline"
+                            className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
+                        >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add Employee
+                        </Button>
                     </div>
                 </div>
             </CardContent>

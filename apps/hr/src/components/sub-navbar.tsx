@@ -23,7 +23,7 @@ const subNavConfig: Record<string, SubNavItem[]> = {
         { label: "Documents", href: "/assets-register/documents" }
     ],
     "/payroll": [
-        { label: "Overview", href: "/payroll" },
+        { label: "ViewEmployeeContents", href: "/payroll" },
         { label: "Payruns", href: "/payroll/payruns" },
         { label: "Compliance", href: "/payroll/compliance" },
         { label: "Taxes", href: "/payroll/taxes" },

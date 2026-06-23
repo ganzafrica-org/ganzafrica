@@ -95,7 +95,7 @@ export default function ProfileTab({ employee, onEditClick }: ProfileTabProps) {
         <div className="flex gap-8 overflow-x-auto">
           {[
             'Personal',
-            'Overview',
+            'ViewEmployeeContents',
             'Payslots',
             'Emergency',
             'Leave',

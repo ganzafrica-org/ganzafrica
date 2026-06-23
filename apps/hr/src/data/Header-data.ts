@@ -29,7 +29,7 @@ export const defaultStats: HeaderStat[] = [
     },
     {
         icon: ClipboardCheck,
-        label: "Attendance Overview",
+        label: "Attendance ViewEmployeeContents",
         value: "67%",
         delta: { direction: "down", value: "10%" },
         comparison: "Compared to (36% last week)",

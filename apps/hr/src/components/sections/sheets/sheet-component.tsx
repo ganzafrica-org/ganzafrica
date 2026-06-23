@@ -60,7 +60,7 @@ export function ReusableSheet({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => onOpenChange(false)}
-                        className="fixed inset-0 bg-black/50 z-[100]"
+                        className="fixed inset-0 bg-black/50 z-[100] h-full"
                     />
                     {/* Sheet Content */}
                     <motion.div
@@ -76,12 +76,12 @@ export function ReusableSheet({
                             side === "top" && "top-0 left-0 w-full",
                             side === "bottom" && "bottom-0 left-0 w-full",
                             // Add rounded corners and margin if requested (previous style)
-                            "m-4 h-[calc(100%-2rem)] rounded-2xl border-none",
+                            "m-4 h-[calc(100%-2rem)] rounded-lg border-none",
                             maxWidth,
                             className
                         )}
                     >
-                        <div className="flex-1 flex flex-col h-full relative px-5">
+                        <div className="flex-1 flex flex-col h-full relative">
                             {/* Close Button */}
                             <button
                                 onClick={() => onOpenChange(false)}
@@ -102,7 +102,7 @@ export function ReusableSheet({
                             </div>
 
                             {footer && (
-                                <div className="p-6 border-t bg-slate-50/50 mt-0 shrink-0">
+                                <div className="p-4 border-t bg-slate-50/50 mt-0 shrink-0">
                                     {footer}
                                 </div>
                             )}

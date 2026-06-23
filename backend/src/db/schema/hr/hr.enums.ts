@@ -73,6 +73,12 @@ export const ticketPriorityEnum = pgEnum("ticket_priority", [
   "CRITICAL",
 ]);
 
+export const maintenanceStatusEnum = pgEnum("maintenance_status", [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+]);
+
 export const notificationTypeEnum = pgEnum("notification_type", [
   "EMPLOYEE_CREATED",
   "EMPLOYEE_STATUS_CHANGED",

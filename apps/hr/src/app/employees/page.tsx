@@ -7,7 +7,7 @@
 import React, {useEffect, useMemo, useState} from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
-import { AlertCircle } from "lucide-react"
+import {AlertCircle, Edit, Trash2} from "lucide-react"
 import { EmployeeManagementContent } from "@/components/sections/employee/employee-tabs-management"
 import { StatsHeader} from "@/components/sections/header";
 import { EmployeeSheet } from "@/components/sections/sheets/employee-sheet"
@@ -118,18 +118,6 @@ const Page = () => {
     const updateMutation = useUpdateEmployee()
     const deleteMutation = useDeleteEmployee()
 
-    const handleDeleteEmployee = async (id: string) => {
-        if (window.confirm("Are you sure you want to delete this employee?")) {
-            try {
-                await deleteMutation.mutateAsync(id)
-                setShowDetailsDialog(false)
-                setSelectedEmployee(null)
-            } catch (error) {
-                console.error("Delete failed", error)
-            }
-        }
-    }
-
     const handleSaveEdit = async () => {
         try {
             await updateMutation.mutateAsync({
@@ -166,6 +154,21 @@ const Page = () => {
         },
     ] : []
 
+    const handleDeleteEmployee = async (id: string) => {
+        setShowDeleteConfirm(true)
+    }
+
+    const confirmDelete = async () => {
+        try {
+            await deleteMutation.mutateAsync(selectedEmployee.id)
+            setShowDeleteConfirm(false)
+            setShowDetailsDialog(false)
+            setSelectedEmployee(null)
+        } catch (error) {
+            console.error("Delete failed", error)
+        }
+    }
+
     const sections = EmployeeManagementContent({
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
@@ -185,7 +188,9 @@ const Page = () => {
         getStatusBadge,
     });
 
+
     const [scrolled, setScrolled] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
     useEffect(() => {
         setPage(1)
@@ -287,28 +292,24 @@ const Page = () => {
                             <div className="flex w-full gap-3">
                                 <Button
                                     variant="outline"
-                                    className="flex-1 border-slate-200 text-slate-600 hover:bg-white"
-                                    onClick={() => {
-                                        if (isEditing) {
-                                            setIsEditing(false)
-                                        } else {
-                                            setShowDetailsDialog(false)
-                                        }
-                                    }}
+                                    size="icon"
+                                    className="flex-1 border-red-500 text-red-500 hover:text-white hover:bg-red-600 shadow-md shadow-red-200"
+                                    onClick={() => handleDeleteEmployee(selectedEmployee.id)}
                                 >
-                                    {isEditing ? "Cancel" : "Close"}
+                                    <Trash2 className="h-4 w-4" /> {isEditing ? " Deleting employee" : " Delete"}
                                 </Button>
                                 <Button
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200"
+                                    className="flex-1 bg-transparent border border-brand-accent hover:border-none hover:bg-brand-accent text-brand-accent hover:text-white shadow-md shadow-blue-200"
                                     onClick={() => {
                                         if (isEditing) {
                                             handleSaveEdit()
                                         } else {
-                                            console.log("Secondary action")
+                                            setIsEditing(true)
+                                            setEditForm({ ...selectedEmployee })
                                         }
                                     }}
                                 >
-                                    {isEditing ? "Save Changes" : "Download PDF"}
+                                    <Edit className="h-4 w-4" /> {isEditing ? "Save Changes" : "Edit"}
                                 </Button>
                             </div>
                         }
@@ -316,13 +317,48 @@ const Page = () => {
                         <EmployeeSheet
                             selectedEmployee={selectedEmployee}
                             isEditing={isEditing}
-                            setIsEditing={setIsEditing}
                             editForm={editForm}
                             setEditForm={setEditForm}
-                            handleSaveEdit={handleSaveEdit}
-                            handleDeleteEmployee={handleDeleteEmployee}
                         />
                     </ReusableSheet>
+                )}
+                {showDeleteConfirm && (
+                    <div className="fixed inset-0 z-150 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4 space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                    <Trash2 className="h-5 w-5 text-red-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-slate-900">Delete Employee</h3>
+                                    <p className="text-sm text-slate-500">This action cannot be undone.</p>
+                                </div>
+                            </div>
+
+                            <p className="text-sm text-slate-600">
+                                Are you sure you want to delete{" "}
+                                <span className="font-semibold text-slate-900">{selectedEmployee?.name}</span>?
+                                They will be permanently removed from the system.
+                            </p>
+
+                            <div className="flex gap-3 pt-1">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                    onClick={confirmDelete}
+                                    disabled={deleteMutation.isPending}
+                                >
+                                    {deleteMutation.isPending ? "Deleting..." : "Yes, Delete"}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
