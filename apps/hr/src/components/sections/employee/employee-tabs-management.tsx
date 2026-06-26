@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { DataTable, ColumnDef } from "../table-component";
 import DepartmentChartPage from "./department-chart";
+import { getStatusBadge } from "../attendance/attendance-table";
 
 
 export const EmployeeManagementContent = ({
@@ -37,7 +38,7 @@ export const EmployeeManagementContent = ({
     handleDeleteEmployee,
     countries,
     getCountryFlag,
-    getStatusBadge,
+    setShowAddSheet,
     employeeStats
 }: any) => {
 

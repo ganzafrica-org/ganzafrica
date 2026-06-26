@@ -1,9 +1,12 @@
-import {Calendar, MoreHorizontal, User, Users} from "lucide-react";
+import {Calendar, ChevronDown, MoreHorizontal, Plus, User, Users} from "lucide-react";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Badge} from "@/components/ui/badge";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
 import React from "react";
+import {Button} from "@/components/ui/button";
+import {LeaveRequests} from "@/components/sections/calendar/LeaveRequests";
+import {PublicHolidays} from "@/components/sections/calendar/PublicHolidays";
 
 interface ProfileProps {
     selectedEmployee: any;
@@ -12,79 +15,77 @@ interface ProfileProps {
     setEditForm: (val: any) => void;
 }
 
-
 export const Overview =()=>{
+
     return(
-        <div className="p-6 border-b space-y-4">
+        <div className="p-6 space-y-6">
             <div className="grid grid-cols-2 gap-4">
-                <div className="overflow-hidden rounded-lg border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-primary)]">
-                    <div className="flex items-center justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-3">
+                <div className="overflow-hidden rounded-lg shadow-lg bg-[color:var(--color-background-primary)]">
+                    <div className="flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2.5">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EEEDFE] text-[15px] text-[#534AB7]">
                                 <i className="ti ti-user" aria-hidden="true" />
                             </div>
-                            <span className="text-[13px] font-medium text-[color:var(--color-text-primary)]">
-              Profile
-            </span>
+                            <p className="text-laj font-medium text-[color:var(--color-text-primary)]">Profile</p>
                         </div>
                     </div>
 
                     <div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
               Name
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
               Christian Sangwa
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              ID
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              #54
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Role
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Agribusiness Expert
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Country
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Rwanda
-            </span>
+            </p>
                         </div>
                         <div className="flex items-start justify-between px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
+            <p className="flex-1 text-slate-400 text-sm">
+              ID
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              #54
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Role
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Agribusiness Expert
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Country
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Rwanda
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
               Status
-            </span>
-                            <span className="flex-1 text-right">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#EAF3DE] px-2 py-[2px] text-[11px] font-medium text-[#3B6D11]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#639922]" />
+            </p>
+                            <p className="flex-1 text-right">
+              <p className="inline-flex items-center gap-1 rounded-full bg-[#EAF3DE] px-2 py-[2px] text-[11px] font-medium text-[#3B6D11]">
+                <p className="h-1.5 w-1.5 rounded-full bg-[#639922]" />
                 Active
-              </span>
-            </span>
+              </p>
+            </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-primary)]">
-                    <div className="flex items-center justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-3">
+                <div className="overflow-hidden rounded-lg shadow-lg bg-[color:var(--color-background-primary)]">
+                    <div className="flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2.5">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E6F1FB] text-[15px] text-[#185FA5]">
                                 <i className="ti ti-briefcase" aria-hidden="true" />
                             </div>
-                            <span className="text-[13px] font-medium text-[color:var(--color-text-primary)]">
+                            <p className="text-laj font-medium text-[color:var(--color-text-primary)]">
               Role details
-            </span>
+            </p>
                         </div>
                         <button className="rounded-md border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-secondary)] px-3 py-1 text-[12px] text-[color:var(--color-text-secondary)]">
                             View
@@ -92,56 +93,56 @@ export const Overview =()=>{
                     </div>
 
                     <div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
               Job title
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
               Agribusiness Expert
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Employment type
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Part-time (50%)
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Base compensation · Part-time
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Fr 100,000.00{" "}
-                                <span className="block text-[11px] font-normal text-[color:var(--color-text-secondary)]">
-                Monthly
-              </span>
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Contract
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Permanent
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Leaves
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              21 days / year
-            </span>
+            </p>
                         </div>
                         <div className="flex items-start justify-between px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Employment type
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Part-time (50%)
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Base compensation · Part-time
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Fr 100,000.00{" "}
+                                <p className="block text-[11px] font-normal text-[color:var(--color-text-secondary)]">
+                Monthly
+              </p>
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Contract
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Permanent
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Leaves
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              21 days / year
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
               Department
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
               Engineering
-            </span>
+            </p>
                         </div>
                     </div>
 
@@ -157,15 +158,15 @@ export const Overview =()=>{
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-primary)]">
-                    <div className="flex items-center justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-3">
+                <div className="overflow-hidden rounded-lg shadow-lg bg-[color:var(--color-background-primary)]">
+                    <div className="flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2.5">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E1F5EE] text-[15px] text-[#0F6E56]">
                                 <i className="ti ti-user-circle" aria-hidden="true" />
                             </div>
-                            <span className="text-[13px] font-medium text-[color:var(--color-text-primary)]">
+                            <p className="text-laj font-medium text-[color:var(--color-text-primary)]">
               Personal
-            </span>
+            </p>
                         </div>
                         <button className="rounded-md border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-secondary)] px-3 py-1 text-[12px] text-[color:var(--color-text-secondary)]">
                             View
@@ -173,125 +174,125 @@ export const Overview =()=>{
                     </div>
 
                     <div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
               First name
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
               Christian
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Last name
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Sangwa
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Home address
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Kicukiro, Kigali 00000, Rwanda
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Personal email
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              christian@gmail.com
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Personal phone
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              +250 788 000 000
-            </span>
+            </p>
                         </div>
                         <div className="flex items-start justify-between px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Last name
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Sangwa
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Home address
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Kicukiro, Kigali 00000, Rwanda
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Personal email
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              christian@gmail.com
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Personal phone
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              +250 788 000 000
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
               Country
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
               Rwanda
-            </span>
+            </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-lg border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-primary)]">
-                    <div className="flex items-center justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-3">
+                <div className="overflow-hidden rounded-lg shadow-lg bg-[color:var(--color-background-primary)]">
+                    <div className="flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2.5">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FAEEDA] text-[15px] text-[#854F0B]">
                                 <i className="ti ti-settings" aria-hidden="true" />
                             </div>
-                            <span className="text-[13px] font-medium text-[color:var(--color-text-primary)]">
+                            <p className="text-laj font-medium text-[color:var(--color-text-primary)]">
               General
-            </span>
+            </p>
                         </div>
                     </div>
 
                     <div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
               Manager
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
               —
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Report
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              —
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Position
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Agribusiness Expert
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Start date
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              1 Jan 2023
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Work email
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              christian@company.com
-            </span>
-                        </div>
-                        <div className="flex items-start justify-between border-b border-[color:var(--color-border-tertiary)] px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Work location
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
-              Kigali, Rwanda
-            </span>
+            </p>
                         </div>
                         <div className="flex items-start justify-between px-4 py-[9px]">
-            <span className="flex-1 text-[12px] text-[color:var(--color-text-secondary)]">
-              Last day of work
-            </span>
-                            <span className="flex-1 text-right text-[12px] font-medium text-[color:var(--color-text-primary)]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Report
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
               —
-            </span>
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Position
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Agribusiness Expert
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Start date
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              1 Jan 2023
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Work email
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              christian@company.com
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Work location
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              Kigali, Rwanda
+            </p>
+                        </div>
+                        <div className="flex items-start justify-between px-4 py-[9px]">
+            <p className="flex-1 text-slate-400 text-sm">
+              Last day of work
+            </p>
+                            <p className="flex-1 text-right text-xs font-medium text-[color:var(--color-text-primary)]">
+              —
+            </p>
                         </div>
                     </div>
 
@@ -317,13 +318,13 @@ export const Profile=({ selectedEmployee, isEditing, editForm, setEditForm }: Pr
             <div className="p-6 border-b space-y-4">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <span>Employee ID</span>
-                        <span className="font-mono font-bold text-slate-900">#{selectedEmployee.employeeId}</span>
-                        <span className="mx-1">•</span>
-                        <span className="flex items-center gap-1">
+                        <p>Employee ID</p>
+                        <p className="font-mono font-bold text-slate-900">#{selectedEmployee.employeeId}</p>
+                        <p className="mx-1">•</p>
+                        <p className="flex items-center gap-1">
                                 <User className="h-3 w-3" />
                                 STAFF
-                            </span>
+                            </p>
                     </div>
                 </div>
 
@@ -337,7 +338,7 @@ export const Profile=({ selectedEmployee, isEditing, editForm, setEditForm }: Pr
                     <div className="space-y-1">
                         <h3 className="text-xl font-bold">{selectedEmployee.name}</h3>
                         <div className="flex items-center gap-3">
-                            <span className="text-sm text-slate-500">Change Status</span>
+                            <p className="text-sm text-slate-500">Change Status</p>
                             <Badge variant="outline" className="bg-emerald-50 text-emerald-700 gap-1.5 py-1 px-3">
                                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                 {selectedEmployee.status.charAt(0).toUpperCase() + selectedEmployee.status.slice(1)}
@@ -487,8 +488,53 @@ export const Profile=({ selectedEmployee, isEditing, editForm, setEditForm }: Pr
 }
 
 export const Leaves=()=>{
+    const balances = [
+        {
+            id: 1,
+            name: 'Annual Leave',
+            available: 8,
+        },
+    ];
+
     return(
-        <p>Leaves contents</p>
+        <div className="w-full bg-white pt-5 overflow-y-auto shrink-0 flex flex-col">
+            <div className="p-6 space-y-8 flex-1">
+                <section>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Time Off Requests</h2>
+                        <button className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors">View All</button>
+                    </div>
+                    {/*<LeaveRequests />*/}
+                </section>
+
+                <section>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Public Holidays</h2>
+                    </div>
+                    {/*<PublicHolidays />*/}
+                </section>
+
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Annual Leaves</h2>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    {balances.map((balance) => (
+                        <div key={balance.id}>
+                            <p className="text-sm font-medium text-gray-700">{balance.name}</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                                {balance.available} days available
+                            </p>
+                        </div>
+                    ))}
+                    <button className="text-sm font-medium text-brand-accent hover:text-brand-dark flex items-center gap-1">
+                        View details
+                        <ChevronDown size={14} />
+                    </button>
+                </div>
+                <button className="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+                    View all
+                </button>
+            </div>
+        </div>
+
     )
 }
 

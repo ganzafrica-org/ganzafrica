@@ -16,10 +16,11 @@ import { useEmployees, useEmployeeStats, useUpdateEmployee, useDeleteEmployee } 
 import { Briefcase } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import type { Employee } from "@/types/api"
+import { AddEmployeeSheet } from "@/components/sections/sheets/add-employee-sheet"
 
 const PAGE_SIZE = 10
 
-const getStatusBadge = (status: string) => {
+export const getStatusBadge = (status: string) => {
     switch (status?.toLowerCase().replace(/\s+/g, "_")) {
         case 'active':
             return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
@@ -114,6 +115,7 @@ const Page = () => {
     const [showDetailsDialog, setShowDetailsDialog] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [editForm, setEditForm] = useState<any>(null)
+    const [showAddSheet, setShowAddSheet] = useState(false)
 
     const updateMutation = useUpdateEmployee()
     const deleteMutation = useDeleteEmployee()
@@ -186,6 +188,7 @@ const Page = () => {
         countries,
         getCountryFlag,
         getStatusBadge,
+        setShowAddSheet
     });
 
 
@@ -360,6 +363,10 @@ const Page = () => {
                         </div>
                     </div>
                 )}
+                <AddEmployeeSheet
+                    open={showAddSheet}
+                    onOpenChange={setShowAddSheet}
+                />
             </div>
         </div>
     )
