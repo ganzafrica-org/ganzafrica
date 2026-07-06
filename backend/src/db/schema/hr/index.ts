@@ -7,7 +7,7 @@ export * from "./asset-specs";
 export * from "./asset-image";
 export * from "./asset-maintenance";
 export * from "./leave";
-export * from "./policy";
+export * from "./document";
 export * from "./helpdesk";
 export * from "./notification";
 export * from "./relations";

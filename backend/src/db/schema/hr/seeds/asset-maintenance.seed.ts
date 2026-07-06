@@ -40,7 +40,7 @@ export async function seedAssetMaintenance() {
 
             const [user] = await db.select({ id: hr_users.id })
                 .from(hr_users)
-                .where(eq(hr_users.email, record.requester_email))
+                .where(eq(hr_users.personal_email, record.requester_email))
                 .limit(1);
 
             if (!asset || !user) {

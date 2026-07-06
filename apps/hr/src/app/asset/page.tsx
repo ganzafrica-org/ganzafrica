@@ -542,7 +542,7 @@ export default function AssetsPage() {
                                                     <SelectItem value="all">All Categories</SelectItem>
                                                     {categories?.map(cat => (
                                                         <SelectItem key={cat.id} value={cat.id}>
-                                                            {cat.parentName} › {cat.name}
+                                                            {cat.parent_name ? `${cat.parent_name} › ` : ""}{cat.name}
                                                         </SelectItem>
                                                     )) ?? []}
                                                 </SelectContent>

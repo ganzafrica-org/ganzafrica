@@ -16,18 +16,22 @@ export const hr_users = pgTable("hr_users", {
   platform_user_id: integer("platform_user_id")
     .unique()
     .references(() => users.id, { onDelete: "set null" }),
+
+  // ── Personal Details (Step 1) ──────────────
   first_name: text("first_name").notNull(),
   last_name: text("last_name").notNull(),
-  email: text("email").notNull().unique(),
+  personal_email: text("personal_email").notNull().unique(),
+  work_email: text("work_email"),
   phone: text("phone"),
   picture: text("picture"),
+  citizenship: text("citizenship"),
+  home_country: text("home_country"),
+  home_city: text("home_city"),
+
+  // ── Auth & System ──────────────────────────
   password_hash: text("password_hash").notNull(),
   role: hrRoleEnum("role").notNull(),
   status: userStatusEnum("status").notNull().default("ACTIVE"),
-  department: text("department"),
-  position: text("position"),
-  location: text("location"),
-  join_date: timestamp("join_date", { withTimezone: true }).notNull().defaultNow(),
   avatar_initials: text("avatar_initials").notNull(),
   refresh_token_hash: text("refresh_token_hash"),
   last_password_change: timestamp("last_password_change", { withTimezone: true })
@@ -35,6 +39,7 @@ export const hr_users = pgTable("hr_users", {
     .defaultNow(),
   requires_password_reset: boolean("requires_password_reset").notNull().default(false),
   profile_setup_completed: boolean("profile_setup_completed").notNull().default(true),
+
   ...timestampFields,
 });
 

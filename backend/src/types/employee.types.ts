@@ -1,5 +1,4 @@
 ﻿export type HrRole = "EMPLOYEE" | "IT" | "HR";
-
 export type EmployeeStatus = "ACTIVE" | "ON_LEAVE" | "INACTIVE" | "TERMINATED";
 
 export interface HrRequester {
@@ -13,15 +12,15 @@ export interface EmployeeRecord {
   platformUserId: number | null;
   firstName: string;
   lastName: string;
-  email: string;
+  personalEmail: string;
+  workEmail: string | null;
   phone: string | null;
   picture: string | null;
+  citizenship: string | null;
+  homeCountry: string | null;
+  homeCity: string | null;
   role: HrRole;
   status: EmployeeStatus;
-  department: string | null;
-  position: string | null;
-  location: string | null;
-  hireDate: Date;
   avatarInitials: string;
   createdAt: Date;
   updatedAt: Date;
@@ -30,7 +29,6 @@ export interface EmployeeRecord {
 export interface ListEmployeesQuery {
   page?: number;
   limit?: number;
-  department?: string;
   status?: EmployeeStatus;
   location?: string;
   sortBy?: "name" | "hireDate";
@@ -40,13 +38,13 @@ export interface ListEmployeesQuery {
 export interface CreateEmployeeInput {
   firstName: string;
   lastName: string;
-  email: string;
-  hireDate: Date;
+  personalEmail: string;
+  workEmail?: string | null;
   phone?: string | null;
   picture?: string | null;
-  department?: string | null;
-  position?: string | null;
-  location?: string | null;
+  citizenship?: string | null;
+  homeCountry?: string | null;
+  homeCity?: string | null;
   role?: HrRole;
   platformUserId?: number;
 }
@@ -54,11 +52,11 @@ export interface CreateEmployeeInput {
 export interface UpdateEmployeeInput {
   firstName?: string;
   lastName?: string;
-  email?: string;
+  personalEmail?: string;
+  workEmail?: string | null;
   phone?: string | null;
   picture?: string | null;
-  department?: string | null;
-  position?: string | null;
-  location?: string | null;
-  hireDate?: Date;
+  citizenship?: string | null;
+  homeCountry?: string | null;
+  homeCity?: string | null;
 }

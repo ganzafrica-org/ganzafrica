@@ -4,9 +4,7 @@ export const listEmployeesSchema = z.object({
   query: z.object({
     page: z.string().optional(),
     limit: z.string().optional(),
-    department: z.string().optional(),
     status: z.enum(["ACTIVE", "ON_LEAVE", "INACTIVE"]).optional(),
-    location: z.string().optional(),
     sortBy: z.enum(["name", "joinDate"]).optional(),
     sortOrder: z.enum(["asc", "desc"]).optional(),
   }),

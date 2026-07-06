@@ -6,7 +6,7 @@ import { hr_otps, hr_users } from "./employee";
 import { hr_helpdesk_tickets } from "./helpdesk";
 import { hr_leaves } from "./leave";
 import { hr_notification_preferences, hr_notifications } from "./notification";
-import { hr_policies } from "./policy";
+import { hr_documents } from "./document";
 
 export const hrUsersRelations = relations(hr_users, ({ one, many }) => ({
   platformUser: one(users, {
@@ -20,7 +20,7 @@ export const hrUsersRelations = relations(hr_users, ({ one, many }) => ({
   submittedTickets: many(hr_helpdesk_tickets, { relationName: "submitted_tickets" }),
   assignedTickets: many(hr_helpdesk_tickets, { relationName: "assigned_tickets" }),
   assignedAssets: many(hr_assets),
-  policiesCreated: many(hr_policies),
+  policiesCreated: many(hr_documents),
 }));
 
 export const usersHrRelations = relations(users, ({ one, many }) => ({
@@ -77,9 +77,9 @@ export const hrLeavesRelations = relations(hr_leaves, ({ one }) => ({
   }),
 }));
 
-export const hrPoliciesRelations = relations(hr_policies, ({ one }) => ({
+export const hrPoliciesRelations = relations(hr_documents, ({ one }) => ({
   createdBy: one(hr_users, {
-    fields: [hr_policies.created_by_id],
+    fields: [hr_documents.created_by_id],
     references: [hr_users.id],
   }),
 }));

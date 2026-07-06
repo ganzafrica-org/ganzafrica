@@ -84,6 +84,35 @@ import { HrRole } from "@/types/employee.types";
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
+
+export const createEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const employee = await employeesService.createEmployee(
+      { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },
+      {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        personalEmail: req.body.personalEmail,
+        workEmail: req.body.workEmail ?? null,
+        phone: req.body.phone ?? null,
+        citizenship: req.body.citizenship ?? null,
+        homeCountry: req.body.homeCountry ?? null,
+        homeCity: req.body.homeCity ?? null,
+        role: req.body.role,
+        platformUserId: req.body.platformUserId,
+      },
+    );
+
+    sendResponse(res, {
+      success: true,
+      message: "Employee created",
+      data: employee,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const listEmployees = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const query = req.query as any;
@@ -95,7 +124,6 @@ export const listEmployees = async (req: Request, res: Response, next: NextFunct
       {
         page,
         limit,
-        department: query.department,
         status: query.status,
         location: query.location,
         sortBy: query.sortBy || "joinDate",

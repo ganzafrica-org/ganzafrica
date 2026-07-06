@@ -2,7 +2,7 @@
 import { constants, Logger } from "../../config";
 import { AppError } from "../../middlewares";
 import * as contractService from "../../services/hr/contract.service";
-import type { ContractStatus, ContractType } from "@/types/contract.types";
+import type { CompensationType, ContractStatus, CreateContractInput, EmploymentTerm, EmploymentType, SalaryScale } from "@/types/contract.types";
 import { getHrRequester } from "../../utils/hr-requester";
 /**
  * @swagger
@@ -146,15 +146,26 @@ function handleErrorResponse(error: unknown, res: Response, errorType: string): 
   }
 }
 
-function parseContractBody(body: Record<string, unknown>) {
+function parseContractBody(body: Record<string, unknown>): CreateContractInput {
   return {
-    type: body.type as ContractType,
+    jobTitle: body.jobTitle as string,
+    department: (body.department as string | null) ?? null,
+    workLocation: (body.workLocation as string | null) ?? null,
+    manager: (body.manager as string | null) ?? null,
+    reportTo: (body.reportTo as string | null) ?? null,
     startDate: new Date(body.startDate as string),
+    employmentTerm: body.employmentTerm as EmploymentTerm,
     endDate: body.endDate ? new Date(body.endDate as string) : null,
-    salary: body.salary as string,
-    currency: body.currency as string | undefined,
+    employmentType: body.employmentType as EmploymentType,
+    daysPerWeek: body.daysPerWeek ? Number(body.daysPerWeek) : null,
+    compensationType: body.compensationType as CompensationType,
+    salaryScale: (body.salaryScale as SalaryScale) ?? null,
+    currency: (body.currency as string) ?? "RWF",
+    baseMonthlyRate: (body.baseMonthlyRate as string | null) ?? null,
+    grossAnnualRate: (body.grossAnnualRate as string | null) ?? null,
+    employmentAgreementUrl: (body.employmentAgreementUrl as string | null) ?? null,
     status: body.status as ContractStatus | undefined,
-    notes: (body.notes as string | null | undefined) ?? null,
+    notes: (body.notes as string | null) ?? null,
   };
 }
 
@@ -207,11 +218,24 @@ export const updateContract = async (req: Request, res: Response): Promise<void>
       req.params.employeeId,
       req.params.contractId,
       {
-        type: body.type,
+        // Job details
+        jobTitle: body.jobTitle,
+        department: body.department,
+        workLocation: body.workLocation,
+        manager: body.manager,
+        reportTo: body.reportTo,
+        // Contract details
         startDate: body.startDate ? new Date(body.startDate) : undefined,
+        employmentTerm: body.employmentTerm,
         endDate: body.endDate !== undefined ? (body.endDate ? new Date(body.endDate) : null) : undefined,
-        salary: body.salary,
+        employmentType: body.employmentType,
+        daysPerWeek: body.daysPerWeek !== undefined ? Number(body.daysPerWeek) : undefined,
+        compensationType: body.compensationType,
+        salaryScale: body.salaryScale,
         currency: body.currency,
+        baseMonthlyRate: body.baseMonthlyRate,
+        grossAnnualRate: body.grossAnnualRate,
+        employmentAgreementUrl: body.employmentAgreementUrl,
         status: body.status,
         notes: body.notes,
       },

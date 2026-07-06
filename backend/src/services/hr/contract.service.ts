@@ -4,9 +4,13 @@ import { hr_contracts } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { getActiveEmployee } from "../../services/hr/employee.service";
 import type {
+  CompensationType,
   ContractRecord,
   ContractStatus,
   CreateContractInput,
+  EmploymentTerm,
+  EmploymentType,
+  SalaryScale,
   UpdateContractInput,
 } from "@/types/contract.types";
 import { sendNotification, resolveTriggeredByFromHrUser } from "@/modules/hr/notifications/notification.service";
@@ -16,12 +20,23 @@ function mapContract(row: typeof hr_contracts.$inferSelect): ContractRecord {
   return {
     id: row.id,
     employeeId: row.employee_id,
-    type: row.type,
+    jobTitle: row.job_title,
+    department: row.department,
+    workLocation: row.work_location,
+    manager: row.manager,
+    reportTo: row.report_to,
     startDate: row.start_date,
+    employmentTerm: row.employment_term as EmploymentTerm,
     endDate: row.end_date,
-    salary: String(row.salary),
+    employmentType: row.employment_type as EmploymentType,
+    daysPerWeek: row.days_per_week,
+    compensationType: row.compensation_type as CompensationType,
+    salaryScale: row.salary_scale as SalaryScale | null,
     currency: row.currency,
-    status: row.status,
+    baseMonthlyRate: row.base_monthly_rate,
+    grossAnnualRate: row.gross_annual_rate,
+    employmentAgreementUrl: row.employment_agreement_url,
+    status: row.status as ContractStatus,
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -86,11 +101,22 @@ export async function createContract(
     .insert(hr_contracts)
     .values({
       employee_id: employeeId,
-      type: input.type,
+      job_title: input.jobTitle,
+      department: input.department ?? null,
+      work_location: input.workLocation ?? null,
+      manager: input.manager ?? null,
+      report_to: input.reportTo ?? null,
       start_date: input.startDate,
+      employment_term: input.employmentTerm,
       end_date: input.endDate ?? null,
-      salary: input.salary,
-      currency: input.currency ?? "USD",
+      employment_type: input.employmentType,
+      days_per_week: input.daysPerWeek ?? null,
+      compensation_type: input.compensationType,
+      salary_scale: input.salaryScale ?? null,
+      currency: input.currency ?? "RWF",
+      base_monthly_rate: input.baseMonthlyRate ?? null,
+      gross_annual_rate: input.grossAnnualRate ?? null,
+      employment_agreement_url: input.employmentAgreementUrl ?? null,
       status: input.status ?? "ACTIVE",
       notes: input.notes ?? null,
     })
@@ -104,7 +130,7 @@ export async function createContract(
       triggeredBy: await resolveTriggeredByFromHrUser(requester.id),
       relatedEntity: { contractId: inserted.id, employeeId },
       title: "New contract created",
-      message: `A new ${inserted.type} contract has been created.`,
+      message: `A new ${inserted.employment_type} contract has been created for employee ${employeeId}.`,
       priority: "HIGH",
     });
   } catch {
@@ -136,11 +162,22 @@ export async function updateContract(
 
   const patch: Partial<typeof hr_contracts.$inferInsert> = { updated_at: new Date() };
 
-  if (input.type !== undefined) patch.type = input.type;
+  if (input.jobTitle !== undefined) patch.job_title = input.jobTitle;
+  if (input.department !== undefined) patch.department = input.department;
+  if (input.workLocation !== undefined) patch.work_location = input.workLocation;
+  if (input.manager !== undefined) patch.manager = input.manager;
+  if (input.reportTo !== undefined) patch.report_to = input.reportTo;
   if (input.startDate !== undefined) patch.start_date = input.startDate;
+  if (input.employmentTerm !== undefined) patch.employment_term = input.employmentTerm;
   if (input.endDate !== undefined) patch.end_date = input.endDate;
-  if (input.salary !== undefined) patch.salary = input.salary;
+  if (input.employmentType !== undefined) patch.employment_type = input.employmentType;
+  if (input.daysPerWeek !== undefined) patch.days_per_week = input.daysPerWeek;
+  if (input.compensationType !== undefined) patch.compensation_type = input.compensationType;
+  if (input.salaryScale !== undefined) patch.salary_scale = input.salaryScale;
   if (input.currency !== undefined) patch.currency = input.currency;
+  if (input.baseMonthlyRate !== undefined) patch.base_monthly_rate = input.baseMonthlyRate;
+  if (input.grossAnnualRate !== undefined) patch.gross_annual_rate = input.grossAnnualRate;
+  if (input.employmentAgreementUrl !== undefined) patch.employment_agreement_url = input.employmentAgreementUrl;
   if (input.status !== undefined) patch.status = input.status as ContractStatus;
   if (input.notes !== undefined) patch.notes = input.notes;
 
@@ -151,19 +188,6 @@ export async function updateContract(
     .returning();
 
   if (!updated) throw new AppError("Contract not found", 404);
-
-  try {
-    await sendNotification({
-      type: "CONTRACT_UPDATED",
-      triggeredBy: await resolveTriggeredByFromHrUser(requester.id),
-      relatedEntity: { contractId: updated.id, employeeId },
-      title: "Contract updated",
-      message: `Contract ${updated.id} has been updated.`,
-      priority: "NORMAL",
-    });
-  } catch {
-    // notification failure must not break the main operation
-  }
 
   return mapContract(updated);
 }

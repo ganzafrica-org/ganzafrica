@@ -63,7 +63,7 @@ export const authenticateHr = async (req: Request, res: Response, next: NextFunc
         req.user = {
             id: String(u.id),
             name: `${u.first_name} ${u.last_name}`.trim(),
-            email: u.email,
+            email: u.work_email ?? u.personal_email ?? '',
             role_id: -1,
             role,
             role_name: role,

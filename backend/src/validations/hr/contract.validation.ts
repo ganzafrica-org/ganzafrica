@@ -4,13 +4,26 @@ const employeeId = z.string().uuid("Invalid employee id");
 const contractId = z.string().uuid("Invalid contract id");
 
 const contractBodyBase = {
-  type: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"]),
+  // Job details
+  jobTitle: z.string().min(1),
+  department: z.string().nullable().optional(),
+  workLocation: z.string().nullable().optional(),
+  manager: z.string().nullable().optional(),
+  reportTo: z.string().nullable().optional(),
+  // Contract details
   startDate: z.string().datetime(),
-  endDate: z.string().datetime().optional().nullable(),
-  salary: z.string().regex(/^\d+(\.\d{1,2})?$/, "Salary must be a positive number"),
+  employmentTerm: z.enum(["indefinite", "definite"]),
+  endDate: z.string().datetime().nullable().optional(),
+  employmentType: z.enum(["full-time", "part-time"]),
+  daysPerWeek: z.number().int().min(1).max(6).nullable().optional(),
+  compensationType: z.enum(["hourly", "salaried"]),
+  salaryScale: z.enum(["annual", "monthly", "weekly", "daily"]).nullable().optional(),
   currency: z.string().min(1).optional(),
+  baseMonthlyRate: z.string().regex(/^\d+(\.\d{1,2})?$/).nullable().optional(),
+  grossAnnualRate: z.string().regex(/^\d+(\.\d{1,2})?$/).nullable().optional(),
+  employmentAgreementUrl: z.string().url().nullable().optional(),
   status: z.enum(["ACTIVE", "EXPIRED", "TERMINATED"]).optional(),
-  notes: z.string().optional().nullable(),
+  notes: z.string().nullable().optional(),
 };
 
 export const listContractsSchema = z.object({
@@ -29,12 +42,23 @@ export const createContractSchema = z.object({
 export const updateContractSchema = z.object({
   params: z.object({ employeeId, contractId }),
   body: z.object({
-    type: contractBodyBase.type.optional(),
+    jobTitle: contractBodyBase.jobTitle.optional(),
+    department: contractBodyBase.department,
+    workLocation: contractBodyBase.workLocation,
+    manager: contractBodyBase.manager,
+    reportTo: contractBodyBase.reportTo,
     startDate: contractBodyBase.startDate.optional(),
-    endDate: contractBodyBase.endDate.optional(),
-    salary: contractBodyBase.salary.optional(),
-    currency: contractBodyBase.currency.optional(),
-    status: contractBodyBase.status.optional(),
-    notes: contractBodyBase.notes.optional(),
+    employmentTerm: contractBodyBase.employmentTerm.optional(),
+    endDate: contractBodyBase.endDate,
+    employmentType: contractBodyBase.employmentType.optional(),
+    daysPerWeek: contractBodyBase.daysPerWeek,
+    compensationType: contractBodyBase.compensationType.optional(),
+    salaryScale: contractBodyBase.salaryScale,
+    currency: contractBodyBase.currency,
+    baseMonthlyRate: contractBodyBase.baseMonthlyRate,
+    grossAnnualRate: contractBodyBase.grossAnnualRate,
+    employmentAgreementUrl: contractBodyBase.employmentAgreementUrl,
+    status: contractBodyBase.status,
+    notes: contractBodyBase.notes,
   }),
 });

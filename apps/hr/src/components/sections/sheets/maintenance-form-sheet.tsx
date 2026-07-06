@@ -31,9 +31,8 @@ export function MaintenanceFormSheet({ open, onOpenChange, maintenance, onSucces
     const isEdit = !!maintenance
     const { user } = useAuth()
 
-    // FIX: Safely retrieve 'data' from useAssets query state wrapper
     const { data } = useAssets()
-    const assets = data?.assets || []
+    const assets = data ?? []
 
     const [submitting, setSubmitting] = useState(false)
 

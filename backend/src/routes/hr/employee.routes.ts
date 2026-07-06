@@ -16,6 +16,8 @@ const router: Router = Router();
 
 router.use(authenticateHr, enforceHrPasswordPolicy);
 
+router.post("/", requireRole("IT"), validate(employeesValidation.createEmployeeSchema), employeesController.createEmployee)
+
 router.get(
   "/",
   requireRole("IT", "HR"),

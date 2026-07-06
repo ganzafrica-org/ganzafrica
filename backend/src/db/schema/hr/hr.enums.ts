@@ -48,15 +48,15 @@ export const assetStatusEnum = pgEnum("asset_status", [
   "DISPOSED",
 ]);
 
-export const policyStatusEnum = pgEnum("policy_status", ["PUBLISHED", "DRAFT"]);
+export const documentStatusEnum = pgEnum("policy_status", ["PUBLISHED", "DRAFT"]);
 
-export const policyCategoryEnum = pgEnum("policy_category", [
-  "GENERAL",
-  "HR",
-  "IT",
-  "FINANCE",
-  "SECURITY",
-  "OTHER",
+export const documentCategoryEnum = pgEnum("policy_category", [
+  "Contract Templates",
+  "Policies & Procedures",
+  "Forms & Applications",
+  "Training Materials",
+  "Compliance & Legal",
+  "Onboarding Materials",
 ]);
 
 export const ticketStatusEnum = pgEnum("ticket_status", [
@@ -95,7 +95,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "ASSET_ASSIGNED",
   "ASSET_RETURNED",
   "ASSET_STATUS_CHANGED",
-  "POLICY_PUBLISHED",
+  "DOCUMENT_PUBLISHED",
 ]);
 
 export const notificationStatusEnum = pgEnum("notification_status", [

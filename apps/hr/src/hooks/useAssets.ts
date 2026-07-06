@@ -82,7 +82,7 @@ export function useAssetCategories() {
     const categories = dataArray;
 
     const grouped = dataArray.reduce<Record<string, AssetCategory[]>>((acc, cat) => {
-        const key = cat.parentName ?? "Other"
+        const key = cat.parent_name ?? "Other"
         if (!acc[key]) acc[key] = []
         acc[key].push(cat)
         return acc
