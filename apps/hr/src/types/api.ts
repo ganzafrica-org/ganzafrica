@@ -86,23 +86,15 @@ export interface Employee {
 export interface CreateEmployeeRequest {
     firstName: string
     lastName: string
-    email: string
-    phone: string
-    position: string
-    department: string
-    location: string
-    country: string
-    status: "Active" | "On Leave" | "Inactive" | "Terminated"
-    joinDate: string
-    type: EmployeeType
-    age?: number
-    gender?: string
-    address?: string
-    managerId?: string
-    salary?: number
-    skills?: string[]
-    avatarUrl?: string
-    contractId?: string
+    personalEmail: string
+    workEmail?: string | null
+    phone?: string | null
+    picture?: string | null
+    citizenship?: string | null
+    homeCountry?: string | null
+    homeCity?: string | null
+    role?: "EMPLOYEE" | "IT" | "HR"
+    platformUserId?: number
 }
 
 export type UpdateEmployeeRequest = Partial<CreateEmployeeRequest>

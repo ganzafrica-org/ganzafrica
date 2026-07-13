@@ -56,24 +56,24 @@ const STEPS: StepConfig[] = [
     },
 ]
 
+
 interface FormState {
     // Personal
     imageUrl: string
     firstName: string
     lastName: string
     email: string
+    phone: string
     department: string
     workEmail: string
     citizenship: string
     homeCountry: string
     homeCity: string
-
     // Job
     jobTitle: string
     workLocation: string
     manager: string
     report: string
-
     // Contract
     startDate: string
     employmentTerm: 'indefinite' | 'definite' | ''
@@ -107,15 +107,10 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
     })
     const [currentStep, setCurrentStep] = useState<StepType>('personalDetails')
     const [formData, setFormData] = useState<FormState>({
-        imageUrl: '',
-        firstName: '', lastName: '', email: '', workEmail: '', department: '',
-        citizenship: '', homeCountry: '', homeCity: '',
-        jobTitle: '', workLocation: '', manager: '', report: '',
-        startDate: '', employmentTerm: '', contractEndDate: '',
-        employmentType: '', daysPerWeek: '',
-        compensationType: '', salaryScale: '', currency: '',
-        baseMonthlyRate: '', grossAnnualRate: '',
-        employmentAgreement: '',
+        imageUrl: '', firstName: '', lastName: '', email: '', phone: '', workEmail: '', department: '',
+        citizenship: '', homeCountry: '', homeCity: '', jobTitle: '', workLocation: '', manager: '', report: '',
+        startDate: '', employmentTerm: '', contractEndDate: '', employmentType: '', daysPerWeek: '',
+        compensationType: '', salaryScale: '', currency: '', baseMonthlyRate: '', grossAnnualRate: '', employmentAgreement: '',
     })
 
     // gross helper
@@ -140,16 +135,12 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
         const employeePayload: CreateEmployeeRequest = {
             firstName: formData.firstName,
             lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.workEmail,
-            position: formData.jobTitle,
-            department: formData.department,
-            location: formData.workLocation,
-            country: formData.homeCountry,
-            status: "Active",
-            joinDate: formData.startDate || new Date().toISOString().split("T")[0],
-            type: "STAFF",
-            address: [formData.homeCity, formData.homeCountry].filter(Boolean).join(", ") || undefined,
+            personalEmail: formData.email,
+            workEmail: formData.workEmail || undefined,
+            phone: formData.phone || undefined,
+            citizenship: formData.citizenship || undefined,
+            homeCountry: formData.homeCountry || undefined,
+            homeCity: formData.homeCity || undefined,
         }
 
         const employee = await createEmployeeMutation.mutateAsync(employeePayload)
@@ -339,6 +330,12 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
                                             <Input type="email" placeholder="john@company.com"
                                                 value={formData.workEmail}
                                                 onChange={e => setFormData(p => ({ ...p, workEmail: e.target.value }))} />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label>Phone Number</Label>
+                                            <Input type="email" placeholder="phone_number"
+                                                   value={formData.phone}
+                                                   onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} />
                                         </div>
                                         <div className="space-y-1.5">
                                             <Label>Citizenship</Label>
@@ -722,14 +719,14 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
 
                             <Button
                                 onClick={handleNext}
-                                className="gap-2 bg-black hover:bg-gray-900"
-                                disabled={currentStepIndex === STEPS.length - 1}
+                                className="gap-2 bg-black text-white hover:bg-gray-900"
+                                // disabled={currentStepIndex === STEPS.length - 1}
                             >
                                 {currentStepIndex === STEPS.length - 1 ? (
-                                    <>
+                                    <div onClick={handleSubmit}>
                                         <Check className="w-4 h-4" />
                                         Create Employee
-                                    </>
+                                    </div>
                                 ) : (
                                     <>
                                         Next
@@ -817,6 +814,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
                                             rows: [
                                                 ['Full Name', `${formData.firstName} ${formData.lastName}`.trim() || '—'],
                                                 ['Personal Email', formData.email || '—'],
+                                                ['Phone', formData.phone || '—'],
                                                 ['Work Email', formData.workEmail || '—'],
                                                 ['Citizenship', formData.citizenship || '—'],
                                                 ['Home Address', [formData.homeCity, formData.homeCountry].filter(Boolean).join(', ') || '—'],

@@ -140,16 +140,11 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
         const employeePayload: CreateEmployeeRequest = {
             firstName: formData.firstName,
             lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.workEmail,
-            position: formData.jobTitle,
-            department: formData.department,
-            location: formData.workLocation,
-            country: formData.homeCountry,
-            status: "Active",
-            joinDate: formData.startDate || new Date().toISOString().split("T")[0],
-            type: "STAFF",
-            address: [formData.homeCity, formData.homeCountry].filter(Boolean).join(", ") || undefined,
+            personalEmail: formData.email,
+            workEmail: formData.workEmail || undefined,
+            citizenship: formData.citizenship || undefined,
+            homeCountry: formData.homeCountry || undefined,
+            homeCity: formData.homeCity || undefined,
         }
 
         const employee = await createEmployeeMutation.mutateAsync(employeePayload)

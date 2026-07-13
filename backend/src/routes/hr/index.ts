@@ -1,6 +1,7 @@
 ﻿import { Router } from "express";
 import hrAuthRoutes from "./auth.routes";
 import employeeRoutes from "./employee.routes";
+import contractRoutes from "./contract.routes";
 import assetsRoutes from "./assets.routes";
 import leaveRoutes from "./leave.routes";
 import documentRoutes from "./document.routes";
@@ -10,6 +11,7 @@ const router = Router();
 
 router.use("/auth", hrAuthRoutes);
 router.use("/employees", employeeRoutes);
+router.use("/employees/:employeeId/contracts", contractRoutes);
 router.use("/assets", assetsRoutes);
 router.use("/leave", leaveRoutes);
 router.use("/document", documentRoutes);

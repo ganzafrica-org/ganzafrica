@@ -12,7 +12,7 @@ interface ReusableSheetProps {
     footer?: ReactNode;
     className?: string;
     side?: "top" | "bottom" | "left" | "right";
-    maxWidth?: string; // e.g. "sm:max-w-[600px]"
+    maxWidth?: string;
 }
 
 export function ReusableSheet({
@@ -60,7 +60,7 @@ export function ReusableSheet({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => onOpenChange(false)}
-                        className="fixed inset-0 bg-black/50 z-[100] h-full"
+                        className="fixed inset-0 bg-black/50 z-[100] h-full border border-green-500"
                     />
                     {/* Sheet Content */}
                     <motion.div
@@ -81,7 +81,7 @@ export function ReusableSheet({
                             className
                         )}
                     >
-                        <div className="flex-1 flex flex-col h-full relative">
+                        <div className="flex-1 flex flex-col h-full relative border border-red-500">
                             {/* Close Button */}
                             <button
                                 onClick={() => onOpenChange(false)}
