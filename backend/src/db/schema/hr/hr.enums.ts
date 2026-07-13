@@ -59,6 +59,18 @@ export const documentCategoryEnum = pgEnum("policy_category", [
   "Onboarding Materials",
 ]);
 
+/** HR policies module (distinct PG types from document enums above) */
+export const policyStatusEnum = pgEnum("hr_policy_status", ["PUBLISHED", "DRAFT"]);
+
+export const policyCategoryEnum = pgEnum("hr_policy_category", [
+  "GENERAL",
+  "HR",
+  "IT",
+  "FINANCE",
+  "COMPLIANCE",
+  "OTHER",
+]);
+
 export const ticketStatusEnum = pgEnum("ticket_status", [
   "OPEN",
   "IN_PROGRESS",

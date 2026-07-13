@@ -8,6 +8,7 @@ export * from "./asset-image";
 export * from "./asset-maintenance";
 export * from "./leave";
 export * from "./document";
+export * from "./policy";
 export * from "./helpdesk";
 export * from "./notification";
 export * from "./relations";
