@@ -26,7 +26,7 @@ describe("HR System - Payroll Management", () => {
     it("should allow admin to list payrolls", async () => {
       const listStub = sandbox.stub(payrollService, "getPayrolls").resolves({
         data: [{ id: 1, name: "User 1" } as any],
-        pagination: { page: 1, limit: 20, total: 1, totalPages: 1 },
+        pagination: { page: 1, limit: 20, total: 1, total_pages: 1 },
       });
 
       const res = await request

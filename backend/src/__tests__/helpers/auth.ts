@@ -59,11 +59,22 @@ function hrUserForId(userId: string): HrUserRow {
   );
 }
 
+function getOrCreateSelectStub(sandbox: SinonSandbox, db: { select: unknown }): SinonStub {
+  const existing = db.select;
+  if (
+    typeof existing === "function" &&
+    "restore" in existing &&
+    typeof (existing as SinonStub).restore === "function"
+  ) {
+    return existing as SinonStub;
+  }
+
+  return sandbox.stub(db, "select");
+}
+
 export function stubHrAuthDb(sandbox: SinonSandbox, defaultUserId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb") {
   const { db } = require("../../db/client");
-  const existing = db.select as SinonStub;
-
-  const selectStub = existing?.isSinonProxy ? existing : sandbox.stub(db, "select");
+  const selectStub = getOrCreateSelectStub(sandbox, db);
 
   selectStub.callsFake(() => ({
     from: sandbox.stub().returns({
@@ -97,8 +108,7 @@ export function stubPortalAuth(sandbox: SinonSandbox) {
   const additionalRoles = [{ role_name: "admin" }];
 
   let selectCall = 0;
-  const existing = db.select as SinonStub;
-  const selectStub = existing?.isSinonProxy ? existing : sandbox.stub(db, "select");
+  const selectStub = getOrCreateSelectStub(sandbox, db);
 
   selectStub.callsFake((selection?: Record<string, unknown>) => {
     selectCall += 1;
