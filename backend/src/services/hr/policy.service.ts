@@ -1,11 +1,12 @@
-﻿import fs from "fs";
+import fs from "fs";
 import path from "path";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
-import { hr_policies, hr_users } from "@/db/schema";
+import { hr_users } from "@/db/schema/hr/employee";
+import { hr_policies } from "@/db/schema/hr/policy";
 import { AppError } from "@/middlewares";
-import { sendNotification } from "@/modules/hr/notifications/notification.service";
 
+export type PolicyCategory = "GENERAL" | "HR" | "IT" | "FINANCE" | "COMPLIANCE" | "OTHER";
 export type PolicyStatus = "PUBLISHED" | "DRAFT";
 
 export interface ListPoliciesQuery {
@@ -19,7 +20,9 @@ export interface ListPoliciesQuery {
 
 export interface CreatePolicyInput {
   title: string;
+  content?: string | null;
   category: string;
+  policyCategory?: PolicyCategory;
   version: string;
   status?: PolicyStatus;
   fileName: string;
@@ -29,9 +32,12 @@ export interface CreatePolicyInput {
 
 export interface UpdatePolicyInput {
   title?: string;
+  content?: string | null;
   category?: string;
+  policyCategory?: PolicyCategory;
   version?: string;
   status?: PolicyStatus;
+  isActive?: boolean;
   fileName?: string;
   fileContentBase64?: string;
 }
@@ -106,26 +112,20 @@ export async function listPolicies(query: ListPoliciesQuery) {
     .limit(query.limit)
     .offset((query.page - 1) * query.limit);
 
-  const creatorIds = [...new Set(rows.map((p) => p.created_by_id))];
-  const creators = creatorIds.length
-    ? await db
-        .select({ id: hr_users.id, first: hr_users.first_name, last: hr_users.last_name })
-        .from(hr_users)
-        .where(and(...creatorIds.map((id) => eq(hr_users.id, id))))
-    : [];
-
-  const creatorMap = new Map(creators.map((c) => [c.id, `${c.first} ${c.last}`]));
-
   const data = rows.map((p) => ({
     id: p.id,
     title: p.title,
+    content: p.content,
     category: p.category,
+    policyCategory: p.policy_category,
     version: p.version,
     fileSize: p.file_size,
     downloads: p.downloads,
+    isActive: p.is_active,
     status: p.status,
+    createdById: p.created_by_id,
     modifiedAt: p.updated_at,
-    createdBy: { id: p.created_by_id, fullName: creatorMap.get(p.created_by_id) ?? "" },
+    createdAt: p.created_at,
   }));
 
   return { data, total };
@@ -136,43 +136,42 @@ export async function getPolicy(id: string) {
   if (!rows.length) throw new AppError("Policy not found", 404);
   const p = rows[0];
 
-  const creators = await db
-    .select({ id: hr_users.id, first: hr_users.first_name, last: hr_users.last_name })
-    .from(hr_users)
-    .where(eq(hr_users.id, p.created_by_id))
-    .limit(1);
-
-  const fullName = creators.length ? `${creators[0].first} ${creators[0].last}` : "";
-
   return {
     id: p.id,
     title: p.title,
+    content: p.content,
     category: p.category,
+    policyCategory: p.policy_category,
     version: p.version,
     filePath: p.file_path,
     fileSize: p.file_size,
     downloads: p.downloads,
+    isActive: p.is_active,
     status: p.status,
+    createdById: p.created_by_id,
     modifiedAt: p.updated_at,
-    createdBy: { id: p.created_by_id, fullName },
     createdAt: p.created_at,
   };
 }
 
 export async function createPolicy(input: CreatePolicyInput) {
   await assertUserExists(input.createdById);
+
   const saved = saveBase64File(input.fileName, input.fileContentBase64);
 
   const inserted = await db
     .insert(hr_policies)
     .values({
       title: input.title,
+      content: input.content ?? null,
       category: input.category,
+      policy_category: input.policyCategory ?? "GENERAL",
       version: input.version,
       status: input.status ?? "PUBLISHED",
       file_path: saved.filePath,
       file_size: saved.fileSize,
       downloads: 0,
+      is_active: true,
       created_by_id: input.createdById,
     })
     .returning();
@@ -198,33 +197,17 @@ export async function updatePolicy(id: string, input: UpdatePolicyInput) {
   };
 
   if (input.title !== undefined) patch.title = input.title;
+  if (input.content !== undefined) patch.content = input.content;
   if (input.category !== undefined) patch.category = input.category;
+  if (input.policyCategory !== undefined) patch.policy_category = input.policyCategory;
   if (input.version !== undefined) patch.version = input.version;
   if (input.status !== undefined) patch.status = input.status;
+  if (input.isActive !== undefined) patch.is_active = input.isActive;
   if (filePatch.file_path !== undefined) patch.file_path = filePatch.file_path;
   if (filePatch.file_size !== undefined) patch.file_size = filePatch.file_size;
 
   const updated = await db.update(hr_policies).set(patch).where(eq(hr_policies.id, id)).returning();
-
   if (!updated.length) throw new AppError("Policy not found", 404);
-
-  const wasActive = rows[0].is_active;
-  const isNowActive = updated[0].is_active;
-  if (!wasActive && isNowActive) {
-    try {
-      await sendNotification({
-        type: "POLICY_PUBLISHED",
-        triggeredBy: 0,
-        relatedEntity: { policyId: updated[0].id },
-        title: "New policy published",
-        message: `Policy "${updated[0].title}" is now active.`,
-        priority: "HIGH",
-      });
-    } catch {
-      // notification failure must not break the main operation
-    }
-  }
-
   return updated[0];
 }
 
@@ -239,7 +222,7 @@ export async function deletePolicy(id: string): Promise<void> {
   try {
     fs.unlinkSync(absolute);
   } catch {
-    // ignore missing files on disk
+    // ignore missing files
   }
 }
 

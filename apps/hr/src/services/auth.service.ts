@@ -12,7 +12,6 @@ export const authService = {
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
         }
-        console.log("HHHHHHHHHHHHHHHHH", fullResponse);
 
         return fullResponse;
     },

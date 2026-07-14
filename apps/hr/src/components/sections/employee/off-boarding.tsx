@@ -792,7 +792,7 @@ export default function OffboardingPage() {
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-6">
-                                {/* Employee Overview */}
+                                {/* Employee ViewEmployeeContents */}
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-4">
                                         <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg border border-red-200">

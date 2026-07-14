@@ -37,7 +37,7 @@ const NOTIFICATION_ROUTING: Record<NotificationType, RoutingTarget> = {
   ASSET_ASSIGNED: { it: true, hr: true, employee: true },
   ASSET_RETURNED: { it: true, hr: true, employee: false },
   ASSET_STATUS_CHANGED: { it: true, hr: true, employee: false },
-  POLICY_PUBLISHED: { it: true, hr: true, employee: "all" },
+  DOCUMENT_PUBLISHED: { it: true, hr: true, employee: "all" },
 };
 
 const LEAVE_TYPES: NotificationType[] = [
@@ -69,7 +69,7 @@ function isPreferenceEnabled(
   if (LEAVE_TYPES.includes(type)) return prefs.leave_updates;
   if (TICKET_TYPES.includes(type)) return prefs.ticket_updates;
   if (ASSET_TYPES.includes(type)) return prefs.asset_updates;
-  if (type === "POLICY_PUBLISHED") return prefs.policy_updates;
+  if (type === "DOCUMENT_PUBLISHED") return prefs.policy_updates;
 
   return true;
 }

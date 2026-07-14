@@ -26,8 +26,234 @@ CREATE TYPE "public"."task_team_role" AS ENUM('owner', 'admin', 'member', 'viewe
 CREATE TYPE "public"."task_team_status" AS ENUM('active', 'inactive', 'archived');--> statement-breakpoint
 CREATE TYPE "public"."two_factor_method" AS ENUM('authenticator', 'sms', 'email');--> statement-breakpoint
 CREATE TYPE "public"."verification_type" AS ENUM('email', 'phone');--> statement-breakpoint
+CREATE TYPE "public"."asset_issue" AS ENUM('YES', 'NO');--> statement-breakpoint
+CREATE TYPE "public"."asset_status" AS ENUM('AVAILABLE', 'ASSIGNED', 'UNDER_MAINTENANCE', 'DISPOSED');--> statement-breakpoint
+CREATE TYPE "public"."contract_status" AS ENUM('ACTIVE', 'EXPIRED', 'TERMINATED');--> statement-breakpoint
+CREATE TYPE "public"."contract_type" AS ENUM('FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP');--> statement-breakpoint
+CREATE TYPE "public"."policy_category" AS ENUM('Contract Templates', 'Policies & Procedures', 'Forms & Applications', 'Training Materials', 'Compliance & Legal', 'Onboarding Materials');--> statement-breakpoint
+CREATE TYPE "public"."policy_status" AS ENUM('PUBLISHED', 'DRAFT');--> statement-breakpoint
+CREATE TYPE "public"."hr_role" AS ENUM('EMPLOYEE', 'IT', 'HR');--> statement-breakpoint
+CREATE TYPE "public"."leave_status" AS ENUM('PENDING', 'APPROVED', 'REJECTED', 'CANCELLED');--> statement-breakpoint
+CREATE TYPE "public"."leave_type" AS ENUM('ANNUAL', 'SICK', 'MATERNITY', 'PATERNITY', 'UNPAID', 'OTHER');--> statement-breakpoint
+CREATE TYPE "public"."maintenance_status" AS ENUM('PENDING', 'APPROVED', 'REJECTED');--> statement-breakpoint
+CREATE TYPE "public"."notification_priority" AS ENUM('LOW', 'NORMAL', 'HIGH', 'CRITICAL');--> statement-breakpoint
+CREATE TYPE "public"."notification_status" AS ENUM('UNREAD', 'READ', 'ARCHIVED');--> statement-breakpoint
+CREATE TYPE "public"."notification_type" AS ENUM('EMPLOYEE_CREATED', 'EMPLOYEE_STATUS_CHANGED', 'CONTRACT_CREATED', 'CONTRACT_UPDATED', 'CONTRACT_EXPIRING', 'LEAVE_REQUESTED', 'LEAVE_APPROVED', 'LEAVE_REJECTED', 'LEAVE_CANCELLED', 'TICKET_CREATED', 'TICKET_STATUS_CHANGED', 'TICKET_ASSIGNED', 'ASSET_ASSIGNED', 'ASSET_RETURNED', 'ASSET_STATUS_CHANGED', 'DOCUMENT_PUBLISHED');--> statement-breakpoint
+CREATE TYPE "public"."ticket_priority" AS ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');--> statement-breakpoint
+CREATE TYPE "public"."ticket_status" AS ENUM('OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED');--> statement-breakpoint
+CREATE TYPE "public"."user_status" AS ENUM('ACTIVE', 'ON_LEAVE', 'INACTIVE', 'TERMINATED');--> statement-breakpoint
 CREATE TYPE "public"."task_priority" AS ENUM('low', 'medium', 'high');--> statement-breakpoint
 CREATE TYPE "public"."task_status" AS ENUM('overdue', 'todo', 'inprogress', 'review', 'done');--> statement-breakpoint
+CREATE TABLE "achievement_comments" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"achievement_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"content" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "achievement_likes" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"achievement_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "alumni_achievements" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"title" text NOT NULL,
+	"description" text,
+	"category" text NOT NULL,
+	"type" text,
+	"date" date,
+	"organization" text,
+	"location" text,
+	"link" text,
+	"image_url" text,
+	"tags" jsonb DEFAULT '[]'::jsonb,
+	"views" integer DEFAULT 0,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "alumni_events" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"event_date" timestamp NOT NULL,
+	"start_time" text,
+	"end_time" text,
+	"duration" text,
+	"location" text,
+	"is_virtual" boolean DEFAULT false,
+	"meeting_url" text,
+	"type" text NOT NULL,
+	"category" text NOT NULL,
+	"organizer" text NOT NULL,
+	"organizer_id" integer,
+	"max_attendees" integer,
+	"is_paid" boolean DEFAULT false,
+	"price" text,
+	"currency" text DEFAULT 'USD',
+	"status" text DEFAULT 'Open' NOT NULL,
+	"image_url" text,
+	"speakers" jsonb DEFAULT '[]'::jsonb,
+	"agenda" jsonb DEFAULT '[]'::jsonb,
+	"tags" jsonb DEFAULT '[]'::jsonb,
+	"views" integer DEFAULT 0,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "alumni_mentorships" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"mentor_id" integer NOT NULL,
+	"mentee_id" integer NOT NULL,
+	"status" text DEFAULT 'active' NOT NULL,
+	"total_sessions" integer DEFAULT 0,
+	"started_at" timestamp DEFAULT now(),
+	"ended_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "alumni_profiles" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"title" text,
+	"company" text,
+	"location" text,
+	"country" text,
+	"industry" text,
+	"bio" text,
+	"graduation_year" integer,
+	"fellow_role" text,
+	"skills" jsonb DEFAULT '[]'::jsonb,
+	"phone" text,
+	"linkedin" text,
+	"twitter" text,
+	"github" text,
+	"website" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "alumni_profiles_user_id_unique" UNIQUE("user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "alumni_resources" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"type" text NOT NULL,
+	"category" text NOT NULL,
+	"file_url" text NOT NULL,
+	"file_type" text,
+	"file_size" text,
+	"thumbnail_url" text,
+	"author_id" integer NOT NULL,
+	"author_name" text NOT NULL,
+	"author_title" text,
+	"tags" jsonb DEFAULT '[]'::jsonb,
+	"estimated_time" text,
+	"pages" integer,
+	"duration" text,
+	"views" integer DEFAULT 0,
+	"downloads" integer DEFAULT 0,
+	"rating_sum" integer DEFAULT 0,
+	"rating_count" integer DEFAULT 0,
+	"is_featured" boolean DEFAULT false,
+	"external_url" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "event_registrations" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"event_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"status" text DEFAULT 'Registered' NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "job_opportunities" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" text NOT NULL,
+	"company" text NOT NULL,
+	"location" text,
+	"job_type" text,
+	"is_remote" boolean DEFAULT false,
+	"salary_min" integer,
+	"salary_max" integer,
+	"salary_currency" text DEFAULT 'USD',
+	"description" text,
+	"requirements" jsonb DEFAULT '[]'::jsonb,
+	"skills" jsonb DEFAULT '[]'::jsonb,
+	"sector" text NOT NULL,
+	"experience_level" text,
+	"application_url" text,
+	"deadline" date,
+	"source" text DEFAULT 'internal' NOT NULL,
+	"source_url" text,
+	"views" integer DEFAULT 0,
+	"posted_by" integer,
+	"expires_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "mentorship_goals" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"mentorship_id" integer NOT NULL,
+	"title" text NOT NULL,
+	"description" text,
+	"completed_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "mentorship_sessions" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"mentorship_id" integer NOT NULL,
+	"title" text,
+	"scheduled_at" timestamp NOT NULL,
+	"duration_minutes" integer DEFAULT 60,
+	"status" text DEFAULT 'scheduled' NOT NULL,
+	"notes" text,
+	"rating" integer,
+	"feedback" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "resource_downloads" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"resource_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "resource_likes" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"resource_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "resource_ratings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"resource_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"rating" integer NOT NULL,
+	"review" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "audit_logs" (
 	"id" integer PRIMARY KEY NOT NULL,
 	"user_id" integer,
@@ -71,6 +297,206 @@ CREATE TABLE "faqs" (
 	"answer" text NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"view_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hr_asset_categories" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"parent_name" text,
+	"slug" text NOT NULL,
+	"spec_schema" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "hr_asset_categories_slug_unique" UNIQUE("slug")
+);
+--> statement-breakpoint
+CREATE TABLE "hr_asset_images" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"asset_id" uuid NOT NULL,
+	"url" text NOT NULL,
+	"storage_key" text NOT NULL,
+	"is_primary" boolean DEFAULT false NOT NULL,
+	"sort_order" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hr_asset_maintenance" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"asset_id" uuid NOT NULL,
+	"requester_id" uuid NOT NULL,
+	"title" text NOT NULL,
+	"description" text,
+	"status" "maintenance_status" DEFAULT 'PENDING' NOT NULL,
+	"rejection_reason" text,
+	"price" numeric(12, 2),
+	"maintenance_date" timestamp with time zone DEFAULT now(),
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hr_asset_specs" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"asset_id" uuid NOT NULL,
+	"spec_key" text NOT NULL,
+	"spec_value" text NOT NULL,
+	CONSTRAINT "hr_asset_specs_asset_id_spec_key_unique" UNIQUE("asset_id","spec_key")
+);
+--> statement-breakpoint
+CREATE TABLE "hr_assets" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"device_name" text NOT NULL,
+	"serial_number" text NOT NULL,
+	"category_id" uuid NOT NULL,
+	"purchase_price" numeric(12, 2),
+	"status" "asset_status" DEFAULT 'AVAILABLE' NOT NULL,
+	"assigned_to_id" uuid,
+	"assigned_at" timestamp with time zone,
+	"returned_at" timestamp with time zone,
+	"notes" text,
+	"has_issue" "asset_issue" DEFAULT 'NO' NOT NULL,
+	"is_flagged" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "hr_assets_serial_number_unique" UNIQUE("serial_number")
+);
+--> statement-breakpoint
+CREATE TABLE "hr_contracts" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"employee_id" uuid NOT NULL,
+	"job_title" text NOT NULL,
+	"department" text,
+	"work_location" text,
+	"manager" text,
+	"report_to" text,
+	"start_date" timestamp with time zone NOT NULL,
+	"employment_term" text NOT NULL,
+	"end_date" timestamp with time zone,
+	"employment_type" text NOT NULL,
+	"days_per_week" integer,
+	"compensation_type" text NOT NULL,
+	"salary_scale" text,
+	"currency" text DEFAULT 'RWF' NOT NULL,
+	"base_monthly_rate" numeric(14, 2),
+	"gross_annual_rate" numeric(14, 2),
+	"employment_agreement_url" text,
+	"status" "contract_status" DEFAULT 'ACTIVE' NOT NULL,
+	"notes" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hr_documents" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"document_name" text NOT NULL,
+	"document_category" "policy_category" NOT NULL,
+	"version" text NOT NULL,
+	"description" text NOT NULL,
+	"department" text NOT NULL,
+	"file_path" text NOT NULL,
+	"file_size" text NOT NULL,
+	"downloads" integer DEFAULT 0 NOT NULL,
+	"status" "policy_status" DEFAULT 'DRAFT' NOT NULL,
+	"access" jsonb NOT NULL,
+	"contract_id" uuid,
+	"created_by_id" uuid NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hr_otps" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"code" text NOT NULL,
+	"email" text NOT NULL,
+	"created_by_id" uuid NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"used" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hr_users" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"platform_user_id" integer,
+	"first_name" text NOT NULL,
+	"last_name" text NOT NULL,
+	"personal_email" text NOT NULL,
+	"work_email" text,
+	"phone" text,
+	"picture" text,
+	"citizenship" text,
+	"home_country" text,
+	"home_city" text,
+	"password_hash" text NOT NULL,
+	"role" "hr_role" NOT NULL,
+	"status" "user_status" DEFAULT 'ACTIVE' NOT NULL,
+	"avatar_initials" text NOT NULL,
+	"refresh_token_hash" text,
+	"last_password_change" timestamp with time zone DEFAULT now() NOT NULL,
+	"requires_password_reset" boolean DEFAULT false NOT NULL,
+	"profile_setup_completed" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "hr_users_platform_user_id_unique" UNIQUE("platform_user_id"),
+	CONSTRAINT "hr_users_personal_email_unique" UNIQUE("personal_email")
+);
+--> statement-breakpoint
+CREATE TABLE "hr_helpdesk_tickets" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"submitted_by_id" uuid NOT NULL,
+	"assigned_to_id" uuid,
+	"status" "ticket_status" DEFAULT 'OPEN' NOT NULL,
+	"priority" "ticket_priority" DEFAULT 'MEDIUM' NOT NULL,
+	"answer" text,
+	"answered_at" timestamp with time zone,
+	"resolved_at" timestamp with time zone,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hr_leaves" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"type" "leave_type" NOT NULL,
+	"start_date" timestamp with time zone NOT NULL,
+	"end_date" timestamp with time zone NOT NULL,
+	"reason" text NOT NULL,
+	"status" "leave_status" DEFAULT 'PENDING' NOT NULL,
+	"reviewed_by_id" uuid,
+	"reviewed_at" timestamp with time zone,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "hr_notification_preferences" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" integer NOT NULL,
+	"email_enabled" boolean DEFAULT false NOT NULL,
+	"contract_expiry" boolean DEFAULT true NOT NULL,
+	"leave_updates" boolean DEFAULT true NOT NULL,
+	"ticket_updates" boolean DEFAULT true NOT NULL,
+	"asset_updates" boolean DEFAULT true NOT NULL,
+	"policy_updates" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "hr_notification_preferences_user_id_unique" UNIQUE("user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "hr_notifications" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"recipient_id" integer NOT NULL,
+	"type" "notification_type" NOT NULL,
+	"priority" "notification_priority" DEFAULT 'NORMAL' NOT NULL,
+	"status" "notification_status" DEFAULT 'UNREAD' NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"message" text NOT NULL,
+	"metadata" jsonb,
+	"read_at" timestamp with time zone,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
@@ -507,6 +933,51 @@ CREATE TABLE "report_templates" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "payrolls" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer,
+	"payroll_period" text NOT NULL,
+	"date_of_payment" date NOT NULL,
+	"name" text NOT NULL,
+	"email" text NOT NULL,
+	"staff_fellow_number" text,
+	"employee_id" text,
+	"program" text,
+	"payroll_type" text DEFAULT 'rwf',
+	"currency" text DEFAULT 'RWF',
+	"basic_salary" numeric(15, 2),
+	"gross_salary" numeric(15, 2),
+	"csr_employer" numeric(15, 2),
+	"occupational_hazards" numeric(15, 2),
+	"maternity_employer" numeric(15, 2),
+	"csr_employee" numeric(15, 2),
+	"maternity_employee" numeric(15, 2),
+	"tpr" numeric(15, 2),
+	"net_salary_before_cbhi" numeric(15, 2),
+	"cbhi" numeric(15, 2),
+	"net_salary" numeric(15, 2) NOT NULL,
+	"bnr_exchange_rate_date" date,
+	"exchange_rate_used" numeric(10, 4),
+	"net_salary_usd" numeric(15, 2),
+	"gross_usd" numeric(15, 2),
+	"wop_usd" numeric(15, 2),
+	"date_rate" date,
+	"wop_rwf" numeric(15, 2),
+	"gross_rwf" numeric(15, 2),
+	"housing_allowance" numeric(15, 2),
+	"function_allowance" numeric(15, 2),
+	"transport_allowance" numeric(15, 2),
+	"payslip_file_url" text,
+	"payslip_file_key" text,
+	"email_sent" boolean DEFAULT false NOT NULL,
+	"email_sent_at" timestamp,
+	"email_error" text,
+	"uploaded_by" integer NOT NULL,
+	"source_filename" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "application_reviews" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"application_id" integer NOT NULL,
@@ -590,7 +1061,45 @@ CREATE TABLE "opportunities" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE "achievement_comments" ADD CONSTRAINT "achievement_comments_achievement_id_alumni_achievements_id_fk" FOREIGN KEY ("achievement_id") REFERENCES "public"."alumni_achievements"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "achievement_comments" ADD CONSTRAINT "achievement_comments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "achievement_likes" ADD CONSTRAINT "achievement_likes_achievement_id_alumni_achievements_id_fk" FOREIGN KEY ("achievement_id") REFERENCES "public"."alumni_achievements"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "achievement_likes" ADD CONSTRAINT "achievement_likes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "alumni_achievements" ADD CONSTRAINT "alumni_achievements_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "alumni_events" ADD CONSTRAINT "alumni_events_organizer_id_users_id_fk" FOREIGN KEY ("organizer_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "alumni_mentorships" ADD CONSTRAINT "alumni_mentorships_mentor_id_users_id_fk" FOREIGN KEY ("mentor_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "alumni_mentorships" ADD CONSTRAINT "alumni_mentorships_mentee_id_users_id_fk" FOREIGN KEY ("mentee_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "alumni_profiles" ADD CONSTRAINT "alumni_profiles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "alumni_resources" ADD CONSTRAINT "alumni_resources_author_id_users_id_fk" FOREIGN KEY ("author_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_registrations" ADD CONSTRAINT "event_registrations_event_id_alumni_events_id_fk" FOREIGN KEY ("event_id") REFERENCES "public"."alumni_events"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "event_registrations" ADD CONSTRAINT "event_registrations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "job_opportunities" ADD CONSTRAINT "job_opportunities_posted_by_users_id_fk" FOREIGN KEY ("posted_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "mentorship_goals" ADD CONSTRAINT "mentorship_goals_mentorship_id_alumni_mentorships_id_fk" FOREIGN KEY ("mentorship_id") REFERENCES "public"."alumni_mentorships"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "mentorship_sessions" ADD CONSTRAINT "mentorship_sessions_mentorship_id_alumni_mentorships_id_fk" FOREIGN KEY ("mentorship_id") REFERENCES "public"."alumni_mentorships"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "resource_downloads" ADD CONSTRAINT "resource_downloads_resource_id_alumni_resources_id_fk" FOREIGN KEY ("resource_id") REFERENCES "public"."alumni_resources"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "resource_downloads" ADD CONSTRAINT "resource_downloads_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "resource_likes" ADD CONSTRAINT "resource_likes_resource_id_alumni_resources_id_fk" FOREIGN KEY ("resource_id") REFERENCES "public"."alumni_resources"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "resource_likes" ADD CONSTRAINT "resource_likes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "resource_ratings" ADD CONSTRAINT "resource_ratings_resource_id_alumni_resources_id_fk" FOREIGN KEY ("resource_id") REFERENCES "public"."alumni_resources"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "resource_ratings" ADD CONSTRAINT "resource_ratings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_asset_images" ADD CONSTRAINT "hr_asset_images_asset_id_hr_assets_id_fk" FOREIGN KEY ("asset_id") REFERENCES "public"."hr_assets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_asset_maintenance" ADD CONSTRAINT "hr_asset_maintenance_asset_id_hr_assets_id_fk" FOREIGN KEY ("asset_id") REFERENCES "public"."hr_assets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_asset_maintenance" ADD CONSTRAINT "hr_asset_maintenance_requester_id_hr_users_id_fk" FOREIGN KEY ("requester_id") REFERENCES "public"."hr_users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_asset_specs" ADD CONSTRAINT "hr_asset_specs_asset_id_hr_assets_id_fk" FOREIGN KEY ("asset_id") REFERENCES "public"."hr_assets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_assets" ADD CONSTRAINT "hr_assets_category_id_hr_asset_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."hr_asset_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_assets" ADD CONSTRAINT "hr_assets_assigned_to_id_hr_users_id_fk" FOREIGN KEY ("assigned_to_id") REFERENCES "public"."hr_users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_contracts" ADD CONSTRAINT "hr_contracts_employee_id_hr_users_id_fk" FOREIGN KEY ("employee_id") REFERENCES "public"."hr_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_documents" ADD CONSTRAINT "hr_documents_contract_id_hr_contracts_id_fk" FOREIGN KEY ("contract_id") REFERENCES "public"."hr_contracts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_documents" ADD CONSTRAINT "hr_documents_created_by_id_hr_users_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."hr_users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_otps" ADD CONSTRAINT "hr_otps_created_by_id_hr_users_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."hr_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_users" ADD CONSTRAINT "hr_users_platform_user_id_users_id_fk" FOREIGN KEY ("platform_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_helpdesk_tickets" ADD CONSTRAINT "hr_helpdesk_tickets_submitted_by_id_hr_users_id_fk" FOREIGN KEY ("submitted_by_id") REFERENCES "public"."hr_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_helpdesk_tickets" ADD CONSTRAINT "hr_helpdesk_tickets_assigned_to_id_hr_users_id_fk" FOREIGN KEY ("assigned_to_id") REFERENCES "public"."hr_users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_leaves" ADD CONSTRAINT "hr_leaves_user_id_hr_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."hr_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_leaves" ADD CONSTRAINT "hr_leaves_reviewed_by_id_hr_users_id_fk" FOREIGN KEY ("reviewed_by_id") REFERENCES "public"."hr_users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_notification_preferences" ADD CONSTRAINT "hr_notification_preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "hr_notifications" ADD CONSTRAINT "hr_notifications_recipient_id_users_id_fk" FOREIGN KEY ("recipient_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "users" ADD CONSTRAINT "users_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "project_documents" ADD CONSTRAINT "project_documents_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -636,6 +1145,8 @@ ALTER TABLE "report_files" ADD CONSTRAINT "report_files_task_id_tasks_id_fk" FOR
 ALTER TABLE "report_files" ADD CONSTRAINT "report_files_uploaded_by_users_id_fk" FOREIGN KEY ("uploaded_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "report_files" ADD CONSTRAINT "report_files_category_id_report_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."report_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "report_templates" ADD CONSTRAINT "report_templates_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "payrolls" ADD CONSTRAINT "payrolls_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "payrolls" ADD CONSTRAINT "payrolls_uploaded_by_users_id_fk" FOREIGN KEY ("uploaded_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "application_reviews" ADD CONSTRAINT "application_reviews_application_id_applications_id_fk" FOREIGN KEY ("application_id") REFERENCES "public"."applications"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "application_reviews" ADD CONSTRAINT "application_reviews_reviewer_id_users_id_fk" FOREIGN KEY ("reviewer_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "applications" ADD CONSTRAINT "applications_opportunity_id_opportunities_id_fk" FOREIGN KEY ("opportunity_id") REFERENCES "public"."opportunities"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

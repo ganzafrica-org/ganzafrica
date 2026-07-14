@@ -181,7 +181,7 @@ export default function HRDashboard() {
 
             {/* Charts Row */}
             <div className="grid gap-4 md:grid-cols-2">
-                {/* Recruitment Overview */}
+                {/* Recruitment ViewEmployeeContents */}
                 <Card>
                     <CardHeader>
                         <CardTitle>Recruitment Overview</CardTitle>

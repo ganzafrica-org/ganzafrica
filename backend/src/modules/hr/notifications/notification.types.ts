@@ -19,7 +19,7 @@ export interface RelatedEntityIds {
   leaveId?: string;
   ticketId?: string;
   assetId?: string;
-  policyId?: string;
+  documentId?: string;
 }
 
 export interface SendNotificationPayload {

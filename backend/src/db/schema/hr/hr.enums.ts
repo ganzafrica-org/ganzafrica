@@ -48,14 +48,26 @@ export const assetStatusEnum = pgEnum("asset_status", [
   "DISPOSED",
 ]);
 
-export const policyStatusEnum = pgEnum("policy_status", ["PUBLISHED", "DRAFT"]);
+export const documentStatusEnum = pgEnum("policy_status", ["PUBLISHED", "DRAFT"]);
 
-export const policyCategoryEnum = pgEnum("policy_category", [
+export const documentCategoryEnum = pgEnum("policy_category", [
+  "Contract Templates",
+  "Policies & Procedures",
+  "Forms & Applications",
+  "Training Materials",
+  "Compliance & Legal",
+  "Onboarding Materials",
+]);
+
+/** HR policies module (distinct PG types from document enums above) */
+export const policyStatusEnum = pgEnum("hr_policy_status", ["PUBLISHED", "DRAFT"]);
+
+export const policyCategoryEnum = pgEnum("hr_policy_category", [
   "GENERAL",
   "HR",
   "IT",
   "FINANCE",
-  "SECURITY",
+  "COMPLIANCE",
   "OTHER",
 ]);
 
@@ -71,6 +83,12 @@ export const ticketPriorityEnum = pgEnum("ticket_priority", [
   "MEDIUM",
   "HIGH",
   "CRITICAL",
+]);
+
+export const maintenanceStatusEnum = pgEnum("maintenance_status", [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
 ]);
 
 export const notificationTypeEnum = pgEnum("notification_type", [
@@ -89,7 +107,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "ASSET_ASSIGNED",
   "ASSET_RETURNED",
   "ASSET_STATUS_CHANGED",
-  "POLICY_PUBLISHED",
+  "DOCUMENT_PUBLISHED",
 ]);
 
 export const notificationStatusEnum = pgEnum("notification_status", [

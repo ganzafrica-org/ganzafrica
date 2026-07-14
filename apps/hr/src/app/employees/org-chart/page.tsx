@@ -1,13 +1,12 @@
 "use client"
 
-import React from "react"
+import React, { useEffect } from "react"
 import { OrganizationChart } from 'primereact/organizationchart'
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import 'primereact/resources/themes/lara-light-green/theme.css'
 import 'primereact/resources/primereact.min.css'
-import { orgData } from "@/data/org-chat-data";
-
+import { orgData } from "@/data/org-chat-data"
 
 const nodeTemplate = (node: any) => {
     return (
@@ -26,6 +25,22 @@ const nodeTemplate = (node: any) => {
 }
 
 export default function OrgChartPage() {
+    useEffect(() => {
+        const style = document.createElement("style")
+        style.innerHTML = `
+            .p-organizationchart .p-organizationchart-line-down {
+                background: #cbd5e1;
+            }
+            .p-organizationchart .p-organizationchart-line-left,
+            .p-organizationchart .p-organizationchart-line-right,
+            .p-organizationchart .p-organizationchart-line-top {
+                border-color: #cbd5e1;
+            }
+        `
+        document.head.appendChild(style)
+        return () => { document.head.removeChild(style) }
+    }, [])
+
     return (
         <div className="min-h-screen p-6">
             <div className="space-y-6">
@@ -37,24 +52,13 @@ export default function OrgChartPage() {
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 rounded-lg p-8 overflow-auto shadow-sm flex justify-center min-h-[100%]">
-                    <OrganizationChart 
-                        value={orgData} 
-                        nodeTemplate={nodeTemplate} 
+                    <OrganizationChart
+                        value={orgData}
+                        nodeTemplate={nodeTemplate}
                         className="company-org-chart"
                     />
                 </div>
             </div>
-            
-            <style jsx global>{`
-                .p-organizationchart .p-organizationchart-line-down {
-                    background: #cbd5e1;
-                }
-                .p-organizationchart .p-organizationchart-line-left,
-                .p-organizationchart .p-organizationchart-line-right,
-                .p-organizationchart .p-organizationchart-line-top {
-                    border-color: #cbd5e1;
-                }
-            `}</style>
         </div>
     )
 }

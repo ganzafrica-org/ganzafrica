@@ -1,149 +1,150 @@
-"use client";
+"use client"
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { authService } from "@/services/auth.service";
-import {User, LoginRequest, LoginResponse} from "@/types/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import React, { createContext, useContext } from "react"
+import { useRouter } from "next/navigation"
+import { authService } from "@/services/auth.service"
+import type { LoginRequest, User } from "@/types/api"
 
-type AuthContextType = {
-    user: User | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    login: (data: LoginRequest) => Promise<void>;
-    logout: () => Promise<void>;
-};
+const TOKEN_KEY   = "accessToken"
+const REFRESH_KEY = "refreshToken"
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// ── Token decoder ─────────────────────────────────────────────────────────────
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
-
-    const bootstrap = async () => {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-            setIsLoading(false);
-            return;
+function decodeTokenUser(token: string): Partial<User> {
+    try {
+        const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+        const payload = JSON.parse(
+            decodeURIComponent(
+                window.atob(base64).split("").map(c =>
+                    "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
+                ).join("")
+            )
+        )
+        return {
+            id:       payload.sub ?? payload.id ?? "",
+            name:     payload.name ?? payload.email?.split("@")[0] ?? "User",
+            email:    payload.email ?? "",
+            role:     payload.role ?? "EMPLOYEE",
+            avatarUrl: payload.avatarUrl,
         }
-
-        try {
-            // Try to decode token first to get immediate role/user info
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-
-                const decoded = JSON.parse(jsonPayload);
-                // Map common JWT claims to our User object
-                const decodedUser: User = {
-                    id: decoded.sub || decoded.id || "",
-                    name: decoded.name || decoded.email?.split('@')[0] || "User",
-                    email: decoded.email || "",
-                    role: decoded.role || "EMPLOYEE",
-                    avatarUrl: decoded.avatarUrl
-                };
-                setUser(decodedUser);
-            } catch (decodeError) {
-                console.error("Failed to decode token", decodeError);
-            }
-
-            // Still fetch fresh user data from API
-            const userData = await authService.getCurrentUser();
-            setUser(userData);
-        } catch (error) {
-            console.error("Auth bootstrap failed", error);
-            // If it's a 401, we might want to clear tokens, but httpClient might already do it
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        bootstrap();
-    }, []);
-
-    const login = async (data: LoginRequest) => {
-        setIsLoading(true);
-        try {
-            const response:LoginResponse = await authService.login(data);
-            // Store tokens in localStorage as requested
-            localStorage.setItem("accessToken", response.data.accessToken);
-            localStorage.setItem("refreshToken", response.data.refreshToken);
-
-            // Try to decode token to ensure we have the most up-to-date role/user info
-            try {
-                const base64Url = response.data.accessToken.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                const decoded = JSON.parse(jsonPayload);
-                
-                // Merge decoded info with response.user
-                const mergedUser: User = {
-                    ...response.data.user,
-                    role: decoded.role || response.data.user.role || "EMPLOYEE"
-                };
-                setUser(mergedUser);
-            } catch (e) {
-                setUser(response.data.user);
-            }
-            
-            // Set session cookie for middleware
-            await fetch("/api/set-session", {
-                method: "POST",
-                body: JSON.stringify({ accessToken: response.data.accessToken }),
-            });
-
-            router.push("/");
-        } catch (error) {
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const logout = async () => {
-        setIsLoading(true);
-        try {
-            await authService.logout();
-            
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-
-            setUser(null);
-            
-            // Clear session cookie
-            await fetch("/api/set-session", {
-                method: "DELETE",
-            });
-
-            router.push("/auth/login");
-        } catch (error) {
-            console.error("Logout failed", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const value: AuthContextType = {
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        logout,
-    };
-
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    } catch {
+        return {}
+    }
 }
 
-export function useAuth() {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
+// ── Auth Context ──────────────────────────────────────────────────────────────
+
+type AuthContextType = {
+    user: User | null
+    isAuthenticated: boolean
+    isLoading: boolean
+    login: (data: LoginRequest) => Promise<void>
+    logout: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// ── Internal hooks (used inside the provider) ─────────────────────────────────
+
+function useCurrentUserQuery() {
+    return useQuery({
+        queryKey: ["currentUser"],
+        queryFn:  () => authService.getCurrentUser(),
+        enabled:  typeof window !== "undefined" && !!localStorage.getItem(TOKEN_KEY),
+        retry: (failureCount, error: any) => {
+            if (error?.response?.status === 401) return false
+            return failureCount < 2
+        },
+        staleTime: 5 * 60 * 1000,
+    })
+}
+
+function useLoginMutation() {
+    const queryClient = useQueryClient()
+    const router      = useRouter()
+
+    return useMutation({
+        mutationFn: (data: LoginRequest) => authService.login(data),
+        onSuccess: async (response) => {
+            const { accessToken, refreshToken, user } = response.data
+
+            localStorage.setItem(TOKEN_KEY,   accessToken)
+            localStorage.setItem(REFRESH_KEY, refreshToken)
+
+            const decoded     = decodeTokenUser(accessToken)
+            const mergedUser: User = { ...user, role: decoded.role ?? user.role }
+
+            // Seed cache immediately — no loading flash after login
+            queryClient.setQueryData(["currentUser"], mergedUser)
+
+            await fetch("/api/set-session", {
+                method: "POST",
+                body:   JSON.stringify({ accessToken }),
+            })
+
+            router.push("/")
+        },
+    })
+}
+
+function useLogoutMutation() {
+    const queryClient = useQueryClient()
+    const router      = useRouter()
+
+    return useMutation({
+        mutationFn: () => authService.logout(),
+        onSettled: async () => {
+            // onSettled ensures cleanup runs even if the API call fails
+            localStorage.removeItem(TOKEN_KEY)
+            localStorage.removeItem(REFRESH_KEY)
+
+            queryClient.removeQueries({ queryKey: ["currentUser"] })
+            queryClient.clear()
+
+            await fetch("/api/set-session", { method: "DELETE" })
+
+            router.push("/auth/login")
+        },
+    })
+}
+
+// ── AuthProvider ──────────────────────────────────────────────────────────────
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const { data: user, isLoading: userLoading } = useCurrentUserQuery()
+    const loginMutation  = useLoginMutation()
+    const logoutMutation = useLogoutMutation()
+
+    const login = async (data: LoginRequest) => {
+        await loginMutation.mutateAsync(data)
     }
-    return context;
+
+    const logout = async () => {
+        await logoutMutation.mutateAsync()
+    }
+
+    const value: AuthContextType = {
+        user:            user ?? null,
+        isAuthenticated: !!user,
+        isLoading:       userLoading || loginMutation.isPending || logoutMutation.isPending,
+        login,
+        logout,
+    }
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    )
+}
+
+// ── useAuth ───────────────────────────────────────────────────────────────────
+
+export function useAuth() {
+    const context = useContext(AuthContext)
+    if (context === undefined) {
+        throw new Error("useAuth must be used within an AuthProvider")
+    }
+    return context
 }

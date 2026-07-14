@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +14,6 @@ import {
     Smartphone,
     Monitor,
     Search,
-    Download,
     Eye,
     Edit,
     MoreVertical,
@@ -28,16 +27,9 @@ import {
     TrendingUp,
     Settings,
     Building,
-    Wrench
+    Wrench,
+    Loader2
 } from "lucide-react"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -49,12 +41,17 @@ import {
 import { CartesianGrid, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { StatsHeader } from "@/components/sections/header"
-import { TimeOffStats } from "@/data/Header-data"
-import { assetsData, assetRequests, assetCategoryData, assetConditionData, monthlyAssetData, AssetStatus } from "@/data/assets-data"
-import { getStatusBadge, getConditionBadge, getRequestStatusBadge, getUrgencyBadge, getCategoryIcon, formatCurrency } from "@/lib/helpers/assets-util"
+import { assetRequests, assetCategoryData, assetConditionData, monthlyAssetData } from "@/data/assets-data"
+import { formatCurrency, getCategoryIcon } from "@/lib/helpers/assets-util"
 import { AssetSheet } from "@/components/sections/sheets/asset-sheet"
+import { MaintenanceFormSheet } from "@/components/sections/sheets/maintenance-form-sheet"
 import { DataTable, ColumnDef } from "@/components/sections/table-component"
-import {ReusableSheet} from "@/components/sections/sheets/sheet-component";
+import { ReusableSheet } from "@/components/sections/sheets/sheet-component"
+import { useAssets, useAssetCategories } from "@/hooks/useAssets"
+import { assetsService } from "@/services/assets.service"
+import type { Asset, AssetStats, AssetMaintenance } from "@/types/api"
+import { toast } from "sonner"
+
 const chartConfig = {
     count: {
         label: "Count",
@@ -78,13 +75,29 @@ const chartConfig = {
     },
 } satisfies ChartConfig
 
+const statusStyles: Record<string, string> = {
+    AVAILABLE: "bg-green-100 text-green-800 border-green-200",
+    ASSIGNED: "bg-blue-100 text-blue-800 border-blue-200",
+    UNDER_MAINTENANCE: "bg-amber-100 text-amber-800 border-amber-200",
+    DISPOSED: "bg-gray-100 text-gray-800 border-gray-200",
+}
+
 export default function AssetsPage() {
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState("all")
     const [categoryFilter, setCategoryFilter] = useState("all")
-    const [selectedAsset, setSelectedAsset] = useState<any>(null)
-    const [showAssetDialog, setShowAssetDialog] = useState(false)
+    const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
+    const [editAsset, setEditAsset] = useState<Asset | null>(null)
+    const [showAddSheet, setShowAddSheet] = useState(false)
+    const [editMaintenance, setEditMaintenance] = useState<AssetMaintenance | null>(null)
+    const [showAddMaintenance, setShowAddMaintenance] = useState(false)
+    const [maintenanceRecords, setMaintenanceRecords] = useState<AssetMaintenance[]>([])
+    const [loadingMaintenance, setLoadingMaintenance] = useState(false)
     const [scrolled, setScrolled] = useState(false)
+    const [stats, setStats] = useState<AssetStats | null>(null)
+
+    const { data: assets, isLoading: loading, refetch } = useAssets()
+    const { categories } = useAssetCategories()
 
     useEffect(() => {
         const mainEl = document.querySelector("main.overflow-auto") as HTMLElement | null
@@ -108,45 +121,86 @@ export default function AssetsPage() {
         }
     }, [])
 
-    const [isEditing, setIsEditing] = useState(false)
-    const [editForm, setEditForm] = useState<any>(null)
+    // useEffect(() => {
+    //     assetsService.getAssetStats().then(setStats).catch(() => {})
+    // }, [assets])
 
-    const assetColumns: ColumnDef<any>[] = [
+    const fetchMaintenance = () => {
+        setLoadingMaintenance(true)
+        assetsService.listMaintenance()
+            .then(setMaintenanceRecords)
+            .catch(() => toast.error("Failed to load maintenance records"))
+            .finally(() => setLoadingMaintenance(false))
+    }
+
+    useEffect(() => {
+        fetchMaintenance()
+    }, [])
+
+    const handleDeleteMaintenance = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this record?")) return
+        try {
+            await assetsService.deleteMaintenance(id)
+            toast.success("Maintenance record deleted")
+            fetchMaintenance()
+        } catch (error) {
+            toast.error("Failed to delete record")
+        }
+    }
+
+    const handleUpdateMaintenanceStatus = async (id: string, status: "APPROVED" | "REJECTED", rejectionReason?: string) => {
+        try {
+            await assetsService.updateMaintenance(id, { status, rejectionReason })
+            toast.success(`Maintenance ${status.toLowerCase()} successfully`)
+            fetchMaintenance()
+        } catch (error) {
+            toast.error(`Failed to ${status.toLowerCase()} maintenance`)
+        }
+    }
+
+    const headerStats = useMemo(() => {
+        return [
+            { label: "Total Assets", value: String(stats?.total ?? 0), icon: Package },
+            { label: "Available", value: String(stats?.available ?? 0), icon: CheckCircle },
+            { label: "Assigned", value: String(stats?.assigned ?? 0), icon: User },
+            { label: "Maintenance", value: String(stats?.underMaintenance ?? 0), icon: Wrench },
+        ]
+    }, [stats])
+    const assetColumns: ColumnDef<Asset>[] = [
         {
-            key: "name",
+            key: "deviceName",        // ← was device_name
             header: "Asset",
             sortable: true,
             render: (_, asset) => (
                 <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg">
-                        {getCategoryIcon(asset.category)}
+                    <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg shrink-0">
+                        {getCategoryIcon(asset.category?.slug || "")}
                     </div>
-                    <div>
-                        <div className="font-medium">{asset.name}</div>
-                        <div className="text-sm text-muted-foreground">{asset.assetTag}</div>
+                    <div className="min-w-0">
+                        <div className="font-medium truncate">{asset.deviceName}</div>
+                        <div className="text-sm text-muted-foreground truncate">{asset.serialNumber}</div>
                     </div>
                 </div>
             )
         },
         {
-            key: "assignedTo",
+            key: "assignedToId",      // ← was assigned_to_id
             header: "Assigned To",
             sortable: true,
-            render: (assignedTo, asset) => (
-                assignedTo ? (
+            render: (assignedToId) => (
+                assignedToId ? (
                     <div className="flex items-center space-x-2">
                         <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-green-100 text-green-600 text-xs">
-                                {assignedTo.split(' ').map((n: string) => n[0]).join('')}
+                            <AvatarFallback className="bg-green-100 text-green-600 text-xs uppercase">
+                                <User className="h-4 w-4" />
                             </AvatarFallback>
                         </Avatar>
                         <div>
-                            <div className="text-sm font-medium">{assignedTo}</div>
-                            <div className="text-xs text-muted-foreground">{asset.department}</div>
+                            <div className="text-sm font-medium truncate max-w-[120px]">{assignedToId as string}</div>
                         </div>
                     </div>
                 ) : (
-                    <span className="text-muted-foreground">-</span>
+                    <span className="text-muted-foreground italic text-xs">Unassigned</span>
                 )
             )
         },
@@ -154,30 +208,27 @@ export default function AssetsPage() {
             key: "status",
             header: "Status",
             sortable: true,
-            render: (status) => getStatusBadge(status as AssetStatus)
-        },
-        {
-            key: "condition",
-            header: "Condition",
-            sortable: true,
-            render: (condition) => getConditionBadge(condition)
-        },
-        {
-            key: "location",
-            header: "Location",
-            sortable: true,
-            render: (location) => (
-                <div className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-sm">{location}</span>
-                </div>
+            render: (status) => (
+                <Badge variant="outline" className={`capitalize ${statusStyles[status as string] ?? ""}`}>
+                    {(status as string).replace("_", " ").toLowerCase()}
+                </Badge>
             )
         },
         {
-            key: "currentValue",
-            header: "Value",
+            key: "hasIssue",          // ← was has_issue
+            header: "Issue",
             sortable: true,
-            render: (val) => <span className="font-medium">{formatCurrency(val)}</span>
+            render: (hasIssue) => (
+                <Badge variant={hasIssue === "YES" ? "destructive" : "secondary"}>
+                    {hasIssue as string}
+                </Badge>
+            )
+        },
+        {
+            key: "purchasePrice",     // ← was purchase_price
+            header: "Purchase Price",
+            sortable: true,
+            render: (val) => <span className="font-medium">{formatCurrency(parseFloat(val as string) || 0)}</span>
         },
         {
             key: "actions",
@@ -191,20 +242,11 @@ export default function AssetsPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => {
-                            setSelectedAsset(asset)
-                            setShowAssetDialog(true)
-                            setIsEditing(false)
-                        }}>
+                        <DropdownMenuItem onClick={() => setSelectedAssetId(asset.id)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                            setSelectedAsset(asset)
-                            setShowAssetDialog(true)
-                            setIsEditing(true)
-                            setEditForm(asset)
-                        }}>
+                        <DropdownMenuItem onClick={() => setEditAsset(asset)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Asset
                         </DropdownMenuItem>
@@ -213,7 +255,7 @@ export default function AssetsPage() {
                             Assign/Unassign
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600">
                             <AlertTriangle className="mr-2 h-4 w-4" />
                             Report Issue
                         </DropdownMenuItem>
@@ -267,19 +309,27 @@ export default function AssetsPage() {
             key: "urgency",
             header: "Urgency",
             sortable: true,
-            render: (urgency) => getUrgencyBadge(urgency)
+            render: (urgency) => (
+                <Badge className={urgency === 'high' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}>
+                    {urgency as string}
+                </Badge>
+            )
         },
         {
             key: "budget",
             header: "Budget",
             sortable: true,
-            render: (budget) => <span className="font-medium">{formatCurrency(budget)}</span>
+            render: (budget) => <span className="font-medium">{formatCurrency(budget as number)}</span>
         },
         {
             key: "status",
             header: "Status",
             sortable: true,
-            render: (status) => getRequestStatusBadge(status)
+            render: (status) => (
+                <Badge className={status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                    {status as string}
+                </Badge>
+            )
         },
         {
             key: "actions",
@@ -315,15 +365,117 @@ export default function AssetsPage() {
         }
     ];
 
-    const filteredAssets = assetsData.filter(asset => {
-        const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            asset.assetTag.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            asset.assignedTo?.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesStatus = statusFilter === "all" || asset.status === statusFilter
-        const matchesCategory = categoryFilter === "all" || asset.category === categoryFilter
-        return matchesSearch && matchesStatus && matchesCategory
-    })
+    const maintenanceColumns: ColumnDef<AssetMaintenance>[] = [
+        {
+            key: "assetId",
+            header: "Asset",
+            sortable: true,
+            render: (assetId) => {
+                const asset = Array.isArray(assets) ? assets.find(a => a.id === assetId) : null
+                return (
+                    <div className="font-medium">
+                        {asset ? asset.deviceName : (assetId as string)}
+                    </div>
+                )
+            }
+        },
+        {
+            key: "title",
+            header: "Title",
+            sortable: true
+        },
+        {
+            key: "status",
+            header: "Status",
+            sortable: true,
+            render: (status) => {
+                const styles: Record<string, string> = {
+                    PENDING: "bg-amber-100 text-amber-800",
+                    APPROVED: "bg-green-100 text-green-800",
+                    REJECTED: "bg-red-100 text-red-800",
+                }
+                return (
+                    <Badge variant="outline" className={styles[status as string]}>
+                        {status as string}
+                    </Badge>
+                )
+            }
+        },
+        {
+            key: "price",
+            header: "Price",
+            sortable: true,
+            render: (price) => <span>{price ? formatCurrency(parseFloat(price as string)) : "-"}</span>
+        },
+        {
+            key: "maintenanceDate",
+            header: "Maintenance Date",
+            sortable: true,
+            render: (date) => <span>{new Date(date as string).toLocaleDateString()}</span>
+        },
+        {
+            key: "actions",
+            header: "Actions",
+            render: (_, record) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                            <MoreVertical className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => setEditMaintenance(record)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                        </DropdownMenuItem>
+                        {record.status === "PENDING" && (
+                            <>
+                                <DropdownMenuItem 
+                                    className="text-green-600"
+                                    onClick={() => handleUpdateMaintenanceStatus(record.id, "APPROVED")}
+                                >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Approve
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => {
+                                        const reason = prompt("Enter rejection reason:")
+                                        if (reason !== null) handleUpdateMaintenanceStatus(record.id, "REJECTED", reason)
+                                    }}
+                                >
+                                    <AlertTriangle className="mr-2 h-4 w-4" />
+                                    Reject
+                                </DropdownMenuItem>
+                            </>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => handleDeleteMaintenance(record.id)}
+                        >
+                            <AlertTriangle className="mr-2 h-4 w-4" />
+                            Delete
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )
+        }
+    ];
 
+    const filteredAssets = useMemo(() => {
+        const safeAssets = Array.isArray(assets) ? assets : []
+        return safeAssets.filter(asset => {
+            const matchesSearch =
+                (asset.deviceName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+                (asset.serialNumber?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+            const matchesStatus = statusFilter === "all" || asset.status === statusFilter
+            const matchesCategory = categoryFilter === "all" || asset.categoryId === categoryFilter
+            return matchesSearch && matchesStatus && matchesCategory
+        })
+    }, [assets, searchTerm, statusFilter, categoryFilter])
+    // Inside your component
     return (
         <div className="min-h-screen flex flex-col w-full bg-[#f6f8fb] dark:bg-slate-950 text-slate-900 dark:text-white">
             <div className="space-y-6">
@@ -331,7 +483,8 @@ export default function AssetsPage() {
                     title="Assets"
                     subtitle="Current condition of all assets"
                     scrolled={scrolled}
-                    stats={TimeOffStats}
+                    stats={headerStats}
+                    isLoading={!stats}
                     ClassName="w-full"
                 />
                 <Tabs defaultValue="assets" className="w-full flex flex-col">
@@ -355,50 +508,53 @@ export default function AssetsPage() {
                     </TabsList>
 
                     <TabsContent value="assets" className="space-y-4">
-
                         <Card className="rounded-lg">
                             <CardContent className="p-6">
                                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                                    <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                                        <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                                            <div className="relative flex-1 max-w-sm w-[80%]">
-                                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                <Input
-                                                    placeholder="Search assets..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                    className="pl-10 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
-                                                />
-                                            </div>
+                                    <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full">
+                                        <div className="relative flex-1 max-w-sm">
+                                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Search assets..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="pl-10 border-slate-200 focus:border-blue-400 focus:ring-blue-400"
+                                            />
+                                        </div>
+                                        <div className="flex gap-3">
                                             <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                                <SelectTrigger className="w-[150px] border-slate-200 rounded-lg py-4.5">
+                                                <SelectTrigger className="w-[150px] border-slate-200 rounded-lg">
                                                     <SelectValue placeholder="Status" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="all">All Status</SelectItem>
-                                                    <SelectItem value="assigned">Assigned</SelectItem>
-                                                    <SelectItem value="available">Available</SelectItem>
-                                                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                                                    <SelectItem value="retired">Retired</SelectItem>
+                                                    <SelectItem value="AVAILABLE">Available</SelectItem>
+                                                    <SelectItem value="ASSIGNED">Assigned</SelectItem>
+                                                    <SelectItem value="UNDER_MAINTENANCE">Maintenance</SelectItem>
+                                                    <SelectItem value="DISPOSED">Disposed</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                                                <SelectTrigger className="w-[150px] border-slate-200 rounded-lg py-4.5">
+                                                <SelectTrigger className="w-[180px] border-slate-200 rounded-lg">
                                                     <SelectValue placeholder="Category" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="all">All Categories</SelectItem>
-                                                    <SelectItem value="laptop">Laptops</SelectItem>
-                                                    <SelectItem value="phone">Phones</SelectItem>
-                                                    <SelectItem value="monitor">Monitors</SelectItem>
-                                                    <SelectItem value="tablet">Tablets</SelectItem>
+                                                    {categories?.map(cat => (
+                                                        <SelectItem key={cat.id} value={cat.id}>
+                                                            {cat.parent_name ? `${cat.parent_name} › ` : ""}{cat.name}
+                                                        </SelectItem>
+                                                    )) ?? []}
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        {/* align the button to the right */}
-                                        <div className="flex justify-end w-[20%]">
-                                            <Button variant="outline" className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white h-full">
-                                                <Plus className="h-4 w-4" />
+                                        <div className="ml-auto">
+                                            <Button 
+                                                onClick={() => setShowAddSheet(true)}
+                                                variant="outline" 
+                                                className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
+                                            >
+                                                <Plus className="h-4 w-4 mr-1" />
                                                 Add Asset
                                             </Button>
                                         </div>
@@ -407,16 +563,18 @@ export default function AssetsPage() {
                             </CardContent>
                         </Card>
 
-                        <DataTable
-                            columns={assetColumns}
-                            data={filteredAssets}
-                            onRowClick={(asset) => {
-                                setSelectedAsset(asset)
-                                setShowAssetDialog(true)
-                                setIsEditing(false)
-                            }}
-                            searchable={false} // We already have a search bar above
-                        />
+                        {loading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                            </div>
+                        ) : (
+                            <DataTable
+                                columns={assetColumns}
+                                data={filteredAssets}
+                                onRowClick={(asset) => setSelectedAssetId(asset.id)}
+                                searchable={false}
+                            />
+                        )}
                     </TabsContent>
 
                     <TabsContent value="requests" className="space-y-4">
@@ -429,21 +587,48 @@ export default function AssetsPage() {
                     </TabsContent>
 
                     <TabsContent value="maintenance" className="space-y-4">
-                        <Card className="rounded-lg mt-4">
-                            <CardContent className="p-6">
-                                <div className="text-center">
-                                    <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Settings className="h-8 w-8 text-orange-600" />
+                        {loadingMaintenance ? (
+                            <div className="flex items-center justify-center h-64">
+                                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                            </div>
+                        ) : maintenanceRecords.length === 0 ? (
+                            <Card className="rounded-lg mt-4">
+                                <CardContent className="p-6">
+                                    <div className="text-center">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Settings className="h-8 w-8 text-orange-600" />
+                                        </div>
+                                        <h3 className="text-lg font-semibold text-slate-700 dark:text-muted-foreground mb-2">Asset Maintenance Tracking</h3>
+                                        <p className="text-sm text-muted-foreground mb-4">Schedule and track maintenance activities for all assets</p>
+                                        <Button 
+                                            onClick={() => setShowAddMaintenance(true)}
+                                            className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
+                                        >
+                                            <Plus className=" h-4 w-4 mr-1" />
+                                            Schedule Maintenance
+                                        </Button>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-slate-700 dark:text-muted-foreground mb-2">Asset Maintenance Tracking</h3>
-                                    <p className="text-sm text-muted-foreground mb-4">Schedule and track maintenance activities for all assets</p>
-                                    <Button className="bg-transparent border border-brand-accent text-brand-accent">
-                                        <Plus className=" h-4 w-4" />
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex justify-end">
+                                    <Button 
+                                        onClick={() => setShowAddMaintenance(true)}
+                                        className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
+                                    >
+                                        <Plus className=" h-4 w-4 mr-1" />
                                         Schedule Maintenance
                                     </Button>
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <DataTable
+                                    columns={maintenanceColumns}
+                                    data={maintenanceRecords}
+                                    searchable={true}
+                                    searchPlaceholder="Search maintenance..."
+                                />
+                            </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="analytics" className="space-y-4">
@@ -508,48 +693,37 @@ export default function AssetsPage() {
                     </TabsContent>
                 </Tabs>
 
-                {showAssetDialog && selectedAsset && (
-                    <ReusableSheet
-                        open={showAssetDialog}
-                        onOpenChange={setShowAssetDialog}
-                        title={`Asset Details - ${selectedAsset.name}`}
-                        description={`Complete information for ${selectedAsset.assetTag}`}
-                        footer={
-                            <div className="flex w-full gap-3">
-                                <Button
-                                    variant="outline"
-                                    className="flex-1 border-slate-200 text-slate-600 hover:bg-white"
-                                    onClick={() => {
-                                        if (isEditing) {
-                                            setIsEditing(false)
-                                        } else {
-                                            setShowAssetDialog(false)
-                                        }
-                                    }}
-                                >
-                                    {isEditing ? "Cancel" : "Close"}
-                                </Button>
-                                <Button
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200"
-                                    onClick={() => {
-                                        if (isEditing) {
-                                            // handleSaveEdit() // Not implemented in original but added for UI consistency
-                                            setIsEditing(false)
-                                        } else {
-                                            console.log("Secondary action")
-                                        }
-                                    }}
-                                >
-                                    {isEditing ? "Save Changes" : "Download PDF"}
-                                </Button>
-                            </div>
-                        }
-                    >
-                        <AssetSheet
-                            assetDialogDraft={isEditing ? editForm : selectedAsset}
-                        />
-                    </ReusableSheet>
-                )}
+                <MaintenanceFormSheet
+                    open={showAddMaintenance}
+                    onOpenChange={setShowAddMaintenance}
+                    onSuccess={fetchMaintenance}
+                />
+
+                <MaintenanceFormSheet
+                    open={!!editMaintenance}
+                    onOpenChange={(open) => !open && setEditMaintenance(null)}
+                    maintenance={editMaintenance}
+                    onSuccess={fetchMaintenance}
+                />
+
+                <ReusableSheet
+                    open={!!selectedAssetId}
+                    onOpenChange={(open) => !open && setSelectedAssetId(null)}
+                    title="Asset Details"
+                    description="Full asset information and specifications"
+                    maxWidth="w-[45%]"
+                    footer={
+                        <Button
+                            variant="outline"
+                            className="w-full border-slate-200 text-slate-600"
+                            onClick={() => setSelectedAssetId(null)}
+                        >
+                            Close
+                        </Button>
+                    }
+                >
+                    <AssetSheet assetId={selectedAssetId} />
+                </ReusableSheet>
             </div>
         </div>
     )

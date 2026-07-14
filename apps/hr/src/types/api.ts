@@ -86,23 +86,15 @@ export interface Employee {
 export interface CreateEmployeeRequest {
     firstName: string
     lastName: string
-    email: string
-    phone: string
-    position: string
-    department: string
-    location: string
-    country: string
-    status: "Active" | "On Leave" | "Inactive" | "Terminated"
-    joinDate: string
-    type: EmployeeType
-    age?: number
-    gender?: string
-    address?: string
-    managerId?: string
-    salary?: number
-    skills?: string[]
-    avatarUrl?: string
-    contractId?: string
+    personalEmail: string
+    workEmail?: string | null
+    phone?: string | null
+    picture?: string | null
+    citizenship?: string | null
+    homeCountry?: string | null
+    homeCity?: string | null
+    role?: "EMPLOYEE" | "IT" | "HR"
+    platformUserId?: number
 }
 
 export type UpdateEmployeeRequest = Partial<CreateEmployeeRequest>
@@ -127,46 +119,111 @@ export interface Leave {
     reason?: string
 }
 
-// --- ASSET ---
+// ─── Asset Category ───────────────────────────────────────────────────────────
+
+export type SpecFieldType = "text" | "number" | "enum" | "boolean"
+
+export interface SpecFieldDefinition {
+    key: string
+    label: string
+    type: SpecFieldType
+    options?: string[]   // only when type === "enum"
+    required: boolean
+    unit?: string        // display hint e.g. "GB", "inches"
+}
+
+export interface AssetCategory {
+    id: string
+    name: string
+    parent_name: string | null
+    slug: string
+    is_active: boolean
+    sort_order: number
+    spec_schema: {
+        key: string
+        label: string
+        type: string
+        unit?: string
+        options?: string[]
+        required: boolean
+    }[]
+    created_at: string
+    updated_at: string
+}
+
+export interface CreateCategoryRequest {
+    name: string
+    parentName?: string
+    slug: string
+    specSchema: SpecFieldDefinition[]
+    sortOrder?: number
+}
+
+export interface UpdateCategoryRequest extends Partial<CreateCategoryRequest> {}
+
+// ─── Asset Spec & Image ───────────────────────────────────────────────────────
+
+export interface AssetSpec {
+    specKey: string
+    specValue: string
+}
+
+export interface AssetImage {
+    id: string
+    url: string
+    storageKey: string
+    isPrimary: boolean
+    sortOrder: number
+}
+
+// ─── Asset ────────────────────────────────────────────────────────────────────
+
+export type AssetStatus = "AVAILABLE" | "ASSIGNED" | "UNDER_MAINTENANCE" | "DISPOSED"
+export type AssetIssue  = "YES" | "NO"
+
 export interface Asset {
     id: string
+    deviceName: string
     serialNumber: string
-    device: string
-    generation: string
-    core: string
-    ram: string
-    hardDisk: string
-    purchasePrice: number
-    assignedTo?: string
-    assignedToId?: string
-    assignedDate?: string
-    hasIssues: boolean
-    issueDescription?: string
+    categoryId: string
+    purchasePrice: string | null
+    status: AssetStatus
+    assignedToId: string | null
+    assignedAt: string | null
+    returnedAt: string | null
+    notes: string | null
+    hasIssue: AssetIssue
+    isFlagged: boolean
+    createdAt: string
+    updatedAt: string
+    // Nested
+    category?: AssetCategory
+    specs?: AssetSpec[]
+    images?: AssetImage[]
 }
 
 export interface CreateAssetRequest {
+    deviceName: string
     serialNumber: string
-    device: string
-    generation: string
-    core: string
-    ram: string
-    hardDisk: string
-    purchasePrice: number
-    assignedTo?: string
-    assignedToId?: string
-    assignedDate?: string
-    hasIssues: boolean
-    issueDescription?: string
+    categoryId: string
+    purchasePrice?: string | null
+    assignedToId?: string | null
+    hasIssue?: AssetIssue
+    isFlagged?: boolean
+    status?: AssetStatus
+    notes?: string
+    specs?: { key: string; value: string }[]
+    // images are sent as FormData files, not JSON — handled separately
 }
 
-export type UpdateAssetRequest = Partial<CreateAssetRequest>
+export interface UpdateAssetRequest extends Partial<CreateAssetRequest> {}
 
 export interface AssetStats {
     total: number
+    available: number
     assigned: number
-    unassigned: number
-    totalValue: number
-    // percentage changes if returned by backend
+    underMaintenance: number
+    disposed: number
 }
 
 // --- SHARED ---
@@ -204,6 +261,43 @@ export interface NotificationItem {
     body: string
     createdAt: string
     read: boolean
+}
+
+export interface AssetMaintenance {
+  id: string
+  assetId: string
+  requesterId: string
+  title: string
+  description: string | null
+  status: "PENDING" | "APPROVED" | "REJECTED"
+  rejectionReason: string | null
+  price: string | null
+  maintenanceDate: string
+  createdAt: string
+  updatedAt: string
+  asset?: Asset
+}
+
+export interface CreateMaintenanceRequest {
+  assetId: string
+  requesterId: string
+  title: string
+  description?: string
+  status?: "PENDING" | "APPROVED" | "REJECTED"
+  rejectionReason?: string
+  price?: string
+  maintenanceDate?: string
+}
+
+export interface UpdateMaintenanceRequest {
+  assetId?: string
+  requesterId?: string
+  title?: string
+  description?: string
+  status?: "PENDING" | "APPROVED" | "REJECTED"
+  rejectionReason?: string
+  price?: string
+  maintenanceDate?: string
 }
 
 // --- POLICY ---

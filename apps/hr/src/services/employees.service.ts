@@ -4,6 +4,7 @@ import type { CreateEmployeeRequest, Employee, EmployeeStats, Leave, PaginatedRe
 export const employeesService = {
     async getEmployees(params?: { search?: string; status?: string; department?: string; country?: string; page?: number; limit?: number }) {
         const response = await httpClient.get<PaginatedResponse<Employee>>("/employees", { params })
+        console.log("777777777", response.data)
         return response.data
     },
     async getEmployeeById(id: string) {

@@ -1,6 +1,6 @@
 "use client"
 
-import React, {useEffect, useMemo, useState} from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox'
 import {
     Plus,
     Search,
-    Filter,
     SlidersHorizontal,
     Download,
     Eye,
@@ -41,29 +40,12 @@ import {
     DropdownMenuTrigger,
     DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog'
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table'
 import { ReusableSheet } from '@/components/sections/sheets/sheet-component'
 import { DataTable, ColumnDef } from "@/components/sections/table-component"
 import { DocumentSheet } from '@/components/sections/sheets/document-sheet'
-import {documentCategories, documents} from "@/data/documents-data";
-import {StatsHeader} from "@/components/sections/header";
-import {DocumentStats} from "@/data/Header-data";
+import { documentCategories, documents } from "@/data/documents-data";
+import { StatsHeader } from "@/components/sections/header";
+import { DocumentStats } from "@/data/Header-data";
 
 export default function DocumentManagementPage() {
     const [searchTerm, setSearchTerm] = useState("")
@@ -192,8 +174,8 @@ export default function DocumentManagementPage() {
         })
     }
 
-    const visibleColumns = useMemo(() => 
-        documentColumns.filter(col => !hidden.has(col.key)), 
+    const visibleColumns = useMemo(() =>
+        documentColumns.filter(col => !hidden.has(col.key)),
         [hidden]
     )
 
@@ -366,18 +348,18 @@ export default function DocumentManagementPage() {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                        <Button
-                                            variant="outline"
-                                            className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white h-full py-3"
-                                            onClick={() => {
-                                                setSelectedDocument(null)
-                                                setIsViewing(false)
-                                                setShowUploadDialog(true)
-                                            }}
-                                        >
-                                            <Plus className="h-4 w-4" />
-                                            Add Document
-                                        </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="bg-transparent border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white h-full py-3"
+                                        onClick={() => {
+                                            setSelectedDocument(null)
+                                            setIsViewing(false)
+                                            setShowUploadDialog(true)
+                                        }}
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                        Add Document
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
@@ -556,6 +538,7 @@ export default function DocumentManagementPage() {
                     <ReusableSheet
                         open={showUploadDialog}
                         onOpenChange={setShowUploadDialog}
+                        maxWidth="w-full sm:max-w-4xl"
                         title={isViewing ? "View Document Details" : selectedDocument ? "Edit Document" : "Upload New Document"}
                         footer={
                             <div className="flex w-full gap-3">
@@ -634,9 +617,16 @@ export default function DocumentManagementPage() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label className="text-sm font-medium">Tags</Label>
-                                    <Input defaultValue={selectedDocument?.tags?.join(', ')} placeholder="Enter tags separated by commas" className="border-slate-200 focus:border-blue-400" />
+                                {/* Modified Section: Converted to a 2-column grid to accommodate the new field seamlessly */}
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="tags" className="text-sm font-medium">Tags</Label>
+                                        <Input id="tags" defaultValue={selectedDocument?.tags?.join(', ')} placeholder="Enter tags separated by commas" className="border-slate-200 focus:border-blue-400" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="author" className="text-sm font-medium">Author / Owner</Label>
+                                        <Input id="author" defaultValue={selectedDocument?.author} placeholder="e.g., Jane Doe" className="border-slate-200 focus:border-blue-400" />
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
