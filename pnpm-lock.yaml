@@ -863,6 +863,9 @@ importers:
       express-async-errors:
         specifier: ^3.1.1
         version: 3.1.1(express@4.22.2)
+      express-rate-limit:
+        specifier: ^7.4.1
+        version: 7.5.1(express@4.22.2)
       googleapis:
         specifier: ^166.0.0
         version: 166.0.0
@@ -6671,6 +6674,12 @@ packages:
     resolution: {integrity: sha512-h6aK1da4tpqWSbyCa3FxB/V6Ehd4EEB15zyQq9qe75OZBp0krinNKuH4rAY+S/U/2I36vdLAUFSjQJ+TFmODng==}
     peerDependencies:
       express: ^4.16.2
+
+  express-rate-limit@7.5.1:
+    resolution: {integrity: sha512-7iN8iPMDzOMHPUYllBEsQdWVB6fPDMPqwjBaFrgr4Jgr/+okjvzAy+UHlYYL/Vs0OsOrMkwS6PJDkFlJwoxUnw==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      express: '>= 4.11'
 
   express-rate-limit@8.5.2:
     resolution: {integrity: sha512-5Kb34ipNX694DH48vN9irak1Qx30nb0PLYHXfJgw4YEjiC3ZEmZJhwOp+VfiCYwFzvFTdB9QkArYS5kXa2cx2A==}
@@ -16441,6 +16450,10 @@ snapshots:
   expect-type@1.3.0: {}
 
   express-async-errors@3.1.1(express@4.22.2):
+    dependencies:
+      express: 4.22.2
+
+  express-rate-limit@7.5.1(express@4.22.2):
     dependencies:
       express: 4.22.2
 

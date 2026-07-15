@@ -162,6 +162,7 @@
  *         description: Emails sent
  */
 import * as payrollService from "../../services/hr/payroll.service";
+import * as payslipTokenService from "../../services/hr/payslip-token.service";
 import * as pdfService from "../../services/hr/pdf.service";
 import * as payrollEmailService from "../../services/hr/payroll-email.service";
 import { AppError } from "../../middlewares";
@@ -706,6 +707,24 @@ export async function sendPayslipEmails(req: Request, res: Response, next: NextF
       message: `Email sending initiated for ${payroll_ids.length} payslip(s)`,
       count: payroll_ids.length,
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Revoke all previously-emailed payslip links for a payroll. Old links immediately 410.
+ */
+export async function revokePayslipLinks(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = parseInt(req.params.id);
+    if (Number.isNaN(id)) throw new AppError("Invalid payroll ID", 400);
+
+    const payroll = await payrollService.getPayrollById(id);
+    if (!payroll) throw new AppError("Payroll not found", 404);
+
+    const revoked = await payslipTokenService.revokeTokensForPayroll(id);
+    res.status(200).json({ revoked });
   } catch (error) {
     next(error);
   }

@@ -270,4 +270,7 @@ router.delete("/:id", payrollController.deletePayroll);
  */
 router.post("/send-emails", payrollController.sendPayslipEmails);
 
+// Revoke all previously-emailed payslip links for a payroll (old links immediately 410).
+router.post("/:id/revoke-links", payrollController.revokePayslipLinks);
+
 export default router;
