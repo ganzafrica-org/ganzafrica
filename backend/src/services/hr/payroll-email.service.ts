@@ -2,6 +2,7 @@
 import * as emailService from "./email.service";
 import * as payrollService from "./payroll.service";
 import * as pdfService from "./pdf.service";
+import * as payslipTokenService from "./payslip-token.service";
 import env from "../../config/env";
 
 const logger = new Logger("PayrollEmailService");
@@ -36,7 +37,8 @@ async function sendPayslipEmail(
           </p>
 
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            You can view and download your payslip by clicking the button below:
+            You can view and download your payslip by clicking the button below.
+            This link is valid for one year.
           </p>
 
           <div style="text-align: center; margin: 30px 0;">
@@ -164,15 +166,16 @@ export async function generateAndSendPayslip(payrollId: number): Promise<boolean
       throw new Error("Payslip key not found");
     }
 
-    // Generate signed URL for email (7 days expiration)
-    const signedUrl = await pdfService.generateSignedPayslipUrl(payslipKey, 7 * 24 * 60 * 60);
+    // Mint a 1-year, revocable token link. The backend redeems it to a fresh 5-min presigned
+    // URL on each click; re-sending a payslip revokes prior links.
+    const payslipLink = await payslipTokenService.mintAndBuildLink(payrollId);
 
-    // Send email with signed URL
+    // Send email with the durable token link
     const sent = await sendPayslipEmail(
       payrollId,
       user?.email || payroll.email,
       payroll.name,
-      signedUrl,
+      payslipLink,
       payroll.payroll_period,
     );
 

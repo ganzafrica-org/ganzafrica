@@ -3,7 +3,7 @@
  * Grow these as specs need more (makeEmployee, makeApplication, makeOffer, …).
  */
 import { db } from "../../src/db/client";
-import { roles, users } from "../../src/db/schema";
+import { roles, users, payrolls } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
 
@@ -60,4 +60,28 @@ export async function makeUser(opts: MakeUserOptions = {}): Promise<MadeUser> {
     .returning();
 
   return { id: row.id, email: row.email, name: row.name, password, roleName };
+}
+
+export interface MakePayrollOptions {
+  uploadedBy: number; // users.id (required FK)
+  name?: string;
+  email?: string;
+  payslipFileKey?: string | null;
+}
+
+/** Insert a payroll row. Requires an uploader user id (see makeUser). */
+export async function makePayroll(opts: MakePayrollOptions) {
+  const [row] = await db
+    .insert(payrolls)
+    .values({
+      payroll_period: "Test 01.26",
+      date_of_payment: "2026-01-31",
+      name: opts.name ?? "Jane Doe",
+      email: opts.email ?? `payee_${uniq()}@test.local`,
+      net_salary: "1000.00",
+      payslip_file_key: opts.payslipFileKey ?? "hr/Jane_Doe/01-26/payslip.pdf",
+      uploaded_by: opts.uploadedBy,
+    })
+    .returning();
+  return row;
 }

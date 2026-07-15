@@ -750,10 +750,16 @@ export async function uploadPayslipToSpaces(
   }
 }
 
+const MAX_PRESIGN_SECONDS = 7 * 24 * 60 * 60; // S3 SigV4 hard cap
+
 export async function generateSignedPayslipUrl(
   key: string,
-  expiresIn: number = 30 * 24 * 60 * 60,
+  expiresIn: number = 300, // 5 minutes — payslip links go through the token redirect, not raw presigns
 ): Promise<string> {
+  if (expiresIn > MAX_PRESIGN_SECONDS) {
+    // Guards the original bug: presigned URLs silently cap at 7 days, so anything longer is a lie.
+    throw new Error("presigned URLs cannot exceed 7 days; use a payslip access token instead");
+  }
   try {
     const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
     const signedUrl = await getSignedUrl(s3Client as any, command as any, { expiresIn });

@@ -14,4 +14,5 @@ export * from "./tasks";
 export * from "./reports";
 export * from "./alumni";
 export * from "./payroll";
+export * from "./payslip-tokens";
 export * from "./hr/index";
