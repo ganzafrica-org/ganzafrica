@@ -291,6 +291,34 @@ export default function PayslipsPage() {
     }
   };
 
+  const handleRevokeLinks = async (payrollId: number) => {
+    if (
+      !window.confirm(
+        "Revoke all emailed payslip links for this payroll? Old links will stop working immediately.",
+      )
+    ) {
+      return;
+    }
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/payroll/${payrollId}/revoke-links`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        },
+      );
+      if (!response.ok) throw new Error("Failed to revoke links");
+      const data = await response.json();
+      toast.success(`Revoked ${data.revoked} link(s)`);
+    } catch (error) {
+      console.error("Error revoking links:", error);
+      toast.error("Failed to revoke links");
+    }
+  };
+
   const handleBulkSendEmails = async () => {
     if (selectedIds.length === 0) {
       toast.error("Please select at least one payroll");
@@ -544,6 +572,15 @@ export default function PayslipsPage() {
                         title="Send payslip email"
                       >
                         <Mail className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleRevokeLinks(payroll.id)}
+                        className="cursor-pointer text-amber-600 hover:text-amber-800"
+                        title="Revoke emailed payslip links"
+                      >
+                        <XCircle className="w-4 h-4" />
                       </Button>
                       <Button
                         size="sm"
