@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "cross-env NEXT_DISABLE_TYPE_CHECKING=true TSC_COMPILE_ON_ERROR=true next build && next-sitemap",
     "start": "next start --port 3000",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "postbuild": "next-sitemap"
   },
@@ -57,6 +57,7 @@
     "@workspace/typescript-config": "workspace:*",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "eslint": "^9.15.0"
   }
 }
