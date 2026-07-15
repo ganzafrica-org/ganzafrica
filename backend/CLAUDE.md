@@ -11,6 +11,9 @@ middle path. In particular, NEVER hand-edit drizzle-generated migration SQL
 Comment sparingly. Explain why, not what; don't comment every function. Prefer clear names and
 self-documenting code over narration that goes stale.
 
+Never add `Co-Authored-By` or "Generated with Claude Code" trailers to commit messages or PR
+bodies. Keep commits to subject + body only.
+
 ## Database migrations (read before ANY schema change)
 
 The ONLY migration workflow:

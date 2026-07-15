@@ -1,6 +1,5 @@
 ﻿import { Router } from "express";
-import { authenticateHr, enforceHrPasswordPolicy } from "@/middlewares/hr/hr.auth.middleware";
-import { requireRole } from "@/middlewares/auth.middleware";
+import { authenticate, requirePermission } from "@/middlewares/auth.middleware";
 import { validate } from "@/middlewares/validation.middleware";
 import * as employeesController from "@/controllers/hr/employee.controller";
 import * as employeesValidation from "@/validations/hr/employee.validation";
@@ -14,45 +13,45 @@ const router: Router = Router();
  *   description: HR portal employee management endpoints
  */
 
-router.use(authenticateHr, enforceHrPasswordPolicy);
+router.use(authenticate);
 
 router.post(
   "/",
-  requireRole("IT"),
+  requirePermission("employees:manage"),
   validate(employeesValidation.createEmployeeSchema),
   employeesController.createEmployee,
 );
 
 router.get(
   "/",
-  requireRole("IT", "HR"),
+  requirePermission("employees:manage"),
   validate(employeesValidation.listEmployeesSchema),
   employeesController.listEmployees,
 );
 
 router.get(
   "/me",
-  requireRole("EMPLOYEE", "IT", "HR"),
+  requirePermission("employees:manage", "employees_self:read"),
   employeesController.getEmployee, // Handled by controller/service as self lookup
 );
 
 router.get(
   "/:id",
-  requireRole("IT", "HR"),
+  requirePermission("employees:manage"),
   validate(employeesValidation.employeeIdParamSchema),
   employeesController.getEmployee,
 );
 
 router.patch(
   "/:id",
-  requireRole("EMPLOYEE", "IT", "HR"), // Ownership check in controller
+  requirePermission("employees:manage", "employees_self:read"), // Ownership check in controller
   validate(employeesValidation.updateEmployeeSchema),
   employeesController.updateEmployee,
 );
 
 router.delete(
   "/:id",
-  requireRole("HR"), // Only HR can delete (matching original mission)
+  requirePermission("employees:manage"), // Only HR can delete (matching original mission)
   validate(employeesValidation.employeeIdParamSchema),
   employeesController.deleteEmployee,
 );

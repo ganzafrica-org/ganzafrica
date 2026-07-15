@@ -3,7 +3,7 @@ import type { HelpdeskAnswerPayload, HelpdeskTicketPayload, PaginatedResponse } 
 
 export const helpdeskService = {
   async createTicket(payload: HelpdeskTicketPayload) {
-    const response = await httpClient.post("/helpdesk", payload);
+    const response = await httpClient.post("/hr/helpdesk", payload);
     return response.data;
   },
   async getTickets(params?: {
@@ -14,26 +14,29 @@ export const helpdeskService = {
     page?: number;
     limit?: number;
   }) {
-    const response = await httpClient.get<PaginatedResponse<HelpdeskTicketPayload>>("/helpdesk", {
-      params,
-    });
+    const response = await httpClient.get<PaginatedResponse<HelpdeskTicketPayload>>(
+      "/hr/helpdesk",
+      {
+        params,
+      },
+    );
 
     return response.data;
   },
   async getTicketById(ticketId: string) {
-    const response = await httpClient.get<HelpdeskTicketPayload>(`/helpdesk/${ticketId}`);
+    const response = await httpClient.get<HelpdeskTicketPayload>(`/hr/helpdesk/${ticketId}`);
     return response.data;
   },
   async answerTicket(ticketId: string, payload: HelpdeskAnswerPayload) {
-    const response = await httpClient.patch(`/helpdesk/${ticketId}/answer`, payload);
+    const response = await httpClient.patch(`/hr/helpdesk/${ticketId}/answer`, payload);
     return response.data;
   },
   async deleteTicket(ticketId: string) {
-    await httpClient.delete(`/helpdesk/${ticketId}`);
+    await httpClient.delete(`/hr/helpdesk/${ticketId}`);
   },
   async updateTicket(ticketId: string, payload: HelpdeskTicketPayload) {
     const response = await httpClient.patch<HelpdeskTicketPayload>(
-      `/helpdesk/${ticketId}`,
+      `/hr/helpdesk/${ticketId}`,
       payload,
     );
     return response.data;

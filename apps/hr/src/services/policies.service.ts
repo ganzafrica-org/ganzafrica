@@ -9,7 +9,7 @@ export const policiesService = {
     page?: number;
     limit?: number;
   }) {
-    const response = await httpClient.get<Policy[] | PaginatedResponse<Policy>>("/policies", {
+    const response = await httpClient.get<Policy[] | PaginatedResponse<Policy>>("/hr/policies", {
       params,
     });
     return response.data;

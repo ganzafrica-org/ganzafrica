@@ -1,39 +1,39 @@
 ﻿import { Router } from "express";
-import { authenticateHr, enforceHrPasswordPolicy, requireRole, validate } from "../../middlewares";
+import { authenticate, requirePermission, validate } from "../../middlewares";
 import * as leaveController from "../../controllers/hr/leave.controller";
 import * as leaveValidation from "../../validations/hr/leave.validation";
 
 const router: Router = Router();
 
-router.use(authenticateHr, enforceHrPasswordPolicy);
+router.use(authenticate);
 
 router.get(
   "/",
-  requireRole("HR"),
+  requirePermission("leave:manage"),
   validate(leaveValidation.listAllLeavesSchema),
   leaveController.listAllLeaves,
 );
 router.patch(
   "/:id",
-  requireRole("HR", "EMPLOYEE"),
+  requirePermission("leave:manage", "leave_self:request"),
   validate(leaveValidation.updateLeaveSchema),
   leaveController.updateLeave,
 );
 router.delete(
   "/:id",
-  requireRole("HR", "EMPLOYEE"),
+  requirePermission("leave:manage", "leave_self:request"),
   validate(leaveValidation.leaveIdParamSchema),
   leaveController.cancelLeave,
 );
 router.post(
   "/:id/approve",
-  requireRole("HR"),
+  requirePermission("leave:approve"),
   validate(leaveValidation.leaveIdParamSchema),
   leaveController.approveLeave,
 );
 router.post(
   "/:id/reject",
-  requireRole("HR"),
+  requirePermission("leave:approve"),
   validate(leaveValidation.leaveIdParamSchema),
   leaveController.rejectLeave,
 );

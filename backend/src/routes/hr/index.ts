@@ -1,5 +1,4 @@
 ﻿import { Router } from "express";
-import hrAuthRoutes from "./auth.routes";
 import employeeRoutes from "./employee.routes";
 import contractRoutes from "./contract.routes";
 import assetsRoutes from "./assets.routes";
@@ -10,13 +9,20 @@ import policyRoutes from "./policy.routes";
 
 const router = Router();
 
-router.use("/auth", hrAuthRoutes);
 router.use("/employees", employeeRoutes);
 router.use("/employees/:employeeId/contracts", contractRoutes);
 router.use("/assets", assetsRoutes);
-router.use("/leave", leaveRoutes);
-router.use("/document", documentRoutes);
+router.use("/leaves", leaveRoutes);
+router.use("/documents", documentRoutes);
 router.use("/helpdesk", helpdeskRoutes);
 router.use("/policies", policyRoutes);
+
+// One-release redirect aliases for the renamed singular paths.
+router.use("/leave", (req, res) =>
+  res.redirect(308, `/api/hr/leaves${req.url === "/" ? "" : req.url}`),
+);
+router.use("/document", (req, res) =>
+  res.redirect(308, `/api/hr/documents${req.url === "/" ? "" : req.url}`),
+);
 
 export default router;

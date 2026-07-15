@@ -1,30 +1,27 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const session = request.cookies.get("auth_session")?.value;
-
-  const isAuthPage =
-    pathname.startsWith("/auth/login") || pathname.startsWith("/auth/reset-password");
-
-  // Allow Next.js internals and public assets
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
+    pathname.startsWith("/auth-callback") ||
     pathname.includes("favicon.ico")
   ) {
     return NextResponse.next();
   }
 
-  if (!session && !isAuthPage) {
-    const loginUrl = new URL("/auth/login", request.url);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  if (session && isAuthPage) {
-    return NextResponse.redirect(new URL("/", request.url));
+  // Presence check only — the API remains the authority. The shared session cookie is set by
+  // the SSO exchange on the .ganzafrica.org parent domain (host-only on localhost in dev).
+  const session = request.cookies.get("ganzafrica_auth")?.value;
+  if (!session) {
+    const login = new URL(`${PORTAL_URL}/login`);
+    login.searchParams.set("next", request.url);
+    return NextResponse.redirect(login);
   }
 
   return NextResponse.next();

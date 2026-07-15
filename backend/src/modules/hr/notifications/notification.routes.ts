@@ -1,11 +1,11 @@
 ﻿import { Router } from "express";
-import { authenticateHr, enforceHrPasswordPolicy, validate } from "@/middlewares";
+import { authenticate, validate } from "@/middlewares";
 import * as notificationController from "./notification.controller";
 import * as notificationValidation from "./notification.validation";
 
 const router: Router = Router();
 
-router.use(authenticateHr, enforceHrPasswordPolicy);
+router.use(authenticate);
 
 router.get("/unread-count", notificationController.getUnreadCount);
 router.patch("/read-all", notificationController.markAllNotificationsRead);

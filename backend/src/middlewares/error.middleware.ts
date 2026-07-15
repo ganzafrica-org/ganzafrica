@@ -8,11 +8,13 @@ const logger = new Logger("ErrorMiddleware");
 export class AppError extends Error {
   statusCode: number;
   isOperational: boolean;
+  code?: string;
 
-  constructor(message: string, statusCode: number) {
+  constructor(message: string, statusCode: number, code?: string) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = true; // Indicates this is a known operational error
+    this.code = code;
 
     Error.captureStackTrace(this, this.constructor);
   }
@@ -71,7 +73,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
       statusCode >= 500 && env.NODE_ENV === "production"
         ? constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
         : message,
-    // Include stack trace in development mode
+    ...(error.code && { code: error.code }),
     ...(env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };
