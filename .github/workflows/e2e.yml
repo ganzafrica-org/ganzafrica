@@ -1,0 +1,79 @@
+name: E2E
+
+on:
+  push:
+    branches: [dev, main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ganzafrica_test
+          POSTGRES_PASSWORD: test
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:test@localhost:5432/ganzafrica_test
+      # Minimal env so the backend boots in test mode.
+      NODE_ENV: test
+      API_BASE_URL: http://localhost:3002
+      WEBSITE_URL: http://localhost:3000
+      PORTAL_URL: http://localhost:3001
+      SESSION_SECRET: test_session_secret_at_least_32_chars_long_xx
+      JWT_SECRET: test_jwt_secret_at_least_32_characters_long_xx
+      JWT_REFRESH_SECRET: test_jwt_refresh_secret_at_least_32_chars_xx
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001
+      DO_SPACES_ENDPOINT: https://test.digitaloceanspaces.com
+      DO_SPACES_REGION: nyc3
+      DO_SPACES_ACCESS_KEY: test-key
+      DO_SPACES_SECRET_KEY: test-secret
+      DO_SPACES_BUCKET: test-bucket
+      API_URL: http://localhost:3002
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations
+        run: pnpm --filter ganzafrica-backend db:migrate
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @workspace/e2e exec playwright install --with-deps chromium
+
+      - name: Build backend + portal
+        run: pnpm turbo run build --filter=ganzafrica-backend --filter=portal
+
+      - name: Start backend + portal
+        run: |
+          pnpm --filter ganzafrica-backend start &
+          pnpm --filter portal start &
+          npx wait-on http://localhost:3002/api/health http://localhost:3001 -t 120000
+
+      - name: Run Playwright
+        run: pnpm --filter @workspace/e2e test:e2e
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
