@@ -8,6 +8,9 @@ simple state is not actually a problem — leave it as-is. Never ship the justif
 middle path. In particular, NEVER hand-edit drizzle-generated migration SQL
 (`drizzle/NNNN_*.sql`); only hand-author `--custom` migrations.
 
+Comment sparingly. Explain why, not what; don't comment every function. Prefer clear names and
+self-documenting code over narration that goes stale.
+
 ## Database migrations (read before ANY schema change)
 
 The ONLY migration workflow:

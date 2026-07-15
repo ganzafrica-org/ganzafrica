@@ -4,6 +4,8 @@ import {
   isAdmin,
   isTeamOrAdmin,
   requireRole,
+  requirePermission,
+  clearPermissionCache,
   setDbContextMiddleware,
 } from "./auth.middleware";
 import { authenticateHr, enforceHrPasswordPolicy } from "./hr/hr.auth.middleware";
@@ -18,6 +20,8 @@ export {
   isAdmin,
   isTeamOrAdmin,
   requireRole,
+  requirePermission,
+  clearPermissionCache,
   setDbContextMiddleware,
   errorHandler,
   notFoundHandler,

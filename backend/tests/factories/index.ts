@@ -3,7 +3,7 @@
  * Grow these as specs need more (makeEmployee, makeApplication, makeOffer, …).
  */
 import { db } from "../../src/db/client";
-import { roles, users, payrolls } from "../../src/db/schema";
+import { roles, users, user_roles, payrolls } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
 
@@ -58,6 +58,8 @@ export async function makeUser(opts: MakeUserOptions = {}): Promise<MadeUser> {
       email_verified: opts.emailVerified ?? true,
     })
     .returning();
+
+  await db.insert(user_roles).values({ user_id: row.id, role_id: role.id });
 
   return { id: row.id, email: row.email, name: row.name, password, roleName };
 }
