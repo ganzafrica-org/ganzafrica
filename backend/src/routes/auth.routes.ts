@@ -40,4 +40,8 @@ router.post(
 router.post("/logout", authenticate, authController.logout);
 router.get("/me", authenticate, authController.getCurrentUser);
 
+// SSO handoff (FND-06): portal mints a one-time code; the target app exchanges it for a session.
+router.post("/handoff", authenticate, authController.createHandoff);
+router.post("/handoff/exchange", authController.exchangeHandoff);
+
 export default router;

@@ -64,6 +64,7 @@ const envSchema = z.object({
 
   // Security
   CORS_ORIGINS: z.string().transform((val) => val.split(",")),
+  COOKIE_DOMAIN: z.string().nullish(), // e.g. ".ganzafrica.org" in prod; unset in dev (host-only)
 
   // Digital Ocean Spaces
   DO_SPACES_ENDPOINT: z.string().url(),

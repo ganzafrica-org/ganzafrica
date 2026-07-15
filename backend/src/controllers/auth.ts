@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import { authService, userService, emailService } from "../services";
+import { authService, userService, emailService, handoffService } from "../services";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 import { db } from "../db/client";
 import { eq } from "drizzle-orm";
-import { roles, users } from "../db/schema";
+import { roles, users, user_roles } from "../db/schema";
 
 const logger = new Logger("AuthController");
 
@@ -422,18 +422,78 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
       }
     }
 
-    // Return user information
+    const roleRows = await db
+      .select({ name: roles.name })
+      .from(user_roles)
+      .innerJoin(roles, eq(user_roles.role_id, roles.id))
+      .where(eq(user_roles.user_id, parseInt(req.user.id)));
+
     res.status(200).json({
       user: {
         id: parseInt(req.user.id),
         email: req.user.email,
         name: req.user.name,
         email_verified: req.user.email_verified,
+        roles: roleRows.map((r) => r.name),
       },
     });
   } catch (error) {
     logger.error("Get current user error", error);
     handleErrorResponse(error, res, "Authentication Error");
+  }
+};
+
+export const createHandoff = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    const targetApp = String(req.body?.target_app ?? "");
+    if (!targetApp) {
+      res.status(400).json({ error: "target_app is required" });
+      return;
+    }
+    const code = await handoffService.createHandoffCode(parseInt(req.user.id), targetApp);
+    res.status(200).json({ code });
+  } catch (error) {
+    logger.error("Create handoff error", error);
+    handleErrorResponse(error, res, "Handoff Error");
+  }
+};
+
+export const exchangeHandoff = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const code = String(req.body?.code ?? "");
+    const userId = code ? await handoffService.redeemHandoffCode(code) : null;
+    if (!userId) {
+      res.status(401).json({ error: "invalid_code" });
+      return;
+    }
+
+    const { accessToken, refreshToken } = await authService.createSession(
+      userId,
+      req.ip || "unknown",
+      req.headers["user-agent"] || "unknown",
+    );
+    res.cookie(constants.AUTH_COOKIE_NAME, accessToken, constants.COOKIE_OPTIONS);
+    res.cookie(constants.REFRESH_COOKIE_NAME, refreshToken, constants.COOKIE_OPTIONS);
+
+    const [u] = await db
+      .select({ id: users.id, email: users.email, name: users.name })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    const roleRows = await db
+      .select({ name: roles.name })
+      .from(user_roles)
+      .innerJoin(roles, eq(user_roles.role_id, roles.id))
+      .where(eq(user_roles.user_id, userId));
+
+    res.status(200).json({ user: { ...u, roles: roleRows.map((r) => r.name) } });
+  } catch (error) {
+    logger.error("Exchange handoff error", error);
+    handleErrorResponse(error, res, "Handoff Error");
   }
 };
 
