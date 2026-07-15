@@ -7,7 +7,7 @@
     "dev": "next dev --port 3003",
     "build": "next build",
     "start": "next start --port 3003",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -39,6 +39,7 @@
     "eslint-config-next": "^15.2.4",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "@workspace/eslint-config": "workspace:*"
   }
 }
