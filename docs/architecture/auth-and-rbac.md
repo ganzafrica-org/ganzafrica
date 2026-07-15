@@ -21,20 +21,20 @@ Seeded into `roles` (backend/src/db/schema/roles.ts). A user can hold MANY roles
 `user_roles`; `users.role_id` remains as a legacy "primary role" display column only —
 no authorization decision may read it.
 
-| Role | Who | Notes |
-|---|---|---|
-| `admin` | System administrators | Full access. Replaces hr_users `IT` |
-| `director` | Directors | Org-wide read, approvals above managers |
-| `hr` | HR staff | Full HR-suite management |
-| `finance` | Finance staff | Payroll management (replaces `NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS` allowlist) |
-| `program_manager` | Program managers | Manages fellows/analysts in their programs |
-| `staff` | Regular employees (non-fellow/analyst) | |
-| `fellow` | Fellows | Auto-qualifies for `alumni` at offboarding |
-| `analyst` | Analysts | Auto-qualifies for `alumni` at offboarding |
-| `mentor` | Mentors | Existing role, unchanged |
-| `alumni` | Alumni-network members | Grants access to apps/alumni |
-| `employee` | EVERY current employee | Base role: self-service HR views. Granted at hire, revoked at offboarding |
-| `public` | Existing seeded role | Unchanged (public site) |
+| Role              | Who                                    | Notes                                                                            |
+| ----------------- | -------------------------------------- | -------------------------------------------------------------------------------- |
+| `admin`           | System administrators                  | Full access. Replaces hr_users `IT`                                              |
+| `director`        | Directors                              | Org-wide read, approvals above managers                                          |
+| `hr`              | HR staff                               | Full HR-suite management                                                         |
+| `finance`         | Finance staff                          | Payroll management (replaces `NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS` allowlist) |
+| `program_manager` | Program managers                       | Manages fellows/analysts in their programs                                       |
+| `staff`           | Regular employees (non-fellow/analyst) |                                                                                  |
+| `fellow`          | Fellows                                | Auto-qualifies for `alumni` at offboarding                                       |
+| `analyst`         | Analysts                               | Auto-qualifies for `alumni` at offboarding                                       |
+| `mentor`          | Mentors                                | Existing role, unchanged                                                         |
+| `alumni`          | Alumni-network members                 | Grants access to apps/alumni                                                     |
+| `employee`        | EVERY current employee                 | Base role: self-service HR views. Granted at hire, revoked at offboarding        |
+| `public`          | Existing seeded role                   | Unchanged (public site)                                                          |
 
 Mapping from legacy: hr_users.role `HR`→`hr`, `IT`→`admin`, `EMPLOYEE`→`employee`;
 constants `ROLES.STAFF`→`staff` etc. (full mapping table in FND-05 §10).
@@ -48,26 +48,26 @@ The legacy `authorize([roleNames])` stays as a shim during migration and is remo
 
 Permission catalog (seed list — FND-05 §3 has the full seed script):
 
-| Resource | Actions | Granted to (beyond admin) |
-|---|---|---|
-| `employees` | `read`, `manage` | read: hr, director, program_manager; manage: hr |
-| `employees_self` | `read`, `update` | employee (own row only — enforced in service by `user_id = session.user_id`) |
-| `org_chart` | `read` | employee (everyone sees the chart) |
-| `contracts` | `read`, `manage` | hr |
-| `payroll` | `manage` | finance, hr |
-| `payroll_self` | `read` | employee (own payslips) |
-| `leave` | `manage`, `approve` | manage: hr; approve: hr + the employee's manager (relationship check in service) |
-| `leave_self` | `read`, `request` | employee |
-| `assets` | `read`, `manage` | read: employee (own assigned); manage: hr, admin |
-| `documents` | `read`, `manage` | read: per-document ACL; manage: hr |
-| `policies` | `read`, `manage` | read: employee; manage: hr |
-| `recruitment` | `read`, `manage` | hr, director (read) |
-| `processes` (onboarding + offboarding) | `read_own`, `manage` | read_own: the subject employee; manage: hr; task-assignees can complete their own tasks (row-level check in service) |
-| `helpdesk` | `create`, `manage` | create: employee; manage: hr, admin |
-| `performance` | `read_own`, `manage`, `review` | manage: hr; review: managers for their reports |
-| `events` | `read`, `manage` | read: employee; manage: hr |
-| `alumni` | `access` | alumni, admin |
-| `reports` | `read` | hr, finance, director |
+| Resource                               | Actions                        | Granted to (beyond admin)                                                                                            |
+| -------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `employees`                            | `read`, `manage`               | read: hr, director, program_manager; manage: hr                                                                      |
+| `employees_self`                       | `read`, `update`               | employee (own row only — enforced in service by `user_id = session.user_id`)                                         |
+| `org_chart`                            | `read`                         | employee (everyone sees the chart)                                                                                   |
+| `contracts`                            | `read`, `manage`               | hr                                                                                                                   |
+| `payroll`                              | `manage`                       | finance, hr                                                                                                          |
+| `payroll_self`                         | `read`                         | employee (own payslips)                                                                                              |
+| `leave`                                | `manage`, `approve`            | manage: hr; approve: hr + the employee's manager (relationship check in service)                                     |
+| `leave_self`                           | `read`, `request`              | employee                                                                                                             |
+| `assets`                               | `read`, `manage`               | read: employee (own assigned); manage: hr, admin                                                                     |
+| `documents`                            | `read`, `manage`               | read: per-document ACL; manage: hr                                                                                   |
+| `policies`                             | `read`, `manage`               | read: employee; manage: hr                                                                                           |
+| `recruitment`                          | `read`, `manage`               | hr, director (read)                                                                                                  |
+| `processes` (onboarding + offboarding) | `read_own`, `manage`           | read_own: the subject employee; manage: hr; task-assignees can complete their own tasks (row-level check in service) |
+| `helpdesk`                             | `create`, `manage`             | create: employee; manage: hr, admin                                                                                  |
+| `performance`                          | `read_own`, `manage`, `review` | manage: hr; review: managers for their reports                                                                       |
+| `events`                               | `read`, `manage`               | read: employee; manage: hr                                                                                           |
+| `alumni`                               | `access`                       | alumni, admin                                                                                                        |
+| `reports`                              | `read`                         | hr, finance, director                                                                                                |
 
 Ownership rules ("own row", "their reports") are enforced in the service layer, not the
 middleware — the middleware answers "may this role class do this action at all".
@@ -83,14 +83,14 @@ middleware — the middleware answers "may this role class do this action at all
 
 ## 5. App access matrix (drives portal platform-selection cards)
 
-| App | Requirement |
-|---|---|
-| portal | `admin`, `hr`, `finance`, `director`, `program_manager` (managers-and-up UI) |
+| App            | Requirement                                                                  |
+| -------------- | ---------------------------------------------------------------------------- |
+| portal         | `admin`, `hr`, `finance`, `director`, `program_manager` (managers-and-up UI) |
 | hr (`apps/hr`) | `employee` OR `hr` OR `admin` — everyone employed sees at least self-service |
-| alumni | `alumni` OR `admin` |
-| task | any authenticated with `employee`/`fellow`/`analyst`/`staff`/`admin` |
-| internal | RETIRED after MOD-07 (was: email allowlist) |
-| web | public |
+| alumni         | `alumni` OR `admin`                                                          |
+| task           | any authenticated with `employee`/`fellow`/`analyst`/`staff`/`admin`         |
+| internal       | RETIRED after MOD-07 (was: email allowlist)                                  |
+| web            | public                                                                       |
 
 ## 6. Sessions
 

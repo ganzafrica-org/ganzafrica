@@ -8,16 +8,7 @@ import {
   mentorship_sessions,
   alumni_profiles,
 } from "../db/schema";
-import {
-  eq,
-  and,
-  or,
-  count,
-  countDistinct,
-  avg,
-  sql,
-  inArray,
-} from "drizzle-orm";
+import { eq, and, or, count, countDistinct, avg, sql, inArray } from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("MentorshipController");
@@ -25,10 +16,7 @@ const logger = new Logger("MentorshipController");
 /**
  * Get mentorship statistics for the current alumni
  */
-export const getMentorshipStats = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getMentorshipStats = async (req: Request, res: Response): Promise<void> => {
   try {
     // Get the fellow and public role IDs
     const rolesResult = await db
@@ -62,8 +50,7 @@ export const getMentorshipStats = async (
       .from(alumni_mentorships)
       .where(eq(alumni_mentorships.status, "active"));
 
-    const availableMentees =
-      (totalMentees[0]?.count || 0) - (menteesWithMentors[0]?.count || 0);
+    const availableMentees = (totalMentees[0]?.count || 0) - (menteesWithMentors[0]?.count || 0);
 
     // Get total active relationships
     const activeRelationships = await db
@@ -93,9 +80,7 @@ export const getMentorshipStats = async (
         availableMentees: Math.max(0, availableMentees),
         activeRelationships: activeRelationships[0]?.count || 0,
         sessionsCompleted: completedSessions[0]?.count || 0,
-        averageRating: avgRating[0]?.avg
-          ? parseFloat(String(avgRating[0].avg)).toFixed(1)
-          : 0,
+        averageRating: avgRating[0]?.avg ? parseFloat(String(avgRating[0].avg)).toFixed(1) : 0,
       },
     });
   } catch (error) {
@@ -110,18 +95,12 @@ export const getMentorshipStats = async (
 /**
  * Get all fellows (potential mentees) with pagination
  */
-export const getFellows = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getFellows = async (req: Request, res: Response): Promise<void> => {
   try {
     const { search, available, page, limit } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(
-      50,
-      Math.max(1, parseInt(limit as string, 10) || 15),
-    );
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 15));
 
     // Get the fellow and public role IDs (matching the stats logic)
     const rolesResult = await db
@@ -235,11 +214,7 @@ export const addMentee = async (req: Request, res: Response): Promise<void> => {
     const menteeId = parseInt(fellowId, 10);
 
     // Check if fellow exists and has fellow role
-    const fellowRole = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.name, "fellow"))
-      .limit(1);
+    const fellowRole = await db.select().from(roles).where(eq(roles.name, "fellow")).limit(1);
 
     if (!fellowRole || fellowRole.length === 0) {
       res.status(400).json({ error: "Fellow role not found" });
@@ -250,11 +225,7 @@ export const addMentee = async (req: Request, res: Response): Promise<void> => {
       .select()
       .from(users)
       .where(
-        and(
-          eq(users.id, menteeId),
-          eq(users.role_id, fellowRole[0].id),
-          eq(users.is_active, true),
-        ),
+        and(eq(users.id, menteeId), eq(users.role_id, fellowRole[0].id), eq(users.is_active, true)),
       )
       .limit(1);
 
@@ -268,17 +239,12 @@ export const addMentee = async (req: Request, res: Response): Promise<void> => {
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.mentee_id, menteeId),
-          eq(alumni_mentorships.status, "active"),
-        ),
+        and(eq(alumni_mentorships.mentee_id, menteeId), eq(alumni_mentorships.status, "active")),
       )
       .limit(1);
 
     if (existingMentorship.length > 0) {
-      res
-        .status(400)
-        .json({ error: "This fellow already has an active mentor" });
+      res.status(400).json({ error: "This fellow already has an active mentor" });
       return;
     }
 
@@ -315,10 +281,7 @@ export const addMentee = async (req: Request, res: Response): Promise<void> => {
 /**
  * Get current user's mentorship connections (as mentor)
  */
-export const getMyConnections = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getMyConnections = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -393,25 +356,16 @@ export const getMyConnections = async (
       const mentorshipGoals = goalsByMentorship.get(m.id) || [];
       const mentorshipSessions = sessionsByMentorship.get(m.id) || [];
 
-      const completedGoals = mentorshipGoals.filter(
-        (g) => g.completed_at !== null,
-      ).length;
+      const completedGoals = mentorshipGoals.filter((g) => g.completed_at !== null).length;
       const totalGoals = mentorshipGoals.length;
-      const progress =
-        totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
+      const progress = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
 
-      const completedSessions = mentorshipSessions.filter(
-        (s) => s.status === "completed",
-      ).length;
-      const scheduledSessions = mentorshipSessions.filter(
-        (s) => s.status === "scheduled",
-      );
+      const completedSessions = mentorshipSessions.filter((s) => s.status === "completed").length;
+      const scheduledSessions = mentorshipSessions.filter((s) => s.status === "scheduled");
       const nextSession =
         scheduledSessions.length > 0
           ? scheduledSessions.sort(
-              (a, b) =>
-                new Date(a.scheduled_at).getTime() -
-                new Date(b.scheduled_at).getTime(),
+              (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
             )[0]
           : null;
 
@@ -459,10 +413,7 @@ export const getMyConnections = async (
 /**
  * Get single mentorship connection details
  */
-export const getConnection = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getConnection = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -482,10 +433,7 @@ export const getConnection = async (
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.id, connectionId),
-          eq(alumni_mentorships.mentor_id, mentorId),
-        ),
+        and(eq(alumni_mentorships.id, connectionId), eq(alumni_mentorships.mentor_id, mentorId)),
       )
       .limit(1);
 
@@ -524,12 +472,9 @@ export const getConnection = async (
       .where(eq(mentorship_sessions.mentorship_id, connectionId));
 
     const completedGoals = goals.filter((g) => g.completed_at !== null).length;
-    const progress =
-      goals.length > 0 ? Math.round((completedGoals / goals.length) * 100) : 0;
+    const progress = goals.length > 0 ? Math.round((completedGoals / goals.length) * 100) : 0;
 
-    const completedSessions = sessions.filter(
-      (s) => s.status === "completed",
-    ).length;
+    const completedSessions = sessions.filter((s) => s.status === "completed").length;
 
     res.status(200).json({
       connection: {
@@ -567,11 +512,7 @@ export const getConnection = async (
             rating: s.rating,
             feedback: s.feedback,
           }))
-          .sort(
-            (a, b) =>
-              new Date(b.scheduledAt).getTime() -
-              new Date(a.scheduledAt).getTime(),
-          ),
+          .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()),
       },
     });
   } catch (error) {
@@ -586,10 +527,7 @@ export const getConnection = async (
 /**
  * Update mentorship settings (total sessions)
  */
-export const updateConnection = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const updateConnection = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -610,10 +548,7 @@ export const updateConnection = async (
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.id, connectionId),
-          eq(alumni_mentorships.mentor_id, mentorId),
-        ),
+        and(eq(alumni_mentorships.id, connectionId), eq(alumni_mentorships.mentor_id, mentorId)),
       )
       .limit(1);
 
@@ -687,10 +622,7 @@ export const addGoal = async (req: Request, res: Response): Promise<void> => {
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.id, connectionId),
-          eq(alumni_mentorships.mentor_id, mentorId),
-        ),
+        and(eq(alumni_mentorships.id, connectionId), eq(alumni_mentorships.mentor_id, mentorId)),
       )
       .limit(1);
 
@@ -730,10 +662,7 @@ export const addGoal = async (req: Request, res: Response): Promise<void> => {
 /**
  * Update a goal (mark complete/incomplete, edit)
  */
-export const updateGoal = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const updateGoal = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -755,10 +684,7 @@ export const updateGoal = async (
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.id, connectionId),
-          eq(alumni_mentorships.mentor_id, mentorId),
-        ),
+        and(eq(alumni_mentorships.id, connectionId), eq(alumni_mentorships.mentor_id, mentorId)),
       )
       .limit(1);
 
@@ -771,12 +697,7 @@ export const updateGoal = async (
     const goalExists = await db
       .select()
       .from(mentorship_goals)
-      .where(
-        and(
-          eq(mentorship_goals.id, goalId),
-          eq(mentorship_goals.mentorship_id, connectionId),
-        ),
-      )
+      .where(and(eq(mentorship_goals.id, goalId), eq(mentorship_goals.mentorship_id, connectionId)))
       .limit(1);
 
     if (goalExists.length === 0) {
@@ -830,10 +751,7 @@ export const updateGoal = async (
 /**
  * Delete a goal
  */
-export const deleteGoal = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const deleteGoal = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -854,10 +772,7 @@ export const deleteGoal = async (
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.id, connectionId),
-          eq(alumni_mentorships.mentor_id, mentorId),
-        ),
+        and(eq(alumni_mentorships.id, connectionId), eq(alumni_mentorships.mentor_id, mentorId)),
       )
       .limit(1);
 
@@ -869,10 +784,7 @@ export const deleteGoal = async (
     await db
       .delete(mentorship_goals)
       .where(
-        and(
-          eq(mentorship_goals.id, goalId),
-          eq(mentorship_goals.mentorship_id, connectionId),
-        ),
+        and(eq(mentorship_goals.id, goalId), eq(mentorship_goals.mentorship_id, connectionId)),
       );
 
     res.status(200).json({ message: "Goal deleted successfully" });
@@ -888,10 +800,7 @@ export const deleteGoal = async (
 /**
  * Schedule a session
  */
-export const scheduleSession = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const scheduleSession = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -917,10 +826,7 @@ export const scheduleSession = async (
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.id, connectionId),
-          eq(alumni_mentorships.mentor_id, mentorId),
-        ),
+        and(eq(alumni_mentorships.id, connectionId), eq(alumni_mentorships.mentor_id, mentorId)),
       )
       .limit(1);
 
@@ -964,10 +870,7 @@ export const scheduleSession = async (
 /**
  * Update a session (status, notes, rating)
  */
-export const updateSession = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const updateSession = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -977,15 +880,7 @@ export const updateSession = async (
     const mentorId = parseInt(req.user.id, 10);
     const connectionId = parseInt(req.params.id, 10);
     const sessionId = parseInt(req.params.sessionId, 10);
-    const {
-      title,
-      scheduledAt,
-      durationMinutes,
-      status,
-      notes,
-      rating,
-      feedback,
-    } = req.body;
+    const { title, scheduledAt, durationMinutes, status, notes, rating, feedback } = req.body;
 
     if (isNaN(connectionId) || isNaN(sessionId)) {
       res.status(400).json({ error: "Invalid IDs" });
@@ -997,10 +892,7 @@ export const updateSession = async (
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.id, connectionId),
-          eq(alumni_mentorships.mentor_id, mentorId),
-        ),
+        and(eq(alumni_mentorships.id, connectionId), eq(alumni_mentorships.mentor_id, mentorId)),
       )
       .limit(1);
 
@@ -1037,10 +929,8 @@ export const updateSession = async (
     }> = {};
 
     if (title !== undefined) updateData.title = title;
-    if (scheduledAt !== undefined)
-      updateData.scheduled_at = new Date(scheduledAt);
-    if (durationMinutes !== undefined)
-      updateData.duration_minutes = durationMinutes;
+    if (scheduledAt !== undefined) updateData.scheduled_at = new Date(scheduledAt);
+    if (durationMinutes !== undefined) updateData.duration_minutes = durationMinutes;
     if (status !== undefined) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes;
     if (rating !== undefined) updateData.rating = rating;
@@ -1077,10 +967,7 @@ export const updateSession = async (
 /**
  * Delete a session
  */
-export const deleteSession = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const deleteSession = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -1101,10 +988,7 @@ export const deleteSession = async (
       .select()
       .from(alumni_mentorships)
       .where(
-        and(
-          eq(alumni_mentorships.id, connectionId),
-          eq(alumni_mentorships.mentor_id, mentorId),
-        ),
+        and(eq(alumni_mentorships.id, connectionId), eq(alumni_mentorships.mentor_id, mentorId)),
       )
       .limit(1);
 

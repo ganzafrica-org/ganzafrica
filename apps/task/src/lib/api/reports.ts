@@ -1,4 +1,4 @@
-import apiClient from '../api-client';
+import apiClient from "../api-client";
 
 export interface ReportFile {
   id: number;
@@ -93,7 +93,7 @@ export interface ReportFilters {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
 }
 
 export interface ReportAnalytics {
@@ -115,32 +115,34 @@ export interface PaginatedResponse<T> {
 }
 
 // Get reports with filtering
-export const getReports = async (filters: ReportFilters = {}): Promise<PaginatedResponse<ReportFile>> => {
+export const getReports = async (
+  filters: ReportFilters = {},
+): Promise<PaginatedResponse<ReportFile>> => {
   const params = new URLSearchParams();
-  
+
   if (filters.dateRange) {
-    params.append('dateRange', JSON.stringify(filters.dateRange));
+    params.append("dateRange", JSON.stringify(filters.dateRange));
   }
   if (filters.teamId) {
-    params.append('teamId', filters.teamId.toString());
+    params.append("teamId", filters.teamId.toString());
   }
   if (filters.projectId) {
-    params.append('projectId', filters.projectId.toString());
+    params.append("projectId", filters.projectId.toString());
   }
   if (filters.fileType) {
-    params.append('fileType', filters.fileType);
+    params.append("fileType", filters.fileType);
   }
   if (filters.page) {
-    params.append('page', filters.page.toString());
+    params.append("page", filters.page.toString());
   }
   if (filters.limit) {
-    params.append('limit', filters.limit.toString());
+    params.append("limit", filters.limit.toString());
   }
   if (filters.sortBy) {
-    params.append('sortBy', filters.sortBy);
+    params.append("sortBy", filters.sortBy);
   }
   if (filters.sortOrder) {
-    params.append('sortOrder', filters.sortOrder);
+    params.append("sortOrder", filters.sortOrder);
   }
 
   const response = await apiClient.get(`/reports?${params.toString()}`);
@@ -150,9 +152,9 @@ export const getReports = async (filters: ReportFilters = {}): Promise<Paginated
 // Get teams with their projects and file counts
 export const getTeamsWithProjects = async (filters: ReportFilters = {}): Promise<Team[]> => {
   const params = new URLSearchParams();
-  
+
   if (filters.dateRange) {
-    params.append('dateRange', JSON.stringify(filters.dateRange));
+    params.append("dateRange", JSON.stringify(filters.dateRange));
   }
 
   const response = await apiClient.get(`/reports/teams?${params.toString()}`);
@@ -160,11 +162,14 @@ export const getTeamsWithProjects = async (filters: ReportFilters = {}): Promise
 };
 
 // Get projects for a specific team
-export const getTeamProjects = async (teamId: number, filters: ReportFilters = {}): Promise<Project[]> => {
+export const getTeamProjects = async (
+  teamId: number,
+  filters: ReportFilters = {},
+): Promise<Project[]> => {
   const params = new URLSearchParams();
-  
+
   if (filters.dateRange) {
-    params.append('dateRange', JSON.stringify(filters.dateRange));
+    params.append("dateRange", JSON.stringify(filters.dateRange));
   }
 
   const response = await apiClient.get(`/reports/teams/${teamId}/projects?${params.toString()}`);
@@ -172,20 +177,23 @@ export const getTeamProjects = async (teamId: number, filters: ReportFilters = {
 };
 
 // Get files for a specific project
-export const getProjectFiles = async (projectId: number, filters: ReportFilters = {}): Promise<PaginatedResponse<ReportFile>> => {
+export const getProjectFiles = async (
+  projectId: number,
+  filters: ReportFilters = {},
+): Promise<PaginatedResponse<ReportFile>> => {
   const params = new URLSearchParams();
-  
+
   if (filters.dateRange) {
-    params.append('dateRange', JSON.stringify(filters.dateRange));
+    params.append("dateRange", JSON.stringify(filters.dateRange));
   }
   if (filters.fileType) {
-    params.append('fileType', filters.fileType);
+    params.append("fileType", filters.fileType);
   }
   if (filters.page) {
-    params.append('page', filters.page.toString());
+    params.append("page", filters.page.toString());
   }
   if (filters.limit) {
-    params.append('limit', filters.limit.toString());
+    params.append("limit", filters.limit.toString());
   }
 
   const response = await apiClient.get(`/reports/projects/${projectId}/files?${params.toString()}`);
@@ -208,30 +216,30 @@ export const uploadProjectFile = async (
     categoryId?: number;
     description?: string;
     tags?: string;
-  } = {}
+  } = {},
 ): Promise<ReportFile> => {
   const formData = new FormData();
-  formData.append('file', file);
-  
+  formData.append("file", file);
+
   if (metadata.teamId) {
-    formData.append('teamId', metadata.teamId.toString());
+    formData.append("teamId", metadata.teamId.toString());
   }
   if (metadata.taskId) {
-    formData.append('taskId', metadata.taskId.toString());
+    formData.append("taskId", metadata.taskId.toString());
   }
   if (metadata.categoryId) {
-    formData.append('categoryId', metadata.categoryId.toString());
+    formData.append("categoryId", metadata.categoryId.toString());
   }
   if (metadata.description) {
-    formData.append('description', metadata.description);
+    formData.append("description", metadata.description);
   }
   if (metadata.tags) {
-    formData.append('tags', metadata.tags);
+    formData.append("tags", metadata.tags);
   }
 
   const response = await apiClient.post(`/reports/projects/${projectId}/upload`, formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   });
   return response.data;
@@ -243,7 +251,7 @@ export const markAsDeliverable = async (
   projectId: number,
   title: string,
   description?: string,
-  version: string = '1.0'
+  version: string = "1.0",
 ): Promise<Deliverable> => {
   const response = await apiClient.post(`/reports/files/${fileId}/deliverable`, {
     projectId,
@@ -257,23 +265,25 @@ export const markAsDeliverable = async (
 // Download file
 export const downloadFile = async (fileId: number): Promise<Blob> => {
   const response = await apiClient.get(`/reports/files/${fileId}/download`, {
-    responseType: 'blob',
+    responseType: "blob",
   });
   return response.data;
 };
 
 // Get report analytics
-export const getReportAnalytics = async (filters: ReportFilters = {}): Promise<ReportAnalytics[]> => {
+export const getReportAnalytics = async (
+  filters: ReportFilters = {},
+): Promise<ReportAnalytics[]> => {
   const params = new URLSearchParams();
-  
+
   if (filters.dateRange) {
-    params.append('dateRange', JSON.stringify(filters.dateRange));
+    params.append("dateRange", JSON.stringify(filters.dateRange));
   }
   if (filters.teamId) {
-    params.append('teamId', filters.teamId.toString());
+    params.append("teamId", filters.teamId.toString());
   }
   if (filters.projectId) {
-    params.append('projectId', filters.projectId.toString());
+    params.append("projectId", filters.projectId.toString());
   }
 
   const response = await apiClient.get(`/reports/analytics?${params.toString()}`);
@@ -282,65 +292,64 @@ export const getReportAnalytics = async (filters: ReportFilters = {}): Promise<R
 
 // Utility functions
 export const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
 export const getFileIcon = (type: string): string => {
   switch (type.toLowerCase()) {
-    case 'pdf':
-      return '📄';
-    case 'docx':
-    case 'doc':
-      return '📝';
-    case 'xlsx':
-    case 'xls':
-      return '📊';
-    case 'zip':
-    case 'rar':
-    case '7z':
-      return '📦';
-    case 'sql':
-      return '🗄️';
-    case 'apk':
-      return '📱';
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-    case 'svg':
-      return '🖼️';
-    case 'mp4':
-    case 'avi':
-    case 'mov':
-      return '🎥';
-    case 'mp3':
-    case 'wav':
-    case 'flac':
-      return '🎵';
+    case "pdf":
+      return "📄";
+    case "docx":
+    case "doc":
+      return "📝";
+    case "xlsx":
+    case "xls":
+      return "📊";
+    case "zip":
+    case "rar":
+    case "7z":
+      return "📦";
+    case "sql":
+      return "🗄️";
+    case "apk":
+      return "📱";
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "gif":
+    case "svg":
+      return "🖼️";
+    case "mp4":
+    case "avi":
+    case "mov":
+      return "🎥";
+    case "mp3":
+    case "wav":
+    case "flac":
+      return "🎵";
     default:
-      return '📎';
+      return "📎";
   }
 };
 
 export const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 };
 
 export const formatDateTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Date(dateString).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
-

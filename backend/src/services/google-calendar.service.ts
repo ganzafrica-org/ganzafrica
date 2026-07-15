@@ -1,16 +1,16 @@
-import { google } from 'googleapis';
-import env from '../config/env';
-import Logger from '../config/logger';
-import { db } from '../db/client';
-import { users, user_profiles } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { google } from "googleapis";
+import env from "../config/env";
+import Logger from "../config/logger";
+import { db } from "../db/client";
+import { users, user_profiles } from "../db/schema";
+import { eq } from "drizzle-orm";
 
-const logger = new Logger('GoogleCalendarService');
+const logger = new Logger("GoogleCalendarService");
 
 const oauth2Client = new google.auth.OAuth2(
   env.GOOGLE_CALENDAR_CLIENT_ID || undefined,
   env.GOOGLE_CALENDAR_CLIENT_SECRET || undefined,
-  env.GOOGLE_CALENDAR_REDIRECT_URI || undefined
+  env.GOOGLE_CALENDAR_REDIRECT_URI || undefined,
 );
 
 interface GoogleCalendarTokens {
@@ -24,18 +24,18 @@ interface GoogleCalendarTokens {
  */
 export const getGoogleCalendarAuthUrl = (userId: string, userEmail?: string): string => {
   if (!env.GOOGLE_CALENDAR_CLIENT_ID || !env.GOOGLE_CALENDAR_REDIRECT_URI) {
-    throw new Error('Google Calendar credentials not configured');
+    throw new Error("Google Calendar credentials not configured");
   }
 
   const scopes = [
-    'https://www.googleapis.com/auth/calendar.readonly',
-    'https://www.googleapis.com/auth/calendar.events.readonly',
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/calendar.events.readonly",
   ];
 
-  const state = Buffer.from(JSON.stringify({ userId })).toString('base64');
-  
+  const state = Buffer.from(JSON.stringify({ userId })).toString("base64");
+
   const authUrlOptions: any = {
-    access_type: 'offline',
+    access_type: "offline",
     scope: scopes,
     state,
   };
@@ -45,33 +45,30 @@ export const getGoogleCalendarAuthUrl = (userId: string, userEmail?: string): st
     authUrlOptions.login_hint = userEmail.toLowerCase().trim(); // Ensure email is normalized
     // Use 'consent' to ensure we get refresh token on first connection
     // With login_hint, Google will pre-select the account, user just needs to click "Allow"
-    authUrlOptions.prompt = 'consent';
+    authUrlOptions.prompt = "consent";
     // Include previously granted scopes to make it smoother
     authUrlOptions.include_granted_scopes = true;
   } else {
     // If no email, show account selection
-    authUrlOptions.prompt = 'select_account consent';
+    authUrlOptions.prompt = "select_account consent";
   }
-  
+
   return oauth2Client.generateAuthUrl(authUrlOptions);
 };
 
 /**
  * Exchange authorization code for tokens
  */
-export const exchangeGoogleCalendarCode = async (
-  code: string,
-  userId: string
-): Promise<void> => {
+export const exchangeGoogleCalendarCode = async (code: string, userId: string): Promise<void> => {
   if (!env.GOOGLE_CALENDAR_CLIENT_ID || !env.GOOGLE_CALENDAR_CLIENT_SECRET) {
-    throw new Error('Google Calendar credentials not configured');
+    throw new Error("Google Calendar credentials not configured");
   }
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
-    
+
     if (!tokens.access_token || !tokens.refresh_token) {
-      throw new Error('Failed to get access and refresh tokens');
+      throw new Error("Failed to get access and refresh tokens");
     }
 
     // Set credentials to get user info
@@ -84,12 +81,15 @@ export const exchangeGoogleCalendarCode = async (
     // Get the Google account email address
     let googleEmail: string | null = null;
     try {
-      const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+      const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
       const userInfo = await oauth2.userinfo.get();
       googleEmail = userInfo.data.email?.toLowerCase().trim() || null;
       logger.info(`Google Calendar connected for user ${userId} with email: ${googleEmail}`);
     } catch (emailError) {
-      logger.warn('Could not retrieve Google account email, will use primary calendar:', emailError);
+      logger.warn(
+        "Could not retrieve Google account email, will use primary calendar:",
+        emailError,
+      );
       // Continue without email - will default to 'primary'
     }
 
@@ -118,15 +118,17 @@ export const exchangeGoogleCalendarCode = async (
       });
     }
   } catch (error) {
-    logger.error('Error exchanging Google Calendar code:', error);
-    throw new Error('Failed to exchange authorization code');
+    logger.error("Error exchanging Google Calendar code:", error);
+    throw new Error("Failed to exchange authorization code");
   }
 };
 
 /**
  * Get user's Google Calendar tokens
  */
-const getUserGoogleCalendarTokens = async (userId: string): Promise<GoogleCalendarTokens | null> => {
+const getUserGoogleCalendarTokens = async (
+  userId: string,
+): Promise<GoogleCalendarTokens | null> => {
   const profile = await db.query.user_profiles.findFirst({
     where: eq(user_profiles.user_id, parseInt(userId)),
   });
@@ -154,7 +156,7 @@ const getUserGoogleCalendarTokens = async (userId: string): Promise<GoogleCalend
  */
 const refreshGoogleCalendarToken = async (userId: string): Promise<string | null> => {
   const tokens = await getUserGoogleCalendarTokens(userId);
-  
+
   if (!tokens) {
     return null;
   }
@@ -175,9 +177,9 @@ const refreshGoogleCalendarToken = async (userId: string): Promise<string | null
   try {
     // Refresh the token
     const { credentials } = await oauth2Client.refreshAccessToken();
-    
+
     if (!credentials.access_token) {
-      throw new Error('Failed to refresh access token');
+      throw new Error("Failed to refresh access token");
     }
 
     // Update stored tokens
@@ -200,7 +202,7 @@ const refreshGoogleCalendarToken = async (userId: string): Promise<string | null
 
     return credentials.access_token;
   } catch (error) {
-    logger.error('Error refreshing Google Calendar token:', error);
+    logger.error("Error refreshing Google Calendar token:", error);
     return null;
   }
 };
@@ -210,16 +212,16 @@ const refreshGoogleCalendarToken = async (userId: string): Promise<string | null
  */
 const getGoogleCalendarClient = async (userId: string) => {
   const accessToken = await refreshGoogleCalendarToken(userId);
-  
+
   if (!accessToken) {
-    throw new Error('Google Calendar not connected or token expired');
+    throw new Error("Google Calendar not connected or token expired");
   }
 
   oauth2Client.setCredentials({
     access_token: accessToken,
   });
 
-  return google.calendar({ version: 'v3', auth: oauth2Client });
+  return google.calendar({ version: "v3", auth: oauth2Client });
 };
 
 /**
@@ -238,9 +240,9 @@ export const getConnectedUserIds = async (userIds: string[]): Promise<string[]> 
     userIds.map(async (userId) => {
       const connected = await isGoogleCalendarConnected(userId);
       return connected ? userId : null;
-    })
+    }),
   );
-  
+
   return results.filter((id): id is string => id !== null);
 };
 
@@ -250,20 +252,20 @@ export const getConnectedUserIds = async (userIds: string[]): Promise<string[]> 
 export const getGoogleCalendarEvents = async (
   userId: string,
   timeMin: string,
-  timeMax: string
+  timeMax: string,
 ): Promise<any[]> => {
   try {
     logger.info(`Fetching Google Calendar events for user ${userId}`, {
       timeMin,
-      timeMax
+      timeMax,
     });
-    
+
     // Get the stored Google account email for this user
     const profile = await db.query.user_profiles.findFirst({
       where: eq(user_profiles.user_id, parseInt(userId)),
     });
 
-    let calendarId = 'primary'; // Default to primary calendar
+    let calendarId = "primary"; // Default to primary calendar
     if (profile?.preferences) {
       const preferences = profile.preferences as Record<string, any>;
       const googleCalendar = preferences.google_calendar;
@@ -272,38 +274,38 @@ export const getGoogleCalendarEvents = async (
         logger.info(`Using calendar ID (email): ${calendarId} for user ${userId}`);
       }
     }
-    
+
     const calendar = await getGoogleCalendarClient(userId);
-    
+
     const response = await calendar.events.list({
       calendarId: calendarId,
       timeMin,
       timeMax,
       singleEvents: true,
-      orderBy: 'startTime',
+      orderBy: "startTime",
     });
 
     const events = response.data.items || [];
     logger.info(`Retrieved ${events.length} Google Calendar events for user ${userId}`);
-    
+
     if (events.length > 0) {
-      logger.debug('Sample event:', {
+      logger.debug("Sample event:", {
         id: events[0].id,
         summary: events[0].summary,
         start: events[0].start,
-        end: events[0].end
+        end: events[0].end,
       });
     }
 
     // Add userId to each event for filtering
-    return events.map(event => ({
+    return events.map((event) => ({
       ...event,
-      userId: userId
+      userId: userId,
     }));
   } catch (error) {
-    logger.error('Error fetching Google Calendar events:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Error details:', errorMessage);
+    logger.error("Error fetching Google Calendar events:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logger.error("Error details:", errorMessage);
     throw new Error(`Failed to fetch Google Calendar events: ${errorMessage}`);
   }
 };
@@ -314,7 +316,7 @@ export const getGoogleCalendarEvents = async (
 export const getGoogleCalendarEventsForUsers = async (
   userIds: string[],
   timeMin: string,
-  timeMax: string
+  timeMax: string,
 ): Promise<Array<{ userId: string; events: any[] }>> => {
   const results = await Promise.allSettled(
     userIds.map(async (userId) => {
@@ -325,12 +327,15 @@ export const getGoogleCalendarEventsForUsers = async (
         logger.warn(`Failed to fetch events for user ${userId}:`, error);
         return { userId, events: [] };
       }
-    })
+    }),
   );
 
   return results
-    .filter((result): result is PromiseFulfilledResult<{ userId: string; events: any[] }> => result.status === 'fulfilled')
-    .map(result => result.value);
+    .filter(
+      (result): result is PromiseFulfilledResult<{ userId: string; events: any[] }> =>
+        result.status === "fulfilled",
+    )
+    .map((result) => result.value);
 };
 
 /**
@@ -352,8 +357,7 @@ export const disconnectGoogleCalendar = async (userId: string): Promise<void> =>
         .where(eq(user_profiles.user_id, parseInt(userId)));
     }
   } catch (error) {
-    logger.error('Error disconnecting Google Calendar:', error);
-    throw new Error('Failed to disconnect Google Calendar');
+    logger.error("Error disconnecting Google Calendar:", error);
+    throw new Error("Failed to disconnect Google Calendar");
   }
 };
-

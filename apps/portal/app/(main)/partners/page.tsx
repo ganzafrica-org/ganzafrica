@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Filter,
@@ -21,11 +21,11 @@ import {
   Image as ImageIcon,
   CheckCircle,
   AlertCircle,
-  Loader
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+  Loader,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import apiClient from "@/lib/api-client";
 
 const PartnersPage = () => {
   const router = useRouter();
@@ -39,9 +39,9 @@ const PartnersPage = () => {
   const [limit, setLimit] = useState(10);
   const [totalPartners, setTotalPartners] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
 
   // States for modal popups
   const [showAddModal, setShowAddModal] = useState(false);
@@ -63,24 +63,24 @@ const PartnersPage = () => {
 
   // States for form data
   const [formData, setFormData] = useState({
-    name: '',
-    logo: '',
-    website_url: '',
-    location: ''
+    name: "",
+    logo: "",
+    website_url: "",
+    location: "",
   });
 
   // States for file upload
   const [logoFile, setLogoFile] = useState(null);
-  const [uploadMethod, setUploadMethod] = useState('url'); // 'url' or 'upload'
+  const [uploadMethod, setUploadMethod] = useState("url"); // 'url' or 'upload'
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // States for form errors and success
-  const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
 
   // Added state for delete success message
-  const [deleteSuccess, setDeleteSuccess] = useState('');
+  const [deleteSuccess, setDeleteSuccess] = useState("");
 
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
@@ -137,14 +137,14 @@ const PartnersPage = () => {
           page,
           limit,
           sort_by: sortBy,
-          sort_order: sortOrder
+          sort_order: sortOrder,
         };
 
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
 
         // Make API request with apiClient
-        const response = await apiClient.get('/partners', { params });
+        const response = await apiClient.get("/partners", { params });
 
         if (response.data) {
           // Parse the response data based on structure
@@ -181,21 +181,21 @@ const PartnersPage = () => {
 
   // Calculate sequential row number based on pagination
   const getRowNumber = (index) => {
-    return ((page - 1) * limit) + index + 1;
+    return (page - 1) * limit + index + 1;
   };
 
   // Reset form data
   const resetForm = () => {
     setFormData({
-      name: '',
-      logo: '',
-      website_url: '',
-      location: ''
+      name: "",
+      logo: "",
+      website_url: "",
+      location: "",
     });
     setLogoFile(null);
-    setUploadMethod('url');
-    setFormError('');
-    setFormSuccess('');
+    setUploadMethod("url");
+    setFormError("");
+    setFormSuccess("");
   };
 
   // Open add partner modal
@@ -208,10 +208,10 @@ const PartnersPage = () => {
   const openEditModal = (partner) => {
     setCurrentPartner(partner);
     setFormData({
-      name: partner.name || '',
-      logo: partner.logo || '',
-      website_url: partner.website_url || '',
-      location: partner.location || ''
+      name: partner.name || "",
+      logo: partner.logo || "",
+      website_url: partner.website_url || "",
+      location: partner.location || "",
     });
     setOpenMenuId(null);
     setShowEditModal(true);
@@ -225,7 +225,7 @@ const PartnersPage = () => {
   };
 
   // Open view partner modal
-  const openViewModal = (partner:Partner) => {
+  const openViewModal = (partner: Partner) => {
     setCurrentPartner(partner);
     setOpenMenuId(null);
     setShowViewModal(true);
@@ -246,7 +246,7 @@ const PartnersPage = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -258,14 +258,14 @@ const PartnersPage = () => {
   };
 
   // Handle upload method change
-  const handleUploadMethodChange = (method: 'url' | 'upload'): void => {
+  const handleUploadMethodChange = (method: "url" | "upload"): void => {
     setUploadMethod(method);
-    if (method === 'url') {
+    if (method === "url") {
       setLogoFile(null);
     } else {
       setFormData({
         ...formData,
-        logo: ''
+        logo: "",
       });
     }
   };
@@ -274,28 +274,28 @@ const PartnersPage = () => {
   const uploadFile = async (file) => {
     setIsUploading(true);
     setUploadProgress(0);
-    
+
     try {
       // Create form data
       const formData = new FormData();
-      formData.append('file', file);
-      
+      formData.append("file", file);
+
       // Update the path to match your backend route structure
-      const response = await apiClient.post('/uploads/file', formData, {
+      const response = await apiClient.post("/uploads/file", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          "Content-Type": "multipart/form-data",
         },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
-        }
+        },
       });
-      
+
       // Return the file URL from the response
       if (response.data && response.data.success) {
         return response.data.file.url;
       } else {
-        throw new Error('Upload failed');
+        throw new Error("Upload failed");
       }
     } catch (error) {
       throw error;
@@ -307,24 +307,24 @@ const PartnersPage = () => {
   // Handle add partner submission
   const handleAddPartner = async (e) => {
     e.preventDefault();
-    setFormError('');
-    setFormSuccess('');
+    setFormError("");
+    setFormSuccess("");
 
     try {
       // Validate form
       if (!formData.name) {
-        setFormError('Partner name is required');
+        setFormError("Partner name is required");
         return;
       }
 
       let logoUrl = formData.logo;
 
       // If upload method is file and there's a file, process it
-      if (uploadMethod === 'upload' && logoFile) {
+      if (uploadMethod === "upload" && logoFile) {
         try {
           logoUrl = await uploadFile(logoFile);
         } catch (error) {
-          setFormError('Failed to upload logo. Please try again.');
+          setFormError("Failed to upload logo. Please try again.");
           return;
         }
       }
@@ -332,14 +332,14 @@ const PartnersPage = () => {
       // Prepare data for API
       const partnerData = {
         ...formData,
-        logo: logoUrl
+        logo: logoUrl,
       };
 
       // Make API request
-      await apiClient.post('/partners', partnerData);
+      await apiClient.post("/partners", partnerData);
 
       // Show success message
-      setFormSuccess('Partner added successfully');
+      setFormSuccess("Partner added successfully");
 
       // Reset form and close modal after a delay
       setTimeout(() => {
@@ -349,31 +349,31 @@ const PartnersPage = () => {
         setPage(1);
       }, 1500);
     } catch (error) {
-      setFormError(error.response?.data?.message || 'Failed to add partner. Please try again.');
+      setFormError(error.response?.data?.message || "Failed to add partner. Please try again.");
     }
   };
 
   // Handle edit partner submission
   const handleEditPartner = async (e) => {
     e.preventDefault();
-    setFormError('');
-    setFormSuccess('');
+    setFormError("");
+    setFormSuccess("");
 
     try {
       // Validate form
       if (!formData.name) {
-        setFormError('Partner name is required');
+        setFormError("Partner name is required");
         return;
       }
 
       let logoUrl = formData.logo;
 
       // If upload method is file and there's a file, process it
-      if (uploadMethod === 'upload' && logoFile) {
+      if (uploadMethod === "upload" && logoFile) {
         try {
           logoUrl = await uploadFile(logoFile);
         } catch (error) {
-          setFormError('Failed to upload logo. Please try again.');
+          setFormError("Failed to upload logo. Please try again.");
           return;
         }
       }
@@ -381,14 +381,14 @@ const PartnersPage = () => {
       // Prepare data for API
       const partnerData = {
         ...formData,
-        logo: logoUrl
+        logo: logoUrl,
       };
 
       // Make API request
       await apiClient.put(`/partners/${currentPartner.id}`, partnerData);
 
       // Show success message
-      setFormSuccess('Partner updated successfully');
+      setFormSuccess("Partner updated successfully");
 
       // Reset form and close modal after a delay
       setTimeout(() => {
@@ -398,7 +398,7 @@ const PartnersPage = () => {
         setPage(1);
       }, 1500);
     } catch (error) {
-      setFormError(error.response?.data?.message || 'Failed to update partner. Please try again.');
+      setFormError(error.response?.data?.message || "Failed to update partner. Please try again.");
     }
   };
 
@@ -415,42 +415,42 @@ const PartnersPage = () => {
       closeAllModals();
 
       // Refresh partners list by updating the page
-      const updatedPartners = partners.filter(partner => partner.id !== currentPartner.id);
+      const updatedPartners = partners.filter((partner) => partner.id !== currentPartner.id);
       setPartners(updatedPartners);
-      
+
       // Update total count
-      setTotalPartners(prev => prev - 1);
-      
+      setTotalPartners((prev) => prev - 1);
+
       // Check if we need to navigate to previous page
       if (updatedPartners.length === 0 && page > 1) {
-        setPage(prev => prev - 1);
+        setPage((prev) => prev - 1);
       } else {
         // Otherwise explicitly refresh the current page
-        setPage(current => current);
+        setPage((current) => current);
       }
-      
+
       // Clear the success message after 3 seconds
       setTimeout(() => {
-        setDeleteSuccess('');
+        setDeleteSuccess("");
       }, 3000);
     } catch (error) {
-      setFormError(error.response?.data?.message || 'Failed to delete partner. Please try again.');
+      setFormError(error.response?.data?.message || "Failed to delete partner. Please try again.");
     }
   };
 
   // Render logo preview - Fixed to properly handle image errors
   const renderLogoPreview = (logoUrl) => {
     if (!logoUrl) return null;
-    
+
     return (
       <div className="mt-2 p-2 border rounded-md">
-        <img 
-          src={logoUrl} 
-          alt="Logo Preview" 
-          className="h-16 object-contain" 
+        <img
+          src={logoUrl}
+          alt="Logo Preview"
+          className="h-16 object-contain"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = '/api/placeholder/64/64';
+            e.target.src = "/api/placeholder/64/64";
           }}
         />
       </div>
@@ -459,9 +459,9 @@ const PartnersPage = () => {
 
   // Truncate text for display
   const truncateText = (text, maxLength = 30) => {
-    if (!text) return '';
+    if (!text) return "";
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
   };
 
   // Handle search submission
@@ -475,30 +475,27 @@ const PartnersPage = () => {
   };
 
   // Image error handling function
-  const handleImageError = (
-    e: React.SyntheticEvent<HTMLImageElement>,
-    fallbackText: string
-  ) => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>, fallbackText: string) => {
     // Create a canvas element for the fallback
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = 40;
     canvas.height = 40;
-    const ctx = canvas.getContext('2d');
-    
+    const ctx = canvas.getContext("2d");
+
     // Fill background
-    ctx.fillStyle = '#f3f4f6';
+    ctx.fillStyle = "#f3f4f6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Add text
-    ctx.fillStyle = '#6b7280';
-    ctx.font = 'bold 16px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(fallbackText || 'P', canvas.width/2, canvas.height/2);
-    
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "bold 16px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(fallbackText || "P", canvas.width / 2, canvas.height / 2);
+
     // Replace image with canvas data
     e.currentTarget.onerror = null; // Prevent infinite error loop
-    e.currentTarget.src = canvas.toDataURL('image/png');
+    e.currentTarget.src = canvas.toDataURL("image/png");
   };
 
   return (
@@ -514,7 +511,7 @@ const PartnersPage = () => {
             <ArrowUp className="w-4 h-4 mr-2" />
             Import Partners
           </button>
-          <button 
+          <button
             onClick={openAddModal}
             className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
           >
@@ -542,16 +539,16 @@ const PartnersPage = () => {
                 <Search className="w-4 h-4 text-gray-500" />
               </div>
               <form onSubmit={handleSearchSubmit}>
-                <input 
-                  type="text" 
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5" 
+                <input
+                  type="text"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
                   placeholder="Search partners..."
                   value={searchTerm}
                   onChange={handleSearchChange}
                 />
               </form>
             </div>
-            <button 
+            <button
               className="ml-2 p-2.5 bg-green-700 text-white rounded-lg"
               onClick={() => {
                 // Open a filter modal or expand filter options
@@ -574,7 +571,7 @@ const PartnersPage = () => {
           ) : partners.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No partners found</p>
-              <button 
+              <button
                 onClick={openAddModal}
                 className="mt-4 px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
               >
@@ -585,35 +582,69 @@ const PartnersPage = () => {
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logo</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Website</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    #
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Logo
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Website
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Location
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {partners.map((partner, index) => (
                   <tr key={partner.id || index} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getRowNumber(index)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {getRowNumber(index)}
+                    </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="h-10 w-10 rounded-full border overflow-hidden bg-gray-100 flex items-center justify-center">
                         {partner.logo ? (
-                          <img 
-                            src={partner.logo} 
-                            alt={partner.name} 
+                          <img
+                            src={partner.logo}
+                            alt={partner.name}
                             className="h-full w-full object-contain"
                             onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                               e.currentTarget.onerror = null; // Prevent infinite error loops
-                              
+
                               // Create fallback with initial letter
-                              const fallbackText = partner.name?.charAt(0)?.toUpperCase() || 'P';
+                              const fallbackText = partner.name?.charAt(0)?.toUpperCase() || "P";
                               handleImageError(e, fallbackText);
                             }}
                           />
                         ) : (
-                          <span className="text-gray-400 text-xs">{partner.name?.charAt(0)?.toUpperCase() || 'P'}</span>
+                          <span className="text-gray-400 text-xs">
+                            {partner.name?.charAt(0)?.toUpperCase() || "P"}
+                          </span>
                         )}
                       </div>
                     </td>
@@ -622,13 +653,17 @@ const PartnersPage = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                       {partner.website_url ? (
-                        <a 
-                          href={partner.website_url.startsWith('http') ? partner.website_url : `https://${partner.website_url}`} 
-                          target="_blank" 
+                        <a
+                          href={
+                            partner.website_url.startsWith("http")
+                              ? partner.website_url
+                              : `https://${partner.website_url}`
+                          }
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-green-700 hover:underline flex items-center"
                         >
-                          {truncateText(partner.website_url.replace(/^https?:\/\//, ''), 25)}
+                          {truncateText(partner.website_url.replace(/^https?:\/\//, ""), 25)}
                           <LinkIcon className="w-3 h-3 ml-1" />
                         </a>
                       ) : (
@@ -639,16 +674,19 @@ const PartnersPage = () => {
                       {partner.location || <span className="text-gray-400">-</span>}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
-                      <button 
+                      <button
                         className="text-gray-500 hover:text-gray-700"
                         onClick={() => toggleMenu(partner.id)}
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
-                      
+
                       {/* Dropdown menu */}
                       {openMenuId === partner.id && (
-                        <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        >
                           <button
                             onClick={() => openViewModal(partner)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -684,36 +722,37 @@ const PartnersPage = () => {
         {partners.length > 0 && (
           <div className="flex items-center justify-between p-4 border-t border-gray-200">
             <div className="text-sm text-gray-500">
-              Showing {partners.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalPartners)} out of {totalPartners} entries
+              Showing {partners.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
+              {Math.min(page * limit, totalPartners)} out of {totalPartners} entries
             </div>
             <div className="flex items-center space-x-1">
-              <button 
+              <button
                 className="p-2 text-gray-500 rounded hover:bg-gray-100"
                 onClick={() => goToPage(1)}
                 disabled={page === 1}
               >
                 <ChevronsLeft className="w-4 h-4" />
               </button>
-              <button 
+              <button
                 className="p-2 text-gray-500 rounded hover:bg-gray-100"
                 onClick={() => goToPage(Math.max(1, page - 1))}
                 disabled={page === 1}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              
+
               {/* Display page numbers */}
               {[...Array(Math.min(totalPages, 3))].map((_, index) => {
                 const pageNumber = page <= 2 ? index + 1 : page - 1 + index;
                 if (pageNumber <= totalPages) {
                   return (
-                    <button 
+                    <button
                       key={pageNumber}
                       onClick={() => goToPage(pageNumber)}
                       className={`p-2 w-8 h-8 rounded-md ${
                         pageNumber === page
-                          ? 'bg-green-700 text-white'
-                          : 'hover:bg-gray-100 text-gray-700'
+                          ? "bg-green-700 text-white"
+                          : "hover:bg-gray-100 text-gray-700"
                       } flex items-center justify-center`}
                     >
                       {pageNumber}
@@ -722,15 +761,15 @@ const PartnersPage = () => {
                 }
                 return null;
               })}
-              
-              <button 
+
+              <button
                 className="p-2 text-gray-500 rounded hover:bg-gray-100"
                 onClick={() => goToPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <button 
+              <button
                 className="p-2 text-gray-500 rounded hover:bg-gray-100"
                 onClick={() => goToPage(totalPages)}
                 disabled={page === totalPages}
@@ -752,7 +791,7 @@ const PartnersPage = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleAddPartner} className="p-6">
               {/* Form Error */}
               {formError && (
@@ -761,7 +800,7 @@ const PartnersPage = () => {
                   <span>{formError}</span>
                 </div>
               )}
-              
+
               {/* Form Success */}
               {formSuccess && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md flex items-start">
@@ -769,7 +808,7 @@ const PartnersPage = () => {
                   <span>{formSuccess}</span>
                 </div>
               )}
-              
+
               {/* Partner Name */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -785,20 +824,18 @@ const PartnersPage = () => {
                   required
                 />
               </div>
-              
+
               {/* Logo Upload Method Selection */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Partner Logo
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Partner Logo</label>
                 <div className="flex space-x-2 mb-2">
                   <button
                     type="button"
-                    onClick={() => handleUploadMethodChange('url')}
+                    onClick={() => handleUploadMethodChange("url")}
                     className={`px-3 py-1.5 text-sm rounded-md flex items-center ${
-                      uploadMethod === 'url' 
-                        ? 'bg-green-100 text-green-800 border border-green-200' 
-                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                      uploadMethod === "url"
+                        ? "bg-green-100 text-green-800 border border-green-200"
+                        : "bg-gray-100 text-gray-700 border border-gray-200"
                     }`}
                   >
                     <LinkIcon className="w-4 h-4 mr-1" />
@@ -806,20 +843,20 @@ const PartnersPage = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleUploadMethodChange('upload')}
+                    onClick={() => handleUploadMethodChange("upload")}
                     className={`px-3 py-1.5 text-sm rounded-md flex items-center ${
-                      uploadMethod === 'upload' 
-                        ? 'bg-green-100 text-green-800 border border-green-200' 
-                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                      uploadMethod === "upload"
+                        ? "bg-green-100 text-green-800 border border-green-200"
+                        : "bg-gray-100 text-gray-700 border border-gray-200"
                     }`}
                   >
                     <ImageIcon className="w-4 h-4 mr-1" />
                     Upload
                   </button>
                 </div>
-                
+
                 {/* URL Input */}
-                {uploadMethod === 'url' && (
+                {uploadMethod === "url" && (
                   <div>
                     <input
                       type="text"
@@ -832,15 +869,18 @@ const PartnersPage = () => {
                     {formData.logo && renderLogoPreview(formData.logo)}
                   </div>
                 )}
-                
+
                 {/* File Upload */}
-                {uploadMethod === 'upload' && (
+                {uploadMethod === "upload" && (
                   <div>
                     <div className="border-2 border-dashed border-gray-300 p-4 rounded-md text-center">
-                      <label htmlFor="logo-upload" className="cursor-pointer flex flex-col items-center">
+                      <label
+                        htmlFor="logo-upload"
+                        className="cursor-pointer flex flex-col items-center"
+                      >
                         <Upload className="h-8 w-8 text-gray-400 mb-2" />
                         <p className="text-sm text-gray-500">
-                          {logoFile ? logoFile.name : 'Click to upload logo image'}
+                          {logoFile ? logoFile.name : "Click to upload logo image"}
                         </p>
                         <input
                           id="logo-upload"
@@ -851,12 +891,12 @@ const PartnersPage = () => {
                         />
                       </label>
                     </div>
-                    
+
                     {isUploading && (
                       <div className="mt-2">
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div 
-                            className="bg-green-700 h-2.5 rounded-full" 
+                          <div
+                            className="bg-green-700 h-2.5 rounded-full"
                             style={{ width: `${uploadProgress}%` }}
                           ></div>
                         </div>
@@ -865,17 +905,15 @@ const PartnersPage = () => {
                         </p>
                       </div>
                     )}
-                    
+
                     {logoFile && !isUploading && renderLogoPreview(URL.createObjectURL(logoFile))}
                   </div>
                 )}
               </div>
-              
+
               {/* Website URL */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Website URL
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
                 <input
                   type="text"
                   name="website_url"
@@ -885,12 +923,10 @@ const PartnersPage = () => {
                   placeholder="https://example.com"
                 />
               </div>
-              
+
               {/* Location */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                 <input
                   type="text"
                   name="location"
@@ -900,7 +936,7 @@ const PartnersPage = () => {
                   placeholder="City, Country"
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
@@ -920,7 +956,7 @@ const PartnersPage = () => {
                       Uploading...
                     </>
                   ) : (
-                    'Add Partner'
+                    "Add Partner"
                   )}
                 </button>
               </div>
@@ -939,7 +975,7 @@ const PartnersPage = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleEditPartner} className="p-6">
               {/* Form Error */}
               {formError && (
@@ -948,7 +984,7 @@ const PartnersPage = () => {
                   <span>{formError}</span>
                 </div>
               )}
-              
+
               {/* Form Success */}
               {formSuccess && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md flex items-start">
@@ -956,7 +992,7 @@ const PartnersPage = () => {
                   <span>{formSuccess}</span>
                 </div>
               )}
-              
+
               {/* Partner Name */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -972,20 +1008,18 @@ const PartnersPage = () => {
                   required
                 />
               </div>
-              
+
               {/* Logo Upload Method Selection */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Partner Logo
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Partner Logo</label>
                 <div className="flex space-x-2 mb-2">
                   <button
                     type="button"
-                    onClick={() => handleUploadMethodChange('url')}
+                    onClick={() => handleUploadMethodChange("url")}
                     className={`px-3 py-1.5 text-sm rounded-md flex items-center ${
-                      uploadMethod === 'url' 
-                        ? 'bg-green-100 text-green-800 border border-green-200' 
-                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                      uploadMethod === "url"
+                        ? "bg-green-100 text-green-800 border border-green-200"
+                        : "bg-gray-100 text-gray-700 border border-gray-200"
                     }`}
                   >
                     <LinkIcon className="w-4 h-4 mr-1" />
@@ -993,20 +1027,20 @@ const PartnersPage = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleUploadMethodChange('upload')}
+                    onClick={() => handleUploadMethodChange("upload")}
                     className={`px-3 py-1.5 text-sm rounded-md flex items-center ${
-                      uploadMethod === 'upload' 
-                        ? 'bg-green-100 text-green-800 border border-green-200' 
-                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                      uploadMethod === "upload"
+                        ? "bg-green-100 text-green-800 border border-green-200"
+                        : "bg-gray-100 text-gray-700 border border-gray-200"
                     }`}
                   >
                     <ImageIcon className="w-4 h-4 mr-1" />
                     Upload
                   </button>
                 </div>
-                
+
                 {/* URL Input */}
-                {uploadMethod === 'url' && (
+                {uploadMethod === "url" && (
                   <div>
                     <input
                       type="text"
@@ -1019,15 +1053,18 @@ const PartnersPage = () => {
                     {formData.logo && renderLogoPreview(formData.logo)}
                   </div>
                 )}
-                
+
                 {/* File Upload */}
-                {uploadMethod === 'upload' && (
+                {uploadMethod === "upload" && (
                   <div>
                     <div className="border-2 border-dashed border-gray-300 p-4 rounded-md text-center">
-                      <label htmlFor="logo-upload-edit" className="cursor-pointer flex flex-col items-center">
+                      <label
+                        htmlFor="logo-upload-edit"
+                        className="cursor-pointer flex flex-col items-center"
+                      >
                         <Upload className="h-8 w-8 text-gray-400 mb-2" />
                         <p className="text-sm text-gray-500">
-                          {logoFile ? logoFile.name : 'Click to upload logo image'}
+                          {logoFile ? logoFile.name : "Click to upload logo image"}
                         </p>
                         <input
                           id="logo-upload-edit"
@@ -1038,12 +1075,12 @@ const PartnersPage = () => {
                         />
                       </label>
                     </div>
-                    
+
                     {isUploading && (
                       <div className="mt-2">
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div 
-                            className="bg-green-700 h-2.5 rounded-full" 
+                          <div
+                            className="bg-green-700 h-2.5 rounded-full"
                             style={{ width: `${uploadProgress}%` }}
                           ></div>
                         </div>
@@ -1052,18 +1089,16 @@ const PartnersPage = () => {
                         </p>
                       </div>
                     )}
-                    
+
                     {logoFile && !isUploading && renderLogoPreview(URL.createObjectURL(logoFile))}
                     {!logoFile && formData.logo && renderLogoPreview(formData.logo)}
                   </div>
                 )}
               </div>
-              
+
               {/* Website URL */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Website URL
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
                 <input
                   type="text"
                   name="website_url"
@@ -1073,12 +1108,10 @@ const PartnersPage = () => {
                   placeholder="https://example.com"
                 />
               </div>
-              
+
               {/* Location */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                 <input
                   type="text"
                   name="location"
@@ -1088,7 +1121,7 @@ const PartnersPage = () => {
                   placeholder="City, Country"
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
@@ -1108,7 +1141,7 @@ const PartnersPage = () => {
                       Uploading...
                     </>
                   ) : (
-                    'Update Partner'
+                    "Update Partner"
                   )}
                 </button>
               </div>
@@ -1127,9 +1160,11 @@ const PartnersPage = () => {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Partner</h3>
               <p className="text-gray-500 mb-6">
-                Are you sure you want to delete <span className="font-medium">{currentPartner.name}</span>? This action cannot be undone.
+                Are you sure you want to delete{" "}
+                <span className="font-medium">{currentPartner.name}</span>? This action cannot be
+                undone.
               </p>
-              
+
               <div className="flex justify-center space-x-3">
                 <button
                   type="button"
@@ -1161,41 +1196,47 @@ const PartnersPage = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="flex items-center justify-center mb-6">
                 <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                   {currentPartner.logo ? (
-                    <img 
-                      src={currentPartner.logo} 
-                      alt={currentPartner.name} 
+                    <img
+                      src={currentPartner.logo}
+                      alt={currentPartner.name}
                       className="h-full w-full object-contain"
                       onError={(e) => {
                         e.target.onerror = null;
                         // Create fallback with initial letter
-                        const fallbackText = currentPartner.name?.charAt(0)?.toUpperCase() || 'P';
+                        const fallbackText = currentPartner.name?.charAt(0)?.toUpperCase() || "P";
                         handleImageError(e, fallbackText);
                       }}
                     />
                   ) : (
-                    <span className="text-gray-400 text-2xl">{currentPartner.name?.charAt(0)?.toUpperCase() || 'P'}</span>
+                    <span className="text-gray-400 text-2xl">
+                      {currentPartner.name?.charAt(0)?.toUpperCase() || "P"}
+                    </span>
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Partner Name</h4>
                   <p className="mt-1">{currentPartner.name}</p>
                 </div>
-                
+
                 {currentPartner.website_url && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Website</h4>
                     <p className="mt-1">
-                      <a 
-                        href={currentPartner.website_url.startsWith('http') ? currentPartner.website_url : `https://${currentPartner.website_url}`} 
-                        target="_blank" 
+                      <a
+                        href={
+                          currentPartner.website_url.startsWith("http")
+                            ? currentPartner.website_url
+                            : `https://${currentPartner.website_url}`
+                        }
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-green-700 hover:underline flex items-center"
                       >
@@ -1205,7 +1246,7 @@ const PartnersPage = () => {
                     </p>
                   </div>
                 )}
-                
+
                 {currentPartner.location && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Location</h4>
@@ -1213,7 +1254,7 @@ const PartnersPage = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex justify-end mt-6">
                 <button
                   type="button"

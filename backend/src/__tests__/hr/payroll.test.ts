@@ -29,9 +29,7 @@ describe("HR System - Payroll Management", () => {
         pagination: { page: 1, limit: 20, total: 1, total_pages: 1 },
       });
 
-      const res = await request
-        .get("/api/payroll")
-        .set("Authorization", `Bearer ${adminToken}`);
+      const res = await request.get("/api/payroll").set("Authorization", `Bearer ${adminToken}`);
 
       expect(res.status).to.equal(200);
       expect(res.body.data).to.be.an("array");
@@ -65,9 +63,7 @@ describe("HR System - Payroll Management", () => {
         name: "User 1",
       } as any);
 
-      const res = await request
-        .get("/api/payroll/1")
-        .set("Authorization", `Bearer ${adminToken}`);
+      const res = await request.get("/api/payroll/1").set("Authorization", `Bearer ${adminToken}`);
 
       expect(res.status).to.equal(200);
       expect(getStub.calledOnce).to.be.true;

@@ -46,13 +46,13 @@ export type UpdateTaskInput = {
  * Check if a task is overdue (past due date and not completed)
  */
 export const isTaskOverdue = (task: any): boolean => {
-  if (!task.due_date || task.status === 'done') {
+  if (!task.due_date || task.status === "done") {
     return false;
   }
-  
+
   const dueDate = new Date(task.due_date);
   const now = new Date();
-  
+
   return dueDate < now;
 };
 
@@ -62,26 +62,21 @@ export const isTaskOverdue = (task: any): boolean => {
 export const updateOverdueTasks = async (): Promise<void> => {
   try {
     const now = new Date();
-    
+
     // Find tasks that are past due date and not completed
     const overdueTasks = await db
       .select()
       .from(tasks)
-      .where(
-        and(
-          sql`${tasks.due_date} < ${now}`,
-          sql`${tasks.status} != 'done'`
-        )
-      );
-    
+      .where(and(sql`${tasks.due_date} < ${now}`, sql`${tasks.status} != 'done'`));
+
     // Update their status to overdue
     for (const task of overdueTasks) {
       await db
         .update(tasks)
-        .set({ status: 'overdue' as any })
+        .set({ status: "overdue" as any })
         .where(eq(tasks.id, task.id));
     }
-    
+
     logger.info(`Updated ${overdueTasks.length} tasks to overdue status`);
   } catch (error) {
     logger.error("Error updating overdue tasks", error);
@@ -105,14 +100,15 @@ export const isUserManager = async (userId: number): Promise<boolean> => {
 
     if (!user) return false;
 
-    const roleName = user.role_name?.toLowerCase() || '';
-    
+    const roleName = user.role_name?.toLowerCase() || "";
+
     // Check for management roles
-    const isManagerRole = roleName.includes('admin') || 
-                         roleName.includes('manager') || 
-                         roleName.includes('staff') || 
-                         roleName.includes('mentor') ||
-                         (user.role_id && user.role_id < 1000); // Assuming admin/manager roles have IDs < 1000
+    const isManagerRole =
+      roleName.includes("admin") ||
+      roleName.includes("manager") ||
+      roleName.includes("staff") ||
+      roleName.includes("mentor") ||
+      (user.role_id && user.role_id < 1000); // Assuming admin/manager roles have IDs < 1000
 
     return !!isManagerRole;
   } catch (error) {
@@ -143,8 +139,8 @@ export const canAccessProject = async (userId: number, projectId?: number): Prom
       .where(
         and(
           eq(task_project_members.project_id, projectId),
-          eq(task_project_members.user_id, userId)
-        )
+          eq(task_project_members.user_id, userId),
+        ),
       )
       .limit(1);
 
@@ -176,12 +172,15 @@ export const createTask = async (input: CreateTaskInput, userId: number) => {
     if (input.due_date) {
       const dueDate = new Date(input.due_date);
       const now = new Date();
-      
+
       if (dueDate < now) {
-        throw new AppError("Cannot create task with past due date. Please select today or a future date.", 400);
+        throw new AppError(
+          "Cannot create task with past due date. Please select today or a future date.",
+          400,
+        );
       }
     }
-    
+
     // Check if user can access the project (if project_id is provided)
     if (input.project_id) {
       const hasAccess = await canAccessProject(userId, input.project_id);
@@ -209,11 +208,11 @@ export const createTask = async (input: CreateTaskInput, userId: number) => {
 
     // Add assignees if provided
     if (input.assignees && input.assignees.length > 0) {
-      const assigneesToInsert = input.assignees.map(assigneeId => ({
+      const assigneesToInsert = input.assignees.map((assigneeId) => ({
         task_id: task.id,
         user_id: assigneeId,
       }));
-      
+
       await db.insert(task_assignees).values(assigneesToInsert as any);
     }
 
@@ -234,12 +233,15 @@ export const createTaskUnrestricted = async (input: CreateTaskInput, userId: num
     if (input.due_date) {
       const dueDate = new Date(input.due_date);
       const now = new Date();
-      
+
       if (dueDate < now) {
-        throw new AppError("Cannot create task with past due date. Please select today or a future date.", 400);
+        throw new AppError(
+          "Cannot create task with past due date. Please select today or a future date.",
+          400,
+        );
       }
     }
-    
+
     // Create the task without permission checks
     const [task] = await db
       .insert(tasks)
@@ -259,11 +261,11 @@ export const createTaskUnrestricted = async (input: CreateTaskInput, userId: num
 
     // Add assignees if provided
     if (input.assignees && input.assignees.length > 0) {
-      const assigneesToInsert = input.assignees.map(assigneeId => ({
+      const assigneesToInsert = input.assignees.map((assigneeId) => ({
         task_id: task.id,
         user_id: assigneeId,
       }));
-      
+
       await db.insert(task_assignees).values(assigneesToInsert as any);
     }
 
@@ -298,7 +300,7 @@ export const createTaskUnrestricted = async (input: CreateTaskInput, userId: num
 
     return {
       ...fullTask[0],
-      assignees: assignees.map(a => a.user_id),
+      assignees: assignees.map((a) => a.user_id),
     };
   } catch (error) {
     logger.error("Create task unrestricted error", error);
@@ -313,7 +315,7 @@ export const getTaskById = async (taskId: number, userId: number) => {
   try {
     // First, update any overdue tasks
     await updateOverdueTasks();
-    
+
     const [task] = await db
       .select({
         id: tasks.id,
@@ -339,27 +341,22 @@ export const getTaskById = async (taskId: number, userId: number) => {
 
     // Check if user can access this task's project (if it has one)
     const hasProjectAccess = await canAccessProject(userId, task.project_id || undefined);
-    
+
     // Also check if user is assigned to this task
     const [taskAssignee] = await db
       .select()
       .from(task_assignees)
-      .where(
-        and(
-          eq(task_assignees.task_id, taskId),
-          eq(task_assignees.user_id, userId)
-        )
-      )
+      .where(and(eq(task_assignees.task_id, taskId), eq(task_assignees.user_id, userId)))
       .limit(1);
-    
+
     const isAssignedToTask = !!taskAssignee;
-    
+
     // Allow access if:
     // 1. User has project access (or task has no project)
     // 2. User is assigned to the task
     // 3. User created the task
     const isTaskCreator = task.created_by === userId;
-    
+
     if (!hasProjectAccess && !isAssignedToTask && !isTaskCreator) {
       throw new AppError("You don't have permission to view this task", 403);
     }
@@ -400,7 +397,7 @@ export const getTaskById = async (taskId: number, userId: number) => {
       .orderBy(desc(task_comments.created_at));
 
     // Debug logs removed - issue identified and fixed
-    
+
     return {
       ...task,
       assignees,
@@ -456,9 +453,9 @@ export const listTasksByProject = async (projectId: number, userId: number) => {
 
         return {
           ...task,
-          assignees: assignees.map(a => a.user_id),
+          assignees: assignees.map((a) => a.user_id),
         };
-      })
+      }),
     );
 
     return tasksWithAssignees;
@@ -476,7 +473,7 @@ export const getTasksByUser = async (userId: number) => {
   try {
     // First, update any overdue tasks
     await updateOverdueTasks();
-    
+
     // Get all tasks where the user is assigned
     const userTasks = await db
       .select({
@@ -542,7 +539,7 @@ export const getTasksByUser = async (userId: number) => {
           assignees,
           comments,
         };
-      })
+      }),
     );
 
     return tasksWithDetails;
@@ -559,7 +556,7 @@ export const getAllTasks = async () => {
   try {
     // First, update any overdue tasks
     await updateOverdueTasks();
-    
+
     // Get all tasks without any permission checks, including creator role information
     const allTasks = await db
       .select({
@@ -597,9 +594,9 @@ export const getAllTasks = async () => {
 
         return {
           ...task,
-          assignees: assignees.map(a => a.user_id),
+          assignees: assignees.map((a) => a.user_id),
         };
-      })
+      }),
     );
 
     return tasksWithAssignees;
@@ -646,8 +643,8 @@ export const getTaskTeamProjects = async (userId?: number) => {
         .from(task_team_members)
         .where(eq(task_team_members.user_id, userId));
 
-      const directProjectIds = directProjectMembers.map(p => p.project_id);
-      const userTeamIds = userTeams.map(t => t.team_id);
+      const directProjectIds = directProjectMembers.map((p) => p.project_id);
+      const userTeamIds = userTeams.map((t) => t.team_id);
 
       // Get project IDs from teams the user is a member of
       const teamProjectIds: number[] = [];
@@ -656,8 +653,8 @@ export const getTaskTeamProjects = async (userId?: number) => {
           .select({ id: task_team_projects.id })
           .from(task_team_projects)
           .where(inArray(task_team_projects.team_id, userTeamIds));
-        
-        teamProjectIds.push(...teamProjects.map(p => p.id));
+
+        teamProjectIds.push(...teamProjects.map((p) => p.id));
       }
 
       // Combine direct project memberships and team-based project memberships
@@ -686,11 +683,7 @@ export const getTaskTeamProjects = async (userId?: number) => {
 export const updateTask = async (taskId: number, input: UpdateTaskInput, userId: number) => {
   try {
     // Get the task first to check permissions and current status
-    const [existingTask] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
+    const [existingTask] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
 
     if (!existingTask) {
       throw new AppError("Task not found", 404);
@@ -698,40 +691,43 @@ export const updateTask = async (taskId: number, input: UpdateTaskInput, userId:
 
     // Check if user is a manager (can edit all tasks and update title/due_date)
     const isManager = await isUserManager(userId);
-    
+
     // Check if user is the task creator
     const isTaskCreator = existingTask.created_by === userId;
-    
+
     // Check if user is assigned to this task
     const [taskAssignee] = await db
       .select()
       .from(task_assignees)
-      .where(
-        and(
-          eq(task_assignees.task_id, taskId),
-          eq(task_assignees.user_id, userId)
-        )
-      )
+      .where(and(eq(task_assignees.task_id, taskId), eq(task_assignees.user_id, userId)))
       .limit(1);
-    
+
     const isAssignedToTask = !!taskAssignee;
-    
+
     // Allow access if:
     // 1. User is a manager (admin, manager, staff, mentor)
     // 2. User created the task
     // 3. User is assigned to the task
     if (!isManager && !isTaskCreator && !isAssignedToTask) {
-      throw new AppError("You don't have permission to update this task. Only managers, task creators, or assigned users can edit tasks.", 403);
+      throw new AppError(
+        "You don't have permission to update this task. Only managers, task creators, or assigned users can edit tasks.",
+        403,
+      );
     }
 
     // Restrict due_date updates to managers only (only if actually changing)
     if (input.due_date !== undefined) {
-      const existingDueDate = existingTask.due_date ? new Date(existingTask.due_date).toISOString() : null;
+      const existingDueDate = existingTask.due_date
+        ? new Date(existingTask.due_date).toISOString()
+        : null;
       const newDueDate = input.due_date ? new Date(input.due_date).toISOString() : null;
 
       // Only check permissions if the due date is actually being changed
       if (existingDueDate !== newDueDate && !isManager) {
-        throw new AppError("Only managers can update task due date. Please contact a manager to make these changes.", 403);
+        throw new AppError(
+          "Only managers can update task due date. Please contact a manager to make these changes.",
+          403,
+        );
       }
     }
 
@@ -739,7 +735,10 @@ export const updateTask = async (taskId: number, input: UpdateTaskInput, userId:
     if (input.title !== undefined) {
       // Only check permissions if the title is actually being changed
       if (input.title !== existingTask.title && !isManager && !isTaskCreator) {
-        throw new AppError("Only managers and task creators can update task title. Please contact a manager to make these changes.", 403);
+        throw new AppError(
+          "Only managers and task creators can update task title. Please contact a manager to make these changes.",
+          403,
+        );
       }
     }
 
@@ -747,59 +746,62 @@ export const updateTask = async (taskId: number, input: UpdateTaskInput, userId:
     if (input.due_date) {
       const dueDate = new Date(input.due_date);
       const now = new Date();
-      
+
       if (dueDate < now) {
-        throw new AppError("Cannot update task with past due date. Please select today or a future date.", 400);
+        throw new AppError(
+          "Cannot update task with past due date. Please select today or a future date.",
+          400,
+        );
       }
     }
-    
+
     // Prevent non-managers from updating overdue tasks
-    if (existingTask.status === 'overdue' && !isManager) {
-      throw new AppError("Only managers can update tasks that are in Overdue status. Please contact a manager to update this task.", 403);
+    if (existingTask.status === "overdue" && !isManager) {
+      throw new AppError(
+        "Only managers can update tasks that are in Overdue status. Please contact a manager to update this task.",
+        403,
+      );
     }
 
     const updateData: any = {};
-    
+
     if (input.title !== undefined) updateData.title = input.title;
     if (input.description !== undefined) updateData.description = input.description;
     if (input.deliverables !== undefined) updateData.deliverables = input.deliverables;
     if (input.status !== undefined) updateData.status = input.status;
     if (input.priority !== undefined) updateData.priority = input.priority;
-    if (input.due_date !== undefined) updateData.due_date = input.due_date ? new Date(input.due_date) : null;
+    if (input.due_date !== undefined)
+      updateData.due_date = input.due_date ? new Date(input.due_date) : null;
     if (input.labels !== undefined) updateData.labels = input.labels;
     if (input.attachments !== undefined) {
       updateData.attachments = input.attachments;
     }
-    
+
     // Automatic status change: if task is overdue and due_date is being updated to future, change to todo
-    if (existingTask.status === 'overdue' && input.due_date) {
+    if (existingTask.status === "overdue" && input.due_date) {
       const newDueDate = new Date(input.due_date);
       const now = new Date();
       if (newDueDate >= now) {
-        updateData.status = 'todo';
+        updateData.status = "todo";
       }
     }
-    
+
     updateData.updated_at = new Date();
 
-    const result = await db
-      .update(tasks)
-      .set(updateData)
-      .where(eq(tasks.id, taskId))
-      .returning();
+    const result = await db.update(tasks).set(updateData).where(eq(tasks.id, taskId)).returning();
 
     // Update assignees if provided
     if (input.assignees !== undefined) {
       // Remove all existing assignees
       await db.delete(task_assignees).where(eq(task_assignees.task_id, taskId));
-      
+
       // Add new assignees
       if (input.assignees.length > 0) {
-        const assigneesToInsert = input.assignees.map(assigneeId => ({
+        const assigneesToInsert = input.assignees.map((assigneeId) => ({
           task_id: taskId,
           user_id: assigneeId,
         }));
-        
+
         await db.insert(task_assignees).values(assigneesToInsert as any);
       }
     }
@@ -819,7 +821,7 @@ export const getTaskByIdUnrestricted = async (taskId: number) => {
   try {
     // First, update any overdue tasks
     await updateOverdueTasks();
-    
+
     const [task] = await db
       .select({
         id: tasks.id,
@@ -899,56 +901,52 @@ export const updateTaskUnrestricted = async (taskId: number, input: UpdateTaskIn
     if (input.due_date) {
       const dueDate = new Date(input.due_date);
       const now = new Date();
-      
+
       if (dueDate < now) {
-        throw new AppError("Cannot update task with past due date. Please select today or a future date.", 400);
+        throw new AppError(
+          "Cannot update task with past due date. Please select today or a future date.",
+          400,
+        );
       }
     }
-    
+
     // Check if task exists
-    const [existingTask] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
+    const [existingTask] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
 
     if (!existingTask) {
       throw new AppError("Task not found", 404);
     }
 
     const updateData: any = {};
-    
+
     if (input.title !== undefined) updateData.title = input.title;
     if (input.description !== undefined) updateData.description = input.description;
     if (input.deliverables !== undefined) updateData.deliverables = input.deliverables;
     if (input.status !== undefined) updateData.status = input.status;
     if (input.priority !== undefined) updateData.priority = input.priority;
-    if (input.due_date !== undefined) updateData.due_date = input.due_date ? new Date(input.due_date) : null;
+    if (input.due_date !== undefined)
+      updateData.due_date = input.due_date ? new Date(input.due_date) : null;
     if (input.labels !== undefined) updateData.labels = input.labels;
     if (input.attachments !== undefined) {
       updateData.attachments = input.attachments;
     }
-    
+
     updateData.updated_at = new Date();
 
-    const result = await db
-      .update(tasks)
-      .set(updateData)
-      .where(eq(tasks.id, taskId))
-      .returning();
+    const result = await db.update(tasks).set(updateData).where(eq(tasks.id, taskId)).returning();
 
     // Update assignees if provided
     if (input.assignees !== undefined) {
       // Remove all existing assignees
       await db.delete(task_assignees).where(eq(task_assignees.task_id, taskId));
-      
+
       // Add new assignees
       if (input.assignees.length > 0) {
-        const assigneesToInsert = input.assignees.map(assigneeId => ({
+        const assigneesToInsert = input.assignees.map((assigneeId) => ({
           task_id: taskId,
           user_id: assigneeId,
         }));
-        
+
         await db.insert(task_assignees).values(assigneesToInsert as any);
       }
     }
@@ -966,11 +964,7 @@ export const updateTaskUnrestricted = async (taskId: number, input: UpdateTaskIn
  */
 export const deleteTask = async (taskId: number, userId: number) => {
   try {
-    const [task] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
 
     if (!task) {
       throw new AppError("Task not found", 404);
@@ -978,15 +972,18 @@ export const deleteTask = async (taskId: number, userId: number) => {
 
     // Check if user is a manager (can delete all tasks)
     const isManager = await isUserManager(userId);
-    
+
     // Check if user is the task creator
     const isTaskCreator = task.created_by === userId;
-    
+
     // Allow access if:
     // 1. User is a manager (admin, manager, staff, mentor)
     // 2. User created the task
     if (!isManager && !isTaskCreator) {
-      throw new AppError("You don't have permission to delete this task. Only managers or task creators can delete tasks.", 403);
+      throw new AppError(
+        "You don't have permission to delete this task. Only managers or task creators can delete tasks.",
+        403,
+      );
     }
 
     await db.delete(tasks).where(eq(tasks.id, taskId));
@@ -1004,11 +1001,7 @@ export const deleteTask = async (taskId: number, userId: number) => {
  */
 export const deleteTaskUnrestricted = async (taskId: number) => {
   try {
-    const [task] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
 
     if (!task) {
       throw new AppError("Task not found", 404);
@@ -1029,11 +1022,7 @@ export const deleteTaskUnrestricted = async (taskId: number) => {
  */
 export const addTaskComment = async (taskId: number, content: string, userId: number) => {
   try {
-    const [task] = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId))
-      .limit(1);
+    const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
 
     if (!task) {
       throw new AppError("Task not found", 404);
@@ -1041,27 +1030,22 @@ export const addTaskComment = async (taskId: number, content: string, userId: nu
 
     // Check if user can access the project (if it has one)
     const hasProjectAccess = await canAccessProject(userId, task.project_id || undefined);
-    
+
     // Also check if user is assigned to this task
     const [taskAssignee] = await db
       .select()
       .from(task_assignees)
-      .where(
-        and(
-          eq(task_assignees.task_id, taskId),
-          eq(task_assignees.user_id, userId)
-        )
-      )
+      .where(and(eq(task_assignees.task_id, taskId), eq(task_assignees.user_id, userId)))
       .limit(1);
-    
+
     const isAssignedToTask = !!taskAssignee;
-    
+
     // Allow access if:
     // 1. User has project access (or task has no project)
     // 2. User is assigned to the task
     // 3. User created the task
     const isTaskCreator = task.created_by === userId;
-    
+
     if (!hasProjectAccess && !isAssignedToTask && !isTaskCreator) {
       throw new AppError("You don't have permission to comment on this task", 403);
     }
@@ -1086,7 +1070,12 @@ export const addTaskComment = async (taskId: number, content: string, userId: nu
 /**
  * Update a comment (author only)
  */
-export const updateTaskComment = async (taskId: number, commentId: number, content: string, userId: number) => {
+export const updateTaskComment = async (
+  taskId: number,
+  commentId: number,
+  content: string,
+  userId: number,
+) => {
   try {
     // Ensure task exists
     const [task] = await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1);
@@ -1131,9 +1120,12 @@ export const deleteTaskComment = async (taskId: number, commentId: number, userI
       .where(and(eq(task_comments.id, commentId), eq(task_comments.task_id, taskId)))
       .limit(1);
     if (!existing) throw new AppError("Comment not found", 404);
-    if (existing.user_id !== userId) throw new AppError("You can only delete your own comment", 403);
+    if (existing.user_id !== userId)
+      throw new AppError("You can only delete your own comment", 403);
 
-    await db.delete(task_comments).where(and(eq(task_comments.id, commentId), eq(task_comments.task_id, taskId)));
+    await db
+      .delete(task_comments)
+      .where(and(eq(task_comments.id, commentId), eq(task_comments.task_id, taskId)));
     return { success: true };
   } catch (error) {
     if (error instanceof AppError) throw error;
@@ -1164,4 +1156,3 @@ export const taskService = {
 };
 
 export default taskService;
-

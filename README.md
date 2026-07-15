@@ -5,7 +5,6 @@ A modern web platform built to support GanzAfrica's mission in land management, 
 ## Key Features
 
 - 🌍 Public Website (`/apps/web`)
-
   - Fellowship program information
   - Impact showcase
   - Project highlights
@@ -126,7 +125,6 @@ Access the applications at:
 
 - `pnpm db:generate` - Generate new migrations
 - `pnpm db:migrate` - Apply migrations to the database
-
 
 ## Contributing
 

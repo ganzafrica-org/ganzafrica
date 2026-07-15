@@ -13,16 +13,8 @@ const router: Router = Router();
  */
 
 // Public routes
-router.post(
-  "/register",
-  validate(authValidation.registerSchema),
-  authController.register,
-);
-router.post(
-  "/login",
-  validate(authValidation.loginSchema),
-  authController.login,
-);
+router.post("/register", validate(authValidation.registerSchema), authController.register);
+router.post("/login", validate(authValidation.loginSchema), authController.login);
 router.post(
   "/verify-email",
   validate(authValidation.verifyEmailSchema),

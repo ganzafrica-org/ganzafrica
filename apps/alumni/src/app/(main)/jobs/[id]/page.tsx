@@ -40,11 +40,7 @@ const getSectorColor = (sector: string) => {
   }
 };
 
-const formatSalary = (
-  min: number | null,
-  max: number | null,
-  currency: string,
-) => {
+const formatSalary = (min: number | null, max: number | null, currency: string) => {
   if (!min && !max) return null;
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -170,11 +166,7 @@ export default function JobDetailPage() {
     <div className="space-y-6 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push("/jobs")}
-        >
+        <Button variant="ghost" size="icon" onClick={() => router.push("/jobs")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-2xl font-bold bg-blue-secondary bg-clip-text text-transparent">
@@ -191,9 +183,7 @@ export default function JobDetailPage() {
               <div className="mb-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                      {job.title}
-                    </h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">{job.title}</h2>
                     <p className="text-lg text-gray-600 flex items-center gap-2">
                       <Building className="h-5 w-5" />
                       {job.company}
@@ -201,12 +191,8 @@ export default function JobDetailPage() {
                   </div>
                   <div className="flex flex-col gap-2 items-end">
                     <Badge
-                      variant={
-                        job.source === "internal" ? "default" : "secondary"
-                      }
-                      className={
-                        job.source === "internal" ? "bg-green-primary" : ""
-                      }
+                      variant={job.source === "internal" ? "default" : "secondary"}
+                      className={job.source === "internal" ? "bg-green-primary" : ""}
                     >
                       {job.source === "internal" ? "Internal" : "External"}
                     </Badge>
@@ -248,9 +234,7 @@ export default function JobDetailPage() {
 
               {/* Description */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  Description
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
                 <div className="text-gray-700 whitespace-pre-line">
                   {stripHtml(job.description) || "No description available."}
                 </div>
@@ -259,15 +243,10 @@ export default function JobDetailPage() {
               {/* Requirements */}
               {job.requirements && job.requirements.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Requirements
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Requirements</h3>
                   <ul className="space-y-2">
                     {job.requirements.map((req, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 text-gray-700"
-                      >
+                      <li key={index} className="flex items-start gap-2 text-gray-700">
                         <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
                         {req}
                       </li>
@@ -279,9 +258,7 @@ export default function JobDetailPage() {
               {/* Skills */}
               {job.skills && job.skills.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Skills
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {job.skills.map((skill) => (
                       <Badge key={skill} variant="outline" className="text-sm">
@@ -322,9 +299,7 @@ export default function JobDetailPage() {
                 <Clock className="h-6 w-6 text-orange-600" />
                 <div>
                   <p className="text-sm text-gray-600">Posted</p>
-                  <p className="font-semibold text-gray-900">
-                    {formatDate(job.createdAt)}
-                  </p>
+                  <p className="font-semibold text-gray-900">{formatDate(job.createdAt)}</p>
                 </div>
               </div>
 
@@ -333,9 +308,7 @@ export default function JobDetailPage() {
                   <Calendar className="h-6 w-6 text-red-600" />
                   <div>
                     <p className="text-sm text-gray-600">Deadline</p>
-                    <p className="font-semibold text-gray-900">
-                      {formatDate(job.deadline)}
-                    </p>
+                    <p className="font-semibold text-gray-900">{formatDate(job.deadline)}</p>
                   </div>
                 </div>
               )}
@@ -344,10 +317,7 @@ export default function JobDetailPage() {
                 <Button
                   className="w-full bg-green-primary hover:bg-green-600"
                   size="lg"
-                  onClick={() =>
-                    job.applicationUrl &&
-                    window.open(job.applicationUrl, "_blank")
-                  }
+                  onClick={() => job.applicationUrl && window.open(job.applicationUrl, "_blank")}
                   disabled={!job.applicationUrl}
                 >
                   <Send className="h-5 w-5 mr-2" />
@@ -369,11 +339,7 @@ export default function JobDetailPage() {
           </Card>
 
           {/* Back Button */}
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => router.push("/jobs")}
-          >
+          <Button variant="outline" className="w-full" onClick={() => router.push("/jobs")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to All Jobs
           </Button>

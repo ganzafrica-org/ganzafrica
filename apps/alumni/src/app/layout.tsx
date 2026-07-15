@@ -11,14 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "GanzAfrica Alumni Portal",
   description: "Connect with the GanzAfrica alumni community",
-  keywords: [
-    "Alumni",
-    "GanzAfrica",
-    "Agriculture",
-    "Environment",
-    "Rwanda",
-    "Network",
-  ],
+  keywords: ["Alumni", "GanzAfrica", "Agriculture", "Environment", "Rwanda", "Network"],
   authors: [{ name: "GanzAfrica" }],
   creator: "GanzAfrica",
   publisher: "GanzAfrica",
@@ -50,11 +43,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>

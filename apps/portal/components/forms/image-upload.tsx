@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback } from 'react';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
-import { Button } from '@workspace/ui/components/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@workspace/ui/components/avatar';
-import { toast } from 'sonner';
+import { useState, useRef, useCallback } from "react";
+import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Button } from "@workspace/ui/components/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@workspace/ui/components/avatar";
+import { toast } from "sonner";
 
 // Utility function to merge class names
 function cn(...inputs: (string | undefined)[]) {
-  return inputs.filter(Boolean).join(' ');
+  return inputs.filter(Boolean).join(" ");
 }
 
 interface ImageUploadProps {
@@ -19,12 +19,12 @@ interface ImageUploadProps {
   description?: string;
 }
 
-export function ImageUpload({ 
-  onImageChange, 
-  initialImage, 
+export function ImageUpload({
+  onImageChange,
+  initialImage,
   className,
-  label = 'Profile Image',
-  description = 'Upload a profile image (JPG, PNG, GIF up to 5MB)'
+  label = "Profile Image",
+  description = "Upload a profile image (JPG, PNG, GIF up to 5MB)",
 }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(initialImage || null);
   const [isDragging, setIsDragging] = useState(false);
@@ -32,14 +32,14 @@ export function ImageUpload({
 
   const validateFile = (file: File) => {
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file (JPG, PNG, or GIF)');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (JPG, PNG, or GIF)");
       return false;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+      toast.error("Image size should be less than 5MB");
       return false;
     }
 
@@ -91,28 +91,22 @@ export function ImageUpload({
     setPreview(null);
     onImageChange(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn("space-y-2", className)}>
       {label && (
-        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}
-        </label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
       )}
-      {description && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {description}
-        </p>
-      )}
+      {description && <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>}
       <div
         className={cn(
-          'relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg transition-colors',
+          "relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg transition-colors",
           isDragging
-            ? 'border-primary-green bg-green-50 dark:bg-green-900/20'
-            : 'border-gray-300 hover:border-primary-green hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50'
+            ? "border-primary-green bg-green-50 dark:bg-green-900/20"
+            : "border-gray-300 hover:border-primary-green hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50",
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -142,9 +136,7 @@ export function ImageUpload({
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Drag and drop or click to upload
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                JPG, PNG, GIF up to 5MB
-              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">JPG, PNG, GIF up to 5MB</p>
             </div>
           </div>
         )}
@@ -157,14 +149,10 @@ export function ImageUpload({
           id="image-upload"
           aria-label="Upload profile image"
         />
-        <Button
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          className="mt-4"
-        >
-          {preview ? 'Change Image' : 'Select Image'}
+        <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="mt-4">
+          {preview ? "Change Image" : "Select Image"}
         </Button>
       </div>
     </div>
   );
-} 
+}

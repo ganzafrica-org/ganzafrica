@@ -9,10 +9,7 @@ export const createPartnerSchema = z.object({
       .max(200, "Partner name must be at most 200 characters long"),
     logo: z.string().optional(),
     website_url: z.string().url("Website URL must be a valid URL").optional(),
-    location: z
-      .string()
-      .max(255, "Location must be at most 255 characters long")
-      .optional(),
+    location: z.string().max(255, "Location must be at most 255 characters long").optional(),
   }),
 });
 
@@ -41,10 +38,7 @@ export const updatePartnerSchema = z.object({
         .optional(),
       logo: z.string().optional(),
       website_url: z.string().url("Website URL must be a valid URL").optional(),
-      location: z
-        .string()
-        .max(255, "Location must be at most 255 characters long")
-        .optional(),
+      location: z.string().max(255, "Location must be at most 255 characters long").optional(),
     })
     .refine((data) => Object.keys(data).length > 0, {
       message: "At least one field to update must be provided",

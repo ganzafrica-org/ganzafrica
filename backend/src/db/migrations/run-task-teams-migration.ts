@@ -22,9 +22,9 @@ async function runMigration() {
   try {
     console.log("Starting task teams migration...");
     const db = drizzle(pool);
-    
+
     await up(db as any);
-    
+
     console.log("✅ Task teams migration completed successfully!");
   } catch (error) {
     console.error("❌ Migration failed:", error);
@@ -40,4 +40,3 @@ if (require.main === module) {
 }
 
 export { runMigration };
-

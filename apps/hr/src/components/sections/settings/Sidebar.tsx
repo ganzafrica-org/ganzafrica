@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo } from "react";
 import {
   ShieldCheck,
   Building2,
@@ -9,71 +9,70 @@ import {
   CalendarOff,
   ClipboardList,
   Search,
-} from 'lucide-react'
-import { NavItem } from './NavItem'
+} from "lucide-react";
+import { NavItem } from "./NavItem";
 
 const SETTINGS_ITEMS = [
   {
-    id: 'roles',
+    id: "roles",
     icon: ShieldCheck,
-    label: 'Roles & Permissions',
-    subtitle: 'Manage access levels and permission sets.',
+    label: "Roles & Permissions",
+    subtitle: "Manage access levels and permission sets.",
   },
   {
-    id: 'entities',
+    id: "entities",
     icon: Building2,
-    label: 'Entities',
-    subtitle: 'Legal entities, branches, and org structure.',
+    label: "Entities",
+    subtitle: "Legal entities, branches, and org structure.",
   },
   {
-    id: 'groups',
+    id: "groups",
     icon: Users,
-    label: 'Groups',
-    subtitle: 'Team groupings and reporting hierarchies.',
+    label: "Groups",
+    subtitle: "Team groupings and reporting hierarchies.",
   },
   {
-    id: 'policies',
+    id: "policies",
     icon: FileText,
-    label: 'Policies',
-    subtitle: 'Attendance, leave, and compliance policies.',
+    label: "Policies",
+    subtitle: "Attendance, leave, and compliance policies.",
   },
   {
-    id: 'timeoff',
+    id: "timeoff",
     icon: CalendarOff,
-    label: 'Time Off',
-    subtitle: 'Leave types, accrual rules, and balances.',
+    label: "Time Off",
+    subtitle: "Leave types, accrual rules, and balances.",
   },
   {
-    id: 'onboarding',
+    id: "onboarding",
     icon: ClipboardList,
-    label: 'Onboarding',
-    subtitle: 'Checklists, documents, and new-hire flows.',
+    label: "Onboarding",
+    subtitle: "Checklists, documents, and new-hire flows.",
   },
-]
+];
 
 interface SidebarProps {
-  activeSection: string
-  onSectionChange: (id: string) => void
+  activeSection: string;
+  onSectionChange: (id: string) => void;
 }
 
 export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return SETTINGS_ITEMS
+    if (!searchQuery.trim()) return SETTINGS_ITEMS;
 
-    const query = searchQuery.toLowerCase()
+    const query = searchQuery.toLowerCase();
     return SETTINGS_ITEMS.filter(
       (item) =>
-        item.label.toLowerCase().includes(query) ||
-        item.subtitle.toLowerCase().includes(query)
-    )
-  }, [searchQuery])
+        item.label.toLowerCase().includes(query) || item.subtitle.toLowerCase().includes(query),
+    );
+  }, [searchQuery]);
 
   const handleNavClick = (id: string) => {
-    onSectionChange(id)
-    setSearchQuery('')
-  }
+    onSectionChange(id);
+    setSearchQuery("");
+  };
 
   return (
     <div className="w-full max-w-xs border-r border-neutral-200 py-4 pr-4 my-5 dark:border-neutral-800 dark:bg-neutral-950">
@@ -115,5 +114,5 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
         )}
       </nav>
     </div>
-  )
+  );
 }

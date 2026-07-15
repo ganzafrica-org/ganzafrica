@@ -9,22 +9,22 @@ interface TruncatedTextProps {
   showToggle?: boolean;
 }
 
-export function TruncatedText({ 
-  text, 
-  maxLength = 170, 
-  className = "", 
-  showToggle = true 
+export function TruncatedText({
+  text,
+  maxLength = 170,
+  className = "",
+  showToggle = true,
 }: TruncatedTextProps): React.JSX.Element {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   // If text is shorter than maxLength, show it all
   if (!text || text.length <= maxLength) {
     return <span className={className}>{text}</span>;
   }
-  
+
   const truncatedText = text.slice(0, maxLength);
   const remainingText = text.slice(maxLength);
-  
+
   return (
     <span className={className}>
       {isExpanded ? text : truncatedText}

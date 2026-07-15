@@ -13,7 +13,10 @@ import type {
   SalaryScale,
   UpdateContractInput,
 } from "@/types/contract.types";
-import { sendNotification, resolveTriggeredByFromHrUser } from "@/modules/hr/notifications/notification.service";
+import {
+  sendNotification,
+  resolveTriggeredByFromHrUser,
+} from "@/modules/hr/notifications/notification.service";
 import type { HrRequester } from "@/types/employee.types";
 
 function mapContract(row: typeof hr_contracts.$inferSelect): ContractRecord {
@@ -62,10 +65,7 @@ export async function listContractsByEmployee(
   assertContractAccess(requester);
   await getActiveEmployee(employeeId);
 
-  const rows = await db
-    .select()
-    .from(hr_contracts)
-    .where(eq(hr_contracts.employee_id, employeeId));
+  const rows = await db.select().from(hr_contracts).where(eq(hr_contracts.employee_id, employeeId));
 
   return rows.map(mapContract);
 }
@@ -177,7 +177,8 @@ export async function updateContract(
   if (input.currency !== undefined) patch.currency = input.currency;
   if (input.baseMonthlyRate !== undefined) patch.base_monthly_rate = input.baseMonthlyRate;
   if (input.grossAnnualRate !== undefined) patch.gross_annual_rate = input.grossAnnualRate;
-  if (input.employmentAgreementUrl !== undefined) patch.employment_agreement_url = input.employmentAgreementUrl;
+  if (input.employmentAgreementUrl !== undefined)
+    patch.employment_agreement_url = input.employmentAgreementUrl;
   if (input.status !== undefined) patch.status = input.status as ContractStatus;
   if (input.notes !== undefined) patch.notes = input.notes;
 

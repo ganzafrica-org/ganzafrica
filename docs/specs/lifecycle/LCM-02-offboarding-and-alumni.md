@@ -39,6 +39,7 @@ tiny migration here.
 ## 4. API & services
 
 Extends `process.service.ts`:
+
 - `POST /hr/employees/:id/offboard` `{reason, last_working_day, template_id?, grant_alumni?}`
   (`requirePermission("processes:manage")`): 409 if employee already `offboarding`/`exited`
   or has an active offboarding instance; sets `employees.status='offboarding'`; instantiates
@@ -56,7 +57,7 @@ Extends `process.service.ts`:
   5. `users.is_active`: stays true iff user now holds `alumni` (or admin/mentor); else false.
   6. Contract status → TERMINATED (active contract rows for the employee).
   7. Notification to HR + manager.
-  All in one transaction except emails (post-commit).
+     All in one transaction except emails (post-commit).
 - Offboardee view: same filtered GET as LCM-01 (`/hr/processes/:id` as subject). Employees
   NOT being offboarded see nothing new anywhere (the "hasn't even gotten to offboarding"
   view = absence; no leaks in dashboards/nav).

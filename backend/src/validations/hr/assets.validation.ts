@@ -10,7 +10,10 @@ export const listAssetsSchema = z.object({
   query: z.object({
     assignedTo: z.string().uuid("Invalid assignedTo id").optional(),
     hasIssue: z.enum(["YES", "NO"]).optional(),
-    isFlagged: z.enum(["true", "false"]).optional().transform((value) => value === "true"),
+    isFlagged: z
+      .enum(["true", "false"])
+      .optional()
+      .transform((value) => value === "true"),
   }),
 });
 
@@ -24,7 +27,7 @@ export const createAssetSchema = z.object({
         z.object({
           key: z.string().min(1),
           value: z.string().min(1),
-        })
+        }),
       )
       .optional(),
     purchasePrice: z.string().optional().nullable(),
@@ -48,7 +51,7 @@ export const updateAssetSchema = z.object({
         z.object({
           key: z.string().min(1),
           value: z.string().min(1),
-        })
+        }),
       )
       .optional(),
     purchasePrice: z.string().optional().nullable(),
@@ -75,7 +78,7 @@ export const createCategorySchema = z.object({
         options: z.array(z.string()).optional(),
         required: z.boolean(),
         unit: z.string().optional(),
-      })
+      }),
     ),
     sort_order: z.number().int().optional(),
   }),

@@ -31,29 +31,39 @@ funnel analytics.
 
 ```ts
 // backend/src/db/schema/recruitment/forms.ts
-export const opportunity_forms = pgTable("opportunity_forms", {
-  id: serial("id").primaryKey(),
-  opportunity_id: integer("opportunity_id").notNull()
-    .references(() => opportunities.id, { onDelete: "cascade" }),
-  version: integer("version").notNull().default(1),        // bump on publish; applications pin the version
-  status: text("status").notNull().default("draft"),        // 'draft' | 'published' | 'archived'
-  definition: jsonb("definition").$type<FormDefinition>().notNull(),
-  created_by: integer("created_by").notNull().references(() => users.id),
-  ...timestampFields,
-}, (t) => ({ oppVersionIdx: uniqueIndex("opportunity_forms_opp_version").on(t.opportunity_id, t.version) }));
+export const opportunity_forms = pgTable(
+  "opportunity_forms",
+  {
+    id: serial("id").primaryKey(),
+    opportunity_id: integer("opportunity_id")
+      .notNull()
+      .references(() => opportunities.id, { onDelete: "cascade" }),
+    version: integer("version").notNull().default(1), // bump on publish; applications pin the version
+    status: text("status").notNull().default("draft"), // 'draft' | 'published' | 'archived'
+    definition: jsonb("definition").$type<FormDefinition>().notNull(),
+    created_by: integer("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...timestampFields,
+  },
+  (t) => ({
+    oppVersionIdx: uniqueIndex("opportunity_forms_opp_version").on(t.opportunity_id, t.version),
+  }),
+);
 
 export const eligibility_rules = pgTable("eligibility_rules", {
   id: serial("id").primaryKey(),
-  opportunity_id: integer("opportunity_id").notNull()
+  opportunity_id: integer("opportunity_id")
+    .notNull()
     .references(() => opportunities.id, { onDelete: "cascade" }),
-  field_key: text("field_key").notNull(),      // standard field name or custom field key
-  operator: text("operator").notNull(),        // 'eq'|'neq'|'gt'|'gte'|'lt'|'lte'|'in'|'not_in'|'contains'|'is_true'|'is_false'
-  value: jsonb("value"),                       // comparison operand (null for is_true/is_false)
+  field_key: text("field_key").notNull(), // standard field name or custom field key
+  operator: text("operator").notNull(), // 'eq'|'neq'|'gt'|'gte'|'lt'|'lte'|'in'|'not_in'|'contains'|'is_true'|'is_false'
+  value: jsonb("value"), // comparison operand (null for is_true/is_false)
   // derived-field support: 'age' is computed from date_of_birth at evaluation time
   reject_message: text("reject_message").notNull(), // shown to the applicant, e.g. "This role requires a valid work permit for Rwanda."
   is_active: boolean("is_active").notNull().default(true),
   sort_order: integer("sort_order").notNull().default(0),
-  hit_count: integer("hit_count").notNull().default(0),    // anonymized counter (funnel)
+  hit_count: integer("hit_count").notNull().default(0), // anonymized counter (funnel)
   ...timestampFields,
 });
 ```
@@ -68,17 +78,27 @@ API):
 
 ```ts
 type FormField = {
-  key: string;                    // unique within form, snake_case
+  key: string; // unique within form, snake_case
   label: string;
-  type: "text"|"textarea"|"select"|"multiselect"|"number"|"date"|"file"|"boolean"|"country";
+  type:
+    | "text"
+    | "textarea"
+    | "select"
+    | "multiselect"
+    | "number"
+    | "date"
+    | "file"
+    | "boolean"
+    | "country";
   required: boolean;
-  options?: string[];             // select/multiselect
+  options?: string[]; // select/multiselect
   max_length?: number;
   order: number;
-  section: string;                // grouping header on the form
+  section: string; // grouping header on the form
 };
 type FormDefinition = {
-  standard: {                     // rendered first, ALWAYS present, not removable in the builder
+  standard: {
+    // rendered first, ALWAYS present, not removable in the builder
     // fixed keys: first_name, last_name, email, phone, date_of_birth,
     // country_of_residence, country_of_work,
     // has_work_permit (conditional: shown iff residence != work)
@@ -93,6 +113,7 @@ Standard-field keys usable in rules: `age` (derived), `country_of_residence`,
 ## 4. API
 
 Rule engine `backend/src/services/recruitment/eligibility.service.ts`:
+
 - `evaluate(rules, answers): { eligible: true } | { eligible: false, failed: {field_key, reject_message}[] }`
   — pure function; `age` derived from `date_of_birth` (UTC, floor of year diff); missing
   value for a rule's field = NOT a failure at check time (checked only when the field has a
@@ -100,18 +121,19 @@ Rule engine `backend/src/services/recruitment/eligibility.service.ts`:
   unknown operator/malformed rule → log + skip (a broken rule must never block OR auto-fail anyone).
 - `recordHits(ruleIds)` — single SQL `UPDATE ... SET hit_count = hit_count + 1 WHERE id IN (...)`.
 
-| Endpoint | Auth | Behavior |
-|---|---|---|
-| `GET /opportunities/:id/form` | public | Latest PUBLISHED form definition + the ACTIVE rules' `{field_key, operator, value}` (client pre-check needs them; reject_messages included). 404 if none published |
-| `POST /opportunities/:id/eligibility-check` | public, rate-limited 20/min/IP | Body `{answers: Record<string,unknown>}` → runs `evaluate` server-side; if fail: `recordHits`, `200 {eligible:false, failed:[...]}`; if pass `200 {eligible:true}`. **No application row either way.** |
-| `POST /opportunities/:id/apply` | public (existing handler, extended) | NEW pre-insert step: run `evaluate` with full answers; fail → `422 {eligible:false, failed}` + recordHits (defense in depth — the UI already stopped them). Pass → existing insert + `form_version` + new standard columns. Old opportunities without forms/rules: skip both, existing behavior byte-identical |
-| `GET/PUT /hr/opportunities/:id/form` | requirePermission("recruitment:manage") | Read/write DRAFT definition; `PUT /hr/opportunities/:id/form/publish` → bump version, status published, archive predecessor |
-| `GET/POST/PATCH/DELETE /hr/opportunities/:id/rules` | recruitment:manage | Rule CRUD; PATCH toggles is_active; DELETE only when hit_count=0 else deactivate |
+| Endpoint                                            | Auth                                    | Behavior                                                                                                                                                                                                                                                                                                       |
+| --------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /opportunities/:id/form`                       | public                                  | Latest PUBLISHED form definition + the ACTIVE rules' `{field_key, operator, value}` (client pre-check needs them; reject_messages included). 404 if none published                                                                                                                                             |
+| `POST /opportunities/:id/eligibility-check`         | public, rate-limited 20/min/IP          | Body `{answers: Record<string,unknown>}` → runs `evaluate` server-side; if fail: `recordHits`, `200 {eligible:false, failed:[...]}`; if pass `200 {eligible:true}`. **No application row either way.**                                                                                                         |
+| `POST /opportunities/:id/apply`                     | public (existing handler, extended)     | NEW pre-insert step: run `evaluate` with full answers; fail → `422 {eligible:false, failed}` + recordHits (defense in depth — the UI already stopped them). Pass → existing insert + `form_version` + new standard columns. Old opportunities without forms/rules: skip both, existing behavior byte-identical |
+| `GET/PUT /hr/opportunities/:id/form`                | requirePermission("recruitment:manage") | Read/write DRAFT definition; `PUT /hr/opportunities/:id/form/publish` → bump version, status published, archive predecessor                                                                                                                                                                                    |
+| `GET/POST/PATCH/DELETE /hr/opportunities/:id/rules` | recruitment:manage                      | Rule CRUD; PATCH toggles is_active; DELETE only when hit_count=0 else deactivate                                                                                                                                                                                                                               |
 
 ## 5. Frontend
 
 **Public form (apps/web** — new dynamic form renderer replacing/augmenting the current apply
 page; harvest layout from `apps/_archived/apply/[jobId]/page.tsx`):
+
 - Renders standard section then custom sections by `order`; `has_work_permit` appears with
   animation when residence ≠ work country.
 - **Live eligibility UX:** on blur/change of any rule-referenced field, evaluate CLIENT-side
@@ -133,6 +155,7 @@ button with version confirm dialog.
 ## 6. Tests to write FIRST
 
 Backend:
+
 1. **Characterization (FIRST OF ALL):** existing public apply POST for a pre-spec opportunity —
    snapshot request/response/row; must pass unchanged at the end.
 2. `evaluate()` unit table: every operator; age derivation (boundary: birthday today);
@@ -144,10 +167,10 @@ Backend:
 6. Form versioning: publish v2 → GET returns v2; in-flight application submitted against v1
    still accepted (form_version recorded as submitted).
 7. Rule CRUD permissions: anonymous 401, staff 403, hr 200.
-Frontend (web, vitest+MSW): renderer shows conditional permit field; failing blur shows the
-panel and disables submit; 422 from server renders the same panel.
-E2E: full public apply happy path; instant-reject path (age rule) — panel appears, no
-application created (assert via seeded admin API).
+   Frontend (web, vitest+MSW): renderer shows conditional permit field; failing blur shows the
+   panel and disables submit; 422 from server renders the same panel.
+   E2E: full public apply happy path; instant-reject path (age rule) — panel appears, no
+   application created (assert via seeded admin API).
 
 ## 7. Acceptance criteria
 

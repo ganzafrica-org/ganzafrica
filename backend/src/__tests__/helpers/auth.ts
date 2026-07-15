@@ -72,7 +72,10 @@ function getOrCreateSelectStub(sandbox: SinonSandbox, db: { select: unknown }): 
   return sandbox.stub(db, "select");
 }
 
-export function stubHrAuthDb(sandbox: SinonSandbox, defaultUserId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb") {
+export function stubHrAuthDb(
+  sandbox: SinonSandbox,
+  defaultUserId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+) {
   const { db } = require("../../db/client");
   const selectStub = getOrCreateSelectStub(sandbox, db);
 

@@ -69,9 +69,7 @@ export default function AchievementDetailPage() {
   const { user } = useAuth();
   const achievementId = parseInt(params.id as string, 10);
 
-  const [achievement, setAchievement] = useState<AchievementDetail | null>(
-    null,
-  );
+  const [achievement, setAchievement] = useState<AchievementDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -114,10 +112,7 @@ export default function AchievementDetailPage() {
 
     try {
       setIsSubmittingComment(true);
-      const response = await achievementsApi.addComment(
-        achievement.id,
-        commentText,
-      );
+      const response = await achievementsApi.addComment(achievement.id, commentText);
       setAchievement({
         ...achievement,
         comments: [response.comment, ...achievement.comments],
@@ -161,8 +156,7 @@ export default function AchievementDetailPage() {
           <CardContent>
             <h2 className="text-2xl font-bold mb-4">Achievement Not Found</h2>
             <p className="text-gray-600 mb-6">
-              The achievement you&apos;re looking for doesn&apos;t exist or has
-              been removed.
+              The achievement you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
             <Button asChild>
               <Link href="/achievements">Back to Achievements</Link>
@@ -189,10 +183,7 @@ export default function AchievementDetailPage() {
             <div className="flex items-start gap-6 mb-6">
               <Avatar className="w-20 h-20">
                 {achievement.achiever.avatar ? (
-                  <AvatarImage
-                    src={achievement.achiever.avatar}
-                    alt={achievement.achiever.name}
-                  />
+                  <AvatarImage src={achievement.achiever.avatar} alt={achievement.achiever.name} />
                 ) : (
                   <AvatarFallback
                     className={`bg-gradient-to-br ${getDepartmentColor(achievement.category)} text-white font-semibold text-2xl`}
@@ -206,13 +197,9 @@ export default function AchievementDetailPage() {
               </Avatar>
 
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {achievement.title}
-                </h1>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{achievement.title}</h1>
                 <div className="flex items-center gap-2 text-gray-600 mb-2">
-                  <span className="font-semibold">
-                    {achievement.achiever.name}
-                  </span>
+                  <span className="font-semibold">{achievement.achiever.name}</span>
                   {achievement.achiever.title && (
                     <>
                       <span>•</span>
@@ -232,9 +219,7 @@ export default function AchievementDetailPage() {
                   >
                     {achievement.category}
                   </Badge>
-                  {achievement.type && (
-                    <Badge variant="secondary">{achievement.type}</Badge>
-                  )}
+                  {achievement.type && <Badge variant="secondary">{achievement.type}</Badge>}
                 </div>
               </div>
             </div>
@@ -300,9 +285,7 @@ export default function AchievementDetailPage() {
                 </span>
                 <span className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  <span className="font-medium">
-                    {achievement.comments.length}
-                  </span>
+                  <span className="font-medium">{achievement.comments.length}</span>
                   <span className="text-sm">comments</span>
                 </span>
               </div>
@@ -317,9 +300,7 @@ export default function AchievementDetailPage() {
                       : "border-blue-secondary text-blue-secondary hover:bg-blue-secondary hover:text-white"
                   }
                 >
-                  <Heart
-                    className={`h-4 w-4 mr-2 ${achievement.hasLiked ? "fill-current" : ""}`}
-                  />
+                  <Heart className={`h-4 w-4 mr-2 ${achievement.hasLiked ? "fill-current" : ""}`} />
                   {achievement.hasLiked ? "Liked" : "Like"}
                 </Button>
                 {achievement.link && (
@@ -328,11 +309,7 @@ export default function AchievementDetailPage() {
                     className="border-orange-primary text-orange-primary hover:bg-orange-primary hover:text-white"
                     asChild
                   >
-                    <a
-                      href={achievement.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={achievement.link} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View Source
                     </a>
@@ -388,10 +365,7 @@ export default function AchievementDetailPage() {
                   >
                     <Avatar className="w-10 h-10">
                       {comment.user.avatar ? (
-                        <AvatarImage
-                          src={comment.user.avatar}
-                          alt={comment.user.name}
-                        />
+                        <AvatarImage src={comment.user.avatar} alt={comment.user.name} />
                       ) : (
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-cyan-600 text-white text-sm">
                           {comment.user.name
@@ -405,20 +379,15 @@ export default function AchievementDetailPage() {
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="font-semibold text-gray-900">
-                            {comment.user.name}
-                          </p>
+                          <p className="font-semibold text-gray-900">{comment.user.name}</p>
                           <p className="text-xs text-gray-500">
-                            {new Date(comment.createdAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )}
+                            {new Date(comment.createdAt).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </p>
                         </div>
                         {user && comment.user.id.toString() === user.id && (
@@ -432,9 +401,7 @@ export default function AchievementDetailPage() {
                           </Button>
                         )}
                       </div>
-                      <p className="text-gray-700 whitespace-pre-wrap">
-                        {comment.content}
-                      </p>
+                      <p className="text-gray-700 whitespace-pre-wrap">{comment.content}</p>
                     </div>
                   </div>
                 ))

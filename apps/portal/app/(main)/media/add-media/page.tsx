@@ -1,241 +1,235 @@
-'use client'
+"use client";
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { Upload, X, ArrowLeft, AlertCircle } from 'lucide-react'
-import { Button } from '@workspace/ui'
-import { toast } from 'sonner'
-import { Progress } from '@workspace/ui'
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Upload, X, ArrowLeft, AlertCircle } from "lucide-react";
+import { Button } from "@workspace/ui";
+import { toast } from "sonner";
+import { Progress } from "@workspace/ui";
 
 // Define allowed file types and max size
 const ALLOWED_FILE_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'video/mp4',
-  'video/webm',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-] as const
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "video/mp4",
+  "video/webm",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+] as const;
 
-type AllowedFileType = typeof ALLOWED_FILE_TYPES[number]
+type AllowedFileType = (typeof ALLOWED_FILE_TYPES)[number];
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 interface UploadingFile extends File {
-  progress?: number
-  error?: string
+  progress?: number;
+  error?: string;
 }
 
 interface UploadResponse {
-  success: boolean
-  url?: string
-  error?: string
+  success: boolean;
+  url?: string;
+  error?: string;
 }
 
 export default function AddMediaPage() {
-  const router = useRouter()
-  const [isDragging, setIsDragging] = useState(false)
-  const [files, setFiles] = useState<UploadingFile[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
+  const router = useRouter();
+  const [isDragging, setIsDragging] = useState(false);
+  const [files, setFiles] = useState<UploadingFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_FILE_TYPES.includes(file.type as AllowedFileType)) {
-      return 'File type not supported'
+      return "File type not supported";
     }
     if (file.size > MAX_FILE_SIZE) {
-      return 'File size exceeds 50MB limit'
+      return "File size exceeds 50MB limit";
     }
-    return null
-  }
+    return null;
+  };
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(true)
-  }, [])
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-  }, [])
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
 
   const addFiles = (newFiles: File[]) => {
-    const validFiles = newFiles.map(file => {
-      const error = validateFile(file)
+    const validFiles = newFiles.map((file) => {
+      const error = validateFile(file);
       return {
         ...file,
         error,
-        progress: 0
-      } as UploadingFile
-    })
-    setFiles(prev => [...prev, ...validFiles])
-  }
+        progress: 0,
+      } as UploadingFile;
+    });
+    setFiles((prev) => [...prev, ...validFiles]);
+  };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
 
-    const droppedFiles = Array.from(e.dataTransfer.files)
-    addFiles(droppedFiles)
-  }, [])
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    addFiles(droppedFiles);
+  }, []);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files)
-      addFiles(selectedFiles)
+      const selectedFiles = Array.from(e.target.files);
+      addFiles(selectedFiles);
     }
-  }, [])
+  }, []);
 
   const removeFile = useCallback((index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index))
-  }, [])
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
-  const uploadFile = async (file: File): Promise<{ success: boolean; error?: string; url?: string }> => {
+  const uploadFile = async (
+    file: File,
+  ): Promise<{ success: boolean; error?: string; url?: string }> => {
     if (!file) {
-      console.error('No file provided to uploadFile function')
-      return { success: false, error: 'No file provided' }
+      console.error("No file provided to uploadFile function");
+      return { success: false, error: "No file provided" };
     }
 
     // Create a safe date string, handling invalid timestamps
     const getFormattedDate = (timestamp: number) => {
       try {
-        const date = new Date(timestamp)
+        const date = new Date(timestamp);
         // Check if date is valid before converting to ISO string
-        return date instanceof Date && !isNaN(date.getTime()) 
-          ? date.toISOString()
-          : 'Invalid Date'
+        return date instanceof Date && !isNaN(date.getTime()) ? date.toISOString() : "Invalid Date";
       } catch (error) {
-        return 'Invalid Date'
+        return "Invalid Date";
       }
-    }
+    };
 
-    console.log('Starting upload for file:', {
+    console.log("Starting upload for file:", {
       name: file.name,
       type: file.type,
       size: file.size,
-      lastModified: getFormattedDate(file.lastModified)
-    })
+      lastModified: getFormattedDate(file.lastModified),
+    });
 
-    const formData = new FormData()
-    formData.append('file', file)
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
-      const response = await fetch('/api/media/upload', {
-        method: 'POST',
+      const response = await fetch("/api/media/upload", {
+        method: "POST",
         body: formData,
-      })
+      });
 
-      const data = await response.json()
-      console.log('Upload response:', data)
+      const data = await response.json();
+      console.log("Upload response:", data);
 
       if (!response.ok) {
-        console.error('Upload failed with status:', response.status)
+        console.error("Upload failed with status:", response.status);
         return {
           success: false,
-          error: data.error || `Upload failed with status ${response.status}`
-        }
+          error: data.error || `Upload failed with status ${response.status}`,
+        };
       }
 
       if (!data.success) {
-        console.error('Upload failed:', data.error)
-        return { success: false, error: data.error || 'Upload failed' }
+        console.error("Upload failed:", data.error);
+        return { success: false, error: data.error || "Upload failed" };
       }
 
-      console.log('Upload successful:', data.url)
-      return { success: true, url: data.url }
-
+      console.log("Upload successful:", data.url);
+      return { success: true, url: data.url };
     } catch (error) {
-      console.error('Error during upload:', error)
-      return { success: false, error: 'Network error during upload' }
+      console.error("Error during upload:", error);
+      return { success: false, error: "Network error during upload" };
     }
-  }
+  };
 
   const handleUpload = async () => {
     if (files.length === 0) {
-      toast.error('Please select files to upload')
-      return
+      toast.error("Please select files to upload");
+      return;
     }
 
-    setUploading(true)
+    setUploading(true);
 
     try {
       const results = await Promise.all(
         files.map(async (file) => {
-          setUploadProgress(prev => ({
+          setUploadProgress((prev) => ({
             ...prev,
-            [file.name]: 0
-          }))
+            [file.name]: 0,
+          }));
 
-          const result = await uploadFile(file)
+          const result = await uploadFile(file);
 
-          setUploadProgress(prev => ({
+          setUploadProgress((prev) => ({
             ...prev,
-            [file.name]: result.success ? 100 : 0
-          }))
+            [file.name]: result.success ? 100 : 0,
+          }));
 
-          return result
-        })
-      )
+          return result;
+        }),
+      );
 
-      const successCount = results.filter((r) => r.success).length
-      const failureCount = results.length - successCount
+      const successCount = results.filter((r) => r.success).length;
+      const failureCount = results.length - successCount;
 
       if (successCount > 0) {
-        toast.success(`Successfully uploaded ${successCount} file${successCount > 1 ? 's' : ''}`)
+        toast.success(`Successfully uploaded ${successCount} file${successCount > 1 ? "s" : ""}`);
       }
       if (failureCount > 0) {
-        toast.error(`Failed to upload ${failureCount} file${failureCount > 1 ? 's' : ''}`)
+        toast.error(`Failed to upload ${failureCount} file${failureCount > 1 ? "s" : ""}`);
       }
 
       if (successCount > 0) {
-        router.push('/media')
+        router.push("/media");
       }
     } catch (error) {
-      console.error('Error in handleUpload:', error)
-      toast.error('An error occurred during upload')
+      console.error("Error in handleUpload:", error);
+      toast.error("An error occurred during upload");
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   const getFileTypeIcon = (file: File) => {
     // Handle case where file.type is undefined
     if (!file.type) {
-      return '📄' // Default icon for unknown type
+      return "📄"; // Default icon for unknown type
     }
 
-    const type = file.type.split('/')[0]
+    const type = file.type.split("/")[0];
     switch (type) {
-      case 'image':
-        return '🖼️'
-      case 'video':
-        return '🎥'
-      case 'audio':
-        return '🎵'
-      case 'application':
-        return file.type.includes('pdf') ? '📄' : '📝'
+      case "image":
+        return "🖼️";
+      case "video":
+        return "🎥";
+      case "audio":
+        return "🎵";
+      case "application":
+        return file.type.includes("pdf") ? "📄" : "📝";
       default:
-        return '📄'
+        return "📄";
     }
-  }
+  };
 
   return (
     <div className="p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            title="Go back"
-          >
+          <Button variant="ghost" size="icon" onClick={() => router.back()} title="Go back">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
@@ -249,9 +243,7 @@ export default function AddMediaPage() {
       <div className="max-w-3xl mx-auto">
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center ${
-            isDragging
-              ? 'border-green-500 bg-green-50'
-              : 'border-gray-300 hover:border-gray-400'
+            isDragging ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
           }`}
           onDragEnter={handleDragEnter}
           onDragOver={handleDragEnter}
@@ -259,19 +251,15 @@ export default function AddMediaPage() {
           onDrop={handleDrop}
         >
           <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-lg font-medium mb-2">
-            Drag and drop your files here
-          </h3>
-          <p className="text-gray-500 mb-4">
-            or click to browse from your computer
-          </p>
+          <h3 className="text-lg font-medium mb-2">Drag and drop your files here</h3>
+          <p className="text-gray-500 mb-4">or click to browse from your computer</p>
           <input
             type="file"
             multiple
             onChange={handleFileSelect}
             className="hidden"
             id="file-upload"
-            accept={ALLOWED_FILE_TYPES.join(',')}
+            accept={ALLOWED_FILE_TYPES.join(",")}
           />
           <label htmlFor="file-upload">
             <Button variant="outline" className="mx-auto">
@@ -279,7 +267,8 @@ export default function AddMediaPage() {
             </Button>
           </label>
           <p className="text-sm text-gray-500 mt-4">
-            Supported formats: Images (JPEG, PNG, GIF, WebP), Videos (MP4, WebM), Documents (PDF, DOC, DOCX)
+            Supported formats: Images (JPEG, PNG, GIF, WebP), Videos (MP4, WebM), Documents (PDF,
+            DOC, DOCX)
             <br />
             Maximum file size: 50MB
           </p>
@@ -294,7 +283,7 @@ export default function AddMediaPage() {
                 <div
                   key={index}
                   className={`flex items-center justify-between p-3 bg-white rounded-lg border ${
-                    file.error ? 'border-red-300 bg-red-50' : ''
+                    file.error ? "border-red-300 bg-red-50" : ""
                   }`}
                 >
                   <div className="flex items-center gap-3 flex-1">
@@ -313,10 +302,7 @@ export default function AddMediaPage() {
                         {(file.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                       {uploading && !file.error && (
-                        <Progress 
-                          value={uploadProgress[file.name] || 0} 
-                          className="mt-2"
-                        />
+                        <Progress value={uploadProgress[file.name] || 0} className="mt-2" />
                       )}
                     </div>
                   </div>
@@ -337,22 +323,18 @@ export default function AddMediaPage() {
 
         {/* Upload Button */}
         <div className="mt-8 flex justify-end gap-3">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={uploading}
-          >
+          <Button variant="outline" onClick={() => router.back()} disabled={uploading}>
             Cancel
           </Button>
           <Button
             onClick={handleUpload}
-            disabled={files.length === 0 || uploading || files.every(f => f.error)}
+            disabled={files.length === 0 || uploading || files.every((f) => f.error)}
             className="bg-green-700 hover:bg-green-800"
           >
-            {uploading ? 'Uploading...' : 'Upload Files'}
+            {uploading ? "Uploading..." : "Upload Files"}
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }

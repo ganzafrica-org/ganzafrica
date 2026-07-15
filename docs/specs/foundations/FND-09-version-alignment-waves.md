@@ -14,17 +14,17 @@ path to deletion.
 
 ## 2. Context & current state (verified matrix)
 
-| Package | Next | React | Tailwind | zod | Notes |
-|---|---|---|---|---|---|
-| web | ^16.0.7 | **19.0.0-rc.1** | v3 | v3 | build disables type checking (`NEXT_DISABLE_TYPE_CHECKING`, `TSC_COMPILE_ON_ERROR`) |
-| portal | ^16.0.7 | ^19.2.1 | v3 | v3 | consumes @workspace/ui |
-| task | ^16.0.7 | ^19.2.1 | v3 | v4 | 4 local shadcn components |
-| alumni | ^16.0.7 | ^19.2.1 | v4 | v4 | 31 local shadcn components |
-| internal | 16.1.6 | ^19.2.4 | v4 | v4 | 30 local; retired by MOD-07 — do the MINIMUM here |
-| hr | 16.2.1 | 19.2.4 | v4 | v4 | 27 local; `lucide-react ^1.7.0` is a bogus spec — fix immediately |
-| packages/ui | — | peer | **v3** | v3 | 34 components; consumed only by web+portal |
-| backend | — | — | — | v3 | zod last (error-shape changes touch validators) |
-| root | pollution removed in FND-03 | | | | `react-server-dom-webpack@19.1.1` pin removed with it |
+| Package     | Next                        | React           | Tailwind | zod | Notes                                                                               |
+| ----------- | --------------------------- | --------------- | -------- | --- | ----------------------------------------------------------------------------------- |
+| web         | ^16.0.7                     | **19.0.0-rc.1** | v3       | v3  | build disables type checking (`NEXT_DISABLE_TYPE_CHECKING`, `TSC_COMPILE_ON_ERROR`) |
+| portal      | ^16.0.7                     | ^19.2.1         | v3       | v3  | consumes @workspace/ui                                                              |
+| task        | ^16.0.7                     | ^19.2.1         | v3       | v4  | 4 local shadcn components                                                           |
+| alumni      | ^16.0.7                     | ^19.2.1         | v4       | v4  | 31 local shadcn components                                                          |
+| internal    | 16.1.6                      | ^19.2.4         | v4       | v4  | 30 local; retired by MOD-07 — do the MINIMUM here                                   |
+| hr          | 16.2.1                      | 19.2.4          | v4       | v4  | 27 local; `lucide-react ^1.7.0` is a bogus spec — fix immediately                   |
+| packages/ui | —                           | peer            | **v3**   | v3  | 34 components; consumed only by web+portal                                          |
+| backend     | —                           | —               | —        | v3  | zod last (error-shape changes touch validators)                                     |
+| root        | pollution removed in FND-03 |                 |          |     | `react-server-dom-webpack@19.1.1` pin removed with it                               |
 
 Also: lucide-react versions differ everywhere (0.456–0.562 + bogus 1.7.0); tailwind-merge v2/v3
 split; CVA duplicated; radix ranges divergent; eslint-config-next 15.x vs 16.x.
@@ -54,8 +54,8 @@ keep component API stable.
 (FND-04 harness) — error `issues` shape changes; update the error-formatting middleware once.
 
 **Wave E — shared-UI adoption policy** (not a big-bang): rule recorded in root CLAUDE.md —
-*new components import `@workspace/ui`; any PR touching a local `components/ui/X` first
-migrates that X to the shared package if it isn't there, then deletes the local copy.*
+_new components import `@workspace/ui`; any PR touching a local `components/ui/X` first
+migrates that X to the shared package if it isn't there, then deletes the local copy._
 Final sweep tickets per app (hr, alumni, task) close out remaining local copies once traffic
 through waves has shrunk them. apps/internal exempt (dies in MOD-07).
 

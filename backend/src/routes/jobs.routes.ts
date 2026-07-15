@@ -74,12 +74,7 @@ router.get("/stats", authenticate, authorize(["alumni", "admin"]), getJobStats);
  *       403:
  *         description: Forbidden - Requires alumni or admin role
  */
-router.get(
-  "/trending-skills",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getTrendingSkills,
-);
+router.get("/trending-skills", authenticate, authorize(["alumni", "admin"]), getTrendingSkills);
 
 /**
  * @swagger
@@ -117,12 +112,7 @@ router.get(
  *                 message:
  *                   type: string
  */
-router.post(
-  "/scrape",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  triggerJobScraping,
-);
+router.post("/scrape", authenticate, authorize(["alumni", "admin"]), triggerJobScraping);
 
 /**
  * @swagger

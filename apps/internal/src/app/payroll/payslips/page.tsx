@@ -129,14 +129,11 @@ export default function PayslipsPage() {
         ...(emailSent && { email_sent: emailSent }),
       });
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/payroll?${params}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll?${params}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
-      );
+      });
 
       if (!response.ok) throw new Error("Failed to fetch payrolls");
 
@@ -190,7 +187,10 @@ export default function PayslipsPage() {
   const getDisplayNetSalary = (payroll: Payroll) => {
     const currency = getDisplayCurrency(payroll);
     // For USD employees (rwf_usd, wop_usd) show net_salary_usd
-    if ((payroll.payroll_type === "rwf_usd" || payroll.payroll_type === "wop_usd") && payroll.net_salary_usd) {
+    if (
+      (payroll.payroll_type === "rwf_usd" || payroll.payroll_type === "wop_usd") &&
+      payroll.net_salary_usd
+    ) {
       return formatCurrency(payroll.net_salary_usd, "USD");
     }
     return formatCurrency(payroll.net_salary, currency);
@@ -223,16 +223,13 @@ export default function PayslipsPage() {
       const formData = new FormData();
       formData.append("file", uploadFile);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/payroll/upload-csv`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-          body: formData,
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/upload-csv`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
-      );
+        body: formData,
+      });
 
       if (!response.ok) throw new Error("Upload failed");
 
@@ -251,23 +248,18 @@ export default function PayslipsPage() {
     if (!uploadResult?.valid_records) return;
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/payroll`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-          body: JSON.stringify({ payrolls: uploadResult.valid_records }),
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
-      );
+        body: JSON.stringify({ payrolls: uploadResult.valid_records }),
+      });
 
       if (!response.ok) throw new Error("Failed to create payrolls");
 
-      toast.success(
-        `Created ${uploadResult.valid_records.length} payroll records`,
-      );
+      toast.success(`Created ${uploadResult.valid_records.length} payroll records`);
       setUploadDialogOpen(false);
       setUploadFile(null);
       setUploadResult(null);
@@ -280,17 +272,14 @@ export default function PayslipsPage() {
 
   const handleSendEmail = async (payrollId: number) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/payroll/send-emails`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-          body: JSON.stringify({ payroll_ids: [payrollId] }),
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/send-emails`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
-      );
+        body: JSON.stringify({ payroll_ids: [payrollId] }),
+      });
 
       if (!response.ok) throw new Error("Failed to send email");
 
@@ -310,23 +299,18 @@ export default function PayslipsPage() {
 
     try {
       setSendingBulkEmails(true);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/payroll/send-emails`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-          body: JSON.stringify({ payroll_ids: selectedIds }),
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/send-emails`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
-      );
+        body: JSON.stringify({ payroll_ids: selectedIds }),
+      });
 
       if (!response.ok) throw new Error("Failed to send emails");
 
-      toast.success(
-        `Email sending initiated for ${selectedIds.length} payslips`,
-      );
+      toast.success(`Email sending initiated for ${selectedIds.length} payslips`);
       setSelectedIds([]);
       setTimeout(() => fetchPayrolls(), 2000);
     } catch (error) {
@@ -346,9 +330,7 @@ export default function PayslipsPage() {
   };
 
   const handleSelectOne = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const handleViewPayslip = async (payrollId: number) => {
@@ -376,15 +358,12 @@ export default function PayslipsPage() {
     if (!deleteId) return;
     try {
       setDeleting(true);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/payroll/${deleteId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/${deleteId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
-      );
+      });
       if (!response.ok) throw new Error("Failed to delete payroll");
       toast.success("Payroll deleted");
       setDeleteId(null);
@@ -403,9 +382,7 @@ export default function PayslipsPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Payslips</h1>
-          <p className="text-gray-600 mt-2">
-            Manage and send payslips to employees
-          </p>
+          <p className="text-gray-600 mt-2">Manage and send payslips to employees</p>
         </div>
         <div className="flex gap-2">
           {selectedIds.length > 0 && (
@@ -485,8 +462,7 @@ export default function PayslipsPage() {
                 <input
                   type="checkbox"
                   checked={
-                    selectedIds.length ===
-                      payrolls.filter((p) => !p.email_sent).length &&
+                    selectedIds.length === payrolls.filter((p) => !p.email_sent).length &&
                     payrolls.length > 0
                   }
                   onChange={handleSelectAll}
@@ -497,12 +473,8 @@ export default function PayslipsPage() {
               <TableHead className="font-semibold">Email</TableHead>
               <TableHead className="font-semibold">Period</TableHead>
               <TableHead className="font-semibold">Date</TableHead>
-              <TableHead className="text-right font-semibold">
-                Basic Salary
-              </TableHead>
-              <TableHead className="text-right font-semibold">
-                Net Salary
-              </TableHead>
+              <TableHead className="text-right font-semibold">Basic Salary</TableHead>
+              <TableHead className="text-right font-semibold">Net Salary</TableHead>
               <TableHead className="font-semibold">Email Status</TableHead>
               <TableHead className="font-semibold">Actions</TableHead>
             </TableRow>
@@ -516,19 +488,13 @@ export default function PayslipsPage() {
               </TableRow>
             ) : payrolls.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={9}
-                  className="text-center py-8 text-gray-500"
-                >
+                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                   No payrolls found
                 </TableCell>
               </TableRow>
             ) : (
               payrolls.map((payroll) => (
-                <TableRow
-                  key={payroll.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
+                <TableRow key={payroll.id} className="hover:bg-gray-50 transition-colors">
                   <TableCell>
                     <input
                       type="checkbox"
@@ -545,9 +511,7 @@ export default function PayslipsPage() {
                   <TableCell className="text-right">
                     {formatCurrency(payroll.basic_salary, getDisplayCurrency(payroll))}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {getDisplayNetSalary(payroll)}
-                  </TableCell>
+                  <TableCell className="text-right">{getDisplayNetSalary(payroll)}</TableCell>
                   <TableCell>
                     {payroll.email_sent ? (
                       <span className="inline-flex items-center gap-1 text-green-600">
@@ -605,8 +569,7 @@ export default function PayslipsPage() {
           <DialogHeader>
             <DialogTitle>Upload Payroll CSV</DialogTitle>
             <DialogDescription>
-              Upload a CSV file with payroll data. The format will be detected
-              automatically.
+              Upload a CSV file with payroll data. The format will be detected automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -636,9 +599,7 @@ export default function PayslipsPage() {
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-gray-600">Total Rows</p>
-                      <p className="text-lg font-semibold">
-                        {uploadResult.summary.total_rows}
-                      </p>
+                      <p className="text-lg font-semibold">{uploadResult.summary.total_rows}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Valid</p>
@@ -660,9 +621,7 @@ export default function PayslipsPage() {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
                       <div className="flex-1">
-                        <h4 className="font-semibold text-red-800">
-                          Invalid Records
-                        </h4>
+                        <h4 className="font-semibold text-red-800">Invalid Records</h4>
                         <p className="text-sm text-red-700 mt-1">
                           The following emails were not found in the database:
                         </p>
@@ -676,8 +635,7 @@ export default function PayslipsPage() {
                             ))}
                           {uploadResult.invalid_records.length > 5 && (
                             <li className="text-red-600 font-semibold">
-                              ... and {uploadResult.invalid_records.length - 5}{" "}
-                              more
+                              ... and {uploadResult.invalid_records.length - 5} more
                             </li>
                           )}
                         </ul>
@@ -701,10 +659,7 @@ export default function PayslipsPage() {
                 >
                   Cancel
                 </Button>
-                <Button
-                  onClick={handleUploadCSV}
-                  disabled={!uploadFile || uploading}
-                >
+                <Button onClick={handleUploadCSV} disabled={!uploadFile || uploading}>
                   {uploading ? "Processing..." : "Process CSV"}
                 </Button>
               </>
@@ -722,10 +677,7 @@ export default function PayslipsPage() {
                 </Button>
                 <Button
                   onClick={handleConfirmUpload}
-                  disabled={
-                    !uploadResult.valid_records ||
-                    uploadResult.valid_records.length === 0
-                  }
+                  disabled={!uploadResult.valid_records || uploadResult.valid_records.length === 0}
                 >
                   Save {uploadResult.summary.valid_records} Valid Records
                 </Button>
@@ -741,19 +693,15 @@ export default function PayslipsPage() {
           <DialogHeader>
             <DialogTitle>Delete Payroll</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this payroll record? This action
-              cannot be undone. You can upload and resend a new one after.
+              Are you sure you want to delete this payroll record? This action cannot be undone. You
+              can upload and resend a new one after.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteConfirm}
-              disabled={deleting}
-            >
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
               {deleting ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>

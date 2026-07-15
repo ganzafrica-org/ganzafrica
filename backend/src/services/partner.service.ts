@@ -32,9 +32,7 @@ export type PartnerOutput = {
 };
 
 // Create a new partner
-export async function createPartner(
-  partnerData: CreatePartnerInput,
-): Promise<PartnerOutput> {
+export async function createPartner(partnerData: CreatePartnerInput): Promise<PartnerOutput> {
   try {
     // Check if a partner with the same name already exists
     const existingPartner = await db
@@ -44,10 +42,7 @@ export async function createPartner(
       .limit(1);
 
     if (existingPartner.length > 0) {
-      throw new AppError(
-        `Partner with name '${partnerData.name}' already exists`,
-        409,
-      );
+      throw new AppError(`Partner with name '${partnerData.name}' already exists`, 409);
     }
 
     // Insert the partner
@@ -84,11 +79,7 @@ export async function createPartner(
 // Get partner by ID
 export async function getPartnerById(id: number): Promise<PartnerOutput> {
   try {
-    const result = await db
-      .select()
-      .from(partners)
-      .where(eq(partners.id, id))
-      .limit(1);
+    const result = await db.select().from(partners).where(eq(partners.id, id)).limit(1);
 
     if (!result.length) {
       throw new AppError("Partner not found", 404);
@@ -111,11 +102,7 @@ export async function updatePartner(
 ): Promise<PartnerOutput> {
   try {
     // Check if partner exists
-    const existingPartner = await db
-      .select()
-      .from(partners)
-      .where(eq(partners.id, id))
-      .limit(1);
+    const existingPartner = await db.select().from(partners).where(eq(partners.id, id)).limit(1);
 
     if (!existingPartner.length) {
       throw new AppError("Partner not found", 404);
@@ -130,10 +117,7 @@ export async function updatePartner(
         .limit(1);
 
       if (nameExists.length > 0) {
-        throw new AppError(
-          `Partner with name '${partnerData.name}' already exists`,
-          409,
-        );
+        throw new AppError(`Partner with name '${partnerData.name}' already exists`, 409);
       }
     }
 
@@ -147,11 +131,7 @@ export async function updatePartner(
       .where(eq(partners.id, id));
 
     // Get updated partner
-    const updatedPartner = await db
-      .select()
-      .from(partners)
-      .where(eq(partners.id, id))
-      .limit(1);
+    const updatedPartner = await db.select().from(partners).where(eq(partners.id, id)).limit(1);
 
     return mapToPartnerOutput(updatedPartner[0]);
   } catch (error) {
@@ -167,11 +147,7 @@ export async function updatePartner(
 export async function deletePartner(id: number): Promise<boolean> {
   try {
     // Check if partner exists
-    const existingPartner = await db
-      .select()
-      .from(partners)
-      .where(eq(partners.id, id))
-      .limit(1);
+    const existingPartner = await db.select().from(partners).where(eq(partners.id, id)).limit(1);
 
     if (!existingPartner.length) {
       throw new AppError("Partner not found", 404);

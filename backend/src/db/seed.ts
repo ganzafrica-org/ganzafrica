@@ -4,7 +4,7 @@ import { seedAssetMaintenance } from "./schema/hr/seeds/asset-maintenance.seed";
 import { seedEmployees } from "./schema/hr/seeds/employee.seed";
 import { seedContracts } from "./schema/hr/seeds/contract.seed";
 import { seedLeaves } from "./schema/hr/seeds/leaves.seed";
-import { seedDocuments } from "./schema/hr/seeds/document.seed"
+import { seedDocuments } from "./schema/hr/seeds/document.seed";
 import Logger from "../config/logger";
 
 const logger = new Logger("SeedRunner");

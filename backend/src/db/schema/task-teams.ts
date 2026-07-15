@@ -39,7 +39,7 @@ export const task_teams = pgTable(
       statusIdx: index("task_teams_status_idx").on(table.status),
       nameIdx: index("task_teams_name_idx").on(table.name),
     };
-  }
+  },
 );
 
 // Task Team Members Table - Users belonging to task teams
@@ -65,12 +65,9 @@ export const task_team_members = pgTable(
       teamIdx: index("task_team_members_team_id_idx").on(table.team_id),
       userIdx: index("task_team_members_user_id_idx").on(table.user_id),
       roleIdx: index("task_team_members_role_idx").on(table.role),
-      uniqueMembership: uniqueIndex("unique_team_user").on(
-        table.team_id,
-        table.user_id
-      ),
+      uniqueMembership: uniqueIndex("unique_team_user").on(table.team_id, table.user_id),
     };
-  }
+  },
 );
 
 // Task Team Projects Table - Projects associated with teams
@@ -101,7 +98,7 @@ export const task_team_projects = pgTable(
       statusIdx: index("task_team_projects_status_idx").on(table.status),
       createdByIdx: index("task_team_projects_created_by_idx").on(table.created_by),
     };
-  }
+  },
 );
 
 // Task Project Members Table - Users assigned to specific projects
@@ -126,12 +123,9 @@ export const task_project_members = pgTable(
     return {
       projectIdx: index("task_project_members_project_id_idx").on(table.project_id),
       userIdx: index("task_project_members_user_id_idx").on(table.user_id),
-      uniqueMembership: uniqueIndex("unique_project_user").on(
-        table.project_id,
-        table.user_id
-      ),
+      uniqueMembership: uniqueIndex("unique_project_user").on(table.project_id, table.user_id),
     };
-  }
+  },
 );
 
 // Default export
@@ -141,4 +135,3 @@ export default {
   task_team_projects,
   task_project_members,
 };
-

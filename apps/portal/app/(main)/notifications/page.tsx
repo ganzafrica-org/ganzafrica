@@ -1,63 +1,65 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Search, Bell, Check, X, Filter, ChevronDown } from 'lucide-react';
-import { Card } from '@workspace/ui/components/card';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
+import { useState } from "react";
+import { Search, Bell, Check, X, Filter, ChevronDown } from "lucide-react";
+import { Card } from "@workspace/ui/components/card";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
 
 // Mock notifications data with different types and priorities
 const mockNotifications = [
   {
     id: 1,
-    title: 'New Project Assignment',
-    message: 'You have been assigned to the Climate Adaptation Project',
-    time: '2 hours ago',
+    title: "New Project Assignment",
+    message: "You have been assigned to the Climate Adaptation Project",
+    time: "2 hours ago",
     isRead: false,
-    type: 'project',
-    priority: 'high'
+    type: "project",
+    priority: "high",
   },
   {
     id: 2,
-    title: 'Task Deadline Approaching',
+    title: "Task Deadline Approaching",
     message: 'The deadline for "Submit Project Report" is tomorrow',
-    time: '5 hours ago',
+    time: "5 hours ago",
     isRead: false,
-    type: 'task',
-    priority: 'high'
+    type: "task",
+    priority: "high",
   },
   {
     id: 3,
-    title: 'System Update',
-    message: 'System maintenance scheduled for tonight',
-    time: '1 day ago',
+    title: "System Update",
+    message: "System maintenance scheduled for tonight",
+    time: "1 day ago",
     isRead: true,
-    type: 'system',
-    priority: 'medium'
+    type: "system",
+    priority: "medium",
   },
   {
     id: 4,
-    title: 'New Comment on Project',
-    message: 'John Smith commented on Climate Adaptation Project',
-    time: '2 days ago',
+    title: "New Comment on Project",
+    message: "John Smith commented on Climate Adaptation Project",
+    time: "2 days ago",
     isRead: true,
-    type: 'project',
-    priority: 'low'
-  }
+    type: "project",
+    priority: "low",
+  },
 ];
 
 export default function NotificationsPage() {
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState("all");
   const [notifications, setNotifications] = useState(mockNotifications);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Filter notifications based on active tab and search query
-  const filteredNotifications = notifications.filter(notification => {
-    const matchesTab = activeTab === 'all' || 
-      (activeTab === 'unread' && !notification.isRead) ||
-      (activeTab === 'read' && notification.isRead);
-    
-    const matchesSearch = searchQuery === '' ||
+  const filteredNotifications = notifications.filter((notification) => {
+    const matchesTab =
+      activeTab === "all" ||
+      (activeTab === "unread" && !notification.isRead) ||
+      (activeTab === "read" && notification.isRead);
+
+    const matchesSearch =
+      searchQuery === "" ||
       notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       notification.message.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -65,29 +67,25 @@ export default function NotificationsPage() {
   });
 
   const markAsRead = (id: number) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, isRead: true } : notif
-      )
+    setNotifications((prev) =>
+      prev.map((notif) => (notif.id === id ? { ...notif, isRead: true } : notif)),
     );
   };
 
   const deleteNotification = (id: number) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+    setNotifications((prev) => prev.filter((notif) => notif.id !== id));
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, isRead: true }))
-    );
+    setNotifications((prev) => prev.map((notif) => ({ ...notif, isRead: true })));
   };
 
   const getTabCount = (tab: string) => {
     switch (tab) {
-      case 'unread':
-        return notifications.filter(n => !n.isRead).length;
-      case 'read':
-        return notifications.filter(n => n.isRead).length;
+      case "unread":
+        return notifications.filter((n) => !n.isRead).length;
+      case "read":
+        return notifications.filter((n) => n.isRead).length;
       default:
         return notifications.length;
     }
@@ -101,7 +99,7 @@ export default function NotificationsPage() {
           <h1 className="text-2xl font-bold dark:text-white">Notifications</h1>
           <p className="text-gray-500 dark:text-gray-400">Manage your notifications</p>
         </div>
-        <Button 
+        <Button
           onClick={markAllAsRead}
           variant="outline"
           className="text-gray-600 dark:text-gray-300"
@@ -116,34 +114,34 @@ export default function NotificationsPage() {
         <div className="flex justify-between items-center">
           <div className="flex space-x-2">
             <button
-              onClick={() => setActiveTab('all')}
+              onClick={() => setActiveTab("all")}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                activeTab === 'all'
-                  ? 'bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-400'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                activeTab === "all"
+                  ? "bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-400"
+                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
               }`}
             >
-              All ({getTabCount('all')})
+              All ({getTabCount("all")})
             </button>
             <button
-              onClick={() => setActiveTab('unread')}
+              onClick={() => setActiveTab("unread")}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                activeTab === 'unread'
-                  ? 'bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-400'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                activeTab === "unread"
+                  ? "bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-400"
+                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
               }`}
             >
-              Unread ({getTabCount('unread')})
+              Unread ({getTabCount("unread")})
             </button>
             <button
-              onClick={() => setActiveTab('read')}
+              onClick={() => setActiveTab("read")}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                activeTab === 'read'
-                  ? 'bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-400'
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+                activeTab === "read"
+                  ? "bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-400"
+                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
               }`}
             >
-              Read ({getTabCount('read')})
+              Read ({getTabCount("read")})
             </button>
           </div>
           <div className="flex items-center space-x-2">
@@ -171,15 +169,19 @@ export default function NotificationsPage() {
         {filteredNotifications.length === 0 ? (
           <div className="text-center py-12">
             <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No notifications</h3>
-            <p className="text-gray-500 dark:text-gray-400">You're all caught up! Check back later for new notifications.</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              No notifications
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              You're all caught up! Check back later for new notifications.
+            </p>
           </div>
         ) : (
           filteredNotifications.map((notification) => (
-            <Card 
-              key={notification.id} 
+            <Card
+              key={notification.id}
               className={`p-4 transition-colors ${
-                !notification.isRead ? 'bg-green-50/50 dark:bg-green-900/10' : ''
+                !notification.isRead ? "bg-green-50/50 dark:bg-green-900/10" : ""
               }`}
             >
               <div className="flex items-start justify-between">
@@ -191,14 +193,18 @@ export default function NotificationsPage() {
                         New
                       </span>
                     )}
-                    {notification.priority === 'high' && (
+                    {notification.priority === "high" && (
                       <span className="bg-red-100 text-red-800 text-xs px-2 py-0.5 rounded-full dark:bg-red-900/50 dark:text-red-400">
                         High Priority
                       </span>
                     )}
                   </div>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">{notification.message}</p>
-                  <span className="text-gray-400 dark:text-gray-500 text-xs">{notification.time}</span>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
+                    {notification.message}
+                  </p>
+                  <span className="text-gray-400 dark:text-gray-500 text-xs">
+                    {notification.time}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   {!notification.isRead && (

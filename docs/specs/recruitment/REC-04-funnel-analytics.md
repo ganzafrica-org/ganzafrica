@@ -22,17 +22,22 @@ for ("how many viewed, how many got to the form, how many applied").
 
 ```ts
 // backend/src/db/schema/recruitment/funnel.ts
-export const opportunity_funnel_events = pgTable("opportunity_funnel_events", {
-  id: bigserial("id", { mode: "number" }).primaryKey(),
-  opportunity_id: integer("opportunity_id").notNull()
-    .references(() => opportunities.id, { onDelete: "cascade" }),
-  event: text("event").notNull(),              // 'view' | 'form_start' | 'form_submit'
-  session_key: char("session_key", { length: 36 }).notNull(), // client-generated uuid, anonymous
-  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  oppEventIdx: index("funnel_opp_event_idx").on(t.opportunity_id, t.event, t.created_at),
-  dedupIdx: uniqueIndex("funnel_dedup_idx").on(t.opportunity_id, t.event, t.session_key),
-}));
+export const opportunity_funnel_events = pgTable(
+  "opportunity_funnel_events",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    opportunity_id: integer("opportunity_id")
+      .notNull()
+      .references(() => opportunities.id, { onDelete: "cascade" }),
+    event: text("event").notNull(), // 'view' | 'form_start' | 'form_submit'
+    session_key: char("session_key", { length: 36 }).notNull(), // client-generated uuid, anonymous
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    oppEventIdx: index("funnel_opp_event_idx").on(t.opportunity_id, t.event, t.created_at),
+    dedupIdx: uniqueIndex("funnel_dedup_idx").on(t.opportunity_id, t.event, t.session_key),
+  }),
+);
 ```
 
 Dedup via the unique index: one view/start/submit per session per posting — inserts use
@@ -40,10 +45,10 @@ Dedup via the unique index: one view/start/submit per session per posting — in
 
 ## 4. API
 
-| Endpoint | Auth | Behavior |
-|---|---|---|
-| `POST /opportunities/:id/events` `{event, session_key}` | public, rate-limit 60/min/IP | Validate event ∈ enum, session_key is uuid, opportunity exists+published; insert-ignore; always `204` (fire-and-forget — never block the page on errors; invalid input also 204 after validation failure is logged, to keep the client dumb) |
-| `GET /hr/recruitment/opportunities/:id/funnel` | requirePermission("recruitment:read") | `200 { views, form_starts, submissions, eligibility_blocks: [{rule_id, field_key, reject_message, hits}], conversion: {view_to_start, start_to_submit} }` — counts distinct session_keys; blocks from REC-01 hit_count |
+| Endpoint                                                | Auth                                  | Behavior                                                                                                                                                                                                                                     |
+| ------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /opportunities/:id/events` `{event, session_key}` | public, rate-limit 60/min/IP          | Validate event ∈ enum, session_key is uuid, opportunity exists+published; insert-ignore; always `204` (fire-and-forget — never block the page on errors; invalid input also 204 after validation failure is logged, to keep the client dumb) |
+| `GET /hr/recruitment/opportunities/:id/funnel`          | requirePermission("recruitment:read") | `200 { views, form_starts, submissions, eligibility_blocks: [{rule_id, field_key, reject_message, hits}], conversion: {view_to_start, start_to_submit} }` — counts distinct session_keys; blocks from REC-01 hit_count                       |
 
 Counts are single GROUP BY queries; no rollup table unless volume ever demands it (note in
 code comment where the rollup would go).
@@ -51,6 +56,7 @@ code comment where the rollup would go).
 ## 5. Frontend
 
 **apps/web instrumentation** (tiny client util `lib/funnel.ts`):
+
 - `session_key`: `crypto.randomUUID()` in `sessionStorage` (per-tab-session — acceptable
   granularity; NOT localStorage, no cross-visit tracking, no consent-banner implications).
 - `view`: posting detail page mount (useEffect once).
@@ -60,6 +66,7 @@ code comment where the rollup would go).
 - `navigator.sendBeacon` where available, fetch keepalive fallback; failures swallowed.
 
 **apps/hr funnel widget** `components/recruitment/funnel-widget.tsx`:
+
 - Horizontal funnel bar (views → starts → submits) with absolute numbers + conversion %,
   and an "Eligibility blocks" list (reject_message + count).
 - Placed on the posting card (REC-03 §5a compact variant) and the pipeline page header
@@ -68,13 +75,14 @@ code comment where the rollup would go).
 ## 6. Tests to write FIRST
 
 Backend:
+
 1. Same session posts `view` 3× → one row; distinct sessions → 3.
 2. Invalid event name / bad uuid / unpublished opportunity → 204, no row, warning logged.
 3. Funnel GET math: fixture (5 views, 3 starts, 2 submissions, rule with 4 hits) → exact JSON.
 4. Permissions: staff 403; director (recruitment:read) 200.
-Frontend (web): view fires once per mount; form_start once despite multiple keystrokes;
-uses sendBeacon when defined (spy).
-E2E: extend the REC-01 apply e2e — after the run, HR funnel endpoint reflects 1/1/1.
+   Frontend (web): view fires once per mount; form_start once despite multiple keystrokes;
+   uses sendBeacon when defined (spy).
+   E2E: extend the REC-01 apply e2e — after the run, HR funnel endpoint reflects 1/1/1.
 
 ## 7. Acceptance criteria
 

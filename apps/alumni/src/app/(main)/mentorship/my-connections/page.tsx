@@ -8,14 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import {
-  Users,
-  Calendar,
-  Target,
-  Clock,
-  CheckCircle,
-  ChevronRight,
-} from "lucide-react";
+import { Users, Calendar, Target, Clock, CheckCircle, ChevronRight } from "lucide-react";
 import { mentorshipApi } from "@/lib/api/alumni";
 
 // Types
@@ -98,12 +91,8 @@ const MentorshipCard = ({
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-gray-900">
-                {mentorship.mentee.name}
-              </h3>
-              <p className="text-sm text-gray-600">
-                {mentorship.mentee.fellowRole}
-              </p>
+              <h3 className="font-semibold text-gray-900">{mentorship.mentee.name}</h3>
+              <p className="text-sm text-gray-600">{mentorship.mentee.fellowRole}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -111,8 +100,7 @@ const MentorshipCard = ({
               variant={mentorship.status === "active" ? "default" : "secondary"}
               className={mentorship.status === "active" ? "bg-green-500" : ""}
             >
-              {mentorship.status.charAt(0).toUpperCase() +
-                mentorship.status.slice(1)}
+              {mentorship.status.charAt(0).toUpperCase() + mentorship.status.slice(1)}
             </Badge>
             <ChevronRight className="h-5 w-5 text-gray-400" />
           </div>
@@ -122,12 +110,8 @@ const MentorshipCard = ({
           {/* Progress */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">
-                Progress
-              </span>
-              <span className="text-sm text-gray-600">
-                {mentorship.progress}%
-              </span>
+              <span className="text-sm font-medium text-gray-700">Progress</span>
+              <span className="text-sm text-gray-600">{mentorship.progress}%</span>
             </div>
             <Progress value={mentorship.progress} className="h-2" />
           </div>
@@ -143,9 +127,7 @@ const MentorshipCard = ({
                     variant="outline"
                     className={`text-xs ${goal.isCompleted ? "bg-green-50 text-green-700" : ""}`}
                   >
-                    {goal.isCompleted && (
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                    )}
+                    {goal.isCompleted && <CheckCircle className="h-3 w-3 mr-1" />}
                     {goal.title}
                   </Badge>
                 ))}
@@ -164,17 +146,13 @@ const MentorshipCard = ({
               <CheckCircle className="h-4 w-4" />
               <span>
                 {mentorship.sessionsCompleted}
-                {mentorship.totalSessions > 0 &&
-                  `/${mentorship.totalSessions}`}{" "}
-                sessions
+                {mentorship.totalSessions > 0 && `/${mentorship.totalSessions}`} sessions
               </span>
             </div>
             {mentorship.startDate && (
               <div className="flex items-center gap-2 text-gray-600">
                 <Clock className="h-4 w-4" />
-                <span>
-                  Started {new Date(mentorship.startDate).toLocaleDateString()}
-                </span>
+                <span>Started {new Date(mentorship.startDate).toLocaleDateString()}</span>
               </div>
             )}
           </div>
@@ -184,14 +162,8 @@ const MentorshipCard = ({
             <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-2 rounded">
               <Calendar className="h-4 w-4" />
               <span>
-                Next:{" "}
-                {new Date(
-                  mentorship.nextSession.scheduledAt,
-                ).toLocaleDateString()}{" "}
-                at{" "}
-                {new Date(
-                  mentorship.nextSession.scheduledAt,
-                ).toLocaleTimeString([], {
+                Next: {new Date(mentorship.nextSession.scheduledAt).toLocaleDateString()} at{" "}
+                {new Date(mentorship.nextSession.scheduledAt).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
@@ -226,14 +198,9 @@ export default function MyConnectionsPage() {
   }, []);
 
   const activeMentorships = mentorships.filter((m) => m.status === "active");
-  const completedMentorships = mentorships.filter(
-    (m) => m.status === "completed",
-  );
+  const completedMentorships = mentorships.filter((m) => m.status === "completed");
 
-  const totalSessions = mentorships.reduce(
-    (acc, m) => acc + m.sessionsCompleted,
-    0,
-  );
+  const totalSessions = mentorships.reduce((acc, m) => acc + m.sessionsCompleted, 0);
 
   return (
     <div className="space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
@@ -243,9 +210,7 @@ export default function MyConnectionsPage() {
           <h1 className="text-2xl font-bold bg-blue-secondary bg-clip-text text-transparent">
             My Connections
           </h1>
-          <p className="text-gray-600">
-            Manage your mentorship relationships with fellows
-          </p>
+          <p className="text-gray-600">Manage your mentorship relationships with fellows</p>
         </div>
       </div>
 
@@ -253,9 +218,7 @@ export default function MyConnectionsPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-100">
-              Active Mentees
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-emerald-100">Active Mentees</CardTitle>
             <Users className="h-5 w-5 text-emerald-200" />
           </CardHeader>
           <CardContent>
@@ -266,9 +229,7 @@ export default function MyConnectionsPage() {
 
         <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-100">
-              Total Sessions
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-100">Total Sessions</CardTitle>
             <Target className="h-5 w-5 text-blue-200" />
           </CardHeader>
           <CardContent>
@@ -279,15 +240,11 @@ export default function MyConnectionsPage() {
 
         <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-100">
-              Completed
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-purple-100">Completed</CardTitle>
             <CheckCircle className="h-5 w-5 text-purple-200" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">
-              {completedMentorships.length}
-            </div>
+            <div className="text-3xl font-bold">{completedMentorships.length}</div>
             <p className="text-xs text-purple-100">Mentorships completed</p>
           </CardContent>
         </Card>
@@ -295,9 +252,7 @@ export default function MyConnectionsPage() {
 
       {/* Active Mentorships */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Active Mentorships
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Active Mentorships</h2>
         {isLoading ? (
           <MentorshipsSkeleton />
         ) : activeMentorships.length > 0 ? (
@@ -306,9 +261,7 @@ export default function MyConnectionsPage() {
               <MentorshipCard
                 key={mentorship.id}
                 mentorship={mentorship}
-                onClick={() =>
-                  router.push(`/mentorship/my-connections/${mentorship.id}`)
-                }
+                onClick={() => router.push(`/mentorship/my-connections/${mentorship.id}`)}
               />
             ))}
           </div>
@@ -316,12 +269,8 @@ export default function MyConnectionsPage() {
           <Card className="shadow-sm">
             <CardContent className="p-12 text-center">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No active mentorships
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Start mentoring by finding fellows to guide
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No active mentorships</h3>
+              <p className="text-gray-600 mb-4">Start mentoring by finding fellows to guide</p>
               <Button
                 className="bg-green-primary hover:bg-green-600"
                 onClick={() => router.push("/mentorship")}
@@ -337,17 +286,13 @@ export default function MyConnectionsPage() {
       {/* Completed Mentorships */}
       {completedMentorships.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Completed Mentorships
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Completed Mentorships</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             {completedMentorships.map((mentorship) => (
               <MentorshipCard
                 key={mentorship.id}
                 mentorship={mentorship}
-                onClick={() =>
-                  router.push(`/mentorship/my-connections/${mentorship.id}`)
-                }
+                onClick={() => router.push(`/mentorship/my-connections/${mentorship.id}`)}
               />
             ))}
           </div>

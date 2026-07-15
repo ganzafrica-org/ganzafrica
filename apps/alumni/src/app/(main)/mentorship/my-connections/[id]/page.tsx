@@ -128,9 +128,7 @@ export default function ConnectionDetailPage() {
   const fetchConnection = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await mentorshipApi.getConnection(
-        parseInt(connectionId),
-      );
+      const response = await mentorshipApi.getConnection(parseInt(connectionId));
       setConnection(response.connection);
       setTotalSessions(response.connection.totalSessions || 0);
     } catch (err) {
@@ -244,10 +242,7 @@ export default function ConnectionDetailPage() {
       const message = encodeURIComponent(
         `Hi ${connection.mentee.name}, I wanted to connect regarding our mentorship.`,
       );
-      window.open(
-        `https://wa.me/${connection.mentee.phone}?text=${message}`,
-        "_blank",
-      );
+      window.open(`https://wa.me/${connection.mentee.phone}?text=${message}`, "_blank");
     }
   };
 
@@ -264,9 +259,7 @@ export default function ConnectionDetailPage() {
       <div className="p-6 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen">
         <Card className="max-w-md mx-auto mt-12">
           <CardContent className="p-8 text-center">
-            <p className="text-red-600 mb-4">
-              {error || "Connection not found"}
-            </p>
+            <p className="text-red-600 mb-4">{error || "Connection not found"}</p>
             <Button onClick={() => router.push("/mentorship/my-connections")}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Connections
@@ -277,12 +270,8 @@ export default function ConnectionDetailPage() {
     );
   }
 
-  const upcomingSessions = connection.sessions.filter(
-    (s) => s.status === "scheduled",
-  );
-  const pastSessions = connection.sessions.filter(
-    (s) => s.status !== "scheduled",
-  );
+  const upcomingSessions = connection.sessions.filter((s) => s.status === "scheduled");
+  const pastSessions = connection.sessions.filter((s) => s.status !== "scheduled");
 
   return (
     <div className="space-y-6 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
@@ -314,26 +303,18 @@ export default function ConnectionDetailPage() {
                 </AvatarFallback>
               </Avatar>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {connection.mentee.name}
-                </h2>
+                <h2 className="text-xl font-bold text-gray-900">{connection.mentee.name}</h2>
                 <p className="text-gray-600">{connection.mentee.fellowRole}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge
-                    variant={
-                      connection.status === "active" ? "default" : "secondary"
-                    }
-                    className={
-                      connection.status === "active" ? "bg-green-500" : ""
-                    }
+                    variant={connection.status === "active" ? "default" : "secondary"}
+                    className={connection.status === "active" ? "bg-green-500" : ""}
                   >
-                    {connection.status.charAt(0).toUpperCase() +
-                      connection.status.slice(1)}
+                    {connection.status.charAt(0).toUpperCase() + connection.status.slice(1)}
                   </Badge>
                   {connection.startDate && (
                     <span className="text-sm text-gray-500">
-                      Since{" "}
-                      {new Date(connection.startDate).toLocaleDateString()}
+                      Since {new Date(connection.startDate).toLocaleDateString()}
                     </span>
                   )}
                 </div>
@@ -356,9 +337,7 @@ export default function ConnectionDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    window.open(`mailto:${connection.mentee.email}`, "_blank")
-                  }
+                  onClick={() => window.open(`mailto:${connection.mentee.email}`, "_blank")}
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Email
@@ -375,22 +354,17 @@ export default function ConnectionDetailPage() {
                   <DialogHeader>
                     <DialogTitle>Mentorship Settings</DialogTitle>
                     <DialogDescription>
-                      Configure the total number of sessions for this
-                      mentorship.
+                      Configure the total number of sessions for this mentorship.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div>
-                      <label className="text-sm font-medium">
-                        Total Sessions
-                      </label>
+                      <label className="text-sm font-medium">Total Sessions</label>
                       <Input
                         type="number"
                         min={0}
                         value={totalSessions}
-                        onChange={(e) =>
-                          setTotalSessions(parseInt(e.target.value) || 0)
-                        }
+                        onChange={(e) => setTotalSessions(parseInt(e.target.value) || 0)}
                         className="mt-1"
                       />
                       <p className="text-xs text-gray-500 mt-1">
@@ -399,10 +373,7 @@ export default function ConnectionDetailPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsSettingsOpen(false)}
-                    >
+                    <Button variant="outline" onClick={() => setIsSettingsOpen(false)}>
                       Cancel
                     </Button>
                     <Button
@@ -423,9 +394,7 @@ export default function ConnectionDetailPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-100">
-              Sessions
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-emerald-100">Sessions</CardTitle>
             <Calendar className="h-5 w-5 text-emerald-200" />
           </CardHeader>
           <CardContent>
@@ -439,15 +408,12 @@ export default function ConnectionDetailPage() {
 
         <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-100">
-              Goals
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-100">Goals</CardTitle>
             <Target className="h-5 w-5 text-blue-200" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {connection.goals.filter((g) => g.isCompleted).length}/
-              {connection.goals.length}
+              {connection.goals.filter((g) => g.isCompleted).length}/{connection.goals.length}
             </div>
             <p className="text-xs text-blue-100">Goals completed</p>
           </CardContent>
@@ -455,17 +421,12 @@ export default function ConnectionDetailPage() {
 
         <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-100">
-              Progress
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-purple-100">Progress</CardTitle>
             <CheckCircle className="h-5 w-5 text-purple-200" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{connection.progress}%</div>
-            <Progress
-              value={connection.progress}
-              className="h-2 mt-2 bg-purple-400"
-            />
+            <Progress value={connection.progress} className="h-2 mt-2 bg-purple-400" />
           </CardContent>
         </Card>
       </div>
@@ -487,41 +448,30 @@ export default function ConnectionDetailPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add New Goal</DialogTitle>
-                <DialogDescription>
-                  Create a new goal for this mentorship
-                </DialogDescription>
+                <DialogDescription>Create a new goal for this mentorship</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
                   <label className="text-sm font-medium">Title</label>
                   <Input
                     value={newGoal.title}
-                    onChange={(e) =>
-                      setNewGoal({ ...newGoal, title: e.target.value })
-                    }
+                    onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
                     placeholder="e.g., Master Python basics"
                     className="mt-1"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">
-                    Description (optional)
-                  </label>
+                  <label className="text-sm font-medium">Description (optional)</label>
                   <Textarea
                     value={newGoal.description}
-                    onChange={(e) =>
-                      setNewGoal({ ...newGoal, description: e.target.value })
-                    }
+                    onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
                     placeholder="Describe the goal..."
                     className="mt-1"
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAddGoalOpen(false)}
-                >
+                <Button variant="outline" onClick={() => setIsAddGoalOpen(false)}>
                   Cancel
                 </Button>
                 <Button
@@ -547,16 +497,12 @@ export default function ConnectionDetailPage() {
                 <div
                   key={goal.id}
                   className={`flex items-start gap-3 p-3 rounded-lg border ${
-                    goal.isCompleted
-                      ? "bg-green-50 border-green-200"
-                      : "bg-white"
+                    goal.isCompleted ? "bg-green-50 border-green-200" : "bg-white"
                   }`}
                 >
                   <Checkbox
                     checked={goal.isCompleted}
-                    onCheckedChange={() =>
-                      handleToggleGoal(goal.id, goal.isCompleted)
-                    }
+                    onCheckedChange={() => handleToggleGoal(goal.id, goal.isCompleted)}
                     className="mt-1"
                   />
                   <div className="flex-1">
@@ -568,14 +514,11 @@ export default function ConnectionDetailPage() {
                       {goal.title}
                     </p>
                     {goal.description && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        {goal.description}
-                      </p>
+                      <p className="text-sm text-gray-600 mt-1">{goal.description}</p>
                     )}
                     {goal.completedAt && (
                       <p className="text-xs text-green-600 mt-1">
-                        Completed{" "}
-                        {new Date(goal.completedAt).toLocaleDateString()}
+                        Completed {new Date(goal.completedAt).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -601,10 +544,7 @@ export default function ConnectionDetailPage() {
             <Calendar className="h-5 w-5 text-blue-secondary" />
             Sessions
           </CardTitle>
-          <Dialog
-            open={isScheduleSessionOpen}
-            onOpenChange={setIsScheduleSessionOpen}
-          >
+          <Dialog open={isScheduleSessionOpen} onOpenChange={setIsScheduleSessionOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="bg-blue-secondary hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
@@ -614,20 +554,14 @@ export default function ConnectionDetailPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Schedule Session</DialogTitle>
-                <DialogDescription>
-                  Schedule a new mentorship session
-                </DialogDescription>
+                <DialogDescription>Schedule a new mentorship session</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div>
-                  <label className="text-sm font-medium">
-                    Title (optional)
-                  </label>
+                  <label className="text-sm font-medium">Title (optional)</label>
                   <Input
                     value={newSession.title}
-                    onChange={(e) =>
-                      setNewSession({ ...newSession, title: e.target.value })
-                    }
+                    onChange={(e) => setNewSession({ ...newSession, title: e.target.value })}
                     placeholder="e.g., Weekly check-in"
                     className="mt-1"
                   />
@@ -670,24 +604,17 @@ export default function ConnectionDetailPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">
-                    Notes (optional)
-                  </label>
+                  <label className="text-sm font-medium">Notes (optional)</label>
                   <Textarea
                     value={newSession.notes}
-                    onChange={(e) =>
-                      setNewSession({ ...newSession, notes: e.target.value })
-                    }
+                    onChange={(e) => setNewSession({ ...newSession, notes: e.target.value })}
                     placeholder="Session agenda or notes..."
                     className="mt-1"
                   />
                 </div>
               </div>
               <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsScheduleSessionOpen(false)}
-                >
+                <Button variant="outline" onClick={() => setIsScheduleSessionOpen(false)}>
                   Cancel
                 </Button>
                 <Button
@@ -712,9 +639,7 @@ export default function ConnectionDetailPage() {
               {/* Upcoming Sessions */}
               {upcomingSessions.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                    Upcoming Sessions
-                  </h3>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Upcoming Sessions</h3>
                   <div className="space-y-3">
                     {upcomingSessions.map((session) => (
                       <div
@@ -726,17 +651,13 @@ export default function ConnectionDetailPage() {
                             <Calendar className="h-5 w-5" />
                           </div>
                           <div>
-                            <p className="font-medium">
-                              {session.title || "Mentorship Session"}
-                            </p>
+                            <p className="font-medium">{session.title || "Mentorship Session"}</p>
                             <p className="text-sm text-gray-600">
                               {new Date(session.scheduledAt).toLocaleString()} •{" "}
                               {session.durationMinutes} min
                             </p>
                             {session.notes && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {session.notes}
-                              </p>
+                              <p className="text-xs text-gray-500 mt-1">{session.notes}</p>
                             )}
                           </div>
                         </div>
@@ -745,9 +666,7 @@ export default function ConnectionDetailPage() {
                             size="sm"
                             variant="outline"
                             className="text-green-600 border-green-600 hover:bg-green-50"
-                            onClick={() =>
-                              handleUpdateSessionStatus(session.id, "completed")
-                            }
+                            onClick={() => handleUpdateSessionStatus(session.id, "completed")}
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Complete
@@ -770,9 +689,7 @@ export default function ConnectionDetailPage() {
               {/* Past Sessions */}
               {pastSessions.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                    Past Sessions
-                  </h3>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Past Sessions</h3>
                   <div className="space-y-3">
                     {pastSessions.map((session) => (
                       <div
@@ -786,9 +703,7 @@ export default function ConnectionDetailPage() {
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${
-                              session.status === "completed"
-                                ? "bg-green-500"
-                                : "bg-gray-400"
+                              session.status === "completed" ? "bg-green-500" : "bg-gray-400"
                             }`}
                           >
                             {session.status === "completed" ? (
@@ -798,22 +713,14 @@ export default function ConnectionDetailPage() {
                             )}
                           </div>
                           <div>
-                            <p className="font-medium">
-                              {session.title || "Mentorship Session"}
-                            </p>
+                            <p className="font-medium">{session.title || "Mentorship Session"}</p>
                             <p className="text-sm text-gray-600">
                               {new Date(session.scheduledAt).toLocaleString()}
                             </p>
                             <Badge
-                              variant={
-                                session.status === "completed"
-                                  ? "default"
-                                  : "secondary"
-                              }
+                              variant={session.status === "completed" ? "default" : "secondary"}
                               className={`mt-1 ${
-                                session.status === "completed"
-                                  ? "bg-green-500"
-                                  : ""
+                                session.status === "completed" ? "bg-green-500" : ""
                               }`}
                             >
                               {session.status}

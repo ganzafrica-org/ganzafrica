@@ -1,11 +1,4 @@
-﻿import {
-  boolean,
-  integer,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+﻿import { boolean, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { timestampFields } from "../common";
 import { hrRoleEnum, userStatusEnum } from "./hr.enums";
 import { users } from "../users";

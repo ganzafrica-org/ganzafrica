@@ -49,8 +49,7 @@ export function getCurrentUserRole(): UserRole | null {
       return null;
     }
 
-    const userStr =
-      localStorage.getItem("alumni_user") || localStorage.getItem("user");
+    const userStr = localStorage.getItem("alumni_user") || localStorage.getItem("user");
     if (userStr) {
       const user = JSON.parse(userStr);
       return {

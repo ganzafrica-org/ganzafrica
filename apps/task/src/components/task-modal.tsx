@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
-import { X, Users, Edit2, Paperclip, Upload, Trash2, MessageSquare, FileText, Link as LinkIcon, ExternalLink } from "lucide-react";
+import {
+  X,
+  Users,
+  Edit2,
+  Paperclip,
+  Upload,
+  Trash2,
+  MessageSquare,
+  FileText,
+  Link as LinkIcon,
+  ExternalLink,
+} from "lucide-react";
 import { Task, TeamMember, Status, Priority } from "@/lib/types";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { InputDialog } from "@/components/input-dialog";
@@ -49,7 +60,9 @@ export function TaskModal({
   const [loadingTeams, setLoadingTeams] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [showComments, setShowComments] = useState(false);
-  const [taskTeamProjects, setTaskTeamProjects] = useState<Array<{ id: number; team_id: number; name: string; color?: string }>>([]);
+  const [taskTeamProjects, setTaskTeamProjects] = useState<
+    Array<{ id: number; team_id: number; name: string; color?: string }>
+  >([]);
   const [teamsLoaded, setTeamsLoaded] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   // Comment UX state
@@ -64,8 +77,8 @@ export function TaskModal({
   // Helper function to get current user ID
   const getCurrentUserId = (): number | null => {
     try {
-      if (typeof window === 'undefined') return null;
-      const userStr = localStorage.getItem('task_user');
+      if (typeof window === "undefined") return null;
+      const userStr = localStorage.getItem("task_user");
       if (userStr) {
         const user = JSON.parse(userStr);
         return user.id || null;
@@ -107,7 +120,7 @@ export function TaskModal({
         return;
       }
       const numericId = parseInt(taskId);
-      
+
       // Wait for teams and projects to be loaded before determining team
       // This ensures we have the correct mapping
       if (!teamsLoaded || teams.length === 0 || taskTeamProjects.length === 0) {
@@ -125,7 +138,7 @@ export function TaskModal({
           }
         }
       }
-      
+
       // Wait for teams and projects to be loaded before determining team
       // This ensures we have the correct mapping
       if (!teamsLoaded || teams.length === 0 || taskTeamProjects.length === 0) {
@@ -137,21 +150,21 @@ export function TaskModal({
           try {
             const resp = await taskApi.getTaskTeamProjects();
             setTaskTeamProjects(resp.projects || []);
-          } catch (e) {
-          }
+          } catch (e) {}
         }
       }
-      
+
       // Use unrestricted endpoint for management mode, regular endpoint for individual mode
-      const response = mode === "management" 
-        ? await taskApi.getTaskByIdUnrestricted(numericId)
-        : await taskApi.getTaskById(numericId);
-        
+      const response =
+        mode === "management"
+          ? await taskApi.getTaskByIdUnrestricted(numericId)
+          : await taskApi.getTaskById(numericId);
+
       if (response.task) {
         // Extract user information from assignees and comments
         // Preserve existing taskUsers data (from teams, etc.) and merge with new data
         let taskUsers: Map<string, any>;
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           const existing = (window as any).taskUsers;
           if (existing && existing instanceof Map) {
             taskUsers = new Map(existing); // Create a copy to avoid mutations
@@ -161,7 +174,7 @@ export function TaskModal({
         } else {
           taskUsers = new Map();
         }
-        
+
         // Extract user info from assignees - merge with existing data
         if (response.task.assignees && Array.isArray(response.task.assignees)) {
           response.task.assignees.forEach((assignee: any) => {
@@ -173,18 +186,18 @@ export function TaskModal({
                 const existingUser = taskUsers.get(userId);
                 taskUsers.set(userId, {
                   id: userId,
-                  name: assignee.user.name || existingUser?.name || 'Unknown User',
-                  email: assignee.user.email || existingUser?.email || '',
-                  avatar_url: assignee.user.avatar_url || existingUser?.avatar_url || '',
+                  name: assignee.user.name || existingUser?.name || "Unknown User",
+                  email: assignee.user.email || existingUser?.email || "",
+                  avatar_url: assignee.user.avatar_url || existingUser?.avatar_url || "",
                 });
               } else if (assignee.user_name) {
                 // Fallback: direct user_name property
                 const existingUser = taskUsers.get(userId);
                 taskUsers.set(userId, {
                   id: userId,
-                  name: assignee.user_name || existingUser?.name || 'Unknown User',
-                  email: assignee.user_email || existingUser?.email || '',
-                  avatar_url: assignee.user_avatar_url || existingUser?.avatar_url || '',
+                  name: assignee.user_name || existingUser?.name || "Unknown User",
+                  email: assignee.user_email || existingUser?.email || "",
+                  avatar_url: assignee.user_avatar_url || existingUser?.avatar_url || "",
                 });
               } else if (!taskUsers.has(userId)) {
                 // If user object is missing and we don't have it in cache, log for debugging
@@ -192,7 +205,7 @@ export function TaskModal({
             }
           });
         }
-        
+
         // Extract user info from comments - merge with existing data
         if (response.task.comments && Array.isArray(response.task.comments)) {
           response.task.comments.forEach((comment: any) => {
@@ -204,18 +217,18 @@ export function TaskModal({
                 const existingUser = taskUsers.get(userId);
                 taskUsers.set(userId, {
                   id: userId,
-                  name: comment.user.name || existingUser?.name || 'Unknown User',
-                  email: comment.user.email || existingUser?.email || '',
-                  avatar_url: comment.user.avatar_url || existingUser?.avatar_url || '',
+                  name: comment.user.name || existingUser?.name || "Unknown User",
+                  email: comment.user.email || existingUser?.email || "",
+                  avatar_url: comment.user.avatar_url || existingUser?.avatar_url || "",
                 });
               } else if (comment.user_name) {
                 // Fallback: direct user_name property
                 const existingUser = taskUsers.get(userId);
                 taskUsers.set(userId, {
                   id: userId,
-                  name: comment.user_name || existingUser?.name || 'Unknown User',
-                  email: comment.user_email || existingUser?.email || '',
-                  avatar_url: comment.user_avatar_url || existingUser?.avatar_url || '',
+                  name: comment.user_name || existingUser?.name || "Unknown User",
+                  email: comment.user_email || existingUser?.email || "",
+                  avatar_url: comment.user_avatar_url || existingUser?.avatar_url || "",
                 });
               } else if (!taskUsers.has(userId)) {
                 // If user object is missing and we don't have it in cache, log for debugging
@@ -223,23 +236,23 @@ export function TaskModal({
             }
           });
         }
-        
+
         // Store updated taskUsers in window (merged with existing data)
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           (window as any).taskUsers = taskUsers;
         }
-        
+
         // Trigger userInfoVersion update to refresh memberById
-        if (typeof window !== 'undefined' && (window as any).refreshUserInfo) {
+        if (typeof window !== "undefined" && (window as any).refreshUserInfo) {
           (window as any).refreshUserInfo();
         }
-        
+
         // Normalize backend comments to frontend format
         const normalizedComments = (response.task.comments || []).map((c: any) => ({
           id: (c.id ?? c.comment_id ?? Math.random().toString(36).slice(2)).toString(),
           userId: (c.user_id ?? c.userId ?? c.user?.id)?.toString(),
-          message: c.content ?? c.message ?? c.text ?? '',
-          text: c.content ?? c.message ?? c.text ?? '',
+          message: c.content ?? c.message ?? c.text ?? "",
+          text: c.content ?? c.message ?? c.text ?? "",
           createdAt: c.created_at ?? c.createdAt ?? new Date().toISOString(),
         }));
 
@@ -247,7 +260,7 @@ export function TaskModal({
         // Otherwise, get from project mapping
         let teamInfo: { id: string; name: string; color: string; memberIds: string[] } | undefined;
         let teamIdStr: string | undefined;
-        
+
         // PRIORITY 1: Use team from task object if available (preserves manager's selection)
         const isManager = isCurrentUserAdminOrManager();
         if (isManager && task?.team) {
@@ -256,20 +269,20 @@ export function TaskModal({
           teamIdStr = task.team.id;
         } else if (task?.teamId) {
           // If we have teamId but not full team object, try to find it in loaded teams
-          const foundTeam = teams.find(t => t.id === parseInt(task.teamId || '0'));
+          const foundTeam = teams.find((t) => t.id === parseInt(task.teamId || "0"));
           if (foundTeam) {
             teamInfo = {
               id: String(foundTeam.id),
               name: foundTeam.name,
-              color: foundTeam.color || '#076297',
-              memberIds: []
+              color: foundTeam.color || "#076297",
+              memberIds: [],
             };
             teamIdStr = task.teamId;
           } else {
             teamIdStr = task.teamId;
           }
         }
-        
+
         // PRIORITY 2: If no team info yet, get from project mapping (for non-managers or when team not selected)
         if (!teamInfo && response.task.project_id) {
           // Make sure we have the latest taskTeamProjects (might have been loaded async)
@@ -280,45 +293,46 @@ export function TaskModal({
               // Check if user is admin or manager - if not, filter projects
               const isAdminOrManager = isCurrentUserAdminOrManager();
               let resp;
-              
+
               if (isAdminOrManager) {
                 resp = await taskApi.getTaskTeamProjects();
               } else {
-                const currentUserId = typeof window !== 'undefined' ? (() => {
-                  try {
-                    const userStr = localStorage.getItem('task_user');
-                    if (userStr) {
-                      const user = JSON.parse(userStr);
-                      return user.id;
-                    }
-                  } catch (error) {
-                  }
-                  return null;
-                })() : null;
-                
+                const currentUserId =
+                  typeof window !== "undefined"
+                    ? (() => {
+                        try {
+                          const userStr = localStorage.getItem("task_user");
+                          if (userStr) {
+                            const user = JSON.parse(userStr);
+                            return user.id;
+                          }
+                        } catch (error) {}
+                        return null;
+                      })()
+                    : null;
+
                 if (currentUserId) {
                   resp = await taskApi.getTaskTeamProjects(currentUserId);
                 } else {
                   resp = { projects: [] };
                 }
               }
-              
+
               setTaskTeamProjects(resp.projects || []);
               currentProjects = resp.projects || [];
-            } catch (e) {
-            }
+            } catch (e) {}
           }
-          
-          const mapped = currentProjects.find(p => p.id === response.task.project_id);
+
+          const mapped = currentProjects.find((p) => p.id === response.task.project_id);
           if (mapped) {
             // Find the team from loaded teams - this should match the project's team_id
-            const team = teams.find(t => t.id === mapped.team_id);
+            const team = teams.find((t) => t.id === mapped.team_id);
             if (team) {
               teamInfo = {
                 id: String(team.id),
                 name: team.name,
-                color: team.color || '#076297',
-                memberIds: []
+                color: team.color || "#076297",
+                memberIds: [],
               };
               teamIdStr = String(team.id);
             } else {
@@ -334,13 +348,16 @@ export function TaskModal({
         const fullTask: Task = {
           id: response.task.id.toString(),
           title: response.task.title,
-          description: response.task.description || '',
-          deliverables: response.task.deliverables || '',
+          description: response.task.description || "",
+          deliverables: response.task.deliverables || "",
           status: response.task.status as Status,
           priority: response.task.priority as Priority,
-          dueDate: response.task.due_date ? new Date(response.task.due_date).toISOString() : undefined,
+          dueDate: response.task.due_date
+            ? new Date(response.task.due_date).toISOString()
+            : undefined,
           labels: response.task.labels || [],
-          assignees: response.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
+          assignees:
+            response.task.assignees?.map((a: any) => a.user_id?.toString() || a.toString()) || [],
           teamId: teamIdStr,
           team: teamInfo,
           projectId: response.task.project_id,
@@ -348,7 +365,7 @@ export function TaskModal({
           attachments: response.task.attachments || [],
           created_by: response.task.created_by,
           creator_role_id: response.task.creator_role_id,
-          creator_role_name: response.task.creator_role_name
+          creator_role_name: response.task.creator_role_name,
         };
         setDraft(fullTask);
 
@@ -358,13 +375,13 @@ export function TaskModal({
         } else if (response.task.project_id) {
           // Fallback: try to get from project mapping
           try {
-            const mapped = taskTeamProjects.find(p => p.id === response.task.project_id);
+            const mapped = taskTeamProjects.find((p) => p.id === response.task.project_id);
             if (mapped) {
               setSelectedTeamId(mapped.team_id);
             }
           } catch {}
         }
-        
+
         // Set selected project ID for managers
         if (response.task.project_id) {
           setSelectedProjectId(response.task.project_id);
@@ -375,13 +392,13 @@ export function TaskModal({
         } else if (response.task.project_id) {
           // Fallback: try to get from project mapping
           try {
-            const mapped = taskTeamProjects.find(p => p.id === response.task.project_id);
+            const mapped = taskTeamProjects.find((p) => p.id === response.task.project_id);
             if (mapped) {
               setSelectedTeamId(mapped.team_id);
             }
           } catch {}
         }
-        
+
         // Set selected project ID for managers
         if (response.task.project_id) {
           setSelectedProjectId(response.task.project_id);
@@ -406,13 +423,13 @@ export function TaskModal({
         if (task.team?.id) {
           setSelectedTeamId(parseInt(task.team.id));
         } else if (task.teamId) {
-          setSelectedTeamId(parseInt(task.teamId || '0'));
+          setSelectedTeamId(parseInt(task.teamId || "0"));
         }
         // Preserve team from task if it exists
         if (task.team?.id) {
           setSelectedTeamId(parseInt(task.team.id));
         } else if (task.teamId) {
-          setSelectedTeamId(parseInt(task.teamId || '0'));
+          setSelectedTeamId(parseInt(task.teamId || "0"));
         }
       }
     } else {
@@ -422,16 +439,16 @@ export function TaskModal({
       if (task?.team?.id) {
         setSelectedTeamId(parseInt(task.team.id));
       } else if (task?.teamId) {
-        setSelectedTeamId(parseInt(task.teamId || '0'));
+        setSelectedTeamId(parseInt(task.teamId || "0"));
       }
       // Preserve team from task if it exists
       if (task?.team?.id) {
         setSelectedTeamId(parseInt(task.team.id));
       } else if (task?.teamId) {
-        setSelectedTeamId(parseInt(task.teamId || '0'));
+        setSelectedTeamId(parseInt(task.teamId || "0"));
       }
     }
-    
+
     if (open && !teamsLoaded) {
       loadTeams();
       // Load task-team projects for team->project mapping
@@ -440,25 +457,28 @@ export function TaskModal({
           // Check if user is admin or manager - if not, filter projects to only show projects they are members of
           const isAdminOrManager = isCurrentUserAdminOrManager();
           let resp;
-          
+
           if (isAdminOrManager) {
             // Load ALL projects for admin/management users
             resp = await taskApi.getTaskTeamProjects();
           } else {
             // For non-admin/management users, only load projects they are members of
-            const currentUserId = typeof window !== 'undefined' ? (() => {
-              try {
-                const userStr = localStorage.getItem('task_user');
-                if (userStr) {
-                  const user = JSON.parse(userStr);
-                  return user.id;
-                }
-              } catch (error) {
-                console.error('Error getting current user:', error);
-              }
-              return null;
-            })() : null;
-            
+            const currentUserId =
+              typeof window !== "undefined"
+                ? (() => {
+                    try {
+                      const userStr = localStorage.getItem("task_user");
+                      if (userStr) {
+                        const user = JSON.parse(userStr);
+                        return user.id;
+                      }
+                    } catch (error) {
+                      console.error("Error getting current user:", error);
+                    }
+                    return null;
+                  })()
+                : null;
+
             if (currentUserId) {
               resp = await taskApi.getTaskTeamProjects(currentUserId);
             } else {
@@ -466,14 +486,14 @@ export function TaskModal({
               resp = { projects: [] };
             }
           }
-          
+
           setTaskTeamProjects(resp.projects || []);
-          
+
           // Preserve team from task if it exists (priority)
           if (task?.team?.id) {
             setSelectedTeamId(parseInt(task.team.id));
           } else if (task?.teamId) {
-            setSelectedTeamId(parseInt(task.teamId || '0'));
+            setSelectedTeamId(parseInt(task.teamId || "0"));
           } else if (task?.projectId && resp.projects?.length) {
             // If task has project_id but no team, find team from project mapping
             const mapped = resp.projects.find((p: any) => p.id === task.projectId);
@@ -481,18 +501,18 @@ export function TaskModal({
               setSelectedTeamId(mapped.team_id);
             }
           }
-          
+
           // Set selected project ID
           if (task?.projectId) {
             setSelectedProjectId(task.projectId);
           }
         } catch (e) {
-          console.error('Error loading task team projects:', e);
+          console.error("Error loading task team projects:", e);
           setTaskTeamProjects([]);
         }
       })();
       // Also refresh user info when modal opens
-      if (typeof window !== 'undefined' && (window as any).refreshUserInfo) {
+      if (typeof window !== "undefined" && (window as any).refreshUserInfo) {
         (window as any).refreshUserInfo();
       }
     } else if (!open) {
@@ -518,32 +538,35 @@ export function TaskModal({
     if (loadingTeams) {
       return;
     }
-    
+
     try {
       setLoadingTeams(true);
-      
+
       // Check if user is admin or manager - if not, filter teams to only show teams they are members of
       const isAdminOrManager = isCurrentUserAdminOrManager();
       let response;
-      
+
       if (isAdminOrManager) {
         // Load ALL teams for admin/management users
         response = await taskTeamsApi.listTeams();
       } else {
         // For non-admin/management users, only load teams they are members of
-        const currentUserId = typeof window !== 'undefined' ? (() => {
-          try {
-            const userStr = localStorage.getItem('task_user');
-            if (userStr) {
-              const user = JSON.parse(userStr);
-              return user.id;
-            }
-          } catch (error) {
-            console.error('Error getting current user:', error);
-          }
-          return null;
-        })() : null;
-        
+        const currentUserId =
+          typeof window !== "undefined"
+            ? (() => {
+                try {
+                  const userStr = localStorage.getItem("task_user");
+                  if (userStr) {
+                    const user = JSON.parse(userStr);
+                    return user.id;
+                  }
+                } catch (error) {
+                  console.error("Error getting current user:", error);
+                }
+                return null;
+              })()
+            : null;
+
         if (currentUserId) {
           response = await taskTeamsApi.listTeams({ user_id: currentUserId });
         } else {
@@ -551,14 +574,14 @@ export function TaskModal({
           response = { teams: [] };
         }
       }
-      
+
       const loadedTeams = response.teams || [];
-      
+
       // Use filtered teams from API
       const teamsToUse = loadedTeams;
-      
+
       setTeams(teamsToUse);
-      
+
       // Don't auto-select any team - let user choose
       // BUT: If task already has a team, preserve it
       if (task?.team?.id) {
@@ -567,7 +590,7 @@ export function TaskModal({
           setSelectedTeamId(teamId);
         }
       } else if (task?.teamId) {
-        const teamId = parseInt(task.teamId || '0');
+        const teamId = parseInt(task.teamId || "0");
         if (teamsToUse.find((t: any) => t.id === teamId)) {
           setSelectedTeamId(teamId);
         }
@@ -575,7 +598,7 @@ export function TaskModal({
         setSelectedTeamId(null);
         setSelectedTeamIds([]);
       }
-      
+
       setTeamsLoaded(true);
     } catch (error) {
       setTeams([]);
@@ -589,21 +612,28 @@ export function TaskModal({
     try {
       const response = await taskTeamsApi.getTeamById(teamId);
       const teamData = response.team;
-      
+
       // Convert team members to TeamMember format
       const convertedMembers: TeamMember[] = (teamData.members || []).map((m: any) => {
         const member = {
           id: m.user_id.toString(),
-          name: m.name || 'Unknown',
-          email: m.user?.email || '',
-          color: teamData.color || '#076297',
-          initials: m.name ? m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA',
+          name: m.name || "Unknown",
+          email: m.user?.email || "",
+          color: teamData.color || "#076297",
+          initials: m.name
+            ? m.name
+                .split(" ")
+                .map((n: string) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)
+            : "NA",
           teamId: teamId,
-          teamName: teamData.name
+          teamName: teamData.name,
         };
         return member;
       });
-      
+
       setTeamMembers(convertedMembers);
     } catch (error) {
       setTeamMembers([]);
@@ -613,29 +643,35 @@ export function TaskModal({
   const loadMembersFromMultipleTeams = async (teamIds: number[]) => {
     try {
       const allMembers: TeamMember[] = [];
-      
+
       // Load members from each selected team
       for (const teamId of teamIds) {
         try {
           const response = await taskTeamsApi.getTeamById(teamId);
           const teamData = response.team;
-          
+
           // Convert team members to TeamMember format
           const convertedMembers: TeamMember[] = (teamData.members || []).map((m: any) => ({
             id: m.user_id.toString(),
-            name: m.name || 'Unknown',
-            email: m.user?.email || '',
-            color: teamData.color || '#076297',
-            initials: m.name ? m.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA',
+            name: m.name || "Unknown",
+            email: m.user?.email || "",
+            color: teamData.color || "#076297",
+            initials: m.name
+              ? m.name
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)
+              : "NA",
             teamId: teamId, // Add team ID to identify which team the member belongs to
-            teamName: teamData.name // Add team name for display
+            teamName: teamData.name, // Add team name for display
           }));
-          
+
           allMembers.push(...convertedMembers);
-        } catch (error) {
-        }
+        } catch (error) {}
       }
-      
+
       setTeamMembers(allMembers);
     } catch (error) {
       setTeamMembers([]);
@@ -648,49 +684,57 @@ export function TaskModal({
     if (draft?.team) {
       return {
         name: draft.team.name,
-        color: draft.team.color || '#076297'
+        color: draft.team.color || "#076297",
       };
     }
-    
+
     // Fallback: Use selectedTeamId to find team from loaded teams
     const byId = selectedTeamId ? teams.find((t) => t.id === selectedTeamId) : undefined;
     if (byId) {
       return {
         name: byId.name,
-        color: byId.color || '#076297'
+        color: byId.color || "#076297",
       };
     }
-    
+
     // Default fallback
-    return { name: undefined, color: '#076297' };
+    return { name: undefined, color: "#076297" };
   }, [selectedTeamId, teams, draft?.team]);
 
   const memberById = useMemo(() => {
-    const map = Object.fromEntries(members.map(m => [m.id, m]));
-    
+    const map = Object.fromEntries(members.map((m) => [m.id, m]));
+
     // Also add teamMembers to the map (they may not be in the main members list)
-    teamMembers.forEach(member => {
+    teamMembers.forEach((member) => {
       if (!map[member.id]) {
         map[member.id] = member;
       }
     });
-    
+
     // Get task users from window if available (populated by loadTasks and loadFullTaskDetails)
-    const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
-    
+    const taskUsers =
+      typeof window !== "undefined" ? ((window as any).taskUsers as Map<string, any>) : null;
+
     // Add assignees from task if they're not already in members
     if (draft) {
-      draft.assignees.forEach(assigneeId => {
+      draft.assignees.forEach((assigneeId) => {
         if (!map[assigneeId]) {
           // Try to get from taskUsers first (populated from API responses with user objects)
           if (taskUsers && taskUsers.has(assigneeId)) {
             const taskUser = taskUsers.get(assigneeId);
             map[assigneeId] = {
               id: taskUser.id,
-              name: taskUser.name || 'Unknown User',
-              email: taskUser.email || '',
-              color: '#076297',
-              initials: taskUser.name ? taskUser.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'U' + assigneeId.toString().slice(0, 1),
+              name: taskUser.name || "Unknown User",
+              email: taskUser.email || "",
+              color: "#076297",
+              initials: taskUser.name
+                ? taskUser.name
+                    .split(" ")
+                    .map((n: string) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)
+                : "U" + assigneeId.toString().slice(0, 1),
             };
           } else {
             // Try to get from teamMembers (already added to map above)
@@ -702,20 +746,27 @@ export function TaskModal({
           }
         }
       });
-      
+
       // Add commenters from task if they're not already in members
       if (draft.comments && Array.isArray(draft.comments)) {
-        draft.comments.forEach(comment => {
+        draft.comments.forEach((comment) => {
           if (comment.userId && !map[comment.userId]) {
             // Try to get from taskUsers first (populated from API responses with user objects)
             if (taskUsers && taskUsers.has(comment.userId)) {
               const taskUser = taskUsers.get(comment.userId);
               map[comment.userId] = {
                 id: taskUser.id,
-                name: taskUser.name || 'Unknown User',
-                email: taskUser.email || '',
-                color: '#6366f1',
-                initials: taskUser.name ? taskUser.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'U' + comment.userId.toString().slice(0, 1),
+                name: taskUser.name || "Unknown User",
+                email: taskUser.email || "",
+                color: "#6366f1",
+                initials: taskUser.name
+                  ? taskUser.name
+                      .split(" ")
+                      .map((n: string) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)
+                  : "U" + comment.userId.toString().slice(0, 1),
               };
             } else {
               // Try to get from teamMembers (already added to map above)
@@ -728,26 +779,26 @@ export function TaskModal({
         });
       }
     }
-    
+
     return map;
   }, [members, draft, userInfoVersion, teamMembers]);
-  
+
   // Filter members based on selected team
   const availableMembers = useMemo(() => {
     // If a team is selected, always show team members regardless of mode
     if (selectedTeamId || selectedTeamIds.length > 0) {
       return teamMembers;
     }
-    
+
     // If no team selected, use general members (for individual mode)
     if (mode === "individual") {
       return members;
     }
-    
+
     // No team selected and not individual mode
     return [];
   }, [mode, selectedTeamId, selectedTeamIds, teamMembers, members]);
-  
+
   if (!open || !draft) return <></>;
 
   const update = (partial: Partial<Task>) => {
@@ -758,23 +809,30 @@ export function TaskModal({
 
   const handleTeamChange = (teamId: string) => {
     const numericTeamId = teamId ? parseInt(teamId) : null;
-    
+
     setSelectedTeamId(numericTeamId);
     // Clear project selection when team changes - user must select project from team's projects
     setSelectedProjectId(null);
-    
+
     // Clear project selection when team changes - user must select project from team's projects
     setSelectedProjectId(null);
-    
+
     // Clear assignees when team changes
-    const teamObj = teams.find(t => t.id === numericTeamId);
-    
-    update({ 
-      teamId: teamId || undefined, 
-      team: teamObj ? { id: String(teamObj.id), name: teamObj.name, color: teamObj.color || '#076297', memberIds: [] } : undefined,
+    const teamObj = teams.find((t) => t.id === numericTeamId);
+
+    update({
+      teamId: teamId || undefined,
+      team: teamObj
+        ? {
+            id: String(teamObj.id),
+            name: teamObj.name,
+            color: teamObj.color || "#076297",
+            memberIds: [],
+          }
+        : undefined,
       assignees: [],
       // Clear project when team changes - user must select project from team's projects
-      projectId: undefined
+      projectId: undefined,
     });
   };
 
@@ -783,30 +841,43 @@ export function TaskModal({
     // Set the first team as primary for project mapping
     const primaryTeamId = teamIds.length > 0 ? teamIds[0] : null;
     setSelectedTeamId(primaryTeamId || null);
-    
+
     // Get all selected teams
-    const selectedTeams = teamIds.map(id => teams.find(t => t.id === id)).filter(Boolean);
-    
+    const selectedTeams = teamIds.map((id) => teams.find((t) => t.id === id)).filter(Boolean);
+
     // Clear assignees when teams change
-    const primaryTeamObj = primaryTeamId ? teams.find(t => t.id === primaryTeamId) : null;
+    const primaryTeamObj = primaryTeamId ? teams.find((t) => t.id === primaryTeamId) : null;
     // Map primary team to a project_id if available
     const mappedProject = primaryTeamId
-      ? taskTeamProjects.find(p => p.team_id === primaryTeamId)
+      ? taskTeamProjects.find((p) => p.team_id === primaryTeamId)
       : undefined;
-    
+
     // Create team information for all selected teams
-    const allTeamsInfo = selectedTeams.map(team => team ? ({
-      id: String(team.id),
-      name: team.name,
-      color: team.color || '#076297',
-      memberIds: []
-    }) : null).filter(Boolean);
-    
-    update({ 
-      teamId: primaryTeamId ? String(primaryTeamId) : undefined, 
-      team: primaryTeamObj ? { id: String(primaryTeamObj.id), name: primaryTeamObj.name, color: primaryTeamObj.color || '#076297', memberIds: [] } : undefined,
+    const allTeamsInfo = selectedTeams
+      .map((team) =>
+        team
+          ? {
+              id: String(team.id),
+              name: team.name,
+              color: team.color || "#076297",
+              memberIds: [],
+            }
+          : null,
+      )
+      .filter(Boolean);
+
+    update({
+      teamId: primaryTeamId ? String(primaryTeamId) : undefined,
+      team: primaryTeamObj
+        ? {
+            id: String(primaryTeamObj.id),
+            name: primaryTeamObj.name,
+            color: primaryTeamObj.color || "#076297",
+            memberIds: [],
+          }
+        : undefined,
       assignees: [],
-      projectId: mappedProject ? mappedProject.id : draft?.projectId
+      projectId: mappedProject ? mappedProject.id : draft?.projectId,
     });
   };
 
@@ -822,31 +893,34 @@ export function TaskModal({
     }
 
     if (draft && draft.title.trim()) {
-      
       // Require due date for task creation
       if (!draft.dueDate) {
-        toast.error('Due date is required. Please select a due date for the task.');
+        toast.error("Due date is required. Please select a due date for the task.");
         return;
       }
-      
+
       // Validate due date is not in the past
       if (draft.dueDate) {
         const dueDate = new Date(draft.dueDate);
         const now = new Date();
-        
+
         if (dueDate < now) {
-          toast.error('Cannot create task with past due date. Please select today or a future date.');
+          toast.error(
+            "Cannot create task with past due date. Please select today or a future date.",
+          );
           return;
         }
       }
-      
+
       // If this is a new task (no ID), we need to upload any pending files first
       if (!draft.id && (draft.attachments?.length || 0) > 0) {
         // Check if there are any attachments without URLs (pending uploads)
-        const pendingUploads = (draft.attachments || []).filter(a => !a.url || a.url.trim() === '');
-        
+        const pendingUploads = (draft.attachments || []).filter(
+          (a) => !a.url || a.url.trim() === "",
+        );
+
         if (pendingUploads.length > 0) {
-          toast.error('Please wait for file uploads to complete before saving the task.');
+          toast.error("Please wait for file uploads to complete before saving the task.");
           return;
         }
       }
@@ -861,29 +935,32 @@ export function TaskModal({
 
           if (draft.title !== task?.title) updateData.title = draft.title;
           if (draft.description !== task?.description) updateData.description = draft.description;
-          if (draft.deliverables !== task?.deliverables) updateData.deliverables = draft.deliverables;
+          if (draft.deliverables !== task?.deliverables)
+            updateData.deliverables = draft.deliverables;
           if (draft.status !== task?.status) updateData.status = draft.status;
           if (draft.priority !== task?.priority) updateData.priority = draft.priority;
 
           // Compare due dates (handle null/undefined cases)
           const originalDueDate = task?.dueDate ? new Date(task.dueDate).toISOString() : null;
           const newDueDate = draft.dueDate ? new Date(draft.dueDate).toISOString() : null;
-          if (originalDueDate !== newDueDate) updateData.due_date = draft.dueDate ? new Date(draft.dueDate) : null;
+          if (originalDueDate !== newDueDate)
+            updateData.due_date = draft.dueDate ? new Date(draft.dueDate) : null;
 
-          if (JSON.stringify(draft.labels) !== JSON.stringify(task?.labels)) updateData.labels = draft.labels;
+          if (JSON.stringify(draft.labels) !== JSON.stringify(task?.labels))
+            updateData.labels = draft.labels;
 
           // Compare attachments
           if (JSON.stringify(draft.attachments) !== JSON.stringify(task?.attachments)) {
-            updateData.attachments = draft.attachments.map(a => ({
+            updateData.attachments = draft.attachments.map((a) => ({
               id: a.id,
               filename: a.filename,
-              url: '',
+              url: "",
             }));
           }
 
           // Compare assignees
           const originalAssignees = task?.assignees || [];
-          const newAssignees = draft.assignees.map(id => parseInt(id)).filter(id => !isNaN(id));
+          const newAssignees = draft.assignees.map((id) => parseInt(id)).filter((id) => !isNaN(id));
           if (JSON.stringify(originalAssignees.sort()) !== JSON.stringify(newAssignees.sort())) {
             updateData.assignees = newAssignees;
           }
@@ -900,7 +977,7 @@ export function TaskModal({
             await taskApi.updateTask(numericId, updateData);
           }
 
-          toast.success('Task updated successfully');
+          toast.success("Task updated successfully");
           onChange(draft);
           onOpenChange(false);
         } else {
@@ -911,22 +988,26 @@ export function TaskModal({
           // The parent will update the task with the real ID from API response
         }
       } catch (error) {
-        let errorMessage = 'Failed to save task';
+        let errorMessage = "Failed to save task";
 
         // Handle specific error types
-        if (error && typeof error === 'object' && 'response' in error) {
-          const axiosError = error as { response?: { status?: number; data?: { message?: string } } };
+        if (error && typeof error === "object" && "response" in error) {
+          const axiosError = error as {
+            response?: { status?: number; data?: { message?: string } };
+          };
           const status = axiosError.response?.status;
           const backendMessage = axiosError.response?.data?.message;
 
           if (status === 403) {
             // Permission denied - provide user-friendly message
-            if (backendMessage?.includes('due date')) {
-              errorMessage = 'You cannot update the date of your task. Only managers can do that.';
-            } else if (backendMessage?.includes('title')) {
-              errorMessage = 'You cannot update the title of this task. Only managers and the task creator can do that.';
+            if (backendMessage?.includes("due date")) {
+              errorMessage = "You cannot update the date of your task. Only managers can do that.";
+            } else if (backendMessage?.includes("title")) {
+              errorMessage =
+                "You cannot update the title of this task. Only managers and the task creator can do that.";
             } else {
-              errorMessage = 'You do not have permission to make this change. Please contact a manager.';
+              errorMessage =
+                "You do not have permission to make this change. Please contact a manager.";
             }
           } else if (backendMessage) {
             errorMessage = backendMessage;
@@ -935,7 +1016,7 @@ export function TaskModal({
           }
         } else {
           // Fallback to logger for other error types
-          const { logger } = await import('@/lib/logger');
+          const { logger } = await import("@/lib/logger");
           errorMessage = logger.getErrorMessage(error) || errorMessage;
         }
 
@@ -951,11 +1032,13 @@ export function TaskModal({
     onOpenChange(false);
   };
 
-  const currentColumn = columns?.find(c => tasks && tasks[c.id]?.some((t: any) => t.id === draft.id));
+  const currentColumn = columns?.find(
+    (c) => tasks && tasks[c.id]?.some((t: any) => t.id === draft.id),
+  );
 
   const handleRemoveAssignee = (assigneeId: string) => {
-    const newAssignees = draft.assignees.filter(id => id !== assigneeId);
-    update({ 
+    const newAssignees = draft.assignees.filter((id) => id !== assigneeId);
+    update({
       assignees: newAssignees,
       team: draft.team ? { ...draft.team, memberIds: newAssignees } : draft.team,
     });
@@ -964,7 +1047,7 @@ export function TaskModal({
   const handleAddAssignee = (memberId: string) => {
     if (!draft.assignees.includes(memberId)) {
       const newAssignees = [...draft.assignees, memberId];
-      update({ 
+      update({
         assignees: newAssignees,
         team: draft.team ? { ...draft.team, memberIds: newAssignees } : draft.team,
       });
@@ -973,49 +1056,51 @@ export function TaskModal({
 
   const handlePostComment = async () => {
     if (!commentText.trim()) return;
-    
+
     const commentToPost = commentText.trim();
     setCommentText(""); // Clear input immediately for better UX
-    
+
     // Get current user ID
-    const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('task_user') || '{}') : {};
-    const currentUserId = currentUser?.id?.toString() || '1';
-    const currentUserName = currentUser?.name || 'You';
-    
+    const currentUser =
+      typeof window !== "undefined" ? JSON.parse(localStorage.getItem("task_user") || "{}") : {};
+    const currentUserId = currentUser?.id?.toString() || "1";
+    const currentUserName = currentUser?.name || "You";
+
     // Create comment object
     const newComment = {
       id: Math.random().toString(36).slice(2),
       userId: currentUserId,
       message: commentToPost,
       text: commentToPost,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
-    
+
     // Add comment locally first (optimistic update)
     update({ comments: [...(draft.comments || []), newComment] });
-    
+
     // If task is saved, also save comment to backend
     if (draft.id && isValidTaskId(draft.id)) {
       const numericId = parseInt(draft.id);
-      
+
       try {
         // Save comment to backend
         await taskApi.addTaskComment(numericId, commentToPost);
-        
+
         // Reload task to get updated comments with proper IDs and user info
-        const response = mode === "management" 
-          ? await taskApi.getTaskByIdUnrestricted(numericId)
-          : await taskApi.getTaskById(numericId);
+        const response =
+          mode === "management"
+            ? await taskApi.getTaskByIdUnrestricted(numericId)
+            : await taskApi.getTaskById(numericId);
         const task = response.task;
-        
+
         // Extract user info from comments and assignees - use the same logic as loadFullTaskDetails
         let taskUsers: Map<string, any>;
-        if (typeof window !== 'undefined') {
-          taskUsers = (window as any).taskUsers as Map<string, any> || new Map();
+        if (typeof window !== "undefined") {
+          taskUsers = ((window as any).taskUsers as Map<string, any>) || new Map();
         } else {
           taskUsers = new Map();
         }
-        
+
         // Extract user info from assignees
         if (task.assignees && Array.isArray(task.assignees)) {
           task.assignees.forEach((a: any) => {
@@ -1025,23 +1110,23 @@ export function TaskModal({
               if (a.user && a.user.id) {
                 taskUsers.set(userId, {
                   id: userId,
-                  name: a.user.name || 'Unknown User',
-                  email: a.user.email || '',
-                  avatar_url: a.user.avatar_url || '',
+                  name: a.user.name || "Unknown User",
+                  email: a.user.email || "",
+                  avatar_url: a.user.avatar_url || "",
                 });
               } else if (a.user_name) {
                 // Fallback: direct user_name property
                 taskUsers.set(userId, {
                   id: userId,
-                  name: a.user_name || 'Unknown User',
-                  email: a.user_email || '',
-                  avatar_url: a.user_avatar_url || '',
+                  name: a.user_name || "Unknown User",
+                  email: a.user_email || "",
+                  avatar_url: a.user_avatar_url || "",
                 });
               }
             }
           });
         }
-        
+
         // Extract user info from comments
         if (task.comments && Array.isArray(task.comments)) {
           task.comments.forEach((c: any) => {
@@ -1051,41 +1136,41 @@ export function TaskModal({
               if (c.user && c.user.id) {
                 taskUsers.set(userId, {
                   id: userId,
-                  name: c.user.name || 'Unknown User',
-                  email: c.user.email || '',
-                  avatar_url: c.user.avatar_url || '',
+                  name: c.user.name || "Unknown User",
+                  email: c.user.email || "",
+                  avatar_url: c.user.avatar_url || "",
                 });
               } else if (c.user_name) {
                 // Fallback: direct user_name property
                 taskUsers.set(userId, {
                   id: userId,
-                  name: c.user_name || 'Unknown User',
-                  email: c.user_email || '',
-                  avatar_url: c.user_avatar_url || '',
+                  name: c.user_name || "Unknown User",
+                  email: c.user_email || "",
+                  avatar_url: c.user_avatar_url || "",
                 });
               }
             }
           });
         }
-        
-        if (typeof window !== 'undefined') {
+
+        if (typeof window !== "undefined") {
           (window as any).taskUsers = taskUsers;
         }
-        
+
         // Trigger userInfoVersion update to refresh memberById
-        if (typeof window !== 'undefined' && (window as any).refreshUserInfo) {
+        if (typeof window !== "undefined" && (window as any).refreshUserInfo) {
           (window as any).refreshUserInfo();
         }
-        
+
         // Normalize backend comments to frontend format
         const updatedComments = (task.comments || []).map((c: any) => ({
           id: (c.id ?? c.comment_id ?? Math.random().toString(36).slice(2)).toString(),
           userId: (c.user_id ?? c.userId ?? c.user?.id)?.toString(),
-          message: c.content ?? c.message ?? c.text ?? '',
-          text: c.content ?? c.message ?? c.text ?? '',
+          message: c.content ?? c.message ?? c.text ?? "",
+          text: c.content ?? c.message ?? c.text ?? "",
           createdAt: c.created_at ?? c.createdAt ?? new Date().toISOString(),
         }));
-        
+
         update({ comments: updatedComments });
       } catch (error) {
         // Comment was already added locally, so we keep it
@@ -1098,26 +1183,26 @@ export function TaskModal({
 
   const handleAddLink = () => {
     if (!linkUrl.trim()) {
-      toast.error('Please enter a valid URL');
+      toast.error("Please enter a valid URL");
       return;
     }
 
     // Validate URL format
     let validUrl = linkUrl.trim();
-    if (!validUrl.startsWith('http://') && !validUrl.startsWith('https://')) {
-      validUrl = 'https://' + validUrl;
+    if (!validUrl.startsWith("http://") && !validUrl.startsWith("https://")) {
+      validUrl = "https://" + validUrl;
     }
 
     try {
       new URL(validUrl); // Validate URL format
     } catch (error) {
-      toast.error('Please enter a valid URL');
+      toast.error("Please enter a valid URL");
       return;
     }
 
     // Extract filename from URL or use domain name
     const urlObj = new URL(validUrl);
-    const filename = urlObj.pathname.split('/').pop() || urlObj.hostname || 'Link';
+    const filename = urlObj.pathname.split("/").pop() || urlObj.hostname || "Link";
 
     // Create link attachment
     const linkAttachment = {
@@ -1135,12 +1220,12 @@ export function TaskModal({
     // Clear input and hide
     setLinkUrl("");
     setShowLinkInput(false);
-    toast.success('Link added successfully');
+    toast.success("Link added successfully");
 
     // If task exists, save to database
     if (draft?.id && isValidTaskId(draft.id)) {
       const numericId = parseInt(draft.id);
-      const attachmentsToSave = newAttachments.map(a => ({
+      const attachmentsToSave = newAttachments.map((a) => ({
         id: a.id,
         filename: a.filename,
         url: a.url,
@@ -1148,7 +1233,7 @@ export function TaskModal({
 
       (async () => {
         try {
-          const { taskApi } = await import('@/lib/api-client');
+          const { taskApi } = await import("@/lib/api-client");
           if (mode === "management") {
             await taskApi.updateTaskUnrestricted(numericId, {
               attachments: attachmentsToSave,
@@ -1171,62 +1256,65 @@ export function TaskModal({
 
     try {
       // Upload files to backend FIRST (same as portal does)
-      const apiClient = (await import('@/lib/api-client')).default;
+      const apiClient = (await import("@/lib/api-client")).default;
       const uploadedFiles = [];
 
       for (const file of Array.from(files)) {
-        
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append("file", file);
 
         // Upload to backend (same endpoint as portal uses)
-        const response = await apiClient.post('/uploads/file', formData, {
+        const response = await apiClient.post("/uploads/file", formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+            "Content-Type": "multipart/form-data",
+          },
         });
-
 
         if (response.data && response.data.success && response.data.file?.url) {
           uploadedFiles.push({
-      id: Math.random().toString(36).slice(2),
-      filename: file.name,
+            id: Math.random().toString(36).slice(2),
+            filename: file.name,
             url: response.data.file.url, // Real URL from backend!
-      sizeKB: Math.round(file.size / 1024),
+            sizeKB: Math.round(file.size / 1024),
             uploadedAt: new Date().toISOString(),
           });
         } else {
-          toast.error(`Failed to upload ${file.name}${response.data?.message ? `. ${response.data.message}` : ''}`);
+          toast.error(
+            `Failed to upload ${file.name}${response.data?.message ? `. ${response.data.message}` : ""}`,
+          );
         }
       }
 
-
       // Add uploaded files to attachments
       const newAttachments = [...draft.attachments, ...uploadedFiles];
-      
+
       // Only keep attachments that have URLs (filter out old attachments without URLs)
-      const attachmentsWithUrls = newAttachments.filter(a => a.url && a.url.trim() !== '');
-      
+      const attachmentsWithUrls = newAttachments.filter((a) => a.url && a.url.trim() !== "");
+
       // Update local state with only attachments that have URLs
       update({ attachments: attachmentsWithUrls });
 
       if (uploadedFiles.length > 0) {
-        toast.success(uploadedFiles.length === 1 ? 'File uploaded successfully' : `${uploadedFiles.length} files uploaded successfully`);
+        toast.success(
+          uploadedFiles.length === 1
+            ? "File uploaded successfully"
+            : `${uploadedFiles.length} files uploaded successfully`,
+        );
       }
 
       // If task exists, also save to database immediately
       if (draft.id) {
-        const { tasksApi } = await import('@/lib/api/tasks');
-        
-        const attachmentsToSave = attachmentsWithUrls.map(a => ({
+        const { tasksApi } = await import("@/lib/api/tasks");
+
+        const attachmentsToSave = attachmentsWithUrls.map((a) => ({
           id: a.id,
           filename: a.filename,
           url: a.url,
         }));
-        
+
         // Validate task ID before updating
         if (!isValidTaskId(draft.id)) {
-          toast.error('Please save the task before uploading attachments');
+          toast.error("Please save the task before uploading attachments");
           return;
         }
         const numericId = parseInt(draft.id);
@@ -1241,14 +1329,15 @@ export function TaskModal({
             attachments: attachmentsToSave,
           });
         }
-        
+
         // After saving to database, reload the task to get the updated data
         try {
-          const response = mode === "management" 
-            ? await taskApi.getTaskByIdUnrestricted(numericId)
-            : await taskApi.getTaskById(numericId);
+          const response =
+            mode === "management"
+              ? await taskApi.getTaskByIdUnrestricted(numericId)
+              : await taskApi.getTaskById(numericId);
           const updatedTask = response.task;
-          
+
           // Update the draft with the fresh data from the database
           update({
             attachments: (updatedTask.attachments || []).map((a: any) => ({
@@ -1257,50 +1346,59 @@ export function TaskModal({
               url: a.url,
               sizeKB: 0,
               uploadedAt: new Date().toISOString(),
-            }))
+            })),
           });
-        } catch (error) {
-        }
+        } catch (error) {}
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.message || error?.response?.data?.error || 'Failed to upload files. Please try again.';
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to upload files. Please try again.";
       toast.error(msg);
     }
-    
+
     // Reset file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0 sm:p-4" 
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-0 sm:p-4"
       onClick={handleCancel}
     >
-      <div 
-        className="bg-white rounded-none sm:rounded-xl w-full h-full sm:h-auto sm:w-full sm:max-w-4xl sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl" 
-        onClick={e => e.stopPropagation()}
+      <div
+        className="bg-white rounded-none sm:rounded-xl w-full h-full sm:h-auto sm:w-full sm:max-w-4xl sm:max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div 
+        <div
           className="p-4 sm:p-6 flex items-center justify-between"
-          style={{ 
-            backgroundColor: '#f0f8fc'
+          style={{
+            backgroundColor: "#f0f8fc",
           }}
         >
           <div className="flex-1 min-w-0">
-            <input 
-              type="text" 
-              value={draft?.title || ''}
-              onChange={e => update({ title: e.target.value })}
+            <input
+              type="text"
+              value={draft?.title || ""}
+              onChange={(e) => update({ title: e.target.value })}
               disabled={!canEditTitleAndDueDate()}
-              className={`text-xl sm:text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none w-full ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed' : ''}`}
+              className={`text-xl sm:text-2xl font-semibold text-gray-900 bg-transparent border-none focus:outline-none w-full ${!canEditTitleAndDueDate() ? "opacity-60 cursor-not-allowed" : ""}`}
               placeholder="Task title..."
             />
             <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
               <span>
-                in <span className="font-medium">{currentColumn?.title || currentColumn?.name || (draft?.status ? draft.status.charAt(0).toUpperCase() + draft.status.slice(1) : 'To Do')}</span>
+                in{" "}
+                <span className="font-medium">
+                  {currentColumn?.title ||
+                    currentColumn?.name ||
+                    (draft?.status
+                      ? draft.status.charAt(0).toUpperCase() + draft.status.slice(1)
+                      : "To Do")}
+                </span>
               </span>
               {currentTeamInfo.name && (
                 <>
@@ -1315,10 +1413,7 @@ export function TaskModal({
               )}
             </div>
           </div>
-          <button 
-            onClick={handleCancel} 
-            className="p-2 hover:bg-white rounded-lg transition"
-          >
+          <button onClick={handleCancel} className="p-2 hover:bg-white rounded-lg transition">
             <X className="w-6 h-6 text-gray-600" />
           </button>
         </div>
@@ -1328,7 +1423,6 @@ export function TaskModal({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Main Content - Left Side */}
             <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-              
               {/* Team and Project Selection - On one line */}
               {!loadingTeams && teams.length > 0 && (
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -1338,12 +1432,12 @@ export function TaskModal({
                       <Users className="w-4 h-4" />
                       Select Team
                     </label>
-                    
+
                     <select
                       value={selectedTeamId || ""}
                       onChange={(e) => handleTeamChange(e.target.value)}
                       disabled={!canEditTitleAndDueDate()}
-                      className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'bg-white'}`}
+                      className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? "opacity-60 cursor-not-allowed bg-gray-100" : "bg-white"}`}
                       onFocus={(e) => e.stopPropagation()}
                     >
                       <option value="">Choose a team...</option>
@@ -1362,7 +1456,7 @@ export function TaskModal({
                         <FileText className="w-4 h-4" />
                         Select Project
                       </label>
-                      
+
                       <select
                         value={selectedProjectId || draft?.projectId || ""}
                         onChange={(e) => {
@@ -1371,7 +1465,7 @@ export function TaskModal({
                           update({ projectId: projectId || undefined });
                         }}
                         disabled={!canEditTitleAndDueDate()}
-                        className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'bg-white'}`}
+                        className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? "opacity-60 cursor-not-allowed bg-gray-100" : "bg-white"}`}
                         onFocus={(e) => e.stopPropagation()}
                       >
                         <option value="">Choose a project...</option>
@@ -1392,76 +1486,93 @@ export function TaskModal({
               {(selectedTeamId || draft.id) && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                    <Users className="w-4 h-4" />
-                    {(() => {
-                      // Use currentTeamInfo to get team name (preserves team from backend)
-                      if (currentTeamInfo.name) {
-                        return `Team Members - ${currentTeamInfo.name}`;
-                      }
-                      // Fallback to selectedTeamId if currentTeamInfo not available
-                      if (selectedTeamId) {
-                        const team = teams.find(t => t.id === selectedTeamId);
-                        return team ? `Team Members - ${team.name}` : "Assignees";
-                      }
-                      return "Assignees";
-                    })()}
-                    {(() => {
-                      // Use currentTeamInfo to get team name (preserves team from backend)
-                      if (currentTeamInfo.name) {
-                        return `Team Members - ${currentTeamInfo.name}`;
-                      }
-                      // Fallback to selectedTeamId if currentTeamInfo not available
-                      if (selectedTeamId) {
-                        const team = teams.find(t => t.id === selectedTeamId);
-                        return team ? `Team Members - ${team.name}` : "Assignees";
-                      }
-                      return "Assignees";
-                    })()}
-                    {draft.assignees.length > 0 && (
-                      <span className="text-xs font-normal text-gray-500">
-                        ({draft.assignees.length} selected)
-                      </span>
-                    )}
-                  </label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <Users className="w-4 h-4" />
+                      {(() => {
+                        // Use currentTeamInfo to get team name (preserves team from backend)
+                        if (currentTeamInfo.name) {
+                          return `Team Members - ${currentTeamInfo.name}`;
+                        }
+                        // Fallback to selectedTeamId if currentTeamInfo not available
+                        if (selectedTeamId) {
+                          const team = teams.find((t) => t.id === selectedTeamId);
+                          return team ? `Team Members - ${team.name}` : "Assignees";
+                        }
+                        return "Assignees";
+                      })()}
+                      {(() => {
+                        // Use currentTeamInfo to get team name (preserves team from backend)
+                        if (currentTeamInfo.name) {
+                          return `Team Members - ${currentTeamInfo.name}`;
+                        }
+                        // Fallback to selectedTeamId if currentTeamInfo not available
+                        if (selectedTeamId) {
+                          const team = teams.find((t) => t.id === selectedTeamId);
+                          return team ? `Team Members - ${team.name}` : "Assignees";
+                        }
+                        return "Assignees";
+                      })()}
+                      {draft.assignees.length > 0 && (
+                        <span className="text-xs font-normal text-gray-500">
+                          ({draft.assignees.length} selected)
+                        </span>
+                      )}
+                    </label>
                     {canEditTitleAndDueDate() && (
                       <>
-                        {(selectedTeamId || selectedTeamIds.length > 0) && availableMembers.length > 0 && (
-                          <MemberDropdown
-                            members={availableMembers.filter(m => !draft.assignees.includes(m.id))}
-                            onSelect={handleAddAssignee}
-                            selectedMembers={draft.assignees}
-                            align="right"
-                          />
-                        )}
-                        {!selectedTeamId && selectedTeamIds.length === 0 && mode === "individual" && (
-                          <MemberDropdown
-                            members={availableMembers.filter(m => !draft.assignees.includes(m.id))}
-                            onSelect={handleAddAssignee}
-                            selectedMembers={draft.assignees}
-                            align="right"
-                          />
-                        )}
+                        {(selectedTeamId || selectedTeamIds.length > 0) &&
+                          availableMembers.length > 0 && (
+                            <MemberDropdown
+                              members={availableMembers.filter(
+                                (m) => !draft.assignees.includes(m.id),
+                              )}
+                              onSelect={handleAddAssignee}
+                              selectedMembers={draft.assignees}
+                              align="right"
+                            />
+                          )}
+                        {!selectedTeamId &&
+                          selectedTeamIds.length === 0 &&
+                          mode === "individual" && (
+                            <MemberDropdown
+                              members={availableMembers.filter(
+                                (m) => !draft.assignees.includes(m.id),
+                              )}
+                              onSelect={handleAddAssignee}
+                              selectedMembers={draft.assignees}
+                              align="right"
+                            />
+                          )}
                       </>
                     )}
                   </div>
-                  <div className={`flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 ${!canEditTitleAndDueDate() ? 'opacity-60' : ''}`}>
+                  <div
+                    className={`flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 ${!canEditTitleAndDueDate() ? "opacity-60" : ""}`}
+                  >
                     {draft.assignees.length === 0 ? (
                       <p className="text-sm text-gray-500">No assignees yet</p>
                     ) : (
-                      draft.assignees.map(assigneeId => {
+                      draft.assignees.map((assigneeId) => {
                         const member = memberById[assigneeId];
                         if (!member) return null;
                         return (
-                          <div 
-                            key={assigneeId} 
-                            className={`flex items-center gap-2 px-3 py-2 transition ${canEditTitleAndDueDate() ? 'group' : ''}`}
-                            style={{ backgroundColor: '#f0f8fc', borderRadius: '7px' }}
-                            onMouseEnter={canEditTitleAndDueDate() ? (e) => (e.currentTarget.style.backgroundColor = '#e6f2f9') : undefined}
-                            onMouseLeave={canEditTitleAndDueDate() ? (e) => (e.currentTarget.style.backgroundColor = '#f0f8fc') : undefined}
+                          <div
+                            key={assigneeId}
+                            className={`flex items-center gap-2 px-3 py-2 transition ${canEditTitleAndDueDate() ? "group" : ""}`}
+                            style={{ backgroundColor: "#f0f8fc", borderRadius: "7px" }}
+                            onMouseEnter={
+                              canEditTitleAndDueDate()
+                                ? (e) => (e.currentTarget.style.backgroundColor = "#e6f2f9")
+                                : undefined
+                            }
+                            onMouseLeave={
+                              canEditTitleAndDueDate()
+                                ? (e) => (e.currentTarget.style.backgroundColor = "#f0f8fc")
+                                : undefined
+                            }
                           >
-                            <UserAvatar 
-                              userId={parseInt(assigneeId)} 
+                            <UserAvatar
+                              userId={parseInt(assigneeId)}
                               size="md"
                               className="w-8 h-8"
                             />
@@ -1470,20 +1581,23 @@ export function TaskModal({
                                 {(() => {
                                   // Get name from member object (from backend)
                                   if (member?.name) return member.name;
-                                  
+
                                   // Try to get from taskUsers (populated from API)
-                                  const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
+                                  const taskUsers =
+                                    typeof window !== "undefined"
+                                      ? ((window as any).taskUsers as Map<string, any>)
+                                      : null;
                                   if (taskUsers && taskUsers.has(assigneeId)) {
                                     return taskUsers.get(assigneeId).name || assigneeId;
                                   }
-                                  
+
                                   // Fallback: show ID (no dummy data)
                                   return assigneeId;
                                 })()}
                               </span>
                             </div>
                             {canEditTitleAndDueDate() && (
-                              <button 
+                              <button
                                 onClick={() => handleRemoveAssignee(assigneeId)}
                                 className="opacity-0 group-hover:opacity-100 ml-1 hover:bg-gray-200 rounded p-0.5 transition"
                               >
@@ -1504,11 +1618,11 @@ export function TaskModal({
                   <Edit2 className="w-4 h-4" />
                   Activities
                 </label>
-                <textarea 
+                <textarea
                   value={draft.description || ""}
-                  onChange={e => update({ description: e.target.value })}
+                  onChange={(e) => update({ description: e.target.value })}
                   disabled={!canEditTitleAndDueDate()}
-                  className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''}`}
+                  className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base ${!canEditTitleAndDueDate() ? "opacity-60 cursor-not-allowed bg-gray-100" : ""}`}
                   rows={4}
                   placeholder="List the activities to be done for this task..."
                   onFocus={(e) => e.stopPropagation()}
@@ -1521,11 +1635,11 @@ export function TaskModal({
                   <Edit2 className="w-4 h-4" />
                   Deliverables
                 </label>
-                <textarea 
+                <textarea
                   value={draft.deliverables || ""}
-                  onChange={e => update({ deliverables: e.target.value })}
+                  onChange={(e) => update({ deliverables: e.target.value })}
                   disabled={!canEditTitleAndDueDate()}
-                  className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''}`}
+                  className={`w-full p-2.5 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-colors text-sm sm:text-base ${!canEditTitleAndDueDate() ? "opacity-60 cursor-not-allowed bg-gray-100" : ""}`}
                   rows={4}
                   placeholder="Describe the expected deliverables for this task..."
                   onFocus={(e) => e.stopPropagation()}
@@ -1542,30 +1656,33 @@ export function TaskModal({
                   <div className="flex items-center gap-2">
                     {canEditTitleAndDueDate() && (
                       <>
-                        <button 
+                        <button
                           onClick={() => setShowLinkInput(!showLinkInput)}
                           className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 transition"
-                          style={{ backgroundColor: showLinkInput ? '#e6f2f9' : '#f0f8fc', borderRadius: '7px' }}
+                          style={{
+                            backgroundColor: showLinkInput ? "#e6f2f9" : "#f0f8fc",
+                            borderRadius: "7px",
+                          }}
                           onMouseEnter={(e) => {
                             if (!showLinkInput) {
-                              e.currentTarget.style.backgroundColor = '#e6f2f9';
+                              e.currentTarget.style.backgroundColor = "#e6f2f9";
                             }
                           }}
                           onMouseLeave={(e) => {
                             if (!showLinkInput) {
-                              e.currentTarget.style.backgroundColor = '#f0f8fc';
+                              e.currentTarget.style.backgroundColor = "#f0f8fc";
                             }
                           }}
                         >
                           <LinkIcon className="w-4 h-4" />
                           Add Link
                         </button>
-                        <button 
+                        <button
                           onClick={() => fileInputRef.current?.click()}
                           className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 transition"
-                          style={{ backgroundColor: '#f0f8fc', borderRadius: '7px' }}
-                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6f2f9')}
-                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f0f8fc')}
+                          style={{ backgroundColor: "#f0f8fc", borderRadius: "7px" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e6f2f9")}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f0f8fc")}
                         >
                           <Upload className="w-4 h-4" />
                           Upload
@@ -1582,20 +1699,23 @@ export function TaskModal({
                     accept="*/*"
                   />
                 </div>
-                
+
                 {/* Link Input */}
                 {showLinkInput && (
-                  <div className="mb-3 p-3 border border-gray-300 rounded-lg" style={{ backgroundColor: '#f9fafb' }}>
+                  <div
+                    className="mb-3 p-3 border border-gray-300 rounded-lg"
+                    style={{ backgroundColor: "#f9fafb" }}
+                  >
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         value={linkUrl}
                         onChange={(e) => setLinkUrl(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             e.preventDefault();
                             handleAddLink();
-                          } else if (e.key === 'Escape') {
+                          } else if (e.key === "Escape") {
                             setShowLinkInput(false);
                             setLinkUrl("");
                           }
@@ -1607,9 +1727,9 @@ export function TaskModal({
                       <button
                         onClick={handleAddLink}
                         className="px-4 py-2 text-sm font-medium text-white transition"
-                        style={{ backgroundColor: '#076297', borderRadius: '7px' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#054a73')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#076297')}
+                        style={{ backgroundColor: "#076297", borderRadius: "7px" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#054a73")}
+                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#076297")}
                       >
                         Add
                       </button>
@@ -1627,85 +1747,113 @@ export function TaskModal({
                 )}
                 <div className="space-y-2">
                   {(draft.attachments?.length || 0) === 0 ? (
-                    <div 
+                    <div
                       onClick={() => fileInputRef.current?.click()}
                       className="text-center py-4 cursor-pointer transition"
-                      style={{ 
-                        border: '2px dashed #e5e7eb', 
-                        borderRadius: '7px' 
+                      style={{
+                        border: "2px dashed #e5e7eb",
+                        borderRadius: "7px",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f9fafb")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                     >
                       <Paperclip className="w-6 h-6 text-gray-300 mx-auto mb-1" />
                       <p className="text-sm text-gray-500">No attachments yet</p>
-                      <p className="text-xs text-gray-400 mt-1">Click to upload or drag files here</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Click to upload or drag files here
+                      </p>
                     </div>
                   ) : (
                     (draft.attachments || []).map((attachment, index) => {
                       const colors = [
-                        { bg: '#dbeafe', icon: '#2563eb' },
-                        { bg: '#dcfce7', icon: '#16a34a' },
-                        { bg: '#f3e8ff', icon: '#9333ea' },
-                        { bg: '#fed7aa', icon: '#ea580c' },
+                        { bg: "#dbeafe", icon: "#2563eb" },
+                        { bg: "#dcfce7", icon: "#16a34a" },
+                        { bg: "#f3e8ff", icon: "#9333ea" },
+                        { bg: "#fed7aa", icon: "#ea580c" },
                       ];
                       const color = colors[index % colors.length];
-                      
+
                       // Check if this is a link (has http/https URL and sizeKB is 0)
-                      const isLink = attachment.url && 
-                        (attachment.url.startsWith('http://') || attachment.url.startsWith('https://')) &&
+                      const isLink =
+                        attachment.url &&
+                        (attachment.url.startsWith("http://") ||
+                          attachment.url.startsWith("https://")) &&
                         attachment.sizeKB === 0;
-                      
+
                       return (
-                        <div 
-                          key={attachment.id} 
+                        <div
+                          key={attachment.id}
                           className="flex items-center justify-between p-3 transition group"
-                          style={{ backgroundColor: '#f0f8fc', borderRadius: '7px' }}
-                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e6f2f9')}
-                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f0f8fc')}
+                          style={{ backgroundColor: "#f0f8fc", borderRadius: "7px" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e6f2f9")}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f0f8fc")}
                         >
-                          <div 
+                          <div
                             className="flex items-center gap-3 flex-1 cursor-pointer"
                             onClick={() => {
                               // Get the file URL - could be relative or absolute
                               const fileUrl = (attachment as any).url;
                               if (fileUrl) {
                                 // If it's a link, use it directly; otherwise prepend API base URL
-                                const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
-                                const fullUrl = fileUrl.startsWith('http') 
-                                  ? fileUrl 
+                                const apiBaseUrl =
+                                  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
+                                const fullUrl = fileUrl.startsWith("http")
+                                  ? fileUrl
                                   : `${apiBaseUrl}${fileUrl}`;
-                                if (typeof window !== 'undefined') {
-                                  window.open(fullUrl, '_blank');
+                                if (typeof window !== "undefined") {
+                                  window.open(fullUrl, "_blank");
                                 }
                               } else {
-                                toast.error('URL not available. This attachment may not have been uploaded yet.');
+                                toast.error(
+                                  "URL not available. This attachment may not have been uploaded yet.",
+                                );
                               }
                             }}
                           >
-                            <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: color?.bg || '#dbeafe' }}>
+                            <div
+                              className="w-10 h-10 rounded flex items-center justify-center"
+                              style={{ backgroundColor: color?.bg || "#dbeafe" }}
+                            >
                               {isLink ? (
-                                <ExternalLink className="w-5 h-5" style={{ color: color?.icon || '#2563eb' }} />
+                                <ExternalLink
+                                  className="w-5 h-5"
+                                  style={{ color: color?.icon || "#2563eb" }}
+                                />
                               ) : (
-                                <Paperclip className="w-5 h-5" style={{ color: color?.icon || '#2563eb' }} />
+                                <Paperclip
+                                  className="w-5 h-5"
+                                  style={{ color: color?.icon || "#2563eb" }}
+                                />
                               )}
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-900 hover:underline">{attachment.filename}</p>
+                              <p className="text-sm font-medium text-gray-900 hover:underline">
+                                {attachment.filename}
+                              </p>
                               <p className="text-xs text-gray-500">
                                 {isLink ? (
-                                  <>Link • Added {new Date(attachment.uploadedAt).toLocaleDateString()}</>
+                                  <>
+                                    Link • Added{" "}
+                                    {new Date(attachment.uploadedAt).toLocaleDateString()}
+                                  </>
                                 ) : (
-                                  <>{(attachment.sizeKB / 1000).toFixed(1)} MB • Added {new Date(attachment.uploadedAt).toLocaleDateString()}</>
+                                  <>
+                                    {(attachment.sizeKB / 1000).toFixed(1)} MB • Added{" "}
+                                    {new Date(attachment.uploadedAt).toLocaleDateString()}
+                                  </>
                                 )}
                               </p>
                             </div>
                           </div>
                           {canEditTitleAndDueDate() && (
-                            <button 
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                update({ attachments: (draft.attachments || []).filter(a => a.id !== attachment.id) });
+                                update({
+                                  attachments: (draft.attachments || []).filter(
+                                    (a) => a.id !== attachment.id,
+                                  ),
+                                });
                               }}
                               className="p-2 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition"
                             >
@@ -1727,50 +1875,65 @@ export function TaskModal({
                     onClick={() => setShowComments(!showComments)}
                     className="flex items-center gap-2 text-sm font-semibold text-gray-700"
                   >
-                  <MessageSquare className="w-4 h-4" />
-                    {showComments ? 'Hide comments' : 'View comments'} ({draft.comments?.length || 0})
+                    <MessageSquare className="w-4 h-4" />
+                    {showComments ? "Hide comments" : "View comments"} (
+                    {draft.comments?.length || 0})
                   </button>
                 </div>
 
                 {/* Existing Comments (collapsible) */}
                 {(draft.comments?.length || 0) > 0 && showComments && (
-                  <div className="space-y-3 mb-4" style={{ borderTop: '1px solid #e5e7eb' }}>
-                    {(draft.comments || []).map(comment => {
+                  <div className="space-y-3 mb-4" style={{ borderTop: "1px solid #e5e7eb" }}>
+                    {(draft.comments || []).map((comment) => {
                       const commenter = memberById[comment.userId];
                       // Fallback: if commenter not found, try to get from taskUsers or use ProfileContext
                       const displayName = (() => {
                         // Get name from commenter object (from backend)
                         if (commenter?.name) return commenter.name;
-                        
+
                         // Try to get from taskUsers (populated from API)
-                        const taskUsers = typeof window !== 'undefined' ? ((window as any).taskUsers as Map<string, any>) : null;
+                        const taskUsers =
+                          typeof window !== "undefined"
+                            ? ((window as any).taskUsers as Map<string, any>)
+                            : null;
                         if (taskUsers && taskUsers.has(comment.userId)) {
                           return taskUsers.get(comment.userId).name || comment.userId;
                         }
-                        
+
                         // Fallback: show ID (no dummy data)
                         return comment.userId;
                       })();
-                      
+
                       if (!comment.userId) return null;
-                      
+
                       return (
                         <div key={comment.id} className="flex gap-3 pt-3 group">
-                          <UserAvatar 
-                            userId={parseInt(comment.userId)} 
+                          <UserAvatar
+                            userId={parseInt(comment.userId)}
                             size="md"
                             className="w-8 h-8 flex-shrink-0"
                           />
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-sm font-semibold text-gray-900">{displayName}</span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {displayName}
+                              </span>
                               <span className="text-xs text-gray-500">
-                                {new Date(comment.createdAt).toLocaleDateString()} at {new Date(comment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(comment.createdAt).toLocaleDateString()} at{" "}
+                                {new Date(comment.createdAt).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
                               </span>
                               {/* Inline actions for own comments - optimistic UI, permission enforced server-side */}
                               {(() => {
-                                const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('task_user') || '{}') : {};
-                                const isOwner = currentUser?.id && currentUser.id.toString() === comment.userId?.toString();
+                                const currentUser =
+                                  typeof window !== "undefined"
+                                    ? JSON.parse(localStorage.getItem("task_user") || "{}")
+                                    : {};
+                                const isOwner =
+                                  currentUser?.id &&
+                                  currentUser.id.toString() === comment.userId?.toString();
                                 if (!isOwner) return null;
                                 return (
                                   <span className="ml-auto flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
@@ -1794,7 +1957,12 @@ export function TaskModal({
                                 );
                               })()}
                             </div>
-                            <p className="text-sm text-gray-700 p-3" style={{ backgroundColor: '#f0f8fc', borderRadius: '7px' }}>{comment.message}</p>
+                            <p
+                              className="text-sm text-gray-700 p-3"
+                              style={{ backgroundColor: "#f0f8fc", borderRadius: "7px" }}
+                            >
+                              {comment.message}
+                            </p>
                           </div>
                         </div>
                       );
@@ -1802,46 +1970,45 @@ export function TaskModal({
                   </div>
                 )}
 
-                  {/* Add Comment */}
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                      ME
-                    </div>
-                    <div className="flex-1">
-                      <textarea 
-                        value={commentText}
-                        onChange={e => setCommentText(e.target.value)}
-                        className="w-full p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition"
-                        style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
-                        rows={2}
-                        placeholder="Write a comment..."
-                      />
-                      <div className="mt-2">
-                        <Button
-                          onClick={handlePostComment}
-                          disabled={!commentText.trim()}
-                          variant="primary"
-                          size="md"
-                        >
-                          Post Comment
-                        </Button>
-                      </div>
+                {/* Add Comment */}
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                    ME
+                  </div>
+                  <div className="flex-1">
+                    <textarea
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      className="w-full p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition"
+                      style={{ borderRadius: "7px", border: "1px solid #e5e7eb" }}
+                      rows={2}
+                      placeholder="Write a comment..."
+                    />
+                    <div className="mt-2">
+                      <Button
+                        onClick={handlePostComment}
+                        disabled={!commentText.trim()}
+                        variant="primary"
+                        size="md"
+                      >
+                        Post Comment
+                      </Button>
                     </div>
                   </div>
+                </div>
               </div>
             </div>
 
             {/* Sidebar - Right Side */}
             <div className="lg:col-span-1 space-y-4">
-              
               {/* Status Dropdown */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">Status</label>
-                <select 
+                <select
                   value={draft.status}
-                  onChange={e => update({ status: e.target.value as Status })}
+                  onChange={(e) => update({ status: e.target.value as Status })}
                   className="w-full p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white text-sm sm:text-base touch-manipulation"
-                  style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
+                  style={{ borderRadius: "7px", border: "1px solid #e5e7eb" }}
                 >
                   <option value="todo">To Do</option>
                   <option value="inprogress">In Progress</option>
@@ -1858,12 +2025,12 @@ export function TaskModal({
               {/* Priority Dropdown */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">Priority</label>
-                <select 
+                <select
                   value={draft.priority}
-                  onChange={e => update({ priority: e.target.value as Priority })}
+                  onChange={(e) => update({ priority: e.target.value as Priority })}
                   disabled={!canEditTitleAndDueDate()}
-                  className={`w-full p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'bg-white'}`}
-                  style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
+                  className={`w-full p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? "opacity-60 cursor-not-allowed bg-gray-100" : "bg-white"}`}
+                  style={{ borderRadius: "7px", border: "1px solid #e5e7eb" }}
                 >
                   <option value="high">🔴 High</option>
                   <option value="medium">🟡 Medium</option>
@@ -1873,48 +2040,58 @@ export function TaskModal({
 
               {/* Due Date and Time */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">Due Date & Time</label>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  Due Date & Time
+                </label>
                 <div className="flex gap-2">
-                  <input 
-                    type="date" 
+                  <input
+                    type="date"
                     value={draft.dueDate ? new Date(draft.dueDate).toISOString().slice(0, 10) : ""}
-                    onChange={e => {
+                    onChange={(e) => {
                       const dateValue = e.target.value;
                       if (dateValue) {
                         const currentTime = draft.dueDate ? new Date(draft.dueDate) : new Date();
-                        const newDateTime = new Date(dateValue + 'T' + currentTime.toTimeString().slice(0, 5));
+                        const newDateTime = new Date(
+                          dateValue + "T" + currentTime.toTimeString().slice(0, 5),
+                        );
                         update({ dueDate: newDateTime.toISOString() });
                       } else {
                         update({ dueDate: undefined });
                       }
                     }}
                     disabled={!canEditTitleAndDueDate()}
-                    className={`flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''}`}
-                    style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
+                    className={`flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? "opacity-60 cursor-not-allowed bg-gray-100" : ""}`}
+                    style={{ borderRadius: "7px", border: "1px solid #e5e7eb" }}
                   />
-                  <input 
-                    type="time" 
-                    value={draft.dueDate ? new Date(draft.dueDate).toTimeString().slice(0, 5) : "17:00"}
-                    onChange={e => {
+                  <input
+                    type="time"
+                    value={
+                      draft.dueDate ? new Date(draft.dueDate).toTimeString().slice(0, 5) : "17:00"
+                    }
+                    onChange={(e) => {
                       const timeValue = e.target.value;
                       if (timeValue && draft.dueDate) {
                         const currentDate = new Date(draft.dueDate);
-                        const newDateTime = new Date(currentDate.toISOString().slice(0, 10) + 'T' + timeValue);
+                        const newDateTime = new Date(
+                          currentDate.toISOString().slice(0, 10) + "T" + timeValue,
+                        );
                         update({ dueDate: newDateTime.toISOString() });
                       } else if (timeValue) {
                         // If no date is set, set today's date with the selected time
                         const today = new Date().toISOString().slice(0, 10);
-                        const newDateTime = new Date(today + 'T' + timeValue);
+                        const newDateTime = new Date(today + "T" + timeValue);
                         update({ dueDate: newDateTime.toISOString() });
                       }
                     }}
                     disabled={!canEditTitleAndDueDate()}
-                    className={`flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? 'opacity-60 cursor-not-allowed bg-gray-100' : ''}`}
-                    style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
+                    className={`flex-1 p-2.5 sm:p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base touch-manipulation ${!canEditTitleAndDueDate() ? "opacity-60 cursor-not-allowed bg-gray-100" : ""}`}
+                    style={{ borderRadius: "7px", border: "1px solid #e5e7eb" }}
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {draft.dueDate ? `Due: ${new Date(draft.dueDate).toLocaleString()}` : 'No due date set'}
+                  {draft.dueDate
+                    ? `Due: ${new Date(draft.dueDate).toLocaleString()}`
+                    : "No due date set"}
                 </p>
                 {draft.dueDate && new Date(draft.dueDate) < new Date() && (
                   <p className="text-xs text-red-500 mt-1">
@@ -1927,40 +2104,44 @@ export function TaskModal({
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">Labels</label>
                 <div className="flex flex-wrap gap-2">
-                   {draft.labels && draft.labels.length > 0 ? (
-                     draft.labels.map((label, idx) => (
-                       <span 
-                         key={label.id || idx} 
-                         className={`px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium flex items-center gap-1 transition ${canEditTitleAndDueDate() ? 'hover:bg-indigo-200' : 'opacity-60'}`}
-                       >
-                         {label.name}
-                         {canEditTitleAndDueDate() && (
-                           <button
-                             onClick={() => {
-                               const newLabels = draft.labels?.filter((_, i) => i !== idx) || [];
-                               update({ labels: newLabels });
-                             }}
-                           >
-                             <X className="w-3 h-3 cursor-pointer hover:text-indigo-900" />
-                           </button>
-                         )}
-                       </span>
-                     ))
-                   ) : (
-                     <p className="text-xs text-gray-500">No labels yet</p>
-                   )}
+                  {draft.labels && draft.labels.length > 0 ? (
+                    draft.labels.map((label, idx) => (
+                      <span
+                        key={label.id || idx}
+                        className={`px-3 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium flex items-center gap-1 transition ${canEditTitleAndDueDate() ? "hover:bg-indigo-200" : "opacity-60"}`}
+                      >
+                        {label.name}
+                        {canEditTitleAndDueDate() && (
+                          <button
+                            onClick={() => {
+                              const newLabels = draft.labels?.filter((_, i) => i !== idx) || [];
+                              update({ labels: newLabels });
+                            }}
+                          >
+                            <X className="w-3 h-3 cursor-pointer hover:text-indigo-900" />
+                          </button>
+                        )}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-500">No labels yet</p>
+                  )}
                   {canEditTitleAndDueDate() && (
-                    <button 
+                    <button
                       onClick={() => setShowAddLabel(true)}
                       className="px-3 py-1 text-xs font-medium transition"
-                      style={{ backgroundColor: '#f0f8fc', color: '#076297', borderRadius: '9999px' }}
+                      style={{
+                        backgroundColor: "#f0f8fc",
+                        color: "#076297",
+                        borderRadius: "9999px",
+                      }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#e6f2f9';
-                        e.currentTarget.style.color = '#054a73';
+                        e.currentTarget.style.backgroundColor = "#e6f2f9";
+                        e.currentTarget.style.color = "#054a73";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f0f8fc';
-                        e.currentTarget.style.color = '#076297';
+                        e.currentTarget.style.backgroundColor = "#f0f8fc";
+                        e.currentTarget.style.color = "#076297";
                       }}
                     >
                       + Add Label
@@ -1972,17 +2153,17 @@ export function TaskModal({
               {/* Delete Button - Only show when editing existing task */}
               {draft?.id && draft?.created_by && canEditTask(draft.created_by) && (
                 <div>
-                  <button 
+                  <button
                     onClick={() => setShowDeleteConfirm(true)}
                     className="w-full px-4 py-2 font-medium text-sm flex items-center justify-center gap-2 transition"
-                    style={{ backgroundColor: '#fef2f2', borderRadius: '7px', color: '#dc2626' }}
+                    style={{ backgroundColor: "#fef2f2", borderRadius: "7px", color: "#dc2626" }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#dc2626';
-                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.backgroundColor = "#dc2626";
+                      e.currentTarget.style.color = "#ffffff";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#fef2f2';
-                      e.currentTarget.style.color = '#dc2626';
+                      e.currentTarget.style.backgroundColor = "#fef2f2";
+                      e.currentTarget.style.color = "#dc2626";
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -1994,14 +2175,14 @@ export function TaskModal({
           </div>
 
           {/* Modal Footer with Save/Cancel */}
-          <div 
+          <div
             className="sticky bottom-0 bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 border-t border-gray-200"
-            style={{ borderRadius: '0 0 7px 7px' }}
+            style={{ borderRadius: "0 0 7px 7px" }}
           >
             <button
               onClick={handleCancel}
               className="px-4 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium touch-manipulation order-2 sm:order-1"
-              style={{ borderRadius: '7px' }}
+              style={{ borderRadius: "7px" }}
             >
               Cancel
             </button>
@@ -2009,22 +2190,23 @@ export function TaskModal({
               onClick={handleSave}
               disabled={!draft.title.trim() || !draft.dueDate || isSaving}
               className="px-4 py-2.5 text-white rounded-md transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation order-1 sm:order-2"
-              style={{ 
-                backgroundColor: (draft.title.trim() && draft.dueDate && !isSaving) ? '#076297' : '#9ca3af',
-                borderRadius: '7px'
+              style={{
+                backgroundColor:
+                  draft.title.trim() && draft.dueDate && !isSaving ? "#076297" : "#9ca3af",
+                borderRadius: "7px",
               }}
               onMouseEnter={(e) => {
                 if (draft.title.trim() && draft.dueDate && !isSaving) {
-                  e.currentTarget.style.backgroundColor = '#054a73';
+                  e.currentTarget.style.backgroundColor = "#054a73";
                 }
               }}
               onMouseLeave={(e) => {
                 if (draft.title.trim() && draft.dueDate && !isSaving) {
-                  e.currentTarget.style.backgroundColor = '#076297';
+                  e.currentTarget.style.backgroundColor = "#076297";
                 }
               }}
             >
-              {isSaving ? 'Saving...' : 'Save Task'}
+              {isSaving ? "Saving..." : "Save Task"}
             </button>
           </div>
         </div>
@@ -2038,7 +2220,7 @@ export function TaskModal({
           const newLabel = {
             id: Math.random().toString(36).slice(2),
             name: labelName,
-            color: "bg-indigo-100 text-indigo-700"
+            color: "bg-indigo-100 text-indigo-700",
           };
           update({ labels: [...currentLabels, newLabel] });
         }}
@@ -2060,22 +2242,25 @@ export function TaskModal({
         }}
         onSubmit={async (value) => {
           if (!editCommentId || !draft?.id) return;
-          
+
           // Validate task and comment IDs
           if (!isValidTaskId(draft.id as string)) {
-            toast.error('Invalid task ID');
+            toast.error("Invalid task ID");
             return;
           }
           const taskNumericId = parseInt(draft.id as string);
           const commentNumericId = parseInt(editCommentId as string);
           if (isNaN(commentNumericId) || commentNumericId <= 0) {
-            toast.error('Invalid task or comment ID');
+            toast.error("Invalid task or comment ID");
             return;
           }
-          
+
           try {
             await taskApi.updateTaskComment(taskNumericId, commentNumericId, value);
-            const resp = mode === 'management' ? await taskApi.getTaskByIdUnrestricted(taskNumericId) : await taskApi.getTaskById(taskNumericId);
+            const resp =
+              mode === "management"
+                ? await taskApi.getTaskByIdUnrestricted(taskNumericId)
+                : await taskApi.getTaskById(taskNumericId);
             const updated = (resp.task.comments || []).map((c: any) => ({
               id: (c.id ?? c.comment_id).toString(),
               userId: (c.user_id ?? c.user?.id).toString(),
@@ -2084,9 +2269,9 @@ export function TaskModal({
               createdAt: c.created_at,
             }));
             update({ comments: updated });
-            toast.success('Comment updated');
+            toast.success("Comment updated");
           } catch (e) {
-            toast.error('Failed to update comment');
+            toast.error("Failed to update comment");
           } finally {
             setShowEditCommentDialog(false);
             setEditCommentId(null);
@@ -2106,25 +2291,25 @@ export function TaskModal({
         onOpenChange={(o) => !o && setDeleteCommentId(null)}
         onConfirm={async () => {
           if (!deleteCommentId || !draft?.id) return;
-          
+
           // Validate task and comment IDs
           if (!isValidTaskId(draft.id as string)) {
-            toast.error('Invalid task ID');
+            toast.error("Invalid task ID");
             return;
           }
           const taskNumericId = parseInt(draft.id as string);
           const commentNumericId = parseInt(deleteCommentId as string);
           if (isNaN(commentNumericId) || commentNumericId <= 0) {
-            toast.error('Invalid task or comment ID');
+            toast.error("Invalid task or comment ID");
             return;
           }
-          
+
           try {
             await taskApi.deleteTaskComment(taskNumericId, commentNumericId);
-            update({ comments: (draft.comments || []).filter(c => c.id !== deleteCommentId) });
-            toast.success('Comment deleted');
+            update({ comments: (draft.comments || []).filter((c) => c.id !== deleteCommentId) });
+            toast.success("Comment deleted");
           } catch (e) {
-            toast.error('Failed to delete comment');
+            toast.error("Failed to delete comment");
           } finally {
             setDeleteCommentId(null);
           }
@@ -2141,21 +2326,21 @@ export function TaskModal({
         onOpenChange={setShowDeleteConfirm}
         onConfirm={async () => {
           if (!draft?.id) return;
-          
+
           // Validate task ID
           if (!isValidTaskId(draft.id)) {
-            toast.error('Invalid task ID');
+            toast.error("Invalid task ID");
             return;
           }
           const numericId = parseInt(draft.id);
-          
+
           try {
             await taskApi.deleteTask(numericId);
             onDelete(draft.id);
             onOpenChange(false);
-            toast.success('Task deleted successfully');
+            toast.success("Task deleted successfully");
           } catch (error) {
-            toast.error('Failed to delete task');
+            toast.error("Failed to delete task");
           } finally {
             setShowDeleteConfirm(false);
           }
@@ -2164,9 +2349,8 @@ export function TaskModal({
         description={`Are you sure you want to delete "${draft?.title}"? All associated data will be permanently removed.`}
         confirmText="Yes, Delete"
         variant="danger"
-        icon={<Trash2 className="w-6 h-6" style={{ color: '#dc2626' }} />}
+        icon={<Trash2 className="w-6 h-6" style={{ color: "#dc2626" }} />}
       />
-
     </div>
   );
 }

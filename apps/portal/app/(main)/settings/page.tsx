@@ -1,25 +1,25 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { 
-  Bell, 
-  Lock, 
-  Globe, 
+import { useState, useEffect } from "react";
+import {
+  Bell,
+  Lock,
+  Globe,
   Moon,
-  Sun, 
+  Sun,
   Smartphone,
   Mail,
   Shield,
   Eye,
   EyeOff,
-  Check
-} from 'lucide-react';
-import { useAuth } from '@/components/auth/auth-provider';
-import { Button } from '@workspace/ui/components/button';
-import { Input } from '@workspace/ui/components/input';
-import { Switch } from '@workspace/ui/components/switch';
-import { Card } from '@workspace/ui/components/card';
-import { toast } from 'sonner';
+  Check,
+} from "lucide-react";
+import { useAuth } from "@/components/auth/auth-provider";
+import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import { Switch } from "@workspace/ui/components/switch";
+import { Card } from "@workspace/ui/components/card";
+import { toast } from "sonner";
 
 interface SettingsSection {
   id: string;
@@ -30,51 +30,51 @@ interface SettingsSection {
 
 const sections: SettingsSection[] = [
   {
-    id: 'notifications',
-    title: 'Notifications',
+    id: "notifications",
+    title: "Notifications",
     icon: Bell,
-    description: 'Configure how you want to receive notifications'
+    description: "Configure how you want to receive notifications",
   },
   {
-    id: 'security',
-    title: 'Security',
+    id: "security",
+    title: "Security",
     icon: Lock,
-    description: 'Manage your account security settings'
+    description: "Manage your account security settings",
   },
   {
-    id: 'language',
-    title: 'Language & Region',
+    id: "language",
+    title: "Language & Region",
     icon: Globe,
-    description: 'Set your language and regional preferences'
+    description: "Set your language and regional preferences",
   },
   {
-    id: 'appearance',
-    title: 'Appearance',
+    id: "appearance",
+    title: "Appearance",
     icon: Moon,
-    description: 'Customize the look and feel of your dashboard'
-  }
+    description: "Customize the look and feel of your dashboard",
+  },
 ];
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState('notifications');
+  const [activeSection, setActiveSection] = useState("notifications");
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Get initial theme from localStorage or default to 'light'
   const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') || 'light';
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("theme") || "light";
     }
-    return 'light';
+    return "light";
   });
 
   // Apply theme changes to document and localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const root = window.document.documentElement;
-      root.classList.remove('light', 'dark');
+      root.classList.remove("light", "dark");
       root.classList.add(theme);
-      localStorage.setItem('theme', theme);
+      localStorage.setItem("theme", theme);
     }
   }, [theme]);
 
@@ -84,45 +84,47 @@ export default function SettingsPage() {
     pushNotifications: false,
     newsUpdates: true,
     projectUpdates: true,
-    securityAlerts: true
+    securityAlerts: true,
   });
 
   // Security settings
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   // Language settings
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [selectedTimezone, setSelectedTimezone] = useState('UTC');
-  const [selectedDateFormat, setSelectedDateFormat] = useState('MM/DD/YYYY');
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [selectedTimezone, setSelectedTimezone] = useState("UTC");
+  const [selectedDateFormat, setSelectedDateFormat] = useState("MM/DD/YYYY");
 
   // Appearance settings
-  const [density, setDensity] = useState('comfortable');
+  const [density, setDensity] = useState("comfortable");
 
   const handleNotificationChange = (key: string) => {
-    setNotificationSettings(prev => ({
+    setNotificationSettings((prev) => ({
       ...prev,
-      [key]: !prev[key as keyof typeof notificationSettings]
+      [key]: !prev[key as keyof typeof notificationSettings],
     }));
-    toast.success(`${key} notifications ${notificationSettings[key as keyof typeof notificationSettings] ? 'disabled' : 'enabled'}`);
+    toast.success(
+      `${key} notifications ${notificationSettings[key as keyof typeof notificationSettings] ? "disabled" : "enabled"}`,
+    );
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate passwords
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error("New passwords do not match");
       return;
     }
 
     if (passwordForm.newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters long');
+      toast.error("Password must be at least 8 characters long");
       return;
     }
 
@@ -130,15 +132,15 @@ export default function SettingsPage() {
 
     try {
       // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Password updated successfully');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      toast.success("Password updated successfully");
       setPasswordForm({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
     } catch (error) {
-      toast.error('Failed to update password');
+      toast.error("Failed to update password");
     } finally {
       setIsLoading(false);
     }
@@ -146,17 +148,17 @@ export default function SettingsPage() {
 
   const handleLanguageChange = async (language: string) => {
     setSelectedLanguage(language);
-    toast.success('Language preference updated');
+    toast.success("Language preference updated");
   };
 
-  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+  const handleThemeChange = (newTheme: "light" | "dark") => {
     setTheme(newTheme);
     toast.success(`Theme changed to ${newTheme} mode`);
   };
 
   const renderContent = () => {
     switch (activeSection) {
-      case 'notifications':
+      case "notifications":
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between py-3 border-b">
@@ -167,9 +169,9 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-500">Receive notifications via email</p>
                 </div>
               </div>
-              <Switch 
+              <Switch
                 checked={notificationSettings.emailNotifications}
-                onCheckedChange={() => handleNotificationChange('emailNotifications')}
+                onCheckedChange={() => handleNotificationChange("emailNotifications")}
                 aria-label="Toggle email notifications"
               />
             </div>
@@ -179,12 +181,14 @@ export default function SettingsPage() {
                 <Smartphone className="w-5 h-5 text-gray-500" />
                 <div>
                   <h3 className="text-sm font-medium">Push Notifications</h3>
-                  <p className="text-sm text-gray-500">Receive push notifications on your devices</p>
+                  <p className="text-sm text-gray-500">
+                    Receive push notifications on your devices
+                  </p>
                 </div>
               </div>
-              <Switch 
+              <Switch
                 checked={notificationSettings.pushNotifications}
-                onCheckedChange={() => handleNotificationChange('pushNotifications')}
+                onCheckedChange={() => handleNotificationChange("pushNotifications")}
                 aria-label="Toggle push notifications"
               />
             </div>
@@ -197,9 +201,9 @@ export default function SettingsPage() {
                   <p className="text-sm text-gray-500">Get notified about news and announcements</p>
                 </div>
               </div>
-              <Switch 
+              <Switch
                 checked={notificationSettings.newsUpdates}
-                onCheckedChange={() => handleNotificationChange('newsUpdates')}
+                onCheckedChange={() => handleNotificationChange("newsUpdates")}
                 aria-label="Toggle news updates"
               />
             </div>
@@ -209,30 +213,36 @@ export default function SettingsPage() {
                 <Shield className="w-5 h-5 text-gray-500" />
                 <div>
                   <h3 className="text-sm font-medium">Security Alerts</h3>
-                  <p className="text-sm text-gray-500">Receive alerts about security-related activities</p>
+                  <p className="text-sm text-gray-500">
+                    Receive alerts about security-related activities
+                  </p>
                 </div>
               </div>
-              <Switch 
+              <Switch
                 checked={notificationSettings.securityAlerts}
-                onCheckedChange={() => handleNotificationChange('securityAlerts')}
+                onCheckedChange={() => handleNotificationChange("securityAlerts")}
                 aria-label="Toggle security alerts"
               />
             </div>
           </div>
         );
 
-      case 'security':
+      case "security":
         return (
           <div className="space-y-6">
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <div>
-                <label htmlFor="currentPassword" className="block text-sm font-medium mb-1">Current Password</label>
+                <label htmlFor="currentPassword" className="block text-sm font-medium mb-1">
+                  Current Password
+                </label>
                 <div className="relative">
                   <Input
                     id="currentPassword"
-                    type={showCurrentPassword ? 'text' : 'password'}
+                    type={showCurrentPassword ? "text" : "password"}
                     value={passwordForm.currentPassword}
-                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))
+                    }
                     className="pr-10"
                     required
                   />
@@ -240,7 +250,9 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2"
-                    aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
+                    aria-label={
+                      showCurrentPassword ? "Hide current password" : "Show current password"
+                    }
                   >
                     {showCurrentPassword ? (
                       <EyeOff className="w-4 h-4 text-gray-500" />
@@ -252,13 +264,17 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label htmlFor="newPassword" className="block text-sm font-medium mb-1">New Password</label>
+                <label htmlFor="newPassword" className="block text-sm font-medium mb-1">
+                  New Password
+                </label>
                 <div className="relative">
                   <Input
                     id="newPassword"
-                    type={showNewPassword ? 'text' : 'password'}
+                    type={showNewPassword ? "text" : "password"}
                     value={passwordForm.newPassword}
-                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))
+                    }
                     className="pr-10"
                     required
                     minLength={8}
@@ -267,7 +283,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2"
-                    aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                    aria-label={showNewPassword ? "Hide new password" : "Show new password"}
                   >
                     {showNewPassword ? (
                       <EyeOff className="w-4 h-4 text-gray-500" />
@@ -279,23 +295,27 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">Confirm New Password</label>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+                  Confirm New Password
+                </label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  onChange={(e) =>
+                    setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))
+                  }
                   required
                   minLength={8}
                 />
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-green-700 hover:bg-green-800"
                 disabled={isLoading}
               >
-                {isLoading ? 'Updating...' : 'Update Password'}
+                {isLoading ? "Updating..." : "Update Password"}
               </Button>
             </form>
 
@@ -308,11 +328,13 @@ export default function SettingsPage() {
           </div>
         );
 
-      case 'language':
+      case "language":
         return (
           <div className="space-y-6">
             <div>
-              <label htmlFor="language" className="block text-sm font-medium mb-2">Language</label>
+              <label htmlFor="language" className="block text-sm font-medium mb-2">
+                Language
+              </label>
               <select
                 id="language"
                 value={selectedLanguage}
@@ -326,7 +348,9 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label htmlFor="timezone" className="block text-sm font-medium mb-2">Time Zone</label>
+              <label htmlFor="timezone" className="block text-sm font-medium mb-2">
+                Time Zone
+              </label>
               <select
                 id="timezone"
                 value={selectedTimezone}
@@ -340,7 +364,9 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label htmlFor="dateFormat" className="block text-sm font-medium mb-2">Date Format</label>
+              <label htmlFor="dateFormat" className="block text-sm font-medium mb-2">
+                Date Format
+              </label>
               <select
                 id="dateFormat"
                 value={selectedDateFormat}
@@ -355,7 +381,7 @@ export default function SettingsPage() {
           </div>
         );
 
-      case 'appearance':
+      case "appearance":
         return (
           <div className="space-y-6">
             <div>
@@ -363,37 +389,35 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => handleThemeChange('light')}
+                  onClick={() => handleThemeChange("light")}
                   className={`p-4 border rounded-lg flex items-center space-x-3 ${
-                    theme === 'light' ? 'border-green-500 bg-green-50' : ''
+                    theme === "light" ? "border-green-500 bg-green-50" : ""
                   }`}
-                  aria-pressed={String(theme === 'light')}
+                  aria-pressed={String(theme === "light")}
                 >
                   <Sun className="w-5 h-5" />
                   <span>Light</span>
-                  {theme === 'light' && (
-                    <Check className="w-4 h-4 text-green-500 ml-auto" />
-                  )}
+                  {theme === "light" && <Check className="w-4 h-4 text-green-500 ml-auto" />}
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleThemeChange('dark')}
+                  onClick={() => handleThemeChange("dark")}
                   className={`p-4 border rounded-lg flex items-center space-x-3 ${
-                    theme === 'dark' ? 'border-green-500 bg-green-50' : ''
+                    theme === "dark" ? "border-green-500 bg-green-50" : ""
                   }`}
-                  aria-pressed={String(theme === 'dark')}
+                  aria-pressed={String(theme === "dark")}
                 >
                   <Moon className="w-5 h-5" />
                   <span>Dark</span>
-                  {theme === 'dark' && (
-                    <Check className="w-4 h-4 text-green-500 ml-auto" />
-                  )}
+                  {theme === "dark" && <Check className="w-4 h-4 text-green-500 ml-auto" />}
                 </button>
               </div>
             </div>
 
             <div>
-              <label htmlFor="density" className="block text-sm font-medium mb-2">Interface Density</label>
+              <label htmlFor="density" className="block text-sm font-medium mb-2">
+                Interface Density
+              </label>
               <select
                 id="density"
                 value={density}
@@ -431,9 +455,7 @@ export default function SettingsPage() {
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
                   className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                    activeSection === section.id
-                      ? 'bg-green-50 text-green-700'
-                      : 'hover:bg-gray-50'
+                    activeSection === section.id ? "bg-green-50 text-green-700" : "hover:bg-gray-50"
                   }`}
                   aria-pressed={activeSection === section.id}
                 >
@@ -450,10 +472,10 @@ export default function SettingsPage() {
           <Card className="p-6">
             <div className="mb-6">
               <h2 className="text-lg font-semibold">
-                {sections.find(s => s.id === activeSection)?.title}
+                {sections.find((s) => s.id === activeSection)?.title}
               </h2>
               <p className="text-gray-500">
-                {sections.find(s => s.id === activeSection)?.description}
+                {sections.find((s) => s.id === activeSection)?.description}
               </p>
             </div>
             {renderContent()}

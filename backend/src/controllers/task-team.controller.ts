@@ -41,7 +41,7 @@ const logger = new Logger("TaskTeamController");
  *         updated_at:
  *           type: string
  *           format: date-time
- *     
+ *
  *     TaskProject:
  *       type: object
  *       properties:
@@ -746,7 +746,7 @@ export const addProjectToTeam = async (req: Request, res: Response) => {
     const teamId = parseInt(req.params.id);
     const projectId = parseInt(req.params.projectId);
     const createdBy = (req as any).user?.id || (req as any).user?.userId;
-    
+
     if (!createdBy) {
       return res.status(401).json({
         error: "Unauthorized",
@@ -1305,4 +1305,3 @@ export const taskTeamController = {
 };
 
 export default taskTeamController;
-

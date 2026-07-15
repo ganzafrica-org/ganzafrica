@@ -59,8 +59,7 @@ const logger = new Logger("NewsController");
 export const createNews = async (req: Request, res: Response) => {
   try {
     // Check if we're in a testing environment to provide appropriate debugging info
-    const isTestMode =
-      process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development";
+    const isTestMode = process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development";
 
     if (isTestMode) {
       logger.info(`Creating news item`);
@@ -70,9 +69,7 @@ export const createNews = async (req: Request, res: Response) => {
       title: req.body.title,
       content: req.body.content,
       status: req.body.status || "not_published",
-      publish_date: req.body.publish_date
-        ? new Date(req.body.publish_date)
-        : undefined,
+      publish_date: req.body.publish_date ? new Date(req.body.publish_date) : undefined,
       category: req.body.category,
       key_lessons: req.body.key_lessons,
       media: req.body.media,
@@ -165,13 +162,9 @@ export const listNews = async (req: Request, res: Response) => {
       category: req.query.category as any,
       status: req.query.status as any,
       search: req.query.search as string,
-      tags: req.query.tags
-        ? (req.query.tags as string).split(",").map(Number)
-        : undefined,
+      tags: req.query.tags ? (req.query.tags as string).split(",").map(Number) : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
-      offset: req.query.offset
-        ? parseInt(req.query.offset as string)
-        : undefined,
+      offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
       sortBy: req.query.sortBy as string,
       sortDir: req.query.sortDir as "asc" | "desc",
     };
@@ -310,9 +303,7 @@ export const updateNews = async (req: Request, res: Response) => {
       title: req.body.title,
       content: req.body.content,
       status: req.body.status,
-      publish_date: req.body.publish_date
-        ? new Date(req.body.publish_date)
-        : undefined,
+      publish_date: req.body.publish_date ? new Date(req.body.publish_date) : undefined,
       category: req.body.category,
       key_lessons: req.body.key_lessons,
       media: req.body.media,

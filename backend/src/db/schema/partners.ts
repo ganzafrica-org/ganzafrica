@@ -1,11 +1,4 @@
-import {
-  integer,
-  pgTable,
-  text,
-  varchar,
-  serial,
-  index,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, varchar, serial, index } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 
 // Partners Table

@@ -19,8 +19,7 @@ function AuthCallbackContent() {
       try {
         const token = searchParams.get("token");
         const user = searchParams.get("user");
-        const portalUrl =
-          process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
 
         if (token && user) {
           try {
@@ -41,14 +40,11 @@ function AuthCallbackContent() {
 
             // Check if user email is authorized
             const authorizedEmails =
-              process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(
-                ",",
-              ).map((e) => e.trim()) || [];
+              process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(",").map((e) => e.trim()) ||
+              [];
 
             if (!authorizedEmails.includes(parsedUser.email)) {
-              toast.error(
-                "You are not authorized to access the Internal Platform",
-              );
+              toast.error("You are not authorized to access the Internal Platform");
               // Redirect back to platform selection
               setTimeout(() => {
                 window.location.href = `${portalUrl}/platform-selection`;
@@ -69,21 +65,18 @@ function AuthCallbackContent() {
             console.error("Error processing authentication:", error);
             toast.error("Authentication failed. Please try again.");
             // Redirect back to portal login
-            const portalUrl =
-              process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+            const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
             window.location.href = `${portalUrl}/login`;
           }
         } else {
           // No authentication data, redirect to portal login
           toast.error("No authentication data received");
-          const portalUrl =
-            process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+          const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
           window.location.href = `${portalUrl}/login`;
         }
       } catch (error: unknown) {
         console.error("Error in auth callback:", error);
-        const portalUrl =
-          process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
         window.location.href = `${portalUrl}/login`;
       } finally {
         setIsProcessing(false);

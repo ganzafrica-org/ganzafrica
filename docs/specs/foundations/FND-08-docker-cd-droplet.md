@@ -27,7 +27,7 @@ compose. Manual SSH deploys end. The repo never lands on the droplet.
    `ENV NODE_ENV=production`). Backend image includes `dist/`, `drizzle/`, `public/images/`.
 2. `docker-compose.yml` (repo root): 7 services + caddy; each app
    `image: ghcr.io/<org>/ganzafrica-<name>:${TAG}`, `env_file: .env`, `restart:
-   unless-stopped`, healthcheck (`wget -qO- localhost:PORT/api/health || exit 1`), memory
+unless-stopped`, healthcheck (`wget -qO- localhost:PORT/api/health || exit 1`), memory
    limits (apps 256m, backend 512m); `extra_hosts: ["host.docker.internal:host-gateway"]`;
    plus a profile-`ops` one-shot `migrate` service (backend image,
    `command: npx drizzle-kit migrate`).
@@ -35,13 +35,13 @@ compose. Manual SSH deploys end. The repo never lands on the droplet.
 4. `.github/workflows/deploy.yml`:
    - trigger `push: branches [main]`;
    - job 1 `changes`: dorny/paths-filter → per-service booleans (an app rebuilds when the
-     app, packages/**, or the lockfile changed; backend likewise);
+     app, packages/\*\*, or the lockfile changed; backend likewise);
    - job 2 `build`: matrix over changed services; docker/build-push-action with GHA cache
      (`cache-from/to: type=gha`), tags `:sha` + `:latest`, login via `GITHUB_TOKEN`;
    - job 3 `e2e-gate`: the FND-04 Playwright suite;
    - job 4 `deploy`: appleboy/ssh-action → `cd /srv/ganzafrica && sed -i "s/^TAG=.*/TAG=${SHA}/" .env
-     && docker compose pull && docker compose --profile ops run --rm migrate &&
-     docker compose up -d --wait && echo "$(date -Is) ${SHA}" >> releases.log`;
+&& docker compose pull && docker compose --profile ops run --rm migrate &&
+docker compose up -d --wait && echo "$(date -Is) ${SHA}" >> releases.log`;
      also scp-sync `docker-compose.yml` + `Caddyfile` before pulling.
 5. `.github/workflows/rollback.yml` — workflow_dispatch(sha) → same SSH pinning TAG, no migrate step.
 6. `docs/architecture/deployment.md` §4 runbook executed and updated with real values

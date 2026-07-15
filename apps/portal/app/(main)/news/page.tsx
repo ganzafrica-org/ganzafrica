@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Filter,
@@ -17,11 +17,11 @@ import {
   Clock,
   Tag,
   User,
-  AlertCircle
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+  AlertCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import apiClient from "@/lib/api-client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,11 +32,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 const NewsListPage = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState("all");
 
   // States for data and UI
   const [news, setNews] = useState([]);
@@ -48,20 +48,20 @@ const NewsListPage = () => {
   const [limit, setLimit] = useState(10);
   const [totalNews, setTotalNews] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('publish_date'); // Updated to publish_date
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("publish_date"); // Updated to publish_date
+  const [sortOrder, setSortOrder] = useState("desc");
 
   // States for tab counts
   const [tabCounts, setTabCounts] = useState({
-    all: 0
+    all: 0,
   });
 
   const [tabCountsLoaded, setTabCountsLoaded] = useState(false);
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
-  
+
   // State for delete confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [newsToDelete, setNewsToDelete] = useState(null);
@@ -80,14 +80,14 @@ const NewsListPage = () => {
   const handleAction = async (action, newsId) => {
     setOpenMenuId(null); // Close the menu
 
-    switch(action) {
-      case 'view':
+    switch (action) {
+      case "view":
         router.push(`/news/${newsId}`);
         break;
-      case 'edit':
+      case "edit":
         router.push(`/news/edit/${newsId}`);
         break;
-      case 'delete':
+      case "delete":
         setNewsToDelete(newsId);
         setIsDeleteDialogOpen(true);
         break;
@@ -102,24 +102,24 @@ const NewsListPage = () => {
 
     try {
       await apiClient.delete(`/news/${newsToDelete}`);
-      
+
       // Close dialog and reset state
       setIsDeleteDialogOpen(false);
       setNewsToDelete(null);
-      
+
       // Show success toast
-      toast.success('News article deleted successfully');
-      
+      toast.success("News article deleted successfully");
+
       // Trigger refresh by updating refreshTrigger
-      setRefreshTrigger(prev => prev + 1);
-      
+      setRefreshTrigger((prev) => prev + 1);
+
       // Adjust page if needed (if we deleted the last item on the page)
       if (news.length === 1 && page > 1) {
         setPage(page - 1);
       }
     } catch (error: any) {
-      console.error('Error deleting news:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete news. Please try again.');
+      console.error("Error deleting news:", error);
+      toast.error(error.response?.data?.message || "Failed to delete news. Please try again.");
       setIsDeleteDialogOpen(false);
       setNewsToDelete(null);
     }
@@ -132,7 +132,7 @@ const NewsListPage = () => {
 
   // Calculate sequential row number based on pagination
   const getRowNumber = (index) => {
-    return ((page - 1) * limit) + index + 1;
+    return (page - 1) * limit + index + 1;
   };
 
   // Add click outside listener to close dropdown
@@ -155,17 +155,17 @@ const NewsListPage = () => {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await apiClient.get('/news/tags');
+        const response = await apiClient.get("/news/tags");
         if (response.data && Array.isArray(response.data.tags)) {
           setTags(response.data.tags);
         } else if (Array.isArray(response.data)) {
           setTags(response.data);
         } else {
-          console.error('Unexpected tags response format:', response.data);
+          console.error("Unexpected tags response format:", response.data);
           setTags([]);
         }
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        console.error("Error fetching tags:", error);
         setTags([]);
       }
     };
@@ -177,8 +177,8 @@ const NewsListPage = () => {
   const fetchTabCounts = async () => {
     try {
       // Get total count of news articles
-      const newsResponse = await apiClient.get('/news', {
-        params: { limit: 0 }
+      const newsResponse = await apiClient.get("/news", {
+        params: { limit: 0 },
       });
 
       const allCount = parseInt(newsResponse.data.pagination?.total) || 0;
@@ -192,8 +192,8 @@ const NewsListPage = () => {
         for (const tag of tags) {
           // For each tag, we could fetch the count from the API or calculate from existing data
           // This depends on your API capabilities
-          const tagResponse = await apiClient.get('/news', {
-            params: { tag_id: tag.id, limit: 0 }
+          const tagResponse = await apiClient.get("/news", {
+            params: { tag_id: tag.id, limit: 0 },
           });
 
           counts[tag.id] = parseInt(tagResponse.data.pagination?.total) || 0;
@@ -203,7 +203,7 @@ const NewsListPage = () => {
       setTabCounts(counts);
       setTabCountsLoaded(true);
     } catch (error) {
-      console.error('Error fetching tab counts:', error);
+      console.error("Error fetching tab counts:", error);
       // Initialize with just the 'all' count as 0
       setTabCounts({ all: 0 });
       setTabCountsLoaded(true);
@@ -246,17 +246,17 @@ const NewsListPage = () => {
           page,
           limit,
           sort_by: sortBy,
-          sort_order: sortOrder
+          sort_order: sortOrder,
         };
 
         if (searchTerm) params.search = searchTerm;
 
         // If a tag is selected (not "all"), filter by tag_id
-        if (activeTab !== 'all') {
+        if (activeTab !== "all") {
           params.tag_id = activeTab;
         }
 
-        const response = await apiClient.get('/news', { params });
+        const response = await apiClient.get("/news", { params });
 
         if (response.data) {
           setNews(response.data.news || []);
@@ -270,7 +270,7 @@ const NewsListPage = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching news:', error);
+        console.error("Error fetching news:", error);
         setNews([]);
       } finally {
         setLoading(false);
@@ -278,20 +278,30 @@ const NewsListPage = () => {
     };
 
     fetchNews();
-  }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, tags.length, refreshTrigger]);
+  }, [
+    page,
+    limit,
+    searchTerm,
+    sortBy,
+    sortOrder,
+    activeTab,
+    tabCountsLoaded,
+    tags.length,
+    refreshTrigger,
+  ]);
 
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    
+    if (!dateString) return "N/A";
+
     // Format date as "Mar 15, 2024"
     const date = new Date(dateString);
-    const options = { 
-      year: 'numeric',
-      month: 'short', 
-      day: 'numeric'
+    const options = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     };
-    return date.toLocaleDateString('en-US', options);
+    return date.toLocaleDateString("en-US", options);
   };
 
   // Handle tab change
@@ -302,31 +312,47 @@ const NewsListPage = () => {
 
   // Get status badge
   const getStatusBadge = (status) => {
-    switch(status) {
-      case 'published':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">• Published</span>;
-      case 'draft':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">• Draft</span>;
-      case 'archived':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• Archived</span>;
+    switch (status) {
+      case "published":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            • Published
+          </span>
+        );
+      case "draft":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+            • Draft
+          </span>
+        );
+      case "archived":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+            • Archived
+          </span>
+        );
       default:
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• {status}</span>;
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+            • {status}
+          </span>
+        );
     }
   };
-  
+
   // Find the active tag name for display
   const getActiveTabName = () => {
-    if (activeTab === 'all') return '';
-    
-    const activeTagObj = tags.find(tag => tag.id.toString() === activeTab);
-    return activeTagObj ? activeTagObj.name : '';
+    if (activeTab === "all") return "";
+
+    const activeTagObj = tags.find((tag) => tag.id.toString() === activeTab);
+    return activeTagObj ? activeTagObj.name : "";
   };
 
   // Truncate text
   const truncateText = (text, maxLength = 100) => {
-    if (!text) return '';
+    if (!text) return "";
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
   };
 
   return (
@@ -338,7 +364,10 @@ const NewsListPage = () => {
           <p className="text-gray-500 text-sm">News Articles</p>
         </div>
         <div>
-          <Link href="/news/add-news" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
+          <Link
+            href="/news/add-news"
+            className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
+          >
             Add News Article
             <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
@@ -346,29 +375,31 @@ const NewsListPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className='bg-white'>
+      <div className="bg-white">
         <div className="flex border-b border-gray-200 mb-6 bg-white overflow-x-auto">
           <button
-            onClick={() => handleTabChange('all')}
+            onClick={() => handleTabChange("all")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'all'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "all"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             All
-            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
+            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.all}
+            </span>
           </button>
-          
+
           {/* Dynamic tabs based on tags */}
-          {tags.map(tag => (
+          {tags.map((tag) => (
             <button
               key={tag.id}
               onClick={() => handleTabChange(tag.id.toString())}
               className={`py-3 px-4 text-sm font-medium relative ${
                 activeTab === tag.id.toString()
-                  ? 'border-b-2 border-green-700 text-green-700'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? "border-b-2 border-green-700 text-green-700"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               {tag.name}
@@ -380,9 +411,7 @@ const NewsListPage = () => {
         </div>
 
         {/* News list title */}
-        <h2 className="text-lg font-bold mb-4">
-          List of {getActiveTabName()} News Articles
-        </h2>
+        <h2 className="text-lg font-bold mb-4">List of {getActiveTabName()} News Articles</h2>
 
         {/* Search and filter */}
         <div className="flex justify-end mb-4">
@@ -391,16 +420,16 @@ const NewsListPage = () => {
               <Search className="w-4 h-4 text-gray-500" />
             </div>
             <form onSubmit={handleSearchSubmit}>
-              <input 
-                type="text" 
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
+              <input
+                type="text"
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5"
                 placeholder="Search"
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
             </form>
           </div>
-          <button 
+          <button
             className="ml-2 p-2.5 bg-green-700 text-white rounded"
             onClick={() => {
               // Open a filter modal or expand filter options
@@ -420,66 +449,105 @@ const NewsListPage = () => {
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published Date</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    #
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Title
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Tags
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Published Date
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {news.map((article, index) => (
                   <tr key={article.id || index} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getRowNumber(index)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {getRowNumber(index)}
+                    </td>
                     <td className="px-4 py-4 text-sm text-gray-900">
                       <div className="font-medium">{article.title}</div>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-900">
                       <div className="flex flex-wrap gap-1">
-                        {article.tags && article.tags.map(tag => (
-                          <span key={tag.id} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
-                            {tag.name}
-                          </span>
-                        ))}
+                        {article.tags &&
+                          article.tags.map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full"
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
                         {(!article.tags || article.tags.length === 0) && (
                           <span className="text-gray-400 text-xs">No tags</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {article.publish_date ? formatDate(article.publish_date) : 'Not published'}
+                      {article.publish_date ? formatDate(article.publish_date) : "Not published"}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       {getStatusBadge(article.status)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
-                      <button 
+                      <button
                         className="text-gray-500 hover:text-gray-700"
                         onClick={() => toggleMenu(article.id)}
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
-                      
+
                       {/* Dropdown menu */}
                       {openMenuId === article.id && (
-                        <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        >
                           <button
-                            onClick={() => handleAction('view', article.id)}
+                            onClick={() => handleAction("view", article.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             View details
                           </button>
                           <button
-                            onClick={() => handleAction('edit', article.id)}
+                            onClick={() => handleAction("edit", article.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <Edit className="w-4 h-4 mr-2" />
                             Edit
                           </button>
                           <button
-                            onClick={() => handleAction('delete', article.id)}
+                            onClick={() => handleAction("delete", article.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                           >
                             <Trash className="w-4 h-4 mr-2" />
@@ -498,36 +566,37 @@ const NewsListPage = () => {
         {/* Pagination */}
         <div className="flex items-center justify-between py-3">
           <div className="text-sm text-gray-500">
-            Showing {news.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalNews)} out of {totalNews} entries
+            Showing {news.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
+            {Math.min(page * limit, totalNews)} out of {totalNews} entries
           </div>
           <div className="flex items-center space-x-1">
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(1)}
               disabled={page === 1}
             >
               <ChevronsLeft className="w-4 h-4" />
             </button>
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(Math.max(1, page - 1))}
               disabled={page === 1}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            
+
             {/* Display page numbers */}
             {[...Array(Math.min(totalPages, 3))].map((_, index) => {
               const pageNumber = page <= 2 ? index + 1 : page - 1 + index;
               if (pageNumber <= totalPages) {
                 return (
-                  <button 
+                  <button
                     key={pageNumber}
                     onClick={() => goToPage(pageNumber)}
                     className={`p-2 w-8 h-8 rounded-md ${
                       pageNumber === page
-                        ? 'bg-green-700 text-white'
-                        : 'hover:bg-gray-100 text-gray-700'
+                        ? "bg-green-700 text-white"
+                        : "hover:bg-gray-100 text-gray-700"
                     } flex items-center justify-center`}
                   >
                     {pageNumber}
@@ -536,15 +605,15 @@ const NewsListPage = () => {
               }
               return null;
             })}
-            
-            <button 
+
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(totalPages)}
               disabled={page === totalPages}
@@ -554,7 +623,7 @@ const NewsListPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -564,21 +633,24 @@ const NewsListPage = () => {
               Delete News Article
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this news article? This action cannot be undone and will permanently delete the article and all associated data.
+              Are you sure you want to delete this news article? This action cannot be undone and
+              will permanently delete the article and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setIsDeleteDialogOpen(false);
-              setNewsToDelete(null);
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setNewsToDelete(null);
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+              style={{ backgroundColor: "#dc2626", color: "#ffffff" }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#b91c1c")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
             >
               Delete News Article
             </AlertDialogAction>

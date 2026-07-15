@@ -80,9 +80,7 @@ async function platformUserIdsByHrRole(role: "IT" | "HR"): Promise<number[]> {
     .from(hr_users)
     .where(eq(hr_users.role, role));
 
-  return rows
-    .map((r) => r.platformUserId)
-    .filter((id): id is number => id != null);
+  return rows.map((r) => r.platformUserId).filter((id): id is number => id != null);
 }
 
 async function platformUserIdForHrEmployee(employeeId: string): Promise<number | null> {
@@ -98,9 +96,7 @@ async function platformUserIdForHrEmployee(employeeId: string): Promise<number |
 async function allEmployeePlatformUserIds(): Promise<number[]> {
   const rows = await db.select({ platformUserId: hr_users.platform_user_id }).from(hr_users);
 
-  return rows
-    .map((r) => r.platformUserId)
-    .filter((id): id is number => id != null);
+  return rows.map((r) => r.platformUserId).filter((id): id is number => id != null);
 }
 
 async function resolveEmployeeIdFromEntity(
@@ -196,9 +192,7 @@ export async function resolveRecipients(
 
   const prefsByUser = new Map(prefsRows.map((p) => [p.user_id, p]));
 
-  return recipientIds.filter((userId) =>
-    isPreferenceEnabled(prefsByUser.get(userId), type),
-  );
+  return recipientIds.filter((userId) => isPreferenceEnabled(prefsByUser.get(userId), type));
 }
 
 export async function sendNotification(payload: SendNotificationPayload): Promise<void> {
@@ -284,9 +278,7 @@ export async function markAsRead(notificationId: string, userId: number): Promis
   const updated = await db
     .update(hr_notifications)
     .set({ status: "READ", read_at: now, updated_at: now })
-    .where(
-      and(eq(hr_notifications.id, notificationId), eq(hr_notifications.recipient_id, userId)),
-    )
+    .where(and(eq(hr_notifications.id, notificationId), eq(hr_notifications.recipient_id, userId)))
     .returning({ id: hr_notifications.id });
 
   if (!updated.length) throw new AppError("Notification not found", 404);
@@ -305,9 +297,7 @@ export async function archiveNotification(notificationId: string, userId: number
   const updated = await db
     .update(hr_notifications)
     .set({ status: "ARCHIVED", updated_at: now })
-    .where(
-      and(eq(hr_notifications.id, notificationId), eq(hr_notifications.recipient_id, userId)),
-    )
+    .where(and(eq(hr_notifications.id, notificationId), eq(hr_notifications.recipient_id, userId)))
     .returning({ id: hr_notifications.id });
 
   if (!updated.length) throw new AppError("Notification not found", 404);
@@ -330,10 +320,7 @@ export async function getPreferences(userId: number) {
   return created;
 }
 
-export async function updatePreferences(
-  userId: number,
-  input: UpdateNotificationPreferencesInput,
-) {
+export async function updatePreferences(userId: number, input: UpdateNotificationPreferencesInput) {
   const existing = await db
     .select()
     .from(hr_notification_preferences)

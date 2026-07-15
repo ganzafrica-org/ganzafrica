@@ -7,26 +7,12 @@ export const createTestimonialSchema = z.object({
       .string()
       .min(2, "Author name must be at least 2 characters long")
       .max(200, "Author name must be at most 200 characters long"),
-    position: z
-      .string()
-      .max(200, "Position must be at most 200 characters long")
-      .optional(),
+    position: z.string().max(200, "Position must be at most 200 characters long").optional(),
     image: z.string().optional(),
-    description: z
-      .string()
-      .min(10, "Description must be at least 10 characters long"),
-    company: z
-      .string()
-      .max(200, "Company must be at most 200 characters long")
-      .optional(),
-    occupation: z
-      .string()
-      .max(200, "Occupation must be at most 200 characters long")
-      .optional(),
-    date: z
-      .string()
-      .datetime({ message: "Date must be a valid ISO datetime string" })
-      .optional(),
+    description: z.string().min(10, "Description must be at least 10 characters long"),
+    company: z.string().max(200, "Company must be at most 200 characters long").optional(),
+    occupation: z.string().max(200, "Occupation must be at most 200 characters long").optional(),
+    date: z.string().datetime({ message: "Date must be a valid ISO datetime string" }).optional(),
     rating: z
       .number()
       .int("Rating must be an integer")
@@ -59,27 +45,12 @@ export const updateTestimonialSchema = z.object({
         .min(2, "Author name must be at least 2 characters long")
         .max(200, "Author name must be at most 200 characters long")
         .optional(),
-      position: z
-        .string()
-        .max(200, "Position must be at most 200 characters long")
-        .optional(),
+      position: z.string().max(200, "Position must be at most 200 characters long").optional(),
       image: z.string().optional(),
-      description: z
-        .string()
-        .min(10, "Description must be at least 10 characters long")
-        .optional(),
-      company: z
-        .string()
-        .max(200, "Company must be at most 200 characters long")
-        .optional(),
-      occupation: z
-        .string()
-        .max(200, "Occupation must be at most 200 characters long")
-        .optional(),
-      date: z
-        .string()
-        .datetime({ message: "Date must be a valid ISO datetime string" })
-        .optional(),
+      description: z.string().min(10, "Description must be at least 10 characters long").optional(),
+      company: z.string().max(200, "Company must be at most 200 characters long").optional(),
+      occupation: z.string().max(200, "Occupation must be at most 200 characters long").optional(),
+      date: z.string().datetime({ message: "Date must be a valid ISO datetime string" }).optional(),
       rating: z
         .number()
         .int("Rating must be an integer")

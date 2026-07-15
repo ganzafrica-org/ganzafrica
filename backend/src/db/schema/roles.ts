@@ -1,11 +1,4 @@
-import {
-  integer,
-  pgTable,
-  text,
-  serial,
-  varchar,
-  uniqueIndex,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, serial, varchar, uniqueIndex } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 import { users } from "./users";
 
@@ -32,10 +25,7 @@ export const user_roles = pgTable(
   },
   (table) => {
     return {
-      userRoleIdx: uniqueIndex("user_role_idx").on(
-        table.user_id,
-        table.role_id,
-      ),
+      userRoleIdx: uniqueIndex("user_role_idx").on(table.user_id, table.role_id),
     };
   },
 );

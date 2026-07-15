@@ -118,22 +118,22 @@ export const createContact = async (req: Request, res: Response) => {
 export const listContacts = async (req: Request, res: Response) => {
   try {
     const status = req.query.status?.toString();
-    const isResolved = req.query.is_resolved 
-      ? req.query.is_resolved.toString() === 'true' 
+    const isResolved = req.query.is_resolved
+      ? req.query.is_resolved.toString() === "true"
       : undefined;
     const location = req.query.location?.toString();
-    
+
     // Get sort parameters with defaults
-    const sortBy = req.query.sort_by?.toString() || 'created_at';
-    const sortOrder = req.query.sort_order?.toString() || 'desc';
+    const sortBy = req.query.sort_by?.toString() || "created_at";
+    const sortOrder = req.query.sort_order?.toString() || "desc";
 
     // Pass filtering and sorting parameters to service
     const contacts = await contactService.listContacts(
-      status, 
-      isResolved, 
-      location, 
-      sortBy, 
-      sortOrder
+      status,
+      isResolved,
+      location,
+      sortBy,
+      sortOrder,
     );
 
     res.status(200).json({ contacts });
@@ -449,19 +449,17 @@ export const unsubscribeNewsletter = async (req: Request, res: Response) => {
  */
 export const listNewsletterSubscribers = async (req: Request, res: Response) => {
   try {
-    const activeOnly = req.query.active_only 
-      ? req.query.active_only.toString() === 'true' 
-      : false;
-    
+    const activeOnly = req.query.active_only ? req.query.active_only.toString() === "true" : false;
+
     // Get sort parameters with defaults
-    const sortBy = req.query.sort_by?.toString() || 'subscribed_at';
-    const sortOrder = req.query.sort_order?.toString() || 'desc';
+    const sortBy = req.query.sort_by?.toString() || "subscribed_at";
+    const sortOrder = req.query.sort_order?.toString() || "desc";
 
     // Fetch subscribers
     const subscribers = await contactService.listNewsletterSubscribers(
-      activeOnly, 
-      sortBy, 
-      sortOrder
+      activeOnly,
+      sortBy,
+      sortOrder,
     );
 
     res.status(200).json({ subscribers });
@@ -534,7 +532,7 @@ export const contactController = {
   subscribeNewsletter,
   unsubscribeNewsletter,
   listNewsletterSubscribers,
-  deleteNewsletterSubscriber
+  deleteNewsletterSubscriber,
 };
 
 // Default export for the controller object

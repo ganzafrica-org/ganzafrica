@@ -57,15 +57,10 @@ export const updateNewsSchema = z.object({
         .min(3, "Title must be at least 3 characters long")
         .max(255, "Title must be at most 255 characters long")
         .optional(),
-      content: z
-        .string()
-        .min(10, "Content must be at least 10 characters long")
-        .optional(),
+      content: z.string().min(10, "Content must be at least 10 characters long").optional(),
       status: z.enum(["published", "not_published"]).optional(),
       publish_date: z.string().datetime().optional().nullable(),
-      category: z
-        .enum(["all", "news", "blogs", "reports", "publications"])
-        .optional(),
+      category: z.enum(["all", "news", "blogs", "reports", "publications"]).optional(),
       key_lessons: z.string().optional().nullable(),
       media: mediaSchema.optional().nullable(),
       tags: z.array(z.number().int().positive()).optional(),
@@ -107,9 +102,7 @@ export const deleteTagSchema = z.object({
 export const listNewsSchema = z.object({
   query: z
     .object({
-      category: z
-        .enum(["all", "news", "blogs", "reports", "publications"])
-        .optional(),
+      category: z.enum(["all", "news", "blogs", "reports", "publications"]).optional(),
       status: z.enum(["published", "not_published"]).optional(),
       search: z.string().optional(),
       tags: z.string().optional(), // Comma-separated list of tag IDs

@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useTranslationContext } from '@/context/translation';
+import React, { useState, useEffect, useRef } from "react";
+import { useTranslationContext } from "@/context/translation";
 
 interface TranslatableTextProps {
   /** The original text to translate */
@@ -28,8 +28,8 @@ interface TranslatableTextProps {
  */
 export function TranslatableText({
   children,
-  as: Component = 'span',
-  className = '',
+  as: Component = "span",
+  className = "",
   showLoading = false,
   onTranslated,
 }: TranslatableTextProps) {
@@ -38,7 +38,7 @@ export function TranslatableText({
     sourceLanguage,
     translateText,
     getCachedTranslation,
-    isTranslated: isGloballyTranslated
+    isTranslated: isGloballyTranslated,
   } = useTranslationContext();
 
   const [displayText, setDisplayText] = useState(children);
@@ -77,7 +77,7 @@ export function TranslatableText({
         setDisplayText(translated);
         onTranslated?.(translated);
       } catch (error) {
-        console.error('Translation failed:', error);
+        console.error("Translation failed:", error);
         // Keep original text on error
         setDisplayText(originalTextRef.current);
       } finally {
@@ -86,12 +86,22 @@ export function TranslatableText({
     };
 
     // Only translate if language changed
-    if (targetLanguage !== lastTargetLangRef.current ||
-        (isGloballyTranslated && displayText === originalTextRef.current)) {
+    if (
+      targetLanguage !== lastTargetLangRef.current ||
+      (isGloballyTranslated && displayText === originalTextRef.current)
+    ) {
       lastTargetLangRef.current = targetLanguage;
       translateContent();
     }
-  }, [targetLanguage, sourceLanguage, translateText, getCachedTranslation, onTranslated, isGloballyTranslated, displayText]);
+  }, [
+    targetLanguage,
+    sourceLanguage,
+    translateText,
+    getCachedTranslation,
+    onTranslated,
+    isGloballyTranslated,
+    displayText,
+  ]);
 
   const ElementComponent = Component as React.ElementType;
 
@@ -103,11 +113,7 @@ export function TranslatableText({
     );
   }
 
-  return (
-    <ElementComponent className={className}>
-      {displayText}
-    </ElementComponent>
-  );
+  return <ElementComponent className={className}>{displayText}</ElementComponent>;
 }
 
 /**
@@ -117,12 +123,8 @@ export function useAutoTranslate(originalText: string): {
   text: string;
   isLoading: boolean;
 } {
-  const {
-    targetLanguage,
-    sourceLanguage,
-    translateText,
-    getCachedTranslation
-  } = useTranslationContext();
+  const { targetLanguage, sourceLanguage, translateText, getCachedTranslation } =
+    useTranslationContext();
 
   const [text, setText] = useState(originalText);
   const [isLoading, setIsLoading] = useState(false);

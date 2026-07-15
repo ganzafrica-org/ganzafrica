@@ -1,11 +1,11 @@
 // 08_create_task_teams.ts
 // Migration to create task team management tables
 
-import { sql } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { sql } from "drizzle-orm";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 export async function up(db: NodePgDatabase<any>) {
-  console.log('Creating task team management tables...');
+  console.log("Creating task team management tables...");
 
   // Create enums first
   await db.execute(sql`
@@ -144,11 +144,11 @@ export async function up(db: NodePgDatabase<any>) {
     CREATE INDEX IF NOT EXISTS task_project_members_user_id_idx ON task_project_members(user_id)
   `);
 
-  console.log('Task team management tables created successfully');
+  console.log("Task team management tables created successfully");
 }
 
 export async function down(db: NodePgDatabase<any>) {
-  console.log('Dropping task team management tables...');
+  console.log("Dropping task team management tables...");
 
   // Drop tables in reverse order
   await db.execute(sql`DROP TABLE IF EXISTS task_project_members CASCADE`);
@@ -161,6 +161,5 @@ export async function down(db: NodePgDatabase<any>) {
   await db.execute(sql`DROP TYPE IF EXISTS task_team_status`);
   await db.execute(sql`DROP TYPE IF EXISTS task_team_role`);
 
-  console.log('Task team management tables dropped successfully');
+  console.log("Task team management tables dropped successfully");
 }
-

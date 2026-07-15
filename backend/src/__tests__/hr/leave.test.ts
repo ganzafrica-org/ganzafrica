@@ -25,13 +25,11 @@ describe("HR System - Leave Management", () => {
 
   describe("GET /api/hr/leave", () => {
     it("should allow HR to list all leaves", async () => {
-      const listStub = sandbox.stub(leaveService, "listAllLeaves").resolves([
-        { id: IDS.leave, status: "PENDING" } as any,
-      ]);
+      const listStub = sandbox
+        .stub(leaveService, "listAllLeaves")
+        .resolves([{ id: IDS.leave, status: "PENDING" } as any]);
 
-      const res = await request
-        .get("/api/hr/leave")
-        .set("Authorization", `Bearer ${hrToken}`);
+      const res = await request.get("/api/hr/leave").set("Authorization", `Bearer ${hrToken}`);
 
       expect(res.status).to.equal(200);
       expect(res.body).to.be.an("array");

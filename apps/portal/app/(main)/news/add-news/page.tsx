@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import apiClient from '@/lib/api-client';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef } from "react";
+import apiClient from "@/lib/api-client";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
@@ -15,48 +15,48 @@ import {
   Loader,
   Calendar,
   ChevronDown,
-  Tag as TagIcon
-} from 'lucide-react';
-import Link from 'next/link';
+  Tag as TagIcon,
+} from "lucide-react";
+import Link from "next/link";
 
 const AddNewsPage = () => {
   const router = useRouter();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [tags, setTags] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
-  const [newTagName, setNewTagName] = useState('');
+  const [newTagName, setNewTagName] = useState("");
   const [addingTag, setAddingTag] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
 
   // Valid enum values based on the validation error
-  const categories = ['all', 'news', 'blogs', 'reports', 'publications'];
-  const statuses = ['published', 'not_published'];
+  const categories = ["all", "news", "blogs", "reports", "publications"];
+  const statuses = ["published", "not_published"];
 
   // Form state
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    summary: '',
-    status: 'published',
+    title: "",
+    content: "",
+    summary: "",
+    status: "published",
     publish_date: new Date().toISOString(),
-    category: 'news',
-    key_lessons: '',
+    category: "news",
+    key_lessons: "",
     media: {
-      items: []
-    }
+      items: [],
+    },
   });
 
   // Temporary state for new media
   const [newMedia, setNewMedia] = useState({
     file: null,
-    type: 'image',
-    title: '',
-    cover: false
+    type: "image",
+    title: "",
+    cover: false,
   });
 
   // Selected tags for the news article
@@ -66,17 +66,17 @@ const AddNewsPage = () => {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await apiClient.get('/news/tags');
+        const response = await apiClient.get("/news/tags");
         if (response.data && Array.isArray(response.data.tags)) {
           setTags(response.data.tags);
         } else if (Array.isArray(response.data)) {
           setTags(response.data);
         } else {
-          console.error('Unexpected tags response format:', response.data);
+          console.error("Unexpected tags response format:", response.data);
           setTags([]);
         }
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        console.error("Error fetching tags:", error);
         setTags([]);
       }
     };
@@ -87,18 +87,18 @@ const AddNewsPage = () => {
   // Handle input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   // Handle text area change
   const handleTextAreaChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -106,40 +106,42 @@ const AddNewsPage = () => {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
+
       // Validate file size (10MB max)
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
         setError(`File size exceeds maximum limit of ${formatFileSize(maxSize)}`);
         // Reset file input
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
         return;
       }
-      
+
       // Validate file type
-      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      const validVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
-      
+      const validImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+      const validVideoTypes = ["video/mp4", "video/webm", "video/quicktime"];
+
       if (!validImageTypes.concat(validVideoTypes).includes(file.type)) {
-        setError('File type not supported. Please upload images (JPEG, PNG, GIF, WEBP) or videos (MP4, WEBM, MOV)');
+        setError(
+          "File type not supported. Please upload images (JPEG, PNG, GIF, WEBP) or videos (MP4, WEBM, MOV)",
+        );
         // Reset file input
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
         return;
       }
-      
-      // Clear previous error if any
-      setError('');
-      
-      const fileType = file.type.startsWith('image/') ? 'image' : 'video';
 
-      setNewMedia(prev => ({
+      // Clear previous error if any
+      setError("");
+
+      const fileType = file.type.startsWith("image/") ? "image" : "video";
+
+      setNewMedia((prev) => ({
         ...prev,
         file,
-        type: fileType
+        type: fileType,
       }));
     }
   };
@@ -147,9 +149,9 @@ const AddNewsPage = () => {
   // Handle media input change
   const handleMediaChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewMedia(prev => ({
+    setNewMedia((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -163,33 +165,33 @@ const AddNewsPage = () => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
-      
+
       // Create form data for file upload
       const formData = new FormData();
-      formData.append('file', file);
-      
+      formData.append("file", file);
+
       // Make the upload request to the backend
-      const response = await apiClient.post('/uploads/file', formData, {
+      const response = await apiClient.post("/uploads/file", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          "Content-Type": "multipart/form-data",
         },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
-        }
+        },
       });
-      
+
       // Check if upload was successful
       if (response.data && response.data.success) {
-        console.log('File uploaded successfully:', response.data.file);
+        console.log("File uploaded successfully:", response.data.file);
         setUploadProgress(100);
         setIsUploading(false);
         return response.data.file.url;
       } else {
-        throw new Error('File upload failed: Server returned unsuccessful response');
+        throw new Error("File upload failed: Server returned unsuccessful response");
       }
     } catch (error) {
-      console.error('Error uploading file to server:', error);
+      console.error("Error uploading file to server:", error);
       setIsUploading(false);
       throw error; // Re-throw to handle in the calling function
     }
@@ -198,7 +200,7 @@ const AddNewsPage = () => {
   // Toggle tag selection
   const toggleTag = (tagId) => {
     if (selectedTags.includes(tagId)) {
-      setSelectedTags(selectedTags.filter(id => id !== tagId));
+      setSelectedTags(selectedTags.filter((id) => id !== tagId));
     } else {
       setSelectedTags([...selectedTags, tagId]);
     }
@@ -207,8 +209,8 @@ const AddNewsPage = () => {
   // Generate a video thumbnail
   const generateVideoThumbnail = async (videoFile) => {
     return new Promise((resolve) => {
-      const videoElement = document.createElement('video');
-      videoElement.preload = 'metadata';
+      const videoElement = document.createElement("video");
+      videoElement.preload = "metadata";
       videoElement.playsInline = true;
       videoElement.muted = true;
 
@@ -225,14 +227,14 @@ const AddNewsPage = () => {
       // When the current time updates (after seeking)
       videoElement.onseeked = () => {
         // Create a canvas and draw the video frame
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = videoElement.videoWidth;
         canvas.height = videoElement.videoHeight;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
         // Convert the canvas to a data URL (thumbnail)
-        const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
+        const thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
 
         // Clean up
         URL.revokeObjectURL(videoURL);
@@ -244,7 +246,7 @@ const AddNewsPage = () => {
       // Handle errors
       videoElement.onerror = () => {
         URL.revokeObjectURL(videoURL);
-        console.error('Error generating video thumbnail');
+        console.error("Error generating video thumbnail");
         resolve(null);
       };
     });
@@ -253,20 +255,20 @@ const AddNewsPage = () => {
   // Get video duration
   const getVideoDuration = async (videoFile) => {
     return new Promise((resolve, reject) => {
-      const videoElement = document.createElement('video');
-      videoElement.preload = 'metadata';
-      
+      const videoElement = document.createElement("video");
+      videoElement.preload = "metadata";
+
       const videoURL = URL.createObjectURL(videoFile);
       videoElement.src = videoURL;
-      
+
       videoElement.onloadedmetadata = () => {
         URL.revokeObjectURL(videoURL);
         resolve(videoElement.duration);
       };
-      
+
       videoElement.onerror = () => {
         URL.revokeObjectURL(videoURL);
-        reject(new Error('Error getting video duration'));
+        reject(new Error("Error getting video duration"));
       };
     });
   };
@@ -275,7 +277,7 @@ const AddNewsPage = () => {
   const dataURLtoFile = async (dataUrl, filename) => {
     const res = await fetch(dataUrl);
     const blob = await res.blob();
-    return new File([blob], filename, { type: 'image/jpeg' });
+    return new File([blob], filename, { type: "image/jpeg" });
   };
 
   // Upload a thumbnail image to the server
@@ -283,11 +285,11 @@ const AddNewsPage = () => {
     try {
       // Convert data URL to File object
       const file = await dataURLtoFile(dataUrl, `thumbnail-${Date.now()}.jpg`);
-      
+
       // Upload the file to the server
       return await uploadFileToServer(file);
     } catch (error) {
-      console.error('Error uploading thumbnail to server:', error);
+      console.error("Error uploading thumbnail to server:", error);
       return null;
     }
   };
@@ -297,35 +299,35 @@ const AddNewsPage = () => {
     if (!newMedia.file || !newMedia.title) return;
 
     try {
-      setError('');
-      
+      setError("");
+
       // Upload the file to the server
       let fileUrl;
       try {
         fileUrl = await uploadFileToServer(newMedia.file);
       } catch (error) {
-        setError('Failed to upload file. Please try again.');
+        setError("Failed to upload file. Please try again.");
         return;
       }
-      
+
       const mediaId = `media-${Date.now()}`;
 
       // For videos, generate and upload a thumbnail
       let thumbnailUrl = null;
       let duration = 0;
-      
-      if (newMedia.type === 'video') {
+
+      if (newMedia.type === "video") {
         try {
           // Get video duration
           duration = await getVideoDuration(newMedia.file);
-          
+
           // Generate and upload thumbnail
           const thumbnailDataUrl = await generateVideoThumbnail(newMedia.file);
           if (thumbnailDataUrl) {
             thumbnailUrl = await uploadThumbnailToServer(thumbnailDataUrl);
           }
         } catch (error) {
-          console.error('Error processing video:', error);
+          console.error("Error processing video:", error);
           // Continue without a thumbnail if there's an error
         }
       }
@@ -339,46 +341,45 @@ const AddNewsPage = () => {
         order: formData.media.items.length + 1,
         size: newMedia.file.size,
         // For videos, add duration and thumbnail
-        ...(newMedia.type === 'video' && {
+        ...(newMedia.type === "video" && {
           duration: duration,
-          thumbnailUrl: thumbnailUrl
-        })
+          thumbnailUrl: thumbnailUrl,
+        }),
       };
 
       // Update media items in form data
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         media: {
-          items: [...prev.media.items, mediaToAdd]
-        }
+          items: [...prev.media.items, mediaToAdd],
+        },
       }));
 
       // Make the first media item the cover if no cover is set yet
       if (formData.media.items.length === 0 && !mediaToAdd.cover) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           media: {
-            items: [{ ...mediaToAdd, cover: true }]
-          }
+            items: [{ ...mediaToAdd, cover: true }],
+          },
         }));
       }
 
       // Reset new media form
       setNewMedia({
         file: null,
-        type: 'image',
-        title: '',
-        cover: false
+        type: "image",
+        title: "",
+        cover: false,
       });
 
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
-
     } catch (error) {
-      console.error('Error adding media:', error);
-      setError('Failed to add media. Please try again.');
+      console.error("Error adding media:", error);
+      setError("Failed to add media. Please try again.");
     }
   };
 
@@ -387,61 +388,57 @@ const AddNewsPage = () => {
     if (selectedMedia && selectedMedia.id === mediaId) {
       setSelectedMedia(null);
     } else {
-      const media = formData.media.items.find(item => item.id === mediaId);
+      const media = formData.media.items.find((item) => item.id === mediaId);
       setSelectedMedia(media);
     }
   };
 
   // Toggle media as cover
   const toggleMediaCover = (mediaId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       media: {
-        items: prev.media.items.map(item =>
-            item.id === mediaId
-                ? { ...item, cover: true }
-                : { ...item, cover: false } // Ensure only one cover image
-        )
-      }
+        items: prev.media.items.map(
+          (item) => (item.id === mediaId ? { ...item, cover: true } : { ...item, cover: false }), // Ensure only one cover image
+        ),
+      },
     }));
 
     // Update selectedMedia if it's the one being updated
     if (selectedMedia && selectedMedia.id === mediaId) {
-      setSelectedMedia(prev => ({ ...prev, cover: true }));
+      setSelectedMedia((prev) => ({ ...prev, cover: true }));
     }
   };
 
   // Remove media from list
   const removeMedia = (mediaId) => {
     // Get the media to be removed
-    const mediaToRemove = formData.media.items.find(item => item.id === mediaId);
-    
+    const mediaToRemove = formData.media.items.find((item) => item.id === mediaId);
+
     // Remove from form data
-    setFormData(prev => {
-      const updatedItems = prev.media.items.filter(media => media.id !== mediaId);
-      
+    setFormData((prev) => {
+      const updatedItems = prev.media.items.filter((media) => media.id !== mediaId);
+
       // If we're removing the cover image, set the first remaining image as cover if available
       if (mediaToRemove.cover && updatedItems.length > 0) {
-        const firstImageItem = updatedItems.find(item => item.type === 'image');
+        const firstImageItem = updatedItems.find((item) => item.type === "image");
         if (firstImageItem) {
           return {
             ...prev,
             media: {
-              items: updatedItems.map(item => 
-                item.id === firstImageItem.id 
-                  ? { ...item, cover: true }
-                  : item
-              )
-            }
+              items: updatedItems.map((item) =>
+                item.id === firstImageItem.id ? { ...item, cover: true } : item,
+              ),
+            },
           };
         }
       }
-      
+
       return {
         ...prev,
         media: {
-          items: updatedItems
-        }
+          items: updatedItems,
+        },
       };
     });
 
@@ -454,14 +451,14 @@ const AddNewsPage = () => {
   const removeNewMedia = () => {
     setNewMedia({
       file: null,
-      type: 'image',
-      title: '',
-      cover: false
+      type: "image",
+      title: "",
+      cover: false,
     });
 
     // Reset file input
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -472,26 +469,26 @@ const AddNewsPage = () => {
     try {
       setAddingTag(true);
 
-      const response = await apiClient.post('/news/tags', {
-        name: newTagName.trim()
+      const response = await apiClient.post("/news/tags", {
+        name: newTagName.trim(),
       });
 
       const newTag = response.data;
 
       // Add the new tag to the tags list
-      setTags(prev => [...prev, newTag]);
+      setTags((prev) => [...prev, newTag]);
 
       // Select the newly created tag
-      setSelectedTags(prev => [...prev, newTag.id]);
+      setSelectedTags((prev) => [...prev, newTag.id]);
 
       // Reset the new tag name
-      setNewTagName('');
+      setNewTagName("");
 
       // Close the modal
       setShowTagModal(false);
     } catch (error) {
-      console.error('Error adding tag:', error);
-      setError('Failed to add tag. Please try again.');
+      console.error("Error adding tag:", error);
+      setError("Failed to add tag. Please try again.");
     } finally {
       setAddingTag(false);
     }
@@ -499,23 +496,23 @@ const AddNewsPage = () => {
 
   // Format date for input field
   const formatDate = (dateString) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
 
     const date = new Date(dateString);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   };
 
   // Format file size display
   const formatFileSize = (bytes) => {
-    if (!bytes) return '0 Bytes';
+    if (!bytes) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   // Update publish_date with valid ISO string when date input changes
@@ -525,14 +522,14 @@ const AddNewsPage = () => {
     if (dateValue) {
       // Create a date object at noon to avoid timezone issues
       const date = new Date(`${dateValue}T12:00:00Z`);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        publish_date: date.toISOString() // Convert to ISO string format
+        publish_date: date.toISOString(), // Convert to ISO string format
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        publish_date: ''
+        publish_date: "",
       }));
     }
   };
@@ -541,32 +538,30 @@ const AddNewsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
     setSuccess(false);
 
     // Validate form data
     if (!formData.title || !formData.content) {
-      setError('Please fill in all required fields (Title, Content)');
+      setError("Please fill in all required fields (Title, Content)");
       setLoading(false);
       return;
     }
 
     // Ensure there's a cover image if media items exist
     if (formData.media.items.length > 0) {
-      const hasCover = formData.media.items.some(item => item.cover);
+      const hasCover = formData.media.items.some((item) => item.cover);
       if (!hasCover) {
         // Set the first image as cover
-        const firstImage = formData.media.items.find(item => item.type === 'image');
+        const firstImage = formData.media.items.find((item) => item.type === "image");
         if (firstImage) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             media: {
-              items: prev.media.items.map(item => 
-                item.id === firstImage.id
-                  ? { ...item, cover: true }
-                  : item
-              )
-            }
+              items: prev.media.items.map((item) =>
+                item.id === firstImage.id ? { ...item, cover: true } : item,
+              ),
+            },
           }));
         }
       }
@@ -581,29 +576,31 @@ const AddNewsPage = () => {
       };
 
       // Ensure we have a valid publish_date if status is published
-      if (formData.status === 'published' && !formData.publish_date) {
+      if (formData.status === "published" && !formData.publish_date) {
         newsData.publish_date = new Date().toISOString();
       }
 
       try {
-        const response = await apiClient.post('/news', newsData);
-        console.log('News created:', response.data);
+        const response = await apiClient.post("/news", newsData);
+        console.log("News created:", response.data);
         setSuccess(true);
 
         // Navigate back to news list after a brief delay
         setTimeout(() => {
-          router.push('/news');
+          router.push("/news");
         }, 2000);
       } catch (error) {
-        console.error('Error creating news:', error);
-        const errorMessage = error.response?.data?.message ||
-            (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) :
-                'Failed to create news article. Please try again.');
+        console.error("Error creating news:", error);
+        const errorMessage =
+          error.response?.data?.message ||
+          (error.response?.data?.errors
+            ? JSON.stringify(error.response.data.errors)
+            : "Failed to create news article. Please try again.");
         setError(errorMessage);
       }
     } catch (error) {
-      console.error('Error processing media:', error);
-      setError('Failed to process media files. Please try again.');
+      console.error("Error processing media:", error);
+      setError("Failed to process media files. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -621,14 +618,14 @@ const AddNewsPage = () => {
         </div>
         <p className="text-gray-600">News/Create Article</p>
       </div>
-      
+
       {/* Success message */}
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
           <span className="block sm:inline">News article created successfully! Redirecting...</span>
         </div>
       )}
-      
+
       {/* Error message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 flex items-center">
@@ -636,7 +633,7 @@ const AddNewsPage = () => {
           <span>{error}</span>
         </div>
       )}
-      
+
       {/* News article form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md">
         {/* Basic information */}
@@ -647,7 +644,7 @@ const AddNewsPage = () => {
               <h2 className="text-xl font-bold">Article Details</h2>
               <p className="text-gray-600 text-sm">Basic information about the news article</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-full md:w-3/4">
               <div className="mb-6">
@@ -665,12 +662,10 @@ const AddNewsPage = () => {
                   required
                 />
               </div>
-              
+
               <div className="mb-6">
                 {/* Summary */}
-                <label className="block text-sm font-medium mb-1">
-                  Summary
-                </label>
+                <label className="block text-sm font-medium mb-1">Summary</label>
                 <textarea
                   name="summary"
                   value={formData.summary}
@@ -680,7 +675,7 @@ const AddNewsPage = () => {
                   placeholder="Enter a brief summary of the article"
                 />
               </div>
-              
+
               <div className="mb-6">
                 {/* Content */}
                 <label className="block text-sm font-medium mb-1">
@@ -696,12 +691,10 @@ const AddNewsPage = () => {
                   required
                 />
               </div>
-              
+
               <div className="mb-6">
                 {/* Key Lessons */}
-                <label className="block text-sm font-medium mb-1">
-                  Key Lessons
-                </label>
+                <label className="block text-sm font-medium mb-1">Key Lessons</label>
                 <textarea
                   name="key_lessons"
                   value={formData.key_lessons}
@@ -711,13 +704,11 @@ const AddNewsPage = () => {
                   placeholder="Enter key takeaways or lessons (separate with semicolons for multiple items)"
                 />
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 {/* Category */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Category
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Category</label>
                   <div className="relative">
                     <select
                       name="category"
@@ -725,7 +716,7 @@ const AddNewsPage = () => {
                       onChange={handleChange}
                       className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
                     >
-                      {categories.map(category => (
+                      {categories.map((category) => (
                         <option key={category} value={category}>
                           {category.charAt(0).toUpperCase() + category.slice(1)}
                         </option>
@@ -734,12 +725,10 @@ const AddNewsPage = () => {
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-                
+
                 {/* Status */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Status
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Status</label>
                   <div className="relative">
                     <select
                       name="status"
@@ -747,18 +736,18 @@ const AddNewsPage = () => {
                       onChange={handleChange}
                       className="w-full p-2.5 border border-gray-300 rounded-md appearance-none"
                     >
-                      {statuses.map(status => (
+                      {statuses.map((status) => (
                         <option key={status} value={status}>
-                          {status === 'published' ? 'Published' : 'Not Published'}
+                          {status === "published" ? "Published" : "Not Published"}
                         </option>
                       ))}
                     </select>
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-                
+
                 {/* Published date - only show if status is published */}
-                {formData.status === 'published' && (
+                {formData.status === "published" && (
                   <div>
                     <label className="block text-sm font-medium mb-1">
                       Publication Date<span className="text-red-500">*</span>
@@ -770,7 +759,7 @@ const AddNewsPage = () => {
                         value={formatDate(formData.publish_date || new Date())}
                         onChange={handleDateChange}
                         className="w-full p-2.5 border border-gray-300 rounded-md"
-                        required={formData.status === 'published'}
+                        required={formData.status === "published"}
                       />
                     </div>
                   </div>
@@ -791,11 +780,11 @@ const AddNewsPage = () => {
               <h2 className="text-xl font-bold">Media</h2>
               <p className="text-gray-600 text-sm">Add images and videos to the article</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-full md:w-3/4">
               {/* Upload area */}
-              <div 
+              <div
                 className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6 cursor-pointer"
                 onClick={!newMedia.file ? triggerFileInput : undefined}
               >
@@ -804,18 +793,22 @@ const AddNewsPage = () => {
                     <Upload className="h-12 w-12 text-gray-400 mb-3" />
                     <p className="text-gray-700 font-medium mb-1">Drag and drop a file here</p>
                     <p className="text-gray-500 text-sm mb-3">or click to browse</p>
-                    <p className="text-xs text-gray-400">Supports images (JPEG, PNG, GIF, WEBP) and videos (MP4, WEBM, MOV) up to 10MB</p>
+                    <p className="text-xs text-gray-400">
+                      Supports images (JPEG, PNG, GIF, WEBP) and videos (MP4, WEBM, MOV) up to 10MB
+                    </p>
                   </div>
                 ) : (
                   <div className="p-4 bg-gray-50 rounded-md">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center">
-                        {newMedia.type === 'image' ? (
+                        {newMedia.type === "image" ? (
                           <ImageIcon className="w-5 h-5 text-blue-500 mr-2" />
                         ) : (
                           <FileVideo className="w-5 h-5 text-purple-500 mr-2" />
                         )}
-                        <span className="text-sm font-medium truncate max-w-xs">{newMedia.file.name}</span>
+                        <span className="text-sm font-medium truncate max-w-xs">
+                          {newMedia.file.name}
+                        </span>
                       </div>
                       <button
                         type="button"
@@ -828,23 +821,26 @@ const AddNewsPage = () => {
                         <X className="w-5 h-5" />
                       </button>
                     </div>
-                    
+
                     <div className="text-xs text-gray-500 mb-3">
-                      Type: {newMedia.type.charAt(0).toUpperCase() + newMedia.type.slice(1)} | 
-                      Size: {formatFileSize(newMedia.file.size)}
+                      Type: {newMedia.type.charAt(0).toUpperCase() + newMedia.type.slice(1)} | Size:{" "}
+                      {formatFileSize(newMedia.file.size)}
                     </div>
-                    
+
                     {isUploading && (
                       <div className="mb-3">
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                          <div
+                            className="bg-green-600 h-2.5 rounded-full"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
                         </div>
                         <div className="text-xs text-gray-500 mt-1 text-center">
                           Uploading: {uploadProgress}%
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Media details form */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -872,7 +868,7 @@ const AddNewsPage = () => {
                           Use as cover image
                         </label>
                       </div>
-                      
+
                       <div className="md:col-span-2 flex justify-end">
                         <button
                           type="button"
@@ -896,7 +892,7 @@ const AddNewsPage = () => {
                         </button>
                       </div>
                     </div>
-                    </div>
+                  </div>
                 )}
                 <input
                   type="file"
@@ -907,45 +903,47 @@ const AddNewsPage = () => {
                   accept="image/*,video/*"
                 />
               </div>
-              
+
               {/* Display media list */}
               <h3 className="text-lg font-semibold mb-4">Article Media</h3>
-              
+
               {formData.media.items.length === 0 ? (
                 <p className="text-gray-500 text-sm italic mb-4">No media added yet.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {formData.media.items.map(media => (
-                    <div 
-                      key={media.id} 
-                      className={`border rounded-md overflow-hidden ${selectedMedia && selectedMedia.id === media.id ? 'ring-2 ring-green-500' : ''}`}
+                  {formData.media.items.map((media) => (
+                    <div
+                      key={media.id}
+                      className={`border rounded-md overflow-hidden ${selectedMedia && selectedMedia.id === media.id ? "ring-2 ring-green-500" : ""}`}
                     >
                       {/* Media preview */}
-                      <div 
+                      <div
                         className="h-32 bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer relative"
                         onClick={() => selectMedia(media.id)}
                       >
-                        {media.type === 'image' ? (
-                          <img 
-                            src={media.url} 
+                        {media.type === "image" ? (
+                          <img
+                            src={media.url}
                             alt={media.title}
-                            className="object-cover w-full h-full" 
+                            className="object-cover w-full h-full"
                             onError={(e) => {
                               console.error(`Failed to load image: ${media.url}`);
-                              e.target.src = '/api/placeholder/320/180';
+                              e.target.src = "/api/placeholder/320/180";
                             }}
                           />
                         ) : (
                           <div className="relative w-full h-full">
                             {media.thumbnailUrl ? (
-                              <img 
-                                src={media.thumbnailUrl} 
+                              <img
+                                src={media.thumbnailUrl}
                                 alt={media.title}
                                 className="object-cover w-full h-full"
                                 onError={(e) => {
-                                  console.error(`Failed to load video thumbnail: ${media.thumbnailUrl}`);
-                                  e.target.src = '/api/placeholder/320/180';
-                                }} 
+                                  console.error(
+                                    `Failed to load video thumbnail: ${media.thumbnailUrl}`,
+                                  );
+                                  e.target.src = "/api/placeholder/320/180";
+                                }}
                               />
                             ) : (
                               <div className="flex items-center justify-center h-full">
@@ -953,7 +951,13 @@ const AddNewsPage = () => {
                               </div>
                             )}
                             <div className="absolute bottom-0 right-0 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded-tl-md">
-                              {media.duration ? `${Math.floor(media.duration / 60)}:${Math.floor(media.duration % 60).toString().padStart(2, '0')}` : '0:00'}
+                              {media.duration
+                                ? `${Math.floor(media.duration / 60)}:${Math.floor(
+                                    media.duration % 60,
+                                  )
+                                    .toString()
+                                    .padStart(2, "0")}`
+                                : "0:00"}
                             </div>
                           </div>
                         )}
@@ -963,7 +967,7 @@ const AddNewsPage = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Media info */}
                       <div className="p-3">
                         <div className="flex justify-between items-start mb-1">
@@ -977,19 +981,17 @@ const AddNewsPage = () => {
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-1 text-xs">
-                          <span className="px-2 py-1 bg-gray-100 rounded-full">
-                            {media.type}
-                          </span>
+                          <span className="px-2 py-1 bg-gray-100 rounded-full">{media.type}</span>
                           <span className="px-2 py-1 bg-gray-100 rounded-full">
                             {formatFileSize(media.size)}
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Actions - show when media is selected */}
                       {selectedMedia && selectedMedia.id === media.id && (
                         <div className="p-3 border-t flex justify-between">
-                          {!media.cover && media.type === 'image' && (
+                          {!media.cover && media.type === "image" && (
                             <button
                               type="button"
                               onClick={() => toggleMediaCover(media.id)}
@@ -1026,14 +1028,12 @@ const AddNewsPage = () => {
               <h2 className="text-xl font-bold">Tags</h2>
               <p className="text-gray-600 text-sm">Categorize the news article</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-full md:w-3/4">
               <div className="mb-4 flex justify-between items-center">
-                <label className="block text-sm font-medium">
-                  Select tags for this article
-                </label>
-                <button 
+                <label className="block text-sm font-medium">Select tags for this article</label>
+                <button
                   type="button"
                   onClick={() => setShowTagModal(true)}
                   className="text-sm flex items-center text-green-700 hover:text-green-800"
@@ -1042,20 +1042,22 @@ const AddNewsPage = () => {
                   Add New Tag
                 </button>
               </div>
-              
+
               <div className="bg-gray-50 p-4 rounded-md mb-4">
                 <div className="flex flex-wrap gap-2">
                   {tags.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No tags available. Create your first tag with the button above.</p>
+                    <p className="text-gray-500 text-sm">
+                      No tags available. Create your first tag with the button above.
+                    </p>
                   ) : (
-                    tags.map(tag => (
-                      <div 
+                    tags.map((tag) => (
+                      <div
                         key={tag.id}
                         onClick={() => toggleTag(tag.id)}
                         className={`px-3 py-2 rounded-full cursor-pointer flex items-center ${
                           selectedTags.includes(tag.id)
-                            ? 'bg-green-100 text-green-800 border border-green-300'
-                            : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+                            ? "bg-green-100 text-green-800 border border-green-300"
+                            : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
                         }`}
                       >
                         <TagIcon className="w-3 h-3 mr-1" />
@@ -1090,7 +1092,9 @@ const AddNewsPage = () => {
                 <Loader className="w-4 h-4 mr-2 animate-spin" />
                 Submitting...
               </>
-            ) : 'Publish'}
+            ) : (
+              "Publish"
+            )}
           </button>
         </div>
       </form>
@@ -1100,7 +1104,7 @@ const AddNewsPage = () => {
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 max-w-full">
             <h3 className="text-lg font-bold mb-4">Add New Tag</h3>
-            
+
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">
                 Tag Name<span className="text-red-500">*</span>
@@ -1113,13 +1117,13 @@ const AddNewsPage = () => {
                 placeholder="Enter tag name"
               />
             </div>
-            
+
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={() => {
                   setShowTagModal(false);
-                  setNewTagName('');
+                  setNewTagName("");
                 }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 disabled={addingTag}

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { Component, ReactNode, ErrorInfo } from 'react';
-import { logger } from '@/lib/logger';
+import React, { Component, ReactNode, ErrorInfo } from "react";
+import { logger } from "@/lib/logger";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -31,9 +31,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    logger.error('ErrorBoundary caught an error:', error);
-    logger.error('Error info:', errorInfo);
-    
+    logger.error("ErrorBoundary caught an error:", error);
+    logger.error("Error info:", errorInfo);
+
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
@@ -74,7 +74,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h2>
             <p className="text-gray-600 mb-4">
-              {this.state.error?.message || 'An unexpected error occurred'}
+              {this.state.error?.message || "An unexpected error occurred"}
             </p>
             <button
               onClick={this.handleReset}
@@ -92,4 +92,3 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 }
 
 export default ErrorBoundary;
-

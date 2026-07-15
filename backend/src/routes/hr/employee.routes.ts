@@ -16,40 +16,45 @@ const router: Router = Router();
 
 router.use(authenticateHr, enforceHrPasswordPolicy);
 
-router.post("/", requireRole("IT"), validate(employeesValidation.createEmployeeSchema), employeesController.createEmployee)
+router.post(
+  "/",
+  requireRole("IT"),
+  validate(employeesValidation.createEmployeeSchema),
+  employeesController.createEmployee,
+);
 
 router.get(
   "/",
   requireRole("IT", "HR"),
   validate(employeesValidation.listEmployeesSchema),
-  employeesController.listEmployees
+  employeesController.listEmployees,
 );
 
 router.get(
   "/me",
   requireRole("EMPLOYEE", "IT", "HR"),
-  employeesController.getEmployee // Handled by controller/service as self lookup
+  employeesController.getEmployee, // Handled by controller/service as self lookup
 );
 
 router.get(
   "/:id",
   requireRole("IT", "HR"),
   validate(employeesValidation.employeeIdParamSchema),
-  employeesController.getEmployee
+  employeesController.getEmployee,
 );
 
 router.patch(
   "/:id",
   requireRole("EMPLOYEE", "IT", "HR"), // Ownership check in controller
   validate(employeesValidation.updateEmployeeSchema),
-  employeesController.updateEmployee
+  employeesController.updateEmployee,
 );
 
 router.delete(
   "/:id",
   requireRole("HR"), // Only HR can delete (matching original mission)
   validate(employeesValidation.employeeIdParamSchema),
-  employeesController.deleteEmployee
+  employeesController.deleteEmployee,
 );
 
 export default router;

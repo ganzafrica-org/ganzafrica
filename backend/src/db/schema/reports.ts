@@ -61,7 +61,7 @@ export const project_deliverables = pgTable(
       fileTypeIdx: index("project_deliverables_file_type_idx").on(table.file_type),
       isFinalIdx: index("project_deliverables_is_final_idx").on(table.is_final),
     };
-  }
+  },
 );
 
 // Report Files Table - General file storage for reports and documents
@@ -69,12 +69,11 @@ export const report_files = pgTable(
   "report_files",
   {
     id: serial("id").primaryKey(),
-    team_id: integer("team_id")
-      .references(() => task_teams.id, { onDelete: "cascade" }),
-    project_id: integer("project_id")
-      .references(() => task_team_projects.id, { onDelete: "cascade" }),
-    task_id: integer("task_id")
-      .references(() => tasks.id, { onDelete: "cascade" }),
+    team_id: integer("team_id").references(() => task_teams.id, { onDelete: "cascade" }),
+    project_id: integer("project_id").references(() => task_team_projects.id, {
+      onDelete: "cascade",
+    }),
+    task_id: integer("task_id").references(() => tasks.id, { onDelete: "cascade" }),
     filename: varchar("filename", { length: 500 }).notNull(),
     original_filename: varchar("original_filename", { length: 500 }),
     file_type: varchar("file_type", { length: 50 }).notNull(),
@@ -85,8 +84,7 @@ export const report_files = pgTable(
     uploaded_by: integer("uploaded_by")
       .notNull()
       .references(() => users.id),
-    category_id: integer("category_id")
-      .references(() => report_categories.id),
+    category_id: integer("category_id").references(() => report_categories.id),
     is_public: boolean("is_public").notNull().default(false),
     metadata: jsonb("metadata").$type<{
       description?: string;
@@ -106,7 +104,7 @@ export const report_files = pgTable(
       categoryIdx: index("report_files_category_id_idx").on(table.category_id),
       fileTypeIdx: index("report_files_file_type_idx").on(table.file_type),
     };
-  }
+  },
 );
 
 // Report Analytics Table - Track report generation and usage
@@ -139,7 +137,7 @@ export const report_analytics = pgTable(
       generatedByIdx: index("report_analytics_generated_by_idx").on(table.generated_by),
       generatedAtIdx: index("report_analytics_generated_at_idx").on(table.generated_at),
     };
-  }
+  },
 );
 
 // Report Templates Table - Predefined report templates
@@ -169,7 +167,7 @@ export const report_templates = pgTable(
       templateTypeIdx: index("report_templates_template_type_idx").on(table.template_type),
       createdByIdx: index("report_templates_created_by_idx").on(table.created_by),
     };
-  }
+  },
 );
 
 // Default export
@@ -180,4 +178,3 @@ export default {
   report_analytics,
   report_templates,
 };
-

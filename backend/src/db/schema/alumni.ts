@@ -244,9 +244,7 @@ export const alumni_events = pgTable("alumni_events", {
   speakers: jsonb("speakers")
     .$type<{ name: string; title: string; company: string }[]>()
     .default([]),
-  agenda: jsonb("agenda")
-    .$type<{ time: string; activity: string }[]>()
-    .default([]),
+  agenda: jsonb("agenda").$type<{ time: string; activity: string }[]>().default([]),
   tags: jsonb("tags").$type<string[]>().default([]),
   views: integer("views").default(0),
   ...timestampFields,

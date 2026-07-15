@@ -3,22 +3,16 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-    "@/*": ["./*"],
-    "@workspace/ui/*": ["../../packages/ui/src/*"],
-    "@ui/*": ["../../packages/ui/src/components/*"]
-      },
+      "@/*": ["./*"],
+      "@workspace/ui/*": ["../../packages/ui/src/*"],
+      "@ui/*": ["../../packages/ui/src/components/*"]
+    },
     "plugins": [
       {
         "name": "next"
       }
     ]
   },
-  "include": [
-    "next-env.d.ts",
-    "next.config.mjs",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["next-env.d.ts", "next.config.mjs", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }

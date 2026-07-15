@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@heroui/styles"; 
+@import "@heroui/styles";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -129,28 +129,46 @@ body {
 }
 
 @layer base {
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-bagoss), sans-serif;
     font-weight: 500;
     font-size: 32px;
   }
 
-  p, span, div, li, a {
-    color: #1B1B1B;
+  p,
+  span,
+  div,
+  li,
+  a {
+    color: #1b1b1b;
   }
 
   .dark {
-    p, span, div, li, a {
+    p,
+    span,
+    div,
+    li,
+    a {
       color: oklch(0.985 0 0);
     }
-    h1, h2, h3, h4, h5, h6 {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
       color: oklch(0.985 0 0);
     }
   }
   .text-small {
-      font-family: var(--font-inter), sans-serif;
-      font-weight: 300;
-      font-size: 10px;
+    font-family: var(--font-inter), sans-serif;
+    font-weight: 300;
+    font-size: 10px;
   }
   .text-default {
     font-family: var(--font-inter), sans-serif;
@@ -163,11 +181,11 @@ body {
     font-weight: 400;
     font-size: 18px;
   }
-    .text-big {
-        font-family: var(--font-inter), sans-serif;
-        font-weight: 400;
-        font-size: 30px;
-    }
+  .text-big {
+    font-family: var(--font-inter), sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+  }
 
   * {
     @apply border-border outline-ring/50;
@@ -182,33 +200,33 @@ body {
 
 /* global.css */
 @keyframes dropdown-in {
-    from {
-        opacity: 0;
-        transform: translateY(-6px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes dropdown-out {
-    from {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-6px) scale(0.95);
-    }
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.95);
+  }
 }
 
 .animate-dropdown-in {
-    animation: dropdown-in 0.2s ease-out forwards;
-    transform-origin: top right;
+  animation: dropdown-in 0.2s ease-out forwards;
+  transform-origin: top right;
 }
 
 .animate-dropdown-out {
-    animation: dropdown-out 0.15s ease-in forwards;
-    transform-origin: top right;
+  animation: dropdown-out 0.15s ease-in forwards;
+  transform-origin: top right;
 }

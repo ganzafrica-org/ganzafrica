@@ -8,10 +8,7 @@ async function runMigration() {
 
   try {
     const migrationSQL = fs.readFileSync(
-      path.join(
-        __dirname,
-        "../../../drizzle/0008_payroll_optional_user_and_formats.sql",
-      ),
+      path.join(__dirname, "../../../drizzle/0008_payroll_optional_user_and_formats.sql"),
       "utf-8",
     );
 
@@ -28,7 +25,12 @@ async function runMigration() {
 
     for (const statement of statements) {
       await db.execute(sql.raw(statement));
-      console.log(`  ✓ ${statement.split("\n").find((l) => l.trim())?.substring(0, 80)}`);
+      console.log(
+        `  ✓ ${statement
+          .split("\n")
+          .find((l) => l.trim())
+          ?.substring(0, 80)}`,
+      );
     }
 
     console.log("\n✅ Payroll formats migration completed successfully!");

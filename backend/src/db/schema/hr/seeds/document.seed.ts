@@ -13,7 +13,8 @@ const seedData = [
     document_name: "Company Wide Remote Work Policy",
     category: "Policies & Procedures" as const,
     version: "1.0.0",
-    description: "Standard operational protocols governing working from home and remote workspace security setup guidelines.",
+    description:
+      "Standard operational protocols governing working from home and remote workspace security setup guidelines.",
     department: "Human Resources",
     status: "PUBLISHED" as const,
     file_path: "uploads/documents/seed-remote-policy.pdf",
@@ -30,7 +31,8 @@ const seedData = [
     document_name: "Onboarding Identity Authorization Request Form",
     category: "Forms & Applications" as const,
     version: "v2.1",
-    description: "Requisition layout required by incoming personnel to acquire building access credentials and structural permissions.",
+    description:
+      "Requisition layout required by incoming personnel to acquire building access credentials and structural permissions.",
     department: "IT",
     status: "PUBLISHED" as const,
     file_path: "uploads/documents/seed-onboarding-form.pdf",
@@ -47,7 +49,8 @@ const seedData = [
     document_name: "Executive Employment Agreement Template - HR Manager",
     category: "Contract Templates" as const,
     version: "2026.1",
-    description: "Executed definitive employment terms agreement copy attached to the primary human resources directory structure.",
+    description:
+      "Executed definitive employment terms agreement copy attached to the primary human resources directory structure.",
     department: "Human Resources",
     status: "PUBLISHED" as const,
     file_path: "uploads/documents/seed-contract-alice.pdf",
@@ -75,7 +78,9 @@ export async function seedDocuments() {
         .limit(1);
 
       if (!creator) {
-        logger.warn(`Skipping document '${doc.document_name}': Creator profile '${doc.creator_email}' not found.`);
+        logger.warn(
+          `Skipping document '${doc.document_name}': Creator profile '${doc.creator_email}' not found.`,
+        );
         continue;
       }
 
@@ -96,14 +101,16 @@ export async function seedDocuments() {
             .from(hr_contracts)
             .where(eq(hr_contracts.employee_id, targetEmployee.id))
             .limit(1);
-          
+
           if (contractRecord) {
             linkedContractId = contractRecord.id;
           }
         }
-        
+
         if (!linkedContractId) {
-          logger.warn(`Could not find a corresponding contract record to link for ${doc.link_to_contract_email}. Proceeding without link.`);
+          logger.warn(
+            `Could not find a corresponding contract record to link for ${doc.link_to_contract_email}. Proceeding without link.`,
+          );
         }
       }
 

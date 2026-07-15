@@ -1,4 +1,3 @@
-
 import { db } from "../client";
 import { sql } from "drizzle-orm";
 
@@ -38,6 +37,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-
-
-

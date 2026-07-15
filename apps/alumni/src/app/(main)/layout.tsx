@@ -35,7 +35,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] dark:bg-gray-900">
-
       {/* MOBILE SIDEBAR SHEET */}
       <Sheet open={isMobileSidebarOpen} onOpenChange={setIsMobileSidebarOpen}>
         <SheetContent side="left" className="p-0 w-64 bg-[#045F3C]">

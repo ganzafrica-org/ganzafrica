@@ -50,18 +50,18 @@ additionally always readable by that contract's employee.
 
 ## 4. API (audit existing, complete to this surface)
 
-| Endpoint | Permission | Behavior |
-|---|---|---|
-| `GET /hr/documents?category&employee&search&page` | documents:manage OR filtered-to-accessible for others | list; non-managers get only rows their ACL admits |
-| `POST /hr/documents` (multipart) | documents:manage | privateUpload; body: name, category, access, optional contract_id/employee link |
-| `PATCH /hr/documents/:id` | documents:manage | metadata + access edits; new file ⇒ version+1 (old key kept — simple version history array or rows? keep columns: previous versions recorded in a `versions jsonb` append [key, version, uploaded_at]) |
-| `GET /hr/documents/:id/download` | ACL check | presigned 302 (like FND-01) + increments downloads |
-| `DELETE /hr/documents/:id` | documents:manage | soft: status→ARCHIVED (add enum value) — hard delete never (audit) |
-| `GET /hr/me/documents` | authenticate | ACL-admitted + own-contract docs (MOD-03) |
-| Policies: CRUD `/hr/policies` | policies:manage | publish flow: DRAFT→PUBLISHED bumps version, resets is_active on predecessor |
-| `GET /hr/policies?active` | policies:read (everyone) | published list + my-ack status |
-| `POST /hr/policies/:id/acknowledge` | authenticate | insert ack for current version; repeat → 200 idempotent |
-| `GET /hr/policies/:id/acknowledgements` | policies:manage | who acked which version, who's missing (LEFT JOIN active employees) |
+| Endpoint                                          | Permission                                            | Behavior                                                                                                                                                                                               |
+| ------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /hr/documents?category&employee&search&page` | documents:manage OR filtered-to-accessible for others | list; non-managers get only rows their ACL admits                                                                                                                                                      |
+| `POST /hr/documents` (multipart)                  | documents:manage                                      | privateUpload; body: name, category, access, optional contract_id/employee link                                                                                                                        |
+| `PATCH /hr/documents/:id`                         | documents:manage                                      | metadata + access edits; new file ⇒ version+1 (old key kept — simple version history array or rows? keep columns: previous versions recorded in a `versions jsonb` append [key, version, uploaded_at]) |
+| `GET /hr/documents/:id/download`                  | ACL check                                             | presigned 302 (like FND-01) + increments downloads                                                                                                                                                     |
+| `DELETE /hr/documents/:id`                        | documents:manage                                      | soft: status→ARCHIVED (add enum value) — hard delete never (audit)                                                                                                                                     |
+| `GET /hr/me/documents`                            | authenticate                                          | ACL-admitted + own-contract docs (MOD-03)                                                                                                                                                              |
+| Policies: CRUD `/hr/policies`                     | policies:manage                                       | publish flow: DRAFT→PUBLISHED bumps version, resets is_active on predecessor                                                                                                                           |
+| `GET /hr/policies?active`                         | policies:read (everyone)                              | published list + my-ack status                                                                                                                                                                         |
+| `POST /hr/policies/:id/acknowledge`               | authenticate                                          | insert ack for current version; repeat → 200 idempotent                                                                                                                                                |
+| `GET /hr/policies/:id/acknowledgements`           | policies:manage                                       | who acked which version, who's missing (LEFT JOIN active employees)                                                                                                                                    |
 
 ## 5. Frontend
 
@@ -81,6 +81,7 @@ additionally always readable by that contract's employee.
 ## 6. Tests to write FIRST
 
 Backend:
+
 1. ACL matrix: role clause / employee_ids clause / departments clause / null-ACL(hr only) /
    contract-owner override — table-driven read attempts (200 vs 403), list filtering matches.
 2. Download: presigned 302, `X-Amz-Expires=300`, downloads incremented; private ACL on
@@ -89,11 +90,11 @@ Backend:
 4. Policy publish resets predecessor; ack is version-scoped (ack v1, publish v2 → pending again).
 5. Ack idempotency + acknowledgements report includes missing employees.
 6. Soft delete hides from lists but keys remain (audit).
-Frontend:
+   Frontend:
 7. Access builder produces the frozen ACL shape; upload flow (MSW multipart).
 8. Employee policy reader: ack button flow, badge flips.
-E2E: HR uploads a private doc ACL'd to fellows → fellow downloads it, staff can't see it →
-HR publishes policy v2 → fellow re-acknowledges; report shows complete.
+   E2E: HR uploads a private doc ACL'd to fellows → fellow downloads it, staff can't see it →
+   HR publishes policy v2 → fellow re-acknowledges; report shows complete.
 
 ## 7. Acceptance criteria
 

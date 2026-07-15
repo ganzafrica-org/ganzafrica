@@ -1,12 +1,4 @@
-import {
-  pgTable,
-  serial,
-  text,
-  boolean,
-  jsonb,
-  integer,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, jsonb, integer, timestamp } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 import { twoFactorMethodEnum } from "./enums";
 import { roles } from "./roles";

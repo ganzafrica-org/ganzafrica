@@ -1,9 +1,9 @@
 "use client";
 
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
-const AfricaMap = dynamic(() => import('react-africa-map').then((mod) => mod.default), { 
-  ssr: false 
+const AfricaMap = dynamic(() => import("react-africa-map").then((mod) => mod.default), {
+  ssr: false,
 });
 
 export default function MapComponent() {
@@ -24,8 +24,8 @@ export default function MapComponent() {
 
       <AfricaMap
         countryColors={{
-            RW: "#FF5733",
-            BF: "#10b981",
+          RW: "#FF5733",
+          BF: "#10b981",
         }}
         selection
         selected={["RW", "BF"]}

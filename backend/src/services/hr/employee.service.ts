@@ -4,7 +4,10 @@ import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
 import { db } from "@/db/client";
 import { hr_users, users } from "@/db/schema";
 import { AppError } from "@/middlewares";
-import { sendNotification, resolveTriggeredByFromHrUser } from "@/modules/hr/notifications/notification.service";
+import {
+  sendNotification,
+  resolveTriggeredByFromHrUser,
+} from "@/modules/hr/notifications/notification.service";
 import type {
   CreateEmployeeInput,
   EmployeeRecord,
@@ -14,7 +17,6 @@ import type {
   ListEmployeesQuery,
   UpdateEmployeeInput,
 } from "@/types/employee.types";
-
 
 export async function createEmployee(
   requester: HrRequester,
@@ -166,7 +168,11 @@ export function assertEmployeeAccess(
 }
 
 async function assertPlatformUserExists(platformUserId: number): Promise<void> {
-  const rows = await db.select({ id: users.id }).from(users).where(eq(users.id, platformUserId)).limit(1);
+  const rows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, platformUserId))
+    .limit(1);
   if (!rows.length) throw new AppError("Platform user not found", 404);
 }
 
@@ -223,7 +229,10 @@ export async function getEmployeeById(requester: HrRequester, id: string): Promi
   return mapEmployee(rows[0]);
 }
 
-export async function softDeleteEmployee(requester: HrRequester, id: string): Promise<EmployeeRecord> {
+export async function softDeleteEmployee(
+  requester: HrRequester,
+  id: string,
+): Promise<EmployeeRecord> {
   if (requester.role !== "HR") throw new AppError("Forbidden", 403);
 
   const [updated] = await db

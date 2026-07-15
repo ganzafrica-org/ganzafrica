@@ -36,19 +36,19 @@ holder" denormalized (write both in one transaction).
 
 ## 4. API (complete surface — audit existing, implement missing; permissions per auth-and-rbac.md: read=assets:read incl. own, manage=assets:manage)
 
-| Endpoint | Behavior |
-|---|---|
-| `GET /hr/assets?status&category&assigned_to&search&page` | list with category + current holder |
-| `POST /hr/assets` / `PATCH /hr/assets/:id` / `DELETE` | CRUD; delete only when never-assigned else DISPOSED transition; serial_number unique 409 |
-| `POST /hr/assets/:id/images` / `DELETE .../images/:imageId` | upload via multer-s3 |
-| CRUD `/hr/asset-categories`, nested spec definitions | categories with spec templates (existing hr_asset_specs pattern — audit) |
-| `POST /hr/assets/:id/assign` `{employee_id, notes}` | 409 unless AVAILABLE; writes assignment row + denormalized fields; notification to employee |
-| `POST /hr/assets/:id/return` `{condition, notes, has_issue?}` | closes assignment (returned_at, condition), status AVAILABLE or UNDER_MAINTENANCE if has_issue |
+| Endpoint                                                         | Behavior                                                                                                    |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `GET /hr/assets?status&category&assigned_to&search&page`         | list with category + current holder                                                                         |
+| `POST /hr/assets` / `PATCH /hr/assets/:id` / `DELETE`            | CRUD; delete only when never-assigned else DISPOSED transition; serial_number unique 409                    |
+| `POST /hr/assets/:id/images` / `DELETE .../images/:imageId`      | upload via multer-s3                                                                                        |
+| CRUD `/hr/asset-categories`, nested spec definitions             | categories with spec templates (existing hr_asset_specs pattern — audit)                                    |
+| `POST /hr/assets/:id/assign` `{employee_id, notes}`              | 409 unless AVAILABLE; writes assignment row + denormalized fields; notification to employee                 |
+| `POST /hr/assets/:id/return` `{condition, notes, has_issue?}`    | closes assignment (returned_at, condition), status AVAILABLE or UNDER_MAINTENANCE if has_issue              |
 | `POST /hr/assets/:id/maintenance` + `PATCH .../maintenance/:mid` | log entries (start/end, cost, description); open entry ⇒ status UNDER_MAINTENANCE, closing last ⇒ AVAILABLE |
-| `POST /hr/assets/:id/flag` `{note}` / unflag | is_flagged toggle |
-| `GET /hr/assets/:id/history` | assignment + maintenance timeline |
-| `GET /hr/me/assets` | own current assets (MOD-03 consumes) |
-| `GET /hr/employees/:id/assets?open=true` | LCM-02 gate query (assets:read) |
+| `POST /hr/assets/:id/flag` `{note}` / unflag                     | is_flagged toggle                                                                                           |
+| `GET /hr/assets/:id/history`                                     | assignment + maintenance timeline                                                                           |
+| `GET /hr/me/assets`                                              | own current assets (MOD-03 consumes)                                                                        |
+| `GET /hr/employees/:id/assets?open=true`                         | LCM-02 gate query (assets:read)                                                                             |
 
 Status machine (service-enforced): AVAILABLE→ASSIGNED/UNDER_MAINTENANCE/DISPOSED;
 ASSIGNED→(return)→AVAILABLE|UNDER_MAINTENANCE; UNDER_MAINTENANCE→AVAILABLE|DISPOSED;
@@ -69,6 +69,7 @@ DISPOSED terminal. Illegal → 409 with allowed.
 ## 6. Tests to write FIRST
 
 Backend:
+
 1. Status machine table-driven (every legal/illegal transition).
 2. Assign: AVAILABLE only; assignment row + denormalized sync in one transaction (inject
    failure → neither).
@@ -77,11 +78,11 @@ Backend:
 5. `GET /hr/employees/:id/assets?open=true` exact rows (the LCM-02 gate).
 6. serial_number uniqueness 409; delete guard.
 7. Permissions: employee reads own via /hr/me/assets, 403 on manage endpoints.
-Frontend:
+   Frontend:
 8. Table + filters (MSW); assign dialog flow; return dialog validates condition.
 9. My-assets renders + report-issue payload.
-E2E: HR creates asset w/ photo → assigns to seeded employee → employee sees it in /me →
-HR processes return with issue → asset shows UNDER_MAINTENANCE.
+   E2E: HR creates asset w/ photo → assigns to seeded employee → employee sees it in /me →
+   HR processes return with issue → asset shows UNDER_MAINTENANCE.
 
 ## 7. Acceptance criteria
 

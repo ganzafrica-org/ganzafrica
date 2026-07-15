@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // LibreTranslate API URL - use environment variable or default to local
-const LIBRETRANSLATE_URL =
-  process.env.LIBRETRANSLATE_URL || "http://localhost:5000";
+const LIBRETRANSLATE_URL = process.env.LIBRETRANSLATE_URL || "http://localhost:5000";
 
 interface TranslateRequest {
   text: string;
@@ -76,19 +75,14 @@ export async function POST(request: NextRequest) {
     if (error instanceof TypeError && error.message.includes("fetch")) {
       return NextResponse.json(
         {
-          error:
-            "Translation service unavailable. Please ensure LibreTranslate is running.",
-          details:
-            "Run: docker run -ti --rm -p 5000:5000 libretranslate/libretranslate",
+          error: "Translation service unavailable. Please ensure LibreTranslate is running.",
+          details: "Run: docker run -ti --rm -p 5000:5000 libretranslate/libretranslate",
         },
         { status: 503 },
       );
     }
 
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -98,10 +92,7 @@ export async function GET() {
     const response = await fetch(`${LIBRETRANSLATE_URL}/languages`);
 
     if (!response.ok) {
-      return NextResponse.json(
-        { error: "Failed to fetch languages" },
-        { status: response.status },
-      );
+      return NextResponse.json({ error: "Failed to fetch languages" }, { status: response.status });
     }
 
     const languages = await response.json();
@@ -111,8 +102,7 @@ export async function GET() {
     return NextResponse.json(
       {
         error: "Translation service unavailable",
-        details:
-          "Run: docker run -ti --rm -p 5000:5000 libretranslate/libretranslate",
+        details: "Run: docker run -ti --rm -p 5000:5000 libretranslate/libretranslate",
       },
       { status: 503 },
     );

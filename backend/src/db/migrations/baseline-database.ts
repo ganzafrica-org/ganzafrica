@@ -38,9 +38,7 @@ async function baselineDatabase() {
     console.log(`Found ${journal.entries.length} migrations in journal\n`);
 
     // Check which migrations are already recorded
-    const existingMigrations = await pool.query(
-      "SELECT hash FROM __drizzle_migrations"
-    );
+    const existingMigrations = await pool.query("SELECT hash FROM __drizzle_migrations");
     const existingHashes = new Set(existingMigrations.rows.map((r) => r.hash));
 
     // Mark the first migration (0000) as applied since the schema exists
@@ -48,10 +46,10 @@ async function baselineDatabase() {
     const firstMigration = journal.entries[0];
 
     if (!existingHashes.has(firstMigration.tag)) {
-      await pool.query(
-        "INSERT INTO __drizzle_migrations (hash, created_at) VALUES ($1, $2)",
-        [firstMigration.tag, firstMigration.when]
-      );
+      await pool.query("INSERT INTO __drizzle_migrations (hash, created_at) VALUES ($1, $2)", [
+        firstMigration.tag,
+        firstMigration.when,
+      ]);
       console.log(`✅ Marked migration '${firstMigration.tag}' as applied (baseline)`);
     } else {
       console.log(`ℹ️  Migration '${firstMigration.tag}' already marked as applied`);
@@ -61,7 +59,6 @@ async function baselineDatabase() {
     console.log("\nNext steps:");
     console.log("1. Run 'pnpm run db:migrate' to apply remaining migrations");
     console.log("   This will apply migrations 0001 through 0006\n");
-
   } catch (error) {
     console.error("Baseline failed:", error);
     process.exit(1);

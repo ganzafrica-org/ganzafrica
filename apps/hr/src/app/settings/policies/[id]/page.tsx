@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { SettingsSection } from '@/components/sections/settings/settings-section';
-import { SettingsModal } from '@/components/sections/settings/settings-modal';
-import { DataRow } from '@/components/sections/settings/data-row';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { SettingsSection } from "@/components/sections/settings/settings-section";
+import { SettingsModal } from "@/components/sections/settings/settings-modal";
+import { DataRow } from "@/components/sections/settings/data-row";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function PolicyDetailsPage() {
   const router = useRouter();
@@ -30,28 +30,18 @@ export default function PolicyDetailsPage() {
           </Button>
         </div>
 
-        <SettingsSection
-          title="Policy details"
-          onEdit={() => setEditingSection('details')}
-        >
+        <SettingsSection title="Policy details" onEdit={() => setEditingSection("details")}>
           <div className="space-y-2">
             <DataRow label="Name" value="sick Leave." />
             <DataRow label="Description" value="Not specified" variant="muted" />
             <DataRow label="Policy type" value="Sick leave" />
             <DataRow label="Leave type" value="Short term" />
-            <DataRow
-              label="Created on"
-              value="11:50, Jan 19th 2024"
-              variant="muted"
-            />
+            <DataRow label="Created on" value="11:50, Jan 19th 2024" variant="muted" />
             <DataRow label="Created by" value="info@ganzafrica.org" variant="muted" />
           </div>
         </SettingsSection>
 
-        <SettingsSection
-          title="Allowance"
-          onEdit={() => setEditingSection('allowance')}
-        >
+        <SettingsSection title="Allowance" onEdit={() => setEditingSection("allowance")}>
           <div className="space-y-2">
             <DataRow label="Allowance time frame" value="Feb 1st - Jan 31st" />
             <DataRow label="Pay type" value="Paid" />
@@ -64,7 +54,7 @@ export default function PolicyDetailsPage() {
 
         <SettingsSection
           title="Proration of allowance"
-          onEdit={() => setEditingSection('proration')}
+          onEdit={() => setEditingSection("proration")}
         >
           <div className="space-y-2">
             <DataRow label="On hire" value="No proration" />
@@ -73,10 +63,7 @@ export default function PolicyDetailsPage() {
           </div>
         </SettingsSection>
 
-        <SettingsSection
-          title="Requests"
-          onEdit={() => setEditingSection('requests')}
-        >
+        <SettingsSection title="Requests" onEdit={() => setEditingSection("requests")}>
           <div className="space-y-3">
             <DataRow label="Allow estimated return date" value="Disabled" />
             <DataRow label="Allow workers to request time off" value="Enabled" />
@@ -85,10 +72,7 @@ export default function PolicyDetailsPage() {
           </div>
         </SettingsSection>
 
-        <SettingsSection
-          title="Approval"
-          onEdit={() => setEditingSection('approval')}
-        >
+        <SettingsSection title="Approval" onEdit={() => setEditingSection("approval")}>
           <div className="space-y-2">
             <DataRow label="Approval Status" value="Single policy required" />
             <DataRow label="Approval policy" value="Time off policy" />
@@ -97,7 +81,7 @@ export default function PolicyDetailsPage() {
       </div>
 
       <SettingsModal
-        isOpen={editingSection === 'details'}
+        isOpen={editingSection === "details"}
         title="Edit policy details"
         subtitle="sick Leave. Policy"
         onClose={() => setEditingSection(null)}
@@ -106,14 +90,13 @@ export default function PolicyDetailsPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
             <span className="text-blue-600">ⓘ</span>
             <p className="text-sm text-blue-700">
-              Certain sections of this policy are restricted to preserve its structure and ensure compliance
+              Certain sections of this policy are restricted to preserve its structure and ensure
+              compliance
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
-              Policy name
-            </label>
+            <label className="block text-sm font-medium text-gray-900 mb-2">Policy name</label>
             <input
               type="text"
               defaultValue="sick Leave."
@@ -134,15 +117,10 @@ export default function PolicyDetailsPage() {
           </div>
 
           <div className="flex gap-3 justify-end pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => setEditingSection(null)}
-            >
+            <Button variant="outline" onClick={() => setEditingSection(null)}>
               Cancel
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              Save changes
-            </Button>
+            <Button className="bg-blue-600 hover:bg-blue-700">Save changes</Button>
           </div>
         </div>
       </SettingsModal>

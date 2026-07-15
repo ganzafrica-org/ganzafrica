@@ -22,7 +22,7 @@ export const StatGrid = ({ stats }: StatGridProps) => {
           title={stat.title}
           value={stat.value}
           trendText={stat.trendText}
-          icon={stat.icon} 
+          icon={stat.icon}
           className={stat.color + " flex-1 min-w-[240px]"}
         />
       ))}

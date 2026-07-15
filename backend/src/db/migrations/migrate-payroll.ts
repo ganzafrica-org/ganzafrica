@@ -9,7 +9,7 @@ async function runPayrollMigration() {
   try {
     const migrationSQL = fs.readFileSync(
       path.join(__dirname, "../../../drizzle/0007_add_payroll_table.sql"),
-      "utf-8"
+      "utf-8",
     );
 
     // Execute the migration

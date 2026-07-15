@@ -30,14 +30,14 @@ on tickets: `assignee_user_id FK users`, `category text` (IT|HR|FACILITIES|OTHER
 
 ## 4. API
 
-| Endpoint | Permission | Behavior |
-|---|---|---|
-| `POST /hr/helpdesk` `{title, body, category, priority?, asset_id?}` | helpdesk:create (everyone) | OPEN ticket; notify triage (hr/admin per category — IT category → admin-role users) |
-| `GET /hr/me/helpdesk` | self | my tickets + statuses |
-| `GET /hr/helpdesk?status&category&assignee&priority&page` | helpdesk:manage | triage list |
-| `PATCH /hr/helpdesk/:id` `{status, priority, assignee_user_id, category}` | helpdesk:manage | transitions OPEN→IN_PROGRESS→RESOLVED→CLOSED (+ REOPENED from RESOLVED by requester within 14 days); RESOLVED sets resolved_at + notifies requester |
-| `POST /hr/helpdesk/:id/comments` | requester or helpdesk:manage | comment + notify counterpart |
-| `GET /hr/helpdesk/:id` | requester or helpdesk:manage | detail + thread |
+| Endpoint                                                                  | Permission                   | Behavior                                                                                                                                            |
+| ------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /hr/helpdesk` `{title, body, category, priority?, asset_id?}`       | helpdesk:create (everyone)   | OPEN ticket; notify triage (hr/admin per category — IT category → admin-role users)                                                                 |
+| `GET /hr/me/helpdesk`                                                     | self                         | my tickets + statuses                                                                                                                               |
+| `GET /hr/helpdesk?status&category&assignee&priority&page`                 | helpdesk:manage              | triage list                                                                                                                                         |
+| `PATCH /hr/helpdesk/:id` `{status, priority, assignee_user_id, category}` | helpdesk:manage              | transitions OPEN→IN_PROGRESS→RESOLVED→CLOSED (+ REOPENED from RESOLVED by requester within 14 days); RESOLVED sets resolved_at + notifies requester |
+| `POST /hr/helpdesk/:id/comments`                                          | requester or helpdesk:manage | comment + notify counterpart                                                                                                                        |
+| `GET /hr/helpdesk/:id`                                                    | requester or helpdesk:manage | detail + thread                                                                                                                                     |
 
 ## 5. Frontend
 
@@ -54,7 +54,7 @@ on tickets: `assignee_user_id FK users`, `category text` (IT|HR|FACILITIES|OTHER
 3. Comment notifications to the right counterpart (mock notification service asserts).
 4. MOD-04 hook: create with asset_id → source asset_issue, asset link in detail.
 5. Frontend: raise flow, thread render, triage assign (MSW).
-E2E: employee raises IT ticket → admin assigns + resolves → employee reopens with comment.
+   E2E: employee raises IT ticket → admin assigns + resolves → employee reopens with comment.
 
 ## 7. Acceptance criteria
 

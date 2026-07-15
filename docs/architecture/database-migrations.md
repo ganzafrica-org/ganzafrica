@@ -19,13 +19,13 @@ see deployment.md) — never by hand, never from a laptop.
 
 ## 2. Forbidden
 
-| Command / practice | Why |
-|---|---|
-| `db:push` against any shared/prod DB | Bypasses the journal — this is what broke migrations originally. The script refuses when `DATABASE_URL` matches prod (guard added in FND-02) |
-| Hand-written tsx migration scripts (`src/db/migrations/*.ts` pattern) | Invisible to drizzle-kit; archived under tag `archive/pre-cleanup` |
-| Editing an already-committed migration file | Checksums break on every environment that applied it. Write a new migration |
-| DDL in application code / triggers outside migrations | Use `drizzle-kit generate --custom` for raw SQL (triggers, indexes CONCURRENTLY, backfills) |
-| Rolling back schema in prod | Forward-only. Use expand/contract for risky changes (add-new → dual-write → migrate data → drop-old, across separate deploys) |
+| Command / practice                                                    | Why                                                                                                                                          |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db:push` against any shared/prod DB                                  | Bypasses the journal — this is what broke migrations originally. The script refuses when `DATABASE_URL` matches prod (guard added in FND-02) |
+| Hand-written tsx migration scripts (`src/db/migrations/*.ts` pattern) | Invisible to drizzle-kit; archived under tag `archive/pre-cleanup`                                                                           |
+| Editing an already-committed migration file                           | Checksums break on every environment that applied it. Write a new migration                                                                  |
+| DDL in application code / triggers outside migrations                 | Use `drizzle-kit generate --custom` for raw SQL (triggers, indexes CONCURRENTLY, backfills)                                                  |
+| Rolling back schema in prod                                           | Forward-only. Use expand/contract for risky changes (add-new → dual-write → migrate data → drop-old, across separate deploys)                |
 
 ## 3. How prod was re-baselined (FND-02, for the record)
 

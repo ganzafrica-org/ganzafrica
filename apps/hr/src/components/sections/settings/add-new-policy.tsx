@@ -1,56 +1,56 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { X, AlertCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
+import { useState } from "react";
+import { X, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddNewPolicyFormProps {
-  onClose: () => void
+  onClose: () => void;
 }
 
 export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    feature: '',
+    name: "",
+    description: "",
+    feature: "",
     notifyUsers: false,
-  })
+  });
 
   const steps = [
-    { number: 1, label: 'Policy information' },
-    { number: 2, label: 'Approvers' },
-    { number: 3, label: 'Notification' },
-  ]
+    { number: 1, label: "Policy information" },
+    { number: 2, label: "Approvers" },
+    { number: 3, label: "Notification" },
+  ];
 
-  const isMissingDetails = !formData.name || !formData.feature
+  const isMissingDetails = !formData.name || !formData.feature;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: value,
+    }));
+  };
 
   const handleNotifyChange = (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      notifyUsers: checked
-    }))
-  }
+      notifyUsers: checked,
+    }));
+  };
 
   const features = [
-    'Data update',
-    'Expenses',
-    'Time tracking submissions',
-    'Worker Resignation',
+    "Data update",
+    "Expenses",
+    "Time tracking submissions",
+    "Worker Resignation",
     "Contractors' submissions",
-    'Time off',
-    'Workforce planning'
-  ]
+    "Time off",
+    "Workforce planning",
+  ];
 
   return (
     <div className="flex h-full w-[40%] flex-col">
@@ -59,10 +59,7 @@ export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">New approval policy</h2>
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600"
-        >
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
           <X className="h-6 w-6" />
         </button>
       </div>
@@ -76,7 +73,7 @@ export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
                 {/* Policy Information */}
                 <div className="bg-white rounded-lg p-6 border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-6">Policy information</h3>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -115,7 +112,8 @@ export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
                 <div className="bg-white rounded-lg p-6 border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Feature selection</h3>
                   <p className="text-sm text-gray-600 mb-6">
-                    Select a feature (like &apos;Time Off&apos;) to make this approval policy available for use there
+                    Select a feature (like &apos;Time Off&apos;) to make this approval policy
+                    available for use there
                   </p>
 
                   <div>
@@ -125,12 +123,14 @@ export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
                     <select
                       name="feature"
                       value={formData.feature}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        feature: e.target.value
-                      }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          feature: e.target.value,
+                        }))
+                      }
                       className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white ${
-                        !formData.feature ? 'border-red-500' : 'border-gray-300'
+                        !formData.feature ? "border-red-500" : "border-gray-300"
                       }`}
                     >
                       <option value="">Select a feature</option>
@@ -158,7 +158,7 @@ export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
             {currentStep === 3 && (
               <div className="bg-white rounded-lg p-6 border border-gray-200 space-y-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification</h3>
-                
+
                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <Checkbox
                     id="notify-users"
@@ -169,7 +169,8 @@ export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
                   <label htmlFor="notify-users" className="flex-1 cursor-pointer">
                     <p className="font-medium text-gray-900">Notify system users</p>
                     <p className="text-sm text-gray-600 mt-1">
-                      Enable this to notify all system users when this approval policy is created or updated
+                      Enable this to notify all system users when this approval policy is created or
+                      updated
                     </p>
                   </label>
                 </div>
@@ -197,24 +198,20 @@ export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
                           currentStep === step.number
-                            ? 'bg-blue-600 text-white'
+                            ? "bg-blue-600 text-white"
                             : step.number < currentStep
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-200 text-gray-600'
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-200 text-gray-600"
                         }`}
                       >
                         {step.number}
                       </div>
-                      {step.number < steps.length && (
-                        <div className="w-0.5 h-8 bg-gray-200 my-1" />
-                      )}
+                      {step.number < steps.length && <div className="w-0.5 h-8 bg-gray-200 my-1" />}
                     </div>
                     <div className="flex-1 pt-1">
                       <p
                         className={`text-sm font-medium ${
-                          currentStep === step.number
-                            ? 'text-gray-900'
-                            : 'text-gray-500'
+                          currentStep === step.number ? "text-gray-900" : "text-gray-500"
                         }`}
                       >
                         {step.label}
@@ -245,18 +242,18 @@ export default function AddNewPolicy({ onClose }: AddNewPolicyFormProps) {
           <Button
             onClick={() => {
               if (currentStep < 3) {
-                setCurrentStep(currentStep + 1)
+                setCurrentStep(currentStep + 1);
               } else {
-                onClose()
+                onClose();
               }
             }}
             disabled={currentStep === 1 && isMissingDetails}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            {currentStep === 3 ? 'Create policy' : 'Next'}
+            {currentStep === 3 ? "Create policy" : "Next"}
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }

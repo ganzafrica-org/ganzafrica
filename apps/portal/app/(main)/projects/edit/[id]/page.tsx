@@ -1,10 +1,28 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Plus, X, Upload, Image, FileVideo, Check, AlertCircle, Loader, UserPlus, Calendar, ChevronDown, Play, Link as LinkIcon, File, FilePlus, Building } from 'lucide-react';
-import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter, useParams } from "next/navigation";
+import {
+  ArrowLeft,
+  Plus,
+  X,
+  Upload,
+  Image,
+  FileVideo,
+  Check,
+  AlertCircle,
+  Loader,
+  UserPlus,
+  Calendar,
+  ChevronDown,
+  Play,
+  Link as LinkIcon,
+  File,
+  FilePlus,
+  Building,
+} from "lucide-react";
+import Link from "next/link";
+import apiClient from "@/lib/api-client";
 
 // Import shadcn/ui components
 import {
@@ -14,11 +32,7 @@ import {
   CommandInput,
   CommandItem,
 } from "@workspace/ui/components/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@workspace/ui/components/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@workspace/ui/components/popover";
 import { Badge } from "@workspace/ui/components/badge";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { Check as CheckIcon } from "lucide-react";
@@ -27,12 +41,12 @@ const EditProjectPage = () => {
   const router = useRouter();
   const params = useParams();
   const projectId = params?.id;
-  
+
   const fileInputRef = useRef(null);
   const documentFileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [categories, setCategories] = useState([]);
   const [users, setUsers] = useState([]);
@@ -40,7 +54,7 @@ const EditProjectPage = () => {
   const [partners, setPartners] = useState([]);
   const [openTeamPopover, setOpenTeamPopover] = useState(false);
   const [openPartnerPopover, setOpenPartnerPopover] = useState(false);
-  
+
   interface TeamMember {
     id: number;
     name: string;
@@ -56,65 +70,70 @@ const EditProjectPage = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
-  const [videoPreviewUrl, setVideoPreviewUrl] = useState('');
-  const [mediaSourceType, setMediaSourceType] = useState('file');
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
+  const [mediaSourceType, setMediaSourceType] = useState("file");
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedRole, setSelectedRole] = useState("");
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<any[]>([]);
-  const [teamSearchValue, setTeamSearchValue] = useState('');
-  const [partnerSearchValue, setPartnerSearchValue] = useState('');
+  const [teamSearchValue, setTeamSearchValue] = useState("");
+  const [partnerSearchValue, setPartnerSearchValue] = useState("");
 
   // Form state
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    status: 'planned',
-    start_date: '',
-    end_date: '',
-    category_id: '',
-    location: '',
+    name: "",
+    description: "",
+    status: "planned",
+    start_date: "",
+    end_date: "",
+    category_id: "",
+    location: "",
     is_published: false,
     goals: {
-      items: []
+      items: [],
     },
     outcomes: {
-      items: []
+      items: [],
     },
     media: {
-      items: []
+      items: [],
     },
     members: [],
     partners: [] as Array<{ partner_id: number }>,
-    documents: []
+    documents: [],
   });
 
   // Temporary state
-  const [newGoal, setNewGoal] = useState({ title: '', description: '', completed: false });
-  const [newOutcome, setNewOutcome] = useState({ title: '', description: '', status: 'pending' });
-  const [newMember, setNewMember] = useState({ team_id: '', role: '' });
-  const [newPartner, setNewPartner] = useState({ partner_id: '' });
-  const [newDocument, setNewDocument] = useState({ name: '', file: null, file_url: '', file_size: 0 });
+  const [newGoal, setNewGoal] = useState({ title: "", description: "", completed: false });
+  const [newOutcome, setNewOutcome] = useState({ title: "", description: "", status: "pending" });
+  const [newMember, setNewMember] = useState({ team_id: "", role: "" });
+  const [newPartner, setNewPartner] = useState({ partner_id: "" });
+  const [newDocument, setNewDocument] = useState({
+    name: "",
+    file: null,
+    file_url: "",
+    file_size: 0,
+  });
   const [newMedia, setNewMedia] = useState({
     file: null,
-    type: 'image',
-    title: '',
-    tag: 'feature',
+    type: "image",
+    title: "",
+    tag: "feature",
     cover: false,
-    url: '',
-    previewUrl: null
+    url: "",
+    previewUrl: null,
   });
 
   // Clean up blob URLs when component unmounts
   useEffect(() => {
     return () => {
       // Revoke any video preview URL
-      if (videoPreviewUrl && videoPreviewUrl.startsWith('blob:')) {
+      if (videoPreviewUrl && videoPreviewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(videoPreviewUrl);
       }
 
       // Revoke all media blob URLs
-      formData.media.items.forEach(media => {
-        if (media.url && media.url.startsWith('blob:')) {
+      formData.media.items.forEach((media) => {
+        if (media.url && media.url.startsWith("blob:")) {
           URL.revokeObjectURL(media.url);
         }
       });
@@ -126,12 +145,12 @@ const EditProjectPage = () => {
     const fetchProjectData = async () => {
       try {
         setInitialLoading(true);
-        setError('');
-        
+        setError("");
+
         // Fetch the project data
         const response = await apiClient.get(`/projects/${projectId}`);
         let projectData;
-        
+
         if (response.data && response.data.project) {
           // If response has a nested project object
           projectData = response.data.project;
@@ -141,41 +160,48 @@ const EditProjectPage = () => {
         } else {
           throw new Error("Invalid project data structure");
         }
-        
+
         // Transform project data into form data
         const processedFormData = {
-          name: projectData.name || '',
-          description: projectData.description || '',
-          status: projectData.status || 'planned',
-          start_date: projectData.start_date ? new Date(projectData.start_date).toISOString().split('T')[0] : '',
-          end_date: projectData.end_date ? new Date(projectData.end_date).toISOString().split('T')[0] : '',
-          category_id: projectData.category_id ? projectData.category_id.toString() : '',
-          location: projectData.location || '',
+          name: projectData.name || "",
+          description: projectData.description || "",
+          status: projectData.status || "planned",
+          start_date: projectData.start_date
+            ? new Date(projectData.start_date).toISOString().split("T")[0]
+            : "",
+          end_date: projectData.end_date
+            ? new Date(projectData.end_date).toISOString().split("T")[0]
+            : "",
+          category_id: projectData.category_id ? projectData.category_id.toString() : "",
+          location: projectData.location || "",
           is_published: projectData.is_published || false,
           goals: {
-            items: Array.isArray(projectData.goals?.items) ? projectData.goals.items : []
+            items: Array.isArray(projectData.goals?.items) ? projectData.goals.items : [],
           },
           outcomes: {
-            items: Array.isArray(projectData.outcomes?.items) ? projectData.outcomes.items : []
+            items: Array.isArray(projectData.outcomes?.items) ? projectData.outcomes.items : [],
           },
           media: {
-            items: Array.isArray(projectData.media?.items) ? projectData.media.items : []
+            items: Array.isArray(projectData.media?.items) ? projectData.media.items : [],
           },
-          members: Array.isArray(projectData.members) ? projectData.members.map(member => ({
-            team_id: member.team_id,
-            role: member.role
-          })) : [],
-          partners: Array.isArray(projectData.partners) ? projectData.partners.map(partner => ({
-            partner_id: partner.partner_id
-          })) : [],
-          documents: Array.isArray(projectData.documents) ? projectData.documents : []
+          members: Array.isArray(projectData.members)
+            ? projectData.members.map((member) => ({
+                team_id: member.team_id,
+                role: member.role,
+              }))
+            : [],
+          partners: Array.isArray(projectData.partners)
+            ? projectData.partners.map((partner) => ({
+                partner_id: partner.partner_id,
+              }))
+            : [],
+          documents: Array.isArray(projectData.documents) ? projectData.documents : [],
         };
-        
+
         setFormData(processedFormData);
-        
       } catch (error) {
-        console.error('Error fetching project data:', error);
-        setError('Failed to load project data. Please try again.');
+        console.error("Error fetching project data:", error);
+        setError("Failed to load project data. Please try again.");
       } finally {
         setInitialLoading(false);
       }
@@ -184,7 +210,7 @@ const EditProjectPage = () => {
     if (projectId) {
       fetchProjectData();
     } else {
-      setError('Project ID is missing. Please go back and try again.');
+      setError("Project ID is missing. Please go back and try again.");
       setInitialLoading(false);
     }
   }, [projectId]);
@@ -194,20 +220,20 @@ const EditProjectPage = () => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const categoriesResponse = await apiClient.get('/categories');
+        const categoriesResponse = await apiClient.get("/categories");
         // Check the structure of the response and extract categories array
         if (categoriesResponse.data && Array.isArray(categoriesResponse.data.categories)) {
           setCategories(categoriesResponse.data.categories);
         } else if (Array.isArray(categoriesResponse.data)) {
           setCategories(categoriesResponse.data);
         } else {
-          console.error('Unexpected categories response format:', categoriesResponse.data);
+          console.error("Unexpected categories response format:", categoriesResponse.data);
           setCategories([]);
         }
 
         // Fetch roles
         try {
-          const rolesResponse = await apiClient.get('/roles');
+          const rolesResponse = await apiClient.get("/roles");
           // Extract roles data based on response structure
           if (rolesResponse.data && Array.isArray(rolesResponse.data.roles)) {
             setRoles(rolesResponse.data.roles);
@@ -215,13 +241,13 @@ const EditProjectPage = () => {
             setRoles(rolesResponse.data);
           }
         } catch (error) {
-          console.error('Error fetching roles:', error);
+          console.error("Error fetching roles:", error);
           setRoles([]);
         }
 
         // Fetch partners
         try {
-          const partnersResponse = await apiClient.get('/partners');
+          const partnersResponse = await apiClient.get("/partners");
 
           // Extract partners array
           if (partnersResponse.data && Array.isArray(partnersResponse.data.partners)) {
@@ -229,17 +255,17 @@ const EditProjectPage = () => {
           } else if (Array.isArray(partnersResponse.data)) {
             setPartners(partnersResponse.data);
           } else {
-            console.error('Unexpected partners response format:', partnersResponse.data);
+            console.error("Unexpected partners response format:", partnersResponse.data);
             setPartners([]);
           }
         } catch (error) {
-          console.error('Error fetching partners:', error);
+          console.error("Error fetching partners:", error);
           setPartners([]);
         }
 
         // Fetch teams
         try {
-          const teamsResponse = await apiClient.get('/teams');
+          const teamsResponse = await apiClient.get("/teams");
 
           // Check the structure of the response and extract teams array
           let allTeamMembers = [];
@@ -250,40 +276,44 @@ const EditProjectPage = () => {
             allTeamMembers = teamsResponse.data;
             setTeams(teamsResponse.data);
           } else {
-            console.error('Unexpected teams response format:', teamsResponse.data);
+            console.error("Unexpected teams response format:", teamsResponse.data);
             setTeams([]);
           }
 
           // Safety check to ensure allTeamMembers is an array before proceeding
           if (!Array.isArray(allTeamMembers)) {
-            console.error('allTeamMembers is not an array:', allTeamMembers);
+            console.error("allTeamMembers is not an array:", allTeamMembers);
             allTeamMembers = [];
           }
 
           // Ensure each member has the required properties for the Command component
-          const processedMembers = allTeamMembers.map(member => {
+          const processedMembers = allTeamMembers.map((member) => {
             // Make sure member has all required fields
             return {
               id: member.id || 0,
-              name: member.name || '',
-              team_type: member.team_type || '',
+              name: member.name || "",
+              team_type: member.team_type || "",
               // Add any other properties needed for display
-              position: member.position || '',
-              photo_url: member.photo_url || '',
-              first_name: member.first_name || '',
-              last_name: member.last_name || ''
+              position: member.position || "",
+              photo_url: member.photo_url || "",
+              first_name: member.first_name || "",
+              last_name: member.last_name || "",
             };
           });
 
           // Filter team members - ONLY show "Our Team" or "Fellow/Fellows" (case-insensitive)
           // Strict filtering: no fallback, only show matching team types
-          const filtered = processedMembers.filter(member => {
+          const filtered = processedMembers.filter((member) => {
             // Handle team_type as an object or string - ensure we have a string before calling toLowerCase()
-            let teamTypeName = '';
+            let teamTypeName = "";
 
-            if (typeof member.team_type === 'string') {
+            if (typeof member.team_type === "string") {
               teamTypeName = member.team_type;
-            } else if (member.team_type && typeof member.team_type === 'object' && member.team_type.name) {
+            } else if (
+              member.team_type &&
+              typeof member.team_type === "object" &&
+              member.team_type.name
+            ) {
               teamTypeName = member.team_type.name;
             }
 
@@ -293,26 +323,29 @@ const EditProjectPage = () => {
             }
 
             // Safely convert to lowercase if teamTypeName is a string
-            const teamTypeNameLower = typeof teamTypeName === 'string' ? teamTypeName.toLowerCase().trim() : '';
+            const teamTypeNameLower =
+              typeof teamTypeName === "string" ? teamTypeName.toLowerCase().trim() : "";
 
             // Match "Our Team" or "Fellow/Fellows" (case-insensitive) - handle both singular and plural
-            return teamTypeNameLower === "our team" || 
-                   teamTypeNameLower === "fellow" || 
-                   teamTypeNameLower === "fellows";
+            return (
+              teamTypeNameLower === "our team" ||
+              teamTypeNameLower === "fellow" ||
+              teamTypeNameLower === "fellows"
+            );
           });
 
           // Always use filtered results only - never show all members as fallback
           setFilteredTeamMembers(filtered);
           setUsers(filtered);
         } catch (error) {
-          console.error('Error fetching teams:', error);
+          console.error("Error fetching teams:", error);
           setTeams([]);
           setFilteredTeamMembers([]);
           setUsers([]);
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
-        setError('Failed to load categories. Please try again.');
+        console.error("Error fetching categories:", error);
+        setError("Failed to load categories. Please try again.");
         setCategories([]);
       }
     };
@@ -323,45 +356,45 @@ const EditProjectPage = () => {
   // Handle input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   // Handle goal input
   const handleGoalChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewGoal(prev => ({
+    setNewGoal((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   // Handle outcome input
   const handleOutcomeChange = (e) => {
     const { name, value } = e.target;
-    setNewOutcome(prev => ({
+    setNewOutcome((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   // Handle member input
   const handleMemberChange = (e) => {
     const { name, value } = e.target;
-    setNewMember(prev => ({
+    setNewMember((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   // Handle media input
   const handleMediaChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNewMedia(prev => ({
+    setNewMedia((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -369,11 +402,11 @@ const EditProjectPage = () => {
   const handleDocumentFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setNewDocument(prev => ({
+      setNewDocument((prev) => ({
         ...prev,
         file: file,
         name: prev.name || file.name,
-        file_size: file.size
+        file_size: file.size,
       }));
     }
   };
@@ -381,21 +414,21 @@ const EditProjectPage = () => {
   // Handle document input change
   const handleDocumentChange = (e) => {
     const { name, value } = e.target;
-    setNewDocument(prev => ({
+    setNewDocument((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   // Add document (upload to server for persistent URL)
   const addDocument = async () => {
     if (!newDocument.file && !newDocument.file_url) {
-      setError('Please select a file or provide a URL and provide a name');
+      setError("Please select a file or provide a URL and provide a name");
       return;
     }
 
     if (!newDocument.name) {
-      setError('Please provide a name for the document');
+      setError("Please provide a name for the document");
       return;
     }
 
@@ -410,7 +443,7 @@ const EditProjectPage = () => {
       if (newDocument.file) {
         const uploadedUrl = await uploadFile(newDocument.file);
         if (!uploadedUrl) {
-          setError('Failed to upload document. Please try again.');
+          setError("Failed to upload document. Please try again.");
           setIsUploading(false);
           return;
         }
@@ -424,31 +457,31 @@ const EditProjectPage = () => {
       const documentToAdd = {
         name: newDocument.name,
         file_url: fileUrl,
-        file_size: fileSize
+        file_size: fileSize,
       };
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        documents: [...prev.documents, documentToAdd]
+        documents: [...prev.documents, documentToAdd],
       }));
 
       // Reset document form
-      setNewDocument({ name: '', file: null, file_url: '', file_size: 0 });
+      setNewDocument({ name: "", file: null, file_url: "", file_size: 0 });
       if (documentFileInputRef.current) {
-        documentFileInputRef.current.value = '';
+        documentFileInputRef.current.value = "";
       }
     } catch (error) {
-      console.error('Error adding document:', error);
-      setError('Failed to add document. Please try again.');
+      console.error("Error adding document:", error);
+      setError("Failed to add document. Please try again.");
       setIsUploading(false);
     }
   };
 
   // Remove document
   const removeDocument = (index) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      documents: prev.documents.filter((_, i) => i !== index)
+      documents: prev.documents.filter((_, i) => i !== index),
     }));
   };
 
@@ -456,38 +489,36 @@ const EditProjectPage = () => {
   const handleTeamMemberSelect = (teamId) => {
     // Check if the role is selected
     if (!selectedRole) {
-      alert('Please select a role first');
+      alert("Please select a role first");
       return;
     }
-    
+
     // Check if team member is already a member
-    const alreadyMember = formData.members.some(
-      member => member.team_id === teamId
-    );
-    
+    const alreadyMember = formData.members.some((member) => member.team_id === teamId);
+
     if (!alreadyMember) {
       const memberToAdd = {
         team_id: teamId,
-        role: selectedRole // This will now be one of: 'lead', 'member', 'supervisor', 'contributor'
+        role: selectedRole, // This will now be one of: 'lead', 'member', 'supervisor', 'contributor'
       };
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
-        members: [...prev.members, memberToAdd]
+        members: [...prev.members, memberToAdd],
       }));
     }
-    
+
     setOpenTeamPopover(false);
   };
 
   // Get role name for display
   const getRoleNameById = (roleId) => {
     // For the fixed role values, return the formatted display name
-    if (roleId === 'lead') return 'Lead';
-    if (roleId === 'member') return 'Member';
-    if (roleId === 'supervisor') return 'Supervisor';
-    if (roleId === 'contributor') return 'Contributor';
-    
+    if (roleId === "lead") return "Lead";
+    if (roleId === "member") return "Member";
+    if (roleId === "supervisor") return "Supervisor";
+    if (roleId === "contributor") return "Contributor";
+
     // Fallback for any other role (should not happen with fixed values)
     return roleId?.toString();
   };
@@ -495,21 +526,19 @@ const EditProjectPage = () => {
   // Handle selecting a partner
   const handlePartnerSelect = (partnerId) => {
     // Check if partner is already added
-    const alreadyAdded = formData.partners.some(
-      partner => partner.partner_id === partnerId
-    );
-    
+    const alreadyAdded = formData.partners.some((partner) => partner.partner_id === partnerId);
+
     if (!alreadyAdded) {
       const partnerToAdd = {
-        partner_id: partnerId
+        partner_id: partnerId,
       };
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
-        partners: [...prev.partners, partnerToAdd]
+        partners: [...prev.partners, partnerToAdd],
       }));
     }
-    
+
     setOpenPartnerPopover(false);
   };
 
@@ -517,52 +546,52 @@ const EditProjectPage = () => {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-      
+      const fileType = file.type.startsWith("image/") ? "image" : "video";
+
       // If previous file was a video, revoke its URL
-      if (newMedia.file && newMedia.type === 'video' && newMedia.previewUrl) {
+      if (newMedia.file && newMedia.type === "video" && newMedia.previewUrl) {
         URL.revokeObjectURL(newMedia.previewUrl);
       }
-      
+
       // Create a preview for videos
       let previewUrl = null;
-      if (fileType === 'video') {
+      if (fileType === "video") {
         previewUrl = URL.createObjectURL(file);
       }
-      
-      setNewMedia(prev => ({
+
+      setNewMedia((prev) => ({
         ...prev,
         file,
         type: fileType,
         previewUrl: previewUrl,
-        url: '' // Clear URL when file is selected
+        url: "", // Clear URL when file is selected
       }));
-      
+
       // Switch to file mode
-      setMediaSourceType('file');
+      setMediaSourceType("file");
     }
   };
 
   // Handle media source type change
   const handleMediaSourceChange = (type) => {
     setMediaSourceType(type);
-    
+
     // Reset media state based on new source type
-    if (type === 'url') {
+    if (type === "url") {
       if (newMedia.file && newMedia.previewUrl) {
         URL.revokeObjectURL(newMedia.previewUrl);
       }
-      
-      setNewMedia(prev => ({
+
+      setNewMedia((prev) => ({
         ...prev,
         file: null,
         previewUrl: null,
-        url: '',
+        url: "",
       }));
     } else {
-      setNewMedia(prev => ({
+      setNewMedia((prev) => ({
         ...prev,
-        url: '',
+        url: "",
       }));
     }
   };
@@ -571,49 +600,55 @@ const EditProjectPage = () => {
   const validateUrl = (url) => {
     try {
       // Simple check if string is not empty
-      if (!url || url.trim() === '') {
-        return { valid: false, type: null, message: 'URL cannot be empty' };
+      if (!url || url.trim() === "") {
+        return { valid: false, type: null, message: "URL cannot be empty" };
       }
-      
+
       // More permissive URL validation to allow a wider range of URLs
       // This pattern only checks for basic URL structure and allows more TLDs
-      const urlPattern = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(\/[a-zA-Z0-9-_.~:/?#[\]@!$&'()*+,;=]*)?$/;
+      const urlPattern =
+        /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+(\/[a-zA-Z0-9-_.~:/?#[\]@!$&'()*+,;=]*)?$/;
       if (!urlPattern.test(url)) {
         // Fall back to a very basic check - just make sure it has some domain structure
-        const veryBasicPattern = /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/;
+        const veryBasicPattern =
+          /^(https?:\/\/)?[a-zA-Z0-9-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/;
         if (!veryBasicPattern.test(url)) {
-          return { valid: false, type: null, message: 'Invalid URL format' };
+          return { valid: false, type: null, message: "Invalid URL format" };
         }
       }
-      
+
       // Check if URL ends with common image extensions
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff'];
-      const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.flv'];
-      
+      const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp", ".tiff"];
+      const videoExtensions = [".mp4", ".webm", ".ogg", ".mov", ".avi", ".mkv", ".flv"];
+
       const lowerUrl = url.toLowerCase();
-      
+
       // Determine type based on extension
       let type = null;
-      if (imageExtensions.some(ext => lowerUrl.endsWith(ext))) {
-        type = 'image';
-      } else if (videoExtensions.some(ext => lowerUrl.endsWith(ext))) {
-        type = 'video';
+      if (imageExtensions.some((ext) => lowerUrl.endsWith(ext))) {
+        type = "image";
+      } else if (videoExtensions.some((ext) => lowerUrl.endsWith(ext))) {
+        type = "video";
       } else {
         // For URLs without clear extensions, try to guess based on common patterns
-        if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be') || 
-            lowerUrl.includes('vimeo.com') || lowerUrl.includes('dailymotion.com')) {
-          type = 'video';
+        if (
+          lowerUrl.includes("youtube.com") ||
+          lowerUrl.includes("youtu.be") ||
+          lowerUrl.includes("vimeo.com") ||
+          lowerUrl.includes("dailymotion.com")
+        ) {
+          type = "video";
         } else {
           // Default to image if we can't determine
-          type = 'image';
+          type = "image";
         }
       }
-      
-      return { valid: true, type, message: 'URL valid' };
+
+      return { valid: true, type, message: "URL valid" };
     } catch (error) {
-      console.error('Error validating URL:', error);
+      console.error("Error validating URL:", error);
       // Return valid true with default type to prevent crashes
-      return { valid: true, type: 'image', message: 'URL format uncertain, treating as image' };
+      return { valid: true, type: "image", message: "URL format uncertain, treating as image" };
     }
   };
 
@@ -621,25 +656,25 @@ const EditProjectPage = () => {
   const handleUrlChange = (e) => {
     try {
       const url = e.target.value;
-      
+
       // Always update the URL in the state
-      setNewMedia(prev => ({ ...prev, url }));
-      
+      setNewMedia((prev) => ({ ...prev, url }));
+
       // Only validate if there's actually a URL entered
-      if (url && url.trim() !== '') {
+      if (url && url.trim() !== "") {
         const validation = validateUrl(url);
         if (validation.valid) {
-          setNewMedia(prev => ({ 
-            ...prev, 
+          setNewMedia((prev) => ({
+            ...prev,
             url,
-            type: validation.type || 'image'
+            type: validation.type || "image",
           }));
         }
       }
     } catch (error) {
-      console.error('Error handling URL change:', error);
+      console.error("Error handling URL change:", error);
       // Don't throw error, just update the URL in state
-      setNewMedia(prev => ({ ...prev, url: e.target.value }));
+      setNewMedia((prev) => ({ ...prev, url: e.target.value }));
     }
   };
 
@@ -660,15 +695,15 @@ const EditProjectPage = () => {
       setUploadProgress(0);
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const response = await apiClient.post('/uploads/file', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await apiClient.post("/uploads/file", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
           if (!progressEvent.total) return;
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
-        }
+        },
       });
 
       if (response.data && response.data.success && response.data.file?.url) {
@@ -677,9 +712,9 @@ const EditProjectPage = () => {
         return response.data.file.url;
       }
 
-      throw new Error('Upload failed');
+      throw new Error("Upload failed");
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error("Error uploading file:", error);
       setIsUploading(false);
       return null;
     }
@@ -688,44 +723,44 @@ const EditProjectPage = () => {
   // Generate a video thumbnail (as a placeholder)
   const generateVideoThumbnail = async (videoFile) => {
     return new Promise((resolve) => {
-      const videoElement = document.createElement('video');
-      videoElement.preload = 'metadata';
+      const videoElement = document.createElement("video");
+      videoElement.preload = "metadata";
       videoElement.playsInline = true;
       videoElement.muted = true;
-      
+
       // Create a URL for the video file
       const videoURL = URL.createObjectURL(videoFile);
       videoElement.src = videoURL;
-      
+
       // Once the video metadata is loaded, capture the thumbnail
       videoElement.onloadedmetadata = () => {
         // Set current time to the first frame
         videoElement.currentTime = 1; // 1 second in to avoid black frames
       };
-      
+
       // When the current time updates (after seeking)
       videoElement.onseeked = () => {
         // Create a canvas and draw the video frame
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = videoElement.videoWidth;
         canvas.height = videoElement.videoHeight;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-        
+
         // Convert the canvas to a data URL (thumbnail)
-        const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.7);
-        
+        const thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
+
         // Clean up
         URL.revokeObjectURL(videoURL);
-        
+
         // Return the thumbnail
         resolve(thumbnailUrl);
       };
-      
+
       // Handle errors
       videoElement.onerror = () => {
         URL.revokeObjectURL(videoURL);
-        console.error('Error generating video thumbnail');
+        console.error("Error generating video thumbnail");
         resolve(null);
       };
     });
@@ -734,91 +769,91 @@ const EditProjectPage = () => {
   // Add goal to goals list
   const addGoal = () => {
     if (!newGoal.title || !newGoal.description) return;
-    
+
     const goalId = `goal-${Date.now()}`;
     const goalToAdd = {
       id: goalId,
       title: newGoal.title,
       description: newGoal.description,
       completed: newGoal.completed,
-      order: formData.goals.items.length + 1
+      order: formData.goals.items.length + 1,
     };
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       goals: {
-        items: [...prev.goals.items, goalToAdd]
-      }
+        items: [...prev.goals.items, goalToAdd],
+      },
     }));
-    
+
     // Reset new goal form
-    setNewGoal({ title: '', description: '', completed: false });
+    setNewGoal({ title: "", description: "", completed: false });
   };
 
   // Add outcome to outcomes list
   const addOutcome = () => {
     if (!newOutcome.title || !newOutcome.description) return;
-    
+
     const outcomeId = `outcome-${Date.now()}`;
     const outcomeToAdd = {
       id: outcomeId,
       title: newOutcome.title,
       description: newOutcome.description,
       status: newOutcome.status,
-      order: formData.outcomes.items.length + 1
+      order: formData.outcomes.items.length + 1,
     };
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       outcomes: {
-        items: [...prev.outcomes.items, outcomeToAdd]
-      }
+        items: [...prev.outcomes.items, outcomeToAdd],
+      },
     }));
-    
+
     // Reset new outcome form
-    setNewOutcome({ title: '', description: '', status: 'pending' });
+    setNewOutcome({ title: "", description: "", status: "pending" });
   };
 
   // Add media to media list
   const addMedia = async () => {
     try {
       // Validate based on media source type
-      if (mediaSourceType === 'file' && !newMedia.file) {
-        setError('Please select a file');
+      if (mediaSourceType === "file" && !newMedia.file) {
+        setError("Please select a file");
         return;
       }
-      
-      if (mediaSourceType === 'url' && !newMedia.url) {
-        setError('Please enter a URL');
+
+      if (mediaSourceType === "url" && !newMedia.url) {
+        setError("Please enter a URL");
         return;
       }
-      
+
       if (!newMedia.title) {
-        setError('Please enter a title for the media');
+        setError("Please enter a title for the media");
         return;
       }
-      
-      setError('');
-      let fileUrl = '';
+
+      setError("");
+      let fileUrl = "";
       let thumbnailUrl = null;
       let mediaSize = 0;
-      
-      if (mediaSourceType === 'file') {
+
+      if (mediaSourceType === "file") {
         // Upload to server and get persistent URL
         fileUrl = await uploadFile(newMedia.file);
         mediaSize = newMedia.file.size;
-        
+
         if (!fileUrl) {
-          setError('Failed to create file URL. Please try again.');
+          setError("Failed to create file URL. Please try again.");
           return;
         }
-        
+
         // For videos, try to generate a thumbnail
-        if (newMedia.type === 'video') {
+        if (newMedia.type === "video") {
           try {
             thumbnailUrl = await generateVideoThumbnail(newMedia.file);
           } catch (error) {
-            console.error('Error generating thumbnail:', error);
+            console.error("Error generating thumbnail:", error);
             // If thumbnail generation fails, use the video itself as thumbnail
             thumbnailUrl = fileUrl;
           }
@@ -828,70 +863,70 @@ const EditProjectPage = () => {
         // Validate URL
         const urlValidation = validateUrl(newMedia.url);
         if (!urlValidation.valid) {
-          setError('Invalid URL. Please check and try again.');
+          setError("Invalid URL. Please check and try again.");
           return;
         }
-        
+
         fileUrl = newMedia.url;
         mediaSize = 0; // We don't know the size for URL-based media
-        
+
         // For URL-based videos, we can't generate a thumbnail here
         // Could use a placeholder or service like OpenGraph for this
-        if (newMedia.type === 'video') {
+        if (newMedia.type === "video") {
           thumbnailUrl = null;
         }
       }
-      
+
       const mediaId = `media-${Date.now()}`;
-      
+
       const mediaToAdd = {
         id: mediaId,
         type: newMedia.type,
         url: fileUrl,
         title: newMedia.title,
-        description: '',
+        description: "",
         tag: newMedia.tag,
         cover: newMedia.cover,
         order: formData.media.items.length + 1,
         size: mediaSize,
-        isExternalUrl: mediaSourceType === 'url',
+        isExternalUrl: mediaSourceType === "url",
         // For videos, add duration and thumbnail
-        ...(newMedia.type === 'video' && {
+        ...(newMedia.type === "video" && {
           duration: 0, // We could calculate actual duration with more complex code
-          thumbnailUrl: thumbnailUrl
-        })
+          thumbnailUrl: thumbnailUrl,
+        }),
       };
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
         media: {
-          items: [...prev.media.items, mediaToAdd]
-        }
+          items: [...prev.media.items, mediaToAdd],
+        },
       }));
-      
+
       // Clear any preview URL from new media
       if (newMedia.previewUrl) {
         URL.revokeObjectURL(newMedia.previewUrl);
       }
-      
+
       // Reset new media form
-      setNewMedia({ 
+      setNewMedia({
         file: null,
-        type: 'image',
-        title: '',
-        tag: 'feature',
+        type: "image",
+        title: "",
+        tag: "feature",
         cover: false,
         previewUrl: null,
-        url: ''
+        url: "",
       });
-      
+
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     } catch (error) {
-      console.error('Error adding media:', error);
-      setError('Failed to add media. Please try again.');
+      console.error("Error adding media:", error);
+      setError("Failed to add media. Please try again.");
     }
   };
 
@@ -902,7 +937,7 @@ const EditProjectPage = () => {
 
   // Close video preview
   const closeVideoPreview = () => {
-    setVideoPreviewUrl('');
+    setVideoPreviewUrl("");
   };
 
   // Select media for editing
@@ -910,141 +945,135 @@ const EditProjectPage = () => {
     if (selectedMedia && selectedMedia.id === mediaId) {
       setSelectedMedia(null);
     } else {
-      const media = formData.media.items.find(item => item.id === mediaId);
+      const media = formData.media.items.find((item) => item.id === mediaId);
       setSelectedMedia(media);
     }
   };
 
   // Update media tag
   const updateMediaTag = (mediaId, tag) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       media: {
-        items: prev.media.items.map(item => 
-          item.id === mediaId ? { ...item, tag } : item
-        )
-      }
+        items: prev.media.items.map((item) => (item.id === mediaId ? { ...item, tag } : item)),
+      },
     }));
-    
+
     // Update selectedMedia if it's the one being updated
     if (selectedMedia && selectedMedia.id === mediaId) {
-      setSelectedMedia(prev => ({ ...prev, tag }));
+      setSelectedMedia((prev) => ({ ...prev, tag }));
     }
   };
 
   // Toggle media as cover
   const toggleMediaCover = (mediaId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       media: {
-        items: prev.media.items.map(item => 
-          item.id === mediaId 
-            ? { ...item, cover: true } 
-            : { ...item, cover: false } // Ensure only one cover image
-        )
-      }
+        items: prev.media.items.map(
+          (item) => (item.id === mediaId ? { ...item, cover: true } : { ...item, cover: false }), // Ensure only one cover image
+        ),
+      },
     }));
-    
+
     // Update selectedMedia if it's the one being updated
     if (selectedMedia && selectedMedia.id === mediaId) {
-      setSelectedMedia(prev => ({ ...prev, cover: true }));
+      setSelectedMedia((prev) => ({ ...prev, cover: true }));
     }
   };
 
   // Add member to members list
   const addMember = () => {
     if (!newMember.team_id || !newMember.role) return;
-    
+
     const memberToAdd = {
       team_id: parseInt(newMember.team_id),
-      role: newMember.role
+      role: newMember.role,
     };
-    
+
     // Check if user is already a member
-    const alreadyMember = formData.members.some(
-      member => member.team_id === memberToAdd.team_id
-    );
-    
+    const alreadyMember = formData.members.some((member) => member.team_id === memberToAdd.team_id);
+
     if (alreadyMember) {
-      alert('This team member is already a project member');
+      alert("This team member is already a project member");
       return;
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      members: [...prev.members, memberToAdd]
+      members: [...prev.members, memberToAdd],
     }));
-    
+
     // Reset new member form
-    setNewMember({ team_id: '', role: 'member' });
+    setNewMember({ team_id: "", role: "member" });
   };
 
   // Add partner to partners list
   const addPartner = () => {
     if (!newPartner.partner_id) return;
-    
+
     const partnerToAdd = {
-      partner_id: parseInt(newPartner.partner_id)
+      partner_id: parseInt(newPartner.partner_id),
     };
-    
+
     // Check if partner is already added
     const alreadyAdded = formData.partners.some(
-      partner => partner.partner_id === partnerToAdd.partner_id
+      (partner) => partner.partner_id === partnerToAdd.partner_id,
     );
-    
+
     if (alreadyAdded) {
-      alert('This partner is already added to the project');
+      alert("This partner is already added to the project");
       return;
     }
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      partners: [...prev.partners, partnerToAdd]
+      partners: [...prev.partners, partnerToAdd],
     }));
-    
+
     // Reset new partner form
-    setNewPartner({ partner_id: '' });
+    setNewPartner({ partner_id: "" });
   };
 
   // Remove goal from list
   const removeGoal = (goalId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       goals: {
-        items: prev.goals.items.filter(goal => goal.id !== goalId)
-      }
+        items: prev.goals.items.filter((goal) => goal.id !== goalId),
+      },
     }));
   };
 
   // Remove outcome from list
   const removeOutcome = (outcomeId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       outcomes: {
-        items: prev.outcomes.items.filter(outcome => outcome.id !== outcomeId)
-      }
+        items: prev.outcomes.items.filter((outcome) => outcome.id !== outcomeId),
+      },
     }));
   };
 
   // Remove media from list
   const removeMedia = (mediaId) => {
     // Revoke the object URL to prevent memory leaks
-    const mediaToRemove = formData.media.items.find(media => media.id === mediaId);
+    const mediaToRemove = formData.media.items.find((media) => media.id === mediaId);
     if (mediaToRemove) {
-      if (mediaToRemove.url && mediaToRemove.url.startsWith('blob:')) {
+      if (mediaToRemove.url && mediaToRemove.url.startsWith("blob:")) {
         URL.revokeObjectURL(mediaToRemove.url);
       }
-      if (mediaToRemove.thumbnailUrl && mediaToRemove.thumbnailUrl.startsWith('blob:')) {
+      if (mediaToRemove.thumbnailUrl && mediaToRemove.thumbnailUrl.startsWith("blob:")) {
         URL.revokeObjectURL(mediaToRemove.thumbnailUrl);
       }
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       media: {
-        items: prev.media.items.filter(media => media.id !== mediaId)
-      }
+        items: prev.media.items.filter((media) => media.id !== mediaId),
+      },
     }));
-    
+
     if (selectedMedia && selectedMedia.id === mediaId) {
       setSelectedMedia(null);
     }
@@ -1052,55 +1081,55 @@ const EditProjectPage = () => {
 
   // Remove member from list
   const removeMember = (teamId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      members: prev.members.filter(member => member.team_id !== teamId)
+      members: prev.members.filter((member) => member.team_id !== teamId),
     }));
   };
 
   // Remove partner from list
   const removePartner = (partnerId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      partners: prev.partners.filter(partner => partner.partner_id !== partnerId)
+      partners: prev.partners.filter((partner) => partner.partner_id !== partnerId),
     }));
   };
 
   // Media preview component
   const MediaPreview = ({ media }) => {
-    if (media.type === 'image') {
+    if (media.type === "image") {
       return (
         <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
-          <img 
-            src={media.url} 
+          <img
+            src={media.url}
             alt={media.title}
-            className="object-cover w-full h-full" 
+            className="object-cover w-full h-full"
             onError={(e) => {
               // Replace with placeholder on error
-              e.target.src = 'https://via.placeholder.com/400x300?text=Image+Not+Available';
+              e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Available";
             }}
           />
         </div>
       );
-    } else if (media.type === 'video') {
+    } else if (media.type === "video") {
       return (
-        <div 
+        <div
           className="h-20 bg-gray-100 flex items-center justify-center relative cursor-pointer"
           onClick={() => openVideoPreview(media.url)}
         >
           {/* Video thumbnail or first frame */}
           {media.thumbnailUrl ? (
-            <img 
-              src={media.thumbnailUrl} 
+            <img
+              src={media.thumbnailUrl}
               alt={media.title}
-              className="object-cover w-full h-full" 
+              className="object-cover w-full h-full"
             />
           ) : (
             <div className="bg-gray-200 w-full h-full flex items-center justify-center">
               <FileVideo className="w-8 h-8 text-gray-500" />
             </div>
           )}
-          
+
           {/* Play button overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 hover:bg-opacity-40 transition-opacity">
             <div className="w-10 h-10 rounded-full bg-white bg-opacity-80 flex items-center justify-center">
@@ -1121,10 +1150,10 @@ const EditProjectPage = () => {
   // Video preview modal
   const VideoPreviewModal = () => {
     if (!videoPreviewUrl) return null;
-    
+
     // Check if URL is external (not blob)
-    const isExternalUrl = !videoPreviewUrl.startsWith('blob:');
-    
+    const isExternalUrl = !videoPreviewUrl.startsWith("blob:");
+
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
         <div className="relative w-full max-w-4xl mx-auto p-4">
@@ -1134,32 +1163,32 @@ const EditProjectPage = () => {
           >
             <X className="w-6 h-6" />
           </button>
-          
+
           <div className="bg-black rounded-lg overflow-hidden">
             {isExternalUrl ? (
               // For external URLs, create an iframe for YouTube/Vimeo or show the video directly
-              videoPreviewUrl.includes('youtube.com') || videoPreviewUrl.includes('youtu.be') ? (
-                <iframe 
-                  src={videoPreviewUrl.replace('watch?v=', 'embed/')} 
+              videoPreviewUrl.includes("youtube.com") || videoPreviewUrl.includes("youtu.be") ? (
+                <iframe
+                  src={videoPreviewUrl.replace("watch?v=", "embed/")}
                   className="w-full h-[80vh]"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 ></iframe>
               ) : (
-                <video 
-                  src={videoPreviewUrl} 
-                  controls 
-                  autoPlay 
+                <video
+                  src={videoPreviewUrl}
+                  controls
+                  autoPlay
                   className="w-full h-auto max-h-[80vh]"
                 />
               )
             ) : (
               // For blob URLs, show the video directly
-              <video 
-                src={videoPreviewUrl} 
-                controls 
-                autoPlay 
+              <video
+                src={videoPreviewUrl}
+                controls
+                autoPlay
                 className="w-full h-auto max-h-[80vh]"
               />
             )}
@@ -1171,12 +1200,12 @@ const EditProjectPage = () => {
 
   // Get team member name
   const getTeamMemberName = (teamId) => {
-    const team = filteredTeamMembers.find(member => member.id === teamId);
+    const team = filteredTeamMembers.find((member) => member.id === teamId);
     if (team) {
       if (team.name) {
         return team.name;
       } else if (team.first_name || team.last_name) {
-        return `${team.first_name || ''} ${team.last_name || ''}`;
+        return `${team.first_name || ""} ${team.last_name || ""}`;
       }
     }
     return `Team Member ${teamId}`;
@@ -1195,16 +1224,16 @@ const EditProjectPage = () => {
 
   // Format file size display
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   // Navigate to add partner page
   const navigateToAddPartner = () => {
-    router.push('/partners/add');
+    router.push("/partners/add");
   };
 
   // Handle form submission
@@ -1269,35 +1298,36 @@ const EditProjectPage = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
     setSuccess(false);
-    
+
     try {
       // Create a new object with the correct data types for submission
       const submissionData: ProjectData = {
         ...formData,
         category_id: formData.category_id ? parseInt(formData.category_id as string, 10) : 0,
         is_published: formData.is_published || false,
-        members: formData.members.map(member => ({
-          ...(typeof member === 'object' && member !== null ? member : {}),
-          team_id: typeof member.team_id === 'string' ? parseInt(member.team_id, 10) : member.team_id,
-          role: member.role, 
-          start_date: formData.start_date
+        members: formData.members.map((member) => ({
+          ...(typeof member === "object" && member !== null ? member : {}),
+          team_id:
+            typeof member.team_id === "string" ? parseInt(member.team_id, 10) : member.team_id,
+          role: member.role,
+          start_date: formData.start_date,
         })),
       };
-      
+
       // Submit to API
       const response = await apiClient.put(`/projects/${projectId}`, submissionData);
-      
+
       setSuccess(true);
-      
+
       // Redirect to project detail
       setTimeout(() => {
         router.push(`/projects/${projectId}`);
       }, 2000);
     } catch (error: any) {
-      console.error('Error updating project:', error);
-      setError(error.response?.data?.message || 'Failed to update project. Please try again.');
+      console.error("Error updating project:", error);
+      setError(error.response?.data?.message || "Failed to update project. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -1313,12 +1343,12 @@ const EditProjectPage = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Video preview modal */}
       {videoPreviewUrl && <VideoPreviewModal />}
-      
+
       {/* Header with back button */}
       <div className="mb-6">
         <div className="flex items-center mb-2">
@@ -1329,14 +1359,14 @@ const EditProjectPage = () => {
         </div>
         <p className="text-gray-600">Projects / {formData.name} / Edit</p>
       </div>
-      
+
       {/* Success message */}
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
           <span className="block sm:inline">Project updated successfully! Redirecting...</span>
         </div>
       )}
-      
+
       {/* Error message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 flex items-center">
@@ -1344,7 +1374,7 @@ const EditProjectPage = () => {
           <span>{error}</span>
         </div>
       )}
-      
+
       {/* Project form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md">
         {/* Basic project information */}
@@ -1355,7 +1385,7 @@ const EditProjectPage = () => {
               <h2 className="text-xl font-bold">Project Details</h2>
               <p className="text-gray-600 text-sm">What is the project all about?</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -1374,7 +1404,7 @@ const EditProjectPage = () => {
                     required
                   />
                 </div>
-                
+
                 {/* Category */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -1389,16 +1419,17 @@ const EditProjectPage = () => {
                       required
                     >
                       <option value="">Select a category</option>
-                      {Array.isArray(categories) && categories.map(category => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
+                      {Array.isArray(categories) &&
+                        categories.map((category) => (
+                          <option key={category.id} value={category.id}>
+                            {category.name}
+                          </option>
+                        ))}
                     </select>
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-                
+
                 {/* Start date */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -1415,12 +1446,10 @@ const EditProjectPage = () => {
                     />
                   </div>
                 </div>
-                
+
                 {/* End date */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    End Date
-                  </label>
+                  <label className="block text-sm font-medium mb-1">End Date</label>
                   <div className="relative">
                     <input
                       type="date"
@@ -1431,12 +1460,10 @@ const EditProjectPage = () => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Status */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Status
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Status</label>
                   <div className="relative">
                     <select
                       name="status"
@@ -1453,12 +1480,10 @@ const EditProjectPage = () => {
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-                
+
                 {/* Location */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Location
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Location</label>
                   <input
                     type="text"
                     name="location"
@@ -1469,7 +1494,7 @@ const EditProjectPage = () => {
                   />
                 </div>
               </div>
-              
+
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -1499,7 +1524,7 @@ const EditProjectPage = () => {
               <h2 className="text-xl font-bold">Goals & Outcomes</h2>
               <p className="text-gray-600 text-sm">What are you trying to achieve?</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1508,10 +1533,10 @@ const EditProjectPage = () => {
                   <label className="block text-sm font-medium mb-2">
                     Project goals/objective<span className="text-red-500">*</span>
                   </label>
-                  
+
                   {/* Goals list */}
                   <div className="space-y-3 mb-4">
-                    {formData.goals.items.map(goal => (
+                    {formData.goals.items.map((goal) => (
                       <div key={goal.id} className="p-3 bg-gray-50 rounded-md relative">
                         <button
                           type="button"
@@ -1523,18 +1548,20 @@ const EditProjectPage = () => {
                         <h4 className="font-medium">{goal.title}</h4>
                         <p className="text-sm text-gray-600">{goal.description}</p>
                         <div className="mt-1 text-xs">
-                          <span className={`px-2 py-1 rounded-full ${goal.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                            {goal.completed ? 'Completed' : 'Not completed'}
+                          <span
+                            className={`px-2 py-1 rounded-full ${goal.completed ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                          >
+                            {goal.completed ? "Completed" : "Not completed"}
                           </span>
                         </div>
                       </div>
                     ))}
-                    
+
                     {formData.goals.items.length === 0 && (
                       <p className="text-gray-500 text-sm italic">No goals added yet.</p>
                     )}
                   </div>
-                  
+
                   {/* Add goal form */}
                   <div className="border-t pt-3">
                     <h4 className="font-medium text-sm mb-2">Add New Goal</h4>
@@ -1582,16 +1609,16 @@ const EditProjectPage = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Project outcomes */}
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Expected outcomes<span className="text-red-500">*</span>
                   </label>
-                  
+
                   {/* Outcomes list */}
                   <div className="space-y-3 mb-4">
-                    {formData.outcomes.items.map(outcome => (
+                    {formData.outcomes.items.map((outcome) => (
                       <div key={outcome.id} className="p-3 bg-gray-50 rounded-md relative">
                         <button
                           type="button"
@@ -1603,22 +1630,26 @@ const EditProjectPage = () => {
                         <h4 className="font-medium">{outcome.title}</h4>
                         <p className="text-sm text-gray-600">{outcome.description}</p>
                         <div className="mt-1 text-xs">
-                          <span className={`px-2 py-1 rounded-full ${
-                            outcome.status === 'achieved' ? 'bg-green-100 text-green-800' :
-                            outcome.status === 'in-progress' ? 'bg-orange-100 text-orange-800' :
-                            'bg-purple-100 text-purple-800'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 rounded-full ${
+                              outcome.status === "achieved"
+                                ? "bg-green-100 text-green-800"
+                                : outcome.status === "in-progress"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : "bg-purple-100 text-purple-800"
+                            }`}
+                          >
                             {outcome.status.charAt(0).toUpperCase() + outcome.status.slice(1)}
                           </span>
                         </div>
                       </div>
                     ))}
-                    
+
                     {formData.outcomes.items.length === 0 && (
                       <p className="text-gray-500 text-sm italic">No outcomes added yet.</p>
                     )}
                   </div>
-                  
+
                   {/* Add outcome form */}
                   <div className="border-t pt-3">
                     <h4 className="font-medium text-sm mb-2">Add New Outcome</h4>
@@ -1684,14 +1715,14 @@ const EditProjectPage = () => {
               <h2 className="text-xl font-bold">Team</h2>
               <p className="text-gray-600 text-sm">Who will be working on this project?</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="mb-4 flex justify-between items-center">
                 <label className="block text-sm font-medium">
                   Team Members<span className="text-red-500">*</span>
                 </label>
-                <a 
+                <a
                   href="/teams/add-team"
                   className="text-sm flex items-center text-green-700 hover:text-green-800"
                 >
@@ -1699,17 +1730,22 @@ const EditProjectPage = () => {
                   Add New Team Member
                 </a>
               </div>
-              
+
               {/* Members list */}
               {formData.members.length === 0 ? (
                 <p className="text-gray-500 text-sm italic mb-4">No team members added yet.</p>
               ) : (
                 <div className="bg-gray-50 rounded-md mb-4">
                   <div className="divide-y divide-gray-200">
-                    {formData.members.map(member => (
-                      <div key={member.team_id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-green-50">
+                    {formData.members.map((member) => (
+                      <div
+                        key={member.team_id}
+                        className="grid grid-cols-12 p-3 items-center text-sm hover:bg-green-50"
+                      >
                         <div className="col-span-6">{getTeamMemberName(member.team_id)}</div>
-                        <div className="col-span-5 text-gray-600">{getRoleNameById(member.role)}</div>
+                        <div className="col-span-5 text-gray-600">
+                          {getRoleNameById(member.role)}
+                        </div>
                         <div className="col-span-1 flex justify-end">
                           <button
                             type="button"
@@ -1724,7 +1760,7 @@ const EditProjectPage = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* Role selection first - Using fixed string enum values instead of IDs */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">
@@ -1745,7 +1781,7 @@ const EditProjectPage = () => {
                   <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                 </div>
               </div>
-              
+
               {/* Team member selection with Popover */}
               <div className="mb-6">
                 <label className="block text-sm font-medium mb-1">
@@ -1759,27 +1795,25 @@ const EditProjectPage = () => {
                       disabled={!selectedRole}
                     >
                       <span className="text-gray-500">
-                        {selectedRole ? 'Select team members...' : 'Please select a role first'}
+                        {selectedRole ? "Select team members..." : "Please select a role first"}
                       </span>
                       <ChevronDown className="w-5 h-5 text-gray-400" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0" align="start">
                     <Command>
-                      <CommandInput 
-                        placeholder="Search team members..." 
+                      <CommandInput
+                        placeholder="Search team members..."
                         value={teamSearchValue}
                         onValueChange={setTeamSearchValue}
                       />
                       <CommandEmpty>No team members found.</CommandEmpty>
                       <CommandGroup>
                         <ScrollArea className="h-[200px]">
-                          {filteredTeamMembers.map(member => {
+                          {filteredTeamMembers.map((member) => {
                             // Check if this team member is already in the project
-                            const isAdded = formData.members.some(
-                              m => m.team_id === member.id
-                            );
-                            
+                            const isAdded = formData.members.some((m) => m.team_id === member.id);
+
                             return (
                               <CommandItem
                                 key={member.id}
@@ -1790,7 +1824,7 @@ const EditProjectPage = () => {
                                   }
                                 }}
                                 disabled={isAdded}
-                                className={isAdded ? 'opacity-50' : ''}
+                                className={isAdded ? "opacity-50" : ""}
                               >
                                 <div className="flex items-center space-x-2">
                                   {isAdded ? (
@@ -1798,9 +1832,7 @@ const EditProjectPage = () => {
                                   ) : (
                                     <div className="h-4 w-4" />
                                   )}
-                                  <span>
-                                    {member.name || `Team Member ${member.id}`}
-                                  </span>
+                                  <span>{member.name || `Team Member ${member.id}`}</span>
                                 </div>
                               </CommandItem>
                             );
@@ -1825,14 +1857,12 @@ const EditProjectPage = () => {
               <h2 className="text-xl font-bold">Partners</h2>
               <p className="text-gray-600 text-sm">Organizations partnering on this project</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="mb-4 flex justify-between items-center">
-                <label className="block text-sm font-medium">
-                  Project Partners
-                </label>
-                <a 
+                <label className="block text-sm font-medium">Project Partners</label>
+                <a
                   href="/partners"
                   className="text-sm flex items-center text-green-700 hover:text-green-800"
                 >
@@ -1840,15 +1870,18 @@ const EditProjectPage = () => {
                   Add New Partners
                 </a>
               </div>
-              
+
               {/* Partners list */}
               {formData.partners.length === 0 ? (
                 <p className="text-gray-500 text-sm italic mb-4">No partners added yet.</p>
               ) : (
                 <div className="bg-gray-50 rounded-md mb-4">
                   <div className="divide-y divide-gray-200">
-                    {formData.partners.map(partner => (
-                      <div key={partner.partner_id} className="grid grid-cols-12 p-3 items-center text-sm hover:bg-blue-50">
+                    {formData.partners.map((partner) => (
+                      <div
+                        key={partner.partner_id}
+                        className="grid grid-cols-12 p-3 items-center text-sm hover:bg-blue-50"
+                      >
                         <div className="col-span-11">{getPartnerName(partner.partner_id)}</div>
                         <div className="col-span-1 flex justify-end">
                           <button
@@ -1864,12 +1897,10 @@ const EditProjectPage = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* Partner selection with Popover */}
               <div className="mb-6">
-                <label className="block text-sm font-medium mb-1">
-                  Add Partners
-                </label>
+                <label className="block text-sm font-medium mb-1">Add Partners</label>
                 <Popover open={openPartnerPopover} onOpenChange={setOpenPartnerPopover}>
                   <PopoverTrigger asChild>
                     <button
@@ -1882,8 +1913,8 @@ const EditProjectPage = () => {
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0" align="start">
                     <Command>
-                      <CommandInput 
-                        placeholder="Search partners..." 
+                      <CommandInput
+                        placeholder="Search partners..."
                         value={partnerSearchValue}
                         onValueChange={setPartnerSearchValue}
                       />
@@ -1902,12 +1933,12 @@ const EditProjectPage = () => {
                       </CommandEmpty>
                       <CommandGroup>
                         <ScrollArea className="h-[200px]">
-                          {partners.map(partner => {
+                          {partners.map((partner) => {
                             // Check if this partner is already added
                             const isAdded = formData.partners.some(
-                              p => p.partner_id === partner.id
+                              (p) => p.partner_id === partner.id,
                             );
-                            
+
                             return (
                               <CommandItem
                                 key={partner.id}
@@ -1918,7 +1949,7 @@ const EditProjectPage = () => {
                                   }
                                 }}
                                 disabled={isAdded}
-                                className={isAdded ? 'opacity-50' : ''}
+                                className={isAdded ? "opacity-50" : ""}
                               >
                                 <div className="flex items-center space-x-2">
                                   {isAdded ? (
@@ -1951,13 +1982,13 @@ const EditProjectPage = () => {
               <h2 className="text-xl font-bold">Files & Media</h2>
               <p className="text-gray-600 text-sm">Please attach any relevant files or URLs</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               {/* Document upload section */}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold mb-4">Project Documents</h3>
-                
+
                 {/* Documents list */}
                 {formData.documents.length === 0 ? (
                   <p className="text-gray-500 text-sm italic mb-4">No documents added yet.</p>
@@ -1970,7 +2001,7 @@ const EditProjectPage = () => {
                           <div>
                             <p className="font-medium text-sm">{doc.name}</p>
                             <p className="text-xs text-gray-500">
-                              {doc.file_size ? formatFileSize(doc.file_size) : 'Unknown size'}
+                              {doc.file_size ? formatFileSize(doc.file_size) : "Unknown size"}
                             </p>
                           </div>
                         </div>
@@ -1985,13 +2016,15 @@ const EditProjectPage = () => {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Document upload form */}
                 <div className="border border-gray-300 rounded-md p-4">
                   <h4 className="font-medium text-sm mb-3">Add Document</h4>
-                  
+
                   <div className="mb-3">
-                    <label className="block text-sm mb-1">Document Name <span className="text-red-500">*</span></label>
+                    <label className="block text-sm mb-1">
+                      Document Name <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
                       name="name"
@@ -2001,17 +2034,19 @@ const EditProjectPage = () => {
                       className="w-full p-2.5 border border-gray-300 rounded-md"
                     />
                   </div>
-                  
+
                   <div className="mb-4">
-                    <label className="block text-sm mb-1">File <span className="text-red-500">*</span></label>
+                    <label className="block text-sm mb-1">
+                      File <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="file"
                       ref={documentFileInputRef}
                       onChange={handleDocumentFileChange}
                       className="hidden"
                     />
-                    
-                    <div 
+
+                    <div
                       onClick={triggerDocumentFileInput}
                       className="w-full border-2 border-dashed border-gray-300 p-4 rounded-md text-center cursor-pointer hover:bg-gray-50"
                     >
@@ -2024,26 +2059,29 @@ const EditProjectPage = () => {
                       )}
                     </div>
                   </div>
-                  
+
                   {isUploading && (
                     <div className="mb-4">
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                        <div
+                          className="bg-green-600 h-2.5 rounded-full"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
                       </div>
                       <div className="text-xs text-gray-500 mt-1 text-center">
                         Uploading: {uploadProgress}%
                       </div>
                     </div>
                   )}
-                  
+
                   <button
                     type="button"
                     onClick={addDocument}
                     disabled={!newDocument.file || !newDocument.name || isUploading}
                     className={`w-full py-2 px-4 rounded-md text-white flex items-center justify-center ${
                       !newDocument.file || !newDocument.name || isUploading
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
                     }`}
                   >
                     {isUploading ? (
@@ -2060,17 +2098,19 @@ const EditProjectPage = () => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Media section */}
               <h3 className="text-lg font-semibold mb-4">Media Content</h3>
-              
+
               {/* Media source toggle */}
               <div className="flex mb-4 border border-gray-200 rounded-md overflow-hidden">
                 <button
                   type="button"
-                  onClick={() => handleMediaSourceChange('file')}
+                  onClick={() => handleMediaSourceChange("file")}
                   className={`flex-1 py-2 px-4 text-center text-sm ${
-                    mediaSourceType === 'file' ? 'bg-green-100 text-green-700 font-medium' : 'bg-gray-50 text-gray-500'
+                    mediaSourceType === "file"
+                      ? "bg-green-100 text-green-700 font-medium"
+                      : "bg-gray-50 text-gray-500"
                   }`}
                 >
                   <Upload className="w-4 h-4 inline-block mr-1" />
@@ -2078,25 +2118,29 @@ const EditProjectPage = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleMediaSourceChange('url')}
+                  onClick={() => handleMediaSourceChange("url")}
                   className={`flex-1 py-2 px-4 text-center text-sm ${
-                    mediaSourceType === 'url' ? 'bg-green-100 text-green-700 font-medium' : 'bg-gray-50 text-gray-500'
+                    mediaSourceType === "url"
+                      ? "bg-green-100 text-green-700 font-medium"
+                      : "bg-gray-50 text-gray-500"
                   }`}
                 >
                   <LinkIcon className="w-4 h-4 inline-block mr-1" />
                   External URL
                 </button>
               </div>
-              
+
               {/* File upload area */}
-              {mediaSourceType === 'file' && (
+              {mediaSourceType === "file" && (
                 <div className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6">
                   <label htmlFor="fileUpload" className="cursor-pointer">
                     <div className="flex flex-col items-center justify-center">
                       <Upload className="h-12 w-12 text-gray-400 mb-3" />
                       <p className="text-gray-700 font-medium mb-1">Drag and drop files here</p>
                       <p className="text-gray-500 text-sm mb-3">or click to browse</p>
-                      <p className="text-xs text-gray-400">Supports images (JPG, PNG, GIF) and videos (MP4, WebM)</p>
+                      <p className="text-xs text-gray-400">
+                        Supports images (JPG, PNG, GIF) and videos (MP4, WebM)
+                      </p>
                     </div>
                   </label>
                   <input
@@ -2109,9 +2153,9 @@ const EditProjectPage = () => {
                   />
                 </div>
               )}
-              
+
               {/* URL input area */}
-              {mediaSourceType === 'url' && (
+              {mediaSourceType === "url" && (
                 <div className="border border-gray-300 p-6 rounded-md mb-6">
                   <div className="mb-4">
                     <label className="block text-sm font-medium mb-2">
@@ -2134,7 +2178,7 @@ const EditProjectPage = () => {
                       Enter URLs for images (JPG, PNG, GIF) or videos (MP4, YouTube, Vimeo links)
                     </p>
                   </div>
-                  
+
                   <div className="flex gap-4 text-sm">
                     <div className="flex items-center">
                       <input
@@ -2142,8 +2186,8 @@ const EditProjectPage = () => {
                         id="mediaTypeImage"
                         name="type"
                         value="image"
-                        checked={newMedia.type === 'image'}
-                        onChange={() => setNewMedia(prev => ({ ...prev, type: 'image' }))}
+                        checked={newMedia.type === "image"}
+                        onChange={() => setNewMedia((prev) => ({ ...prev, type: "image" }))}
                         className="mr-2"
                       />
                       <label htmlFor="mediaTypeImage" className="flex items-center">
@@ -2156,8 +2200,8 @@ const EditProjectPage = () => {
                         id="mediaTypeVideo"
                         name="type"
                         value="video"
-                        checked={newMedia.type === 'video'}
-                        onChange={() => setNewMedia(prev => ({ ...prev, type: 'video' }))}
+                        checked={newMedia.type === "video"}
+                        onChange={() => setNewMedia((prev) => ({ ...prev, type: "video" }))}
                         className="mr-2"
                       />
                       <label htmlFor="mediaTypeVideo" className="flex items-center">
@@ -2167,87 +2211,98 @@ const EditProjectPage = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* File/URL preview */}
-              {(mediaSourceType === 'file' && newMedia.file) || (mediaSourceType === 'url' && newMedia.url) ? (
+              {(mediaSourceType === "file" && newMedia.file) ||
+              (mediaSourceType === "url" && newMedia.url) ? (
                 <div className="p-4 bg-gray-50 rounded-md mb-6">
                   <div className="flex items-center mb-3">
-                    {newMedia.type === 'image' ? (
+                    {newMedia.type === "image" ? (
                       <Image className="w-6 h-6 mr-2 text-blue-500" />
                     ) : (
                       <FileVideo className="w-6 h-6 mr-2 text-purple-500" />
                     )}
                     <span className="text-sm font-medium">
-                      {mediaSourceType === 'file' 
-                        ? newMedia.file.name 
-                        : newMedia.url.length > 50 
-                          ? newMedia.url.substring(0, 47) + '...' 
-                          : newMedia.url
-                      }
+                      {mediaSourceType === "file"
+                        ? newMedia.file.name
+                        : newMedia.url.length > 50
+                          ? newMedia.url.substring(0, 47) + "..."
+                          : newMedia.url}
                     </span>
                   </div>
-                  
+
                   <div className="text-xs text-gray-500 mb-4">
                     Type: {newMedia.type.charAt(0).toUpperCase() + newMedia.type.slice(1)}
-                    {mediaSourceType === 'file' && ` | Size: ${formatFileSize(newMedia.file.size)}`}
-                    {mediaSourceType === 'url' && ` | External URL`}
+                    {mediaSourceType === "file" && ` | Size: ${formatFileSize(newMedia.file.size)}`}
+                    {mediaSourceType === "url" && ` | External URL`}
                   </div>
-                  
+
                   {/* Video preview for local videos */}
-                  {mediaSourceType === 'file' && newMedia.type === 'video' && newMedia.previewUrl && (
-                    <div className="mb-4 border rounded overflow-hidden">
-                      <video 
-                        src={newMedia.previewUrl} 
-                        controls 
-                        className="w-full h-auto max-h-40" 
-                      />
-                    </div>
-                  )}
-                  
+                  {mediaSourceType === "file" &&
+                    newMedia.type === "video" &&
+                    newMedia.previewUrl && (
+                      <div className="mb-4 border rounded overflow-hidden">
+                        <video
+                          src={newMedia.previewUrl}
+                          controls
+                          className="w-full h-auto max-h-40"
+                        />
+                      </div>
+                    )}
+
                   {/* Image preview for local images */}
-                  {mediaSourceType === 'file' && newMedia.type === 'image' && newMedia.file && (
+                  {mediaSourceType === "file" && newMedia.type === "image" && newMedia.file && (
                     <div className="mb-4 border rounded overflow-hidden">
-                      <img 
-                        src={URL.createObjectURL(newMedia.file)} 
-                        alt="Preview" 
-                        className="w-full h-auto max-h-40 object-contain" 
+                      <img
+                        src={URL.createObjectURL(newMedia.file)}
+                        alt="Preview"
+                        className="w-full h-auto max-h-40 object-contain"
                         onLoad={(e) => URL.revokeObjectURL(e.target.src)} // Clean up object URL after loading
                       />
                     </div>
                   )}
-                  
+
                   {/* URL preview placeholders */}
-                  {mediaSourceType === 'url' && newMedia.url && (
+                  {mediaSourceType === "url" && newMedia.url && (
                     <div className="mb-4 border rounded overflow-hidden bg-gray-100 p-2 flex items-center justify-center">
-                      {newMedia.type === 'image' ? (
+                      {newMedia.type === "image" ? (
                         <div className="text-center p-4">
-                         <Image className="w-8 h-8 mx-auto text-gray-400" />
-                          <p className="text-sm text-gray-500 mt-2">Image will be loaded from URL</p>
+                          <Image className="w-8 h-8 mx-auto text-gray-400" />
+                          <p className="text-sm text-gray-500 mt-2">
+                            Image will be loaded from URL
+                          </p>
                         </div>
                       ) : (
                         <div className="text-center p-4">
                           <FileVideo className="w-8 h-8 mx-auto text-gray-400" />
-                          <p className="text-sm text-gray-500 mt-2">Video will be loaded from URL</p>
+                          <p className="text-sm text-gray-500 mt-2">
+                            Video will be loaded from URL
+                          </p>
                         </div>
                       )}
                     </div>
                   )}
-                  
+
                   {isUploading && (
                     <div className="mb-4">
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                        <div
+                          className="bg-green-600 h-2.5 rounded-full"
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
                       </div>
                       <div className="text-xs text-gray-500 mt-1 text-center">
                         Uploading: {uploadProgress}%
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Media details form */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm mb-1">Title <span className="text-red-500">*</span></label>
+                      <label className="block text-sm mb-1">
+                        Title <span className="text-red-500">*</span>
+                      </label>
                       <input
                         type="text"
                         name="title"
@@ -2257,7 +2312,7 @@ const EditProjectPage = () => {
                         className="w-full p-2.5 border border-gray-300 rounded-md"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm mb-1">Tag</label>
                       <div className="relative">
@@ -2274,7 +2329,7 @@ const EditProjectPage = () => {
                         <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center">
                       <input
                         type="checkbox"
@@ -2283,14 +2338,17 @@ const EditProjectPage = () => {
                         checked={newMedia.cover}
                         onChange={handleMediaChange}
                         className="mr-2"
-                        disabled={newMedia.type === 'video'} // Only images can be cover
+                        disabled={newMedia.type === "video"} // Only images can be cover
                       />
-                      <label htmlFor="mediaCover" className={`text-sm ${newMedia.type === 'video' ? 'text-gray-400' : ''}`}>
+                      <label
+                        htmlFor="mediaCover"
+                        className={`text-sm ${newMedia.type === "video" ? "text-gray-400" : ""}`}
+                      >
                         Use as cover image
-                        {newMedia.type === 'video' && " (only available for images)"}
+                        {newMedia.type === "video" && " (only available for images)"}
                       </label>
                     </div>
-                    
+
                     <div className="flex justify-end">
                       <button
                         type="button"
@@ -2305,8 +2363,8 @@ const EditProjectPage = () => {
                           </>
                         ) : (
                           <>
-                            <Plus className="w-4 h-4 mr-1" /> 
-                            {mediaSourceType === 'url' ? 'Add External Media' : 'Add Media'}
+                            <Plus className="w-4 h-4 mr-1" />
+                            {mediaSourceType === "url" ? "Add External Media" : "Add Media"}
                           </>
                         )}
                       </button>
@@ -2314,27 +2372,31 @@ const EditProjectPage = () => {
                   </div>
                 </div>
               ) : null}
-              
+
               {/* Display media list */}
               <h3 className="text-lg font-semibold mb-4">Project Media</h3>
-              
+
               {formData.media.items.length === 0 ? (
                 <p className="text-gray-500 text-sm italic mb-4">No media added yet.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {formData.media.items.map(media => (
-                    <div 
-                      key={media.id} 
-                      className={`border rounded-md overflow-hidden ${selectedMedia && selectedMedia.id === media.id ? 'ring-2 ring-green-500' : ''}`}
+                  {formData.media.items.map((media) => (
+                    <div
+                      key={media.id}
+                      className={`border rounded-md overflow-hidden ${selectedMedia && selectedMedia.id === media.id ? "ring-2 ring-green-500" : ""}`}
                     >
                       {/* Media preview */}
-                      <div 
+                      <div
                         className="cursor-pointer"
-                        onClick={() => media.type === 'video' ? openVideoPreview(media.url) : selectMedia(media.id)}
+                        onClick={() =>
+                          media.type === "video"
+                            ? openVideoPreview(media.url)
+                            : selectMedia(media.id)
+                        }
                       >
                         <MediaPreview media={media} />
                       </div>
-                      
+
                       {/* Media info */}
                       <div className="p-3">
                         <div className="flex justify-between items-start mb-1">
@@ -2347,15 +2409,15 @@ const EditProjectPage = () => {
                             <X className="w-4 h-4" />
                           </button>
                         </div>
-                        
+
                         {media.description && (
-                          <p className="text-xs text-gray-600 mb-2 line-clamp-2">{media.description}</p>
+                          <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                            {media.description}
+                          </p>
                         )}
-                        
+
                         <div className="flex flex-wrap gap-1 text-xs">
-                          <span className="px-2 py-1 bg-gray-100 rounded-full">
-                            {media.type}
-                          </span>
+                          <span className="px-2 py-1 bg-gray-100 rounded-full">{media.type}</span>
                           {media.isExternalUrl ? (
                             <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full">
                               External URL
@@ -2365,11 +2427,15 @@ const EditProjectPage = () => {
                               {formatFileSize(media.size)}
                             </span>
                           )}
-                          <span className={`px-2 py-1 rounded-full ${
-                            media.tag === 'feature' ? 'bg-blue-100 text-blue-800' :
-                            media.tag === 'description' ? 'bg-purple-100 text-purple-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 rounded-full ${
+                              media.tag === "feature"
+                                ? "bg-blue-100 text-blue-800"
+                                : media.tag === "description"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-green-100 text-green-800"
+                            }`}
+                          >
                             {media.tag}
                           </span>
                           {media.cover && (
@@ -2379,38 +2445,40 @@ const EditProjectPage = () => {
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Tag selection - show when media is selected */}
-                      {selectedMedia && selectedMedia.id === media.id && media.type !== 'video' && (
+                      {selectedMedia && selectedMedia.id === media.id && media.type !== "video" && (
                         <div className="p-3 border-t">
                           <div className="mb-2">
-                            <label className="text-xs font-semibold mb-1 block">Change Display Tag:</label>
+                            <label className="text-xs font-semibold mb-1 block">
+                              Change Display Tag:
+                            </label>
                             <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
-                                onClick={() => updateMediaTag(media.id, 'feature')}
-                                className={`px-2 py-1 text-xs rounded-full ${media.tag === 'feature' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'}`}
+                                onClick={() => updateMediaTag(media.id, "feature")}
+                                className={`px-2 py-1 text-xs rounded-full ${media.tag === "feature" ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-800"}`}
                               >
                                 Feature
                               </button>
                               <button
                                 type="button"
-                                onClick={() => updateMediaTag(media.id, 'description')}
-                                className={`px-2 py-1 text-xs rounded-full ${media.tag === 'description' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-800'}`}
+                                onClick={() => updateMediaTag(media.id, "description")}
+                                className={`px-2 py-1 text-xs rounded-full ${media.tag === "description" ? "bg-purple-600 text-white" : "bg-purple-100 text-purple-800"}`}
                               >
                                 Description
                               </button>
                               <button
                                 type="button"
-                                onClick={() => updateMediaTag(media.id, 'others')}
-                                className={`px-2 py-1 text-xs rounded-full ${media.tag === 'others' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800'}`}
+                                onClick={() => updateMediaTag(media.id, "others")}
+                                className={`px-2 py-1 text-xs rounded-full ${media.tag === "others" ? "bg-green-600 text-white" : "bg-green-100 text-green-800"}`}
                               >
                                 Others
                               </button>
                             </div>
                           </div>
-                          
-                          {!media.cover && media.type === 'image' && (
+
+                          {!media.cover && media.type === "image" && (
                             <button
                               type="button"
                               onClick={() => toggleMediaCover(media.id)}
@@ -2476,7 +2544,9 @@ const EditProjectPage = () => {
                 <Loader className="w-4 h-4 mr-2 animate-spin" />
                 Updating...
               </>
-            ) : 'Update Project'}
+            ) : (
+              "Update Project"
+            )}
           </button>
         </div>
       </form>

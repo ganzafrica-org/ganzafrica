@@ -11,7 +11,7 @@ export async function changeBackToUsersTable() {
 
     // Update task_team_members
     console.log("Updating task_team_members...");
-    
+
     await db.execute(sql`
       ALTER TABLE task_team_members 
       DROP CONSTRAINT IF EXISTS task_team_members_user_id_fkey;
@@ -27,7 +27,7 @@ export async function changeBackToUsersTable() {
 
     // Update task_project_members
     console.log("Updating task_project_members...");
-    
+
     await db.execute(sql`
       ALTER TABLE task_project_members 
       DROP CONSTRAINT IF EXISTS task_project_members_user_id_fkey;
@@ -60,4 +60,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-

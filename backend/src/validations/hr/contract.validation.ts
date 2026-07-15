@@ -19,8 +19,16 @@ const contractBodyBase = {
   compensationType: z.enum(["hourly", "salaried"]),
   salaryScale: z.enum(["annual", "monthly", "weekly", "daily"]).nullable().optional(),
   currency: z.string().min(1).optional(),
-  baseMonthlyRate: z.string().regex(/^\d+(\.\d{1,2})?$/).nullable().optional(),
-  grossAnnualRate: z.string().regex(/^\d+(\.\d{1,2})?$/).nullable().optional(),
+  baseMonthlyRate: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .nullable()
+    .optional(),
+  grossAnnualRate: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .nullable()
+    .optional(),
   employmentAgreementUrl: z.string().url().nullable().optional(),
   status: z.enum(["ACTIVE", "EXPIRED", "TERMINATED"]).optional(),
   notes: z.string().nullable().optional(),

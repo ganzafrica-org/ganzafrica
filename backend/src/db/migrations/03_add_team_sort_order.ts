@@ -1,5 +1,5 @@
-import { sql } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { sql } from "drizzle-orm";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 export async function up(db: NodePgDatabase<any>) {
   // 1) Add nullable column (safe for existing rows)
@@ -31,5 +31,3 @@ export async function down(db: NodePgDatabase<any>) {
   // Usually keep column for future; if you must rollback:
   // await db.execute(sql`ALTER TABLE teams DROP COLUMN IF EXISTS sort_order`);
 }
-
-

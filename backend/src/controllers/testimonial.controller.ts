@@ -66,8 +66,7 @@ export const createTestimonial = async (req: Request, res: Response) => {
       rating: req.body.rating,
     };
 
-    const testimonial =
-      await testimonialService.createTestimonial(testimonialData);
+    const testimonial = await testimonialService.createTestimonial(testimonialData);
 
     res.status(201).json({
       message: "Testimonial created successfully",
@@ -239,10 +238,7 @@ export const updateTestimonial = async (req: Request, res: Response) => {
       rating: req.body.rating,
     };
 
-    const testimonial = await testimonialService.updateTestimonial(
-      id,
-      testimonialData,
-    );
+    const testimonial = await testimonialService.updateTestimonial(id, testimonialData);
 
     res.status(200).json({
       message: "Testimonial updated successfully",

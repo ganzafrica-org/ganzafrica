@@ -99,25 +99,13 @@ function Calendar({
     "relative flex items-center justify-center pt-1",
     props.captionClassName,
   );
-  const _captionLabelClassName = cn(
-    "truncate text-sm font-medium",
-    props.captionLabelClassName,
-  );
+  const _captionLabelClassName = cn("truncate text-sm font-medium", props.captionLabelClassName);
   const buttonNavClassName = buttonVariants({
     variant: "outline",
-    className:
-      "absolute h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+    className: "absolute h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
   });
-  const _buttonNextClassName = cn(
-    buttonNavClassName,
-    "right-0",
-    props.buttonNextClassName,
-  );
-  const _buttonPreviousClassName = cn(
-    buttonNavClassName,
-    "left-0",
-    props.buttonPreviousClassName,
-  );
+  const _buttonNextClassName = cn(buttonNavClassName, "right-0", props.buttonNextClassName);
+  const _buttonPreviousClassName = cn(buttonNavClassName, "left-0", props.buttonPreviousClassName);
   const _navClassName = cn("flex items-start", props.navClassName);
   const _monthGridClassName = cn("mx-auto mt-4", props.monthGridClassName);
   const _weekClassName = cn("mt-2 flex w-max items-start", props.weekClassName);
@@ -158,10 +146,7 @@ function Calendar({
     "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
     props.outsideClassName,
   );
-  const _disabledClassName = cn(
-    "text-muted-foreground opacity-50",
-    props.disabledClassName,
-  );
+  const _disabledClassName = cn("text-muted-foreground opacity-50", props.disabledClassName);
   const _hiddenClassName = cn("invisible flex-1", props.hiddenClassName);
 
   return (
@@ -255,9 +240,7 @@ function Nav({
   startMonth?: Date;
   endMonth?: Date;
   displayYears: { from: number; to: number };
-  setDisplayYears: React.Dispatch<
-    React.SetStateAction<{ from: number; to: number }>
-  >;
+  setDisplayYears: React.Dispatch<React.SetStateAction<{ from: number; to: number }>>;
   onPrevClick?: (date: Date) => void;
   onNextClick?: (date: Date) => void;
 }) {
@@ -267,15 +250,8 @@ function Nav({
     if (navView === "years") {
       return (
         (startMonth &&
-          differenceInCalendarDays(
-            new Date(displayYears.from - 1, 0, 1),
-            startMonth,
-          ) < 0) ||
-        (endMonth &&
-          differenceInCalendarDays(
-            new Date(displayYears.from - 1, 0, 1),
-            endMonth,
-          ) > 0)
+          differenceInCalendarDays(new Date(displayYears.from - 1, 0, 1), startMonth) < 0) ||
+        (endMonth && differenceInCalendarDays(new Date(displayYears.from - 1, 0, 1), endMonth) > 0)
       );
     }
     return !previousMonth;
@@ -285,15 +261,8 @@ function Nav({
     if (navView === "years") {
       return (
         (startMonth &&
-          differenceInCalendarDays(
-            new Date(displayYears.to + 1, 0, 1),
-            startMonth,
-          ) < 0) ||
-        (endMonth &&
-          differenceInCalendarDays(
-            new Date(displayYears.to + 1, 0, 1),
-            endMonth,
-          ) > 0)
+          differenceInCalendarDays(new Date(displayYears.to + 1, 0, 1), startMonth) < 0) ||
+        (endMonth && differenceInCalendarDays(new Date(displayYears.to + 1, 0, 1), endMonth) > 0)
       );
     }
     return !nextMonth;
@@ -306,13 +275,7 @@ function Nav({
         from: prev.from - (prev.to - prev.from + 1),
         to: prev.to - (prev.to - prev.from + 1),
       }));
-      onPrevClick?.(
-        new Date(
-          displayYears.from - (displayYears.to - displayYears.from),
-          0,
-          1,
-        ),
-      );
+      onPrevClick?.(new Date(displayYears.from - (displayYears.to - displayYears.from), 0, 1));
       return;
     }
     goToMonth(previousMonth);
@@ -326,13 +289,7 @@ function Nav({
         from: prev.from + (prev.to - prev.from + 1),
         to: prev.to + (prev.to - prev.from + 1),
       }));
-      onNextClick?.(
-        new Date(
-          displayYears.from + (displayYears.to - displayYears.from),
-          0,
-          1,
-        ),
-      );
+      onNextClick?.(new Date(displayYears.from + (displayYears.to - displayYears.from), 0, 1));
       return;
     }
     goToMonth(nextMonth);
@@ -348,9 +305,7 @@ function Nav({
         disabled={isPreviousDisabled}
         aria-label={
           navView === "years"
-            ? `Go to the previous ${
-                displayYears.to - displayYears.from + 1
-              } years`
+            ? `Go to the previous ${displayYears.to - displayYears.from + 1} years`
             : labelPrevious(previousMonth)
         }
         onClick={handlePreviousClick}
@@ -398,9 +353,7 @@ function CaptionLabel({
       size="sm"
       onClick={() => setNavView((prev) => (prev === "days" ? "years" : "days"))}
     >
-      {navView === "days"
-        ? children
-        : displayYears.from + " - " + displayYears.to}
+      {navView === "days" ? children : displayYears.from + " - " + displayYears.to}
     </Button>
   );
 }
@@ -463,47 +416,35 @@ function YearGrid({
 
   return (
     <div className={cn("grid grid-cols-4 gap-y-2", className)} {...props}>
-      {Array.from(
-        { length: displayYears.to - displayYears.from + 1 },
-        (_, i) => {
-          const isBefore =
-            differenceInCalendarDays(
-              new Date(displayYears.from + i, 11, 31),
-              startMonth!,
-            ) < 0;
+      {Array.from({ length: displayYears.to - displayYears.from + 1 }, (_, i) => {
+        const isBefore =
+          differenceInCalendarDays(new Date(displayYears.from + i, 11, 31), startMonth!) < 0;
 
-          const isAfter =
-            differenceInCalendarDays(
-              new Date(displayYears.from + i, 0, 0),
-              endMonth!,
-            ) > 0;
+        const isAfter =
+          differenceInCalendarDays(new Date(displayYears.from + i, 0, 0), endMonth!) > 0;
 
-          const isDisabled = isBefore || isAfter;
-          return (
-            <Button
-              key={i}
-              className={cn(
-                "h-7 w-full text-sm font-normal text-foreground",
-                displayYears.from + i === new Date().getFullYear() &&
-                  "bg-accent font-medium text-accent-foreground",
-              )}
-              variant="ghost"
-              onClick={() => {
-                setNavView("days");
-                goToMonth(
-                  new Date(
-                    displayYears.from + i,
-                    (selected as Date | undefined)?.getMonth() ?? 0,
-                  ),
-                );
-              }}
-              disabled={navView === "years" ? isDisabled : undefined}
-            >
-              {displayYears.from + i}
-            </Button>
-          );
-        },
-      )}
+        const isDisabled = isBefore || isAfter;
+        return (
+          <Button
+            key={i}
+            className={cn(
+              "h-7 w-full text-sm font-normal text-foreground",
+              displayYears.from + i === new Date().getFullYear() &&
+                "bg-accent font-medium text-accent-foreground",
+            )}
+            variant="ghost"
+            onClick={() => {
+              setNavView("days");
+              goToMonth(
+                new Date(displayYears.from + i, (selected as Date | undefined)?.getMonth() ?? 0),
+              );
+            }}
+            disabled={navView === "years" ? isDisabled : undefined}
+          >
+            {displayYears.from + i}
+          </Button>
+        );
+      })}
     </div>
   );
 }

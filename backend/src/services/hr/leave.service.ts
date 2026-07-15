@@ -4,7 +4,10 @@ import { hr_leaves, hr_users } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { assertEmployeeAccess, getActiveEmployee } from "../../services/hr/employee.service";
 import type { HrRequester } from "@/types/employee.types";
-import { sendNotification, resolveTriggeredByFromHrUser } from "@/modules/hr/notifications/notification.service";
+import {
+  sendNotification,
+  resolveTriggeredByFromHrUser,
+} from "@/modules/hr/notifications/notification.service";
 import type {
   CreateLeaveInput,
   LeaveRecord,
@@ -171,7 +174,11 @@ export async function updateLeave(
   if (input.endDate !== undefined) patch.end_date = input.endDate;
   if (input.reason !== undefined) patch.reason = input.reason ?? "";
 
-  const [updated] = await db.update(hr_leaves).set(patch).where(eq(hr_leaves.id, leaveId)).returning();
+  const [updated] = await db
+    .update(hr_leaves)
+    .set(patch)
+    .where(eq(hr_leaves.id, leaveId))
+    .returning();
   if (!updated) throw new AppError("Leave not found", 404);
 
   return mapLeave(updated);

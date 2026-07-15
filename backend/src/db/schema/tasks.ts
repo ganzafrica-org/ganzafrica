@@ -17,15 +17,22 @@ import { task_team_projects } from "./task-teams";
 import { pgEnum } from "drizzle-orm/pg-core";
 
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"]);
-export const taskStatusEnum = pgEnum("task_status", ["overdue", "todo", "inprogress", "review", "done"]);
+export const taskStatusEnum = pgEnum("task_status", [
+  "overdue",
+  "todo",
+  "inprogress",
+  "review",
+  "done",
+]);
 
 // Tasks Table
 export const tasks = pgTable(
   "tasks",
   {
     id: serial("id").primaryKey(),
-    project_id: integer("project_id")
-      .references(() => task_team_projects.id, { onDelete: "cascade" }),
+    project_id: integer("project_id").references(() => task_team_projects.id, {
+      onDelete: "cascade",
+    }),
     title: varchar("title", { length: 500 }).notNull(),
     description: text("description"), // Activities to do
     deliverables: text("deliverables"), // Expected deliverables
@@ -33,7 +40,17 @@ export const tasks = pgTable(
     priority: taskPriorityEnum("priority").notNull().default("medium"),
     due_date: timestamp("due_date", { withTimezone: true }),
     labels: jsonb("labels").$type<Array<{ id: string; name: string; color: string }>>().default([]),
-    attachments: jsonb("attachments").$type<Array<{ id: string; filename: string; url: string; uploaded_by: number; uploaded_at: string }>>().default([]),
+    attachments: jsonb("attachments")
+      .$type<
+        Array<{
+          id: string;
+          filename: string;
+          url: string;
+          uploaded_by: number;
+          uploaded_at: string;
+        }>
+      >()
+      .default([]),
     created_by: integer("created_by")
       .notNull()
       .references(() => users.id),
@@ -47,7 +64,7 @@ export const tasks = pgTable(
       createdByIdx: index("tasks_created_by_idx").on(table.created_by),
       dueDateIdx: index("tasks_due_date_idx").on(table.due_date),
     };
-  }
+  },
 );
 
 // Task Assignees Table - Users assigned to tasks
@@ -69,7 +86,7 @@ export const task_assignees = pgTable(
       taskIdx: index("task_assignees_task_id_idx").on(table.task_id),
       userIdx: index("task_assignees_user_id_idx").on(table.user_id),
     };
-  }
+  },
 );
 
 // Task Comments Table
@@ -92,7 +109,7 @@ export const task_comments = pgTable(
       taskIdx: index("task_comments_task_id_idx").on(table.task_id),
       userIdx: index("task_comments_user_id_idx").on(table.user_id),
     };
-  }
+  },
 );
 
 // Default export
@@ -103,4 +120,3 @@ export default {
   taskPriorityEnum,
   taskStatusEnum,
 };
-

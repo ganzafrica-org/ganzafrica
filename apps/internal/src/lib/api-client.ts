@@ -130,8 +130,7 @@ apiClient.interceptors.response.use(
         localStorage.removeItem("internal_user");
 
         if (typeof window !== "undefined") {
-          const portalUrl =
-            process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+          const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
           window.location.href = `${portalUrl}/login`;
         }
       }

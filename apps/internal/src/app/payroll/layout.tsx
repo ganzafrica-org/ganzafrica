@@ -6,18 +6,13 @@ import Navbar from "@/components/layout/Navbar";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
-export default function PayrollLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function PayrollLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { isLoading, isAuthenticated } = useAuth();
 
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
-  const toggleMobileSidebar = () =>
-    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  const toggleMobileSidebar = () => setIsMobileSidebarOpen(!isMobileSidebarOpen);
 
   if (isLoading) {
     return (
@@ -32,8 +27,7 @@ export default function PayrollLayout({
 
   if (!isAuthenticated) {
     if (typeof window !== "undefined") {
-      const portalUrl =
-        process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+      const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
       window.location.href = `${portalUrl}/login`;
     }
     return null;

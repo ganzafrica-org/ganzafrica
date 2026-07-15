@@ -1,28 +1,28 @@
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { resolutionTimeData } from '@/data/help-desk-data'
-import { ShieldCheck, Settings, Cpu, Edit, User } from 'lucide-react'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolutionTimeData } from "@/data/help-desk-data";
+import { ShieldCheck, Settings, Cpu, Edit, User } from "lucide-react";
 
 const categoryDistribution = [
-  { category: 'IT Support', count: 23, fill: '#10b981' },
-  { category: 'HR', count: 18, fill: '#3b82f6' },
-  { category: 'Facilities', count: 12, fill: '#f59e0b' },
-  { category: 'Payroll', count: 8, fill: '#ef4444' },
-  { category: 'Training', count: 6, fill: '#8b5cf6' },
-  { category: 'Other', count: 4, fill: '#6b7280' },
-]
+  { category: "IT Support", count: 23, fill: "#10b981" },
+  { category: "HR", count: 18, fill: "#3b82f6" },
+  { category: "Facilities", count: 12, fill: "#f59e0b" },
+  { category: "Payroll", count: 8, fill: "#ef4444" },
+  { category: "Training", count: 6, fill: "#8b5cf6" },
+  { category: "Other", count: 4, fill: "#6b7280" },
+];
 
 function getCategoryIcon(category: string) {
   switch (category) {
-    case 'Security':
-      return <ShieldCheck className="h-4 w-4" />
-    case 'General':
-      return <Settings className="h-4 w-4" />
-    case 'Integrations':
-      return <Cpu className="h-4 w-4" />
+    case "Security":
+      return <ShieldCheck className="h-4 w-4" />;
+    case "General":
+      return <Settings className="h-4 w-4" />;
+    case "Integrations":
+      return <Cpu className="h-4 w-4" />;
     default:
-      return <Settings className="h-4 w-4" />
+      return <Settings className="h-4 w-4" />;
   }
 }
 
@@ -112,10 +112,10 @@ export function PagesPanel() {
                     <div className="font-medium">Target: {item.target}h</div>
                     <div
                       className={`text-sm ${
-                        item.avgHours <= item.target ? 'text-green-600' : 'text-red-600'
+                        item.avgHours <= item.target ? "text-green-600" : "text-red-600"
                       }`}
                     >
-                      {item.avgHours <= item.target ? 'Meeting SLA' : 'Missing SLA'}
+                      {item.avgHours <= item.target ? "Meeting SLA" : "Missing SLA"}
                     </div>
                   </div>
                 </div>
@@ -137,5 +137,5 @@ export function PagesPanel() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

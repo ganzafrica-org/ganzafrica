@@ -1,6 +1,6 @@
 "use client";
 
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,17 +9,43 @@ import { useAuth } from "./auth-provider";
 import { useProfile } from "@/contexts/profile-context";
 
 // Dynamically import icons to prevent hydration mismatches
-const Bell = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Bell })), { ssr: false });
-const Plus = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Plus })), { ssr: false });
-const Search = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Search })), { ssr: false });
-const User = dynamic(() => import('lucide-react').then(mod => ({ default: mod.User })), { ssr: false });
-const BellOff = dynamic(() => import('lucide-react').then(mod => ({ default: mod.BellOff })), { ssr: false });
-const Settings = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Settings })), { ssr: false });
-const HelpCircle = dynamic(() => import('lucide-react').then(mod => ({ default: mod.HelpCircle })), { ssr: false });
-const LogOut = dynamic(() => import('lucide-react').then(mod => ({ default: mod.LogOut })), { ssr: false });
-const ChevronRight = dynamic(() => import('lucide-react').then(mod => ({ default: mod.ChevronRight })), { ssr: false });
-const ChevronDown = dynamic(() => import('lucide-react').then(mod => ({ default: mod.ChevronDown })), { ssr: false });
-const AlignJustify = dynamic(() => import('lucide-react').then(mod => ({ default: mod.AlignJustify })), { ssr: false });
+const Bell = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.Bell })), {
+  ssr: false,
+});
+const Plus = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.Plus })), {
+  ssr: false,
+});
+const Search = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.Search })), {
+  ssr: false,
+});
+const User = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.User })), {
+  ssr: false,
+});
+const BellOff = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.BellOff })), {
+  ssr: false,
+});
+const Settings = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.Settings })), {
+  ssr: false,
+});
+const HelpCircle = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.HelpCircle })),
+  { ssr: false },
+);
+const LogOut = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.LogOut })), {
+  ssr: false,
+});
+const ChevronRight = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.ChevronRight })),
+  { ssr: false },
+);
+const ChevronDown = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.ChevronDown })),
+  { ssr: false },
+);
+const AlignJustify = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.AlignJustify })),
+  { ssr: false },
+);
 
 interface NavbarProps {
   tasks: Task[];
@@ -29,7 +55,13 @@ interface NavbarProps {
   searchQuery?: string;
 }
 
-export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, searchQuery = "" }: NavbarProps): React.JSX.Element {
+export function Navbar({
+  tasks,
+  onAddTask,
+  onToggleSidebar,
+  onSearchChange,
+  searchQuery = "",
+}: NavbarProps): React.JSX.Element {
   const router = useRouter();
   const { logout, user } = useAuth();
   const { currentUserProfile, getUserInitials, getUserDisplayImage } = useProfile();
@@ -67,7 +99,6 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
     }
   };
 
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -77,12 +108,15 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-white" style={{ overflowX: 'visible', overflowY: 'visible' }}>
+    <div
+      className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-white"
+      style={{ overflowX: "visible", overflowY: "visible" }}
+    >
       {/* Hamburger Menu - Only visible on mobile/small screens */}
       {onToggleSidebar && (
         <button
@@ -93,22 +127,18 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
           <AlignJustify className="h-6 w-6 text-gray-700" />
         </button>
       )}
-      
+
       <div className="flex items-center gap-2">
         <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-[#076297] via-[#0a84c1] to-[#3db1ff]" />
         <span className="font-semibold text-sm sm:text-base">Task Management</span>
       </div>
-      
+
       <div className="flex-1" />
-      
+
       {/* Search - hidden on mobile, shown on tablet and up */}
       <div className="relative max-w-md w-full hidden sm:block">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
-          <Search 
-            className="h-5 w-5" 
-            style={{ color: '#4b5563' }}
-            strokeWidth={2}
-          />
+          <Search className="h-5 w-5" style={{ color: "#4b5563" }} strokeWidth={2} />
         </div>
         <input
           type="text"
@@ -116,37 +146,37 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
           onChange={handleSearchChange}
           placeholder="Search tasks..."
           className="w-full pl-10 pr-3 py-2 bg-white outline-none focus:ring-2 focus:ring-indigo-400 text-sm transition-all relative"
-          style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
+          style={{ borderRadius: "7px", border: "1px solid #e5e7eb" }}
         />
         {query && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">
-            {matches} {matches === 1 ? 'match' : 'matches'}
+            {matches} {matches === 1 ? "match" : "matches"}
           </span>
         )}
       </div>
-      
+
       <button className="relative p-2 rounded-md hover:bg-black/5">
         <Bell className="h-5 w-5" />
         <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
       </button>
-      
+
       {/* Profile Menu */}
-      <div className="relative" ref={profileMenuRef} style={{ overflow: 'visible', zIndex: 10000 }}>
-        <button 
+      <div className="relative" ref={profileMenuRef} style={{ overflow: "visible", zIndex: 10000 }}>
+        <button
           onClick={() => setShowProfileMenu(!showProfileMenu)}
           className="h-8 w-8 rounded-full text-white grid place-items-center text-xs font-semibold hover:opacity-90 transition-opacity overflow-hidden"
-          style={{ backgroundColor: '#076297' }}
+          style={{ backgroundColor: "#076297" }}
         >
           {currentUserProfile ? (
             currentUserProfile.avatar_url ? (
-              <img 
-                src={currentUserProfile.avatar_url} 
-                alt="Profile" 
+              <img
+                src={currentUserProfile.avatar_url}
+                alt="Profile"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   // Fallback to initials if image fails to load
                   const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
+                  target.style.display = "none";
                   const parent = target.parentElement;
                   if (parent) {
                     parent.innerHTML = `<div class="w-full h-full flex items-center justify-center text-white" style="background-color: #076297">${getUserInitials(currentUserProfile.id)}</div>`;
@@ -157,25 +187,25 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
               getUserInitials(currentUserProfile.id)
             )
           ) : (
-            user?.initials || 'ME'
+            user?.initials || "ME"
           )}
         </button>
 
         {/* Dropdown Menu */}
         {showProfileMenu && (
-          <div 
+          <div
             className="absolute bg-white shadow-xl"
-            style={{ 
-              borderRadius: '7px', 
-              border: '1px solid #e5e7eb',
-              right: '100%',
-              marginRight: '8px',
-              marginTop: '8px',
+            style={{
+              borderRadius: "7px",
+              border: "1px solid #e5e7eb",
+              right: "100%",
+              marginRight: "8px",
+              marginTop: "8px",
               zIndex: 10000,
-              position: 'absolute',
-              top: '0',
-              width: '280px',
-              minWidth: '280px'
+              position: "absolute",
+              top: "0",
+              width: "280px",
+              minWidth: "280px",
             }}
           >
             {/* Profile Option */}
@@ -186,29 +216,29 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
                 setShowProfileMenu(false);
               }}
               className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
-              style={{ 
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: activeMenuItem === 'profile' ? '#076297' : 'transparent',
-                textDecoration: 'none'
+              style={{
+                borderBottom: "1px solid #e5e7eb",
+                backgroundColor: activeMenuItem === "profile" ? "#076297" : "transparent",
+                textDecoration: "none",
               }}
               onMouseEnter={(e) => {
-                if (activeMenuItem !== 'profile') {
-                  e.currentTarget.style.backgroundColor = '#e6f2f8';
+                if (activeMenuItem !== "profile") {
+                  e.currentTarget.style.backgroundColor = "#e6f2f8";
                 }
               }}
               onMouseLeave={(e) => {
-                if (activeMenuItem !== 'profile') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                if (activeMenuItem !== "profile") {
+                  e.currentTarget.style.backgroundColor = "transparent";
                 }
               }}
             >
-              <User 
-                className="w-4 h-4 flex-shrink-0" 
-                style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#4b5563' }}
+              <User
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: activeMenuItem === "profile" ? "#ffffff" : "#4b5563" }}
               />
-              <span 
+              <span
                 className="text-sm font-medium whitespace-nowrap"
-                style={{ color: activeMenuItem === 'profile' ? '#ffffff' : '#374151' }}
+                style={{ color: activeMenuItem === "profile" ? "#ffffff" : "#374151" }}
               >
                 Profile
               </span>
@@ -218,40 +248,40 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
             <button
               onClick={() => setShowMuteSubmenu(!showMuteSubmenu)}
               className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left"
-              style={{ 
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: activeMenuItem === 'mute' ? '#076297' : 'transparent'
+              style={{
+                borderBottom: "1px solid #e5e7eb",
+                backgroundColor: activeMenuItem === "mute" ? "#076297" : "transparent",
               }}
               onMouseEnter={(e) => {
-                if (activeMenuItem !== 'mute') {
-                  e.currentTarget.style.backgroundColor = '#e6f2f8';
+                if (activeMenuItem !== "mute") {
+                  e.currentTarget.style.backgroundColor = "#e6f2f8";
                 }
               }}
               onMouseLeave={(e) => {
-                if (activeMenuItem !== 'mute') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                if (activeMenuItem !== "mute") {
+                  e.currentTarget.style.backgroundColor = "transparent";
                 }
               }}
             >
-              <BellOff 
-                className="w-4 h-4 flex-shrink-0" 
-                style={{ color: activeMenuItem === 'mute' ? '#ffffff' : '#4b5563' }}
+              <BellOff
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: activeMenuItem === "mute" ? "#ffffff" : "#4b5563" }}
               />
-              <span 
+              <span
                 className="text-sm font-medium flex-1 whitespace-nowrap"
-                style={{ color: activeMenuItem === 'mute' ? '#ffffff' : '#374151' }}
+                style={{ color: activeMenuItem === "mute" ? "#ffffff" : "#374151" }}
               >
                 Mute Notifications
               </span>
               {showMuteSubmenu ? (
-                <ChevronDown 
-                  className="w-4 h-4" 
-                  style={{ color: activeMenuItem === 'mute' ? '#ffffff' : '#9ca3af' }}
+                <ChevronDown
+                  className="w-4 h-4"
+                  style={{ color: activeMenuItem === "mute" ? "#ffffff" : "#9ca3af" }}
                 />
               ) : (
-                <ChevronRight 
-                  className="w-4 h-4" 
-                  style={{ color: activeMenuItem === 'mute' ? '#ffffff' : '#9ca3af' }}
+                <ChevronRight
+                  className="w-4 h-4"
+                  style={{ color: activeMenuItem === "mute" ? "#ffffff" : "#9ca3af" }}
                 />
               )}
             </button>
@@ -264,29 +294,29 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
                 setShowProfileMenu(false);
               }}
               className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
-              style={{ 
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: activeMenuItem === 'settings' ? '#076297' : 'transparent',
-                textDecoration: 'none'
+              style={{
+                borderBottom: "1px solid #e5e7eb",
+                backgroundColor: activeMenuItem === "settings" ? "#076297" : "transparent",
+                textDecoration: "none",
               }}
               onMouseEnter={(e) => {
-                if (activeMenuItem !== 'settings') {
-                  e.currentTarget.style.backgroundColor = '#e6f2f8';
+                if (activeMenuItem !== "settings") {
+                  e.currentTarget.style.backgroundColor = "#e6f2f8";
                 }
               }}
               onMouseLeave={(e) => {
-                if (activeMenuItem !== 'settings') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                if (activeMenuItem !== "settings") {
+                  e.currentTarget.style.backgroundColor = "transparent";
                 }
               }}
             >
-              <Settings 
-                className="w-4 h-4 flex-shrink-0" 
-                style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#4b5563' }}
+              <Settings
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: activeMenuItem === "settings" ? "#ffffff" : "#4b5563" }}
               />
-              <span 
+              <span
                 className="text-sm font-medium whitespace-nowrap"
-                style={{ color: activeMenuItem === 'settings' ? '#ffffff' : '#374151' }}
+                style={{ color: activeMenuItem === "settings" ? "#ffffff" : "#374151" }}
               >
                 Settings
               </span>
@@ -300,40 +330,40 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
                 setShowProfileMenu(false);
               }}
               className="w-full px-4 py-3 flex items-center gap-3 transition-colors text-left block"
-              style={{ 
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: activeMenuItem === 'help' ? '#076297' : 'transparent',
-                textDecoration: 'none'
+              style={{
+                borderBottom: "1px solid #e5e7eb",
+                backgroundColor: activeMenuItem === "help" ? "#076297" : "transparent",
+                textDecoration: "none",
               }}
               onMouseEnter={(e) => {
-                if (activeMenuItem !== 'help') {
-                  e.currentTarget.style.backgroundColor = '#e6f2f8';
+                if (activeMenuItem !== "help") {
+                  e.currentTarget.style.backgroundColor = "#e6f2f8";
                 }
               }}
               onMouseLeave={(e) => {
-                if (activeMenuItem !== 'help') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                if (activeMenuItem !== "help") {
+                  e.currentTarget.style.backgroundColor = "transparent";
                 }
               }}
             >
-              <HelpCircle 
-                className="w-4 h-4 flex-shrink-0" 
-                style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#4b5563' }}
+              <HelpCircle
+                className="w-4 h-4 flex-shrink-0"
+                style={{ color: activeMenuItem === "help" ? "#ffffff" : "#4b5563" }}
               />
-              <span 
+              <span
                 className="text-sm font-medium whitespace-nowrap"
-                style={{ color: activeMenuItem === 'help' ? '#ffffff' : '#374151' }}
+                style={{ color: activeMenuItem === "help" ? "#ffffff" : "#374151" }}
               >
                 Help
               </span>
             </Link>
 
             {/* Sign Out */}
-              <button
-                onClick={() => {
-                  setShowProfileMenu(false);
-                  logout();
-                }}
+            <button
+              onClick={() => {
+                setShowProfileMenu(false);
+                logout();
+              }}
               className="w-full px-4 py-3 flex items-center gap-3 hover:bg-red-50 transition-colors text-left"
             >
               <LogOut className="w-4 h-4 text-red-600" />
@@ -347,23 +377,23 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
       {showMuteSubmenu && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-transparent z-40"
             onClick={() => setShowMuteSubmenu(false)}
           />
-          
+
           {/* Small Card positioned to the left of profile dropdown */}
-          <div 
+          <div
             className="absolute right-64 top-20 w-48 bg-white shadow-xl z-50"
-            style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
+            style={{ borderRadius: "7px", border: "1px solid #e5e7eb" }}
           >
             {/* Options */}
             <div className="py-1">
               {[
-                { label: 'For 1 hour', value: '1h' },
-                { label: 'Until tomorrow', value: 'tomorrow' },
-                { label: 'Until next week', value: 'week' },
-                { label: 'Custom date and time', value: 'custom' }
+                { label: "For 1 hour", value: "1h" },
+                { label: "Until tomorrow", value: "tomorrow" },
+                { label: "Until next week", value: "week" },
+                { label: "Custom date and time", value: "custom" },
               ].map((option) => (
                 <button
                   key={option.value}
@@ -375,23 +405,23 @@ export function Navbar({ tasks, onAddTask, onToggleSidebar, onSearchChange, sear
                   }}
                   className="w-full px-3 py-2 text-left transition-colors"
                   style={{
-                    backgroundColor: activeMuteOption === option.value ? '#076297' : 'transparent'
+                    backgroundColor: activeMuteOption === option.value ? "#076297" : "transparent",
                   }}
                   onMouseEnter={(e) => {
                     if (activeMuteOption !== option.value) {
-                      e.currentTarget.style.backgroundColor = '#e6f2f8';
+                      e.currentTarget.style.backgroundColor = "#e6f2f8";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (activeMuteOption !== option.value) {
-                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.backgroundColor = "transparent";
                     }
                   }}
                 >
-                  <span 
+                  <span
                     className="text-sm"
                     style={{
-                      color: activeMuteOption === option.value ? '#ffffff' : '#374151'
+                      color: activeMuteOption === option.value ? "#ffffff" : "#374151",
                     }}
                   >
                     {option.label}

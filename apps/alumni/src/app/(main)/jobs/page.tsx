@@ -2,13 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,11 +105,7 @@ const getSectorColor = (sector: string) => {
   }
 };
 
-const formatSalary = (
-  min: number | null,
-  max: number | null,
-  currency: string,
-) => {
+const formatSalary = (min: number | null, max: number | null, currency: string) => {
   if (!min && !max) return null;
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -150,9 +140,7 @@ const JobCard = ({ job }: { job: Job }) => {
       <CardContent className="p-6 flex flex-col h-full">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate">
-              {job.title}
-            </h3>
+            <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate">{job.title}</h3>
             <p className="text-gray-600 flex items-center gap-1">
               <Building className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">{job.company}</span>
@@ -184,10 +172,7 @@ const JobCard = ({ job }: { job: Job }) => {
               {job.sector}
             </div>
             {job.isRemote && (
-              <Badge
-                variant="outline"
-                className="text-green-600 border-green-200"
-              >
+              <Badge variant="outline" className="text-green-600 border-green-200">
                 Remote
               </Badge>
             )}
@@ -202,9 +187,7 @@ const JobCard = ({ job }: { job: Job }) => {
           {salary && (
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-              <span className="text-sm font-medium text-gray-900">
-                {salary}
-              </span>
+              <span className="text-sm font-medium text-gray-900">{salary}</span>
             </div>
           )}
 
@@ -242,9 +225,7 @@ const JobCard = ({ job }: { job: Job }) => {
         <div className="flex gap-2 mt-4">
           <Button
             className="flex-1 bg-green-primary hover:bg-green-600"
-            onClick={() =>
-              job.applicationUrl && window.open(job.applicationUrl, "_blank")
-            }
+            onClick={() => job.applicationUrl && window.open(job.applicationUrl, "_blank")}
             disabled={!job.applicationUrl}
           >
             <Send className="h-4 w-4 mr-2" />
@@ -254,9 +235,7 @@ const JobCard = ({ job }: { job: Job }) => {
             variant="outline"
             size="icon"
             className="border-orange-primary text-orange-primary hover:bg-orange-primary hover:text-white"
-            onClick={() =>
-              job.applicationUrl && window.open(job.applicationUrl, "_blank")
-            }
+            onClick={() => job.applicationUrl && window.open(job.applicationUrl, "_blank")}
             disabled={!job.applicationUrl}
           >
             <ExternalLink className="h-4 w-4" />
@@ -272,9 +251,7 @@ const StatsCards = ({ stats }: { stats: JobStats }) => (
   <div className="grid gap-4 md:grid-cols-3">
     <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-emerald-100">
-          Total Jobs
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-emerald-100">Total Jobs</CardTitle>
         <Briefcase className="h-5 w-5 text-emerald-200" />
       </CardHeader>
       <CardContent>
@@ -288,9 +265,7 @@ const StatsCards = ({ stats }: { stats: JobStats }) => (
 
     <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-blue-100">
-          Remote Jobs
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-blue-100">Remote Jobs</CardTitle>
         <Globe className="h-5 w-5 text-blue-200" />
       </CardHeader>
       <CardContent>
@@ -301,9 +276,7 @@ const StatsCards = ({ stats }: { stats: JobStats }) => (
 
     <Card className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-amber-100">
-          Internal Posts
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-amber-100">Internal Posts</CardTitle>
         <TrendingUp className="h-5 w-5 text-amber-200" />
       </CardHeader>
       <CardContent>
@@ -505,17 +478,12 @@ export default function AlumniJobs() {
           Job Opportunities
         </h1>
         <p className="text-gray-600">
-          Discover career opportunities in land, agriculture, environment, and
-          more
+          Discover career opportunities in land, agriculture, environment, and more
         </p>
       </div>
 
       {/* Quick Stats */}
-      {isLoadingStats ? (
-        <StatsSkeleton />
-      ) : (
-        stats && <StatsCards stats={stats} />
-      )}
+      {isLoadingStats ? <StatsSkeleton /> : stats && <StatsCards stats={stats} />}
 
       {/* Search and Filters */}
       <Card className="shadow-sm">
@@ -650,9 +618,7 @@ export default function AlumniJobs() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-                }
+                onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
                 disabled={!pagination.hasMore}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -689,9 +655,7 @@ export default function AlumniJobs() {
         <Card className="shadow-sm">
           <CardContent className="p-12 text-center">
             <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No jobs found
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No jobs found</h3>
             <p className="text-gray-600 mb-4">
               Try adjusting your search criteria or clearing filters
             </p>
@@ -719,9 +683,7 @@ export default function AlumniJobs() {
           </Button>
           <Button
             variant="outline"
-            onClick={() =>
-              setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-            }
+            onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
             disabled={!pagination.hasMore}
           >
             Next
@@ -737,9 +699,7 @@ export default function AlumniJobs() {
             <TrendingUp className="h-6 w-6 text-orange-600" />
             Trending Skills
           </CardTitle>
-          <CardDescription>
-            Most in-demand skills across all job postings
-          </CardDescription>
+          <CardDescription>Most in-demand skills across all job postings</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           {isLoadingSkills ? (
@@ -765,9 +725,7 @@ export default function AlumniJobs() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">
-              No trending skills data available yet.
-            </p>
+            <p className="text-gray-500 text-sm">No trending skills data available yet.</p>
           )}
         </CardContent>
       </Card>

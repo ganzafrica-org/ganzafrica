@@ -1,13 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import { trackTranslation } from "@/components/analytics/google-analytics";
 
 // Supported languages (all supported by LibreTranslate)
@@ -57,12 +50,8 @@ interface TranslationProviderProps {
   sourceLanguage?: LanguageCode;
 }
 
-export function TranslationProvider({
-  children,
-  sourceLanguage = "en",
-}: TranslationProviderProps) {
-  const [targetLanguage, setTargetLanguageState] =
-    useState<LanguageCode>(sourceLanguage);
+export function TranslationProvider({ children, sourceLanguage = "en" }: TranslationProviderProps) {
+  const [targetLanguage, setTargetLanguageState] = useState<LanguageCode>(sourceLanguage);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isTranslated, setIsTranslated] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,13 +138,10 @@ export function TranslationProvider({
       setError(null);
 
       try {
-        const results = await Promise.all(
-          texts.map((text) => translateText(text)),
-        );
+        const results = await Promise.all(texts.map((text) => translateText(text)));
         return results;
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Translation failed";
+        const errorMessage = err instanceof Error ? err.message : "Translation failed";
         setError(errorMessage);
         throw err;
       } finally {
@@ -171,13 +157,13 @@ export function TranslationProvider({
       setIsTranslated(lang !== sourceLanguage);
       setError(null);
 
-       if (lang !== targetLanguage) {
-         trackTranslation({
-           source_language: sourceLanguage,
-           target_language: lang,
-           scope: "page",
-         });
-       }
+      if (lang !== targetLanguage) {
+        trackTranslation({
+          source_language: sourceLanguage,
+          target_language: lang,
+          scope: "page",
+        });
+      }
 
       // Save preference
       if (typeof window !== "undefined") {
@@ -210,19 +196,13 @@ export function TranslationProvider({
     getCachedTranslation,
   };
 
-  return (
-    <TranslationContext.Provider value={value}>
-      {children}
-    </TranslationContext.Provider>
-  );
+  return <TranslationContext.Provider value={value}>{children}</TranslationContext.Provider>;
 }
 
 export function useTranslationContext() {
   const context = useContext(TranslationContext);
   if (!context) {
-    throw new Error(
-      "useTranslationContext must be used within a TranslationProvider",
-    );
+    throw new Error("useTranslationContext must be used within a TranslationProvider");
   }
   return context;
 }

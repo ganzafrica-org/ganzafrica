@@ -1,5 +1,5 @@
 import { eq, and, or, sql, desc, asc, like, ilike, inArray } from "drizzle-orm";
-import { db } from '../db/client';
+import { db } from "../db/client";
 import { news, news_tags, news_to_tags } from "../db/schema/news";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
@@ -14,7 +14,7 @@ const logger = new Logger("NewsService");
 export const createNews = async (newsData: any) => {
   try {
     let result: { id: number } | undefined;
-    
+
     await db.transaction(async (tx) => {
       // Insert news
       const insertedNews = await tx
@@ -93,10 +93,7 @@ export const listNews = async (filter: any = {}) => {
 
     if (search) {
       whereConditions.push(
-        or(
-          ilike(news.title, `%${search}%`),
-          ilike(news.content, `%${search}%`)
-        )
+        or(ilike(news.title, `%${search}%`), ilike(news.content, `%${search}%`)),
       );
     }
 
@@ -113,11 +110,11 @@ export const listNews = async (filter: any = {}) => {
       created_at: news.created_at,
       updated_at: news.updated_at,
     };
-    
+
     // Determine tag filtering if needed
     let newsIdsForTagFilter: number[] = [];
     let useTagFilter = false;
-    
+
     if (tags && Array.isArray(tags) && tags.length > 0) {
       // Get news IDs that have all the specified tags
       const newsWithTags = await db
@@ -134,13 +131,13 @@ export const listNews = async (filter: any = {}) => {
         return { news: [], total: 0 }; // No news items match the tag filter
       }
     }
-    
+
     // Build the WHERE condition combining all filters
     const allConditions = [...whereConditions];
     if (useTagFilter) {
       allConditions.push(inArray(news.id, newsIdsForTagFilter));
     }
-    
+
     // Count total matching records
     const countQuery = db.select({ count: sql<number>`count(*)` }).from(news);
     if (allConditions.length > 0) {
@@ -148,16 +145,16 @@ export const listNews = async (filter: any = {}) => {
     }
     const countResult = await countQuery;
     const total = countResult[0]?.count || 0;
-    
+
     // Determine the sort column and direction
     let sortColumnToUse = news.created_at;
     let sortFunction = desc;
-    
+
     if (sortBy && sortBy in news) {
       sortColumnToUse = news[sortBy as keyof typeof news] as PgColumn<any>;
       sortFunction = sortDir === "asc" ? asc : desc;
     }
-    
+
     // Execute the final query with all conditions in one go
     const result = await db
       .select(baseSelection)
@@ -176,17 +173,14 @@ export const listNews = async (filter: any = {}) => {
             name: news_tags.name,
           })
           .from(news_tags)
-          .innerJoin(
-            news_to_tags,
-            eq(news_tags.id, news_to_tags.tag_id)
-          )
+          .innerJoin(news_to_tags, eq(news_tags.id, news_to_tags.tag_id))
           .where(eq(news_to_tags.news_id, newsItem.id));
 
         return {
           ...newsItem,
           tags,
         };
-      })
+      }),
     );
 
     return {
@@ -204,11 +198,7 @@ export const listNews = async (filter: any = {}) => {
  */
 export const getNewsById = async (id: number) => {
   try {
-    const result = await db
-      .select()
-      .from(news)
-      .where(eq(news.id, id))
-      .limit(1);
+    const result = await db.select().from(news).where(eq(news.id, id)).limit(1);
 
     if (result.length === 0) {
       throw new AppError("News item not found", 404);
@@ -223,10 +213,7 @@ export const getNewsById = async (id: number) => {
         name: news_tags.name,
       })
       .from(news_tags)
-      .innerJoin(
-        news_to_tags,
-        eq(news_tags.id, news_to_tags.tag_id)
-      )
+      .innerJoin(news_to_tags, eq(news_tags.id, news_to_tags.tag_id))
       .where(eq(news_to_tags.news_id, id));
 
     return {
@@ -341,10 +328,7 @@ export const listTags = async () => {
  */
 export const createTag = async (name: string) => {
   try {
-    const result = await db
-      .insert(news_tags)
-      .values({ name })
-      .returning();
+    const result = await db.insert(news_tags).values({ name }).returning();
 
     if (!result || result.length === 0) {
       throw new AppError("Failed to create tag", 500);
@@ -354,7 +338,7 @@ export const createTag = async (name: string) => {
   } catch (error) {
     logger.error("Error creating tag", error);
     // Check for unique constraint violation
-    if ((error as any)?.code === '23505') {
+    if ((error as any)?.code === "23505") {
       throw new AppError(`Tag with name "${name}" already exists`, 400);
     }
     throw new AppError("Failed to create tag", 500);

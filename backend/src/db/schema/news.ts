@@ -64,8 +64,7 @@ export const news = pgTable(
         order?: number;
       }>;
     }>(),
-    
-  
+
     ...timestampFields,
   },
   (table) => {

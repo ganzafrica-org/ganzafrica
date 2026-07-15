@@ -1,1079 +1,1085 @@
-import React, {useCallback, useState} from "react";
-import {Badge} from "@/components/ui/badge";
-import {Card, CardContent} from "@/components/ui/card";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Button} from "@/components/ui/button";
-import {Download, Upload} from "lucide-react";
+import React, { useCallback, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Download, Upload } from "lucide-react";
 import type { RevisionEntry } from "@/types/revision";
 
 export const employees = [
-    {
-        id: 1,
-        employeeId: "GZ001",
-        name: "Jean Baptiste Mukamana",
-        email: "jean.mukamana@ganzafrica.org",
-        phone: "+250 788 123 456",
-        position: "HR Manager",
-        department: "Human Resources",
-        status: "active",
-        joinDate: "2024-01-15",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$45,000",
-        avatar: "",
-        skills: ["HR Management", "Recruitment", "Employee Relations"],
-        emergencyContact: {
-            name: "Marie Mukamana",
-            relationship: "Spouse",
-            phone: "+250 788 654 321"
-        },
-        level: 2
+  {
+    id: 1,
+    employeeId: "GZ001",
+    name: "Jean Baptiste Mukamana",
+    email: "jean.mukamana@ganzafrica.org",
+    phone: "+250 788 123 456",
+    position: "HR Manager",
+    department: "Human Resources",
+    status: "active",
+    joinDate: "2024-01-15",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$45,000",
+    avatar: "",
+    skills: ["HR Management", "Recruitment", "Employee Relations"],
+    emergencyContact: {
+      name: "Marie Mukamana",
+      relationship: "Spouse",
+      phone: "+250 788 654 321",
     },
-    {
-        id: 2,
-        employeeId: "GZ002",
-        name: "Marie Claire Nsengimana",
-        email: "marie.nsengimana@ganzafrica.org",
-        phone: "+250 788 234 567",
-        position: "Agricultural Specialist",
-        department: "Agriculture",
-        status: "active",
-        joinDate: "2024-02-01",
-        location: "Musanze, Rwanda",
-        country: "Rwanda",
-        manager: "David Nshimiyimana",
-        managerId: "GZ006",
-        salary: "$38,000",
-        avatar: "",
-        skills: ["Sustainable Farming", "Crop Management", "Research"],
-        emergencyContact: {
-            name: "Paul Nsengimana",
-            relationship: "Father",
-            phone: "+250 788 765 432"
-        },
-        level: 3
+    level: 2,
+  },
+  {
+    id: 2,
+    employeeId: "GZ002",
+    name: "Marie Claire Nsengimana",
+    email: "marie.nsengimana@ganzafrica.org",
+    phone: "+250 788 234 567",
+    position: "Agricultural Specialist",
+    department: "Agriculture",
+    status: "active",
+    joinDate: "2024-02-01",
+    location: "Musanze, Rwanda",
+    country: "Rwanda",
+    manager: "David Nshimiyimana",
+    managerId: "GZ006",
+    salary: "$38,000",
+    avatar: "",
+    skills: ["Sustainable Farming", "Crop Management", "Research"],
+    emergencyContact: {
+      name: "Paul Nsengimana",
+      relationship: "Father",
+      phone: "+250 788 765 432",
     },
-    {
-        id: 3,
-        employeeId: "GZ003",
-        name: "David Niyonkuru",
-        email: "david.niyonkuru@ganzafrica.org",
-        phone: "+250 788 345 678",
-        position: "Youth Fellow",
-        department: "Fellowship Program",
-        status: "active",
-        joinDate: "2024-03-01",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Grace Uwimana",
-        managerId: "GZ007",
-        salary: "Stipend",
-        avatar: "",
-        skills: ["Community Engagement", "Project Coordination", "Research"],
-        emergencyContact: {
-            name: "Agnes Niyonkuru",
-            relationship: "Mother",
-            phone: "+250 788 876 543"
-        },
-        level: 4
+    level: 3,
+  },
+  {
+    id: 3,
+    employeeId: "GZ003",
+    name: "David Niyonkuru",
+    email: "david.niyonkuru@ganzafrica.org",
+    phone: "+250 788 345 678",
+    position: "Youth Fellow",
+    department: "Fellowship Program",
+    status: "active",
+    joinDate: "2024-03-01",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Grace Uwimana",
+    managerId: "GZ007",
+    salary: "Stipend",
+    avatar: "",
+    skills: ["Community Engagement", "Project Coordination", "Research"],
+    emergencyContact: {
+      name: "Agnes Niyonkuru",
+      relationship: "Mother",
+      phone: "+250 788 876 543",
     },
-    {
-        id: 4,
-        employeeId: "GZ004",
-        name: "Grace Mukamana",
-        email: "grace.mukamana@ganzafrica.org",
-        phone: "+250 788 456 789",
-        position: "Environmental Consultant",
-        department: "Environment",
-        status: "on_leave",
-        joinDate: "2023-06-15",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$42,000",
-        avatar: "",
-        skills: ["Environmental Assessment", "Policy Analysis", "Sustainability"],
-        emergencyContact: {
-            name: "John Mukamana",
-            relationship: "Brother",
-            phone: "+250 788 987 654"
-        },
-        level: 2
+    level: 4,
+  },
+  {
+    id: 4,
+    employeeId: "GZ004",
+    name: "Grace Mukamana",
+    email: "grace.mukamana@ganzafrica.org",
+    phone: "+250 788 456 789",
+    position: "Environmental Consultant",
+    department: "Environment",
+    status: "on_leave",
+    joinDate: "2023-06-15",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$42,000",
+    avatar: "",
+    skills: ["Environmental Assessment", "Policy Analysis", "Sustainability"],
+    emergencyContact: {
+      name: "John Mukamana",
+      relationship: "Brother",
+      phone: "+250 788 987 654",
     },
-    {
-        id: 5,
-        employeeId: "GZ005",
-        name: "Emmanuel Nshimiyimana",
-        email: "emmanuel.nshimiyimana@ganzafrica.org",
-        phone: "+250 788 567 890",
-        position: "Land Management Coordinator",
-        department: "Land Management",
-        status: "active",
-        joinDate: "2023-01-10",
-        location: "Huye, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$40,000",
-        avatar: "",
-        skills: ["GIS", "Land Planning", "Community Relations"],
-        emergencyContact: {
-            name: "Christine Nshimiyimana",
-            relationship: "Wife",
-            phone: "+250 788 098 765"
-        },
-        level: 2
+    level: 2,
+  },
+  {
+    id: 5,
+    employeeId: "GZ005",
+    name: "Emmanuel Nshimiyimana",
+    email: "emmanuel.nshimiyimana@ganzafrica.org",
+    phone: "+250 788 567 890",
+    position: "Land Management Coordinator",
+    department: "Land Management",
+    status: "active",
+    joinDate: "2023-01-10",
+    location: "Huye, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$40,000",
+    avatar: "",
+    skills: ["GIS", "Land Planning", "Community Relations"],
+    emergencyContact: {
+      name: "Christine Nshimiyimana",
+      relationship: "Wife",
+      phone: "+250 788 098 765",
     },
-    {
-        id: 6,
-        employeeId: "GZ006",
-        name: "David Nshimiyimana",
-        email: "david.nshimiyimana@ganzafrica.org",
-        phone: "+250 788 111 222",
-        position: "Agriculture Director",
-        department: "Agriculture",
-        status: "active",
-        joinDate: "2022-08-01",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$55,000",
-        avatar: "",
-        skills: ["Agricultural Leadership", "Strategic Planning", "Team Management"],
-        emergencyContact: {
-            name: "Grace Nshimiyimana",
-            relationship: "Wife",
-            phone: "+250 788 333 444"
-        },
-        level: 1
+    level: 2,
+  },
+  {
+    id: 6,
+    employeeId: "GZ006",
+    name: "David Nshimiyimana",
+    email: "david.nshimiyimana@ganzafrica.org",
+    phone: "+250 788 111 222",
+    position: "Agriculture Director",
+    department: "Agriculture",
+    status: "active",
+    joinDate: "2022-08-01",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$55,000",
+    avatar: "",
+    skills: ["Agricultural Leadership", "Strategic Planning", "Team Management"],
+    emergencyContact: {
+      name: "Grace Nshimiyimana",
+      relationship: "Wife",
+      phone: "+250 788 333 444",
     },
-    {
-        id: 7,
-        employeeId: "GZ007",
-        name: "Grace Uwimana",
-        email: "grace.uwimana@ganzafrica.org",
-        phone: "+250 788 555 666",
-        position: "Fellowship Director",
-        department: "Fellowship Program",
-        status: "active",
-        joinDate: "2022-05-15",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$52,000",
-        avatar: "",
-        skills: ["Youth Development", "Program Management", "Strategic Leadership"],
-        emergencyContact: {
-            name: "Jean Uwimana",
-            relationship: "Husband",
-            phone: "+250 788 777 888"
-        },
-        level: 1
+    level: 1,
+  },
+  {
+    id: 7,
+    employeeId: "GZ007",
+    name: "Grace Uwimana",
+    email: "grace.uwimana@ganzafrica.org",
+    phone: "+250 788 555 666",
+    position: "Fellowship Director",
+    department: "Fellowship Program",
+    status: "active",
+    joinDate: "2022-05-15",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$52,000",
+    avatar: "",
+    skills: ["Youth Development", "Program Management", "Strategic Leadership"],
+    emergencyContact: {
+      name: "Jean Uwimana",
+      relationship: "Husband",
+      phone: "+250 788 777 888",
     },
-    {
-        id: 8,
-        employeeId: "GZ000",
-        name: "Sarah Uwimana",
-        email: "sarah.uwimana@ganzafrica.org",
-        phone: "+250 788 999 000",
-        position: "Executive Director",
-        department: "Executive",
-        status: "active",
-        joinDate: "2021-01-01",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Board of Directors",
-        managerId: null,
-        salary: "$75,000",
-        avatar: "",
-        skills: ["Strategic Leadership", "Organizational Development", "Partnership Management"],
-        emergencyContact: {
-            name: "Paul Uwimana",
-            relationship: "Spouse",
-            phone: "+250 788 111 000"
-        },
-        level: 0
+    level: 1,
+  },
+  {
+    id: 8,
+    employeeId: "GZ000",
+    name: "Sarah Uwimana",
+    email: "sarah.uwimana@ganzafrica.org",
+    phone: "+250 788 999 000",
+    position: "Executive Director",
+    department: "Executive",
+    status: "active",
+    joinDate: "2021-01-01",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Board of Directors",
+    managerId: null,
+    salary: "$75,000",
+    avatar: "",
+    skills: ["Strategic Leadership", "Organizational Development", "Partnership Management"],
+    emergencyContact: {
+      name: "Paul Uwimana",
+      relationship: "Spouse",
+      phone: "+250 788 111 000",
     },
-    {
-        id: 9,
-        employeeId: "GZ008",
-        name: "Alice Mukamana",
-        email: "alice.mukamana@ganzafrica.org",
-        phone: "+254 788 123 456",
-        position: "Regional Coordinator",
-        department: "East Africa Operations",
-        status: "active",
-        joinDate: "2023-09-01",
-        location: "Nairobi, Kenya",
-        country: "Kenya",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$48,000",
-        avatar: "",
-        skills: ["Regional Management", "Cross-border Operations", "Policy Development"],
-        emergencyContact: {
-            name: "Peter Mukamana",
-            relationship: "Brother",
-            phone: "+254 788 654 321"
-        },
-        level: 1
+    level: 0,
+  },
+  {
+    id: 9,
+    employeeId: "GZ008",
+    name: "Alice Mukamana",
+    email: "alice.mukamana@ganzafrica.org",
+    phone: "+254 788 123 456",
+    position: "Regional Coordinator",
+    department: "East Africa Operations",
+    status: "active",
+    joinDate: "2023-09-01",
+    location: "Nairobi, Kenya",
+    country: "Kenya",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$48,000",
+    avatar: "",
+    skills: ["Regional Management", "Cross-border Operations", "Policy Development"],
+    emergencyContact: {
+      name: "Peter Mukamana",
+      relationship: "Brother",
+      phone: "+254 788 654 321",
     },
-    {
-        id: 10,
-        employeeId: "GZ009",
-        name: "Samuel Nkomo",
-        email: "samuel.nkomo@ganzafrica.org",
-        phone: "+27 82 123 4567",
-        position: "Research Analyst",
-        department: "Research & Development",
-        status: "active",
-        joinDate: "2024-04-01",
-        location: "Cape Town, South Africa",
-        country: "South Africa",
-        manager: "Alice Mukamana",
-        managerId: "GZ008",
-        salary: "$35,000",
-        avatar: "",
-        skills: ["Data Analysis", "Research Methodology", "Report Writing"],
-        emergencyContact: {
-            name: "Mary Nkomo",
-            relationship: "Mother",
-            phone: "+27 82 765 4321"
-        },
-        level: 2
-    }
-]
+    level: 1,
+  },
+  {
+    id: 10,
+    employeeId: "GZ009",
+    name: "Samuel Nkomo",
+    email: "samuel.nkomo@ganzafrica.org",
+    phone: "+27 82 123 4567",
+    position: "Research Analyst",
+    department: "Research & Development",
+    status: "active",
+    joinDate: "2024-04-01",
+    location: "Cape Town, South Africa",
+    country: "South Africa",
+    manager: "Alice Mukamana",
+    managerId: "GZ008",
+    salary: "$35,000",
+    avatar: "",
+    skills: ["Data Analysis", "Research Methodology", "Report Writing"],
+    emergencyContact: {
+      name: "Mary Nkomo",
+      relationship: "Mother",
+      phone: "+27 82 765 4321",
+    },
+    level: 2,
+  },
+];
 
 export const mockDocuments = [
-    {
-        id: 1,
-        name: "Employment Contract - Jean Baptiste.pdf",
-        employee: "Jean Baptiste Mukamana",
-        category: "Contract",
-        uploadDate: "2024-01-15",
-        expiryDate: "2026-01-15",
-        status: "Active"
-    },
-    {
-        id: 2,
-        name: "NDA_Marie_Claire.pdf",
-        employee: "Marie Claire Nsengimana",
-        category: "Legal",
-        uploadDate: "2024-02-10",
-        expiryDate: "2025-02-10",
-        status: "Active"
-    },
-    {
-        id: 3,
-        name: "Performance_Review_Q1_David.docx",
-        employee: "David Niyonkuru",
-        category: "Performance",
-        uploadDate: "2024-04-01",
-        expiryDate: "-",
-        status: "Pending"
-    },
-    {
-        id: 4,
-        name: "ID_Copy_Grace.jpg",
-        employee: "Grace Mukamana",
-        category: "Personal ID",
-        uploadDate: "2023-05-20",
-        expiryDate: "2024-05-20",
-        status: "Expired"
-    },
-    {
-        id: 5,
-        name: "Work_Permit_Emmanuel.pdf",
-        employee: "Emmanuel Nshimiyimana",
-        category: "Legal",
-        uploadDate: "2024-03-12",
-        expiryDate: "2025-03-12",
-        status: "Active"
-    }
-]
+  {
+    id: 1,
+    name: "Employment Contract - Jean Baptiste.pdf",
+    employee: "Jean Baptiste Mukamana",
+    category: "Contract",
+    uploadDate: "2024-01-15",
+    expiryDate: "2026-01-15",
+    status: "Active",
+  },
+  {
+    id: 2,
+    name: "NDA_Marie_Claire.pdf",
+    employee: "Marie Claire Nsengimana",
+    category: "Legal",
+    uploadDate: "2024-02-10",
+    expiryDate: "2025-02-10",
+    status: "Active",
+  },
+  {
+    id: 3,
+    name: "Performance_Review_Q1_David.docx",
+    employee: "David Niyonkuru",
+    category: "Performance",
+    uploadDate: "2024-04-01",
+    expiryDate: "-",
+    status: "Pending",
+  },
+  {
+    id: 4,
+    name: "ID_Copy_Grace.jpg",
+    employee: "Grace Mukamana",
+    category: "Personal ID",
+    uploadDate: "2023-05-20",
+    expiryDate: "2024-05-20",
+    status: "Expired",
+  },
+  {
+    id: 5,
+    name: "Work_Permit_Emmanuel.pdf",
+    employee: "Emmanuel Nshimiyimana",
+    category: "Legal",
+    uploadDate: "2024-03-12",
+    expiryDate: "2025-03-12",
+    status: "Active",
+  },
+];
 
 export const mockDocumentRevisions: Record<number, RevisionEntry[]> = {
-    1: [
-        {
-            date: "15-Jan-2024",
-            revisionNo: "0",
-            description: "Initial issue of employment contract",
-            nameAndDesignation: "Jean Baptiste Mukamana, HR Manager",
-            signature: "JBM",
-        },
-        {
-            date: "01-Jul-2024",
-            revisionNo: "1",
-            description: "Updated compensation and benefits clause",
-            nameAndDesignation: "Sarah Uwimana, Director of HR",
-            signature: "SU",
-        },
-    ],
-    2: [
-        {
-            date: "10-Feb-2024",
-            revisionNo: "0",
-            description: "Initial issue of non-disclosure agreement",
-            nameAndDesignation: "Marie Claire Nsengimana, Legal Officer",
-            signature: "MCN",
-        },
-    ],
-    3: [
-        {
-            date: "01-Apr-2024",
-            revisionNo: "0",
-            description: "Draft performance review for Q1",
-            nameAndDesignation: "David Niyonkuru, Youth Fellow",
-            signature: "",
-        },
-        {
-            date: "15-Apr-2024",
-            revisionNo: "1",
-            description: "Manager comments added; pending final approval",
-            nameAndDesignation: "Grace Uwimana, Program Manager",
-            signature: "",
-        },
-    ],
-    4: [
-        {
-            date: "20-May-2023",
-            revisionNo: "0",
-            description: "Copy of national ID on file",
-            nameAndDesignation: "Grace Mukamana, HR Coordinator",
-            signature: "GM",
-        },
-    ],
-    5: [
-        {
-            date: "12-Mar-2024",
-            revisionNo: "0",
-            description: "Work permit document uploaded",
-            nameAndDesignation: "Emmanuel Nshimiyimana, Employee",
-            signature: "EN",
-        },
-        {
-            date: "10-Sep-2024",
-            revisionNo: "1",
-            description: "Renewal documentation attached",
-            nameAndDesignation: "Jean Baptiste Mukamana, HR Manager",
-            signature: "JBM",
-        },
-    ],
-}
+  1: [
+    {
+      date: "15-Jan-2024",
+      revisionNo: "0",
+      description: "Initial issue of employment contract",
+      nameAndDesignation: "Jean Baptiste Mukamana, HR Manager",
+      signature: "JBM",
+    },
+    {
+      date: "01-Jul-2024",
+      revisionNo: "1",
+      description: "Updated compensation and benefits clause",
+      nameAndDesignation: "Sarah Uwimana, Director of HR",
+      signature: "SU",
+    },
+  ],
+  2: [
+    {
+      date: "10-Feb-2024",
+      revisionNo: "0",
+      description: "Initial issue of non-disclosure agreement",
+      nameAndDesignation: "Marie Claire Nsengimana, Legal Officer",
+      signature: "MCN",
+    },
+  ],
+  3: [
+    {
+      date: "01-Apr-2024",
+      revisionNo: "0",
+      description: "Draft performance review for Q1",
+      nameAndDesignation: "David Niyonkuru, Youth Fellow",
+      signature: "",
+    },
+    {
+      date: "15-Apr-2024",
+      revisionNo: "1",
+      description: "Manager comments added; pending final approval",
+      nameAndDesignation: "Grace Uwimana, Program Manager",
+      signature: "",
+    },
+  ],
+  4: [
+    {
+      date: "20-May-2023",
+      revisionNo: "0",
+      description: "Copy of national ID on file",
+      nameAndDesignation: "Grace Mukamana, HR Coordinator",
+      signature: "GM",
+    },
+  ],
+  5: [
+    {
+      date: "12-Mar-2024",
+      revisionNo: "0",
+      description: "Work permit document uploaded",
+      nameAndDesignation: "Emmanuel Nshimiyimana, Employee",
+      signature: "EN",
+    },
+    {
+      date: "10-Sep-2024",
+      revisionNo: "1",
+      description: "Renewal documentation attached",
+      nameAndDesignation: "Jean Baptiste Mukamana, HR Manager",
+      signature: "JBM",
+    },
+  ],
+};
 
-export type LeaveStatus = "Available" | "Pending"
-export type LeaveUnit = "days" | "hours"
+export type LeaveStatus = "Available" | "Pending";
+export type LeaveUnit = "days" | "hours";
 
 // PROFILE DUMMY
 export interface EmployeeRecord {
-    id: string
-    name: string
-    title: string
-    department: string
-    status: string
-    hireDate: string
-    workPhone: string
-    workEmail: string
-    officeLocation: string
-    avatar: string
+  id: string;
+  name: string;
+  title: string;
+  department: string;
+  status: string;
+  hireDate: string;
+  workPhone: string;
+  workEmail: string;
+  officeLocation: string;
+  avatar: string;
 }
 
 export interface LeaveBase {
-    id: number
-    name: string
-    status: LeaveStatus
-    unit: LeaveUnit
+  id: number;
+  name: string;
+  status: LeaveStatus;
+  unit: LeaveUnit;
 }
 
 export interface LeaveWithBalance extends LeaveBase {
-    available: number
-    pending: number
-    estimated: number
+  available: number;
+  pending: number;
+  estimated: number;
 }
 
 export interface LeaveWithRequest extends LeaveBase {
-    leaveFrom: string
-    leaveTo: string
-    pending: number
-    type: string
+  leaveFrom: string;
+  leaveTo: string;
+  pending: number;
+  type: string;
 }
 
-export type LeaveRecord = LeaveWithBalance | LeaveWithRequest
+export type LeaveRecord = LeaveWithBalance | LeaveWithRequest;
 
 export interface EmployeeLeaveData {
-    employee: EmployeeRecord
-    leave: LeaveRecord[]
+  employee: EmployeeRecord;
+  leave: LeaveRecord[];
 }
 
 export const profileData: EmployeeLeaveData = {
-    employee: {
-        id: "#2277701",
-        name: "Veronica Tex",
-        title: "Chief Science Officer",
-        department: "Technical Department",
-        status: "Active",
-        hireDate: "September 4, 2012",
-        workPhone: "(959) 308-4411",
-        workEmail: "Albert.Einstein@closeboard.com",
-        officeLocation: "Cincinnati, OH 45202 United States",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop",
+  employee: {
+    id: "#2277701",
+    name: "Veronica Tex",
+    title: "Chief Science Officer",
+    department: "Technical Department",
+    status: "Active",
+    hireDate: "September 4, 2012",
+    workPhone: "(959) 308-4411",
+    workEmail: "Albert.Einstein@closeboard.com",
+    officeLocation: "Cincinnati, OH 45202 United States",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop",
+  },
+  leave: [
+    {
+      id: 1,
+      name: "Standard Leave",
+      status: "Available",
+      available: 180.46,
+      pending: 10.57,
+      estimated: 18.57,
+      unit: "days",
     },
-    leave: [
-        {
-            id: 1,
-            name: "Standard Leave",
-            status: "Available",
-            available: 180.46,
-            pending: 10.57,
-            estimated: 18.57,
-            unit: "days",
-        },
-        {
-            id: 2,
-            name: "Educational Leave",
-            status: "Available",
-            available: 51.05,
-            pending: 1,
-            estimated: 52.05,
-            unit: "days",
-        },
-        {
-            id: 3,
-            name: "Bereavement Leave",
-            status: "Available",
-            available: 3,
-            pending: 0,
-            estimated: 8,
-            unit: "days",
-        },
-        {
-            id: 4,
-            name: "Paternity Leave",
-            status: "Available",
-            available: 2,
-            pending: 0,
-            estimated: 32,
-            unit: "days",
-        },
-        {
-            id: 5,
-            name: "Approved Attendance",
-            status: "Available",
-            available: 2000,
-            pending: 0,
-            estimated: 2000,
-            unit: "hours",
-        },
-        {
-            id: 6,
-            name: "Pending",
-            status: "Pending",
-            leaveFrom: "Feb 12, 2020",
-            leaveTo: "Feb 13, 2020",
-            pending: 1,
-            type: "Standard Leave",
-            unit: "days",
-        },
-    ],
-}
-
+    {
+      id: 2,
+      name: "Educational Leave",
+      status: "Available",
+      available: 51.05,
+      pending: 1,
+      estimated: 52.05,
+      unit: "days",
+    },
+    {
+      id: 3,
+      name: "Bereavement Leave",
+      status: "Available",
+      available: 3,
+      pending: 0,
+      estimated: 8,
+      unit: "days",
+    },
+    {
+      id: 4,
+      name: "Paternity Leave",
+      status: "Available",
+      available: 2,
+      pending: 0,
+      estimated: 32,
+      unit: "days",
+    },
+    {
+      id: 5,
+      name: "Approved Attendance",
+      status: "Available",
+      available: 2000,
+      pending: 0,
+      estimated: 2000,
+      unit: "hours",
+    },
+    {
+      id: 6,
+      name: "Pending",
+      status: "Pending",
+      leaveFrom: "Feb 12, 2020",
+      leaveTo: "Feb 13, 2020",
+      pending: 1,
+      type: "Standard Leave",
+      unit: "days",
+    },
+  ],
+};
 
 export const leaveRequests = [
-    {
-        id: 1,
-        employeeId: "GZ001",
-        name: "Jean Baptiste Mukamana",
-        department: "Human Resources",
-        leaveType: "Annual Leave",
-        startDate: "2024-12-20",
-        endDate: "2024-12-27",
-        days: 6,
-        status: "pending",
-        appliedDate: "2024-12-08",
-        reason: "Family vacation during Christmas holidays",
-        approver: "Sarah Uwimana",
-        coveringEmployee: "Marie Claire Nsengimana"
-    },
-    {
-        id: 2,
-        employeeId: "GZ002",
-        name: "Marie Claire Nsengimana",
-        department: "Agriculture",
-        leaveType: "Sick Leave",
-        startDate: "2024-12-12",
-        endDate: "2024-12-13",
-        days: 2,
-        status: "approved",
-        appliedDate: "2024-12-11",
-        reason: "Medical appointment and recovery",
-        approver: "David Nshimiyimana",
-        coveringEmployee: "Grace Mukamana"
-    },
-    {
-        id: 3,
-        employeeId: "GZ003",
-        name: "David Niyonkuru",
-        department: "Fellowship Program",
-        leaveType: "Study Leave",
-        startDate: "2024-12-15",
-        endDate: "2024-12-19",
-        days: 5,
-        status: "approved",
-        appliedDate: "2024-12-05",
-        reason: "University examinations",
-        approver: "Grace Uwimana",
-        coveringEmployee: "Emmanuel Nshimiyimana"
-    },
-    {
-        id: 4,
-        employeeId: "GZ004",
-        name: "Grace Mukamana",
-        department: "Environment",
-        leaveType: "Maternity Leave",
-        startDate: "2025-01-15",
-        endDate: "2025-04-15",
-        days: 90,
-        status: "approved",
-        appliedDate: "2024-11-20",
-        reason: "Maternity leave for childbirth",
-        approver: "Sarah Uwimana",
-        coveringEmployee: "Marie Claire Nsengimana"
-    }
-]
+  {
+    id: 1,
+    employeeId: "GZ001",
+    name: "Jean Baptiste Mukamana",
+    department: "Human Resources",
+    leaveType: "Annual Leave",
+    startDate: "2024-12-20",
+    endDate: "2024-12-27",
+    days: 6,
+    status: "pending",
+    appliedDate: "2024-12-08",
+    reason: "Family vacation during Christmas holidays",
+    approver: "Sarah Uwimana",
+    coveringEmployee: "Marie Claire Nsengimana",
+  },
+  {
+    id: 2,
+    employeeId: "GZ002",
+    name: "Marie Claire Nsengimana",
+    department: "Agriculture",
+    leaveType: "Sick Leave",
+    startDate: "2024-12-12",
+    endDate: "2024-12-13",
+    days: 2,
+    status: "approved",
+    appliedDate: "2024-12-11",
+    reason: "Medical appointment and recovery",
+    approver: "David Nshimiyimana",
+    coveringEmployee: "Grace Mukamana",
+  },
+  {
+    id: 3,
+    employeeId: "GZ003",
+    name: "David Niyonkuru",
+    department: "Fellowship Program",
+    leaveType: "Study Leave",
+    startDate: "2024-12-15",
+    endDate: "2024-12-19",
+    days: 5,
+    status: "approved",
+    appliedDate: "2024-12-05",
+    reason: "University examinations",
+    approver: "Grace Uwimana",
+    coveringEmployee: "Emmanuel Nshimiyimana",
+  },
+  {
+    id: 4,
+    employeeId: "GZ004",
+    name: "Grace Mukamana",
+    department: "Environment",
+    leaveType: "Maternity Leave",
+    startDate: "2025-01-15",
+    endDate: "2025-04-15",
+    days: 90,
+    status: "approved",
+    appliedDate: "2024-11-20",
+    reason: "Maternity leave for childbirth",
+    approver: "Sarah Uwimana",
+    coveringEmployee: "Marie Claire Nsengimana",
+  },
+];
 
 // DEPARTMENT CHART INITIAL EMPLOYEE
 
 export interface Employee {
-    id: string
-    name: string
-    role: string
-    avatar?: string
-    teamCount?: number
-    parentId?: string
-    color?: string
-    email?: string
-    phone?: string
-    department?: string
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+  teamCount?: number;
+  parentId?: string;
+  color?: string;
+  email?: string;
+  phone?: string;
+  department?: string;
 }
 
 export const initial_employee: Employee[] = [
-    {
-        id: '1',
-        name: 'George Brown',
-        role: 'CEO',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop',
-        teamCount: 1,
-        color: 'border-purple-500',
-        email: 'george.brown@company.com',
-        phone: '+1 (555) 000-1111',
-        department: 'Executive',
-    },
-    {
-        id: '2',
-        name: 'Emma Johnson',
-        role: 'PM',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop',
-        teamCount: 3,
-        parentId: '1',
-        color: 'border-blue-500',
-        email: 'emma.johnson@company.com',
-        phone: '+1 (555) 000-2222',
-        department: 'Product Management',
-    },
-    {
-        id: '3',
-        name: 'Dominic Scott',
-        role: 'PM',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop',
-        teamCount: 2,
-        parentId: '1',
-        color: 'border-blue-500',
-    },
-    {
-        id: '4',
-        name: 'Henry Singh',
-        role: 'PM',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop',
-        teamCount: 5,
-        parentId: '1',
-        color: 'border-blue-500',
-    },
-    {
-        id: '5',
-        name: 'Eagle Nebula Team',
-        role: 'Team',
-        teamCount: 3,
-        parentId: '2',
-        color: 'border-slate-300',
-    },
-    {
-        id: '6',
-        name: 'Lion Nebula Team',
-        role: 'Team',
-        teamCount: 4,
-        parentId: '2',
-        color: 'border-slate-300',
-    },
-    {
-        id: '7',
-        name: 'Hypernova Team',
-        role: 'Team',
-        teamCount: 6,
-        parentId: '2',
-        color: 'border-slate-300',
-    },
-    {
-        id: '8',
-        name: 'Solaris Team',
-        role: 'Team',
-        teamCount: 1,
-        parentId: '3',
-        color: 'border-slate-300',
-    },
-    {
-        id: '9',
-        name: 'Uranus Team',
-        role: 'Team',
-        teamCount: 2,
-        parentId: '3',
-        color: 'border-slate-300',
-    },
-    {
-        id: '10',
-        name: 'Orion Team',
-        role: 'Team',
-        teamCount: 2,
-        parentId: '3',
-        color: 'border-slate-300',
-    },
-    {
-        id: '11',
-        name: 'Phoenix Team',
-        role: 'Team',
-        teamCount: 3,
-        parentId: '4',
-        color: 'border-slate-300',
-    },
-    {
-        id: '12',
-        name: 'Sirius Team',
-        role: 'Team',
-        teamCount: 3,
-        parentId: '4',
-        color: 'border-slate-300',
-    },
-    {
-        id: '13',
-        name: 'Supernova Team',
-        role: 'Team',
-        teamCount: 3,
-        parentId: '4',
-        color: 'border-slate-300',
-    },
-    {
-        id: '14',
-        name: 'Hypernova Team',
-        role: 'Team',
-        teamCount: 4,
-        parentId: '4',
-        color: 'border-slate-300',
-    },
-]
-
+  {
+    id: "1",
+    name: "George Brown",
+    role: "CEO",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop",
+    teamCount: 1,
+    color: "border-purple-500",
+    email: "george.brown@company.com",
+    phone: "+1 (555) 000-1111",
+    department: "Executive",
+  },
+  {
+    id: "2",
+    name: "Emma Johnson",
+    role: "PM",
+    avatar:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop",
+    teamCount: 3,
+    parentId: "1",
+    color: "border-blue-500",
+    email: "emma.johnson@company.com",
+    phone: "+1 (555) 000-2222",
+    department: "Product Management",
+  },
+  {
+    id: "3",
+    name: "Dominic Scott",
+    role: "PM",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop",
+    teamCount: 2,
+    parentId: "1",
+    color: "border-blue-500",
+  },
+  {
+    id: "4",
+    name: "Henry Singh",
+    role: "PM",
+    avatar:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop",
+    teamCount: 5,
+    parentId: "1",
+    color: "border-blue-500",
+  },
+  {
+    id: "5",
+    name: "Eagle Nebula Team",
+    role: "Team",
+    teamCount: 3,
+    parentId: "2",
+    color: "border-slate-300",
+  },
+  {
+    id: "6",
+    name: "Lion Nebula Team",
+    role: "Team",
+    teamCount: 4,
+    parentId: "2",
+    color: "border-slate-300",
+  },
+  {
+    id: "7",
+    name: "Hypernova Team",
+    role: "Team",
+    teamCount: 6,
+    parentId: "2",
+    color: "border-slate-300",
+  },
+  {
+    id: "8",
+    name: "Solaris Team",
+    role: "Team",
+    teamCount: 1,
+    parentId: "3",
+    color: "border-slate-300",
+  },
+  {
+    id: "9",
+    name: "Uranus Team",
+    role: "Team",
+    teamCount: 2,
+    parentId: "3",
+    color: "border-slate-300",
+  },
+  {
+    id: "10",
+    name: "Orion Team",
+    role: "Team",
+    teamCount: 2,
+    parentId: "3",
+    color: "border-slate-300",
+  },
+  {
+    id: "11",
+    name: "Phoenix Team",
+    role: "Team",
+    teamCount: 3,
+    parentId: "4",
+    color: "border-slate-300",
+  },
+  {
+    id: "12",
+    name: "Sirius Team",
+    role: "Team",
+    teamCount: 3,
+    parentId: "4",
+    color: "border-slate-300",
+  },
+  {
+    id: "13",
+    name: "Supernova Team",
+    role: "Team",
+    teamCount: 3,
+    parentId: "4",
+    color: "border-slate-300",
+  },
+  {
+    id: "14",
+    name: "Hypernova Team",
+    role: "Team",
+    teamCount: 4,
+    parentId: "4",
+    color: "border-slate-300",
+  },
+];
 
 //EMPLOYEE COMPONENT DATA
 export const employees_table_data = [
-    {
-        id: 1,
-        employeeId: "GZ001",
-        name: "Jean Baptiste Mukamana",
-        email: "jean.mukamana@ganzafrica.org",
-        phone: "+250 788 123 456",
-        position: "HR Manager",
-        department: "Human Resources",
-        status: "active",
-        joinDate: "2024-01-15",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$45,000",
-        avatar: "",
-        skills: ["HR Management", "Recruitment", "Employee Relations"],
-        emergencyContact: {
-            name: "Marie Mukamana",
-            relationship: "Spouse",
-            phone: "+250 788 654 321"
-        },
-        level: 2
+  {
+    id: 1,
+    employeeId: "GZ001",
+    name: "Jean Baptiste Mukamana",
+    email: "jean.mukamana@ganzafrica.org",
+    phone: "+250 788 123 456",
+    position: "HR Manager",
+    department: "Human Resources",
+    status: "active",
+    joinDate: "2024-01-15",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$45,000",
+    avatar: "",
+    skills: ["HR Management", "Recruitment", "Employee Relations"],
+    emergencyContact: {
+      name: "Marie Mukamana",
+      relationship: "Spouse",
+      phone: "+250 788 654 321",
     },
-    {
-        id: 2,
-        employeeId: "GZ002",
-        name: "Marie Claire Nsengimana",
-        email: "marie.nsengimana@ganzafrica.org",
-        phone: "+250 788 234 567",
-        position: "Agricultural Specialist",
-        department: "Agriculture",
-        status: "active",
-        joinDate: "2024-02-01",
-        location: "Musanze, Rwanda",
-        country: "Rwanda",
-        manager: "David Nshimiyimana",
-        managerId: "GZ006",
-        salary: "$38,000",
-        avatar: "",
-        skills: ["Sustainable Farming", "Crop Management", "Research"],
-        emergencyContact: {
-            name: "Paul Nsengimana",
-            relationship: "Father",
-            phone: "+250 788 765 432"
-        },
-        level: 3
+    level: 2,
+  },
+  {
+    id: 2,
+    employeeId: "GZ002",
+    name: "Marie Claire Nsengimana",
+    email: "marie.nsengimana@ganzafrica.org",
+    phone: "+250 788 234 567",
+    position: "Agricultural Specialist",
+    department: "Agriculture",
+    status: "active",
+    joinDate: "2024-02-01",
+    location: "Musanze, Rwanda",
+    country: "Rwanda",
+    manager: "David Nshimiyimana",
+    managerId: "GZ006",
+    salary: "$38,000",
+    avatar: "",
+    skills: ["Sustainable Farming", "Crop Management", "Research"],
+    emergencyContact: {
+      name: "Paul Nsengimana",
+      relationship: "Father",
+      phone: "+250 788 765 432",
     },
-    {
-        id: 3,
-        employeeId: "GZ003",
-        name: "David Niyonkuru",
-        email: "david.niyonkuru@ganzafrica.org",
-        phone: "+250 788 345 678",
-        position: "Youth Fellow",
-        department: "Fellowship Program",
-        status: "active",
-        joinDate: "2024-03-01",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Grace Uwimana",
-        managerId: "GZ007",
-        salary: "Stipend",
-        avatar: "",
-        skills: ["Community Engagement", "Project Coordination", "Research"],
-        emergencyContact: {
-            name: "Agnes Niyonkuru",
-            relationship: "Mother",
-            phone: "+250 788 876 543"
-        },
-        level: 4
+    level: 3,
+  },
+  {
+    id: 3,
+    employeeId: "GZ003",
+    name: "David Niyonkuru",
+    email: "david.niyonkuru@ganzafrica.org",
+    phone: "+250 788 345 678",
+    position: "Youth Fellow",
+    department: "Fellowship Program",
+    status: "active",
+    joinDate: "2024-03-01",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Grace Uwimana",
+    managerId: "GZ007",
+    salary: "Stipend",
+    avatar: "",
+    skills: ["Community Engagement", "Project Coordination", "Research"],
+    emergencyContact: {
+      name: "Agnes Niyonkuru",
+      relationship: "Mother",
+      phone: "+250 788 876 543",
     },
-    {
-        id: 4,
-        employeeId: "GZ004",
-        name: "Grace Mukamana",
-        email: "grace.mukamana@ganzafrica.org",
-        phone: "+250 788 456 789",
-        position: "Environmental Consultant",
-        department: "Environment",
-        status: "on_leave",
-        joinDate: "2023-06-15",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$42,000",
-        avatar: "",
-        skills: ["Environmental Assessment", "Policy Analysis", "Sustainability"],
-        emergencyContact: {
-            name: "John Mukamana",
-            relationship: "Brother",
-            phone: "+250 788 987 654"
-        },
-        level: 2
+    level: 4,
+  },
+  {
+    id: 4,
+    employeeId: "GZ004",
+    name: "Grace Mukamana",
+    email: "grace.mukamana@ganzafrica.org",
+    phone: "+250 788 456 789",
+    position: "Environmental Consultant",
+    department: "Environment",
+    status: "on_leave",
+    joinDate: "2023-06-15",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$42,000",
+    avatar: "",
+    skills: ["Environmental Assessment", "Policy Analysis", "Sustainability"],
+    emergencyContact: {
+      name: "John Mukamana",
+      relationship: "Brother",
+      phone: "+250 788 987 654",
     },
-    {
-        id: 5,
-        employeeId: "GZ005",
-        name: "Emmanuel Nshimiyimana",
-        email: "emmanuel.nshimiyimana@ganzafrica.org",
-        phone: "+250 788 567 890",
-        position: "Land Management Coordinator",
-        department: "Land Management",
-        status: "active",
-        joinDate: "2023-01-10",
-        location: "Huye, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$40,000",
-        avatar: "",
-        skills: ["GIS", "Land Planning", "Community Relations"],
-        emergencyContact: {
-            name: "Christine Nshimiyimana",
-            relationship: "Wife",
-            phone: "+250 788 098 765"
-        },
-        level: 2
+    level: 2,
+  },
+  {
+    id: 5,
+    employeeId: "GZ005",
+    name: "Emmanuel Nshimiyimana",
+    email: "emmanuel.nshimiyimana@ganzafrica.org",
+    phone: "+250 788 567 890",
+    position: "Land Management Coordinator",
+    department: "Land Management",
+    status: "active",
+    joinDate: "2023-01-10",
+    location: "Huye, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$40,000",
+    avatar: "",
+    skills: ["GIS", "Land Planning", "Community Relations"],
+    emergencyContact: {
+      name: "Christine Nshimiyimana",
+      relationship: "Wife",
+      phone: "+250 788 098 765",
     },
-    {
-        id: 6,
-        employeeId: "GZ006",
-        name: "David Nshimiyimana",
-        email: "david.nshimiyimana@ganzafrica.org",
-        phone: "+250 788 111 222",
-        position: "Agriculture Director",
-        department: "Agriculture",
-        status: "active",
-        joinDate: "2022-08-01",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$55,000",
-        avatar: "",
-        skills: ["Agricultural Leadership", "Strategic Planning", "Team Management"],
-        emergencyContact: {
-            name: "Grace Nshimiyimana",
-            relationship: "Wife",
-            phone: "+250 788 333 444"
-        },
-        level: 1
+    level: 2,
+  },
+  {
+    id: 6,
+    employeeId: "GZ006",
+    name: "David Nshimiyimana",
+    email: "david.nshimiyimana@ganzafrica.org",
+    phone: "+250 788 111 222",
+    position: "Agriculture Director",
+    department: "Agriculture",
+    status: "active",
+    joinDate: "2022-08-01",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$55,000",
+    avatar: "",
+    skills: ["Agricultural Leadership", "Strategic Planning", "Team Management"],
+    emergencyContact: {
+      name: "Grace Nshimiyimana",
+      relationship: "Wife",
+      phone: "+250 788 333 444",
     },
-    {
-        id: 7,
-        employeeId: "GZ007",
-        name: "Grace Uwimana",
-        email: "grace.uwimana@ganzafrica.org",
-        phone: "+250 788 555 666",
-        position: "Fellowship Director",
-        department: "Fellowship Program",
-        status: "active",
-        joinDate: "2022-05-15",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$52,000",
-        avatar: "",
-        skills: ["Youth Development", "Program Management", "Strategic Leadership"],
-        emergencyContact: {
-            name: "Jean Uwimana",
-            relationship: "Husband",
-            phone: "+250 788 777 888"
-        },
-        level: 1
+    level: 1,
+  },
+  {
+    id: 7,
+    employeeId: "GZ007",
+    name: "Grace Uwimana",
+    email: "grace.uwimana@ganzafrica.org",
+    phone: "+250 788 555 666",
+    position: "Fellowship Director",
+    department: "Fellowship Program",
+    status: "active",
+    joinDate: "2022-05-15",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$52,000",
+    avatar: "",
+    skills: ["Youth Development", "Program Management", "Strategic Leadership"],
+    emergencyContact: {
+      name: "Jean Uwimana",
+      relationship: "Husband",
+      phone: "+250 788 777 888",
     },
-    {
-        id: 8,
-        employeeId: "GZ000",
-        name: "Sarah Uwimana",
-        email: "sarah.uwimana@ganzafrica.org",
-        phone: "+250 788 999 000",
-        position: "Executive Director",
-        department: "Executive",
-        status: "active",
-        joinDate: "2021-01-01",
-        location: "Kigali, Rwanda",
-        country: "Rwanda",
-        manager: "Board of Directors",
-        managerId: null,
-        salary: "$75,000",
-        avatar: "",
-        skills: ["Strategic Leadership", "Organizational Development", "Partnership Management"],
-        emergencyContact: {
-            name: "Paul Uwimana",
-            relationship: "Spouse",
-            phone: "+250 788 111 000"
-        },
-        level: 0
+    level: 1,
+  },
+  {
+    id: 8,
+    employeeId: "GZ000",
+    name: "Sarah Uwimana",
+    email: "sarah.uwimana@ganzafrica.org",
+    phone: "+250 788 999 000",
+    position: "Executive Director",
+    department: "Executive",
+    status: "active",
+    joinDate: "2021-01-01",
+    location: "Kigali, Rwanda",
+    country: "Rwanda",
+    manager: "Board of Directors",
+    managerId: null,
+    salary: "$75,000",
+    avatar: "",
+    skills: ["Strategic Leadership", "Organizational Development", "Partnership Management"],
+    emergencyContact: {
+      name: "Paul Uwimana",
+      relationship: "Spouse",
+      phone: "+250 788 111 000",
     },
-    {
-        id: 9,
-        employeeId: "GZ008",
-        name: "Alice Mukamana",
-        email: "alice.mukamana@ganzafrica.org",
-        phone: "+254 788 123 456",
-        position: "Regional Coordinator",
-        department: "East Africa Operations",
-        status: "active",
-        joinDate: "2023-09-01",
-        location: "Nairobi, Kenya",
-        country: "Kenya",
-        manager: "Sarah Uwimana",
-        managerId: "GZ000",
-        salary: "$48,000",
-        avatar: "",
-        skills: ["Regional Management", "Cross-border Operations", "Policy Development"],
-        emergencyContact: {
-            name: "Peter Mukamana",
-            relationship: "Brother",
-            phone: "+254 788 654 321"
-        },
-        level: 1
+    level: 0,
+  },
+  {
+    id: 9,
+    employeeId: "GZ008",
+    name: "Alice Mukamana",
+    email: "alice.mukamana@ganzafrica.org",
+    phone: "+254 788 123 456",
+    position: "Regional Coordinator",
+    department: "East Africa Operations",
+    status: "active",
+    joinDate: "2023-09-01",
+    location: "Nairobi, Kenya",
+    country: "Kenya",
+    manager: "Sarah Uwimana",
+    managerId: "GZ000",
+    salary: "$48,000",
+    avatar: "",
+    skills: ["Regional Management", "Cross-border Operations", "Policy Development"],
+    emergencyContact: {
+      name: "Peter Mukamana",
+      relationship: "Brother",
+      phone: "+254 788 654 321",
     },
-    {
-        id: 10,
-        employeeId: "GZ009",
-        name: "Samuel Nkomo",
-        email: "samuel.nkomo@ganzafrica.org",
-        phone: "+27 82 123 4567",
-        position: "Research Analyst",
-        department: "Research & Development",
-        status: "active",
-        joinDate: "2024-04-01",
-        location: "Cape Town, South Africa",
-        country: "South Africa",
-        manager: "Alice Mukamana",
-        managerId: "GZ008",
-        salary: "$35,000",
-        avatar: "",
-        skills: ["Data Analysis", "Research Methodology", "Report Writing"],
-        emergencyContact: {
-            name: "Mary Nkomo",
-            relationship: "Mother",
-            phone: "+27 82 765 4321"
-        },
-        level: 2
-    }
-]
+    level: 1,
+  },
+  {
+    id: 10,
+    employeeId: "GZ009",
+    name: "Samuel Nkomo",
+    email: "samuel.nkomo@ganzafrica.org",
+    phone: "+27 82 123 4567",
+    position: "Research Analyst",
+    department: "Research & Development",
+    status: "active",
+    joinDate: "2024-04-01",
+    location: "Cape Town, South Africa",
+    country: "South Africa",
+    manager: "Alice Mukamana",
+    managerId: "GZ008",
+    salary: "$35,000",
+    avatar: "",
+    skills: ["Data Analysis", "Research Methodology", "Report Writing"],
+    emergencyContact: {
+      name: "Mary Nkomo",
+      relationship: "Mother",
+      phone: "+27 82 765 4321",
+    },
+    level: 2,
+  },
+];
 
 export const departmentStats = [
-    { name: "Agriculture", count: 25, active: 23, onLeave: 2 },
-    { name: "Environment", count: 18, active: 16, onLeave: 2 },
-    { name: "Land Management", count: 12, active: 11, onLeave: 1 },
-    { name: "Human Resources", count: 5, active: 5, onLeave: 0 },
-    { name: "Administration", count: 8, active: 7, onLeave: 1 },
-    { name: "Fellowship Program", count: 15, active: 15, onLeave: 0 },
-    { name: "East Africa Operations", count: 8, active: 8, onLeave: 0 },
-    { name: "Research & Development", count: 6, active: 6, onLeave: 0 }
-]
+  { name: "Agriculture", count: 25, active: 23, onLeave: 2 },
+  { name: "Environment", count: 18, active: 16, onLeave: 2 },
+  { name: "Land Management", count: 12, active: 11, onLeave: 1 },
+  { name: "Human Resources", count: 5, active: 5, onLeave: 0 },
+  { name: "Administration", count: 8, active: 7, onLeave: 1 },
+  { name: "Fellowship Program", count: 15, active: 15, onLeave: 0 },
+  { name: "East Africa Operations", count: 8, active: 8, onLeave: 0 },
+  { name: "Research & Development", count: 6, active: 6, onLeave: 0 },
+];
 
 export interface initialEmployee {
-    id: string
-    name: string
-    role: string
-    avatar?: string
-    teamCount?: number
-    parentId?: string
-    color?: string
-    email?: string
-    phone?: string
-    department?: string
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+  teamCount?: number;
+  parentId?: string;
+  color?: string;
+  email?: string;
+  phone?: string;
+  department?: string;
 }
 
 export const INITIAL_EMPLOYEES: initialEmployee[] = [
-    {
-        id: '1',
-        name: 'George Brown',
-        role: 'CEO',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop',
-        teamCount: 1,
-        color: 'border-purple-500',
-        email: 'george.brown@company.com',
-        phone: '+1 (555) 000-1111',
-        department: 'Executive',
-    },
-    {
-        id: '2',
-        name: 'Emma Johnson',
-        role: 'PM',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop',
-        teamCount: 3,
-        parentId: '1',
-        color: 'border-blue-500',
-        email: 'emma.johnson@company.com',
-        phone: '+1 (555) 000-2222',
-        department: 'Product Management',
-    },
-    {
-        id: '3',
-        name: 'Dominic Scott',
-        role: 'PM',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop',
-        teamCount: 2,
-        parentId: '1',
-        color: 'border-blue-500',
-    },
-    {
-        id: '4',
-        name: 'Henry Singh',
-        role: 'PM',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop',
-        teamCount: 5,
-        parentId: '1',
-        color: 'border-blue-500',
-    },
-    {
-        id: '5',
-        name: 'Eagle Nebula Team',
-        role: 'Team',
-        teamCount: 3,
-        parentId: '2',
-        color: 'border-slate-300',
-    },
-    {
-        id: '6',
-        name: 'Lion Nebula Team',
-        role: 'Team',
-        teamCount: 4,
-        parentId: '2',
-        color: 'border-slate-300',
-    },
-    {
-        id: '7',
-        name: 'Hypernova Team',
-        role: 'Team',
-        teamCount: 6,
-        parentId: '2',
-        color: 'border-slate-300',
-    },
-    {
-        id: '8',
-        name: 'Solaris Team',
-        role: 'Team',
-        teamCount: 1,
-        parentId: '3',
-        color: 'border-slate-300',
-    },
-    {
-        id: '9',
-        name: 'Uranus Team',
-        role: 'Team',
-        teamCount: 2,
-        parentId: '3',
-        color: 'border-slate-300',
-    },
-    {
-        id: '10',
-        name: 'Orion Team',
-        role: 'Team',
-        teamCount: 2,
-        parentId: '3',
-        color: 'border-slate-300',
-    },
-    {
-        id: '11',
-        name: 'Phoenix Team',
-        role: 'Team',
-        teamCount: 3,
-        parentId: '4',
-        color: 'border-slate-300',
-    },
-    {
-        id: '12',
-        name: 'Sirius Team',
-        role: 'Team',
-        teamCount: 3,
-        parentId: '4',
-        color: 'border-slate-300',
-    },
-    {
-        id: '13',
-        name: 'Supernova Team',
-        role: 'Team',
-        teamCount: 3,
-        parentId: '4',
-        color: 'border-slate-300',
-    },
-    {
-        id: '14',
-        name: 'Hypernova Team',
-        role: 'Team',
-        teamCount: 4,
-        parentId: '4',
-        color: 'border-slate-300',
-    },
-]
+  {
+    id: "1",
+    name: "George Brown",
+    role: "CEO",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop",
+    teamCount: 1,
+    color: "border-purple-500",
+    email: "george.brown@company.com",
+    phone: "+1 (555) 000-1111",
+    department: "Executive",
+  },
+  {
+    id: "2",
+    name: "Emma Johnson",
+    role: "PM",
+    avatar:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop",
+    teamCount: 3,
+    parentId: "1",
+    color: "border-blue-500",
+    email: "emma.johnson@company.com",
+    phone: "+1 (555) 000-2222",
+    department: "Product Management",
+  },
+  {
+    id: "3",
+    name: "Dominic Scott",
+    role: "PM",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop",
+    teamCount: 2,
+    parentId: "1",
+    color: "border-blue-500",
+  },
+  {
+    id: "4",
+    name: "Henry Singh",
+    role: "PM",
+    avatar:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop",
+    teamCount: 5,
+    parentId: "1",
+    color: "border-blue-500",
+  },
+  {
+    id: "5",
+    name: "Eagle Nebula Team",
+    role: "Team",
+    teamCount: 3,
+    parentId: "2",
+    color: "border-slate-300",
+  },
+  {
+    id: "6",
+    name: "Lion Nebula Team",
+    role: "Team",
+    teamCount: 4,
+    parentId: "2",
+    color: "border-slate-300",
+  },
+  {
+    id: "7",
+    name: "Hypernova Team",
+    role: "Team",
+    teamCount: 6,
+    parentId: "2",
+    color: "border-slate-300",
+  },
+  {
+    id: "8",
+    name: "Solaris Team",
+    role: "Team",
+    teamCount: 1,
+    parentId: "3",
+    color: "border-slate-300",
+  },
+  {
+    id: "9",
+    name: "Uranus Team",
+    role: "Team",
+    teamCount: 2,
+    parentId: "3",
+    color: "border-slate-300",
+  },
+  {
+    id: "10",
+    name: "Orion Team",
+    role: "Team",
+    teamCount: 2,
+    parentId: "3",
+    color: "border-slate-300",
+  },
+  {
+    id: "11",
+    name: "Phoenix Team",
+    role: "Team",
+    teamCount: 3,
+    parentId: "4",
+    color: "border-slate-300",
+  },
+  {
+    id: "12",
+    name: "Sirius Team",
+    role: "Team",
+    teamCount: 3,
+    parentId: "4",
+    color: "border-slate-300",
+  },
+  {
+    id: "13",
+    name: "Supernova Team",
+    role: "Team",
+    teamCount: 3,
+    parentId: "4",
+    color: "border-slate-300",
+  },
+  {
+    id: "14",
+    name: "Hypernova Team",
+    role: "Team",
+    teamCount: 4,
+    parentId: "4",
+    color: "border-slate-300",
+  },
+];

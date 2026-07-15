@@ -357,17 +357,13 @@ export const alumniApi = {
     return response.data;
   },
 
-  getAll: async (
-    params: AlumniQueryParams = {},
-  ): Promise<AlumniListResponse> => {
+  getAll: async (params: AlumniQueryParams = {}): Promise<AlumniListResponse> => {
     const queryParams = new URLSearchParams();
 
     if (params.page) queryParams.set("page", params.page.toString());
     if (params.limit) queryParams.set("limit", params.limit.toString());
-    if (params.country && params.country !== "all")
-      queryParams.set("country", params.country);
-    if (params.industry && params.industry !== "all")
-      queryParams.set("industry", params.industry);
+    if (params.country && params.country !== "all") queryParams.set("country", params.country);
+    if (params.industry && params.industry !== "all") queryParams.set("industry", params.industry);
     if (params.graduationYear && params.graduationYear !== "all")
       queryParams.set("graduationYear", params.graduationYear);
     if (params.search) queryParams.set("search", params.search);
@@ -384,9 +380,7 @@ export const alumniApi = {
     return response.data;
   },
 
-  updateProfile: async (
-    data: UpdateProfileData,
-  ): Promise<{ profile: AlumniProfile }> => {
+  updateProfile: async (data: UpdateProfileData): Promise<{ profile: AlumniProfile }> => {
     const response = await apiClient.put("/alumni/profile", data);
     return response.data;
   },
@@ -399,9 +393,7 @@ export const mentorshipApi = {
     return response.data;
   },
 
-  getFellows: async (
-    params: FellowsQueryParams = {},
-  ): Promise<FellowsResponse> => {
+  getFellows: async (params: FellowsQueryParams = {}): Promise<FellowsResponse> => {
     const queryParams = new URLSearchParams();
 
     if (params.page) queryParams.set("page", params.page.toString());
@@ -410,17 +402,13 @@ export const mentorshipApi = {
     if (params.available) queryParams.set("available", "true");
 
     const queryString = queryParams.toString();
-    const url = queryString
-      ? `/mentorship/fellows?${queryString}`
-      : "/mentorship/fellows";
+    const url = queryString ? `/mentorship/fellows?${queryString}` : "/mentorship/fellows";
 
     const response = await apiClient.get(url);
     return response.data;
   },
 
-  addMentee: async (
-    fellowId: number,
-  ): Promise<{ message: string; mentorship: any }> => {
+  addMentee: async (fellowId: number): Promise<{ message: string; mentorship: any }> => {
     const response = await apiClient.post("/mentorship/add-mentee", {
       fellowId,
     });
@@ -432,9 +420,7 @@ export const mentorshipApi = {
     return response.data;
   },
 
-  getConnection: async (
-    id: number,
-  ): Promise<{ connection: ConnectionDetail }> => {
+  getConnection: async (id: number): Promise<{ connection: ConnectionDetail }> => {
     const response = await apiClient.get(`/mentorship/connections/${id}`);
     return response.data;
   },
@@ -452,10 +438,7 @@ export const mentorshipApi = {
     connectionId: number,
     data: { title: string; description?: string },
   ): Promise<{ message: string; goal: Goal }> => {
-    const response = await apiClient.post(
-      `/mentorship/connections/${connectionId}/goals`,
-      data,
-    );
+    const response = await apiClient.post(`/mentorship/connections/${connectionId}/goals`, data);
     return response.data;
   },
 
@@ -471,10 +454,7 @@ export const mentorshipApi = {
     return response.data;
   },
 
-  deleteGoal: async (
-    connectionId: number,
-    goalId: number,
-  ): Promise<{ message: string }> => {
+  deleteGoal: async (connectionId: number, goalId: number): Promise<{ message: string }> => {
     const response = await apiClient.delete(
       `/mentorship/connections/${connectionId}/goals/${goalId}`,
     );
@@ -491,10 +471,7 @@ export const mentorshipApi = {
       notes?: string;
     },
   ): Promise<{ message: string; session: Session }> => {
-    const response = await apiClient.post(
-      `/mentorship/connections/${connectionId}/sessions`,
-      data,
-    );
+    const response = await apiClient.post(`/mentorship/connections/${connectionId}/sessions`, data);
     return response.data;
   },
 
@@ -518,10 +495,7 @@ export const mentorshipApi = {
     return response.data;
   },
 
-  deleteSession: async (
-    connectionId: number,
-    sessionId: number,
-  ): Promise<{ message: string }> => {
+  deleteSession: async (connectionId: number, sessionId: number): Promise<{ message: string }> => {
     const response = await apiClient.delete(
       `/mentorship/connections/${connectionId}/sessions/${sessionId}`,
     );
@@ -536,20 +510,15 @@ export const achievementsApi = {
     return response.data;
   },
 
-  getAll: async (
-    params: AchievementsQueryParams = {},
-  ): Promise<AchievementsResponse> => {
+  getAll: async (params: AchievementsQueryParams = {}): Promise<AchievementsResponse> => {
     const queryParams = new URLSearchParams();
 
     if (params.page) queryParams.set("page", params.page.toString());
     if (params.limit) queryParams.set("limit", params.limit.toString());
     if (params.search) queryParams.set("search", params.search);
-    if (params.category && params.category !== "all")
-      queryParams.set("category", params.category);
-    if (params.type && params.type !== "all")
-      queryParams.set("type", params.type);
-    if (params.year && params.year !== "all")
-      queryParams.set("year", params.year);
+    if (params.category && params.category !== "all") queryParams.set("category", params.category);
+    if (params.type && params.type !== "all") queryParams.set("type", params.type);
+    if (params.year && params.year !== "all") queryParams.set("year", params.year);
     if (params.sort) queryParams.set("sort", params.sort);
 
     const queryString = queryParams.toString();
@@ -584,9 +553,7 @@ export const achievementsApi = {
     return response.data;
   },
 
-  toggleLike: async (
-    id: number,
-  ): Promise<{ liked: boolean; likes: number }> => {
+  toggleLike: async (id: number): Promise<{ liked: boolean; likes: number }> => {
     const response = await apiClient.post(`/achievements/${id}/like`);
     return response.data;
   },
@@ -601,13 +568,8 @@ export const achievementsApi = {
     return response.data;
   },
 
-  deleteComment: async (
-    achievementId: number,
-    commentId: number,
-  ): Promise<{ message: string }> => {
-    const response = await apiClient.delete(
-      `/achievements/${achievementId}/comments/${commentId}`,
-    );
+  deleteComment: async (achievementId: number, commentId: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/achievements/${achievementId}/comments/${commentId}`);
     return response.data;
   },
 };
@@ -630,15 +592,11 @@ export const jobsApi = {
     if (params.page) queryParams.set("page", params.page.toString());
     if (params.limit) queryParams.set("limit", params.limit.toString());
     if (params.search) queryParams.set("search", params.search);
-    if (params.sector && params.sector !== "all")
-      queryParams.set("sector", params.sector);
-    if (params.job_type && params.job_type !== "all")
-      queryParams.set("job_type", params.job_type);
-    if (params.location && params.location !== "all")
-      queryParams.set("location", params.location);
+    if (params.sector && params.sector !== "all") queryParams.set("sector", params.sector);
+    if (params.job_type && params.job_type !== "all") queryParams.set("job_type", params.job_type);
+    if (params.location && params.location !== "all") queryParams.set("location", params.location);
     if (params.remote) queryParams.set("remote", "true");
-    if (params.source && params.source !== "all")
-      queryParams.set("source", params.source);
+    if (params.source && params.source !== "all") queryParams.set("source", params.source);
     if (params.experience_level && params.experience_level !== "all")
       queryParams.set("experience_level", params.experience_level);
     if (params.sort) queryParams.set("sort", params.sort);
@@ -762,17 +720,13 @@ export const resourcesApi = {
     return response.data;
   },
 
-  getAll: async (
-    params: ResourcesQueryParams = {},
-  ): Promise<ResourcesResponse> => {
+  getAll: async (params: ResourcesQueryParams = {}): Promise<ResourcesResponse> => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.set("page", params.page.toString());
     if (params.limit) queryParams.set("limit", params.limit.toString());
     if (params.search) queryParams.set("search", params.search);
-    if (params.category && params.category !== "all")
-      queryParams.set("category", params.category);
-    if (params.type && params.type !== "all")
-      queryParams.set("type", params.type);
+    if (params.category && params.category !== "all") queryParams.set("category", params.category);
+    if (params.type && params.type !== "all") queryParams.set("type", params.type);
     if (params.sort) queryParams.set("sort", params.sort);
 
     const queryString = queryParams.toString();
@@ -787,9 +741,7 @@ export const resourcesApi = {
     return response.data;
   },
 
-  create: async (
-    data: CreateResourceData,
-  ): Promise<{ message: string; resource: Resource }> => {
+  create: async (data: CreateResourceData): Promise<{ message: string; resource: Resource }> => {
     const response = await apiClient.post("/resources", data);
     return response.data;
   },
@@ -807,16 +759,12 @@ export const resourcesApi = {
     return response.data;
   },
 
-  toggleLike: async (
-    id: number,
-  ): Promise<{ liked: boolean; likes: number }> => {
+  toggleLike: async (id: number): Promise<{ liked: boolean; likes: number }> => {
     const response = await apiClient.post(`/resources/${id}/like`);
     return response.data;
   },
 
-  trackDownload: async (
-    id: number,
-  ): Promise<{ message: string; downloads: number }> => {
+  trackDownload: async (id: number): Promise<{ message: string; downloads: number }> => {
     const response = await apiClient.post(`/resources/${id}/download`);
     return response.data;
   },
@@ -833,9 +781,7 @@ export const resourcesApi = {
     return response.data;
   },
 
-  toggleFeatured: async (
-    id: number,
-  ): Promise<{ message: string; isFeatured: boolean }> => {
+  toggleFeatured: async (id: number): Promise<{ message: string; isFeatured: boolean }> => {
     const response = await apiClient.put(`/resources/${id}/feature`);
     return response.data;
   },
@@ -918,12 +864,9 @@ export const eventsApi = {
     if (params.page) queryParams.set("page", params.page.toString());
     if (params.limit) queryParams.set("limit", params.limit.toString());
     if (params.search) queryParams.set("search", params.search);
-    if (params.type && params.type !== "all")
-      queryParams.set("type", params.type);
-    if (params.category && params.category !== "all")
-      queryParams.set("category", params.category);
-    if (params.status && params.status !== "all")
-      queryParams.set("status", params.status);
+    if (params.type && params.type !== "all") queryParams.set("type", params.type);
+    if (params.category && params.category !== "all") queryParams.set("category", params.category);
+    if (params.status && params.status !== "all") queryParams.set("status", params.status);
     if (params.myEvents) queryParams.set("myEvents", "true");
     if (params.startDate) queryParams.set("startDate", params.startDate);
     if (params.endDate) queryParams.set("endDate", params.endDate);

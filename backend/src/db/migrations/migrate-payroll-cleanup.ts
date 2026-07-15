@@ -3,10 +3,7 @@ import fs from "fs";
 import path from "path";
 
 async function runMigration() {
-  const sqlPath = path.join(
-    __dirname,
-    "../../../drizzle/0009_payroll_schema_cleanup.sql",
-  );
+  const sqlPath = path.join(__dirname, "../../../drizzle/0009_payroll_schema_cleanup.sql");
   const raw = fs.readFileSync(sqlPath, "utf-8");
 
   // Strip comment lines before splitting on semicolons

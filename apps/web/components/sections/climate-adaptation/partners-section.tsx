@@ -83,10 +83,9 @@ const PartnersSection = (): JSX.Element => {
               <span className="text-primary-green">Climate action</span>
             </h2>
             <p className="text-gray-600 mb-6">
-              We extend our sincere gratitude to all our partners who support
-              our work in climate adaptation. Your commitment to building
-              sustainable, resilient, and equitable climate solutions has been
-              instrumental to our success.
+              We extend our sincere gratitude to all our partners who support our work in climate
+              adaptation. Your commitment to building sustainable, resilient, and equitable climate
+              solutions has been instrumental to our success.
             </p>
           </motion.div>
 

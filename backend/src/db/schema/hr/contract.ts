@@ -23,9 +23,9 @@ export const hr_contracts = pgTable("hr_contracts", {
   employment_term: text("employment_term").notNull(), // 'indefinite' | 'definite'
   end_date: timestamp("end_date", { withTimezone: true }), // only if definite
   employment_type: text("employment_type").notNull(), // 'full-time' | 'part-time'
-  days_per_week: integer("days_per_week"),            // only if part-time
+  days_per_week: integer("days_per_week"), // only if part-time
   compensation_type: text("compensation_type").notNull(), // 'hourly' | 'salaried'
-  salary_scale: text("salary_scale"),                 // 'annual'|'monthly'|'weekly'|'daily'
+  salary_scale: text("salary_scale"), // 'annual'|'monthly'|'weekly'|'daily'
   currency: text("currency").notNull().default("RWF"),
   base_monthly_rate: numeric("base_monthly_rate", { precision: 14, scale: 2 }),
   gross_annual_rate: numeric("gross_annual_rate", { precision: 14, scale: 2 }),

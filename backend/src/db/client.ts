@@ -24,9 +24,7 @@ connectionPool.on("error", (err) => {
 export const db = drizzle(connectionPool, { schema });
 
 // Extend the pool with middleware functionality
-export async function withDbTransaction<T>(
-  callback: (txDb: any) => Promise<T>,
-): Promise<T> {
+export async function withDbTransaction<T>(callback: (txDb: any) => Promise<T>): Promise<T> {
   const client = await connectionPool.connect();
   try {
     await client.query("BEGIN");
@@ -43,10 +41,7 @@ export async function withDbTransaction<T>(
 }
 
 // Setup context for audit logging
-export async function setDbContext(
-  userId: number | string | null,
-  ipAddress: string | null,
-) {
+export async function setDbContext(userId: number | string | null, ipAddress: string | null) {
   const client = await connectionPool.connect();
   try {
     if (userId) {

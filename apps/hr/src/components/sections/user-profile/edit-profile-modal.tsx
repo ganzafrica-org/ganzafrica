@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -50,10 +50,10 @@ export default function EditProfileModal({
           />
           {/* Sheet */}
           <motion.div
-            initial={{ x: '100%' }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 120, duration: 0.8 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 120, duration: 0.8 }}
             className="fixed right-0 top-0 h-full bg-white shadow-2xl z-50 w-[40%] flex flex-col"
           >
             <div className="flex justify-between items-center p-6 border-b">
@@ -68,9 +68,7 @@ export default function EditProfileModal({
 
             <div className="p-6 space-y-6 flex-1 overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <Input
                   name="name"
                   value={formData.name}
@@ -80,9 +78,7 @@ export default function EditProfileModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Title
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                 <Input
                   name="title"
                   value={formData.title}
@@ -92,9 +88,7 @@ export default function EditProfileModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Department
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
                 <Input
                   name="department"
                   value={formData.department}
@@ -104,9 +98,7 @@ export default function EditProfileModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Employee ID
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
                 <Input
                   name="id"
                   value={formData.id}
@@ -116,9 +108,7 @@ export default function EditProfileModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <Input
                   name="status"
                   value={formData.status}
@@ -128,9 +118,7 @@ export default function EditProfileModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hire Date
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
                 <Input
                   name="hireDate"
                   value={formData.hireDate}
@@ -140,9 +128,7 @@ export default function EditProfileModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Work Phone
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Work Phone</label>
                 <Input
                   name="workPhone"
                   value={formData.workPhone}
@@ -152,9 +138,7 @@ export default function EditProfileModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Work Email
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Work Email</label>
                 <Input
                   name="workEmail"
                   value={formData.workEmail}

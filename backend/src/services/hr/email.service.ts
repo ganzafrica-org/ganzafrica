@@ -41,10 +41,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
 }
 
 // Send email verification email
-export async function sendVerificationEmail(
-  to: string,
-  data: { token: string; expiresAt: Date },
-) {
+export async function sendVerificationEmail(to: string, data: { token: string; expiresAt: Date }) {
   const verificationUrl = `${env.WEBSITE_URL}/verify-email?token=${data.token}`;
 
   const html = `
@@ -67,10 +64,7 @@ export async function sendVerificationEmail(
 }
 
 // Send password reset email
-export async function sendPasswordResetEmail(
-  to: string,
-  data: { token: string; expiresAt: Date },
-) {
+export async function sendPasswordResetEmail(to: string, data: { token: string; expiresAt: Date }) {
   const resetUrl = `${env.WEBSITE_URL}/reset-password?token=${data.token}`;
 
   const html = `

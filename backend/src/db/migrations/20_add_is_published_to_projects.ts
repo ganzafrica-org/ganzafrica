@@ -1,5 +1,5 @@
-import { sql } from 'drizzle-orm';
-import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { sql } from "drizzle-orm";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
 
 export async function up(db: NodePgDatabase<any>) {
   // Add is_published column to projects table if it doesn't exist
@@ -7,8 +7,8 @@ export async function up(db: NodePgDatabase<any>) {
     ALTER TABLE projects
     ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT false
   `);
-  
-  console.log('✓ Added is_published column to projects table');
+
+  console.log("✓ Added is_published column to projects table");
 }
 
 export async function down(db: NodePgDatabase<any>) {
@@ -17,7 +17,6 @@ export async function down(db: NodePgDatabase<any>) {
     ALTER TABLE projects
     DROP COLUMN IF EXISTS is_published
   `);
-  
-  console.log('✓ Removed is_published column from projects table');
-}
 
+  console.log("✓ Removed is_published column from projects table");
+}

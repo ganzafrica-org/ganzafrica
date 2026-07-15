@@ -16,35 +16,15 @@ const router: Router = Router();
 // router.use(authenticate);
 
 // Team routes
-router.post(
-  "/",
-  validate(teamValidation.createTeamSchema),
-  teamController.createTeam,
-);
+router.post("/", validate(teamValidation.createTeamSchema), teamController.createTeam);
 
-router.get(
-  "/",
-  validate(teamValidation.listTeamsSchema),
-  teamController.listTeams,
-);
+router.get("/", validate(teamValidation.listTeamsSchema), teamController.listTeams);
 
-router.get(
-  "/:id",
-  validate(teamValidation.getTeamSchema),
-  teamController.getTeamById,
-);
+router.get("/:id", validate(teamValidation.getTeamSchema), teamController.getTeamById);
 
-router.put(
-  "/:id",
-  validate(teamValidation.updateTeamSchema),
-  teamController.updateTeam,
-);
+router.put("/:id", validate(teamValidation.updateTeamSchema), teamController.updateTeam);
 
-router.delete(
-  "/:id",
-  validate(teamValidation.deleteTeamSchema),
-  teamController.deleteTeam,
-);
+router.delete("/:id", validate(teamValidation.deleteTeamSchema), teamController.deleteTeam);
 
 // Bulk reorder teams by setting sort_order values
 router.post(
@@ -63,7 +43,7 @@ router.post(
     } catch (e) {
       return;
     }
-  }
+  },
 );
 
 export default router;

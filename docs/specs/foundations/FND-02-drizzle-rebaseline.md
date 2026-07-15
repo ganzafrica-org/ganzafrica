@@ -69,6 +69,7 @@ None.
 
 Scripted verification (this spec is procedural; the "tests" are executable proofs, add as
 `backend/scripts/verify-migrations.ts` run in CI by FND-04):
+
 1. Fresh empty DB → `drizzle-kit migrate` applies 0000 + 0001 cleanly; a sentinel trigger from
    0001 exists (`SELECT 1 FROM pg_trigger WHERE tgname = '<one known trigger>'`).
 2. `drizzle-kit generate` immediately after → produces NO new migration (schema ↔ SQL in sync).
@@ -82,7 +83,7 @@ Scripted verification (this spec is procedural; the "tests" are executable proof
 
 - [ ] On prod: `drizzle-kit migrate` runs clean as a no-op (screenshot/log in PR).
 - [ ] On a fresh DB: `migrate` builds the entire schema including triggers.
-- [ ] `src/db/migrations/` no longer exists; package.json has only the three db:* scripts + guard.
+- [ ] `src/db/migrations/` no longer exists; package.json has only the three db:\* scripts + guard.
 - [ ] `db:push` refuses non-localhost targets.
 - [ ] `verify-migrations.ts` passes and is wired into CI (or a follow-up note in FND-04 if CI lands later).
 

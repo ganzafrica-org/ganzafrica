@@ -57,6 +57,7 @@ settings). Half-days out of scope v1.
 ## 4. API
 
 `services/hr/leave.service.ts`:
+
 - `computeDays(start, end)` — working days per above; 0 → 422.
 - `ensureBalances(employeeId, year)` — instantiate from policies by employment_type
   (idempotent; the LCM-01 `leave_setup` side-effect calls this; also lazily called on first
@@ -68,17 +69,17 @@ settings). Half-days out of scope v1.
   OR leave:manage; APPROVED updates `used_days`; REJECT requires note.
 - Cancel: requester before start_date (APPROVED cancel → used_days released); HR anytime.
 
-| Endpoint | Permission | Behavior |
-|---|---|---|
-| `GET /hr/me/leave` | self | balances + my requests |
-| `POST /hr/me/leave` `{type,start,end,reason}` | self | request flow above |
-| `POST /hr/leave/:id/cancel` | self(own)/leave:manage | per rules |
-| `GET /hr/leave/pending-approvals` | manager/hr | my queue (reports' PENDING) |
-| `POST /hr/leave/:id/approve` / `/reject` `{note}` | manager-of/leave:manage | decide |
-| `GET /hr/leave?status&employee&type&range` | leave:manage | admin list |
-| `GET /hr/leave/calendar?from&to&team=me` | employee (team=own reports/dept), leave:manage (all) | events for fullcalendar (approved + own pending) |
-| CRUD `/hr/leave-policies`, `/hr/holidays` | leave:manage | settings (`app/settings/timeoff` page exists — wire it) |
-| `PATCH /hr/leave-balances/:id` | leave:manage | manual adjustment (audit note required) |
+| Endpoint                                          | Permission                                           | Behavior                                                |
+| ------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------- |
+| `GET /hr/me/leave`                                | self                                                 | balances + my requests                                  |
+| `POST /hr/me/leave` `{type,start,end,reason}`     | self                                                 | request flow above                                      |
+| `POST /hr/leave/:id/cancel`                       | self(own)/leave:manage                               | per rules                                               |
+| `GET /hr/leave/pending-approvals`                 | manager/hr                                           | my queue (reports' PENDING)                             |
+| `POST /hr/leave/:id/approve` / `/reject` `{note}` | manager-of/leave:manage                              | decide                                                  |
+| `GET /hr/leave?status&employee&type&range`        | leave:manage                                         | admin list                                              |
+| `GET /hr/leave/calendar?from&to&team=me`          | employee (team=own reports/dept), leave:manage (all) | events for fullcalendar (approved + own pending)        |
+| CRUD `/hr/leave-policies`, `/hr/holidays`         | leave:manage                                         | settings (`app/settings/timeoff` page exists — wire it) |
+| `PATCH /hr/leave-balances/:id`                    | leave:manage                                         | manual adjustment (audit note required)                 |
 
 ## 5. Frontend
 
@@ -94,6 +95,7 @@ settings). Half-days out of scope v1.
 ## 6. Tests to write FIRST
 
 Backend:
+
 1. computeDays: spans weekend, holiday-aware, same-day, end<start 422.
 2. Balance instantiation from policy by employment_type; idempotent; lazy-create on request.
 3. Request guards: overlap 409, insufficient balance 422 (ANNUAL), UNPAID bypasses balance.
@@ -102,11 +104,11 @@ Backend:
 5. Approve → used_days; cancel approved → released; reject requires note.
 6. Manual balance adjust requires note; audit trail present.
 7. Calendar scoping: employee sees own+team only; hr sees all.
-Frontend:
+   Frontend:
 8. Request dialog: day-count preview, insufficient-balance disabled state (MSW validate).
 9. Approvals queue actions; calendar renders fixture events by type color.
-E2E: fellow requests 3 days → manager approves from Team view → balance ring updates →
-appears on HR calendar; second overlapping request blocked.
+   E2E: fellow requests 3 days → manager approves from Team view → balance ring updates →
+   appears on HR calendar; second overlapping request blocked.
 
 ## 7. Acceptance criteria
 

@@ -42,9 +42,7 @@ async function runAlumniMigrations() {
     ];
 
     // Check which migrations are already applied
-    const existingMigrations = await pool.query(
-      "SELECT hash FROM __drizzle_migrations"
-    );
+    const existingMigrations = await pool.query("SELECT hash FROM __drizzle_migrations");
     const existingHashes = new Set(existingMigrations.rows.map((r) => r.hash));
 
     let appliedCount = 0;
@@ -60,11 +58,7 @@ async function runAlumniMigrations() {
       console.log(`📦 Applying ${migration.tag}...`);
 
       // Read and execute the migration SQL
-      const migrationPath = path.resolve(
-        __dirname,
-        "../../../drizzle",
-        migration.file
-      );
+      const migrationPath = path.resolve(__dirname, "../../../drizzle", migration.file);
       const sql = fs.readFileSync(migrationPath, "utf-8");
 
       // Split by statement breakpoint and execute each statement
@@ -80,10 +74,10 @@ async function runAlumniMigrations() {
         }
 
         // Record the migration
-        await pool.query(
-          "INSERT INTO __drizzle_migrations (hash, created_at) VALUES ($1, $2)",
-          [migration.tag, Date.now()]
-        );
+        await pool.query("INSERT INTO __drizzle_migrations (hash, created_at) VALUES ($1, $2)", [
+          migration.tag,
+          Date.now(),
+        ]);
 
         await pool.query("COMMIT");
         console.log(`✅ Applied ${migration.tag}`);
@@ -100,7 +94,6 @@ async function runAlumniMigrations() {
     console.log(`   Applied: ${appliedCount}`);
     console.log(`   Skipped: ${skippedCount}`);
     console.log("=".repeat(50) + "\n");
-
   } catch (error) {
     console.error("\n❌ Migration failed:", error);
     process.exit(1);

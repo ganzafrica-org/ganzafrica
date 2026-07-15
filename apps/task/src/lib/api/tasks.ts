@@ -1,4 +1,4 @@
-import apiClient from '../api-client';
+import apiClient from "../api-client";
 
 // Types
 export interface Task {
@@ -7,22 +7,24 @@ export interface Task {
   title: string;
   description?: string;
   deliverables?: string;
-  status: 'backlog' | 'todo' | 'inprogress' | 'review' | 'done';
-  priority: 'low' | 'medium' | 'high';
+  status: "backlog" | "todo" | "inprogress" | "review" | "done";
+  priority: "low" | "medium" | "high";
   due_date?: string;
   labels?: Array<{ id: string; name: string; color: string }>;
   attachments?: Array<{ id: string; filename: string; url: string }>;
-  assignees?: number[] | Array<{
-    id: number;
-    user_id: number;
-    assigned_at: string;
-    user: {
-      id: number;
-      name: string;
-      email: string;
-      avatar_url?: string;
-    };
-  }>;
+  assignees?:
+    | number[]
+    | Array<{
+        id: number;
+        user_id: number;
+        assigned_at: string;
+        user: {
+          id: number;
+          name: string;
+          email: string;
+          avatar_url?: string;
+        };
+      }>;
   comments?: Array<{
     id: number;
     content: string;
@@ -44,8 +46,8 @@ export interface CreateTaskInput {
   title: string;
   description?: string;
   deliverables?: string;
-  status?: 'backlog' | 'todo' | 'inprogress' | 'review' | 'done';
-  priority?: 'low' | 'medium' | 'high';
+  status?: "backlog" | "todo" | "inprogress" | "review" | "done";
+  priority?: "low" | "medium" | "high";
   due_date?: string;
   labels?: Array<{ id: string; name: string; color: string }>;
   attachments?: Array<{ id: string; filename: string; url: string }>;
@@ -57,8 +59,8 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string;
   deliverables?: string;
-  status?: 'backlog' | 'todo' | 'inprogress' | 'review' | 'done';
-  priority?: 'low' | 'medium' | 'high';
+  status?: "backlog" | "todo" | "inprogress" | "review" | "done";
+  priority?: "low" | "medium" | "high";
   due_date?: string;
   labels?: Array<{ id: string; name: string; color: string }>;
   attachments?: Array<{ id: string; filename: string; url: string }>;
@@ -69,7 +71,7 @@ export interface UpdateTaskInput {
 export const tasksApi = {
   // Create task
   async createTask(data: CreateTaskInput) {
-    const response = await apiClient.post('/tasks', data);
+    const response = await apiClient.post("/tasks", data);
     return response.data;
   },
 
@@ -81,7 +83,7 @@ export const tasksApi = {
 
   // Get tasks assigned to current user
   async getTasksByUser() {
-    const response = await apiClient.get('/tasks/user/assigned');
+    const response = await apiClient.get("/tasks/user/assigned");
     return response.data;
   },
 
@@ -113,15 +115,14 @@ export const tasksApi = {
   async uploadAttachments(taskId: number, files: File[]) {
     const formData = new FormData();
     files.forEach((file) => {
-      formData.append('files', file);
+      formData.append("files", file);
     });
 
     const response = await apiClient.post(`/tasks/${taskId}/upload`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
     });
     return response.data;
   },
 };
-

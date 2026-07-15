@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { SettingsSection } from '@/components/sections/settings/settings-section';
-import { DataRow } from '@/components/sections/settings/data-row';
-import { Button } from '@/components/ui/button';
+import { SettingsSection } from "@/components/sections/settings/settings-section";
+import { DataRow } from "@/components/sections/settings/data-row";
+import { Button } from "@/components/ui/button";
 
 export default function OrganizationPage() {
   return (
@@ -13,10 +13,7 @@ export default function OrganizationPage() {
           <p className="text-gray-600 mt-1">Manage your organization information and preferences</p>
         </div>
 
-        <SettingsSection
-          title="Organization information"
-          onEdit={() => alert('Edit clicked')}
-        >
+        <SettingsSection title="Organization information" onEdit={() => alert("Edit clicked")}>
           <div className="space-y-2">
             <DataRow label="Organization name" value="GanzAfrica" />
             <DataRow label="Registration number" value="REG-2024-001" variant="muted" />
@@ -27,10 +24,7 @@ export default function OrganizationPage() {
           </div>
         </SettingsSection>
 
-        <SettingsSection
-          title="Contact information"
-          onEdit={() => alert('Edit clicked')}
-        >
+        <SettingsSection title="Contact information" onEdit={() => alert("Edit clicked")}>
           <div className="space-y-2">
             <DataRow label="Primary email" value="contact@ganzafrica.org" />
             <DataRow label="Support email" value="support@ganzafrica.org" />
@@ -39,10 +33,7 @@ export default function OrganizationPage() {
           </div>
         </SettingsSection>
 
-        <SettingsSection
-          title="Subscription"
-          onEdit={() => alert('Edit clicked')}
-        >
+        <SettingsSection title="Subscription" onEdit={() => alert("Edit clicked")}>
           <div className="space-y-2">
             <DataRow label="Plan" value="Enterprise" />
             <DataRow label="Status" value="Active" />

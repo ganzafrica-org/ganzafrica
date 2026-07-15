@@ -8,24 +8,24 @@ const router: Router = Router();
 router.post(
   "/subscribe",
   validate(contactValidation.newsletterSubscribeSchema),
-  contactController.subscribeNewsletter
+  contactController.subscribeNewsletter,
 );
 
 router.post(
   "/unsubscribe/:id",
   validate(contactValidation.newsletterUnsubscribeSchema),
-  contactController.unsubscribeNewsletter
+  contactController.unsubscribeNewsletter,
 );
 router.get(
-    "/subscribers",
-    validate(contactValidation.listNewsletterSubscribersSchema),
-    contactController.listNewsletterSubscribers
-  );
+  "/subscribers",
+  validate(contactValidation.listNewsletterSubscribersSchema),
+  contactController.listNewsletterSubscribers,
+);
 
 router.delete(
-    "/subscribers/:id",
-    validate(contactValidation.newsletterUnsubscribeSchema),
-    contactController.deleteNewsletterSubscriber
-  );
+  "/subscribers/:id",
+  validate(contactValidation.newsletterUnsubscribeSchema),
+  contactController.deleteNewsletterSubscriber,
+);
 
 export default router;

@@ -1,2 +1,2 @@
-export { TranslateArticleButton } from './TranslateArticleButton';
-export { TranslatableText, useAutoTranslate } from './TranslatableText';
+export { TranslateArticleButton } from "./TranslateArticleButton";
+export { TranslatableText, useAutoTranslate } from "./TranslatableText";

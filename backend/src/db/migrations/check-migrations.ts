@@ -76,7 +76,6 @@ async function checkMigrations() {
     enums.rows.forEach((row) => {
       console.log(`  - ${row.typname}`);
     });
-
   } catch (error) {
     console.error("Error checking migrations:", error);
   } finally {

@@ -39,15 +39,15 @@ gaps emerge (e.g. `employees.bio`, `emergency_contact jsonb`) — keep additive,
 
 ## 4. API (all under `/hr`, permission names per auth-and-rbac.md; today via authenticateHr + role checks, mechanical swap at FND-07)
 
-| Endpoint | Permission | Behavior |
-|---|---|---|
-| `GET /hr/employees?search&department&status&employment_type&page&sort` | employees:read | Paged directory; row: id, names, work_email, job_title, department, employment_type, status, manager name, avatar. Sort: name/department/hired_at |
-| `POST /hr/employees` | employees:manage | Manual create (legacy staff): profile fields + employment_type + hired_at; creates/link `users` row (same 3-case logic as FND-05 merge — REUSE `backend/scripts/migrate-hr-users.ts`'s core as a service function `linkOrCreateUserForEmployee`) |
-| `GET /hr/employees/:id` | employees:read OR self | Full detail + contract summary + counts (assets assigned, open leave, docs) |
-| `PATCH /hr/employees/:id` | employees:manage | HR-editable set: job_title, department, employment_type, status (active/on_leave only — exited via LCM-02), work_email, employee_number, hired_at, manager_id (MOD-02 adds validation) |
-| `PATCH /hr/me/profile` | authenticate (self) | Self-editable set ONLY: phone, picture, home_city, home_country, personal_email, emergency_contact, bio. Server rejects any other key (422 listing offenders) |
-| `GET /hr/me` | authenticate | Own employee record + user info + roles (drives self-service shell, MOD-03) |
-| Contracts nested: `GET/POST/PATCH /hr/employees/:id/contracts` | contracts:read/manage | Existing endpoints repointed to employee_id; add status transitions (DRAFT→ACTIVE requires employment_agreement_url; ACTIVE→TERMINATED via LCM-02 only) |
+| Endpoint                                                               | Permission             | Behavior                                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /hr/employees?search&department&status&employment_type&page&sort` | employees:read         | Paged directory; row: id, names, work_email, job_title, department, employment_type, status, manager name, avatar. Sort: name/department/hired_at                                                                                                |
+| `POST /hr/employees`                                                   | employees:manage       | Manual create (legacy staff): profile fields + employment_type + hired_at; creates/link `users` row (same 3-case logic as FND-05 merge — REUSE `backend/scripts/migrate-hr-users.ts`'s core as a service function `linkOrCreateUserForEmployee`) |
+| `GET /hr/employees/:id`                                                | employees:read OR self | Full detail + contract summary + counts (assets assigned, open leave, docs)                                                                                                                                                                      |
+| `PATCH /hr/employees/:id`                                              | employees:manage       | HR-editable set: job_title, department, employment_type, status (active/on_leave only — exited via LCM-02), work_email, employee_number, hired_at, manager_id (MOD-02 adds validation)                                                           |
+| `PATCH /hr/me/profile`                                                 | authenticate (self)    | Self-editable set ONLY: phone, picture, home_city, home_country, personal_email, emergency_contact, bio. Server rejects any other key (422 listing offenders)                                                                                    |
+| `GET /hr/me`                                                           | authenticate           | Own employee record + user info + roles (drives self-service shell, MOD-03)                                                                                                                                                                      |
+| Contracts nested: `GET/POST/PATCH /hr/employees/:id/contracts`         | contracts:read/manage  | Existing endpoints repointed to employee_id; add status transitions (DRAFT→ACTIVE requires employment_agreement_url; ACTIVE→TERMINATED via LCM-02 only)                                                                                          |
 
 ## 5. Frontend
 
@@ -71,6 +71,7 @@ gaps emerge (e.g. `employees.bio`, `emergency_contact jsonb`) — keep additive,
 ## 6. Tests to write FIRST
 
 Backend:
+
 1. Directory filters/pagination/sort (fixtures: 25 employees across departments/statuses).
 2. Field-set enforcement: self PATCH with `job_title` → 422; HR PATCH with `phone` → 422
    (each set exclusive); HR PATCH status→exited → 422 (LCM-02 only).
@@ -79,12 +80,12 @@ Backend:
 4. Detail includes contract summary + accurate counts; self can read own, staff cannot read
    others (403), hr can.
 5. Contract transitions: ACTIVE without agreement URL → 422.
-Frontend:
+   Frontend:
 6. Directory renders/filters (MSW); status badges map correctly.
 7. Detail tabs render per role fixture (hr sees edit affordances, employee self doesn't on hr-set).
 8. Profile self-edit: disallowed field absent from form payload.
-E2E: HR adds a legacy employee → appears in directory → edits department → employee logs in
-(post-FND-07: SSO; pre: existing hr auth) → sees own profile, edits phone, cannot edit title.
+   E2E: HR adds a legacy employee → appears in directory → edits department → employee logs in
+   (post-FND-07: SSO; pre: existing hr auth) → sees own profile, edits phone, cannot edit title.
 
 ## 7. Acceptance criteria
 

@@ -3,13 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,9 +117,7 @@ const StatsCards = ({ stats }: { stats: ResourceStats }) => (
   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
     <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-emerald-100">
-          Total Resources
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-emerald-100">Total Resources</CardTitle>
         <BookOpen className="h-5 w-5 text-emerald-200" />
       </CardHeader>
       <CardContent>
@@ -139,9 +131,7 @@ const StatsCards = ({ stats }: { stats: ResourceStats }) => (
 
     <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-blue-100">
-          Featured
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-blue-100">Featured</CardTitle>
         <Star className="h-5 w-5 text-blue-200" />
       </CardHeader>
       <CardContent>
@@ -152,9 +142,7 @@ const StatsCards = ({ stats }: { stats: ResourceStats }) => (
 
     <Card className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-amber-100">
-          Total Downloads
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-amber-100">Total Downloads</CardTitle>
         <Download className="h-5 w-5 text-amber-200" />
       </CardHeader>
       <CardContent>
@@ -165,9 +153,7 @@ const StatsCards = ({ stats }: { stats: ResourceStats }) => (
 
     <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-purple-100">
-          Categories
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-purple-100">Categories</CardTitle>
         <BookOpen className="h-5 w-5 text-purple-200" />
       </CardHeader>
       <CardContent>
@@ -202,9 +188,7 @@ const ResourceCard = ({ resource }: { resource: Resource }) => (
               {resource.title}
             </h3>
           </Link>
-          <p className="text-gray-700 text-sm mb-3 line-clamp-3 flex-1">
-            {resource.description}
-          </p>
+          <p className="text-gray-700 text-sm mb-3 line-clamp-3 flex-1">{resource.description}</p>
 
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
             <span className="font-medium">By {resource.author.name}</span>
@@ -251,10 +235,7 @@ const ResourceCard = ({ resource }: { resource: Resource }) => (
         </div>
 
         <div className="flex gap-2 mt-4">
-          <Button
-            asChild
-            className="flex-1 bg-green-primary hover:bg-green-600"
-          >
+          <Button asChild className="flex-1 bg-green-primary hover:bg-green-600">
             <Link href={`/resources/${resource.id}`}>
               <Eye className="h-4 w-4 mr-2" />
               View Details
@@ -369,9 +350,7 @@ const ContributeResourceForm = ({
         fileType: formData.fileType || undefined,
         fileSize: formData.fileSize || undefined,
         thumbnailUrl: formData.thumbnailUrl || undefined,
-        tags: formData.tags
-          ? formData.tags.split(",").map((t) => t.trim())
-          : undefined,
+        tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : undefined,
         estimatedTime: formData.estimatedTime || undefined,
         pages: formData.pages ? parseInt(formData.pages, 10) : undefined,
         duration: formData.duration || undefined,
@@ -385,9 +364,7 @@ const ContributeResourceForm = ({
   return (
     <Card className="shadow-sm">
       <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b">
-        <CardTitle className="text-xl text-slate-800">
-          Contribute a Resource
-        </CardTitle>
+        <CardTitle className="text-xl text-slate-800">Contribute a Resource</CardTitle>
         <CardDescription>
           Share valuable resources with the GanzAfrica alumni community!
         </CardDescription>
@@ -402,9 +379,7 @@ const ContributeResourceForm = ({
               placeholder="e.g., Complete Guide to Career Transition"
               className="border-slate-200"
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
           </div>
           <div className="space-y-2">
@@ -438,9 +413,7 @@ const ContributeResourceForm = ({
             rows={4}
             className="border-slate-200"
             value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
         </div>
 
@@ -476,11 +449,7 @@ const ContributeResourceForm = ({
               variant={uploadMethod === "upload" ? "default" : "outline"}
               size="sm"
               onClick={() => setUploadMethod("upload")}
-              className={
-                uploadMethod === "upload"
-                  ? "bg-green-primary hover:bg-green-600"
-                  : ""
-              }
+              className={uploadMethod === "upload" ? "bg-green-primary hover:bg-green-600" : ""}
             >
               <Upload className="h-4 w-4 mr-2" />
               Upload File
@@ -490,11 +459,7 @@ const ContributeResourceForm = ({
               variant={uploadMethod === "url" ? "default" : "outline"}
               size="sm"
               onClick={() => setUploadMethod("url")}
-              className={
-                uploadMethod === "url"
-                  ? "bg-green-primary hover:bg-green-600"
-                  : ""
-              }
+              className={uploadMethod === "url" ? "bg-green-primary hover:bg-green-600" : ""}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Provide URL
@@ -521,9 +486,7 @@ const ContributeResourceForm = ({
                     <p className="text-sm font-medium text-gray-700 mb-1">
                       Click to upload or drag and drop
                     </p>
-                    <p className="text-xs text-gray-500">
-                      PDF, DOC, Images, or Videos (max 100MB)
-                    </p>
+                    <p className="text-xs text-gray-500">PDF, DOC, Images, or Videos (max 100MB)</p>
                   </label>
                 </div>
               ) : (
@@ -532,12 +495,8 @@ const ContributeResourceForm = ({
                     <div className="flex items-center gap-3">
                       <FileText className="h-8 w-8 text-green-primary" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {selectedFile.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatFileSize(selectedFile.size)}
-                        </p>
+                        <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                        <p className="text-xs text-gray-500">{formatFileSize(selectedFile.size)}</p>
                       </div>
                     </div>
                     <Button
@@ -571,9 +530,7 @@ const ContributeResourceForm = ({
               placeholder="https://example.com/resource.pdf"
               className="border-slate-200"
               value={formData.fileUrl}
-              onChange={(e) =>
-                setFormData({ ...formData, fileUrl: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, fileUrl: e.target.value })}
             />
           )}
         </div>
@@ -585,9 +542,7 @@ const ContributeResourceForm = ({
               placeholder="e.g., PDF"
               className="border-slate-200"
               value={formData.fileType}
-              onChange={(e) =>
-                setFormData({ ...formData, fileType: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, fileType: e.target.value })}
             />
           </div>
           <div className="space-y-2">
@@ -596,9 +551,7 @@ const ContributeResourceForm = ({
               placeholder="e.g., 2.4 MB"
               className="border-slate-200"
               value={formData.fileSize}
-              onChange={(e) =>
-                setFormData({ ...formData, fileSize: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
             />
           </div>
           <div className="space-y-2">
@@ -607,9 +560,7 @@ const ContributeResourceForm = ({
               placeholder="e.g., 2 hours"
               className="border-slate-200"
               value={formData.estimatedTime}
-              onChange={(e) =>
-                setFormData({ ...formData, estimatedTime: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, estimatedTime: e.target.value })}
             />
           </div>
         </div>
@@ -622,9 +573,7 @@ const ContributeResourceForm = ({
               placeholder="e.g., 45"
               className="border-slate-200"
               value={formData.pages}
-              onChange={(e) =>
-                setFormData({ ...formData, pages: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, pages: e.target.value })}
             />
           </div>
           <div className="space-y-2">
@@ -633,9 +582,7 @@ const ContributeResourceForm = ({
               placeholder="e.g., 3.5 hours"
               className="border-slate-200"
               value={formData.duration}
-              onChange={(e) =>
-                setFormData({ ...formData, duration: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
             />
           </div>
         </div>
@@ -656,9 +603,7 @@ const ContributeResourceForm = ({
             placeholder="https://example.com/original-source"
             className="border-slate-200"
             value={formData.externalUrl}
-            onChange={(e) =>
-              setFormData({ ...formData, externalUrl: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, externalUrl: e.target.value })}
           />
         </div>
 
@@ -677,11 +622,7 @@ const ContributeResourceForm = ({
           >
             {isSubmitting ? "Submitting..." : "Contribute Resource"}
           </Button>
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            className="border-slate-200"
-          >
+          <Button variant="outline" onClick={onCancel} className="border-slate-200">
             Cancel
           </Button>
         </div>
@@ -789,14 +730,7 @@ export default function AlumniResources() {
     };
 
     fetchResources();
-  }, [
-    currentPage,
-    pageLimit,
-    selectedCategory,
-    selectedType,
-    debouncedSearch,
-    sortBy,
-  ]);
+  }, [currentPage, pageLimit, selectedCategory, selectedType, debouncedSearch, sortBy]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -819,10 +753,7 @@ export default function AlumniResources() {
   ]);
 
   // Reset to page 1 when filters change
-  const handleFilterChange = (
-    setter: (value: string) => void,
-    value: string,
-  ) => {
+  const handleFilterChange = (setter: (value: string) => void, value: string) => {
     setter(value);
     setCurrentPage(1);
   };
@@ -865,9 +796,7 @@ export default function AlumniResources() {
           <h1 className="text-2xl font-bold bg-blue-secondary bg-clip-text text-transparent">
             Resource Library
           </h1>
-          <p className="text-gray-600">
-            Access curated resources from our expert alumni
-          </p>
+          <p className="text-gray-600">Access curated resources from our expert alumni</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -913,11 +842,7 @@ export default function AlumniResources() {
       )}
 
       {/* Quick Stats */}
-      {isLoadingStats ? (
-        <StatsSkeleton />
-      ) : (
-        stats && <StatsCards stats={stats} />
-      )}
+      {isLoadingStats ? <StatsSkeleton /> : stats && <StatsCards stats={stats} />}
 
       {/* Search and Filters */}
       <Card className="shadow-sm">
@@ -941,9 +866,7 @@ export default function AlumniResources() {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Select
                 value={selectedCategory}
-                onValueChange={(v) =>
-                  handleFilterChange(setSelectedCategory, v)
-                }
+                onValueChange={(v) => handleFilterChange(setSelectedCategory, v)}
               >
                 <SelectTrigger className="border-slate-200">
                   <SelectValue placeholder="Category" />
@@ -1023,9 +946,7 @@ export default function AlumniResources() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-              }
+              onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
               disabled={!pagination.hasMore}
             >
               <ChevronRight className="h-4 w-4" />
@@ -1047,9 +968,7 @@ export default function AlumniResources() {
         <Card className="shadow-sm">
           <CardContent className="p-12 text-center">
             <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No resources found
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No resources found</h3>
             <p className="text-gray-600 mb-4">
               Try adjusting your search criteria or clearing filters
             </p>
@@ -1077,9 +996,7 @@ export default function AlumniResources() {
           </Button>
           <Button
             variant="outline"
-            onClick={() =>
-              setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-            }
+            onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
             disabled={!pagination.hasMore}
           >
             Next

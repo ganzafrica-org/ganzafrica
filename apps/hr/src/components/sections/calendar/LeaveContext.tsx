@@ -1,8 +1,15 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState } from 'react';
-import { LeaveContextType, LeaveRequest, LeaveStatus, LeaveType, TeamMember, PublicHoliday } from '@/types/leave';
-import { doRangesOverlap } from '@/lib/date-utils';
+import React, { createContext, useContext, useState } from "react";
+import {
+  LeaveContextType,
+  LeaveRequest,
+  LeaveStatus,
+  LeaveType,
+  TeamMember,
+  PublicHoliday,
+} from "@/types/leave";
+import { doRangesOverlap } from "@/lib/date-utils";
 import { mock_holidays, mock_leaves, mock_team_members } from "@/data/leave-data";
 
 const LeaveContext = createContext<LeaveContextType | undefined>(undefined);
@@ -16,7 +23,7 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
     leaveType: LeaveType,
     startDate: Date,
     endDate: Date,
-    notes: string
+    notes: string,
   ) => {
     const newLeave: LeaveRequest = {
       id: String(Date.now()),
@@ -25,7 +32,7 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
       startDate,
       endDate,
       notes,
-      status: 'Pending',
+      status: "Pending",
       requestedAt: new Date(),
     };
     setLeaveRequests([...leaveRequests, newLeave]);
@@ -33,7 +40,7 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
 
   const updateLeaveRequest = (updatedRequest: LeaveRequest) => {
     setLeaveRequests(
-      leaveRequests.map((leave) => (leave.id === updatedRequest.id ? updatedRequest : leave))
+      leaveRequests.map((leave) => (leave.id === updatedRequest.id ? updatedRequest : leave)),
     );
   };
 
@@ -43,11 +50,11 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
 
   const updateLeaveStatus = (id: string, status: LeaveStatus) => {
     setLeaveRequests(
-      leaveRequests.map((leave) => (leave.id === id ? { ...leave, status } : leave))
+      leaveRequests.map((leave) => (leave.id === id ? { ...leave, status } : leave)),
     );
   };
 
-  const addPublicHoliday = (holiday: Omit<PublicHoliday, 'id'>) => {
+  const addPublicHoliday = (holiday: Omit<PublicHoliday, "id">) => {
     const newHoliday: PublicHoliday = {
       ...holiday,
       id: String(Date.now()),
@@ -56,9 +63,7 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updatePublicHoliday = (updatedHoliday: PublicHoliday) => {
-    setPublicHolidays(
-      publicHolidays.map((h) => (h.id === updatedHoliday.id ? updatedHoliday : h))
-    );
+    setPublicHolidays(publicHolidays.map((h) => (h.id === updatedHoliday.id ? updatedHoliday : h)));
   };
 
   const deletePublicHoliday = (id: string) => {
@@ -68,7 +73,7 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
   const getFilteredLeaves = (
     selectedMemberId?: string,
     selectedLeaveType?: LeaveType,
-    dateRange?: { start: Date; end: Date }
+    dateRange?: { start: Date; end: Date },
   ): LeaveRequest[] => {
     return leaveRequests.filter((leave) => {
       if (selectedMemberId && leave.employeeId !== selectedMemberId) {
@@ -82,7 +87,7 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
           leave.startDate,
           leave.endDate,
           dateRange.start,
-          dateRange.end
+          dateRange.end,
         );
         if (!hasOverlap) {
           return false;
@@ -117,7 +122,7 @@ export function LeaveProvider({ children }: { children: React.ReactNode }) {
 export function useLeaveContext() {
   const context = useContext(LeaveContext);
   if (!context) {
-    throw new Error('useLeaveContext must be used within LeaveProvider');
+    throw new Error("useLeaveContext must be used within LeaveProvider");
   }
   return context;
 }

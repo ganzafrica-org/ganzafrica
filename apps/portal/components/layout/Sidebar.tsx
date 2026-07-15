@@ -47,8 +47,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
   const userIsAdminOrManager = isAdminOrManager(user);
 
   // Get Task Management URL from environment variable
-  const taskManagementUrl =
-    process.env.NEXT_PUBLIC_TASK_URL || "http://localhost:3003";
+  const taskManagementUrl = process.env.NEXT_PUBLIC_TASK_URL || "http://localhost:3003";
 
   const toggleOpportunities = () => {
     if (!isCollapsed) {
@@ -222,9 +221,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                     }`}
                   >
                     <LayoutGrid className="w-5 h-5 flex-shrink-0" />
-                    {!isCollapsed && (
-                      <span className="ml-3 font-medium">Dashboard</span>
-                    )}
+                    {!isCollapsed && <span className="ml-3 font-medium">Dashboard</span>}
                   </Link>
 
                   {/* Projects Dropdown */}
@@ -238,15 +235,11 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                           ? "bg-white/10 text-white"
                           : "text-white/80 hover:bg-white/5 hover:text-white"
                       }`}
-                      onClick={() =>
-                        !isCollapsed && setProjectsOpen(!projectsOpen)
-                      }
+                      onClick={() => !isCollapsed && setProjectsOpen(!projectsOpen)}
                     >
                       <div className="flex items-center">
                         <FolderGit2 className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium">Projects</span>
-                        )}
+                        {!isCollapsed && <span className="ml-3 font-medium">Projects</span>}
                       </div>
                       {!isCollapsed &&
                         (projectsOpen ? (
@@ -268,23 +261,18 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                           }`}
                         >
                           <FolderGit2 className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">
-                            Manage Projects
-                          </span>
+                          <span className="ml-3 font-medium text-sm">Manage Projects</span>
                         </Link>
                         <Link
                           href="/categories"
                           className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
-                            pathname === "/categories" ||
-                            pathname.startsWith("/categories/")
+                            pathname === "/categories" || pathname.startsWith("/categories/")
                               ? "bg-white/10 text-white"
                               : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
                         >
                           <Tag className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">
-                            Project Categories
-                          </span>
+                          <span className="ml-3 font-medium text-sm">Project Categories</span>
                         </Link>
                       </>
                     )}
@@ -304,11 +292,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                     >
                       <div className="flex items-center">
                         <Briefcase className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium">
-                            Opportunities
-                          </span>
-                        )}
+                        {!isCollapsed && <span className="ml-3 font-medium">Opportunities</span>}
                       </div>
                       {!isCollapsed &&
                         (opportunitiesOpen ? (
@@ -334,15 +318,12 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                         <Link
                           href="/applications"
                           className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-                            pathname === "/applications" ||
-                            pathname.startsWith("/applications/")
+                            pathname === "/applications" || pathname.startsWith("/applications/")
                               ? "bg-white/10 text-white"
                               : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
                         >
-                          <span className="font-medium">
-                            General Applications
-                          </span>
+                          <span className="font-medium">General Applications</span>
                         </Link>
                       </div>
                     )}
@@ -381,9 +362,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                     >
                       <div className="flex items-center">
                         <Users2 className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium">Users</span>
-                        )}
+                        {!isCollapsed && <span className="ml-3 font-medium">Users</span>}
                       </div>
                       {!isCollapsed &&
                         (usersOpen ? (
@@ -405,23 +384,18 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                           }`}
                         >
                           <Users2 className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">
-                            Manage Users
-                          </span>
+                          <span className="ml-3 font-medium text-sm">Manage Users</span>
                         </Link>
                         <Link
                           href="/roles"
                           className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
-                            pathname === "/roles" ||
-                            pathname.startsWith("/roles/")
+                            pathname === "/roles" || pathname.startsWith("/roles/")
                               ? "bg-white/10 text-white"
                               : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
                         >
                           <Shield className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">
-                            Roles
-                          </span>
+                          <span className="ml-3 font-medium text-sm">Roles</span>
                         </Link>
                       </>
                     )}
@@ -439,9 +413,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                     >
                       <div className="flex items-center">
                         <UserPlus className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium">Teams</span>
-                        )}
+                        {!isCollapsed && <span className="ml-3 font-medium">Teams</span>}
                       </div>
                       {!isCollapsed &&
                         (teamsOpen ? (
@@ -504,9 +476,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                     >
                       <div className="flex items-center">
                         <FileText className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium">News</span>
-                        )}
+                        {!isCollapsed && <span className="ml-3 font-medium">News</span>}
                       </div>
                       {!isCollapsed &&
                         (newsOpen ? (
@@ -526,15 +496,12 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                           }`}
                         >
                           <FileText className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">
-                            All News
-                          </span>
+                          <span className="ml-3 font-medium text-sm">All News</span>
                         </Link>
                         <Link
                           href="/news/tags"
                           className={`flex items-center pl-10 pr-4 py-2 rounded-lg transition-colors ${
-                            pathname === "/news/tags" ||
-                            pathname.startsWith("/news/tags")
+                            pathname === "/news/tags" || pathname.startsWith("/news/tags")
                               ? "bg-white/10 text-white"
                               : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
@@ -548,31 +515,25 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                   <Link
                     href="/partners"
                     className={`flex items-center ${isCollapsed ? "justify-center px-3" : "px-4"} py-2.5 rounded-lg transition-colors ${
-                      pathname === "/partners" ||
-                      pathname.startsWith("/partners/")
+                      pathname === "/partners" || pathname.startsWith("/partners/")
                         ? "bg-white/10 text-white"
                         : "text-white/80 hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     <Users className="w-5 h-5 flex-shrink-0" />
-                    {!isCollapsed && (
-                      <span className="ml-3 font-medium">Partners</span>
-                    )}
+                    {!isCollapsed && <span className="ml-3 font-medium">Partners</span>}
                   </Link>
 
                   <Link
                     href="/testimonials"
                     className={`flex items-center ${isCollapsed ? "justify-center px-3" : "px-4"} py-2.5 rounded-lg transition-colors ${
-                      pathname === "/testimonials" ||
-                      pathname.startsWith("/testimonials/")
+                      pathname === "/testimonials" || pathname.startsWith("/testimonials/")
                         ? "bg-white/10 text-white"
                         : "text-white/80 hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     <MessageSquareQuote className="w-5 h-5 flex-shrink-0" />
-                    {!isCollapsed && (
-                      <span className="ml-3 font-medium">Testimonials</span>
-                    )}
+                    {!isCollapsed && <span className="ml-3 font-medium">Testimonials</span>}
                   </Link>
 
                   {/* Help & FAQs Dropdown */}
@@ -592,9 +553,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                     >
                       <div className="flex items-center">
                         <HelpCircle className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium">Help & FAQs</span>
-                        )}
+                        {!isCollapsed && <span className="ml-3 font-medium">Help & FAQs</span>}
                       </div>
                       {!isCollapsed &&
                         (helpFAQsOpen ? (
@@ -610,8 +569,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                         <Link
                           href="/faqs"
                           className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-                            pathname === "/faqs" ||
-                            pathname.startsWith("/faqs/")
+                            pathname === "/faqs" || pathname.startsWith("/faqs/")
                               ? "bg-white/10 text-white"
                               : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
@@ -622,8 +580,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                         <Link
                           href="/contact"
                           className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-                            pathname === "/contact" ||
-                            pathname.startsWith("/contact/")
+                            pathname === "/contact" || pathname.startsWith("/contact/")
                               ? "bg-white/10 text-white"
                               : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
@@ -634,8 +591,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                         <Link
                           href="/subscribers"
                           className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
-                            pathname === "/subscribers" ||
-                            pathname.startsWith("/subscribers/")
+                            pathname === "/subscribers" || pathname.startsWith("/subscribers/")
                               ? "bg-white/10 text-white"
                               : "text-white/80 hover:bg-white/5 hover:text-white"
                           }`}
@@ -686,9 +642,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
               className={`flex items-center ${isCollapsed ? "justify-center px-3" : "px-4"} py-2.5 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition-colors`}
             >
               <CheckSquare className="w-5 h-5 flex-shrink-0" />
-              {!isCollapsed && (
-                <span className="ml-3 font-medium">Task Management</span>
-              )}
+              {!isCollapsed && <span className="ml-3 font-medium">Task Management</span>}
             </a>
           </div>
         )}

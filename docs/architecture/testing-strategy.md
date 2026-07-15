@@ -5,18 +5,19 @@
 
 ## 1. Test pyramid & tools
 
-| Layer | Tool | Where | Runs |
-|---|---|---|---|
-| Backend unit | vitest | `backend/src/**/*.test.ts` (colocated) | every PR |
-| Backend integration (API) | vitest + supertest against a real test Postgres | `backend/tests/integration/**` | every PR |
-| Frontend unit/component | vitest + Testing Library + MSW (already set up in apps/hr — replicate config) | `apps/<app>/src/**/*.test.tsx` | every PR |
-| E2E | Playwright | `e2e/` (workspace package `@workspace/e2e`) | merge to dev/main + nightly |
+| Layer                     | Tool                                                                          | Where                                       | Runs                        |
+| ------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------- | --------------------------- |
+| Backend unit              | vitest                                                                        | `backend/src/**/*.test.ts` (colocated)      | every PR                    |
+| Backend integration (API) | vitest + supertest against a real test Postgres                               | `backend/tests/integration/**`              | every PR                    |
+| Frontend unit/component   | vitest + Testing Library + MSW (already set up in apps/hr — replicate config) | `apps/<app>/src/**/*.test.tsx`              | every PR                    |
+| E2E                       | Playwright                                                                    | `e2e/` (workspace package `@workspace/e2e`) | merge to dev/main + nightly |
 
 Backend standardizes on **vitest** (the existing jest/mocha mix is removed in FND-04).
 
 ## 2. TDD rule
 
 Each spec lists tests to write FIRST. The implementing agent:
+
 1. Writes the listed tests (they fail).
 2. Implements until green.
 3. May add tests, may not delete listed ones. A PR that weakens or skips a listed test is rejected.

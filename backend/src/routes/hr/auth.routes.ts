@@ -13,23 +13,10 @@ const router: Router = Router();
  *   description: HR portal authentication endpoints
  */
 
-router.post(
-  "/login",
-  validate(hrAuthValidation.loginSchema),
-  hrAuthController.loginHr
-);
+router.post("/login", validate(hrAuthValidation.loginSchema), hrAuthController.loginHr);
 
-router.get(
-  "/me",
-  authenticateHr,
-  enforceHrPasswordPolicy,
-  hrAuthController.getMeHr
-);
+router.get("/me", authenticateHr, enforceHrPasswordPolicy, hrAuthController.getMeHr);
 
-router.post(
-  "/logout",
-  authenticateHr,
-  hrAuthController.logoutHr
-);
+router.post("/logout", authenticateHr, hrAuthController.logoutHr);
 
 export default router;

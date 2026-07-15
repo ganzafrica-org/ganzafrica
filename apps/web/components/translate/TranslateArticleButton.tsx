@@ -67,29 +67,17 @@ export function TranslateArticleButton({
             if (!p.trim()) return p;
             const textContent = stripHtml(p);
             if (!textContent.trim()) return p;
-            const translated = await translate(
-              textContent,
-              selectedLanguage,
-              sourceLanguage,
-            );
+            const translated = await translate(textContent, selectedLanguage, sourceLanguage);
             // Reconstruct with original HTML structure (simplified)
             return p.replace(textContent, translated);
           }),
         );
         contentToTranslate = translatedParagraphs.join("</p>");
       } else {
-        contentToTranslate = await translate(
-          originalContent,
-          selectedLanguage,
-          sourceLanguage,
-        );
+        contentToTranslate = await translate(originalContent, selectedLanguage, sourceLanguage);
       }
 
-      const translatedTitle = await translate(
-        originalTitle,
-        selectedLanguage,
-        sourceLanguage,
-      );
+      const translatedTitle = await translate(originalTitle, selectedLanguage, sourceLanguage);
 
       onTranslate(contentToTranslate, translatedTitle);
       trackTranslation({
@@ -117,31 +105,23 @@ export function TranslateArticleButton({
         title="Translate article"
       >
         <Languages className="w-5 h-5 text-[#00A651]" />
-        <span className="text-sm font-medium">
-          {isTranslated ? "Translated" : "Translate"}
-        </span>
+        <span className="text-sm font-medium">{isTranslated ? "Translated" : "Translate"}</span>
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           <div className="p-4">
-            <h4 className="text-sm font-semibold text-gray-800 mb-3">
-              Translate to:
-            </h4>
+            <h4 className="text-sm font-semibold text-gray-800 mb-3">Translate to:</h4>
 
             {/* Language Selection */}
             <select
               value={selectedLanguage}
-              onChange={(e) =>
-                setSelectedLanguage(e.target.value as LanguageCode)
-              }
+              onChange={(e) => setSelectedLanguage(e.target.value as LanguageCode)}
               className="w-full p-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#00A651] focus:border-transparent"
               disabled={isLoading}
             >
-              {SUPPORTED_LANGUAGES.filter(
-                (lang) => lang.code !== sourceLanguage,
-              ).map((lang) => (
+              {SUPPORTED_LANGUAGES.filter((lang) => lang.code !== sourceLanguage).map((lang) => (
                 <option key={lang.code} value={lang.code}>
                   {lang.name}
                 </option>
@@ -152,11 +132,7 @@ export function TranslateArticleButton({
             {error && (
               <p className="mt-2 text-xs text-red-500">
                 {error.error}
-                {error.details && (
-                  <span className="block mt-1 text-gray-500">
-                    {error.details}
-                  </span>
-                )}
+                {error.details && <span className="block mt-1 text-gray-500">{error.details}</span>}
               </p>
             )}
 
@@ -195,9 +171,7 @@ export function TranslateArticleButton({
       )}
 
       {/* Click outside to close */}
-      {isOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-      )}
+      {isOpen && <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />}
     </div>
   );
 }

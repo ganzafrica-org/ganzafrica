@@ -2,13 +2,13 @@
 import path from "path";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
-import { hr_users} from "@/db/schema/hr/employee";
-import { hr_contracts } from "@/db/schema/hr/contract"
-import { hr_documents } from "@/db/schema/hr/document"
+import { hr_users } from "@/db/schema/hr/employee";
+import { hr_contracts } from "@/db/schema/hr/contract";
+import { hr_documents } from "@/db/schema/hr/document";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
 
-export type DocumentCategory = 
+export type DocumentCategory =
   | "Contract Templates"
   | "Policies & Procedures"
   | "Forms & Applications"
@@ -67,7 +67,7 @@ const VALID_CATEGORIES: DocumentCategory[] = [
   "Forms & Applications",
   "Training Materials",
   "Compliance & Legal",
-  "Onboarding Materials"
+  "Onboarding Materials",
 ];
 
 function uploadsDir(): string {
@@ -104,12 +104,20 @@ function saveBase64File(fileName: string, base64: string): { filePath: string; f
 }
 
 async function assertUserExists(userId: string): Promise<void> {
-  const rows = await db.select({ id: hr_users.id }).from(hr_users).where(eq(hr_users.id, userId)).limit(1);
+  const rows = await db
+    .select({ id: hr_users.id })
+    .from(hr_users)
+    .where(eq(hr_users.id, userId))
+    .limit(1);
   if (!rows.length) throw new AppError("Created by user not found", 404);
 }
 
 async function assertContractExists(contractId: string): Promise<void> {
-  const rows = await db.select({ id: hr_contracts.id }).from(hr_contracts).where(eq(hr_contracts.id, contractId)).limit(1);
+  const rows = await db
+    .select({ id: hr_contracts.id })
+    .from(hr_contracts)
+    .where(eq(hr_contracts.id, contractId))
+    .limit(1);
   if (!rows.length) throw new AppError("Linked contract record not found in DB", 404);
 }
 
@@ -208,7 +216,7 @@ export async function getDocument(id: string) {
 
 export async function createDocument(input: CreateDocumentInput) {
   await assertUserExists(input.createdById);
-  
+
   if (!VALID_CATEGORIES.includes(input.category)) {
     throw new AppError(`Invalid category. Must be one of: ${VALID_CATEGORIES.join(", ")}`, 400);
   }
@@ -283,13 +291,17 @@ export async function updateDocument(id: string, input: UpdateDocumentInput) {
   if (filePatch.file_path !== undefined) patch.file_path = filePatch.file_path;
   if (filePatch.file_size !== undefined) patch.file_size = filePatch.file_size;
 
-  const updated = await db.update(hr_documents).set(patch).where(eq(hr_documents.id, id)).returning();
+  const updated = await db
+    .update(hr_documents)
+    .set(patch)
+    .where(eq(hr_documents.id, id))
+    .returning();
 
   if (!updated.length) throw new AppError("Document not found", 404);
 
   const wasPublished = rows[0].status === "PUBLISHED";
   const isNowPublished = updated[0].status === "PUBLISHED";
-  
+
   if (!wasPublished && isNowPublished) {
     try {
       await sendNotification({

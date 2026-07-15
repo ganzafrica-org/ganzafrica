@@ -3,21 +3,44 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import { Task, TeamMember } from "@/lib/types";
 import { isCurrentUserAdminOrManager, isCurrentUserAdminOrManagerAsync } from "@/lib/auth-utils";
 import { useSidebar } from "./sidebar-provider";
 
 // Dynamically import icons to prevent hydration mismatches
-const Layout = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Layout })), { ssr: false });
-const ListTodo = dynamic(() => import('lucide-react').then(mod => ({ default: mod.ListTodo })), { ssr: false });
-const Layers = dynamic(() => import('lucide-react').then(mod => ({ default: mod.Layers })), { ssr: false });
-const CalendarDays = dynamic(() => import('lucide-react').then(mod => ({ default: mod.CalendarDays })), { ssr: false });
-const BarChart3 = dynamic(() => import('lucide-react').then(mod => ({ default: mod.BarChart3 })), { ssr: false });
-const X = dynamic(() => import('lucide-react').then(mod => ({ default: mod.X })), { ssr: false });
-const LayoutDashboard = dynamic(() => import('lucide-react').then(mod => ({ default: mod.LayoutDashboard })), { ssr: false });
+const Layout = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.Layout })), {
+  ssr: false,
+});
+const ListTodo = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.ListTodo })), {
+  ssr: false,
+});
+const Layers = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.Layers })), {
+  ssr: false,
+});
+const CalendarDays = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.CalendarDays })),
+  { ssr: false },
+);
+const BarChart3 = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.BarChart3 })),
+  { ssr: false },
+);
+const X = dynamic(() => import("lucide-react").then((mod) => ({ default: mod.X })), { ssr: false });
+const LayoutDashboard = dynamic(
+  () => import("lucide-react").then((mod) => ({ default: mod.LayoutDashboard })),
+  { ssr: false },
+);
 
-export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; tasks: Task[]; collapsed?: boolean }): React.JSX.Element {
+export function Sidebar({
+  members,
+  tasks,
+  collapsed,
+}: {
+  members: TeamMember[];
+  tasks: Task[];
+  collapsed?: boolean;
+}): React.JSX.Element {
   const pathname = usePathname();
   const router = useRouter();
   const { closeMobile, mobileOpen } = useSidebar();
@@ -38,7 +61,7 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
         setUserHasAccess(false);
       }
     };
-    
+
     checkUserAccess();
   }, []);
 
@@ -51,7 +74,7 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
   ];
 
   // Add Board View only for admin/manager users
-  const navItems = userHasAccess 
+  const navItems = userHasAccess
     ? [{ href: "/board", icon: Layout, label: "Board View" }, ...baseNavItems]
     : baseNavItems;
 
@@ -63,14 +86,14 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
   };
 
   return (
-    <div 
-      className="h-full p-3 sm:p-4 flex flex-col overflow-y-auto" 
-      style={{ 
-        backgroundColor: '#076297',
-        overflowX: 'hidden',
-        touchAction: 'pan-y',
-        WebkitOverflowScrolling: 'touch',
-        width: '100%'
+    <div
+      className="h-full p-3 sm:p-4 flex flex-col overflow-y-auto"
+      style={{
+        backgroundColor: "#076297",
+        overflowX: "hidden",
+        touchAction: "pan-y",
+        WebkitOverflowScrolling: "touch",
+        width: "100%",
       }}
     >
       {/* Mobile close button */}
@@ -91,32 +114,38 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
-          
+
           return (
-             <div key={item.href} className="relative group">
+            <div key={item.href} className="relative group">
               <Link
                 href={item.href}
                 onClick={handleLinkClick}
                 className={`flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-md transition-all duration-200 text-white ${
-                  collapsed ? 'justify-center px-2' : ''
-                } ${
-                  isActive ? 'bg-white/20 shadow-sm' : 'hover:bg-white/10'
-                }`}
+                  collapsed ? "justify-center px-2" : ""
+                } ${isActive ? "bg-white/20 shadow-sm" : "hover:bg-white/10"}`}
               >
-                <Icon className={`${collapsed ? 'h-5 w-5' : 'h-4 w-4 sm:h-5 sm:w-5'} flex-shrink-0`} /> 
+                <Icon
+                  className={`${collapsed ? "h-5 w-5" : "h-4 w-4 sm:h-5 sm:w-5"} flex-shrink-0`}
+                />
                 {!collapsed && (
                   <span className="text-sm sm:text-base font-medium whitespace-nowrap">
                     {item.label}
                   </span>
                 )}
               </Link>
-              
+
               {/* Tooltip for collapsed sidebar (desktop only) */}
               {collapsed && !mobileOpen && (
-                <div className="absolute left-full ml-2 px-3 py-2 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[99999] whitespace-nowrap pointer-events-none shadow-lg" style={{ backgroundColor: '#0a7bb8' }}>
+                <div
+                  className="absolute left-full ml-2 px-3 py-2 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[99999] whitespace-nowrap pointer-events-none shadow-lg"
+                  style={{ backgroundColor: "#0a7bb8" }}
+                >
                   {item.label}
                   {/* Arrow pointing to the icon */}
-                  <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent" style={{ borderRightColor: '#0a7bb8' }}></div>
+                  <div
+                    className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent"
+                    style={{ borderRightColor: "#0a7bb8" }}
+                  ></div>
                 </div>
               )}
             </div>
@@ -129,28 +158,34 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
         <div className="mt-auto pt-2 border-t border-white/20">
           <div className="relative group">
             <a
-              href={`${process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001'}/dashboard`}
+              href={`${process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001"}/dashboard`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleLinkClick}
               className={`flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-md transition-all duration-200 text-white hover:bg-white/10 ${
-                collapsed ? 'justify-center px-2' : ''
+                collapsed ? "justify-center px-2" : ""
               }`}
             >
-              <LayoutDashboard className={`${collapsed ? 'h-5 w-5' : 'h-4 w-4 sm:h-5 sm:w-5'} flex-shrink-0`} />
+              <LayoutDashboard
+                className={`${collapsed ? "h-5 w-5" : "h-4 w-4 sm:h-5 sm:w-5"} flex-shrink-0`}
+              />
               {!collapsed && (
-                <span className="text-sm sm:text-base font-medium whitespace-nowrap">
-                  Portal
-                </span>
+                <span className="text-sm sm:text-base font-medium whitespace-nowrap">Portal</span>
               )}
             </a>
-            
+
             {/* Tooltip for collapsed sidebar (desktop only) */}
             {collapsed && !mobileOpen && (
-              <div className="absolute left-full ml-2 px-3 py-2 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[99999] whitespace-nowrap pointer-events-none shadow-lg" style={{ backgroundColor: '#0a7bb8' }}>
+              <div
+                className="absolute left-full ml-2 px-3 py-2 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[99999] whitespace-nowrap pointer-events-none shadow-lg"
+                style={{ backgroundColor: "#0a7bb8" }}
+              >
                 Portal
                 {/* Arrow pointing to the icon */}
-                <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent" style={{ borderRightColor: '#0a7bb8' }}></div>
+                <div
+                  className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent"
+                  style={{ borderRightColor: "#0a7bb8" }}
+                ></div>
               </div>
             )}
           </div>
@@ -159,5 +194,3 @@ export function Sidebar({ members, tasks, collapsed }: { members: TeamMember[]; 
     </div>
   );
 }
-
-

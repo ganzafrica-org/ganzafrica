@@ -1,23 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Users,
-  Briefcase,
-  Calendar,
-  Trophy,
-  UserPlus,
-  BookOpen,
-} from "lucide-react";
+import { Users, Briefcase, Calendar, Trophy, UserPlus, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { alumniApi, type DashboardStats } from "@/lib/api/alumni";
 
@@ -44,9 +31,7 @@ const StatsCards = ({ stats }: { stats: DashboardStats }) => (
   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
     <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-emerald-100">
-          My Mentorship Pairs
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-emerald-100">My Mentorship Pairs</CardTitle>
         <UserPlus className="h-5 w-5 text-emerald-200" />
       </CardHeader>
       <CardContent>
@@ -57,9 +42,7 @@ const StatsCards = ({ stats }: { stats: DashboardStats }) => (
 
     <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-blue-100">
-          Upcoming Events
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-blue-100">Upcoming Events</CardTitle>
         <Calendar className="h-5 w-5 text-blue-200" />
       </CardHeader>
       <CardContent>
@@ -70,9 +53,7 @@ const StatsCards = ({ stats }: { stats: DashboardStats }) => (
 
     <Card className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-amber-100">
-          Job Postings
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-amber-100">Job Postings</CardTitle>
         <Briefcase className="h-5 w-5 text-amber-200" />
       </CardHeader>
       <CardContent>
@@ -83,9 +64,7 @@ const StatsCards = ({ stats }: { stats: DashboardStats }) => (
 
     <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-purple-100">
-          Achievements
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-purple-100">Achievements</CardTitle>
         <Trophy className="h-5 w-5 text-purple-200" />
       </CardHeader>
       <CardContent>
@@ -122,9 +101,7 @@ export default function AlumniDashboard() {
       <div className="bg-gradient-to-r from-green-primary to-green-secondary rounded-lg text-white p-8 shadow-lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-3">
-              Welcome to the Alumni Network
-            </h1>
+            <h1 className="text-3xl font-bold mb-3">Welcome to the Alumni Network</h1>
             <p className="text-green-100 mb-6 text-lg">
               Connect, grow, and give back to the GanzAfrica community
             </p>
@@ -139,7 +116,6 @@ export default function AlumniDashboard() {
                   Browse Alumni
                 </Link>
               </Button>
-
             </div>
           </div>
           <div className="hidden md:block">
@@ -154,20 +130,14 @@ export default function AlumniDashboard() {
       ) : stats ? (
         <StatsCards stats={stats} />
       ) : (
-        <div className="text-center text-gray-500">
-          Failed to load statistics
-        </div>
+        <div className="text-center text-gray-500">Failed to load statistics</div>
       )}
 
       {/* Quick Actions */}
       <Card className="shadow-sm">
         <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-lg border-b">
-          <CardTitle className="text-xl text-slate-800">
-            Quick Actions
-          </CardTitle>
-          <CardDescription>
-            Get started with the most popular alumni activities
-          </CardDescription>
+          <CardTitle className="text-xl text-slate-800">Quick Actions</CardTitle>
+          <CardDescription>Get started with the most popular alumni activities</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">

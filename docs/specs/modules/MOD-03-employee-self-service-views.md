@@ -58,17 +58,18 @@ try/catch per section — the endpoint never 500s because one module lags).
 ## 6. Tests to write FIRST
 
 Frontend:
+
 1. Nav config: employee fixture sees exactly self-service; manager adds Team; hr adds
    Management (snapshot per role).
 2. Route guard: employee visiting /employees admin URL → 403 page (not crash/redirect loop).
 3. `/me` cards render from MSW summary incl. degraded fields (null payslip → "No payslips yet").
 4. Onboarding banner shows iff status onboarding.
-Backend:
+   Backend:
 5. `/hr/me/summary` shape + null-tolerance (drop one module's tables in fixture → field null,
    200 still).
 6. Summary leaks nothing cross-employee (fixture with two employees — counts are mine only).
-E2E: login as seeded fellow → lands on /me → requests leave from the card → sees it pending;
-login as their manager → Team shows the pending approval.
+   E2E: login as seeded fellow → lands on /me → requests leave from the card → sees it pending;
+   login as their manager → Team shows the pending approval.
 
 ## 7. Acceptance criteria
 

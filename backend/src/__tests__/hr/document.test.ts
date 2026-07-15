@@ -47,9 +47,7 @@ describe("HR System - Document Management", () => {
         total: 1,
       });
 
-      const res = await request
-        .get("/api/hr/document")
-        .set("Authorization", `Bearer ${hrToken}`);
+      const res = await request.get("/api/hr/document").set("Authorization", `Bearer ${hrToken}`);
 
       expect(res.status).to.equal(200);
       expect(res.body.data).to.be.an("array");

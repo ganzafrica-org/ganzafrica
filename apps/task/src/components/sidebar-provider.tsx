@@ -32,8 +32,8 @@ export function SidebarProvider({ children }: { children: ReactNode }): React.JS
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const toggleCollapsed = () => {
@@ -53,7 +53,9 @@ export function SidebarProvider({ children }: { children: ReactNode }): React.JS
   };
 
   return (
-    <SidebarContext.Provider value={{ collapsed, mobileOpen, toggleCollapsed, toggleMobile, closeMobile }}>
+    <SidebarContext.Provider
+      value={{ collapsed, mobileOpen, toggleCollapsed, toggleMobile, closeMobile }}
+    >
       {children}
     </SidebarContext.Provider>
   );
@@ -66,4 +68,3 @@ export function useSidebar() {
   }
   return context;
 }
-

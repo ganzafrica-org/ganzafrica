@@ -20,4 +20,3 @@ router.get("/events", authenticate, googleCalendarController.getEvents);
 router.post("/disconnect", authenticate, googleCalendarController.disconnect);
 
 export default router;
-

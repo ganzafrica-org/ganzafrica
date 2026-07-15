@@ -101,23 +101,23 @@ export type AddProjectMemberInput = {
 export const createTaskTeam = async (input: CreateTaskTeamInput) => {
   try {
     logger.info("Creating task team with input:", JSON.stringify(input, null, 2));
-    
+
     // Use transaction to ensure all operations succeed or fail together
     return await withDbTransaction(async (tx) => {
       // Create the team
       logger.info("Step 1: Creating team...");
       const [team] = await tx
-      .insert(task_teams)
-      .values({
-        name: input.name,
-        description: input.description,
-        avatar_url: input.avatar_url,
-        color: input.color,
-        status: input.status || "active",
-        created_by: input.created_by,
-        settings: input.settings ? JSON.stringify(input.settings) : null,
-      })
-      .returning();
+        .insert(task_teams)
+        .values({
+          name: input.name,
+          description: input.description,
+          avatar_url: input.avatar_url,
+          color: input.color,
+          status: input.status || "active",
+          created_by: input.created_by,
+          settings: input.settings ? JSON.stringify(input.settings) : null,
+        })
+        .returning();
       logger.info("✓ Team created with ID:", team.id);
 
       // Add creator as owner (if they have a user account)
@@ -127,15 +127,15 @@ export const createTaskTeam = async (input: CreateTaskTeamInput) => {
       // Add additional members if provided
       if (input.members && input.members.length > 0) {
         logger.info(`Step 2: Adding ${input.members.length} members...`);
-        const membersToInsert = input.members.map(member => ({
-      team_id: team.id,
+        const membersToInsert = input.members.map((member) => ({
+          team_id: team.id,
           user_id: member.user_id, // References portal teams table (teams.id)
           name: member.name || null,
           role: "member" as const, // Default role for access control
           position: member.position || null, // Actual position/title from portal teams
-      is_active: true,
+          is_active: true,
         }));
-        
+
         logger.info("Members to insert:", JSON.stringify(membersToInsert, null, 2));
         await tx.insert(task_team_members).values(membersToInsert as any);
         logger.info("✓ Members added successfully");
@@ -144,7 +144,7 @@ export const createTaskTeam = async (input: CreateTaskTeamInput) => {
       // Create projects if provided
       if (input.projects && input.projects.length > 0) {
         logger.info(`Step 3: Creating ${input.projects.length} projects...`);
-        const projectsToInsert = input.projects.map(project => ({
+        const projectsToInsert = input.projects.map((project) => ({
           team_id: team.id,
           name: project.name,
           description: project.description,
@@ -155,7 +155,7 @@ export const createTaskTeam = async (input: CreateTaskTeamInput) => {
           created_by: input.created_by,
           settings: null,
         }));
-        
+
         logger.info("Projects to insert:", JSON.stringify(projectsToInsert, null, 2));
         await tx.insert(task_team_projects).values(projectsToInsert as any);
         logger.info("✓ Projects created successfully");
@@ -179,7 +179,7 @@ export const createTaskTeam = async (input: CreateTaskTeamInput) => {
 export const getTaskTeamById = async (teamId: number, transaction?: any) => {
   try {
     const dbClient = transaction || db;
-    
+
     const [team] = await dbClient
       .select({
         id: task_teams.id,
@@ -300,7 +300,7 @@ export const listTaskTeams = async (filters?: {
 
     if (filters?.search) {
       conditions.push(
-        sql`(${task_teams.name} ILIKE ${`%${filters.search}%`} OR ${task_teams.description} ILIKE ${`%${filters.search}%`})`
+        sql`(${task_teams.name} ILIKE ${`%${filters.search}%`} OR ${task_teams.description} ILIKE ${`%${filters.search}%`})`,
       );
     }
 
@@ -313,9 +313,7 @@ export const listTaskTeams = async (filters?: {
 
       if (userTeamIds.length > 0) {
         conditions.push(
-          sql`${task_teams.id} IN ${sql.raw(
-            `(${userTeamIds.map((t) => t.team_id).join(",")})`
-          )}`
+          sql`${task_teams.id} IN ${sql.raw(`(${userTeamIds.map((t) => t.team_id).join(",")})`)}`,
         );
       } else {
         // Return empty result if user is not in any teams
@@ -332,10 +330,7 @@ export const listTaskTeams = async (filters?: {
       query = query.where(and(...conditions)) as any;
     }
 
-    const teams = await query
-      .orderBy(desc(task_teams.created_at))
-      .limit(limit)
-      .offset(offset);
+    const teams = await query.orderBy(desc(task_teams.created_at)).limit(limit).offset(offset);
 
     // Get member count and project count for each team
     const teamsWithCounts = await Promise.all(
@@ -355,7 +350,7 @@ export const listTaskTeams = async (filters?: {
           member_count: memberCount?.count || 0,
           project_count: projectCount?.count || 0,
         };
-      })
+      }),
     );
 
     // Get total count
@@ -379,10 +374,7 @@ export const listTaskTeams = async (filters?: {
 /**
  * Update task team
  */
-export const updateTaskTeam = async (
-  teamId: number,
-  input: UpdateTaskTeamInput
-) => {
+export const updateTaskTeam = async (teamId: number, input: UpdateTaskTeamInput) => {
   try {
     const updateData: any = {};
 
@@ -416,10 +408,7 @@ export const updateTaskTeam = async (
  */
 export const deleteTaskTeam = async (teamId: number) => {
   try {
-    const [deleted] = await db
-      .delete(task_teams)
-      .where(eq(task_teams.id, teamId))
-      .returning();
+    const [deleted] = await db.delete(task_teams).where(eq(task_teams.id, teamId)).returning();
 
     if (!deleted) {
       throw new AppError("Task team not found", 404);
@@ -450,8 +439,8 @@ export const addTeamMember = async (input: AddTeamMemberInput) => {
       .where(
         and(
           eq(task_team_members.team_id, input.team_id),
-          eq(task_team_members.user_id, input.portal_team_id)
-        )
+          eq(task_team_members.user_id, input.portal_team_id),
+        ),
       );
 
     if (existing) {
@@ -461,7 +450,7 @@ export const addTeamMember = async (input: AddTeamMemberInput) => {
     // If name/position not provided, try to get from users table
     let memberName: string | null = input.name || null;
     let memberPosition: string | null = input.position || null;
-    
+
     if (!memberName || !memberPosition) {
       // Try to get from users table
       const [user] = await db
@@ -471,7 +460,7 @@ export const addTeamMember = async (input: AddTeamMemberInput) => {
         .from(users)
         .where(eq(users.id, input.portal_team_id))
         .limit(1);
-      
+
       if (user) {
         memberName = memberName || user.name;
       }
@@ -504,12 +493,7 @@ export const removeTeamMember = async (teamId: number, userId: number) => {
   try {
     const [deleted] = await db
       .delete(task_team_members)
-      .where(
-        and(
-          eq(task_team_members.team_id, teamId),
-          eq(task_team_members.user_id, userId)
-        )
-      )
+      .where(and(eq(task_team_members.team_id, teamId), eq(task_team_members.user_id, userId)))
       .returning();
 
     if (!deleted) {
@@ -527,21 +511,12 @@ export const removeTeamMember = async (teamId: number, userId: number) => {
 /**
  * Update team member role
  */
-export const updateTeamMemberRole = async (
-  teamId: number,
-  userId: number,
-  role: string
-) => {
+export const updateTeamMemberRole = async (teamId: number, userId: number, role: string) => {
   try {
     const [updated] = await db
       .update(task_team_members)
       .set({ role: role as any })
-      .where(
-        and(
-          eq(task_team_members.team_id, teamId),
-          eq(task_team_members.user_id, userId)
-        )
-      )
+      .where(and(eq(task_team_members.team_id, teamId), eq(task_team_members.user_id, userId)))
       .returning();
 
     if (!updated) {
@@ -646,10 +621,13 @@ export const getTaskProjectById = async (projectId: number) => {
 /**
  * List projects for a team
  */
-export const listTaskProjects = async (teamId: number, filters?: {
-  status?: string;
-  search?: string;
-}) => {
+export const listTaskProjects = async (
+  teamId: number,
+  filters?: {
+    status?: string;
+    search?: string;
+  },
+) => {
   try {
     let query = db
       .select({
@@ -683,7 +661,7 @@ export const listTaskProjects = async (teamId: number, filters?: {
 
     if (filters?.search) {
       conditions.push(
-        sql`(${task_team_projects.name} ILIKE ${`%${filters.search}%`} OR ${task_team_projects.description} ILIKE ${`%${filters.search}%`})`
+        sql`(${task_team_projects.name} ILIKE ${`%${filters.search}%`} OR ${task_team_projects.description} ILIKE ${`%${filters.search}%`})`,
       );
     }
 
@@ -724,7 +702,7 @@ export const listTaskProjects = async (teamId: number, filters?: {
           ...project,
           member_count: count?.count || 0,
         };
-      })
+      }),
     );
 
     return projectsWithCounts;
@@ -737,10 +715,7 @@ export const listTaskProjects = async (teamId: number, filters?: {
 /**
  * Update task project
  */
-export const updateTaskProject = async (
-  projectId: number,
-  input: UpdateTaskProjectInput
-) => {
+export const updateTaskProject = async (projectId: number, input: UpdateTaskProjectInput) => {
   try {
     const updateData: any = {};
 
@@ -814,8 +789,8 @@ export const addProjectToTeam = async (teamId: number, projectId: number, create
       .where(
         and(
           eq(task_team_projects.team_id, teamId),
-          eq(task_team_projects.name, existingProject.name)
-        )
+          eq(task_team_projects.name, existingProject.name),
+        ),
       );
 
     if (existingInTeam) {
@@ -855,12 +830,7 @@ export const removeProjectFromTeam = async (teamId: number, projectId: number) =
     const [project] = await db
       .select()
       .from(task_team_projects)
-      .where(
-        and(
-          eq(task_team_projects.id, projectId),
-          eq(task_team_projects.team_id, teamId)
-        )
-      );
+      .where(and(eq(task_team_projects.id, projectId), eq(task_team_projects.team_id, teamId)));
 
     if (!project) {
       throw new AppError("Project not found in this team", 404);
@@ -896,8 +866,8 @@ export const addProjectMember = async (input: AddProjectMemberInput) => {
       .where(
         and(
           eq(task_project_members.project_id, input.project_id),
-          eq(task_project_members.user_id, input.user_id)
-        )
+          eq(task_project_members.user_id, input.user_id),
+        ),
       );
 
     if (existing) {
@@ -907,7 +877,7 @@ export const addProjectMember = async (input: AddProjectMemberInput) => {
     // If name/position not provided, try to get from user or team member
     let memberName: string | null = input.name || null;
     let memberPosition: string | null = input.position || null;
-    
+
     if (!memberName || !memberPosition) {
       // Try to get from users table first
       const [user] = await db
@@ -917,11 +887,11 @@ export const addProjectMember = async (input: AddProjectMemberInput) => {
         .from(users)
         .where(eq(users.id, input.user_id))
         .limit(1);
-      
+
       if (user) {
         memberName = memberName || user.name;
       }
-      
+
       // Try to get position from existing team member record
       const [teamMember] = await db
         .select({
@@ -930,7 +900,7 @@ export const addProjectMember = async (input: AddProjectMemberInput) => {
         .from(task_team_members)
         .where(eq(task_team_members.user_id, input.user_id))
         .limit(1);
-      
+
       if (teamMember) {
         memberPosition = memberPosition || teamMember.position;
       }
@@ -966,8 +936,8 @@ export const removeProjectMember = async (projectId: number, userId: number) => 
       .where(
         and(
           eq(task_project_members.project_id, projectId),
-          eq(task_project_members.user_id, userId)
-        )
+          eq(task_project_members.user_id, userId),
+        ),
       )
       .returning();
 
@@ -986,10 +956,7 @@ export const removeProjectMember = async (projectId: number, userId: number) => 
 /**
  * List all projects across all teams
  */
-export const listAllProjects = async (filters?: {
-  status?: string;
-  search?: string;
-}) => {
+export const listAllProjects = async (filters?: { status?: string; search?: string }) => {
   try {
     // For now, just get all projects without filters to fix the TypeScript issue
     // TODO: Add proper filtering later
@@ -1046,4 +1013,3 @@ export const taskTeamService = {
 };
 
 export default taskTeamService;
-

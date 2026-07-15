@@ -1,4 +1,4 @@
-import apiClient from '../api-client';
+import apiClient from "../api-client";
 
 // Types
 export interface TaskTeam {
@@ -7,7 +7,7 @@ export interface TaskTeam {
   description: string;
   avatar_url?: string;
   color?: string;
-  status: 'active' | 'inactive' | 'archived';
+  status: "active" | "inactive" | "archived";
   created_by: number;
   settings?: any;
   members?: TeamMember[];
@@ -23,7 +23,7 @@ export interface TeamMember {
   id: number;
   user_id: number;
   name?: string;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
+  role: "owner" | "admin" | "member" | "viewer";
   position?: string;
   is_active: boolean;
   joined_at: string;
@@ -40,7 +40,7 @@ export interface TaskProject {
   team_id: number;
   name: string;
   description?: string;
-  status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+  status: "planning" | "active" | "on_hold" | "completed" | "cancelled";
   start_date?: string;
   end_date?: string;
   color?: string;
@@ -56,7 +56,7 @@ export interface ProjectMember {
   id: number;
   user_id: number;
   name?: string;
-  role: 'owner' | 'admin' | 'member' | 'viewer';
+  role: "owner" | "admin" | "member" | "viewer";
   position?: string;
   is_active: boolean;
   joined_at: string;
@@ -73,7 +73,7 @@ export interface CreateTeamInput {
   description?: string;
   avatar_url?: string;
   color?: string;
-  status?: 'active' | 'inactive' | 'archived';
+  status?: "active" | "inactive" | "archived";
   created_by: number;
   settings?: any;
   members?: Array<{
@@ -84,7 +84,7 @@ export interface CreateTeamInput {
   projects?: Array<{
     name: string;
     description?: string;
-    status?: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+    status?: "planning" | "active" | "on_hold" | "completed" | "cancelled";
     start_date?: string;
     end_date?: string;
     color?: string;
@@ -96,14 +96,14 @@ export interface UpdateTeamInput {
   description?: string;
   avatar_url?: string;
   color?: string;
-  status?: 'active' | 'inactive' | 'archived';
+  status?: "active" | "inactive" | "archived";
   settings?: any;
 }
 
 export interface CreateProjectInput {
   name: string;
   description?: string;
-  status?: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+  status?: "planning" | "active" | "on_hold" | "completed" | "cancelled";
   start_date?: string;
   end_date?: string;
   color?: string;
@@ -114,7 +114,7 @@ export interface CreateProjectInput {
 export interface UpdateProjectInput {
   name?: string;
   description?: string;
-  status?: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
+  status?: "planning" | "active" | "on_hold" | "completed" | "cancelled";
   start_date?: string;
   end_date?: string;
   color?: string;
@@ -132,7 +132,7 @@ export const taskTeamsApi = {
     page?: number;
     limit?: number;
   }) {
-    const response = await apiClient.get('/task-teams', { params: filters });
+    const response = await apiClient.get("/task-teams", { params: filters });
     return response.data;
   },
 
@@ -142,7 +142,7 @@ export const taskTeamsApi = {
   },
 
   async createTeam(data: CreateTeamInput) {
-    const response = await apiClient.post('/task-teams', data);
+    const response = await apiClient.post("/task-teams", data);
     return response.data;
   },
 
@@ -160,7 +160,7 @@ export const taskTeamsApi = {
   async addTeamMember(teamId: number, userId: number, role?: string) {
     const response = await apiClient.post(`/task-teams/${teamId}/members`, {
       user_id: userId,
-      role: role || 'member',
+      role: role || "member",
     });
     return response.data;
   },
@@ -179,7 +179,7 @@ export const taskTeamsApi = {
 
   // List all projects (for team assignment)
   async listAllProjects() {
-    const response = await apiClient.get('/task-teams/projects/all');
+    const response = await apiClient.get("/task-teams/projects/all");
     return response.data;
   },
 
@@ -196,10 +196,13 @@ export const taskTeamsApi = {
   },
 
   // Projects
-  async listProjects(teamId: number, filters?: {
-    status?: string;
-    search?: string;
-  }) {
+  async listProjects(
+    teamId: number,
+    filters?: {
+      status?: string;
+      search?: string;
+    },
+  ) {
     const response = await apiClient.get(`/task-teams/${teamId}/projects`, { params: filters });
     return response.data;
   },
@@ -228,7 +231,7 @@ export const taskTeamsApi = {
   async addProjectMember(projectId: number, userId: number, role?: string) {
     const response = await apiClient.post(`/task-teams/projects/${projectId}/members`, {
       user_id: userId,
-      role: role || 'member',
+      role: role || "member",
     });
     return response.data;
   },
@@ -238,4 +241,3 @@ export const taskTeamsApi = {
     return response.data;
   },
 };
-

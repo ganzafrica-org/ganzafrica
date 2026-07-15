@@ -30,7 +30,7 @@ export interface UploadFilesResponse {
  */
 export const uploadFile = async (
   file: File,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ): Promise<UploadFileResponse> => {
   const formData = new FormData();
   formData.append("file", file);
@@ -41,9 +41,7 @@ export const uploadFile = async (
     },
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
-        const progress = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
-        );
+        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         onProgress(progress);
       }
     },
@@ -60,7 +58,7 @@ export const uploadFile = async (
  */
 export const uploadFiles = async (
   files: File[],
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ): Promise<UploadFilesResponse> => {
   const formData = new FormData();
   files.forEach((file) => {
@@ -73,9 +71,7 @@ export const uploadFiles = async (
     },
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
-        const progress = Math.round(
-          (progressEvent.loaded * 100) / progressEvent.total
-        );
+        const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
         onProgress(progress);
       }
     },

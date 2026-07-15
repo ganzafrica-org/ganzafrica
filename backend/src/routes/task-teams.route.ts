@@ -30,7 +30,10 @@ router.delete("/projects/:id", authenticate, taskTeamController.deleteTaskProjec
 
 // Task Project Members Routes
 router.post("/projects/:id/members", authenticate, taskTeamController.addProjectMember);
-router.delete("/projects/:id/members/:userId", authenticate, taskTeamController.removeProjectMember);
+router.delete(
+  "/projects/:id/members/:userId",
+  authenticate,
+  taskTeamController.removeProjectMember,
+);
 
 export default router;
-

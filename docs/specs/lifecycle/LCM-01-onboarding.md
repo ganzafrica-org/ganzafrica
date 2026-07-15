@@ -31,28 +31,31 @@ to `active` — contract signed, leave set up, assets issued, all tracked as ste
 // backend/src/db/schema/hr/processes.ts
 export const process_templates = pgTable("process_templates", {
   id: serial("id").primaryKey(),
-  type: text("type").notNull(),                    // 'onboarding' | 'offboarding'
-  name: text("name").notNull(),                    // e.g. "Fellow onboarding", "Staff onboarding"
+  type: text("type").notNull(), // 'onboarding' | 'offboarding'
+  name: text("name").notNull(), // e.g. "Fellow onboarding", "Staff onboarding"
   employment_types: jsonb("employment_types").$type<string[]>(), // null = any; else auto-pick match
   is_active: boolean("is_active").notNull().default(true),
-  created_by: integer("created_by").notNull().references(() => users.id),
+  created_by: integer("created_by")
+    .notNull()
+    .references(() => users.id),
   ...timestampFields,
 });
 
 export const process_template_tasks = pgTable("process_template_tasks", {
   id: serial("id").primaryKey(),
-  template_id: integer("template_id").notNull()
+  template_id: integer("template_id")
+    .notNull()
     .references(() => process_templates.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
   sort_order: integer("sort_order").notNull(),
   default_assignee: text("default_assignee").notNull(), // 'hr'|'it'|'manager'|'finance'|'employee'
   visibility: text("visibility").notNull().default("all"), // 'all' | 'staff_only'
-  due_offset_days: integer("due_offset_days"),     // from instance start
+  due_offset_days: integer("due_offset_days"), // from instance start
   is_blocking: boolean("is_blocking").notNull().default(false),
   kind: text("kind").notNull().default("checklist"),
-    // 'checklist' | 'contract_signing' | 'document_upload' | 'asset_assignment' | 'leave_setup'
-    // kind drives a widget on the task card + a completion side-effect hook (see §4)
+  // 'checklist' | 'contract_signing' | 'document_upload' | 'asset_assignment' | 'leave_setup'
+  // kind drives a widget on the task card + a completion side-effect hook (see §4)
   ...timestampFields,
 });
 
@@ -60,7 +63,9 @@ export const process_instances = pgTable("process_instances", {
   id: serial("id").primaryKey(),
   template_id: integer("template_id").references(() => process_templates.id),
   type: text("type").notNull(),
-  employee_id: uuid("employee_id").notNull().references(() => employees.id),
+  employee_id: uuid("employee_id")
+    .notNull()
+    .references(() => employees.id),
   status: text("status").notNull().default("in_progress"), // in_progress|completed|cancelled
   started_at: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   due_date: date("due_date"),
@@ -72,9 +77,11 @@ export const process_instances = pgTable("process_instances", {
   ...timestampFields,
 });
 
-export const process_tasks = pgTable("process_tasks", {   // snapshot copy at instantiation
+export const process_tasks = pgTable("process_tasks", {
+  // snapshot copy at instantiation
   id: serial("id").primaryKey(),
-  instance_id: integer("instance_id").notNull()
+  instance_id: integer("instance_id")
+    .notNull()
     .references(() => process_instances.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
@@ -83,12 +90,12 @@ export const process_tasks = pgTable("process_tasks", {   // snapshot copy at in
   visibility: text("visibility").notNull().default("all"),
   is_blocking: boolean("is_blocking").notNull().default(false),
   kind: text("kind").notNull().default("checklist"),
-  status: text("status").notNull().default("pending"),     // pending|done|skipped
+  status: text("status").notNull().default("pending"), // pending|done|skipped
   due_date: date("due_date"),
   completed_at: timestamp("completed_at", { withTimezone: true }),
   completed_by: integer("completed_by").references(() => users.id),
   notes: text("notes"),
-  link_ref: jsonb("link_ref"),   // kind-specific: {contract_id} | {document_id} | {asset_id}
+  link_ref: jsonb("link_ref"), // kind-specific: {contract_id} | {document_id} | {asset_id}
   ...timestampFields,
 });
 ```
@@ -96,6 +103,7 @@ export const process_tasks = pgTable("process_tasks", {   // snapshot copy at in
 ## 4. API & services
 
 `backend/src/services/hr/process.service.ts` (type-agnostic — LCM-02 reuses):
+
 - `instantiateProcess(type, employeeId, opts)` — picks template (matching `employment_types`,
   else the active default), snapshots tasks, resolves assignees: `hr` → all users with hr
   role? NO — the instance has a single `owner` per assignee-class resolved at creation:

@@ -49,12 +49,7 @@ const router: Router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get(
-  "/stats",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getAchievementStats,
-);
+router.get("/stats", authenticate, authorize(["alumni", "admin"]), getAchievementStats);
 
 /**
  * @swagger
@@ -183,12 +178,7 @@ router.get(
  *                       items:
  *                         type: integer
  */
-router.get(
-  "/",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getAllAchievements,
-);
+router.get("/", authenticate, authorize(["alumni", "admin"]), getAllAchievements);
 
 /**
  * @swagger
@@ -213,12 +203,7 @@ router.get(
  *       404:
  *         description: Achievement not found
  */
-router.get(
-  "/:id",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getAchievement,
-);
+router.get("/:id", authenticate, authorize(["alumni", "admin"]), getAchievement);
 
 /**
  * @swagger
@@ -270,12 +255,7 @@ router.get(
  *       403:
  *         description: Forbidden - Requires alumni or admin role
  */
-router.post(
-  "/",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  createAchievement,
-);
+router.post("/", authenticate, authorize(["alumni", "admin"]), createAchievement);
 
 /**
  * @swagger
@@ -328,12 +308,7 @@ router.post(
  *       404:
  *         description: Achievement not found
  */
-router.put(
-  "/:id",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  updateAchievement,
-);
+router.put("/:id", authenticate, authorize(["alumni", "admin"]), updateAchievement);
 
 /**
  * @swagger
@@ -358,12 +333,7 @@ router.put(
  *       404:
  *         description: Achievement not found
  */
-router.delete(
-  "/:id",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  deleteAchievement,
-);
+router.delete("/:id", authenticate, authorize(["alumni", "admin"]), deleteAchievement);
 
 /**
  * @swagger
@@ -397,12 +367,7 @@ router.delete(
  *       404:
  *         description: Achievement not found
  */
-router.post(
-  "/:id/like",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  toggleLike,
-);
+router.post("/:id/like", authenticate, authorize(["alumni", "admin"]), toggleLike);
 
 /**
  * @swagger
@@ -440,12 +405,7 @@ router.post(
  *       404:
  *         description: Achievement not found
  */
-router.post(
-  "/:id/comments",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  addComment,
-);
+router.post("/:id/comments", authenticate, authorize(["alumni", "admin"]), addComment);
 
 /**
  * @swagger

@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { fetchUserProfile } from "@/lib/auth-utils";
 
@@ -34,11 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-export function AuthProvider({
-  children,
-}: {
-  children: ReactNode;
-}): React.JSX.Element {
+export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   useRouter();
@@ -49,8 +39,7 @@ export function AuthProvider({
 
       if (token) {
         // First, try to get user from localStorage (set by auth callback)
-        const userData =
-          localStorage.getItem("alumni_user") || localStorage.getItem("user");
+        const userData = localStorage.getItem("alumni_user") || localStorage.getItem("user");
 
         if (userData) {
           try {
@@ -64,8 +53,7 @@ export function AuthProvider({
               .then((userProfile) => {
                 if (userProfile) {
                   const updatedUserData =
-                    localStorage.getItem("alumni_user") ||
-                    localStorage.getItem("user");
+                    localStorage.getItem("alumni_user") || localStorage.getItem("user");
                   if (updatedUserData) {
                     const updatedUser = JSON.parse(updatedUserData);
                     setUser(updatedUser);
@@ -92,8 +80,7 @@ export function AuthProvider({
 
           if (userProfile) {
             const fetchedUserData =
-              localStorage.getItem("alumni_user") ||
-              localStorage.getItem("user");
+              localStorage.getItem("alumni_user") || localStorage.getItem("user");
             if (fetchedUserData) {
               const parsedUser = JSON.parse(fetchedUserData);
               setUser(parsedUser);
@@ -125,8 +112,7 @@ export function AuthProvider({
     localStorage.removeItem("user");
     setUser(null);
     // Redirect to portal login with alumni param
-    const portalUrl =
-      process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+    const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
     window.location.href = `${portalUrl}/login?user=alumni`;
   };
 

@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import apiClient from "@/lib/api-client";
-import { 
-  Search, 
-  Filter, 
-  ArrowUp, 
-  MoreHorizontal, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
+import {
+  Search,
+  Filter,
+  ArrowUp,
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
   ChevronsRight,
   ArrowRight,
   Eye,
@@ -17,10 +17,10 @@ import {
   Trash,
   RefreshCw,
   Calendar,
-  AlertCircle
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+  AlertCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,35 +31,34 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
-import { toast } from 'sonner';
-
+import { toast } from "sonner";
 
 const OpportunitiesPage = () => {
   const router = useRouter();
   // State for the active tab
-  const [activeTab, setActiveTab] = useState('all');
-  
+  const [activeTab, setActiveTab] = useState("all");
+
   // States for data and UI
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState({});
-  
+
   // States for pagination and filtering
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalOpportunities, setTotalOpportunities] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
-  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
+
   // States for tab counts
   const [tabCounts, setTabCounts] = useState({
     all: 0,
     draft: 0,
     published: 0,
     archived: 0,
-    closed: 0
+    closed: 0,
   });
 
   // Add state to track if tab counts are loaded
@@ -67,12 +66,12 @@ const OpportunitiesPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
-  
+
   // State for delete confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [opportunityToDelete, setOpportunityToDelete] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  
+
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
     if (openMenuId === id) {
@@ -85,21 +84,21 @@ const OpportunitiesPage = () => {
   // Function to handle action click
   const handleAction = async (action, opportunityId) => {
     setOpenMenuId(null); // Close the menu
-    
-    switch(action) {
-      case 'view':
+
+    switch (action) {
+      case "view":
         // Navigate to opportunity details page
         router.push(`/opportunities/${opportunityId}`);
         break;
-      case 'delete':
+      case "delete":
         setOpportunityToDelete(opportunityId);
         setIsDeleteDialogOpen(true);
         break;
-      case 'update':
+      case "update":
         // Navigate to update page
         router.push(`/opportunities/edit-opportunity/${opportunityId}`);
         break;
-      case 'status':
+      case "status":
         // Open status change modal/form
         break;
       default:
@@ -113,24 +112,26 @@ const OpportunitiesPage = () => {
 
     try {
       await apiClient.delete(`/opportunities/${opportunityToDelete}`);
-      
+
       // Close dialog and reset state
       setIsDeleteDialogOpen(false);
       setOpportunityToDelete(null);
-      
+
       // Show success toast
-      toast.success('Opportunity deleted successfully');
-      
+      toast.success("Opportunity deleted successfully");
+
       // Trigger refresh by updating refreshTrigger
-      setRefreshTrigger(prev => prev + 1);
-      
+      setRefreshTrigger((prev) => prev + 1);
+
       // Adjust page if needed (if we deleted the last item on the page)
       if (opportunities.length === 1 && page > 1) {
         setPage(page - 1);
       }
     } catch (error: any) {
-      console.error('Error deleting opportunity:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete opportunity. Please try again.');
+      console.error("Error deleting opportunity:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to delete opportunity. Please try again.",
+      );
       setIsDeleteDialogOpen(false);
       setOpportunityToDelete(null);
     }
@@ -143,19 +144,19 @@ const OpportunitiesPage = () => {
 
   // Calculate sequential row number based on pagination
   const getRowNumber = (index) => {
-    return ((page - 1) * limit) + index + 1;
+    return (page - 1) * limit + index + 1;
   };
 
   // Add click outside listener to close dropdown
   const menuRef = useRef(null);
-  
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
       }
     }
-    
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -166,11 +167,11 @@ const OpportunitiesPage = () => {
   useEffect(() => {
     // Use default categories
     setCategories({
-      1: 'Internship',
-      2: 'Grant',
-      3: 'Fellowship',
-      4: 'Scholarship',
-      5: 'Training Program'
+      1: "Internship",
+      2: "Grant",
+      3: "Fellowship",
+      4: "Scholarship",
+      5: "Training Program",
     });
   }, []);
 
@@ -178,8 +179,8 @@ const OpportunitiesPage = () => {
   const fetchTabCounts = async () => {
     try {
       // Fetch all opportunities with limit=0 just to get count
-      const response = await apiClient.get('/opportunities', {
-        params: { limit: 0 }
+      const response = await apiClient.get("/opportunities", {
+        params: { limit: 0 },
       });
 
       // Get the total count from the response
@@ -192,11 +193,11 @@ const OpportunitiesPage = () => {
       let closedCount = 0;
 
       if (response.data.opportunities && Array.isArray(response.data.opportunities)) {
-        response.data.opportunities.forEach(opportunity => {
-          if (opportunity.status === 'draft') draftCount++;
-          else if (opportunity.status === 'published') publishedCount++;
-          else if (opportunity.status === 'archived') archivedCount++;
-          else if (opportunity.status === 'closed') closedCount++;
+        response.data.opportunities.forEach((opportunity) => {
+          if (opportunity.status === "draft") draftCount++;
+          else if (opportunity.status === "published") publishedCount++;
+          else if (opportunity.status === "archived") archivedCount++;
+          else if (opportunity.status === "closed") closedCount++;
         });
       }
 
@@ -205,19 +206,19 @@ const OpportunitiesPage = () => {
         draft: draftCount,
         published: publishedCount,
         archived: archivedCount,
-        closed: closedCount
+        closed: closedCount,
       });
 
       setTabCountsLoaded(true);
     } catch (error) {
-      console.error('Error fetching tab counts:', error);
+      console.error("Error fetching tab counts:", error);
       // Use default values in case of error
       setTabCounts({
         all: 0,
         draft: 0,
         published: 0,
         archived: 0,
-        closed: 0
+        closed: 0,
       });
       setTabCountsLoaded(true);
     }
@@ -225,23 +226,23 @@ const OpportunitiesPage = () => {
 
   // Add debouncing for search
   const searchTimeoutRef = useRef(null);
-  
+
   // Handle search input change with debounce
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    
+
     // Clear any existing timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     // Set a new timeout to trigger search after user stops typing
     searchTimeoutRef.current = setTimeout(() => {
       setPage(1); // Reset to first page when searching
     }, 500); // 500ms debounce
   };
-  
+
   // Handle search submission
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -260,17 +261,17 @@ const OpportunitiesPage = () => {
 
   // Get category name from category_id
   const getCategoryName = (categoryId) => {
-    return categories[categoryId] || 'Other';
+    return categories[categoryId] || "Other";
   };
 
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    if (!dateString) return "N/A";
+
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -285,19 +286,19 @@ const OpportunitiesPage = () => {
           page,
           limit,
           sort_by: sortBy,
-          sort_order: sortOrder
+          sort_order: sortOrder,
         };
 
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
 
         // Add status filter if not showing all
-        if (activeTab !== 'all') {
+        if (activeTab !== "all") {
           params.status = activeTab;
         }
 
         // Make API request with apiClient
-        const response = await apiClient.get('/opportunities', { params });
+        const response = await apiClient.get("/opportunities", { params });
 
         if (response.data) {
           setOpportunities(response.data.opportunities || []);
@@ -313,30 +314,49 @@ const OpportunitiesPage = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching opportunities:', error);
+        console.error("Error fetching opportunities:", error);
         setOpportunities([]);
       } finally {
         setLoading(false);
       }
     };
 
-
     fetchOpportunities();
   }, [page, limit, searchTerm, sortBy, sortOrder, activeTab, tabCountsLoaded, refreshTrigger]);
 
   // Get status badge
   const getStatusBadge = (status) => {
-    switch(status) {
-      case 'draft':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• Draft</span>;
-      case 'published':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">• Published</span>;
-      case 'archived':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">• Archived</span>;
-      case 'closed':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">• Closed</span>;
+    switch (status) {
+      case "draft":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+            • Draft
+          </span>
+        );
+      case "published":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            • Published
+          </span>
+        );
+      case "archived":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+            • Archived
+          </span>
+        );
+      case "closed":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+            • Closed
+          </span>
+        );
       default:
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• {status || 'Unknown'}</span>;
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+            • {status || "Unknown"}
+          </span>
+        );
     }
   };
 
@@ -353,7 +373,10 @@ const OpportunitiesPage = () => {
             <ArrowUp className="w-4 h-4 mr-2" />
             Import Opportunities
           </button>
-          <Link href="/opportunities/add-opportunities" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
+          <Link
+            href="/opportunities/add-opportunities"
+            className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
+          >
             Add Opportunity
             <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
@@ -361,67 +384,81 @@ const OpportunitiesPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className='bg-white'>
+      <div className="bg-white">
         <div className="flex border-b border-gray-200 mb-6 bg-white">
           <button
-            onClick={() => handleTabChange('all')}
+            onClick={() => handleTabChange("all")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'all'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "all"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             All
-            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
+            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.all}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('draft')}
+            onClick={() => handleTabChange("draft")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'draft'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "draft"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Draft
-            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.draft}</span>
+            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.draft}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('published')}
+            onClick={() => handleTabChange("published")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'published'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "published"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Published
-            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.published}</span>
+            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.published}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('archived')}
+            onClick={() => handleTabChange("archived")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'archived'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "archived"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Archived
-            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.archived}</span>
+            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.archived}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('closed')}
+            onClick={() => handleTabChange("closed")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'closed'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "closed"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Closed
-            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.closed}</span>
+            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.closed}
+            </span>
           </button>
         </div>
 
         {/* Opportunity list title */}
-        <h2 className="text-lg font-bold mb-4">List of {activeTab === 'all' ? '' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Opportunities</h2>
+        <h2 className="text-lg font-bold mb-4">
+          List of{" "}
+          {activeTab === "all" ? "" : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}{" "}
+          Opportunities
+        </h2>
 
         {/* Search and filter */}
         <div className="flex justify-end mb-4">
@@ -430,16 +467,16 @@ const OpportunitiesPage = () => {
               <Search className="w-4 h-4 text-gray-500" />
             </div>
             <form onSubmit={handleSearchSubmit}>
-              <input 
-                type="text" 
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
+              <input
+                type="text"
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5"
                 placeholder="Search"
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
             </form>
           </div>
-          <button 
+          <button
             className="ml-2 p-2.5 bg-green-700 text-white rounded"
             onClick={() => {
               // Open a filter modal or expand filter options
@@ -459,20 +496,62 @@ const OpportunitiesPage = () => {
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    #
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Title
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Type
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Category
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Location
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Deadline
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {opportunities.map((opportunity, index) => (
                   <tr key={opportunity.id || index} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getRowNumber(index)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {getRowNumber(index)}
+                    </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {opportunity.title}
                     </td>
@@ -483,8 +562,12 @@ const OpportunitiesPage = () => {
                       {getCategoryName(opportunity.category_id)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {opportunity.location || 'N/A'}
-                      {opportunity.location_type && <span className="text-xs ml-1 text-gray-500">({opportunity.location_type})</span>}
+                      {opportunity.location || "N/A"}
+                      {opportunity.location_type && (
+                        <span className="text-xs ml-1 text-gray-500">
+                          ({opportunity.location_type})
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center">
@@ -496,39 +579,42 @@ const OpportunitiesPage = () => {
                       {getStatusBadge(opportunity.status)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
-                      <button 
+                      <button
                         className="text-gray-500 hover:text-gray-700"
                         onClick={() => toggleMenu(opportunity.id)}
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
-                      
+
                       {/* Dropdown menu */}
                       {openMenuId === opportunity.id && (
-                        <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        >
                           <button
-                            onClick={() => handleAction('view', opportunity.id)}
+                            onClick={() => handleAction("view", opportunity.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             View details
                           </button>
                           <button
-                            onClick={() => handleAction('update', opportunity.id)}
+                            onClick={() => handleAction("update", opportunity.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <Edit className="w-4 h-4 mr-2" />
                             Update
                           </button>
                           <button
-                            onClick={() => handleAction('status', opportunity.id)}
+                            onClick={() => handleAction("status", opportunity.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <RefreshCw className="w-4 h-4 mr-2" />
                             Change status
                           </button>
                           <button
-                            onClick={() => handleAction('delete', opportunity.id)}
+                            onClick={() => handleAction("delete", opportunity.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                           >
                             <Trash className="w-4 h-4 mr-2" />
@@ -547,36 +633,37 @@ const OpportunitiesPage = () => {
         {/* Pagination */}
         <div className="flex items-center justify-between py-3">
           <div className="text-sm text-gray-500">
-            Showing {opportunities.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalOpportunities)} out of {totalOpportunities} entries
+            Showing {opportunities.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
+            {Math.min(page * limit, totalOpportunities)} out of {totalOpportunities} entries
           </div>
           <div className="flex items-center space-x-1">
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(1)}
               disabled={page === 1}
             >
               <ChevronsLeft className="w-4 h-4" />
             </button>
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(Math.max(1, page - 1))}
               disabled={page === 1}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            
+
             {/* Display page numbers */}
             {[...Array(Math.min(totalPages, 3))].map((_, index) => {
               const pageNumber = page <= 2 ? index + 1 : page - 1 + index;
               if (pageNumber <= totalPages) {
                 return (
-                  <button 
+                  <button
                     key={pageNumber}
                     onClick={() => goToPage(pageNumber)}
                     className={`p-2 w-8 h-8 rounded-md ${
                       pageNumber === page
-                        ? 'bg-green-700 text-white'
-                        : 'hover:bg-gray-100 text-gray-700'
+                        ? "bg-green-700 text-white"
+                        : "hover:bg-gray-100 text-gray-700"
                     } flex items-center justify-center`}
                   >
                     {pageNumber}
@@ -585,15 +672,15 @@ const OpportunitiesPage = () => {
               }
               return null;
             })}
-            
-            <button 
+
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(totalPages)}
               disabled={page === totalPages}
@@ -603,7 +690,7 @@ const OpportunitiesPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -613,21 +700,24 @@ const OpportunitiesPage = () => {
               Delete Opportunity
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this opportunity? This action cannot be undone and will permanently delete the opportunity and all associated data.
+              Are you sure you want to delete this opportunity? This action cannot be undone and
+              will permanently delete the opportunity and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setIsDeleteDialogOpen(false);
-              setOpportunityToDelete(null);
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setOpportunityToDelete(null);
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+              style={{ backgroundColor: "#dc2626", color: "#ffffff" }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#b91c1c")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
             >
               Delete Opportunity
             </AlertDialogAction>

@@ -1,68 +1,65 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { AnimatePresence, motion, type Variants } from 'framer-motion';
-import { X, Send, MessageCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
+import { X, Send, MessageCircle } from "lucide-react";
 
 interface Message {
   id: string;
   text: string;
-  sender: 'user' | 'assistant';
+  sender: "user" | "assistant";
   timestamp: Date;
 }
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Close widget when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
   const handleActionClick = (action: string) => {
     const actionMessages: Record<string, string> = {
-      products: 'I want to learn about your products',
-      pricing: 'I want to learn about your pricing',
-      it2: 'I want to learn about Stable IT2',
+      products: "I want to learn about your products",
+      pricing: "I want to learn about your pricing",
+      it2: "I want to learn about Stable IT2",
     };
 
     const defaultResponses: Record<string, string> = {
       products:
-        'Our products are designed to help you succeed. We offer comprehensive solutions tailored to your needs. Would you like to know more about specific features?',
+        "Our products are designed to help you succeed. We offer comprehensive solutions tailored to your needs. Would you like to know more about specific features?",
       pricing:
-        'We offer flexible pricing plans to suit businesses of all sizes. Our plans include all essential features with scalable options. Contact our sales team for a custom quote.',
-      it2: 'Stable IT2 is our enterprise-grade solution with advanced security, 99.9% uptime guarantee, and 24/7 support. Perfect for mission-critical operations.',
+        "We offer flexible pricing plans to suit businesses of all sizes. Our plans include all essential features with scalable options. Contact our sales team for a custom quote.",
+      it2: "Stable IT2 is our enterprise-grade solution with advanced security, 99.9% uptime guarantee, and 24/7 support. Perfect for mission-critical operations.",
     };
 
     const userMessage: Message = {
       id: Date.now().toString(),
       text: actionMessages[action] || action,
-      sender: 'user',
+      sender: "user",
       timestamp: new Date(),
     };
 
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
-      text: defaultResponses[action] || 'How can I help you further?',
-      sender: 'assistant',
+      text: defaultResponses[action] || "How can I help you further?",
+      sender: "assistant",
       timestamp: new Date(),
     };
 
@@ -75,12 +72,12 @@ export default function ChatWidget() {
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputValue,
-      sender: 'user',
+      sender: "user",
       timestamp: new Date(),
     };
 
     setMessages([...messages, userMessage]);
-    setInputValue('');
+    setInputValue("");
   };
 
   const containerVariants: Variants = {
@@ -172,19 +169,19 @@ export default function ChatWidget() {
                       What would you like to do?
                     </p>
                     <button
-                      onClick={() => handleActionClick('products')}
+                      onClick={() => handleActionClick("products")}
                       className="w-full py-2 px-3 sm:px-4 text-xs sm:text-sm border-2 border-brand-accent text-brand-accent font-medium rounded-lg hover:bg-orange-50 transition-colors"
                     >
                       Learn about Products
                     </button>
                     <button
-                      onClick={() => handleActionClick('pricing')}
+                      onClick={() => handleActionClick("pricing")}
                       className="w-full py-2 px-3 sm:px-4 text-xs sm:text-sm border-2 border-brand-accent text-brand-accent font-medium rounded-lg hover:bg-orange-50 transition-colors"
                     >
                       Learn about Pricing
                     </button>
                     <button
-                      onClick={() => handleActionClick('it2')}
+                      onClick={() => handleActionClick("it2")}
                       className="w-full py-2 px-3 sm:px-4 text-xs sm:text-sm border-2 border-brand-accent text-brand-accent font-medium rounded-lg hover:bg-orange-50 transition-colors"
                     >
                       Learn about Stable IT2
@@ -196,15 +193,13 @@ export default function ChatWidget() {
                   {messages.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`flex ${
-                        msg.sender === 'user' ? 'justify-end' : 'justify-start'
-                      }`}
+                      className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                     >
                       <div
                         className={`max-w-xs sm:max-w-sm px-3 sm:px-4 py-2 rounded-lg ${
-                          msg.sender === 'user'
-                            ? 'bg-brand-accent text-white'
-                            : 'bg-gray-200 text-gray-800'
+                          msg.sender === "user"
+                            ? "bg-brand-accent text-white"
+                            : "bg-gray-200 text-gray-800"
                         }`}
                       >
                         <p className="text-xs sm:text-sm">{msg.text}</p>
@@ -222,7 +217,7 @@ export default function ChatWidget() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') handleSendMessage();
+                  if (e.key === "Enter") handleSendMessage();
                 }}
                 placeholder="Choose an option or type your message..."
                 className="flex-1 px-3 sm:px-4 py-2 bg-gray-100 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent placeholder-gray-500"

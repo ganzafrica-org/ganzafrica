@@ -78,21 +78,21 @@ export const feedback_notes = pgTable("feedback_notes", {  // continuous feedbac
 
 ## 4. API (routes/hr/performance.routes.ts)
 
-| Endpoint | Permission | Behavior |
-|---|---|---|
-| CRUD `/hr/perf/cycles` | performance:manage (hr) | open → instantiate pending reviews: self for every active employee, manager review per manager_id (null manager → hr owner), peers only if flag (peer selection = manager picks up to 3, endpoint below); close → freeze (no more submissions) |
-| `POST /hr/perf/cycles/:id/peers` `{employee_id, peer_user_ids[]}` | manager-of or manage | create pending peer reviews |
-| `GET /hr/me/reviews` | self | reviews I must write (as reviewer) + my own results (as subject; manager/peer reviews visible only after cycle close AND manager review submitted — HR configurable? keep fixed rule v1) |
-| `PATCH /hr/reviews/:id` | the reviewer, while cycle open | save draft / submit (`status=submitted` requires rating + strengths) |
-| `GET /hr/perf/cycles/:id/status` | performance:manage; managers get their subtree | completion matrix (submitted/pending by kind) |
-| Goals: CRUD `/hr/me/goals`; `PATCH /hr/goals/:id/agree` | self; manager-of | agree flips agreed_with_manager (manager only) |
-| Feedback: `POST /hr/feedback` `{employee_id, kind, body, visibility}` | any employee | store + notify per visibility |
-| `GET /hr/me/feedback` / `GET /hr/employees/:id/feedback` | self / manager-of or review:performance | visibility-filtered |
+| Endpoint                                                              | Permission                                     | Behavior                                                                                                                                                                                                                                       |
+| --------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CRUD `/hr/perf/cycles`                                                | performance:manage (hr)                        | open → instantiate pending reviews: self for every active employee, manager review per manager_id (null manager → hr owner), peers only if flag (peer selection = manager picks up to 3, endpoint below); close → freeze (no more submissions) |
+| `POST /hr/perf/cycles/:id/peers` `{employee_id, peer_user_ids[]}`     | manager-of or manage                           | create pending peer reviews                                                                                                                                                                                                                    |
+| `GET /hr/me/reviews`                                                  | self                                           | reviews I must write (as reviewer) + my own results (as subject; manager/peer reviews visible only after cycle close AND manager review submitted — HR configurable? keep fixed rule v1)                                                       |
+| `PATCH /hr/reviews/:id`                                               | the reviewer, while cycle open                 | save draft / submit (`status=submitted` requires rating + strengths)                                                                                                                                                                           |
+| `GET /hr/perf/cycles/:id/status`                                      | performance:manage; managers get their subtree | completion matrix (submitted/pending by kind)                                                                                                                                                                                                  |
+| Goals: CRUD `/hr/me/goals`; `PATCH /hr/goals/:id/agree`               | self; manager-of                               | agree flips agreed_with_manager (manager only)                                                                                                                                                                                                 |
+| Feedback: `POST /hr/feedback` `{employee_id, kind, body, visibility}` | any employee                                   | store + notify per visibility                                                                                                                                                                                                                  |
+| `GET /hr/me/feedback` / `GET /hr/employees/:id/feedback`              | self / manager-of or review:performance        | visibility-filtered                                                                                                                                                                                                                            |
 
 Review visibility rule (service-enforced, test hard): subject NEVER reads manager/peer
 review content while cycle open; reviewer reads only own drafts; hr reads all.
 
-## 5. Frontend (apps/hr — replace mock pages; harvest _archived layouts)
+## 5. Frontend (apps/hr — replace mock pages; harvest \_archived layouts)
 
 - HR `app/performance`: cycles list + create (dates, scale editor with sensible 1–5 default,
   peer toggle), cycle detail = completion dashboard (bar per kind, nudge button →
@@ -116,8 +116,8 @@ review content while cycle open; reviewer reads only own drafts; hr reads all.
 5. Goals: agree only by manager-of; subject CRUD own only.
 6. Feedback visibility filtering (3 kinds × reader roles).
 7. Frontend: review form drives from scale fixture; results hidden pre-close (MSW).
-E2E: HR opens cycle → employee submits self-review + manager submits → HR closes →
-employee sees results; peer path when enabled.
+   E2E: HR opens cycle → employee submits self-review + manager submits → HR closes →
+   employee sees results; peer path when enabled.
 
 ## 7. Acceptance criteria
 

@@ -17,19 +17,19 @@ export interface UserRole {
  */
 export function isAdminOrManager(user: UserRole | null): boolean {
   if (!user) return false;
-  
+
   const roleName = user.role_name || user.roleName || user.role;
   const roleId = user.role_id || user.roleId;
-  
+
   // Check for admin or manager roles
-  const isAdminOrManagerRole = roleName && (
-    roleName.toLowerCase().includes('admin') ||
-    roleName.toLowerCase().includes('manager') ||
-    roleName.toLowerCase().includes('staff') ||
-    roleName.toLowerCase().includes('mentor') ||
-    (roleId && roleId < 1000) // Assuming admin/manager roles have IDs < 1000
-  );
-  
+  const isAdminOrManagerRole =
+    roleName &&
+    (roleName.toLowerCase().includes("admin") ||
+      roleName.toLowerCase().includes("manager") ||
+      roleName.toLowerCase().includes("staff") ||
+      roleName.toLowerCase().includes("mentor") ||
+      (roleId && roleId < 1000)); // Assuming admin/manager roles have IDs < 1000
+
   return !!isAdminOrManagerRole;
 }
 
@@ -40,16 +40,14 @@ export function isAdminOrManager(user: UserRole | null): boolean {
  */
 export function isAdmin(user: UserRole | null): boolean {
   if (!user) return false;
-  
+
   const roleName = user.role_name || user.roleName || user.role;
   const roleId = user.role_id || user.roleId;
-  
+
   // Check specifically for admin role
-  const isAdminRole = roleName && (
-    roleName.toLowerCase().includes('admin') ||
-    (roleId && roleId < 100) // Assuming admin roles have IDs < 100
-  );
-  
+  const isAdminRole =
+    roleName && (roleName.toLowerCase().includes("admin") || (roleId && roleId < 100)); // Assuming admin roles have IDs < 100
+
   return !!isAdminRole;
 }
 
@@ -60,10 +58,10 @@ export function isAdmin(user: UserRole | null): boolean {
  */
 export function isAlumni(user: UserRole | null): boolean {
   if (!user) return false;
-  
+
   const roleName = user.role_name || user.roleName || user.role;
-  
-  return !!(roleName && roleName.toLowerCase().includes('alumni'));
+
+  return !!(roleName && roleName.toLowerCase().includes("alumni"));
 }
 
 /**
@@ -82,11 +80,11 @@ export function shouldBlockUser(user: UserRole | null): boolean {
 export function getCurrentUserRole(): UserRole | null {
   try {
     // Check if we're in the browser environment
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return null;
     }
-    
-    const userStr = localStorage.getItem('task_user') || localStorage.getItem('user');
+
+    const userStr = localStorage.getItem("task_user") || localStorage.getItem("user");
     if (userStr) {
       const user = JSON.parse(userStr);
       return {
@@ -97,8 +95,7 @@ export function getCurrentUserRole(): UserRole | null {
         roleId: user.roleId,
       };
     }
-  } catch (error) {
-  }
+  } catch (error) {}
   return null;
 }
 
@@ -109,26 +106,26 @@ export function getCurrentUserRole(): UserRole | null {
 export async function fetchUserProfile(): Promise<UserRole | null> {
   try {
     // Check if we're in the browser environment
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return null;
     }
-    
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('task_token');
+
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("task_token");
     if (!token) {
       return null;
     }
-    
+
     // Import apiClient dynamically to avoid circular imports
-    const { default: apiClient } = await import('./api-client');
-    
-    const response = await apiClient.get('/users/profile/me');
+    const { default: apiClient } = await import("./api-client");
+
+    const response = await apiClient.get("/users/profile/me");
     const profile = response.data.profile;
-    
+
     if (profile) {
       // Update localStorage with fresh profile data
-      localStorage.setItem('task_user', JSON.stringify(profile));
-      localStorage.setItem('user', JSON.stringify(profile));
-      
+      localStorage.setItem("task_user", JSON.stringify(profile));
+      localStorage.setItem("user", JSON.stringify(profile));
+
       return {
         role_name: profile.role_name,
         roleName: profile.role_name,
@@ -137,8 +134,7 @@ export async function fetchUserProfile(): Promise<UserRole | null> {
         roleId: profile.role_id,
       };
     }
-  } catch (error) {
-  }
+  } catch (error) {}
   return null;
 }
 
@@ -194,15 +190,17 @@ export function shouldBlockCurrentUser(): boolean {
  */
 export function canEditTask(taskCreatorId: number | string): boolean {
   const user = getCurrentUserRole();
-  
+
   // If user is admin/manager, they can edit any task
   if (isAdminOrManager(user)) {
     return true;
   }
-  
+
   // Check if current user is the task creator
   try {
-    const currentUserId = parseInt(localStorage.getItem('task_user_id') || localStorage.getItem('user_id') || '0');
+    const currentUserId = parseInt(
+      localStorage.getItem("task_user_id") || localStorage.getItem("user_id") || "0",
+    );
     return currentUserId === parseInt(taskCreatorId.toString());
   } catch (error) {
     return false;
@@ -216,15 +214,17 @@ export function canEditTask(taskCreatorId: number | string): boolean {
  */
 export async function canEditTaskAsync(taskCreatorId: number | string): Promise<boolean> {
   const user = await fetchUserProfile();
-  
+
   // If user is admin/manager, they can edit any task
   if (isAdminOrManager(user)) {
     return true;
   }
-  
+
   // Check if current user is the task creator
   try {
-    const currentUserId = parseInt(localStorage.getItem('task_user_id') || localStorage.getItem('user_id') || '0');
+    const currentUserId = parseInt(
+      localStorage.getItem("task_user_id") || localStorage.getItem("user_id") || "0",
+    );
     return currentUserId === parseInt(taskCreatorId.toString());
   } catch (error) {
     return false;

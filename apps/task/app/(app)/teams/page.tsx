@@ -10,16 +10,26 @@ import { TeamMember } from "@/lib/types";
 import { taskTeamsApi, TaskTeam } from "@/lib/api/task-teams";
 import { portalDataApi, PortalTeam, PortalProject } from "@/lib/api/portal-data";
 import { usersApi, User } from "@/lib/api/users";
-import { Users, Briefcase, X, Plus, Minus, MoreVertical, Loader2, Check, UserPlus } from "lucide-react";
+import {
+  Users,
+  Briefcase,
+  X,
+  Plus,
+  Minus,
+  MoreVertical,
+  Loader2,
+  Check,
+  UserPlus,
+} from "lucide-react";
 import { TruncatedText } from "@/components/truncated-text";
 import { isCurrentUserAdminOrManager, getCurrentUserRole } from "@/lib/auth-utils";
 
 export default function TeamsPage(): React.JSX.Element {
   const router = useRouter();
-  
+
   // State to track admin/manager status (set after hydration to avoid SSR mismatch)
   const [isUserAdminOrManager, setIsUserAdminOrManager] = useState(false);
-  
+
   // Check if current user can edit a specific team
   const canEditTeam = (team: TaskTeam): boolean => {
     // Only Admin/Manager can edit teams
@@ -29,19 +39,21 @@ export default function TeamsPage(): React.JSX.Element {
   // Check if current user is assigned to a team
   const isCurrentUserAssignedToTeam = (team: TaskTeam): boolean => {
     if (!team.members) return false;
-    
+
     // Admin and Manager can always manage teams
     if (isUserAdminOrManager) return true;
-    
+
     // Get current user ID from localStorage
     try {
-      const currentUserId = parseInt(localStorage.getItem('task_user_id') || localStorage.getItem('user_id') || '0');
+      const currentUserId = parseInt(
+        localStorage.getItem("task_user_id") || localStorage.getItem("user_id") || "0",
+      );
       if (currentUserId === 0) return false;
-      
+
       // Check if current user is a member of this team
-      return team.members.some(member => member.user_id === currentUserId);
+      return team.members.some((member) => member.user_id === currentUserId);
     } catch (error) {
-      console.error('Error checking team assignment:', error);
+      console.error("Error checking team assignment:", error);
       return false;
     }
   };
@@ -59,9 +71,9 @@ export default function TeamsPage(): React.JSX.Element {
   const [isEditingTeam, setIsEditingTeam] = useState(false);
   const [loadingTeamDetails, setLoadingTeamDetails] = useState(false);
   const [editTeamData, setEditTeamData] = useState({
-    name: '',
-    description: '',
-    color: '#073392',
+    name: "",
+    description: "",
+    color: "#073392",
   });
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [isAddingProject, setIsAddingProject] = useState(false);
@@ -77,16 +89,16 @@ export default function TeamsPage(): React.JSX.Element {
     message: string;
   }>({
     isOpen: false,
-    title: '',
-    message: '',
+    title: "",
+    message: "",
   });
   const [newTeam, setNewTeam] = useState({
-    name: '',
-    description: '',
-    color: '#073392',
-    lead: '',
+    name: "",
+    description: "",
+    color: "#073392",
+    lead: "",
     members: [] as string[],
-    projects: [] as string[]
+    projects: [] as string[],
   });
 
   // Close dropdown when clicking outside
@@ -97,9 +109,9 @@ export default function TeamsPage(): React.JSX.Element {
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [openMenuId]);
 
@@ -117,20 +129,24 @@ export default function TeamsPage(): React.JSX.Element {
   const loadPortalData = async () => {
     try {
       setLoadingData(true);
-      
+
       // Get users from the system
-      const usersResponse = await usersApi.listUsers({ limit: 100, is_active: true, exclude_alumni: false });
+      const usersResponse = await usersApi.listUsers({
+        limit: 100,
+        is_active: true,
+        exclude_alumni: false,
+      });
       setUsers(usersResponse.users || []);
-      
+
       // Get all projects
       const projectsResponse = await portalDataApi.getAllProjects({ limit: 100 });
       setPortalProjects(projectsResponse.projects || []);
     } catch (error: any) {
-      console.error('Error loading portal data:', error);
+      console.error("Error loading portal data:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Loading Data',
-        message: error.response?.data?.message || 'Failed to load users and projects.',
+        title: "Error Loading Data",
+        message: error.response?.data?.message || "Failed to load users and projects.",
       });
     } finally {
       setLoadingData(false);
@@ -143,11 +159,11 @@ export default function TeamsPage(): React.JSX.Element {
       const response = await taskTeamsApi.listTeams();
       setTeams(response.teams || []);
     } catch (error: any) {
-      console.error('Error loading teams:', error);
+      console.error("Error loading teams:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Loading Teams',
-        message: error.response?.data?.message || 'Failed to load teams. Please try again.',
+        title: "Error Loading Teams",
+        message: error.response?.data?.message || "Failed to load teams. Please try again.",
       });
     } finally {
       setLoading(false);
@@ -161,11 +177,11 @@ export default function TeamsPage(): React.JSX.Element {
       setSelectedTeamForDetails(response.team);
       setIsDetailsModalOpen(true);
     } catch (error: any) {
-      console.error('Error loading team details:', error);
+      console.error("Error loading team details:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Loading Team Details',
-        message: error.response?.data?.message || 'Failed to load team details. Please try again.',
+        title: "Error Loading Team Details",
+        message: error.response?.data?.message || "Failed to load team details. Please try again.",
       });
     } finally {
       setLoadingTeamDetails(false);
@@ -177,8 +193,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (!isUserAdminOrManager) {
       setErrorModal({
         isOpen: true,
-        title: 'Access Denied',
-        message: 'Only administrators and managers can create teams',
+        title: "Access Denied",
+        message: "Only administrators and managers can create teams",
       });
       return;
     }
@@ -186,56 +202,62 @@ export default function TeamsPage(): React.JSX.Element {
     if (!newTeam.name.trim()) {
       setErrorModal({
         isOpen: true,
-        title: 'Validation Error',
-        message: 'Please enter a team name',
+        title: "Validation Error",
+        message: "Please enter a team name",
       });
       return;
     }
 
     try {
       setCreating(true);
-      const userData = localStorage.getItem('user');
+      const userData = localStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
-      
+
       if (!user || !user.id) {
         setErrorModal({
           isOpen: true,
-          title: 'Authentication Error',
-          message: 'User not found. Please log in again.',
+          title: "Authentication Error",
+          message: "User not found. Please log in again.",
         });
         return;
       }
 
       // Prepare members array with actual user information
-      const members = newTeam.members.map(memberId => {
-        const user = users.find(u => u.id.toString() === memberId);
+      const members = newTeam.members.map((memberId) => {
+        const user = users.find((u) => u.id.toString() === memberId);
         return {
           user_id: parseInt(memberId),
-          name: user?.name || '',
-          position: user?.role_name || 'none'
+          name: user?.name || "",
+          position: user?.role_name || "none",
         };
       });
-      
+
       // Prepare projects array
-      const projects = newTeam.projects.map(projectId => {
-        const project = portalProjects.find(p => p.id.toString() === projectId);
-        if (project) {
-          return {
-            name: project.name,
-            description: project.description || '',
-            status: (project.status === 'active' ? 'active' : 
-                    project.status === 'completed' ? 'completed' :
-                    project.status === 'planned' ? 'planning' : 'planning') as 'planning' | 'active' | 'completed' | 'cancelled' | 'on_hold',
-            start_date: project.start_date,
-            end_date: project.end_date,
-            color: newTeam.color,
-          };
-        }
-        return null;
-      }).filter(p => p !== null) as Array<{
+      const projects = newTeam.projects
+        .map((projectId) => {
+          const project = portalProjects.find((p) => p.id.toString() === projectId);
+          if (project) {
+            return {
+              name: project.name,
+              description: project.description || "",
+              status: (project.status === "active"
+                ? "active"
+                : project.status === "completed"
+                  ? "completed"
+                  : project.status === "planned"
+                    ? "planning"
+                    : "planning") as "planning" | "active" | "completed" | "cancelled" | "on_hold",
+              start_date: project.start_date,
+              end_date: project.end_date,
+              color: newTeam.color,
+            };
+          }
+          return null;
+        })
+        .filter((p) => p !== null) as Array<{
         name: string;
         description: string;
-        status: 'planning' | 'active' | 'completed' | 'cancelled' | 'on_hold';
+        status: "planning" | "active" | "completed" | "cancelled" | "on_hold";
         start_date: string;
         end_date?: string;
         color: string;
@@ -247,28 +269,28 @@ export default function TeamsPage(): React.JSX.Element {
         description: newTeam.description,
         color: newTeam.color,
         created_by: parseInt(user.id),
-        status: 'active',
+        status: "active",
         members: members.length > 0 ? members : undefined,
         projects: projects.length > 0 ? projects : undefined,
       });
 
       // Reset form and reload teams
       setNewTeam({
-        name: '',
-        description: '',
-        color: '#073392',
-        lead: '',
+        name: "",
+        description: "",
+        color: "#073392",
+        lead: "",
         members: [],
-        projects: []
+        projects: [],
       });
       setIsAddTeamModalOpen(false);
       loadTeams();
     } catch (error: any) {
-      console.error('Error creating team:', error);
+      console.error("Error creating team:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Creating Team',
-        message: error.response?.data?.message || 'Failed to create team. Please try again.',
+        title: "Error Creating Team",
+        message: error.response?.data?.message || "Failed to create team. Please try again.",
       });
     } finally {
       setCreating(false);
@@ -282,7 +304,7 @@ export default function TeamsPage(): React.JSX.Element {
   }>({
     isOpen: false,
     teamId: 0,
-    teamName: '',
+    teamName: "",
   });
 
   const handleDeleteTeam = async (teamId: number, teamName: string) => {
@@ -298,23 +320,23 @@ export default function TeamsPage(): React.JSX.Element {
     if (!isUserAdminOrManager) {
       setErrorModal({
         isOpen: true,
-        title: 'Access Denied',
-        message: 'Only administrators and managers can delete teams',
+        title: "Access Denied",
+        message: "Only administrators and managers can delete teams",
       });
-      setDeleteConfirm({ isOpen: false, teamId: 0, teamName: '' });
+      setDeleteConfirm({ isOpen: false, teamId: 0, teamName: "" });
       return;
     }
 
     try {
       await taskTeamsApi.deleteTeam(deleteConfirm.teamId);
-      setDeleteConfirm({ isOpen: false, teamId: 0, teamName: '' });
+      setDeleteConfirm({ isOpen: false, teamId: 0, teamName: "" });
       loadTeams();
     } catch (error: any) {
-      console.error('Error deleting team:', error);
+      console.error("Error deleting team:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Deleting Team',
-        message: error.response?.data?.message || 'Failed to delete team. Please try again.',
+        title: "Error Deleting Team",
+        message: error.response?.data?.message || "Failed to delete team. Please try again.",
       });
     }
   };
@@ -323,8 +345,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (!selectedTeamForDetails || !editTeamData.name.trim()) {
       setErrorModal({
         isOpen: true,
-        title: 'Validation Error',
-        message: 'Please enter a team name',
+        title: "Validation Error",
+        message: "Please enter a team name",
       });
       return;
     }
@@ -333,8 +355,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (!isUserAdminOrManager) {
       setErrorModal({
         isOpen: true,
-        title: 'Access Denied',
-        message: 'Only administrators and managers can edit teams',
+        title: "Access Denied",
+        message: "Only administrators and managers can edit teams",
       });
       return;
     }
@@ -351,11 +373,11 @@ export default function TeamsPage(): React.JSX.Element {
       setIsDetailsModalOpen(false);
       loadTeams();
     } catch (error: any) {
-      console.error('Error updating team:', error);
+      console.error("Error updating team:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Updating Team',
-        message: error.response?.data?.message || 'Failed to update team. Please try again.',
+        title: "Error Updating Team",
+        message: error.response?.data?.message || "Failed to update team. Please try again.",
       });
     } finally {
       setCreating(false);
@@ -367,14 +389,18 @@ export default function TeamsPage(): React.JSX.Element {
     try {
       setLoadingUsers(true);
       // Fetch a large page of active, non-alumni users so all potential members are available
-      const response = await usersApi.listUsers({ limit: 1000, is_active: true, exclude_alumni: true });
+      const response = await usersApi.listUsers({
+        limit: 1000,
+        is_active: true,
+        exclude_alumni: true,
+      });
       setAllUsers(response.users || []);
     } catch (error) {
-      console.error('Error loading users:', error);
+      console.error("Error loading users:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Loading Users',
-        message: 'Failed to load users. Please try again.',
+        title: "Error Loading Users",
+        message: "Failed to load users. Please try again.",
       });
     } finally {
       setLoadingUsers(false);
@@ -388,11 +414,11 @@ export default function TeamsPage(): React.JSX.Element {
       const response = await taskTeamsApi.listAllProjects();
       setAllProjects(response.projects || []);
     } catch (error) {
-      console.error('Error loading projects:', error);
+      console.error("Error loading projects:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Loading Projects',
-        message: 'Failed to load projects. Please try again.',
+        title: "Error Loading Projects",
+        message: "Failed to load projects. Please try again.",
       });
     } finally {
       setLoadingProjects(false);
@@ -404,8 +430,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (selectedMembersToAdd.length === 0) {
       setErrorModal({
         isOpen: true,
-        title: 'No Members Selected',
-        message: 'Please select at least one member to add.',
+        title: "No Members Selected",
+        message: "Please select at least one member to add.",
       });
       return;
     }
@@ -414,8 +440,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (!selectedTeamForDetails || !isCurrentUserAssignedToTeam(selectedTeamForDetails)) {
       setErrorModal({
         isOpen: true,
-        title: 'Access Denied',
-        message: 'You are not assigned to this team. Only team members can add other members.',
+        title: "Access Denied",
+        message: "You are not assigned to this team. Only team members can add other members.",
       });
       return;
     }
@@ -423,24 +449,24 @@ export default function TeamsPage(): React.JSX.Element {
     try {
       setCreating(true);
       for (const userId of selectedMembersToAdd) {
-        await taskTeamsApi.addTeamMember(selectedTeamForDetails!.id, userId, 'member');
+        await taskTeamsApi.addTeamMember(selectedTeamForDetails!.id, userId, "member");
       }
-      
+
       setIsAddingMember(false);
       setSelectedMembersToAdd([]);
       loadTeamDetails(selectedTeamForDetails!.id);
-      
+
       setErrorModal({
         isOpen: true,
-        title: 'Success',
+        title: "Success",
         message: `Successfully added ${selectedMembersToAdd.length} member(s) to the team.`,
       });
     } catch (error: any) {
-      console.error('Error adding members:', error);
+      console.error("Error adding members:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Adding Members',
-        message: error.response?.data?.message || 'Failed to add members. Please try again.',
+        title: "Error Adding Members",
+        message: error.response?.data?.message || "Failed to add members. Please try again.",
       });
     } finally {
       setCreating(false);
@@ -453,8 +479,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (!selectedTeamForDetails || !isCurrentUserAssignedToTeam(selectedTeamForDetails)) {
       setErrorModal({
         isOpen: true,
-        title: 'Access Denied',
-        message: 'You are not assigned to this team. Only team members can remove other members.',
+        title: "Access Denied",
+        message: "You are not assigned to this team. Only team members can remove other members.",
       });
       return;
     }
@@ -462,18 +488,18 @@ export default function TeamsPage(): React.JSX.Element {
     try {
       await taskTeamsApi.removeTeamMember(selectedTeamForDetails!.id, userId);
       loadTeamDetails(selectedTeamForDetails!.id);
-      
+
       setErrorModal({
         isOpen: true,
-        title: 'Success',
+        title: "Success",
         message: `Successfully removed ${memberName} from the team.`,
       });
     } catch (error: any) {
-      console.error('Error removing member:', error);
+      console.error("Error removing member:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Removing Member',
-        message: error.response?.data?.message || 'Failed to remove member. Please try again.',
+        title: "Error Removing Member",
+        message: error.response?.data?.message || "Failed to remove member. Please try again.",
       });
     }
   };
@@ -483,8 +509,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (selectedProjectsToAdd.length === 0) {
       setErrorModal({
         isOpen: true,
-        title: 'No Projects Selected',
-        message: 'Please select at least one project to add.',
+        title: "No Projects Selected",
+        message: "Please select at least one project to add.",
       });
       return;
     }
@@ -493,8 +519,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (!selectedTeamForDetails || !isCurrentUserAssignedToTeam(selectedTeamForDetails)) {
       setErrorModal({
         isOpen: true,
-        title: 'Access Denied',
-        message: 'You are not assigned to this team. Only team members can add projects.',
+        title: "Access Denied",
+        message: "You are not assigned to this team. Only team members can add projects.",
       });
       return;
     }
@@ -504,33 +530,34 @@ export default function TeamsPage(): React.JSX.Element {
       for (const projectId of selectedProjectsToAdd) {
         await taskTeamsApi.addProjectToTeam(selectedTeamForDetails!.id, projectId);
       }
-      
+
       setIsAddingProject(false);
       setSelectedProjectsToAdd([]);
       loadTeamDetails(selectedTeamForDetails!.id);
-      
+
       setErrorModal({
         isOpen: true,
-        title: 'Success',
+        title: "Success",
         message: `Successfully added ${selectedProjectsToAdd.length} project(s) to the team.`,
       });
     } catch (error: any) {
-      console.error('Error adding projects:', error);
-      let errorMessage = 'Failed to add projects. Please try again.';
-      
+      console.error("Error adding projects:", error);
+      let errorMessage = "Failed to add projects. Please try again.";
+
       if (error.response?.status === 404) {
-        errorMessage = error.response?.data?.message || 'Project not found. Please refresh and try again.';
+        errorMessage =
+          error.response?.data?.message || "Project not found. Please refresh and try again.";
       } else if (error.response?.status === 400) {
-        errorMessage = error.response?.data?.message || 'Project already exists in this team.';
+        errorMessage = error.response?.data?.message || "Project already exists in this team.";
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       setErrorModal({
         isOpen: true,
-        title: 'Error Adding Projects',
+        title: "Error Adding Projects",
         message: errorMessage,
       });
     } finally {
@@ -544,8 +571,8 @@ export default function TeamsPage(): React.JSX.Element {
     if (!selectedTeamForDetails || !isCurrentUserAssignedToTeam(selectedTeamForDetails)) {
       setErrorModal({
         isOpen: true,
-        title: 'Access Denied',
-        message: 'You are not assigned to this team. Only team members can remove projects.',
+        title: "Access Denied",
+        message: "You are not assigned to this team. Only team members can remove projects.",
       });
       return;
     }
@@ -553,164 +580,175 @@ export default function TeamsPage(): React.JSX.Element {
     try {
       await taskTeamsApi.removeProjectFromTeam(selectedTeamForDetails!.id, projectId);
       loadTeamDetails(selectedTeamForDetails!.id);
-      
+
       setErrorModal({
         isOpen: true,
-        title: 'Success',
+        title: "Success",
         message: `Successfully removed ${projectName} from the team.`,
       });
     } catch (error: any) {
-      console.error('Error removing project:', error);
+      console.error("Error removing project:", error);
       setErrorModal({
         isOpen: true,
-        title: 'Error Removing Project',
-        message: error.response?.data?.message || 'Failed to remove project. Please try again.',
+        title: "Error Removing Project",
+        message: error.response?.data?.message || "Failed to remove project. Please try again.",
       });
     }
   };
 
   return (
-    <PageLayout 
-      members={[]} 
-      tasks={[]} 
+    <PageLayout
+      members={[]}
+      tasks={[]}
       title="Teams"
       headerAction={
         isUserAdminOrManager ? (
-        <Button
-          variant="primary"
-          size="md"
-          showPlusIcon
-          onClick={() => setIsAddTeamModalOpen(true)}
-        >
-          Add Team
-        </Button>
+          <Button
+            variant="primary"
+            size="md"
+            showPlusIcon
+            onClick={() => setIsAddTeamModalOpen(true)}
+          >
+            Add Team
+          </Button>
         ) : null
       }
     >
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#076297' }} />
+          <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#076297" }} />
         </div>
       ) : teams.length === 0 ? (
         <div className="text-center py-12">
-          <Users className="w-16 h-16 mx-auto mb-4" style={{ color: '#9ca3af' }} />
-          <p className="text-lg font-medium mb-2" style={{ color: '#6b7280' }}>No teams yet</p>
-          <p className="text-sm" style={{ color: '#9ca3af' }}>Create your first team to get started</p>
+          <Users className="w-16 h-16 mx-auto mb-4" style={{ color: "#9ca3af" }} />
+          <p className="text-lg font-medium mb-2" style={{ color: "#6b7280" }}>
+            No teams yet
+          </p>
+          <p className="text-sm" style={{ color: "#9ca3af" }}>
+            Create your first team to get started
+          </p>
         </div>
       ) : (
-      <div style={{ overflowX: 'visible', overflowY: 'visible', width: '100%' }}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{ overflowX: 'visible', overflowY: 'visible' }}>
-          {teams.map((team) => (
+        <div style={{ overflowX: "visible", overflowY: "visible", width: "100%" }}>
           <div
-            key={team.id}
-            onClick={() => router.push(`/teams/${team.id}`)}
-            className="p-4 cursor-pointer transition-all relative overflow-visible"
-            style={{ 
-              backgroundColor: '#ffffff',
-              borderRadius: '7px',
-              border: '1px solid #e5e7eb',
-              boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-              minHeight: '140px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 1px 2px 0 rgb(0 0 0 / 0.05)';
-            }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            style={{ overflowX: "visible", overflowY: "visible" }}
           >
-            {/* Three Dots Menu - Only show for admin/manager users */}
-            {isUserAdminOrManager && (
-            <div className="absolute top-3 right-3 z-50">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenMenuId(openMenuId === team.id ? null : team.id);
+            {teams.map((team) => (
+              <div
+                key={team.id}
+                onClick={() => router.push(`/teams/${team.id}`)}
+                className="p-4 cursor-pointer transition-all relative overflow-visible"
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderRadius: "7px",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+                  minHeight: "140px",
                 }}
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                style={{ borderRadius: '7px' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow = "0 1px 2px 0 rgb(0 0 0 / 0.05)";
+                }}
               >
-                <MoreVertical className="w-5 h-5" style={{ color: '#6b7280' }} />
-              </button>
-              
-              {/* Dropdown Menu */}
-              {openMenuId === team.id && (
-                <div
-                  className="absolute right-0 mt-2 w-56 bg-white border shadow-xl z-[60] rounded-lg overflow-hidden"
-                  style={{ 
-                    borderRadius: '7px', 
-                    borderColor: '#e5e7eb',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                    minWidth: '224px',
-                    right: '0',
-                    left: 'auto'
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      loadTeamDetails(team.id);
-                      setOpenMenuId(null);
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b whitespace-nowrap"
-                    style={{ color: '#374151', borderColor: '#e5e7eb' }}
-                    disabled={loadingTeamDetails}
-                  >
-                    {loadingTeamDetails ? 'Loading...' : 'View Details'}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTeam(team.id, team.name);
-                      setOpenMenuId(null);
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 transition-colors whitespace-nowrap"
-                    style={{ color: '#dc2626' }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
-            )}
+                {/* Three Dots Menu - Only show for admin/manager users */}
+                {isUserAdminOrManager && (
+                  <div className="absolute top-3 right-3 z-50">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId(openMenuId === team.id ? null : team.id);
+                      }}
+                      className="p-1 hover:bg-gray-100 rounded transition-colors"
+                      style={{ borderRadius: "7px" }}
+                    >
+                      <MoreVertical className="w-5 h-5" style={{ color: "#6b7280" }} />
+                    </button>
 
-            {/* Team Header */}
-            <div className="flex items-start gap-3 mb-4 pr-8">
-              <div 
-                className="w-12 h-12 flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: team.color || '#073392', borderRadius: '7px' }}
-              >
-                <Users className="w-6 h-6" style={{ color: '#ffffff' }} />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold mb-1" style={{ color: '#1f2937' }}>{team.name}</h3>
-                <div className="text-sm" style={{ color: '#6b7280' }}>
-                  <TruncatedText 
-                    text={team.description || 'No description'} 
-                    maxLength={100}
-                    className=""
-                    showToggle={false}
-                  />
+                    {/* Dropdown Menu */}
+                    {openMenuId === team.id && (
+                      <div
+                        className="absolute right-0 mt-2 w-56 bg-white border shadow-xl z-[60] rounded-lg overflow-hidden"
+                        style={{
+                          borderRadius: "7px",
+                          borderColor: "#e5e7eb",
+                          boxShadow:
+                            "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                          minWidth: "224px",
+                          right: "0",
+                          left: "auto",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            loadTeamDetails(team.id);
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b whitespace-nowrap"
+                          style={{ color: "#374151", borderColor: "#e5e7eb" }}
+                          disabled={loadingTeamDetails}
+                        >
+                          {loadingTeamDetails ? "Loading..." : "View Details"}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTeam(team.id, team.name);
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 transition-colors whitespace-nowrap"
+                          style={{ color: "#dc2626" }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Team Header */}
+                <div className="flex items-start gap-3 mb-4 pr-8">
+                  <div
+                    className="w-12 h-12 flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: team.color || "#073392", borderRadius: "7px" }}
+                  >
+                    <Users className="w-6 h-6" style={{ color: "#ffffff" }} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold mb-1" style={{ color: "#1f2937" }}>
+                      {team.name}
+                    </h3>
+                    <div className="text-sm" style={{ color: "#6b7280" }}>
+                      <TruncatedText
+                        text={team.description || "No description"}
+                        maxLength={100}
+                        className=""
+                        showToggle={false}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team Stats */}
+                <div className="flex items-center gap-4 text-sm mt-4" style={{ color: "#4b5563" }}>
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    <span>{team.member_count || 0} members</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Briefcase className="w-4 h-4" />
+                    <span>{team.project_count || 0} projects</span>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Team Stats */}
-            <div className="flex items-center gap-4 text-sm mt-4" style={{ color: '#4b5563' }}>
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                  <span>{team.member_count || 0} members</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Briefcase className="w-4 h-4" />
-                  <span>{team.project_count || 0} projects</span>
-              </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
-      </div>
+        </div>
       )}
 
       {/* Add Team Modal */}
@@ -721,18 +759,23 @@ export default function TeamsPage(): React.JSX.Element {
         >
           <div
             className="bg-white shadow-2xl w-[600px] max-h-[80vh] overflow-y-auto"
-            style={{ borderRadius: '7px' }}
+            style={{ borderRadius: "7px" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between" style={{ borderColor: '#e5e7eb', borderRadius: '7px 7px 0 0' }}>
-              <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>Add New Team</h3>
+            <div
+              className="sticky top-0 bg-white border-b p-4 flex items-center justify-between"
+              style={{ borderColor: "#e5e7eb", borderRadius: "7px 7px 0 0" }}
+            >
+              <h3 className="text-lg font-semibold" style={{ color: "#1f2937" }}>
+                Add New Team
+              </h3>
               <button
                 onClick={() => setIsAddTeamModalOpen(false)}
                 className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                style={{ borderRadius: '7px' }}
+                style={{ borderRadius: "7px" }}
               >
-                <X className="w-5 h-5" style={{ color: '#6b7280' }} />
+                <X className="w-5 h-5" style={{ color: "#6b7280" }} />
               </button>
             </div>
 
@@ -740,7 +783,7 @@ export default function TeamsPage(): React.JSX.Element {
             <div className="p-6 space-y-6">
               {/* Team Name */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
                   Team Name *
                 </label>
                 <input
@@ -749,13 +792,13 @@ export default function TeamsPage(): React.JSX.Element {
                   onChange={(e) => setNewTeam({ ...newTeam, name: e.target.value })}
                   placeholder="Enter team name"
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ borderColor: '#d1d5db', borderRadius: '7px' }}
+                  style={{ borderColor: "#d1d5db", borderRadius: "7px" }}
                 />
               </div>
 
               {/* Team Description */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
                   Description *
                 </label>
                 <textarea
@@ -764,29 +807,29 @@ export default function TeamsPage(): React.JSX.Element {
                   placeholder="Enter team description"
                   rows={3}
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ borderColor: '#d1d5db', borderRadius: '7px' }}
+                  style={{ borderColor: "#d1d5db", borderRadius: "7px" }}
                 />
               </div>
 
               {/* Team Color */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
                   Team Color
                 </label>
                 <div className="flex gap-2">
                   {[
-                    { name: 'Dark Blue', value: '#073392' },
-                    { name: 'Blue', value: '#2F88E1' },
-                    { name: 'Green', value: '#005C30' },
-                    { name: 'Secondary Green', value: '#009758' },
-                    { name: 'Orange', value: '#F8B712' },
-                    { name: 'Red', value: '#D42B1D' }
+                    { name: "Dark Blue", value: "#073392" },
+                    { name: "Blue", value: "#2F88E1" },
+                    { name: "Green", value: "#005C30" },
+                    { name: "Secondary Green", value: "#009758" },
+                    { name: "Orange", value: "#F8B712" },
+                    { name: "Red", value: "#D42B1D" },
                   ].map((color) => (
                     <button
                       key={color.value}
                       onClick={() => setNewTeam({ ...newTeam, color: color.value })}
                       className={`w-8 h-8 rounded-full border-2 ${
-                        newTeam.color === color.value ? 'border-gray-800' : 'border-gray-300'
+                        newTeam.color === color.value ? "border-gray-800" : "border-gray-300"
                       }`}
                       style={{ backgroundColor: color.value }}
                       title={color.name}
@@ -797,7 +840,7 @@ export default function TeamsPage(): React.JSX.Element {
 
               {/* Team Lead */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
                   Team Lead
                 </label>
                 <input
@@ -806,47 +849,59 @@ export default function TeamsPage(): React.JSX.Element {
                   onChange={(e) => setNewTeam({ ...newTeam, lead: e.target.value })}
                   placeholder="Enter team lead name"
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ borderColor: '#d1d5db', borderRadius: '7px' }}
+                  style={{ borderColor: "#d1d5db", borderRadius: "7px" }}
                 />
               </div>
 
               {/* Team Members */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
                   Team Members
                 </label>
                 <div className="space-y-2">
                   {loadingData ? (
                     <div className="flex items-center justify-center py-4">
-                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#076297' }} />
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#076297" }} />
                     </div>
                   ) : users.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">No users available</p>
                   ) : (
                     <div className="max-h-60 overflow-y-auto space-y-2">
                       {users.map((user) => (
-                        <label key={user.id} className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded" style={{ borderRadius: '7px' }}>
+                        <label
+                          key={user.id}
+                          className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded"
+                          style={{ borderRadius: "7px" }}
+                        >
                           <input
                             type="checkbox"
                             checked={newTeam.members.includes(user.id.toString())}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setNewTeam({ ...newTeam, members: [...newTeam.members, user.id.toString()] });
+                                setNewTeam({
+                                  ...newTeam,
+                                  members: [...newTeam.members, user.id.toString()],
+                                });
                               } else {
-                                setNewTeam({ ...newTeam, members: newTeam.members.filter(id => id !== user.id.toString()) });
+                                setNewTeam({
+                                  ...newTeam,
+                                  members: newTeam.members.filter(
+                                    (id) => id !== user.id.toString(),
+                                  ),
+                                });
                               }
                             }}
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
                           <div className="flex items-center space-x-2 flex-1">
-                            <UserAvatar 
-                              userId={user.id} 
-                              size="md"
-                              className="w-8 h-8"
-                            />
+                            <UserAvatar userId={user.id} size="md" className="w-8 h-8" />
                             <div className="flex-1">
-                              <div className="text-sm font-medium" style={{ color: '#374151' }}>{user.name}</div>
-                              <div className="text-xs" style={{ color: '#6b7280' }}>{user.email}</div>
+                              <div className="text-sm font-medium" style={{ color: "#374151" }}>
+                                {user.name}
+                              </div>
+                              <div className="text-xs" style={{ color: "#6b7280" }}>
+                                {user.email}
+                              </div>
                             </div>
                           </div>
                         </label>
@@ -858,34 +913,48 @@ export default function TeamsPage(): React.JSX.Element {
 
               {/* Initial Projects */}
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#374151' }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#374151" }}>
                   Initial Projects
                 </label>
                 <div className="space-y-2">
                   {loadingData ? (
                     <div className="flex items-center justify-center py-4">
-                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#076297' }} />
+                      <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#076297" }} />
                     </div>
                   ) : portalProjects.length === 0 ? (
                     <p className="text-sm text-gray-500 text-center py-4">No projects available</p>
                   ) : (
                     <div className="max-h-60 overflow-y-auto space-y-2">
                       {portalProjects.map((project) => (
-                        <label key={project.id} className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded" style={{ borderRadius: '7px' }}>
+                        <label
+                          key={project.id}
+                          className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded"
+                          style={{ borderRadius: "7px" }}
+                        >
                           <input
                             type="checkbox"
                             checked={newTeam.projects.includes(project.id.toString())}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setNewTeam({ ...newTeam, projects: [...newTeam.projects, project.id.toString()] });
+                                setNewTeam({
+                                  ...newTeam,
+                                  projects: [...newTeam.projects, project.id.toString()],
+                                });
                               } else {
-                                setNewTeam({ ...newTeam, projects: newTeam.projects.filter(id => id !== project.id.toString()) });
+                                setNewTeam({
+                                  ...newTeam,
+                                  projects: newTeam.projects.filter(
+                                    (id) => id !== project.id.toString(),
+                                  ),
+                                });
                               }
                             }}
                             className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
                           <div className="flex-1">
-                            <div className="text-sm font-medium" style={{ color: '#374151' }}>{project.name}</div>
+                            <div className="text-sm font-medium" style={{ color: "#374151" }}>
+                              {project.name}
+                            </div>
                           </div>
                         </label>
                       ))}
@@ -896,11 +965,14 @@ export default function TeamsPage(): React.JSX.Element {
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-gray-50 border-t p-4 flex justify-end space-x-3" style={{ borderColor: '#e5e7eb', borderRadius: '0 0 7px 7px' }}>
+            <div
+              className="sticky bottom-0 bg-gray-50 border-t p-4 flex justify-end space-x-3"
+              style={{ borderColor: "#e5e7eb", borderRadius: "0 0 7px 7px" }}
+            >
               <button
                 onClick={() => setIsAddTeamModalOpen(false)}
                 className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                style={{ borderRadius: '7px' }}
+                style={{ borderRadius: "7px" }}
               >
                 Cancel
               </button>
@@ -908,9 +980,9 @@ export default function TeamsPage(): React.JSX.Element {
                 onClick={handleCreateTeam}
                 disabled={creating}
                 className="px-4 py-2 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+                style={{ backgroundColor: "#076297", borderRadius: "7px" }}
               >
-                {creating ? 'Creating...' : 'Create Team'}
+                {creating ? "Creating..." : "Create Team"}
               </button>
             </div>
           </div>
@@ -944,51 +1016,68 @@ export default function TeamsPage(): React.JSX.Element {
         >
           <div
             className="bg-white shadow-2xl w-[700px] max-h-[85vh] overflow-y-auto"
-            style={{ borderRadius: '7px' }}
+            style={{ borderRadius: "7px" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between" style={{ borderColor: '#e5e7eb', borderRadius: '7px 7px 0 0' }}>
+            <div
+              className="sticky top-0 bg-white border-b p-4 flex items-center justify-between"
+              style={{ borderColor: "#e5e7eb", borderRadius: "7px 7px 0 0" }}
+            >
               <div className="flex items-center gap-3">
-                <div 
+                <div
                   className="w-12 h-12 flex items-center justify-center"
-                  style={{ backgroundColor: isEditingTeam ? editTeamData.color : selectedTeamForDetails?.color || '#073392', borderRadius: '7px' }}
+                  style={{
+                    backgroundColor: isEditingTeam
+                      ? editTeamData.color
+                      : selectedTeamForDetails?.color || "#073392",
+                    borderRadius: "7px",
+                  }}
                 >
-                  <Users className="w-6 h-6" style={{ color: '#ffffff' }} />
+                  <Users className="w-6 h-6" style={{ color: "#ffffff" }} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold" style={{ color: '#1f2937' }}>
-                    {loadingTeamDetails ? 'Loading...' : (isEditingTeam ? 'Edit Team' : selectedTeamForDetails?.name || 'Team Details')}
+                  <h3 className="text-lg font-semibold" style={{ color: "#1f2937" }}>
+                    {loadingTeamDetails
+                      ? "Loading..."
+                      : isEditingTeam
+                        ? "Edit Team"
+                        : selectedTeamForDetails?.name || "Team Details"}
                   </h3>
-                  <p className="text-sm" style={{ color: '#6b7280' }}>Team Details</p>
+                  <p className="text-sm" style={{ color: "#6b7280" }}>
+                    Team Details
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {!isEditingTeam && !loadingTeamDetails && selectedTeamForDetails && isUserAdminOrManager && (
-                  <button
-                    onClick={() => {
-                      setEditTeamData({
-                        name: selectedTeamForDetails.name,
-                        description: selectedTeamForDetails.description || '',
-                        color: selectedTeamForDetails.color || '#073392',
-                      });
-                      setIsEditingTeam(true);
-                    }}
-                    className="px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
-                    style={{ borderColor: '#d1d5db', color: '#374151', borderRadius: '7px' }}
-                  >
-                    Edit
-                  </button>
-                )}
+                {!isEditingTeam &&
+                  !loadingTeamDetails &&
+                  selectedTeamForDetails &&
+                  isUserAdminOrManager && (
+                    <button
+                      onClick={() => {
+                        setEditTeamData({
+                          name: selectedTeamForDetails.name,
+                          description: selectedTeamForDetails.description || "",
+                          color: selectedTeamForDetails.color || "#073392",
+                        });
+                        setIsEditingTeam(true);
+                      }}
+                      className="px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
+                      style={{ borderColor: "#d1d5db", color: "#374151", borderRadius: "7px" }}
+                    >
+                      Edit
+                    </button>
+                  )}
                 <button
                   onClick={() => {
                     setIsDetailsModalOpen(false);
                     setIsEditingTeam(false);
                   }}
                   className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                  style={{ borderRadius: '7px' }}
+                  style={{ borderRadius: "7px" }}
                 >
-                  <X className="w-5 h-5" style={{ color: '#6b7280' }} />
+                  <X className="w-5 h-5" style={{ color: "#6b7280" }} />
                 </button>
               </div>
             </div>
@@ -997,326 +1086,503 @@ export default function TeamsPage(): React.JSX.Element {
             <div className="p-6 space-y-6">
               {loadingTeamDetails ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#076297' }} />
+                  <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#076297" }} />
                   <span className="ml-2 text-gray-600">Loading team details...</span>
                 </div>
               ) : selectedTeamForDetails ? (
                 <>
                   {/* Team Information */}
                   <div>
-                    <h4 className="text-sm font-semibold mb-3" style={{ color: '#374151' }}>Team Information</h4>
-                {isEditingTeam ? (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-medium block mb-1" style={{ color: '#6b7280' }}>Name *</label>
-                      <input
-                        type="text"
-                        value={editTeamData.name}
-                        onChange={(e) => setEditTeamData({ ...editTeamData, name: e.target.value })}
-                        placeholder="Enter team name"
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style={{ borderColor: '#d1d5db', borderRadius: '7px' }}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium block mb-1" style={{ color: '#6b7280' }}>Description</label>
-                      <textarea
-                        value={editTeamData.description}
-                        onChange={(e) => setEditTeamData({ ...editTeamData, description: e.target.value })}
-                        placeholder="Enter team description"
-                        rows={3}
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style={{ borderColor: '#d1d5db', borderRadius: '7px' }}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium block mb-2" style={{ color: '#6b7280' }}>Team Color</label>
-                      <div className="flex gap-2">
-                        {[
-                          { name: 'Dark Blue', value: '#073392' },
-                          { name: 'Blue', value: '#2F88E1' },
-                          { name: 'Green', value: '#005C30' },
-                          { name: 'Secondary Green', value: '#009758' },
-                          { name: 'Orange', value: '#F8B712' },
-                          { name: 'Red', value: '#D42B1D' }
-                        ].map((color) => (
-                          <button
-                            key={color.value}
-                            onClick={() => setEditTeamData({ ...editTeamData, color: color.value })}
-                            className={`w-8 h-8 rounded-full border-2 ${
-                              editTeamData.color === color.value ? 'border-gray-800' : 'border-gray-300'
-                            }`}
-                            style={{ backgroundColor: color.value }}
-                            title={color.name}
+                    <h4 className="text-sm font-semibold mb-3" style={{ color: "#374151" }}>
+                      Team Information
+                    </h4>
+                    {isEditingTeam ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label
+                            className="text-xs font-medium block mb-1"
+                            style={{ color: "#6b7280" }}
+                          >
+                            Name *
+                          </label>
+                          <input
+                            type="text"
+                            value={editTeamData.name}
+                            onChange={(e) =>
+                              setEditTeamData({ ...editTeamData, name: e.target.value })
+                            }
+                            placeholder="Enter team name"
+                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            style={{ borderColor: "#d1d5db", borderRadius: "7px" }}
                           />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-medium" style={{ color: '#6b7280' }}>Name</label>
-                      <p className="text-sm font-medium" style={{ color: '#1f2937' }}>{selectedTeamForDetails.name}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium" style={{ color: '#6b7280' }}>Description</label>
-                      <div className="text-sm" style={{ color: '#1f2937' }}>
-                        <TruncatedText 
-                          text={selectedTeamForDetails.description || 'No description'} 
-                          maxLength={170}
-                          className=""
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <label className="text-xs font-medium" style={{ color: '#6b7280' }}>Color</label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="w-8 h-8 rounded" style={{ backgroundColor: selectedTeamForDetails.color || '#073392', border: '1px solid #e5e7eb' }}></div>
-                          <span className="text-sm" style={{ color: '#1f2937' }}>{selectedTeamForDetails.color || '#073392'}</span>
+                        </div>
+                        <div>
+                          <label
+                            className="text-xs font-medium block mb-1"
+                            style={{ color: "#6b7280" }}
+                          >
+                            Description
+                          </label>
+                          <textarea
+                            value={editTeamData.description}
+                            onChange={(e) =>
+                              setEditTeamData({ ...editTeamData, description: e.target.value })
+                            }
+                            placeholder="Enter team description"
+                            rows={3}
+                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            style={{ borderColor: "#d1d5db", borderRadius: "7px" }}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            className="text-xs font-medium block mb-2"
+                            style={{ color: "#6b7280" }}
+                          >
+                            Team Color
+                          </label>
+                          <div className="flex gap-2">
+                            {[
+                              { name: "Dark Blue", value: "#073392" },
+                              { name: "Blue", value: "#2F88E1" },
+                              { name: "Green", value: "#005C30" },
+                              { name: "Secondary Green", value: "#009758" },
+                              { name: "Orange", value: "#F8B712" },
+                              { name: "Red", value: "#D42B1D" },
+                            ].map((color) => (
+                              <button
+                                key={color.value}
+                                onClick={() =>
+                                  setEditTeamData({ ...editTeamData, color: color.value })
+                                }
+                                className={`w-8 h-8 rounded-full border-2 ${
+                                  editTeamData.color === color.value
+                                    ? "border-gray-800"
+                                    : "border-gray-300"
+                                }`}
+                                style={{ backgroundColor: color.value }}
+                                title={color.name}
+                              />
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <label className="text-xs font-medium" style={{ color: '#6b7280' }}>Status</label>
-                        <p className="text-sm capitalize mt-1" style={{ color: '#1f2937' }}>{selectedTeamForDetails.status}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Team Members */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold" style={{ color: '#374151' }}>
-                  Team Members ({selectedTeamForDetails.member_count || 0})
-                </h4>
-                  {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
-                    <button
-                      onClick={() => {
-                        loadAllUsers();
-                        setIsAddingMember(true);
-                      }}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
-                      style={{ borderColor: '#d1d5db', color: '#374151', borderRadius: '7px' }}
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      Add Member
-                    </button>
-                  )}
-                </div>
-                
-                {isAddingMember && (
-                  <div className="mb-4 p-4 border rounded-lg" style={{ borderColor: '#e5e7eb', backgroundColor: '#f9fafb' }}>
-                    <h5 className="text-sm font-medium mb-3" style={{ color: '#374151' }}>Add Members to Team</h5>
-                    {loadingUsers ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#076297' }} />
-                        <span className="ml-2 text-sm" style={{ color: '#6b7280' }}>Loading users...</span>
-                      </div>
                     ) : (
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {allUsers.filter(user => !selectedTeamForDetails.members?.some(member => member.user_id === user.id)).map((user) => (
-                          <label key={user.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={selectedMembersToAdd.includes(user.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedMembersToAdd([...selectedMembersToAdd, user.id]);
-                                } else {
-                                  setSelectedMembersToAdd(selectedMembersToAdd.filter(id => id !== user.id));
-                                }
-                              }}
-                              className="w-4 h-4"
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs font-medium" style={{ color: "#6b7280" }}>
+                            Name
+                          </label>
+                          <p className="text-sm font-medium" style={{ color: "#1f2937" }}>
+                            {selectedTeamForDetails.name}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium" style={{ color: "#6b7280" }}>
+                            Description
+                          </label>
+                          <div className="text-sm" style={{ color: "#1f2937" }}>
+                            <TruncatedText
+                              text={selectedTeamForDetails.description || "No description"}
+                              maxLength={170}
+                              className=""
                             />
-                            <div className="flex items-center gap-2 flex-1">
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <label className="text-xs font-medium" style={{ color: "#6b7280" }}>
+                              Color
+                            </label>
+                            <div className="flex items-center gap-2 mt-1">
                               <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                                style={{ backgroundColor: selectedTeamForDetails.color || '#073392' }}
-                              >
-                                {user.name ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA'}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-medium" style={{ color: '#374151' }}>{user.name}</p>
-                                <p className="text-xs" style={{ color: '#6b7280' }}>{user.email}</p>
-                              </div>
+                                className="w-8 h-8 rounded"
+                                style={{
+                                  backgroundColor: selectedTeamForDetails.color || "#073392",
+                                  border: "1px solid #e5e7eb",
+                                }}
+                              ></div>
+                              <span className="text-sm" style={{ color: "#1f2937" }}>
+                                {selectedTeamForDetails.color || "#073392"}
+                              </span>
                             </div>
-                          </label>
-                        ))}
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium" style={{ color: "#6b7280" }}>
+                              Status
+                            </label>
+                            <p className="text-sm capitalize mt-1" style={{ color: "#1f2937" }}>
+                              {selectedTeamForDetails.status}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
-                    {allUsers.filter(user => !selectedTeamForDetails.members?.some(member => member.user_id === user.id)).length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">All users are already in this team</p>
-                    )}
-                    <div className="flex justify-end gap-2 mt-3">
-                      <button
-                        onClick={() => {
-                          setIsAddingMember(false);
-                          setSelectedMembersToAdd([]);
-                        }}
-                        className="px-3 py-1.5 text-sm rounded-md border transition-colors"
-                        style={{ borderColor: '#d1d5db', borderRadius: '7px', color: '#374151' }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleAddMembersToTeam}
-                        disabled={selectedMembersToAdd.length === 0 || creating}
-                        className="px-3 py-1.5 text-sm rounded-md text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ backgroundColor: '#076297', borderRadius: '7px' }}
-                      >
-                        {creating ? 'Adding...' : `Add Selected (${selectedMembersToAdd.length})`}
-                      </button>
-                    </div>
                   </div>
-                )}
 
-                {selectedTeamForDetails.members && selectedTeamForDetails.members.length > 0 ? (
-                  <div className="space-y-2">
-                    {selectedTeamForDetails.members.map((member) => (
-                      <div
-                        key={member.id}
-                        className="flex items-center gap-3 p-3 rounded-lg border"
-                        style={{ borderColor: '#e5e7eb', backgroundColor: '#fafafa' }}
-                      >
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
-                          style={{ backgroundColor: selectedTeamForDetails.color || '#076297' }}
-                        >
-                          {member.name ? member.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : 'NA'}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium" style={{ color: '#1f2937' }}>{member.name || 'Unknown'}</p>
-                        </div>
-                        {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
+                  {/* Team Members */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold" style={{ color: "#374151" }}>
+                        Team Members ({selectedTeamForDetails.member_count || 0})
+                      </h4>
+                      {isEditingTeam &&
+                        selectedTeamForDetails &&
+                        isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
                           <button
-                            onClick={() => handleRemoveTeamMember(member.user_id, member.name || 'this member')}
-                            className="p-1 hover:bg-red-50 rounded transition-colors"
-                            title="Remove from team"
+                            onClick={() => {
+                              loadAllUsers();
+                              setIsAddingMember(true);
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
+                            style={{
+                              borderColor: "#d1d5db",
+                              color: "#374151",
+                              borderRadius: "7px",
+                            }}
                           >
-                            <X className="w-4 h-4" style={{ color: '#dc2626' }} />
+                            <UserPlus className="w-4 h-4" />
+                            Add Member
                           </button>
                         )}
+                    </div>
+
+                    {isAddingMember && (
+                      <div
+                        className="mb-4 p-4 border rounded-lg"
+                        style={{ borderColor: "#e5e7eb", backgroundColor: "#f9fafb" }}
+                      >
+                        <h5 className="text-sm font-medium mb-3" style={{ color: "#374151" }}>
+                          Add Members to Team
+                        </h5>
+                        {loadingUsers ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2
+                              className="w-5 h-5 animate-spin"
+                              style={{ color: "#076297" }}
+                            />
+                            <span className="ml-2 text-sm" style={{ color: "#6b7280" }}>
+                              Loading users...
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {allUsers
+                              .filter(
+                                (user) =>
+                                  !selectedTeamForDetails.members?.some(
+                                    (member) => member.user_id === user.id,
+                                  ),
+                              )
+                              .map((user) => (
+                                <label
+                                  key={user.id}
+                                  className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedMembersToAdd.includes(user.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedMembersToAdd([...selectedMembersToAdd, user.id]);
+                                      } else {
+                                        setSelectedMembersToAdd(
+                                          selectedMembersToAdd.filter((id) => id !== user.id),
+                                        );
+                                      }
+                                    }}
+                                    className="w-4 h-4"
+                                  />
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <div
+                                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                                      style={{
+                                        backgroundColor: selectedTeamForDetails.color || "#073392",
+                                      }}
+                                    >
+                                      {user.name
+                                        ? user.name
+                                            .split(" ")
+                                            .map((n: string) => n[0])
+                                            .join("")
+                                            .toUpperCase()
+                                            .slice(0, 2)
+                                        : "NA"}
+                                    </div>
+                                    <div className="flex-1">
+                                      <p
+                                        className="text-sm font-medium"
+                                        style={{ color: "#374151" }}
+                                      >
+                                        {user.name}
+                                      </p>
+                                      <p className="text-xs" style={{ color: "#6b7280" }}>
+                                        {user.email}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </label>
+                              ))}
+                          </div>
+                        )}
+                        {allUsers.filter(
+                          (user) =>
+                            !selectedTeamForDetails.members?.some(
+                              (member) => member.user_id === user.id,
+                            ),
+                        ).length === 0 && (
+                          <p className="text-sm text-gray-500 text-center py-4">
+                            All users are already in this team
+                          </p>
+                        )}
+                        <div className="flex justify-end gap-2 mt-3">
+                          <button
+                            onClick={() => {
+                              setIsAddingMember(false);
+                              setSelectedMembersToAdd([]);
+                            }}
+                            className="px-3 py-1.5 text-sm rounded-md border transition-colors"
+                            style={{
+                              borderColor: "#d1d5db",
+                              borderRadius: "7px",
+                              color: "#374151",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleAddMembersToTeam}
+                            disabled={selectedMembersToAdd.length === 0 || creating}
+                            className="px-3 py-1.5 text-sm rounded-md text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{ backgroundColor: "#076297", borderRadius: "7px" }}
+                          >
+                            {creating
+                              ? "Adding..."
+                              : `Add Selected (${selectedMembersToAdd.length})`}
+                          </button>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">No members</p>
-                )}
-              </div>
+                    )}
 
-              {/* Projects */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold" style={{ color: '#374151' }}>
-                  Projects ({selectedTeamForDetails.project_count || 0})
-                </h4>
-                  {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
-                    <button
-                      onClick={() => {
-                        loadAllProjects();
-                        setIsAddingProject(true);
-                      }}
-                      className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
-                      style={{ borderColor: '#d1d5db', color: '#374151', borderRadius: '7px' }}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Project
-                    </button>
-                  )}
-                </div>
-
-                {isAddingProject && (
-                  <div className="mb-4 p-4 border rounded-lg" style={{ borderColor: '#e5e7eb', backgroundColor: '#f9fafb' }}>
-                    <h5 className="text-sm font-medium mb-3" style={{ color: '#374151' }}>Add Projects to Team</h5>
-                    {loadingProjects ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#076297' }} />
-                        <span className="ml-2 text-sm" style={{ color: '#6b7280' }}>Loading projects...</span>
+                    {selectedTeamForDetails.members && selectedTeamForDetails.members.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedTeamForDetails.members.map((member) => (
+                          <div
+                            key={member.id}
+                            className="flex items-center gap-3 p-3 rounded-lg border"
+                            style={{ borderColor: "#e5e7eb", backgroundColor: "#fafafa" }}
+                          >
+                            <div
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0"
+                              style={{ backgroundColor: selectedTeamForDetails.color || "#076297" }}
+                            >
+                              {member.name
+                                ? member.name
+                                    .split(" ")
+                                    .map((n: string) => n[0])
+                                    .join("")
+                                    .toUpperCase()
+                                    .slice(0, 2)
+                                : "NA"}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium" style={{ color: "#1f2937" }}>
+                                {member.name || "Unknown"}
+                              </p>
+                            </div>
+                            {isEditingTeam &&
+                              selectedTeamForDetails &&
+                              isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
+                                <button
+                                  onClick={() =>
+                                    handleRemoveTeamMember(
+                                      member.user_id,
+                                      member.name || "this member",
+                                    )
+                                  }
+                                  className="p-1 hover:bg-red-50 rounded transition-colors"
+                                  title="Remove from team"
+                                >
+                                  <X className="w-4 h-4" style={{ color: "#dc2626" }} />
+                                </button>
+                              )}
+                          </div>
+                        ))}
                       </div>
                     ) : (
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {allProjects.filter(project => !selectedTeamForDetails.projects?.some(teamProject => teamProject.id === project.id)).map((project) => (
-                          <label key={project.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={selectedProjectsToAdd.includes(project.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedProjectsToAdd([...selectedProjectsToAdd, project.id]);
-                                } else {
-                                  setSelectedProjectsToAdd(selectedProjectsToAdd.filter(id => id !== project.id));
-                                }
-                              }}
-                              className="w-4 h-4"
-                            />
-                            <div className="flex items-center gap-2 flex-1">
-                              <div className="flex-1">
-                                <p className="text-sm font-medium" style={{ color: '#374151' }}>{project.name}</p>
-                              </div>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
+                      <p className="text-sm text-gray-500 text-center py-4">No members</p>
                     )}
-                    {allProjects.filter(project => !selectedTeamForDetails.projects?.some(teamProject => teamProject.id === project.id)).length === 0 && (
-                      <p className="text-sm text-gray-500 text-center py-4">All projects are already in this team</p>
-                    )}
-                    <div className="flex justify-end gap-2 mt-3">
-                      <button
-                        onClick={() => {
-                          setIsAddingProject(false);
-                          setSelectedProjectsToAdd([]);
-                        }}
-                        className="px-3 py-1.5 text-sm rounded-md border transition-colors"
-                        style={{ borderColor: '#d1d5db', borderRadius: '7px', color: '#374151' }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleAddProjectsToTeam}
-                        disabled={selectedProjectsToAdd.length === 0 || creating}
-                        className="px-3 py-1.5 text-sm rounded-md text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ backgroundColor: '#076297', borderRadius: '7px' }}
-                      >
-                        {creating ? 'Adding...' : `Add Selected (${selectedProjectsToAdd.length})`}
-                      </button>
-                    </div>
                   </div>
-                )}
 
-                {selectedTeamForDetails.projects && selectedTeamForDetails.projects.length > 0 ? (
-                  <div className="space-y-2">
-                    {selectedTeamForDetails.projects.map((project) => (
-                      <div
-                        key={project.id}
-                        className="flex items-center justify-between gap-3 p-3 rounded-lg border"
-                        style={{ borderColor: '#e5e7eb' }}
-                      >
-                        <div className="flex-1 cursor-pointer" onClick={() => {
-                          router.push(`/teams/${selectedTeamForDetails.id}/projects/${project.id}`);
-                          setIsDetailsModalOpen(false);
-                        }}>
-                          <p className="text-sm font-medium" style={{ color: '#1f2937' }}>{project.name}</p>
-                        </div>
-                        {isEditingTeam && selectedTeamForDetails && isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
+                  {/* Projects */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-semibold" style={{ color: "#374151" }}>
+                        Projects ({selectedTeamForDetails.project_count || 0})
+                      </h4>
+                      {isEditingTeam &&
+                        selectedTeamForDetails &&
+                        isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
                           <button
-                            onClick={() => handleRemoveTeamProject(project.id, project.name)}
-                            className="p-1 hover:bg-red-50 rounded transition-colors"
-                            title="Remove from team"
+                            onClick={() => {
+                              loadAllProjects();
+                              setIsAddingProject(true);
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
+                            style={{
+                              borderColor: "#d1d5db",
+                              color: "#374151",
+                              borderRadius: "7px",
+                            }}
                           >
-                            <X className="w-4 h-4" style={{ color: '#dc2626' }} />
+                            <Plus className="w-4 h-4" />
+                            Add Project
                           </button>
                         )}
+                    </div>
+
+                    {isAddingProject && (
+                      <div
+                        className="mb-4 p-4 border rounded-lg"
+                        style={{ borderColor: "#e5e7eb", backgroundColor: "#f9fafb" }}
+                      >
+                        <h5 className="text-sm font-medium mb-3" style={{ color: "#374151" }}>
+                          Add Projects to Team
+                        </h5>
+                        {loadingProjects ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2
+                              className="w-5 h-5 animate-spin"
+                              style={{ color: "#076297" }}
+                            />
+                            <span className="ml-2 text-sm" style={{ color: "#6b7280" }}>
+                              Loading projects...
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {allProjects
+                              .filter(
+                                (project) =>
+                                  !selectedTeamForDetails.projects?.some(
+                                    (teamProject) => teamProject.id === project.id,
+                                  ),
+                              )
+                              .map((project) => (
+                                <label
+                                  key={project.id}
+                                  className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedProjectsToAdd.includes(project.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedProjectsToAdd([
+                                          ...selectedProjectsToAdd,
+                                          project.id,
+                                        ]);
+                                      } else {
+                                        setSelectedProjectsToAdd(
+                                          selectedProjectsToAdd.filter((id) => id !== project.id),
+                                        );
+                                      }
+                                    }}
+                                    className="w-4 h-4"
+                                  />
+                                  <div className="flex items-center gap-2 flex-1">
+                                    <div className="flex-1">
+                                      <p
+                                        className="text-sm font-medium"
+                                        style={{ color: "#374151" }}
+                                      >
+                                        {project.name}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </label>
+                              ))}
+                          </div>
+                        )}
+                        {allProjects.filter(
+                          (project) =>
+                            !selectedTeamForDetails.projects?.some(
+                              (teamProject) => teamProject.id === project.id,
+                            ),
+                        ).length === 0 && (
+                          <p className="text-sm text-gray-500 text-center py-4">
+                            All projects are already in this team
+                          </p>
+                        )}
+                        <div className="flex justify-end gap-2 mt-3">
+                          <button
+                            onClick={() => {
+                              setIsAddingProject(false);
+                              setSelectedProjectsToAdd([]);
+                            }}
+                            className="px-3 py-1.5 text-sm rounded-md border transition-colors"
+                            style={{
+                              borderColor: "#d1d5db",
+                              borderRadius: "7px",
+                              color: "#374151",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleAddProjectsToTeam}
+                            disabled={selectedProjectsToAdd.length === 0 || creating}
+                            className="px-3 py-1.5 text-sm rounded-md text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{ backgroundColor: "#076297", borderRadius: "7px" }}
+                          >
+                            {creating
+                              ? "Adding..."
+                              : `Add Selected (${selectedProjectsToAdd.length})`}
+                          </button>
+                        </div>
                       </div>
-                    ))}
+                    )}
+
+                    {selectedTeamForDetails.projects &&
+                    selectedTeamForDetails.projects.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedTeamForDetails.projects.map((project) => (
+                          <div
+                            key={project.id}
+                            className="flex items-center justify-between gap-3 p-3 rounded-lg border"
+                            style={{ borderColor: "#e5e7eb" }}
+                          >
+                            <div
+                              className="flex-1 cursor-pointer"
+                              onClick={() => {
+                                router.push(
+                                  `/teams/${selectedTeamForDetails.id}/projects/${project.id}`,
+                                );
+                                setIsDetailsModalOpen(false);
+                              }}
+                            >
+                              <p className="text-sm font-medium" style={{ color: "#1f2937" }}>
+                                {project.name}
+                              </p>
+                            </div>
+                            {isEditingTeam &&
+                              selectedTeamForDetails &&
+                              isCurrentUserAssignedToTeam(selectedTeamForDetails) && (
+                                <button
+                                  onClick={() => handleRemoveTeamProject(project.id, project.name)}
+                                  className="p-1 hover:bg-red-50 rounded transition-colors"
+                                  title="Remove from team"
+                                >
+                                  <X className="w-4 h-4" style={{ color: "#dc2626" }} />
+                                </button>
+                              )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 text-center py-4">No projects</p>
+                    )}
                   </div>
-                ) : (
-                  <p className="text-sm text-gray-500 text-center py-4">No projects</p>
-                )}
-              </div>
                 </>
               ) : (
                 <div className="text-center py-12">
@@ -1326,12 +1592,15 @@ export default function TeamsPage(): React.JSX.Element {
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-gray-50 border-t p-4 flex justify-end space-x-3" style={{ borderColor: '#e5e7eb', borderRadius: '0 0 7px 7px' }}>
+            <div
+              className="sticky bottom-0 bg-gray-50 border-t p-4 flex justify-end space-x-3"
+              style={{ borderColor: "#e5e7eb", borderRadius: "0 0 7px 7px" }}
+            >
               {loadingTeamDetails ? (
                 <button
                   onClick={() => setIsDetailsModalOpen(false)}
                   className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                  style={{ borderRadius: '7px' }}
+                  style={{ borderRadius: "7px" }}
                 >
                   Close
                 </button>
@@ -1340,7 +1609,7 @@ export default function TeamsPage(): React.JSX.Element {
                   <button
                     onClick={() => setIsEditingTeam(false)}
                     className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                    style={{ borderRadius: '7px' }}
+                    style={{ borderRadius: "7px" }}
                   >
                     Cancel
                   </button>
@@ -1348,9 +1617,9 @@ export default function TeamsPage(): React.JSX.Element {
                     onClick={handleUpdateTeam}
                     disabled={creating}
                     className="px-4 py-2 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+                    style={{ backgroundColor: "#076297", borderRadius: "7px" }}
                   >
-                    {creating ? 'Saving...' : 'Save Changes'}
+                    {creating ? "Saving..." : "Save Changes"}
                   </button>
                 </>
               ) : (
@@ -1358,7 +1627,7 @@ export default function TeamsPage(): React.JSX.Element {
                   <button
                     onClick={() => setIsDetailsModalOpen(false)}
                     className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                    style={{ borderRadius: '7px' }}
+                    style={{ borderRadius: "7px" }}
                   >
                     Close
                   </button>
@@ -1369,7 +1638,7 @@ export default function TeamsPage(): React.JSX.Element {
                         router.push(`/teams/${selectedTeamForDetails!.id}`);
                       }}
                       className="px-4 py-2 text-white rounded-md transition-colors"
-                      style={{ backgroundColor: '#076297', borderRadius: '7px' }}
+                      style={{ backgroundColor: "#076297", borderRadius: "7px" }}
                     >
                       View Full Details
                     </button>

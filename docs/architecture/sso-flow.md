@@ -10,6 +10,7 @@ a Bearer interceptor; refresh relies on a `sameSite=strict`, host-only cookie
 (`backend/src/config/constants.ts` COOKIE_OPTIONS).
 
 Failure modes:
+
 1. **Stale token replay** — platform-selection reuses whatever access token sits in portal
    localStorage; after 24h expiry (TOKEN_EXPIRY.ACCESS) the destination app's first call
    401s → bounce to login → "sign in twice".
@@ -23,12 +24,12 @@ Failure modes:
 
 ### Cookies (the main fix)
 
-| | Dev (localhost:3000–3005 + API :PORT) | Production |
-|---|---|---|
+|                               | Dev (localhost:3000–3005 + API :PORT)                            | Production                                                                                                     |
+| ----------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Session/refresh cookie domain | none (host-only `localhost` — port-agnostic, shared by all apps) | `.ganzafrica.org` (apps are `ganzafrica.org`, `portal.`, `hr.`, `alumni.`, `tasks.`, API `api.ganzafrica.org`) |
-| sameSite | `lax` | `lax` |
-| secure | false | true |
-| httpOnly | true (both cookies) | true |
+| sameSite                      | `lax`                                                            | `lax`                                                                                                          |
+| secure                        | false                                                            | true                                                                                                           |
+| httpOnly                      | true (both cookies)                                              | true                                                                                                           |
 
 `sameSite=lax` (not strict) so top-level navigations (email links into apps) carry the
 cookie. CSRF delta covered by enforcing the existing `ganzafrica_csrf` double-submit token

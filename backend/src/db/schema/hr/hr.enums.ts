@@ -17,11 +17,7 @@ export const contractTypeEnum = pgEnum("contract_type", [
   "INTERNSHIP",
 ]);
 
-export const contractStatusEnum = pgEnum("contract_status", [
-  "ACTIVE",
-  "EXPIRED",
-  "TERMINATED",
-]);
+export const contractStatusEnum = pgEnum("contract_status", ["ACTIVE", "EXPIRED", "TERMINATED"]);
 
 export const leaveTypeEnum = pgEnum("leave_type", [
   "ANNUAL",
@@ -78,12 +74,7 @@ export const ticketStatusEnum = pgEnum("ticket_status", [
   "CLOSED",
 ]);
 
-export const ticketPriorityEnum = pgEnum("ticket_priority", [
-  "LOW",
-  "MEDIUM",
-  "HIGH",
-  "CRITICAL",
-]);
+export const ticketPriorityEnum = pgEnum("ticket_priority", ["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
 
 export const maintenanceStatusEnum = pgEnum("maintenance_status", [
   "PENDING",
@@ -110,11 +101,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "DOCUMENT_PUBLISHED",
 ]);
 
-export const notificationStatusEnum = pgEnum("notification_status", [
-  "UNREAD",
-  "READ",
-  "ARCHIVED",
-]);
+export const notificationStatusEnum = pgEnum("notification_status", ["UNREAD", "READ", "ARCHIVED"]);
 
 export const notificationPriorityEnum = pgEnum("notification_priority", [
   "LOW",

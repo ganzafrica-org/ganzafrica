@@ -42,8 +42,8 @@ holiday (hr_org_holidays) | weekend | absent (working day, no row, no leave).
 
 a) `POST /hr/me/attendance/check-in` / `check-out` (self, today only, idempotent);
 b) `GET /hr/attendance/report?month&department` (attendance:manage → add permission to
-   catalog at activation): matrix employee × day with derived statuses + absent-without-leave
-   list; `GET /hr/me/attendance?month` (self view);
+catalog at activation): matrix employee × day with derived statuses + absent-without-leave
+list; `GET /hr/me/attendance?month` (self view);
 c) `PATCH /hr/attendance/:employeeId/:date` (attendance:manage) — HR adjustment with note.
 
 ## 5–6. Frontend & tests (summary — expand at activation)

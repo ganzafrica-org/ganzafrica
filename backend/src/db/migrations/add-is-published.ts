@@ -24,12 +24,15 @@ async function addIsPublishedColumn() {
     const db = drizzle(pool);
 
     // Read and execute the SQL migration
-    const sqlPath = path.resolve(__dirname, "../../../drizzle/0007_add_is_published_to_projects.sql");
+    const sqlPath = path.resolve(
+      __dirname,
+      "../../../drizzle/0007_add_is_published_to_projects.sql",
+    );
     const sql = fs.readFileSync(sqlPath, "utf-8");
 
     // Execute the SQL
     await pool.query(sql);
-    
+
     console.log("✅ Successfully added is_published column to projects table!");
   } catch (error) {
     console.error("❌ Migration failed:", error);
@@ -45,4 +48,3 @@ if (require.main === module) {
 }
 
 export { addIsPublishedColumn };
-

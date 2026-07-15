@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Calendar } from 'lucide-react';
+import { Calendar } from "lucide-react";
 
 interface LeaveTabProps {
   leaves: any[];
@@ -26,23 +26,16 @@ export default function LeaveTab({ leaves }: LeaveTabProps) {
       {/* Leave Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {leaves.slice(0, 4).map((leave) => (
-          <div
-            key={leave.id}
-            className="bg-white rounded-lg border border-gray-200 p-6"
-          >
+          <div key={leave.id} className="bg-white rounded-lg border border-gray-200 p-6">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
               {leave.status}
             </p>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {leave.name}
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{leave.name}</h3>
 
             <div className="mb-4">
               <p className="text-4xl font-bold text-brand-accent">
                 {leave.available}
-                <span className="text-sm font-normal text-gray-600 ml-1">
-                  {leave.unit}
-                </span>
+                <span className="text-sm font-normal text-gray-600 ml-1">{leave.unit}</span>
               </p>
             </div>
 
@@ -57,10 +50,7 @@ export default function LeaveTab({ leaves }: LeaveTabProps) {
               </div>
             </div>
 
-            <a
-              href="#"
-              className="text-brand-accent hover:text-brand-accent text-sm font-medium"
-            >
+            <a href="#" className="text-brand-accent hover:text-brand-accent text-sm font-medium">
               View Details
             </a>
           </div>
@@ -72,20 +62,14 @@ export default function LeaveTab({ leaves }: LeaveTabProps) {
             <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-2">
               {leaves[5].status}
             </p>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              {leaves[5].type}
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{leaves[5].type}</h3>
 
             <div className="mb-4">
               <p className="text-2xl font-bold text-orange-600">
-                {leaves[5].pending}{' '}
-                <span className="text-sm font-normal text-gray-600">
-                  {leaves[5].unit}
-                </span>
+                {leaves[5].pending}{" "}
+                <span className="text-sm font-normal text-gray-600">{leaves[5].unit}</span>
               </p>
-              <p className="text-xs text-gray-500 mt-2">
-                Applied on {leaves[5].leaveFrom}
-              </p>
+              <p className="text-xs text-gray-500 mt-2">Applied on {leaves[5].leaveFrom}</p>
             </div>
 
             <div className="flex gap-4 text-sm mb-4">
@@ -99,10 +83,7 @@ export default function LeaveTab({ leaves }: LeaveTabProps) {
               </div>
             </div>
 
-            <a
-              href="#"
-              className="text-orange-600 hover:text-orange-700 text-sm font-medium"
-            >
+            <a href="#" className="text-orange-600 hover:text-orange-700 text-sm font-medium">
               View Details
             </a>
           </div>

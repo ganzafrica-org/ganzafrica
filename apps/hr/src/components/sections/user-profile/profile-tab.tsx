@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { Edit2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Edit2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ProfileTabProps {
   employee: any;
@@ -22,9 +22,7 @@ export default function ProfileTab({ employee, onEditClick }: ProfileTabProps) {
                 className="w-16 h-16 rounded-full object-cover"
               />
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {employee.name}
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-900">{employee.name}</h2>
                 <p className="text-sm text-gray-600">{employee.title}</p>
                 <p className="text-sm text-gray-600">{employee.department}</p>
               </div>
@@ -58,33 +56,25 @@ export default function ProfileTab({ employee, onEditClick }: ProfileTabProps) {
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                 Hire Date
               </p>
-              <p className="text-sm font-medium text-gray-900">
-                {employee.hireDate}
-              </p>
+              <p className="text-sm font-medium text-gray-900">{employee.hireDate}</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                 Work Phone
               </p>
-              <p className="text-sm font-medium text-gray-900">
-                {employee.workPhone}
-              </p>
+              <p className="text-sm font-medium text-gray-900">{employee.workPhone}</p>
             </div>
             <div className="col-span-2 md:col-span-1">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                 Work Email
               </p>
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {employee.workEmail}
-              </p>
+              <p className="text-sm font-medium text-gray-900 truncate">{employee.workEmail}</p>
             </div>
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                 Office Location
               </p>
-              <p className="text-sm font-medium text-gray-900">
-                {employee.officeLocation}
-              </p>
+              <p className="text-sm font-medium text-gray-900">{employee.officeLocation}</p>
             </div>
           </div>
         </div>
@@ -94,12 +84,12 @@ export default function ProfileTab({ employee, onEditClick }: ProfileTabProps) {
       <div className="border-b border-gray-200">
         <div className="flex gap-8 overflow-x-auto">
           {[
-            'Personal',
-            'ViewEmployeeContents',
-            'Payslots',
-            'Emergency',
-            'Leave',
-            'Performance',
+            "Personal",
+            "ViewEmployeeContents",
+            "Payslots",
+            "Emergency",
+            "Leave",
+            "Performance",
           ].map((tab) => (
             <button
               key={tab}
@@ -122,8 +112,8 @@ export default function ProfileTab({ employee, onEditClick }: ProfileTabProps) {
               Personal Information
             </p>
             <p className="text-sm text-gray-600 line-clamp-3">
-              This section contains personal details and emergency contact
-              information for the employee.
+              This section contains personal details and emergency contact information for the
+              employee.
             </p>
             <a
               href="#"
@@ -139,8 +129,8 @@ export default function ProfileTab({ employee, onEditClick }: ProfileTabProps) {
               Job Profile
             </p>
             <p className="text-sm text-gray-600 line-clamp-3">
-              Current job role, responsibilities, and career progression
-              information is maintained here.
+              Current job role, responsibilities, and career progression information is maintained
+              here.
             </p>
             <a
               href="#"
@@ -156,8 +146,7 @@ export default function ProfileTab({ employee, onEditClick }: ProfileTabProps) {
               Compensation
             </p>
             <p className="text-sm text-gray-600 line-clamp-3">
-              Salary details, benefits, and compensation information managed
-              securely.
+              Salary details, benefits, and compensation information managed securely.
             </p>
             <a
               href="#"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Filter,
@@ -22,11 +22,11 @@ import {
   CheckCircle,
   AlertCircle,
   Loader,
-  MessageSquare
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+  MessageSquare,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import apiClient from "@/lib/api-client";
 
 const ContactsPage = () => {
   const router = useRouter();
@@ -40,9 +40,9 @@ const ContactsPage = () => {
   const [limit, setLimit] = useState(10);
   const [totalContacts, setTotalContacts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
 
   // States for modal popups
   const [showAddModal, setShowAddModal] = useState(false);
@@ -56,16 +56,16 @@ const ContactsPage = () => {
 
   // States for form data
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    location: '',
-    message: ''
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    message: "",
   });
 
   // States for form errors and success
-  const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
 
   // Function to toggle dropdown menu
   const toggleMenu = (id) => {
@@ -122,14 +122,14 @@ const ContactsPage = () => {
           page,
           limit,
           sort_by: sortBy,
-          sort_order: sortOrder
+          sort_order: sortOrder,
         };
 
         // Add optional filters if they exist
         if (searchTerm) params.search = searchTerm;
 
         // Make API request with apiClient
-        const response = await apiClient.get('/contacts', { params });
+        const response = await apiClient.get("/contacts", { params });
 
         if (response.data) {
           // Parse the response data based on structure
@@ -150,7 +150,7 @@ const ContactsPage = () => {
           setContacts(contactsData);
         }
       } catch (error) {
-        console.error('Error fetching contacts:', error);
+        console.error("Error fetching contacts:", error);
         setContacts([]);
       } finally {
         setLoading(false);
@@ -167,20 +167,20 @@ const ContactsPage = () => {
 
   // Calculate sequential row number based on pagination
   const getRowNumber = (index) => {
-    return ((page - 1) * limit) + index + 1;
+    return (page - 1) * limit + index + 1;
   };
 
   // Reset form data
   const resetForm = () => {
     setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      location: '',
-      message: ''
+      name: "",
+      email: "",
+      phone: "",
+      location: "",
+      message: "",
     });
-    setFormError('');
-    setFormSuccess('');
+    setFormError("");
+    setFormSuccess("");
   };
 
   // Open add contact modal
@@ -193,11 +193,11 @@ const ContactsPage = () => {
   const openEditModal = (contact) => {
     setCurrentContact(contact);
     setFormData({
-      name: contact.name || '',
-      email: contact.email || '',
-      phone: contact.phone || '',
-      location: contact.location || '',
-      message: contact.message || ''
+      name: contact.name || "",
+      email: contact.email || "",
+      phone: contact.phone || "",
+      location: contact.location || "",
+      message: contact.message || "",
     });
     setOpenMenuId(null);
     setShowEditModal(true);
@@ -232,33 +232,33 @@ const ContactsPage = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
   // Handle add contact submission
   const handleAddContact = async (e) => {
     e.preventDefault();
-    setFormError('');
-    setFormSuccess('');
+    setFormError("");
+    setFormSuccess("");
 
     try {
       // Validate form
       if (!formData.name) {
-        setFormError('Name is required');
+        setFormError("Name is required");
         return;
       }
 
       if (formData.email && !validateEmail(formData.email)) {
-        setFormError('Please enter a valid email address');
+        setFormError("Please enter a valid email address");
         return;
       }
 
       // Make API request
-      await apiClient.post('/contacts', formData);
+      await apiClient.post("/contacts", formData);
 
       // Show success message
-      setFormSuccess('Contact added successfully');
+      setFormSuccess("Contact added successfully");
 
       // Reset form and close modal after a delay
       setTimeout(() => {
@@ -268,26 +268,26 @@ const ContactsPage = () => {
         setPage(1);
       }, 1500);
     } catch (error) {
-      console.error('Error adding contact:', error);
-      setFormError(error.response?.data?.message || 'Failed to add contact. Please try again.');
+      console.error("Error adding contact:", error);
+      setFormError(error.response?.data?.message || "Failed to add contact. Please try again.");
     }
   };
 
   // Handle edit contact submission
   const handleEditContact = async (e) => {
     e.preventDefault();
-    setFormError('');
-    setFormSuccess('');
+    setFormError("");
+    setFormSuccess("");
 
     try {
       // Validate form
       if (!formData.name) {
-        setFormError('Name is required');
+        setFormError("Name is required");
         return;
       }
 
       if (formData.email && !validateEmail(formData.email)) {
-        setFormError('Please enter a valid email address');
+        setFormError("Please enter a valid email address");
         return;
       }
 
@@ -295,7 +295,7 @@ const ContactsPage = () => {
       await apiClient.put(`/contacts/${currentContact.id}`, formData);
 
       // Show success message
-      setFormSuccess('Contact updated successfully');
+      setFormSuccess("Contact updated successfully");
 
       // Reset form and close modal after a delay
       setTimeout(() => {
@@ -305,8 +305,8 @@ const ContactsPage = () => {
         setPage(1);
       }, 1500);
     } catch (error) {
-      console.error('Error updating contact:', error);
-      setFormError(error.response?.data?.message || 'Failed to update contact. Please try again.');
+      console.error("Error updating contact:", error);
+      setFormError(error.response?.data?.message || "Failed to update contact. Please try again.");
     }
   };
 
@@ -322,29 +322,30 @@ const ContactsPage = () => {
       // Refresh contacts list
       setPage(1);
     } catch (error) {
-      console.error('Error deleting contact:', error);
-      setFormError(error.response?.data?.message || 'Failed to delete contact. Please try again.');
+      console.error("Error deleting contact:", error);
+      setFormError(error.response?.data?.message || "Failed to delete contact. Please try again.");
     }
   };
 
   // Validate email format
   const validateEmail = (email) => {
-    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    const re =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
   };
 
   // Format phone number for display
   const formatPhone = (phone) => {
-    if (!phone) return '';
+    if (!phone) return "";
     // Format as needed for your region
     return phone;
   };
 
   // Truncate text for display
   const truncateText = (text, maxLength = 30) => {
-    if (!text) return '';
+    if (!text) return "";
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
   };
 
   // Handle search submission
@@ -361,11 +362,11 @@ const ContactsPage = () => {
   const handleSortChange = (field) => {
     if (sortBy === field) {
       // Toggle sort order if same field
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       // Set new field and default to ascending
       setSortBy(field);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
@@ -382,7 +383,7 @@ const ContactsPage = () => {
             <ArrowUp className="w-4 h-4 mr-2" />
             Import Contacts
           </button>
-          <button 
+          <button
             onClick={openAddModal}
             className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
           >
@@ -402,16 +403,16 @@ const ContactsPage = () => {
                 <Search className="w-4 h-4 text-gray-500" />
               </div>
               <form onSubmit={handleSearchSubmit}>
-                <input 
-                  type="text" 
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5" 
+                <input
+                  type="text"
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full pl-10 p-2.5"
                   placeholder="Search contacts..."
                   value={searchTerm}
                   onChange={handleSearchChange}
                 />
               </form>
             </div>
-            <button 
+            <button
               className="ml-2 p-2.5 bg-green-700 text-white rounded-lg"
               onClick={() => {
                 // Open a filter modal or expand filter options
@@ -434,7 +435,7 @@ const ContactsPage = () => {
           ) : contacts.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No contacts found</p>
-              <button 
+              <button
                 onClick={openAddModal}
                 className="mt-4 px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
               >
@@ -445,35 +446,67 @@ const ContactsPage = () => {
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th 
-                    scope="col" 
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    #
+                  </th>
+                  <th
+                    scope="col"
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSortChange('name')}
+                    onClick={() => handleSortChange("name")}
                   >
                     Name
-                    {sortBy === 'name' && (
-                      <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    {sortBy === "name" && (
+                      <span className="ml-1">{sortOrder === "asc" ? "↑" : "↓"}</span>
                     )}
                   </th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Email
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Phone
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Location
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Message
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {contacts.map((contact, index) => (
                   <tr key={contact.id || index} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getRowNumber(index)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {getRowNumber(index)}
+                    </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {contact.name || "N/A"}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                       {contact.email ? (
-                        <a 
-                          href={`mailto:${contact.email}`} 
+                        <a
+                          href={`mailto:${contact.email}`}
                           className="text-green-700 hover:underline flex items-center"
                         >
                           {truncateText(contact.email, 25)}
@@ -485,8 +518,8 @@ const ContactsPage = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {contact.phone ? (
-                        <a 
-                          href={`tel:${contact.phone}`} 
+                        <a
+                          href={`tel:${contact.phone}`}
                           className="text-green-700 hover:underline flex items-center"
                         >
                           {formatPhone(contact.phone)}
@@ -500,19 +533,24 @@ const ContactsPage = () => {
                       {contact.location || <span className="text-gray-400">-</span>}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {truncateText(contact.message, 20) || <span className="text-gray-400">-</span>}
+                      {truncateText(contact.message, 20) || (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
-                      <button 
+                      <button
                         className="text-gray-500 hover:text-gray-700"
                         onClick={() => toggleMenu(contact.id)}
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
-                      
+
                       {/* Dropdown menu */}
                       {openMenuId === contact.id && (
-                        <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        >
                           <button
                             onClick={() => openViewModal(contact)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -548,36 +586,37 @@ const ContactsPage = () => {
         {contacts.length > 0 && (
           <div className="flex items-center justify-between p-4 border-t border-gray-200">
             <div className="text-sm text-gray-500">
-              Showing {contacts.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalContacts)} out of {totalContacts} entries
+              Showing {contacts.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
+              {Math.min(page * limit, totalContacts)} out of {totalContacts} entries
             </div>
             <div className="flex items-center space-x-1">
-              <button 
+              <button
                 className="p-2 text-gray-500 rounded hover:bg-gray-100"
                 onClick={() => goToPage(1)}
                 disabled={page === 1}
               >
                 <ChevronsLeft className="w-4 h-4" />
               </button>
-              <button 
+              <button
                 className="p-2 text-gray-500 rounded hover:bg-gray-100"
                 onClick={() => goToPage(Math.max(1, page - 1))}
                 disabled={page === 1}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              
+
               {/* Display page numbers */}
               {[...Array(Math.min(totalPages, 3))].map((_, index) => {
                 const pageNumber = page <= 2 ? index + 1 : page - 1 + index;
                 if (pageNumber <= totalPages) {
                   return (
-                    <button 
+                    <button
                       key={pageNumber}
                       onClick={() => goToPage(pageNumber)}
                       className={`p-2 w-8 h-8 rounded-md ${
                         pageNumber === page
-                          ? 'bg-green-700 text-white'
-                          : 'hover:bg-gray-100 text-gray-700'
+                          ? "bg-green-700 text-white"
+                          : "hover:bg-gray-100 text-gray-700"
                       } flex items-center justify-center`}
                     >
                       {pageNumber}
@@ -586,15 +625,15 @@ const ContactsPage = () => {
                 }
                 return null;
               })}
-              
-              <button 
+
+              <button
                 className="p-2 text-gray-500 rounded hover:bg-gray-100"
                 onClick={() => goToPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <button 
+              <button
                 className="p-2 text-gray-500 rounded hover:bg-gray-100"
                 onClick={() => goToPage(totalPages)}
                 disabled={page === totalPages}
@@ -616,7 +655,7 @@ const ContactsPage = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleAddContact} className="p-6">
               {/* Form Error */}
               {formError && (
@@ -625,7 +664,7 @@ const ContactsPage = () => {
                   <span>{formError}</span>
                 </div>
               )}
-              
+
               {/* Form Success */}
               {formSuccess && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md flex items-start">
@@ -633,7 +672,7 @@ const ContactsPage = () => {
                   <span>{formSuccess}</span>
                 </div>
               )}
-              
+
               {/* Name */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -649,12 +688,10 @@ const ContactsPage = () => {
                   required
                 />
               </div>
-              
+
               {/* Email */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
                   type="email"
                   name="email"
@@ -664,12 +701,10 @@ const ContactsPage = () => {
                   placeholder="email@example.com"
                 />
               </div>
-              
+
               {/* Phone */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input
                   type="text"
                   name="phone"
@@ -679,12 +714,10 @@ const ContactsPage = () => {
                   placeholder="+1 (123) 456-7890"
                 />
               </div>
-              
+
               {/* Location */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                 <input
                   type="text"
                   name="location"
@@ -694,12 +727,10 @@ const ContactsPage = () => {
                   placeholder="City, Country"
                 />
               </div>
-              
+
               {/* Message */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Message
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
                 <textarea
                   name="message"
                   value={formData.message}
@@ -709,7 +740,7 @@ const ContactsPage = () => {
                   placeholder="Additional information about this contact..."
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
@@ -718,10 +749,7 @@ const ContactsPage = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-700 text-white rounded-md"
-                >
+                <button type="submit" className="px-4 py-2 bg-green-700 text-white rounded-md">
                   Add Contact
                 </button>
               </div>
@@ -740,7 +768,7 @@ const ContactsPage = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleEditContact} className="p-6">
               {/* Form Error */}
               {formError && (
@@ -749,7 +777,7 @@ const ContactsPage = () => {
                   <span>{formError}</span>
                 </div>
               )}
-              
+
               {/* Form Success */}
               {formSuccess && (
                 <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md flex items-start">
@@ -757,7 +785,7 @@ const ContactsPage = () => {
                   <span>{formSuccess}</span>
                 </div>
               )}
-              
+
               {/* Name */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -773,12 +801,10 @@ const ContactsPage = () => {
                   required
                 />
               </div>
-              
+
               {/* Email */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
                   type="email"
                   name="email"
@@ -788,12 +814,10 @@ const ContactsPage = () => {
                   placeholder="email@example.com"
                 />
               </div>
-              
+
               {/* Phone */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input
                   type="text"
                   name="phone"
@@ -803,12 +827,10 @@ const ContactsPage = () => {
                   placeholder="+1 (123) 456-7890"
                 />
               </div>
-              
+
               {/* Location */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                 <input
                   type="text"
                   name="location"
@@ -818,12 +840,10 @@ const ContactsPage = () => {
                   placeholder="City, Country"
                 />
               </div>
-              
+
               {/* Message */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Message
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
                 <textarea
                   name="message"
                   value={formData.message}
@@ -833,7 +853,7 @@ const ContactsPage = () => {
                   placeholder="Additional information about this contact..."
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
@@ -842,10 +862,7 @@ const ContactsPage = () => {
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-700 text-white rounded-md"
-                >
+                <button type="submit" className="px-4 py-2 bg-green-700 text-white rounded-md">
                   Update Contact
                 </button>
               </div>
@@ -864,9 +881,11 @@ const ContactsPage = () => {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Contact</h3>
               <p className="text-gray-500 mb-6">
-                Are you sure you want to delete <span className="font-medium">{currentContact.name}</span>? This action cannot be undone.
+                Are you sure you want to delete{" "}
+                <span className="font-medium">{currentContact.name}</span>? This action cannot be
+                undone.
               </p>
-              
+
               <div className="flex justify-center space-x-3">
                 <button
                   type="button"
@@ -898,12 +917,12 @@ const ContactsPage = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6">
               <div className="text-center mb-4">
                 <h2 className="text-xl font-bold">{currentContact.name}</h2>
               </div>
-              
+
               <div className="border-t pt-4 mt-4">
                 <div className="space-y-4">
                   {currentContact.email && (
@@ -912,8 +931,8 @@ const ContactsPage = () => {
                       <div>
                         <h4 className="text-sm font-medium text-gray-500">Email</h4>
                         <p className="mt-1">
-                          <a 
-                            href={`mailto:${currentContact.email}`} 
+                          <a
+                            href={`mailto:${currentContact.email}`}
                             className="text-green-700 hover:underline"
                           >
                             {currentContact.email}
@@ -922,15 +941,15 @@ const ContactsPage = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {currentContact.phone && (
                     <div className="flex items-start">
                       <Phone className="w-5 h-5 text-gray-400 mt-0.5 mr-3" />
                       <div>
                         <h4 className="text-sm font-medium text-gray-500">Phone</h4>
                         <p className="mt-1">
-                          <a 
-                            href={`tel:${currentContact.phone}`} 
+                          <a
+                            href={`tel:${currentContact.phone}`}
                             className="text-green-700 hover:underline"
                           >
                             {formatPhone(currentContact.phone)}
@@ -939,7 +958,7 @@ const ContactsPage = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {currentContact.location && (
                     <div className="flex items-start">
                       <MapPin className="w-5 h-5 text-gray-400 mt-0.5 mr-3" />
@@ -949,19 +968,21 @@ const ContactsPage = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {currentContact.message && (
                     <div className="flex items-start">
                       <MessageSquare className="w-5 h-5 text-gray-400 mt-0.5 mr-3" />
                       <div>
                         <h4 className="text-sm font-medium text-gray-500">Message</h4>
-                        <p className="mt-1 text-gray-700 whitespace-pre-line">{currentContact.message}</p>
+                        <p className="mt-1 text-gray-700 whitespace-pre-line">
+                          {currentContact.message}
+                        </p>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-              
+
               <div className="flex justify-end mt-6 pt-4 border-t">
                 <button
                   type="button"

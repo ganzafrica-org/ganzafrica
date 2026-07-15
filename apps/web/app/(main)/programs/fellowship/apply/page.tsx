@@ -1,18 +1,27 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, FileText, Upload, CheckCircle2, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
-import { Button } from '@ui/button';
-import { Input } from '@ui/input';
-import { Textarea } from '@ui/textarea';
-import { useRouter } from 'next/navigation';
+import React, { useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Upload,
+  CheckCircle2,
+  ChevronDown,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { Button } from "@ui/button";
+import { Input } from "@ui/input";
+import { Textarea } from "@ui/textarea";
+import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api-client";
-import {Metadata} from "next";
-import { trackFormSubmission, trackApplicationComplete, trackApplicationStart } from "@/components/analytics/google-analytics";
-
-
+import { Metadata } from "next";
+import {
+  trackFormSubmission,
+  trackApplicationComplete,
+  trackApplicationStart,
+} from "@/components/analytics/google-analytics";
 
 // Normalize lucide icon component types across React versions
 type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -35,36 +44,36 @@ type Country = {
 
 const countries: Country[] = [
   {
-    code: 'RW',
-    name: 'Rwanda',
-    flag: '🇷🇼',
-    dialCode: '+250',
-    format: '+250 7XX XXX XXX',
-    regex: /^\+250\s?7[0-9]{2}\s?[0-9]{3}\s?[0-9]{3}$/
+    code: "RW",
+    name: "Rwanda",
+    flag: "🇷🇼",
+    dialCode: "+250",
+    format: "+250 7XX XXX XXX",
+    regex: /^\+250\s?7[0-9]{2}\s?[0-9]{3}\s?[0-9]{3}$/,
   },
   {
-    code: 'KE',
-    name: 'Kenya',
-    flag: '🇰🇪',
-    dialCode: '+254',
-    format: '+254 7XX XXX XXX',
-    regex: /^\+254\s?[71][0-9]{8}$/
+    code: "KE",
+    name: "Kenya",
+    flag: "🇰🇪",
+    dialCode: "+254",
+    format: "+254 7XX XXX XXX",
+    regex: /^\+254\s?[71][0-9]{8}$/,
   },
   {
-    code: 'UG',
-    name: 'Uganda',
-    flag: '🇺🇬',
-    dialCode: '+256',
-    format: '+256 7XX XXX XXX',
-    regex: /^\+256\s?7[0-9]{8}$/
+    code: "UG",
+    name: "Uganda",
+    flag: "🇺🇬",
+    dialCode: "+256",
+    format: "+256 7XX XXX XXX",
+    regex: /^\+256\s?7[0-9]{8}$/,
   },
   {
-    code: 'TZ',
-    name: 'Tanzania',
-    flag: '🇹🇿',
-    dialCode: '+255',
-    format: '+255 7XX XXX XXX',
-    regex: /^\+255\s?[67][0-9]{8}$/
+    code: "TZ",
+    name: "Tanzania",
+    flag: "🇹🇿",
+    dialCode: "+255",
+    format: "+255 7XX XXX XXX",
+    regex: /^\+255\s?[67][0-9]{8}$/,
   },
 ];
 
@@ -94,60 +103,60 @@ type FormData = {
 };
 
 const initialFormData: FormData = {
-  firstName: '',
-  lastName: '',
-  phone: '',
+  firstName: "",
+  lastName: "",
+  phone: "",
   selectedCountry: countries[0] ?? {
-    code: 'RW',
-    name: 'Rwanda',
-    flag: '🇷🇼',
-    dialCode: '+250',
-    format: '### ### ###',
-    regex: /^\d{9}$/
+    code: "RW",
+    name: "Rwanda",
+    flag: "🇷🇼",
+    dialCode: "+250",
+    format: "### ### ###",
+    regex: /^\d{9}$/,
   },
-  nationalId: '',
-  email: '',
-  city: '',
-  country: '',
-  educationLevel: '',
-  educationField: '',
+  nationalId: "",
+  email: "",
+  city: "",
+  country: "",
+  educationLevel: "",
+  educationField: "",
   cv: null,
   supportingDocs: null,
-  careerExperience: '',
-  leadershipExample: '',
-  motivation: '',
-  fiveYearVision: '',
-  desiredImpact: '',
-  communityRole: '',
-  nationalStrategy: '',
-  ganzAfricaHelp: '',
-  ganzAfricaContribution: '',
+  careerExperience: "",
+  leadershipExample: "",
+  motivation: "",
+  fiveYearVision: "",
+  desiredImpact: "",
+  communityRole: "",
+  nationalStrategy: "",
+  ganzAfricaHelp: "",
+  ganzAfricaContribution: "",
   consent: false,
 };
 
 const steps = [
-  { title: 'Personal Information', description: 'Basic contact details' },
-  { title: 'Experience and Knowledge', description: 'Educational background' },
-  { title: 'Work Aspirations', description: 'Career goals' },
-  { title: 'Impact to the Community', description: 'Social contribution' },
-  { title: 'Programme Relevance', description: 'Final steps' },
+  { title: "Personal Information", description: "Basic contact details" },
+  { title: "Experience and Knowledge", description: "Educational background" },
+  { title: "Work Aspirations", description: "Career goals" },
+  { title: "Impact to the Community", description: "Social contribution" },
+  { title: "Programme Relevance", description: "Final steps" },
 ];
 
 const slideVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 1000 : -1000,
-    opacity: 0
+    opacity: 0,
   }),
   center: {
     zIndex: 1,
     x: 0,
-    opacity: 1
+    opacity: 1,
   },
   exit: (direction: number) => ({
     zIndex: 0,
     x: direction < 0 ? 1000 : -1000,
-    opacity: 0
-  })
+    opacity: 0,
+  }),
 };
 
 // Add type for step numbers
@@ -161,101 +170,123 @@ export default function FellowshipApplyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [hasTrackedStart, setHasTrackedStart] = useState(false);
-  
+
   // Opportunity ID (if applying to a specific opportunity)
   // This could be passed as a URL parameter
   const opportunityId = null; // Set to actual ID if applying to specific opportunity
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
-    
+
     // If the user is typing and hasn't added the country code, add it
-    if (!value.startsWith('+') && value.length > 0) {
-      value = formData.selectedCountry.dialCode + ' ' + value;
+    if (!value.startsWith("+") && value.length > 0) {
+      value = formData.selectedCountry.dialCode + " " + value;
     }
 
     // Remove any non-digit characters except + and space
-    value = value.replace(/[^\d+\s]/g, '');
+    value = value.replace(/[^\d+\s]/g, "");
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      phone: value
+      phone: value,
     }));
   };
 
   const handleCountrySelect = (country: Country) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       selectedCountry: country,
-      phone: prev.phone ? country.dialCode + prev.phone.substring(prev.selectedCountry.dialCode.length) : ''
+      phone: prev.phone
+        ? country.dialCode + prev.phone.substring(prev.selectedCountry.dialCode.length)
+        : "",
     }));
     setIsCountryDropdownOpen(false);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'cv' | 'supportingDocs') => {
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: "cv" | "supportingDocs",
+  ) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        toast.error('File size must be less than 2MB');
+        toast.error("File size must be less than 2MB");
         return;
       }
-      if (file.type !== 'application/pdf') {
-        toast.error('Only PDF files are allowed');
+      if (file.type !== "application/pdf") {
+        toast.error("Only PDF files are allowed");
         return;
       }
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [field]: file
+        [field]: file,
       }));
-      toast.success(`${field === 'cv' ? 'CV' : 'Supporting document'} uploaded successfully`);
+      toast.success(`${field === "cv" ? "CV" : "Supporting document"} uploaded successfully`);
     }
   };
 
   const validateStep = () => {
     switch (currentStep) {
       case 0:
-        if (!formData.firstName || !formData.lastName || !formData.phone || !formData.nationalId || !formData.email || !formData.city || !formData.country) {
-          toast.error('Please fill in all required fields');
+        if (
+          !formData.firstName ||
+          !formData.lastName ||
+          !formData.phone ||
+          !formData.nationalId ||
+          !formData.email ||
+          !formData.city ||
+          !formData.country
+        ) {
+          toast.error("Please fill in all required fields");
           return false;
         }
         if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-          toast.error('Please enter a valid email address');
+          toast.error("Please enter a valid email address");
           return false;
         }
         if (!formData.selectedCountry.regex.test(formData.phone)) {
-          toast.error(`Please enter a valid ${formData.selectedCountry.name} phone number\nFormat: ${formData.selectedCountry.format}`);
+          toast.error(
+            `Please enter a valid ${formData.selectedCountry.name} phone number\nFormat: ${formData.selectedCountry.format}`,
+          );
           return false;
         }
         break;
       case 1:
-        if (!formData.educationLevel || !formData.educationField || !formData.cv || !formData.careerExperience) {
-          toast.error('Please fill in all required fields');
+        if (
+          !formData.educationLevel ||
+          !formData.educationField ||
+          !formData.cv ||
+          !formData.careerExperience
+        ) {
+          toast.error("Please fill in all required fields");
           return false;
         }
         break;
       case 2:
         if (!formData.motivation || !formData.fiveYearVision) {
-          toast.error('Please fill in all required fields');
+          toast.error("Please fill in all required fields");
           return false;
         }
         break;
       case 3:
         if (!formData.desiredImpact || !formData.communityRole || !formData.nationalStrategy) {
-          toast.error('Please fill in all required fields');
+          toast.error("Please fill in all required fields");
           return false;
         }
         break;
       case 4:
         if (!formData.ganzAfricaHelp || !formData.ganzAfricaContribution || !formData.consent) {
-          toast.error('Please fill in all required fields and accept the terms');
+          toast.error("Please fill in all required fields and accept the terms");
           return false;
         }
         break;
@@ -268,46 +299,46 @@ export default function FellowshipApplyPage() {
   const uploadFileAndGetUrl = async (file: File, fileType: string): Promise<string> => {
     // Since there's no actual file upload endpoint, we'll simulate one
     // In a real implementation, you'd upload to S3, Cloudinary, or another storage service
-    
+
     // This would create a deterministic URL based on the file name and time
     // which we're using to simulate a real upload URL
-    const fileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+    const fileName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
     const timestamp = new Date().getTime();
     const mockUploadUrl = `https://example-storage.com/${fileType}/${timestamp}_${fileName}`;
-    
+
     // In a real implementation, we'd do something like:
     // const formData = new FormData();
     // formData.append('file', file);
     // const response = await apiClient.post('/upload-endpoint', formData);
     // return response.data.url;
-    
+
     // For now, just pause briefly to simulate network request
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     return mockUploadUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep()) return;
-    
+
     setIsSubmitting(true);
-  
+
     try {
       // Instead of converting to base64, we'll simulate getting URLs
       let cvUrl = "";
       let supportingDocsUrl = "";
-      
+
       if (formData.cv) {
-        cvUrl = await uploadFileAndGetUrl(formData.cv, 'cv');
+        cvUrl = await uploadFileAndGetUrl(formData.cv, "cv");
       } else {
-        throw new Error('CV is required');
+        throw new Error("CV is required");
       }
-      
+
       if (formData.supportingDocs) {
-        supportingDocsUrl = await uploadFileAndGetUrl(formData.supportingDocs, 'supporting_docs');
+        supportingDocsUrl = await uploadFileAndGetUrl(formData.supportingDocs, "supporting_docs");
       }
-      
+
       // Prepare the application data in the exact format backend expects
       const applicationData = {
         first_name: formData.firstName,
@@ -329,52 +360,62 @@ export default function FellowshipApplyPage() {
         national_strategy: formData.nationalStrategy,
         how_ganzafrica_can_help: formData.ganzAfricaHelp,
         contribution_to_ganzafrica: formData.ganzAfricaContribution,
-        data_processing_consent: formData.consent
+        data_processing_consent: formData.consent,
       };
-  
+
       // Determine if this is a general application or for a specific opportunity
-      const endpoint = opportunityId 
-        ? `/opportunities/${opportunityId}/apply` 
-        : `/applications`;
-  
+      const endpoint = opportunityId ? `/opportunities/${opportunityId}/apply` : `/applications`;
+
       // Submit the application
       const response = await apiClient.post(endpoint, applicationData, {
         headers: {
-          'Content-Type': 'application/json',
-        }
+          "Content-Type": "application/json",
+        },
       });
-  
+
       // Application was submitted successfully
-      toast.success('Application submitted successfully!');
+      toast.success("Application submitted successfully!");
       trackFormSubmission("fellowship_application", true);
       trackApplicationComplete(
         opportunityId ? `Opportunity ${opportunityId}` : "Fellowship Application",
-        opportunityId ?? "fellowship_general"
+        opportunityId ?? "fellowship_general",
       );
-      
+
       // Redirect after success
       setTimeout(() => {
-        router.push('/en/programs/fellowship?success=true');
+        router.push("/en/programs/fellowship?success=true");
       }, 1500);
     } catch (error) {
-      console.error('Application submission error:', error);
+      console.error("Application submission error:", error);
       trackFormSubmission("fellowship_application", false);
-      
+
       // Handle error response from the API
       if (error instanceof Error && (error as any).response && (error as any).response.data) {
         // If the error has a structured response
-        const errorMessage = (error as any)?.response?.data?.message || (error as any)?.response?.data?.error || 'Failed to submit application';
+        const errorMessage =
+          (error as any)?.response?.data?.message ||
+          (error as any)?.response?.data?.error ||
+          "Failed to submit application";
         toast.error(errorMessage);
-        
+
         // If there are validation errors, display them
-        if ((error as any)?.response?.data?.details && Array.isArray((error as any).response.data.details)) {
-            ((error as any)?.response?.data?.details as { path: string; message: string }[]).forEach((detail) => {
-            toast.error(`${detail.path}: ${detail.message}`);
-            });
+        if (
+          (error as any)?.response?.data?.details &&
+          Array.isArray((error as any).response.data.details)
+        ) {
+          ((error as any)?.response?.data?.details as { path: string; message: string }[]).forEach(
+            (detail) => {
+              toast.error(`${detail.path}: ${detail.message}`);
+            },
+          );
         }
       } else {
         // Generic error message
-        toast.error(error instanceof Error ? error.message : 'Failed to submit application. Please try again.');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to submit application. Please try again.",
+        );
       }
     } finally {
       setIsSubmitting(false);
@@ -385,18 +426,15 @@ export default function FellowshipApplyPage() {
     if (!validateStep()) return;
     setDirection(1);
     if (!hasTrackedStart) {
-      trackApplicationStart(
-        "Fellowship Application",
-        opportunityId ?? "fellowship_general"
-      );
+      trackApplicationStart("Fellowship Application", opportunityId ?? "fellowship_general");
       setHasTrackedStart(true);
     }
-    setCurrentStep(prev => Math.min(prev + 1, steps.length - 1));
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
 
   const prevStep = () => {
     setDirection(-1);
-    setCurrentStep(prev => Math.max(prev - 1, 0));
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
   const renderProgressBar = () => (
@@ -404,16 +442,12 @@ export default function FellowshipApplyPage() {
       <div className="flex justify-between mb-4">
         {steps.map((step, index) => (
           <div key={step.title} className="flex flex-col items-center relative group">
-            <div 
+            <div
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                index <= currentStep ? 'bg-[#005c3d] text-[#fef597]' : 'bg-gray-200 text-gray-500'
+                index <= currentStep ? "bg-[#005c3d] text-[#fef597]" : "bg-gray-200 text-gray-500"
               }`}
             >
-              {index < currentStep ? (
-                <CheckCircle2Icon className="w-6 h-6" />
-              ) : (
-                index + 1
-              )}
+              {index < currentStep ? <CheckCircle2Icon className="w-6 h-6" /> : index + 1}
             </div>
             <div className="absolute -bottom-16 opacity-0 group-hover:opacity-100 transition-opacity bg-white p-2 rounded-lg shadow-lg text-sm w-48 text-center">
               <p className="font-semibold">{step.title}</p>
@@ -425,7 +459,7 @@ export default function FellowshipApplyPage() {
       </div>
       <div className="relative">
         <div className="absolute top-1/2 w-full h-1 bg-gray-200 -translate-y-1/2" />
-        <div 
+        <div
           className="absolute top-1/2 h-1 bg-[#005c3d] -translate-y-1/2 transition-all duration-500"
           style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
         />
@@ -438,20 +472,14 @@ export default function FellowshipApplyPage() {
       {/* Hero Section */}
       <section className="relative h-[400px] md:h-[500px]">
         <div className="absolute inset-0">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          >
+          <video autoPlay loop muted playsInline className="w-full h-full object-cover">
             <source src="/videos/hero-video.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/60" />
         </div>
         <div className="relative z-10 h-full flex items-center justify-center">
           <div className="container mx-auto px-4 text-center">
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -459,14 +487,14 @@ export default function FellowshipApplyPage() {
             >
               Fellowship <span className="text-[#FDB022]">Application</span>
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-white/90 text-base md:text-lg max-w-2xl mx-auto mb-6"
             >
-              Take the first step towards becoming a leader in sustainable development. 
-              Our fellowship program offers unique opportunities for growth, learning, and impact.
+              Take the first step towards becoming a leader in sustainable development. Our
+              fellowship program offers unique opportunities for growth, learning, and impact.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -497,7 +525,7 @@ export default function FellowshipApplyPage() {
       <div className="max-w-4xl mx-auto px-6 -mt-20 relative z-20">
         <div className="bg-white rounded-xl shadow-xl p-10">
           {renderProgressBar()}
-          
+
           <form onSubmit={handleSubmit} className="relative mt-12">
             <AnimatePresence initial={false} custom={direction}>
               <motion.div
@@ -509,16 +537,21 @@ export default function FellowshipApplyPage() {
                 exit="exit"
                 transition={{
                   x: { type: "spring", stiffness: 300, damping: 30 },
-                  opacity: { duration: 0.2 }
+                  opacity: { duration: 0.2 },
                 }}
                 className="relative"
               >
                 {currentStep === 0 && (
                   <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Personal Information</h3>
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">
+                      Personal Information
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="firstName">
+                        <label
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                          htmlFor="firstName"
+                        >
                           First Name *
                         </label>
                         <input
@@ -534,7 +567,10 @@ export default function FellowshipApplyPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="lastName">
+                        <label
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                          htmlFor="lastName"
+                        >
                           Last Name *
                         </label>
                         <input
@@ -551,7 +587,10 @@ export default function FellowshipApplyPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="email"
+                      >
                         Email *
                       </label>
                       <input
@@ -567,7 +606,10 @@ export default function FellowshipApplyPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="phone">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="phone"
+                      >
                         Phone Number *
                       </label>
                       <div className="relative">
@@ -609,7 +651,10 @@ export default function FellowshipApplyPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="nationalId">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="nationalId"
+                      >
                         National ID *
                       </label>
                       <input
@@ -626,7 +671,10 @@ export default function FellowshipApplyPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="city">
+                        <label
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                          htmlFor="city"
+                        >
                           City *
                         </label>
                         <input
@@ -642,7 +690,10 @@ export default function FellowshipApplyPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="country">
+                        <label
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                          htmlFor="country"
+                        >
                           Country *
                         </label>
                         <input
@@ -663,9 +714,14 @@ export default function FellowshipApplyPage() {
 
                 {currentStep === 1 && (
                   <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Education & Experience</h3>
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">
+                      Education & Experience
+                    </h3>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="educationLevel">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="educationLevel"
+                      >
                         Education Level *
                       </label>
                       <select
@@ -683,12 +739,17 @@ export default function FellowshipApplyPage() {
                         <option value="bachelors_degree">Bachelor's Degree</option>
                         <option value="masters_degree">Master's Degree</option>
                         <option value="doctorate">PhD</option>
-                        <option value="professional_certification">Professional Certification</option>
+                        <option value="professional_certification">
+                          Professional Certification
+                        </option>
                         <option value="other">Other</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="educationField">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="educationField"
+                      >
                         Field of Study *
                       </label>
                       <input
@@ -704,7 +765,10 @@ export default function FellowshipApplyPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="careerExperience">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="careerExperience"
+                      >
                         Career Experience *
                       </label>
                       <textarea
@@ -728,7 +792,7 @@ export default function FellowshipApplyPage() {
                           type="file"
                           id="cv"
                           name="cv"
-                          onChange={(e) => handleFileChange(e, 'cv')}
+                          onChange={(e) => handleFileChange(e, "cv")}
                           accept=".pdf"
                           className="hidden"
                           required
@@ -738,7 +802,7 @@ export default function FellowshipApplyPage() {
                           htmlFor="cv"
                           className="flex items-center px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
                         >
-                         <UploadIcon className="w-5 h-5 mr-2 text-gray-500" />
+                          <UploadIcon className="w-5 h-5 mr-2 text-gray-500" />
                           <span className="text-sm text-gray-700">Choose CV</span>
                         </label>
                         {formData.cv && (
@@ -750,8 +814,11 @@ export default function FellowshipApplyPage() {
                       </div>
                       <p className="mt-1 text-sm text-gray-500">Max file size: 2MB</p>
                     </div>
-                                          <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="supportingDocs">
+                    <div>
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="supportingDocs"
+                      >
                         Supporting Documents (PDF)
                       </label>
                       <div className="flex items-center space-x-2">
@@ -759,7 +826,7 @@ export default function FellowshipApplyPage() {
                           type="file"
                           id="supportingDocs"
                           name="supportingDocs"
-                          onChange={(e) => handleFileChange(e, 'supportingDocs')}
+                          onChange={(e) => handleFileChange(e, "supportingDocs")}
                           accept=".pdf"
                           className="hidden"
                           title="Upload supporting documents in PDF format"
@@ -785,9 +852,14 @@ export default function FellowshipApplyPage() {
 
                 {currentStep === 2 && (
                   <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Vision & Motivation</h3>
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">
+                      Vision & Motivation
+                    </h3>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="motivation">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="motivation"
+                      >
                         Motivation *
                       </label>
                       <textarea
@@ -803,7 +875,10 @@ export default function FellowshipApplyPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="fiveYearVision">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="fiveYearVision"
+                      >
                         Five-Year Vision *
                       </label>
                       <textarea
@@ -825,7 +900,10 @@ export default function FellowshipApplyPage() {
                   <div className="space-y-6">
                     <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Community Impact</h3>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="desiredImpact">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="desiredImpact"
+                      >
                         Desired Impact *
                       </label>
                       <textarea
@@ -841,7 +919,10 @@ export default function FellowshipApplyPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="communityRole">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="communityRole"
+                      >
                         Community Role *
                       </label>
                       <textarea
@@ -857,7 +938,10 @@ export default function FellowshipApplyPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="nationalStrategy">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="nationalStrategy"
+                      >
                         National Strategy *
                       </label>
                       <textarea
@@ -877,9 +961,14 @@ export default function FellowshipApplyPage() {
 
                 {currentStep === 4 && (
                   <div className="space-y-6">
-                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">Programme Relevance</h3>
+                    <h3 className="text-xl font-semibold text-[#005c3d] mb-4">
+                      Programme Relevance
+                    </h3>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="ganzAfricaHelp">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="ganzAfricaHelp"
+                      >
                         How can GanzAfrica help you? *
                       </label>
                       <textarea
@@ -895,7 +984,10 @@ export default function FellowshipApplyPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="ganzAfricaContribution">
+                      <label
+                        className="block text-sm font-medium text-gray-700 mb-1"
+                        htmlFor="ganzAfricaContribution"
+                      >
                         How can you contribute to GanzAfrica? *
                       </label>
                       <textarea
@@ -922,7 +1014,8 @@ export default function FellowshipApplyPage() {
                         title="Consent to data processing"
                       />
                       <label htmlFor="consent" className="text-sm text-gray-700">
-                        I consent to the processing of my personal data in accordance with the privacy policy and terms and conditions *
+                        I consent to the processing of my personal data in accordance with the
+                        privacy policy and terms and conditions *
                       </label>
                     </div>
                   </div>
@@ -937,8 +1030,8 @@ export default function FellowshipApplyPage() {
                 onClick={prevStep}
                 className={`flex items-center px-8 py-3 text-sm font-medium rounded-full transition-all duration-300 ${
                   currentStep === 0
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-50'
-                    : 'bg-[#005c3d] text-[#fef597] hover:bg-[#009758] hover:shadow-lg transform hover:-translate-y-1'
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-50"
+                    : "bg-[#005c3d] text-[#fef597] hover:bg-[#009758] hover:shadow-lg transform hover:-translate-y-1"
                 }`}
                 disabled={currentStep === 0}
               >
@@ -951,7 +1044,7 @@ export default function FellowshipApplyPage() {
                   type="submit"
                   disabled={isSubmitting}
                   className={`flex items-center px-8 py-3 text-sm font-medium rounded-full bg-[#005c3d] text-[#fef597] hover:bg-[#009758] transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 ${
-                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    isSubmitting ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
                   {isSubmitting ? (
@@ -960,7 +1053,7 @@ export default function FellowshipApplyPage() {
                       Submitting...
                     </>
                   ) : (
-                    'Submit Application'
+                    "Submit Application"
                   )}
                 </button>
               ) : (

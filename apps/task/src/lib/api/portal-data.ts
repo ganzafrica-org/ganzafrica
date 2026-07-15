@@ -1,4 +1,4 @@
-import apiClient from '../api-client';
+import apiClient from "../api-client";
 
 // Types
 export interface PortalTeam {
@@ -43,24 +43,19 @@ export interface PortalProject {
 export const portalDataApi = {
   // Get teams by team type IDs (e.g., Team and Fellow)
   async getTeamsByType(teamTypeIds: number[]) {
-    const ids = teamTypeIds.join(',');
+    const ids = teamTypeIds.join(",");
     const response = await apiClient.get(`/portal-data/teams?team_type_ids=${ids}`);
     return response.data;
   },
 
   // Get all projects
-  async getAllProjects(filters?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-  }) {
+  async getAllProjects(filters?: { page?: number; limit?: number; search?: string }) {
     const params = new URLSearchParams();
-    if (filters?.page) params.append('page', filters.page.toString());
-    if (filters?.limit) params.append('limit', filters.limit.toString());
-    if (filters?.search) params.append('search', filters.search);
+    if (filters?.page) params.append("page", filters.page.toString());
+    if (filters?.limit) params.append("limit", filters.limit.toString());
+    if (filters?.search) params.append("search", filters.search);
 
     const response = await apiClient.get(`/portal-data/projects?${params.toString()}`);
     return response.data;
   },
 };
-

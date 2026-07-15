@@ -1,4 +1,4 @@
-import apiClient from '../api-client';
+import apiClient from "../api-client";
 
 export interface GoogleCalendarEvent {
   id: string;
@@ -42,7 +42,7 @@ export const googleCalendarApi = {
    * Get Google Calendar OAuth URL
    */
   getAuthUrl: async (): Promise<GoogleCalendarAuthUrlResponse> => {
-    const response = await apiClient.get('/google-calendar/auth-url');
+    const response = await apiClient.get("/google-calendar/auth-url");
     return response.data;
   },
 
@@ -53,9 +53,9 @@ export const googleCalendarApi = {
   getConnectionStatus: async (userIds?: string[]): Promise<GoogleCalendarStatusResponse> => {
     const params: any = {};
     if (userIds && userIds.length > 0) {
-      params.userIds = userIds.join(',');
+      params.userIds = userIds.join(",");
     }
-    const response = await apiClient.get('/google-calendar/status', { params });
+    const response = await apiClient.get("/google-calendar/status", { params });
     return response.data;
   },
 
@@ -68,18 +68,18 @@ export const googleCalendarApi = {
   getEvents: async (
     timeMin: string,
     timeMax: string,
-    userIds?: string[]
+    userIds?: string[],
   ): Promise<GoogleCalendarEventsResponse> => {
     const params: any = {
       timeMin,
       timeMax,
     };
-    
+
     if (userIds && userIds.length > 0) {
-      params.userIds = userIds.join(',');
+      params.userIds = userIds.join(",");
     }
-    
-    const response = await apiClient.get('/google-calendar/events', { params });
+
+    const response = await apiClient.get("/google-calendar/events", { params });
     return response.data;
   },
 
@@ -87,8 +87,7 @@ export const googleCalendarApi = {
    * Disconnect Google Calendar
    */
   disconnect: async (): Promise<GoogleCalendarDisconnectResponse> => {
-    const response = await apiClient.post('/google-calendar/disconnect');
+    const response = await apiClient.post("/google-calendar/disconnect");
     return response.data;
   },
 };
-

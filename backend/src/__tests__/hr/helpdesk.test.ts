@@ -47,13 +47,11 @@ describe("HR System - Helpdesk Management", () => {
 
   describe("GET /api/hr/helpdesk", () => {
     it("should allow listing tickets", async () => {
-      const listStub = sandbox.stub(helpdeskService, "listTickets").resolves([
-        { id: IDS.ticket, title: "T1" } as any,
-      ]);
+      const listStub = sandbox
+        .stub(helpdeskService, "listTickets")
+        .resolves([{ id: IDS.ticket, title: "T1" } as any]);
 
-      const res = await request
-        .get("/api/hr/helpdesk")
-        .set("Authorization", `Bearer ${hrToken}`);
+      const res = await request.get("/api/hr/helpdesk").set("Authorization", `Bearer ${hrToken}`);
 
       expect(res.status).to.equal(200);
       expect(res.body).to.be.an("array");

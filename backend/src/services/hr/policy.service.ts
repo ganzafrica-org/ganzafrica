@@ -76,7 +76,11 @@ function saveBase64File(fileName: string, base64: string): { filePath: string; f
 }
 
 async function assertUserExists(userId: string): Promise<void> {
-  const rows = await db.select({ id: hr_users.id }).from(hr_users).where(eq(hr_users.id, userId)).limit(1);
+  const rows = await db
+    .select({ id: hr_users.id })
+    .from(hr_users)
+    .where(eq(hr_users.id, userId))
+    .limit(1);
   if (!rows.length) throw new AppError("Created by user not found", 404);
 }
 

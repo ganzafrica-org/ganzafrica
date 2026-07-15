@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function HomePage(): React.JSX.Element {
   const router = useRouter();
@@ -9,16 +9,16 @@ export default function HomePage(): React.JSX.Element {
 
   useEffect(() => {
     // Check if user is authenticated
-    const token = localStorage.getItem('accessToken');
-    
+    const token = localStorage.getItem("accessToken");
+
     if (token) {
       // User is authenticated, redirect to my-tasks
-      router.push('/my-tasks');
+      router.push("/my-tasks");
     } else {
       // User is not authenticated, redirect to login page
-      router.push('/login');
+      router.push("/login");
     }
-    
+
     setIsChecking(false);
   }, [router]);
 
@@ -31,4 +31,3 @@ export default function HomePage(): React.JSX.Element {
     </div>
   );
 }
-

@@ -33,8 +33,7 @@ export const projects = pgTable(
     category_id: integer("category_id")
       .references(() => project_categories.id)
       .notNull(),
-    partner_id: integer("partner_id")
-      .references(() => partners.id),
+    partner_id: integer("partner_id").references(() => partners.id),
     goals: jsonb("goals").$type<{
       items: Array<{
         id: string;
@@ -44,7 +43,7 @@ export const projects = pgTable(
         order?: number;
       }>;
     }>(),
-    
+
     outcomes: jsonb("outcomes").$type<{
       items: Array<{
         id: string;
@@ -71,7 +70,7 @@ export const projects = pgTable(
         order?: number;
       }>;
     }>(),
-    
+
     other_information: jsonb("other_information").$type<{
       [key: string]: any;
     }>(),
@@ -111,10 +110,7 @@ export const project_members = pgTable(
     return {
       projectIdx: index("project_members_project_id_idx").on(table.project_id),
       teamIdx: index("project_members_team_id_idx").on(table.team_id), // Team index instead of user index
-      uniqueMembership: uniqueIndex("unique_project_team").on(
-        table.project_id,
-        table.team_id,
-      ), // Unique constraint for project-team combination
+      uniqueMembership: uniqueIndex("unique_project_team").on(table.project_id, table.team_id), // Unique constraint for project-team combination
     };
   },
 );
@@ -171,7 +167,7 @@ export const project_documents = pgTable(
     return {
       projectIdx: index("project_documents_project_id_idx").on(table.project_id),
     };
-  }
+  },
 );
 
 // Project Partners Junction Table - For multiple partners per project
@@ -194,8 +190,8 @@ export const project_partners = pgTable(
       // Ensure a partner can only be added once to a project
       uniqueProjectPartner: uniqueIndex("unique_project_partner").on(
         table.project_id,
-        table.partner_id
+        table.partner_id,
       ),
     };
-  }
+  },
 );

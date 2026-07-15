@@ -29,12 +29,7 @@ import {
 } from "lucide-react";
 import { eventsApi, type Event } from "@/lib/api/alumni";
 import { useDebounce } from "@/hooks/use-debounce";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar as BigCalendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -136,8 +131,7 @@ export default function AlumniEvents() {
         if (selectedCategory !== "all") params.category = selectedCategory;
         if (myEventsOnly) params.myEvents = "true";
 
-        const { events: eventList, pagination: paginationData } =
-          await eventsApi.getAll(params);
+        const { events: eventList, pagination: paginationData } = await eventsApi.getAll(params);
         setEvents(eventList);
         setPagination(paginationData);
       } catch (error) {
@@ -149,14 +143,7 @@ export default function AlumniEvents() {
       }
     };
     fetchEvents();
-  }, [
-    debouncedSearch,
-    selectedType,
-    selectedCategory,
-    myEventsOnly,
-    currentPage,
-    pageLimit,
-  ]);
+  }, [debouncedSearch, selectedType, selectedCategory, myEventsOnly, currentPage, pageLimit]);
 
   // Update URL params
   const updateUrlParams = useCallback(
@@ -206,10 +193,7 @@ export default function AlumniEvents() {
     updateUrlParams,
   ]);
 
-  const handleRegister = async (
-    eventId: number,
-    e: React.MouseEvent<HTMLButtonElement>,
-  ) => {
+  const handleRegister = async (eventId: number, e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -225,8 +209,7 @@ export default function AlumniEvents() {
       if (selectedCategory !== "all") params.category = selectedCategory;
       if (myEventsOnly) params.myEvents = "true";
 
-      const { events: eventList, pagination: paginationData } =
-        await eventsApi.getAll(params);
+      const { events: eventList, pagination: paginationData } = await eventsApi.getAll(params);
       setEvents(eventList);
       setPagination(paginationData);
 
@@ -280,9 +263,7 @@ export default function AlumniEvents() {
                   {event.title}
                 </h3>
               </Link>
-              <p className="text-gray-700 text-sm mb-3 line-clamp-2">
-                {event.description}
-              </p>
+              <p className="text-gray-700 text-sm mb-3 line-clamp-2">{event.description}</p>
 
               <div className="space-y-2">
                 <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -304,16 +285,13 @@ export default function AlumniEvents() {
                   </span>
                 </div>
                 {event.duration && (
-                  <div className="text-sm text-gray-600">
-                    Duration: {event.duration}
-                  </div>
+                  <div className="text-sm text-gray-600">Duration: {event.duration}</div>
                 )}
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <span className="flex items-center gap-1">
                     <Users className="h-4 w-4 text-amber-500" />
                     {event.attendees}
-                    {event.maxAttendees ? `/${event.maxAttendees}` : ""}{" "}
-                    attending
+                    {event.maxAttendees ? `/${event.maxAttendees}` : ""} attending
                   </span>
                 </div>
               </div>
@@ -328,19 +306,13 @@ export default function AlumniEvents() {
                 {event.type}
               </div>
               {isOnline && (
-                <Badge
-                  variant="outline"
-                  className="text-blue-600 border-blue-200"
-                >
+                <Badge variant="outline" className="text-blue-600 border-blue-200">
                   <Video className="h-3 w-3 mr-1" />
                   Online
                 </Badge>
               )}
               {!isOnline && (
-                <Badge
-                  variant="outline"
-                  className="text-gray-600 border-gray-200"
-                >
+                <Badge variant="outline" className="text-gray-600 border-gray-200">
                   In-person
                 </Badge>
               )}
@@ -349,16 +321,12 @@ export default function AlumniEvents() {
                   {event.currency} {event.price}
                 </span>
               )}
-              {!isPaid && (
-                <span className="text-sm font-medium text-gray-600">Free</span>
-              )}
+              {!isPaid && <span className="text-sm font-medium text-gray-600">Free</span>}
             </div>
           </div>
 
           <div className="mt-auto pt-3 border-t space-y-3">
-            <div className="text-xs text-gray-500">
-              Organized by {event.organizer}
-            </div>
+            <div className="text-xs text-gray-500">Organized by {event.organizer}</div>
 
             <div className="flex gap-2">
               <Button
@@ -366,8 +334,7 @@ export default function AlumniEvents() {
                 variant={event.isRegistered ? "outline" : "default"}
                 disabled={
                   event.maxAttendees
-                    ? event.attendees >= event.maxAttendees &&
-                      !event.isRegistered
+                    ? event.attendees >= event.maxAttendees && !event.isRegistered
                     : false
                 }
                 onClick={(e) => handleRegister(event.id, e)}
@@ -404,9 +371,7 @@ export default function AlumniEvents() {
           <h1 className="text-2xl font-bold bg-blue-secondary bg-clip-text text-transparent">
             Alumni Events
           </h1>
-          <p className="text-gray-600">
-            Discover and join amazing events in our community
-          </p>
+          <p className="text-gray-600">Discover and join amazing events in our community</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -425,9 +390,7 @@ export default function AlumniEvents() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-100">
-              Total Events
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-emerald-100">Total Events</CardTitle>
             <Calendar className="h-5 w-5 text-emerald-200" />
           </CardHeader>
           <CardContent>
@@ -438,9 +401,7 @@ export default function AlumniEvents() {
 
         <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-100">
-              Upcoming Events
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-100">Upcoming Events</CardTitle>
             <Clock className="h-5 w-5 text-blue-200" />
           </CardHeader>
           <CardContent>
@@ -451,9 +412,7 @@ export default function AlumniEvents() {
 
         <Card className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-amber-100">
-              My Events
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-amber-100">My Events</CardTitle>
             <Users className="h-5 w-5 text-amber-200" />
           </CardHeader>
           <CardContent>
@@ -494,10 +453,7 @@ export default function AlumniEvents() {
                 </SelectContent>
               </Select>
 
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="border-slate-200">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
@@ -541,9 +497,7 @@ export default function AlumniEvents() {
         <p className="text-sm text-gray-600">
           {pagination
             ? `Showing ${
-                pagination.totalCount > 0
-                  ? (currentPage - 1) * pagination.limit + 1
-                  : 0
+                pagination.totalCount > 0 ? (currentPage - 1) * pagination.limit + 1 : 0
               }-${Math.min(
                 currentPage * pagination.limit,
                 pagination.totalCount,
@@ -569,9 +523,7 @@ export default function AlumniEvents() {
         <Card className="shadow-sm">
           <CardContent className="p-12 text-center">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No events found
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No events found</h3>
             <p className="text-gray-600 mb-4">
               Try adjusting your search criteria or clearing filters
             </p>
@@ -604,11 +556,7 @@ export default function AlumniEvents() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              setCurrentPage((prev) =>
-                Math.min(pagination.totalPages, prev + 1),
-              )
-            }
+            onClick={() => setCurrentPage((prev) => Math.min(pagination.totalPages, prev + 1))}
             disabled={currentPage === pagination.totalPages}
           >
             Next
@@ -631,9 +579,7 @@ export default function AlumniEvents() {
               endAccessor="end"
               onSelectEvent={async (event: any) => {
                 try {
-                  const { event: eventDetail } = await eventsApi.getOne(
-                    event.resource.id,
-                  );
+                  const { event: eventDetail } = await eventsApi.getOne(event.resource.id);
                   setSelectedEvent(eventDetail);
                 } catch (error) {
                   console.error("Failed to fetch event details:", error);
@@ -641,9 +587,7 @@ export default function AlumniEvents() {
               }}
               eventPropGetter={(event: any) => ({
                 style: {
-                  backgroundColor: event.resource.isRegistered
-                    ? "#10b981"
-                    : "#3b82f6",
+                  backgroundColor: event.resource.isRegistered ? "#10b981" : "#3b82f6",
                 },
               })}
             />
@@ -652,10 +596,7 @@ export default function AlumniEvents() {
       </Dialog>
 
       {/* Event Detail Modal */}
-      <Dialog
-        open={!!selectedEvent}
-        onOpenChange={() => setSelectedEvent(null)}
-      >
+      <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedEvent && (
             <>
@@ -692,9 +633,7 @@ export default function AlumniEvents() {
                     variant={selectedEvent.isRegistered ? "outline" : "default"}
                     onClick={(e) => handleRegister(selectedEvent.id, e)}
                   >
-                    {selectedEvent.isRegistered
-                      ? "Cancel Registration"
-                      : "Register"}
+                    {selectedEvent.isRegistered ? "Cancel Registration" : "Register"}
                   </Button>
                   <Button variant="outline" size="icon">
                     <Share2 className="h-4 w-4" />

@@ -28,6 +28,7 @@ None (manager_id exists). Deprecation note added as comments on the contract tex
 ## 4. API
 
 `backend/src/services/hr/org.service.ts`:
+
 - `setManager(employeeId, managerId|null, actor)` — guards: not self; manager exists and
   status ∉ {exited}; **cycle check** — walk `manager_id` ancestors from the proposed manager;
   if employeeId appears → 422 `{"error":"cycle","path":[names]}`. Depth cap 20 (defensive).
@@ -36,12 +37,12 @@ None (manager_id exists). Deprecation note added as comments on the contract tex
 - `getReports(employeeId, {direct: boolean})` — direct via one WHERE; all via CTE. Exposed
   for MOD-06/09 ("is X a manager of Y" check `isManagerOf(managerId, employeeId)` — transitive).
 
-| Endpoint | Permission | Behavior |
-|---|---|---|
-| `GET /hr/org-chart` | org_chart:read (every employee) | full tree |
-| `PATCH /hr/employees/:id/manager` `{manager_id}` | employees:manage | setManager; event-logged (notes/audit via existing notification or a simple employees history? keep simple: write a `hr_notifications` entry to the employee + old/new manager) |
-| `GET /hr/employees/:id/reports?direct=true` | employees:read OR the manager themself | reports list |
-| `GET /hr/org-chart/unresolved` | employees:manage | backfill leftovers (below) |
+| Endpoint                                         | Permission                             | Behavior                                                                                                                                                                        |
+| ------------------------------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /hr/org-chart`                              | org_chart:read (every employee)        | full tree                                                                                                                                                                       |
+| `PATCH /hr/employees/:id/manager` `{manager_id}` | employees:manage                       | setManager; event-logged (notes/audit via existing notification or a simple employees history? keep simple: write a `hr_notifications` entry to the employee + old/new manager) |
+| `GET /hr/employees/:id/reports?direct=true`      | employees:read OR the manager themself | reports list                                                                                                                                                                    |
+| `GET /hr/org-chart/unresolved`                   | employees:manage                       | backfill leftovers (below)                                                                                                                                                      |
 
 **Backfill script** `backend/scripts/backfill-managers.ts` (one-off, idempotent):
 for each active employee's latest contract, take `report_to` (fallback `manager`) text,
@@ -66,6 +67,7 @@ so the UI can work through them (row deleted/marked when HR assigns manually).
 ## 6. Tests to write FIRST
 
 Backend:
+
 1. Cycle prevention: A→B→C, set C's manager = A's report... concretely: setManager(A, C)
    where C is in A's subtree → 422 with path; legal reassignments pass; self → 422.
 2. CTE tree shape (fixture forest with 2 roots, 3 levels); exited employees excluded;
@@ -76,10 +78,10 @@ Backend:
 4. Backfill: fixtures with exact, case-variant, ambiguous ("John"), missing names → correct
    sets + unresolved rows; rerun idempotent.
 5. Permissions: employee reads chart 200, edits manager 403.
-Frontend:
+   Frontend:
 6. Chart renders fixture tree; node click navigates.
 7. Unresolved panel assigns and removes rows (MSW).
-E2E: HR assigns manager on detail → chart reflects; attempt cycle → error toast.
+   E2E: HR assigns manager on detail → chart reflects; attempt cycle → error toast.
 
 ## 7. Acceptance criteria
 

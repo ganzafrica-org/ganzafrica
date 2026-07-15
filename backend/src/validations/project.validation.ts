@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Date validation helper function
 const validateDateString = (val: string): Date => {
-  if (!val || val.trim() === '') {
+  if (!val || val.trim() === "") {
     throw new Error("Date is required. Please provide a valid date in YYYY-MM-DD format.");
   }
   const date = new Date(val);
@@ -13,7 +13,14 @@ const validateDateString = (val: string): Date => {
 };
 
 // Base project status validation
-const projectStatusEnum = z.enum(["planned", "active", "completed", "cancelled", "on_hold", "overdue"]);
+const projectStatusEnum = z.enum([
+  "planned",
+  "active",
+  "completed",
+  "cancelled",
+  "on_hold",
+  "overdue",
+]);
 
 // Project member role validation
 const projectMemberRoleEnum = z.enum(["lead", "member", "supervisor", "contributor"]);
@@ -58,25 +65,28 @@ const outcomeItemSchema = z.object({
 const projectMemberSchema = z.object({
   team_id: z.number().int().positive("Team ID is required"),
   role: projectMemberRoleEnum,
-  start_date: z.string().refine(
-    (val) => {
-      if (!val || val.trim() === '') return false;
-      const date = new Date(val);
-      return !isNaN(date.getTime());
-    },
-    { message: "Invalid member start date format. Please use YYYY-MM-DD format." }
-  ).transform((val) => validateDateString(val)),
+  start_date: z
+    .string()
+    .refine(
+      (val) => {
+        if (!val || val.trim() === "") return false;
+        const date = new Date(val);
+        return !isNaN(date.getTime());
+      },
+      { message: "Invalid member start date format. Please use YYYY-MM-DD format." },
+    )
+    .transform((val) => validateDateString(val)),
   end_date: z
     .string()
     .refine(
       (val) => {
-        if (!val || val.trim() === '') return true; // Optional field
+        if (!val || val.trim() === "") return true; // Optional field
         const date = new Date(val);
         return !isNaN(date.getTime());
       },
-      { message: "Invalid member end date format. Please use YYYY-MM-DD format." }
+      { message: "Invalid member end date format. Please use YYYY-MM-DD format." },
     )
-    .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
+    .transform((val) => (val && val.trim() !== "" ? validateDateString(val) : undefined))
     .optional(),
 });
 
@@ -98,26 +108,27 @@ export const fileValidationSchema = z.object({
   originalname: z.string().min(1, "Original filename is required"),
   encoding: z.string(),
   mimetype: z.string().refine(
-    (mime) => 
+    (mime) =>
       // List of allowed mime types
       [
-        'application/pdf', 
-        'application/msword', 
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/svg+xml',
-        'text/plain',
-        'text/csv'
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/svg+xml",
+        "text/plain",
+        "text/csv",
       ].includes(mime),
     {
-      message: "Unsupported file type. Only PDF, Word, Excel, PowerPoint, images, and text files are allowed."
-    }
+      message:
+        "Unsupported file type. Only PDF, Word, Excel, PowerPoint, images, and text files are allowed.",
+    },
   ),
   size: z.number().max(10 * 1024 * 1024, "File size must be less than 10MB"),
   buffer: z.instanceof(Buffer).optional(),
@@ -134,96 +145,109 @@ export const createProjectSchema = z.object({
     description: z.string().optional(),
     status: projectStatusEnum.optional().default("active"), // Default to 'active' when creating
     // start_date is automatically set to current date when project is created
-    start_date: z.string()
+    start_date: z
+      .string()
       .refine(
         (val) => {
-          if (!val || val.trim() === '') return true; // Optional field
+          if (!val || val.trim() === "") return true; // Optional field
           const date = new Date(val);
           return !isNaN(date.getTime());
         },
-        { message: "Invalid start date format. Please use YYYY-MM-DD format." }
+        { message: "Invalid start date format. Please use YYYY-MM-DD format." },
       )
-      .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
+      .transform((val) => (val && val.trim() !== "" ? validateDateString(val) : undefined))
       .optional(),
     // end_date is not set during creation - it will be set automatically when status changes to 'completed'
     category_id: z.number().int().positive("Category ID is required"),
     partner_id: z.number().int().positive().optional(),
     location: z.string().optional(),
     impacted_people: z.number().int().optional(),
-    
+
     // These fields might be strings in multipart/form-data
-    goals: z.union([
-      z.object({
-        items: z.array(goalItemSchema)
-      }),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for goals");
-        }
-      })
-    ]).optional(),
-    
-    outcomes: z.union([
-      z.object({
-        items: z.array(outcomeItemSchema)
-      }),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for outcomes");
-        }
-      })
-    ]).optional(),
-    
-    media: z.union([
-      z.object({
-        items: z.array(mediaItemSchema)
-      }),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for media");
-        }
-      })
-    ]).optional(),
-    
-    other_information: z.union([
-      z.record(z.any()),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for other_information");
-        }
-      })
-    ]).optional(),
-    
-    members: z.union([
-      z.array(projectMemberSchema),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for members");
-        }
-      })
-    ]).optional(),
-    
-    partners: z.union([
-      z.array(projectPartnerSchema),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for partners");
-        }
-      })
-    ]).optional(),
-    
+    goals: z
+      .union([
+        z.object({
+          items: z.array(goalItemSchema),
+        }),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for goals");
+          }
+        }),
+      ])
+      .optional(),
+
+    outcomes: z
+      .union([
+        z.object({
+          items: z.array(outcomeItemSchema),
+        }),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for outcomes");
+          }
+        }),
+      ])
+      .optional(),
+
+    media: z
+      .union([
+        z.object({
+          items: z.array(mediaItemSchema),
+        }),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for media");
+          }
+        }),
+      ])
+      .optional(),
+
+    other_information: z
+      .union([
+        z.record(z.any()),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for other_information");
+          }
+        }),
+      ])
+      .optional(),
+
+    members: z
+      .union([
+        z.array(projectMemberSchema),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for members");
+          }
+        }),
+      ])
+      .optional(),
+
+    partners: z
+      .union([
+        z.array(projectPartnerSchema),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for partners");
+          }
+        }),
+      ])
+      .optional(),
+
     documents: z.array(projectDocumentSchema).optional(),
   }),
   files: z.array(fileValidationSchema).optional(),
@@ -242,82 +266,90 @@ export const updateProjectSchema = z.object({
       .string()
       .refine(
         (val) => {
-          if (!val || val.trim() === '') return true; // Optional field
+          if (!val || val.trim() === "") return true; // Optional field
           const date = new Date(val);
           return !isNaN(date.getTime());
         },
-        { message: "Invalid start date format. Please use YYYY-MM-DD format." }
+        { message: "Invalid start date format. Please use YYYY-MM-DD format." },
       )
-      .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
+      .transform((val) => (val && val.trim() !== "" ? validateDateString(val) : undefined))
       .optional(),
     end_date: z
       .string()
       .refine(
         (val) => {
-          if (!val || val.trim() === '') return true; // Optional field
+          if (!val || val.trim() === "") return true; // Optional field
           const date = new Date(val);
           return !isNaN(date.getTime());
         },
-        { message: "Invalid end date format. Please use YYYY-MM-DD format." }
+        { message: "Invalid end date format. Please use YYYY-MM-DD format." },
       )
-      .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
+      .transform((val) => (val && val.trim() !== "" ? validateDateString(val) : undefined))
       .optional()
       .nullable(),
     category_id: z.number().int().positive().optional(),
     partner_id: z.number().int().positive().optional(),
     location: z.string().optional(),
     impacted_people: z.number().int().optional(),
-    
+
     // These fields might be strings in multipart/form-data
-    goals: z.union([
-      z.object({
-        items: z.array(goalItemSchema)
-      }),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for goals");
-        }
-      })
-    ]).optional(),
-    
-    outcomes: z.union([
-      z.object({
-        items: z.array(outcomeItemSchema)
-      }),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for outcomes");
-        }
-      })
-    ]).optional(),
-    
-    media: z.union([
-      z.object({
-        items: z.array(mediaItemSchema)
-      }),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for media");
-        }
-      })
-    ]).optional(),
-    
-    other_information: z.union([
-      z.record(z.any()),
-      z.string().transform(val => {
-        try {
-          return JSON.parse(val);
-        } catch (e) {
-          throw new Error("Invalid JSON for other_information");
-        }
-      })
-    ]).optional(),
+    goals: z
+      .union([
+        z.object({
+          items: z.array(goalItemSchema),
+        }),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for goals");
+          }
+        }),
+      ])
+      .optional(),
+
+    outcomes: z
+      .union([
+        z.object({
+          items: z.array(outcomeItemSchema),
+        }),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for outcomes");
+          }
+        }),
+      ])
+      .optional(),
+
+    media: z
+      .union([
+        z.object({
+          items: z.array(mediaItemSchema),
+        }),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for media");
+          }
+        }),
+      ])
+      .optional(),
+
+    other_information: z
+      .union([
+        z.record(z.any()),
+        z.string().transform((val) => {
+          try {
+            return JSON.parse(val);
+          } catch (e) {
+            throw new Error("Invalid JSON for other_information");
+          }
+        }),
+      ])
+      .optional(),
   }),
   files: z.array(fileValidationSchema).optional(),
 });
@@ -379,48 +411,55 @@ export const importProjectsSchema = z.object({
         name: z.string().min(1, "Project name is required"),
         description: z.string().optional(),
         status: projectStatusEnum,
-        start_date: z.string()
+        start_date: z
+          .string()
           .refine(
             (val) => {
-              if (!val || val.trim() === '') return false;
+              if (!val || val.trim() === "") return false;
               const date = new Date(val);
               return !isNaN(date.getTime());
             },
-            { message: "Invalid start date format. Please use YYYY-MM-DD format." }
+            { message: "Invalid start date format. Please use YYYY-MM-DD format." },
           )
           .transform((val) => validateDateString(val)),
         end_date: z
           .string()
           .refine(
             (val) => {
-              if (!val || val.trim() === '') return true; // Optional field
+              if (!val || val.trim() === "") return true; // Optional field
               const date = new Date(val);
               return !isNaN(date.getTime());
             },
-            { message: "Invalid end date format. Please use YYYY-MM-DD format." }
+            { message: "Invalid end date format. Please use YYYY-MM-DD format." },
           )
-          .transform((val) => val && val.trim() !== '' ? validateDateString(val) : undefined)
+          .transform((val) => (val && val.trim() !== "" ? validateDateString(val) : undefined))
           .optional(),
         category_id: z.number().int().positive("Category ID is required"),
         partner_id: z.number().int().positive().optional(),
         location: z.string().optional(),
         impacted_people: z.number().int().optional(),
-        
+
         // New fields
-        goals: z.object({
-          items: z.array(goalItemSchema)
-        }).optional(),
-        
-        outcomes: z.object({
-          items: z.array(outcomeItemSchema)
-        }).optional(),
-        
-        media: z.object({
-          items: z.array(mediaItemSchema)
-        }).optional(),
-        
+        goals: z
+          .object({
+            items: z.array(goalItemSchema),
+          })
+          .optional(),
+
+        outcomes: z
+          .object({
+            items: z.array(outcomeItemSchema),
+          })
+          .optional(),
+
+        media: z
+          .object({
+            items: z.array(mediaItemSchema),
+          })
+          .optional(),
+
         other_information: z.record(z.any()).optional(),
-        
+
         members: z.array(projectMemberSchema).optional(),
         partners: z.array(projectPartnerSchema).optional(),
         documents: z.array(projectDocumentSchema).optional(),

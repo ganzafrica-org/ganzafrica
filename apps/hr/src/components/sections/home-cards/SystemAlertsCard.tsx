@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import React from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { AlertCircle, CheckCircle2, Info } from "lucide-react"
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, CheckCircle2, Info } from "lucide-react";
 
 const alerts = [
   {
@@ -27,7 +27,7 @@ const alerts = [
     subtitle: "Daily backup completed successfully at 2:00 AM",
     tone: "success" as const,
   },
-]
+];
 
 const toneStyles = {
   warning: {
@@ -45,37 +45,45 @@ const toneStyles = {
     icon: "text-emerald-700",
     badge: "bg-emerald-100 text-emerald-700",
   },
-}
+};
 
 export function SystemAlertsCard() {
   return (
     <Card className="border-0 shadow-sm rounded-lg">
       <CardHeader>
-        <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-300">System Alerts</CardTitle>
+        <CardTitle className="text-sm font-semibold text-slate-800 dark:text-slate-300">
+          System Alerts
+        </CardTitle>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
         {alerts.map((a) => {
-          const Icon = a.icon
-          const t = toneStyles[a.tone]
+          const Icon = a.icon;
+          const t = toneStyles[a.tone];
           return (
-            <div key={a.id} className={`rounded-2xl border dark:border-none p-4 dark:bg-white/10 ${t.wrap}`}>
+            <div
+              key={a.id}
+              className={`rounded-2xl border dark:border-none p-4 dark:bg-white/10 ${t.wrap}`}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <div className={`mt-0.5 ${t.icon}`}>
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900 dark:text-white">{a.title}</div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-white/60">{a.subtitle}</div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {a.title}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-white/60">
+                      {a.subtitle}
+                    </div>
                   </div>
                 </div>
                 <Badge className={`border-0 rounded-md ${t.badge}`}>{a.tone}</Badge>
               </div>
             </div>
-          )
+          );
         })}
       </CardContent>
     </Card>
-  )
+  );
 }
-

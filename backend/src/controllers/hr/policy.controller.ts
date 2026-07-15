@@ -125,7 +125,11 @@
 import { sendResponse } from "@/utils/sendResponse";
 import * as policyService from "../../services/hr/policy.service";
 
-export const listPolicies = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const listPolicies = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const q = req.query as unknown as Record<string, string | undefined>;
     const page = q.page ? parseInt(q.page, 10) : 1;
@@ -160,7 +164,11 @@ export const getPolicy = async (req: Request, res: Response, next: NextFunction)
   }
 };
 
-export const createPolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const createPolicy = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const created = await policyService.createPolicy(req.body);
     res.status(201);
@@ -170,7 +178,11 @@ export const createPolicy = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const updatePolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updatePolicy = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const updated = await policyService.updatePolicy(req.params.id, req.body);
     sendResponse(res, { success: true, message: "Policy updated", data: updated });
@@ -179,7 +191,11 @@ export const updatePolicy = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const deletePolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const deletePolicy = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     await policyService.deletePolicy(req.params.id);
     sendResponse(res, { success: true, message: "Policy deleted", data: {} });
@@ -188,9 +204,15 @@ export const deletePolicy = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const downloadPolicy = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const downloadPolicy = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
-    const { absolutePath, fileName } = await policyService.incrementDownloadsAndGetPath(req.params.id);
+    const { absolutePath, fileName } = await policyService.incrementDownloadsAndGetPath(
+      req.params.id,
+    );
 
     res.download(absolutePath, fileName, (err) => {
       if (err) next(err);

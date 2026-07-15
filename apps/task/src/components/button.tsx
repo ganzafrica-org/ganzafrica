@@ -1,22 +1,22 @@
 "use client";
-import React from 'react';
-import { Plus, LucideIcon } from 'lucide-react';
+import React from "react";
+import { Plus, LucideIcon } from "lucide-react";
 
 /**
  * Reusable Button Component
- * 
+ *
  * @example
  * // Primary button with plus icon
  * <Button variant="primary" size="md" showPlusIcon>
  *   Add Task
  * </Button>
- * 
+ *
  * @example
  * // Secondary button with custom icon
  * <Button variant="secondary" icon={Save}>
  *   Save
  * </Button>
- * 
+ *
  * @example
  * // Outline button (for cancel actions)
  * <Button variant="outline">
@@ -26,48 +26,48 @@ import { Plus, LucideIcon } from 'lucide-react';
 interface ButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "outline";
+  size?: "sm" | "md" | "lg";
   icon?: LucideIcon;
   showPlusIcon?: boolean;
   disabled?: boolean;
   className?: string;
-  type?: 'button' | 'submit' | 'reset';
+  type?: "button" | "submit" | "reset";
 }
 
 export function Button({
   children,
   onClick,
-  variant = 'primary',
-  size = 'md',
+  variant = "primary",
+  size = "md",
   icon: Icon,
   showPlusIcon = false,
   disabled = false,
-  className = '',
-  type = 'button',
+  className = "",
+  type = "button",
 }: ButtonProps): React.JSX.Element {
   const [isHovered, setIsHovered] = React.useState(false);
 
   // Color variants
   const getVariantStyles = () => {
     switch (variant) {
-      case 'primary':
+      case "primary":
         return {
-          backgroundColor: isHovered ? '#054a73' : '#076297',
-          color: '#ffffff',
-          border: 'none',
+          backgroundColor: isHovered ? "#054a73" : "#076297",
+          color: "#ffffff",
+          border: "none",
         };
-      case 'secondary':
+      case "secondary":
         return {
-          backgroundColor: isHovered ? '#d99a0f' : '#F8B712',
-          color: '#ffffff',
-          border: 'none',
+          backgroundColor: isHovered ? "#d99a0f" : "#F8B712",
+          color: "#ffffff",
+          border: "none",
         };
-      case 'outline':
+      case "outline":
         return {
-          backgroundColor: isHovered ? '#f9fafb' : '#ffffff',
-          color: '#374151',
-          border: '1px solid #d1d5db',
+          backgroundColor: isHovered ? "#f9fafb" : "#ffffff",
+          color: "#374151",
+          border: "1px solid #d1d5db",
         };
       default:
         return {};
@@ -77,14 +77,14 @@ export function Button({
   // Size variants
   const getSizeClasses = () => {
     switch (size) {
-      case 'sm':
-        return 'px-3 py-1.5 text-xs';
-      case 'md':
-        return 'px-4 py-2 text-sm';
-      case 'lg':
-        return 'px-6 py-3 text-base';
+      case "sm":
+        return "px-3 py-1.5 text-xs";
+      case "md":
+        return "px-4 py-2 text-sm";
+      case "lg":
+        return "px-6 py-3 text-base";
       default:
-        return 'px-4 py-2 text-sm';
+        return "px-4 py-2 text-sm";
     }
   };
 
@@ -97,9 +97,11 @@ export function Button({
     items-center
     justify-center
     gap-2
-    ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+    ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
     ${className}
-  `.trim().replace(/\s+/g, ' ');
+  `
+    .trim()
+    .replace(/\s+/g, " ");
 
   return (
     <button
@@ -107,7 +109,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       className={baseClasses}
-      style={{ ...getVariantStyles(), borderRadius: '7px' }}
+      style={{ ...getVariantStyles(), borderRadius: "7px" }}
       onMouseEnter={() => !disabled && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -122,8 +124,8 @@ export function Button({
 interface IconButtonProps {
   onClick?: () => void;
   icon: LucideIcon;
-  variant?: 'primary' | 'secondary' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "secondary" | "outline";
+  size?: "sm" | "md" | "lg";
   disabled?: boolean;
   className?: string;
   title?: string;
@@ -132,31 +134,31 @@ interface IconButtonProps {
 export function IconButton({
   onClick,
   icon: Icon,
-  variant = 'primary',
-  size = 'md',
+  variant = "primary",
+  size = "md",
   disabled = false,
-  className = '',
+  className = "",
   title,
 }: IconButtonProps): React.JSX.Element {
   const [isHovered, setIsHovered] = React.useState(false);
 
   const getVariantStyles = () => {
     switch (variant) {
-      case 'primary':
+      case "primary":
         return {
-          backgroundColor: isHovered ? '#054a73' : '#076297',
-          color: '#ffffff',
+          backgroundColor: isHovered ? "#054a73" : "#076297",
+          color: "#ffffff",
         };
-      case 'secondary':
+      case "secondary":
         return {
-          backgroundColor: isHovered ? '#d99a0f' : '#F8B712',
-          color: '#ffffff',
+          backgroundColor: isHovered ? "#d99a0f" : "#F8B712",
+          color: "#ffffff",
         };
-      case 'outline':
+      case "outline":
         return {
-          backgroundColor: isHovered ? '#f9fafb' : '#ffffff',
-          color: '#374151',
-          border: '1px solid #d1d5db',
+          backgroundColor: isHovered ? "#f9fafb" : "#ffffff",
+          color: "#374151",
+          border: "1px solid #d1d5db",
         };
       default:
         return {};
@@ -165,14 +167,14 @@ export function IconButton({
 
   const getSizeClasses = () => {
     switch (size) {
-      case 'sm':
-        return 'w-6 h-6';
-      case 'md':
-        return 'w-8 h-8';
-      case 'lg':
-        return 'w-10 h-10';
+      case "sm":
+        return "w-6 h-6";
+      case "md":
+        return "w-8 h-8";
+      case "lg":
+        return "w-10 h-10";
       default:
-        return 'w-8 h-8';
+        return "w-8 h-8";
     }
   };
 
@@ -188,9 +190,11 @@ export function IconButton({
         justify-center
         transition-all
         duration-200
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
         ${className}
-      `.trim().replace(/\s+/g, ' ')}
+      `
+        .trim()
+        .replace(/\s+/g, " ")}
       style={getVariantStyles()}
       onMouseEnter={() => !disabled && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -200,4 +204,3 @@ export function IconButton({
     </button>
   );
 }
-
