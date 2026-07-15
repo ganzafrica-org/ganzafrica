@@ -24,5 +24,10 @@ export async function loginAs(role = "admin"): Promise<AuthedAgent> {
   if (res.status !== 200) {
     throw new Error(`loginAs(${role}) failed: ${res.status} ${JSON.stringify(res.body)}`);
   }
+
+  const setCookies = (res.headers["set-cookie"] as unknown as string[]) ?? [];
+  const csrf = setCookies.map((c) => /ganzafrica_csrf=([^;]+)/.exec(c)?.[1]).find(Boolean);
+  if (csrf) agent.set("X-CSRF-Token", csrf);
+
   return { agent, user };
 }

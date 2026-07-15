@@ -377,20 +377,23 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       throw new AppError(constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || "Account is inactive", 401);
     }
 
-    // Create new session and tokens
-    const { accessToken, refreshToken: newRefreshToken } = await authService.createSession(
-      user.id,
-      req.ip || "unknown",
-      req.headers["user-agent"] || "unknown",
-    );
+    // Rotate the existing session's refresh token (with 60s grace) rather than spawning a new one.
+    const rotated = await authService.rotateSession(user.id, refreshToken);
+    if (!rotated) {
+      res.clearCookie(constants.AUTH_COOKIE_NAME, constants.COOKIE_OPTIONS);
+      res.clearCookie(constants.REFRESH_COOKIE_NAME, constants.COOKIE_OPTIONS);
+      res
+        .status(401)
+        .json({ error: "Unauthorized", message: constants.ERROR_MESSAGES.INVALID_TOKEN });
+      return;
+    }
 
-    // Set cookies
-    res.cookie(constants.AUTH_COOKIE_NAME, accessToken, constants.COOKIE_OPTIONS);
-    res.cookie(constants.REFRESH_COOKIE_NAME, newRefreshToken, constants.COOKIE_OPTIONS);
+    res.cookie(constants.AUTH_COOKIE_NAME, rotated.accessToken, constants.COOKIE_OPTIONS);
+    res.cookie(constants.REFRESH_COOKIE_NAME, rotated.refreshToken, constants.COOKIE_OPTIONS);
 
     res.status(200).json({
       message: "Token refreshed successfully",
-      token: accessToken,
+      token: rotated.accessToken,
     });
   } catch (error) {
     logger.error("Token refresh error", error);

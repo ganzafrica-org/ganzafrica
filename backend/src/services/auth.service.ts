@@ -13,6 +13,12 @@ const logger = new Logger("AuthService");
 // Configure bcrypt options for password hashing
 const SALT_ROUNDS = 10;
 
+const REFRESH_GRACE_MS = 60_000;
+
+function sha256(value: string) {
+  return crypto.createHash("sha256").update(value).digest("hex");
+}
+
 // Set secret key for JWT
 const JWT_SECRET = env.JWT_SECRET || "your-default-jwt-secret-key-should-be-updated";
 const JWT_REFRESH_SECRET =
@@ -214,8 +220,9 @@ export async function createSession(
       true,
     );
 
-    // Hash tokens for secure storage
-    const refreshTokenHash = await bcrypt.hash(refreshToken, SALT_ROUNDS);
+    // Access hash stays bcrypt (not used for lookup); refresh hash is sha256 so rotation can
+    // match a presented refresh token by equality (see rotateSession).
+    const refreshTokenHash = sha256(refreshToken);
     const accessTokenHash = await bcrypt.hash(accessToken, SALT_ROUNDS);
 
     const expiresAt = new Date(Date.now() + parseTimeToMs(env.REFRESH_TOKEN_EXPIRY || "7d"));
@@ -272,6 +279,73 @@ export async function createSession(
     logger.error("Session creation error", error);
     throw new AppError("Failed to create session", 500);
   }
+}
+
+/**
+ * Rotate a session's refresh token with a grace window. Accepts the current refresh hash, or the
+ * previous one if rotated within REFRESH_GRACE_MS (kills the multi-tab race). Reuse of a refresh
+ * token outside the grace window is treated as theft: the session is revoked and null returned.
+ */
+export async function rotateSession(
+  userId: number,
+  presentedRefreshToken: string,
+): Promise<SessionData | null> {
+  const presentedHash = sha256(presentedRefreshToken);
+  const userSessions = await db
+    .select()
+    .from(sessions)
+    .where(and(eq(sessions.user_id, userId), eq(sessions.is_valid, true)));
+
+  const session = userSessions.find((s) => {
+    if (s.refresh_token_hash === presentedHash) return true;
+    if (
+      s.previous_refresh_hash === presentedHash &&
+      s.refresh_rotated_at &&
+      Date.now() - new Date(s.refresh_rotated_at).getTime() < REFRESH_GRACE_MS
+    )
+      return true;
+    return false;
+  });
+
+  if (!session) {
+    // Presented a refresh token that matches no live session (or an expired-grace previous one).
+    const stale = userSessions.find((s) => s.previous_refresh_hash === presentedHash);
+    if (stale) {
+      await db
+        .update(sessions)
+        .set({ is_valid: false, updated_at: new Date() })
+        .where(eq(sessions.id, stale.id));
+    }
+    return null;
+  }
+
+  const accessToken = await createUserToken(
+    userId,
+    constants.TOKEN_TYPES.ACCESS,
+    env.ACCESS_TOKEN_EXPIRY,
+    false,
+  );
+  const refreshToken = await createUserToken(
+    userId,
+    constants.TOKEN_TYPES.REFRESH,
+    env.REFRESH_TOKEN_EXPIRY,
+    true,
+  );
+
+  await db
+    .update(sessions)
+    .set({
+      token_hash: await bcrypt.hash(accessToken, SALT_ROUNDS),
+      previous_refresh_hash: session.refresh_token_hash,
+      refresh_token_hash: sha256(refreshToken),
+      refresh_rotated_at: new Date(),
+      last_activity: new Date(),
+      expires_at: new Date(Date.now() + parseTimeToMs(env.REFRESH_TOKEN_EXPIRY || "7d")),
+      updated_at: new Date(),
+    })
+    .where(eq(sessions.id, session.id));
+
+  return { accessToken, refreshToken, sessionId: session.id.toString() };
 }
 
 /**
