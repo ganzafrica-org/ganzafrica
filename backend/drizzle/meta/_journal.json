@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1782737297938,
-      "tag": "0000_amused_victor_mancha",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1784115182793,
-      "tag": "0001_triggers",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1784124253208,
-      "tag": "0002_hr_policies_baseline_catchup",
+      "when": 1784127237275,
+      "tag": "0000_baseline",
       "breakpoints": true
     }
   ]

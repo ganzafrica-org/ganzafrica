@@ -1,6 +1,6 @@
 {
-  "id": "e597fb1d-e1c4-4de4-abb1-f68d209fdca3",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "60cf1cf5-8e71-4851-89da-a29681f72863",
+  "prevId": "b34a21d0-0dd9-43c0-9a6a-0b0a55fcbed0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2933,6 +2933,122 @@
           "columnsFrom": ["reviewed_by_id"],
           "columnsTo": ["id"],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hr_policies": {
+      "name": "hr_policies",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "policy_category": {
+          "name": "policy_category",
+          "type": "hr_policy_category",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'GENERAL'"
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_path": {
+          "name": "file_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_size": {
+          "name": "file_size",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "downloads": {
+          "name": "downloads",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "status": {
+          "name": "status",
+          "type": "hr_policy_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PUBLISHED'"
+        },
+        "created_by_id": {
+          "name": "created_by_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hr_policies_created_by_id_hr_users_id_fk": {
+          "name": "hr_policies_created_by_id_hr_users_id_fk",
+          "tableFrom": "hr_policies",
+          "tableTo": "hr_users",
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },
@@ -8405,6 +8521,16 @@
         "ASSET_STATUS_CHANGED",
         "DOCUMENT_PUBLISHED"
       ]
+    },
+    "public.hr_policy_category": {
+      "name": "hr_policy_category",
+      "schema": "public",
+      "values": ["GENERAL", "HR", "IT", "FINANCE", "COMPLIANCE", "OTHER"]
+    },
+    "public.hr_policy_status": {
+      "name": "hr_policy_status",
+      "schema": "public",
+      "values": ["PUBLISHED", "DRAFT"]
     },
     "public.ticket_priority": {
       "name": "ticket_priority",

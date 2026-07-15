@@ -12,7 +12,7 @@
     "dev": "tsx watch src/server.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:migrate:mark-baseline": "tsx scripts/mark-baseline-applied.ts",
+    "db:reconcile": "tsx scripts/reconcile-db.ts",
     "db:verify": "tsx scripts/verify-migrations.ts",
     "db:set-admin": "tsx scripts/set-admin-user.ts",
     "db:studio": "drizzle-kit studio",

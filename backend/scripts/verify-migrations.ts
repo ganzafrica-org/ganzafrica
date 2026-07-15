@@ -25,7 +25,7 @@ if (host !== "localhost" && host !== "127.0.0.1" && host !== "::1") {
   process.exit(1);
 }
 
-const KNOWN_TRIGGER = "audit_users_trigger"; // defined in 0001_triggers.sql
+const KNOWN_TRIGGER = "audit_users_trigger"; // defined in the baseline triggers section
 
 function run(cmd: string, args: string[]) {
   // Single command string with shell:true is the cross-platform-safe form (resolves
@@ -56,38 +56,48 @@ async function main() {
   };
 
   try {
-    // 1. Fresh DB → migrate applies 0000 + 0001 cleanly; the sentinel trigger exists.
+    // 1. Fresh DB → migrate applies the squashed baseline; schema + sentinel trigger exist.
     console.log("[1] fresh migrate");
     await resetSchema(pool);
     if (run("npx", ["drizzle-kit", "migrate"]) !== 0) throw new Error("migrate failed");
     const trig = await pool.query(`SELECT 1 FROM pg_trigger WHERE tgname = $1`, [KNOWN_TRIGGER]);
-    assert(trig.rowCount === 1, `trigger ${KNOWN_TRIGGER} created by 0001`);
+    assert(trig.rowCount === 1, `trigger ${KNOWN_TRIGGER} created by the baseline`);
+    const tables = await pool.query(
+      `SELECT count(*)::int c FROM pg_tables WHERE schemaname='public'`,
+    );
+    assert(tables.rows[0].c >= 70, `full schema built (${tables.rows[0].c} tables)`);
     const applied = await pool.query(
       `SELECT count(*)::int c FROM "drizzle"."__drizzle_migrations"`,
     );
-    assert(applied.rows[0].c >= 2, "0000 + 0001 recorded as applied");
+    assert(applied.rows[0].c === 1, "exactly one baseline row recorded");
 
-    // 2. generate immediately after → no new migration (schema <-> SQL in sync).
+    // 2. generate immediately after → no new migration (schema <-> snapshot in sync).
     console.log("[2] generate is a no-op");
     const before = new Set(listSql());
     if (run("npx", ["drizzle-kit", "generate"]) !== 0) throw new Error("generate failed");
-    const after = listSql();
-    const added = after.filter((f) => !before.has(f));
+    const added = listSql().filter((f) => !before.has(f));
     assert(added.length === 0, `no new migration generated (added: ${added.join(",") || "none"})`);
 
-    // 3. Simulated existing DB → marker script → migrate is a no-op.
-    console.log("[3] marker + migrate no-op on populated DB");
-    // DB already has schema + tracking rows from step 1; re-running migrate must be clean.
-    if (run("npx", ["tsx", "scripts/mark-baseline-applied.ts"]) !== 0)
-      throw new Error("marker failed");
+    // 3. Reconcile brings a populated, untracked DB in line and migrate is then a no-op.
+    console.log("[3] reconcile on a populated, untracked DB");
+    // Simulate a legacy DB: keep the schema but wipe ALL tracking (the broken pre-baseline state).
+    await pool.query(`DROP SCHEMA IF EXISTS drizzle CASCADE`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS "public"."__drizzle_migrations" (id serial, hash text, created_at bigint)
+    `); // legacy junk table that reconcile must remove
+    if (run("npx", ["tsx", "scripts/reconcile-db.ts"]) !== 0) throw new Error("reconcile failed");
+    const legacy = await pool.query(`SELECT to_regclass('public.__drizzle_migrations') AS t`);
+    assert(legacy.rows[0].t === null, "legacy public.__drizzle_migrations removed");
+    const rows = await pool.query(`SELECT count(*)::int c FROM "drizzle"."__drizzle_migrations"`);
+    assert(rows.rows[0].c === 1, "exactly one baseline row after reconcile");
     if (run("npx", ["drizzle-kit", "migrate"]) !== 0) throw new Error("migrate (no-op) failed");
 
-    // 4. Marker idempotent.
-    console.log("[4] marker idempotent");
-    if (run("npx", ["tsx", "scripts/mark-baseline-applied.ts"]) !== 0)
-      throw new Error("marker second run failed");
-    const cnt2 = await pool.query(`SELECT count(*)::int c FROM "drizzle"."__drizzle_migrations"`);
-    assert(cnt2.rows[0].c >= 2, "no duplicate tracking rows after second marker run");
+    // 4. Reconcile is idempotent.
+    console.log("[4] reconcile idempotent");
+    if (run("npx", ["tsx", "scripts/reconcile-db.ts"]) !== 0)
+      throw new Error("reconcile rerun failed");
+    const rows2 = await pool.query(`SELECT count(*)::int c FROM "drizzle"."__drizzle_migrations"`);
+    assert(rows2.rows[0].c === 1, "still one baseline row after second reconcile");
 
     console.log("\nAll migration checks passed.");
   } finally {
