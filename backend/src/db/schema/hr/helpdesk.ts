@@ -2,6 +2,7 @@
 import { timestampFields } from "../common";
 import { ticketPriorityEnum, ticketStatusEnum } from "./hr.enums";
 import { hr_users } from "./employee";
+import { employees } from "./employees";
 
 export const hr_helpdesk_tickets = pgTable("hr_helpdesk_tickets", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -10,7 +11,14 @@ export const hr_helpdesk_tickets = pgTable("hr_helpdesk_tickets", {
   submitted_by_id: uuid("submitted_by_id")
     .notNull()
     .references(() => hr_users.id, { onDelete: "cascade" }),
+  // FND-05 expand: new employees FKs, backfilled by the merge script.
+  submitted_by_employee_id: uuid("submitted_by_employee_id").references(() => employees.id, {
+    onDelete: "cascade",
+  }),
   assigned_to_id: uuid("assigned_to_id").references(() => hr_users.id, {
+    onDelete: "set null",
+  }),
+  assigned_to_employee_id: uuid("assigned_to_employee_id").references(() => employees.id, {
     onDelete: "set null",
   }),
   status: ticketStatusEnum("status").notNull().default("OPEN"),

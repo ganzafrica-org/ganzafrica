@@ -13,6 +13,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:reconcile": "tsx scripts/reconcile-db.ts",
+    "db:seed:rbac": "tsx scripts/seed-rbac.ts",
     "db:verify": "tsx scripts/verify-migrations.ts",
     "db:set-admin": "tsx scripts/set-admin-user.ts",
     "db:studio": "drizzle-kit studio",

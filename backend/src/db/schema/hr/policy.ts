@@ -2,6 +2,7 @@
 import { timestampFields } from "../common";
 import { policyCategoryEnum, policyStatusEnum } from "./hr.enums";
 import { hr_users } from "./employee";
+import { employees } from "./employees";
 
 export const hr_policies = pgTable("hr_policies", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -18,6 +19,10 @@ export const hr_policies = pgTable("hr_policies", {
   created_by_id: uuid("created_by_id")
     .notNull()
     .references(() => hr_users.id, { onDelete: "restrict" }),
+  // FND-05 expand: new employees FK, backfilled by the merge script.
+  created_by_employee_id: uuid("created_by_employee_id").references(() => employees.id, {
+    onDelete: "restrict",
+  }),
   ...timestampFields,
 });
 
