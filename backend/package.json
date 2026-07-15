@@ -25,6 +25,7 @@
     "db:push": "drizzle-kit push",
     "swagger:generate": "tsx src/swagger/generate.ts",
     "lint": "eslint --ext .ts src",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:hr": "NODE_OPTIONS='--max-old-space-size=4096' TS_NODE_PROJECT=tsconfig.test.json mocha"
   },
