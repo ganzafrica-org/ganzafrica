@@ -3,6 +3,7 @@
 import React, { useEffect, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { completeAuthCallback } from "../../src/lib/auth-callback";
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -10,66 +11,12 @@ function AuthCallbackContent() {
   const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    // Ensure we're on the client side
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const processAuth = () => {
-      try {
-        const token = searchParams.get("token");
-        const user = searchParams.get("user");
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-
-        if (token && user) {
-          try {
-            // Store the authentication tokens
-            localStorage.setItem("accessToken", token);
-
-            // Store user data - safely parse the user data
-            let parsedUser;
-            try {
-              const decodedUser = decodeURIComponent(user);
-              parsedUser = JSON.parse(decodedUser);
-            } catch (parseError) {
-              console.error("Error parsing user data:", parseError);
-              toast.error("Invalid user data received");
-              window.location.href = `${portalUrl}/login`;
-              return;
-            }
-
-            localStorage.setItem("user", JSON.stringify(parsedUser));
-            localStorage.setItem("task_user", JSON.stringify(parsedUser));
-
-            toast.success("Authentication successful!");
-
-            // Redirect to my-tasks
-            setTimeout(() => {
-              router.push("/my-tasks");
-            }, 500);
-          } catch (error: unknown) {
-            console.error("Error processing authentication:", error);
-            toast.error("Authentication failed. Please try again.");
-            // Redirect back to portal login
-            const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-            window.location.href = `${portalUrl}/login`;
-          }
-        } else {
-          // No authentication data, redirect to portal login
-          toast.error("No authentication data received");
-          const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-          window.location.href = `${portalUrl}/login`;
-        }
-      } catch (error: unknown) {
-        console.error("Error in auth callback:", error);
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-        window.location.href = `${portalUrl}/login`;
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-
-    processAuth();
+    if (typeof window === "undefined") return;
+    completeAuthCallback({
+      code: searchParams.get("code"),
+      next: searchParams.get("next") || "/my-tasks",
+      onSuccess: (dest) => router.replace(dest),
+    }).finally(() => setIsProcessing(false));
   }, [searchParams, router]);
 
   return (
