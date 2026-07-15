@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
+import { completeAuthCallback } from "@/lib/auth-callback";
 
 function LoadingScreen({ message = "Initializing application" }: { message?: string }) {
   const logoSrc =
@@ -63,72 +64,15 @@ function AuthCallbackContent() {
       }
     }, 400);
 
-    const processAuth = () => {
-      try {
-        const token = searchParams.get("token");
-        const user = searchParams.get("user");
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-
-        if (token && user) {
-          try {
-            // Clear ALL old tokens and user data first
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("user");
-            localStorage.removeItem("alumni_user");
-
-            // Store the NEW authentication tokens
-            localStorage.setItem("accessToken", token);
-
-            // Store user data - safely parse the user data
-            let parsedUser;
-            try {
-              const decodedUser = decodeURIComponent(user);
-              parsedUser = JSON.parse(decodedUser);
-            } catch (parseError) {
-              console.error("Error parsing user data:", parseError);
-              toast.error("Invalid user data received");
-              clearInterval(timer);
-              window.location.href = `${portalUrl}/login?user=alumni`;
-              return;
-            }
-
-            localStorage.setItem("user", JSON.stringify(parsedUser));
-            localStorage.setItem("alumni_user", JSON.stringify(parsedUser));
-
-            toast.success("Authentication successful!");
-
-            // Wait for progress animation then redirect to dashboard
-            // Use window.location to ensure a full page reload with fresh auth state
-            setTimeout(() => {
-              clearInterval(timer);
-              // In production, basePath is /alumni, so we need to redirect relative to current location
-              // Using relative path ensures it works in both dev (no basePath) and prod (with /alumni basePath)
-              const basePath = process.env.NODE_ENV === "production" ? "/alumni" : "";
-              window.location.href = `${basePath}/`;
-            }, 2000);
-          } catch (error: unknown) {
-            console.error("Error processing authentication:", error);
-            toast.error("Authentication failed. Please try again.");
-            clearInterval(timer);
-            window.location.href = `${portalUrl}/login?user=alumni`;
-          }
-        } else {
-          // No authentication data, redirect to portal login
-          toast.error("No authentication data received");
-          clearInterval(timer);
-          window.location.href = `${portalUrl}/login?user=alumni`;
-        }
-      } catch (error: unknown) {
-        console.error("Error in auth callback:", error);
+    const basePath = process.env.NODE_ENV === "production" ? "/alumni" : "";
+    completeAuthCallback({
+      code: searchParams.get("code"),
+      next: searchParams.get("next") || `${basePath}/`,
+      onSuccess: (dest) => {
         clearInterval(timer);
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-        window.location.href = `${portalUrl}/login?user=alumni`;
-      }
-    };
-
-    // Start processing after a small delay
-    setTimeout(processAuth, 500);
+        window.location.href = dest;
+      },
+    });
 
     return () => clearInterval(timer);
   }, [searchParams, router]);

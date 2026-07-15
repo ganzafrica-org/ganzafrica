@@ -3,6 +3,17 @@
 import React, { useEffect, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import apiClient from "../../lib/api-client";
+
+const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+
+// Access to the internal payroll app is still gated by the email allowlist until FND-07/MOD-07
+// replaces it with the finance/hr RBAC role.
+function isAuthorized(email?: string): boolean {
+  const allow =
+    process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(",").map((e) => e.trim()) || [];
+  return !!email && allow.includes(email);
+}
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -10,80 +21,45 @@ function AuthCallbackContent() {
   const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    // Ensure we're on the client side
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
-    const processAuth = () => {
-      try {
-        const token = searchParams.get("token");
-        const user = searchParams.get("user");
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+    const run = async () => {
+      const code = searchParams.get("code");
+      const next = searchParams.get("next") || "/payroll/payslips";
 
-        if (token && user) {
-          try {
-            // Store the authentication tokens
-            localStorage.setItem("accessToken", token);
-
-            // Store user data - safely parse the user data
-            let parsedUser;
-            try {
-              const decodedUser = decodeURIComponent(user);
-              parsedUser = JSON.parse(decodedUser);
-            } catch (parseError) {
-              console.error("Error parsing user data:", parseError);
-              toast.error("Invalid user data received");
-              window.location.href = `${portalUrl}/login`;
-              return;
-            }
-
-            // Check if user email is authorized
-            const authorizedEmails =
-              process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(",").map((e) => e.trim()) ||
-              [];
-
-            if (!authorizedEmails.includes(parsedUser.email)) {
-              toast.error("You are not authorized to access the Internal Platform");
-              // Redirect back to platform selection
-              setTimeout(() => {
-                window.location.href = `${portalUrl}/platform-selection`;
-              }, 2000);
-              return;
-            }
-
-            localStorage.setItem("user", JSON.stringify(parsedUser));
-            localStorage.setItem("internal_user", JSON.stringify(parsedUser));
-
-            toast.success("Authentication successful!");
-
-            // Redirect to payslips
-            setTimeout(() => {
-              router.push("/payroll/payslips");
-            }, 500);
-          } catch (error: unknown) {
-            console.error("Error processing authentication:", error);
-            toast.error("Authentication failed. Please try again.");
-            // Redirect back to portal login
-            const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-            window.location.href = `${portalUrl}/login`;
-          }
-        } else {
-          // No authentication data, redirect to portal login
-          toast.error("No authentication data received");
-          const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-          window.location.href = `${portalUrl}/login`;
+      const gate = (email?: string) => {
+        if (!isAuthorized(email)) {
+          toast.error("You are not authorized to access the Internal Platform");
+          setTimeout(() => (window.location.href = `${PORTAL_URL}/platform-selection`), 2000);
+          return;
         }
-      } catch (error: unknown) {
-        console.error("Error in auth callback:", error);
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-        window.location.href = `${portalUrl}/login`;
-      } finally {
-        setIsProcessing(false);
+        router.replace(next);
+      };
+
+      try {
+        const me = await apiClient.get("/auth/me");
+        gate(me.data?.user?.email);
+        return;
+      } catch {
+        // no session yet
       }
+
+      if (code) {
+        try {
+          const res = await apiClient.post("/auth/handoff/exchange", { code });
+          gate(res.data?.user?.email);
+          return;
+        } catch {
+          // fall through
+        }
+      }
+
+      const login = new URL(`${PORTAL_URL}/login`);
+      login.searchParams.set("next", window.location.href);
+      window.location.href = login.toString();
     };
 
-    processAuth();
+    run().finally(() => setIsProcessing(false));
   }, [searchParams, router]);
 
   return (
