@@ -55,7 +55,6 @@ declare global {
         name: string;
         email: string;
         role_id: number;
-        /** HR portal JWT role (`EMPLOYEE` | `IT` | `HR`) when using `authenticateHr` */
         role?: string;
         role_name?: string;
         roles?: string[];
@@ -338,14 +337,14 @@ async function loadPermissions(userId: number): Promise<CachedPerms> {
  * `admin` is allowed everything. Ownership ("own row") is enforced in services, not here.
  * Run after `authenticate`.
  */
-export const requirePermission = (perm: Permission) => {
+export const requirePermission = (...required: Permission[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
     }
     try {
       const { roles: roleNames, perms } = await loadPermissions(Number(req.user.id));
-      if (roleNames.has("admin") || perms.has(perm)) return next();
+      if (roleNames.has("admin") || required.some((p) => perms.has(p))) return next();
       return res
         .status(403)
         .json({ error: "Forbidden", message: constants.ERROR_MESSAGES.FORBIDDEN });

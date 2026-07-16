@@ -1,74 +1,53 @@
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
 
-interface TokenPayload {
-  exp?: number;
-  id?: string;
-  email?: string;
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
+const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api",
+  baseURL: API_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// Helper to check if token is expired
-const isTokenExpired = (token: string): boolean => {
-  try {
-    const decoded = jwtDecode<TokenPayload>(token);
-    const currentTime = Date.now() / 1000;
-    return decoded.exp ? decoded.exp < currentTime : true;
-  } catch {
-    return true;
+function readCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
+  return match && match[1] ? decodeURIComponent(match[1]) : null;
+}
+
+apiClient.interceptors.request.use((config) => {
+  const method = (config.method || "get").toUpperCase();
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const csrf = readCookie("ganzafrica_csrf");
+    if (csrf) config.headers["X-CSRF-Token"] = csrf;
   }
-};
+  return config;
+});
 
-// Request interceptor for adding tokens
-apiClient.interceptors.request.use(
-  async (config) => {
-    let token = localStorage.getItem("accessToken");
+let refreshPromise: Promise<boolean> | null = null;
 
-    if (token) {
-      if (isTokenExpired(token)) {
-        console.debug("Token expired, attempting to refresh...");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        token = null;
-      }
-    }
-
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
-// Response interceptor for handling authentication errors
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      localStorage.removeItem("alumni_user");
-
+      if (!refreshPromise) {
+        refreshPromise = axios
+          .post(`${API_URL}/auth/refresh-token`, {}, { withCredentials: true })
+          .then(() => true)
+          .catch(() => false)
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+      if (await refreshPromise) return apiClient(originalRequest);
       if (typeof window !== "undefined") {
-        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-        window.location.href = `${portalUrl}/login?user=alumni`;
+        const login = new URL(`${PORTAL_URL}/login`);
+        login.searchParams.set("next", window.location.href);
+        window.location.href = login.toString();
       }
     }
-
     return Promise.reject(error);
   },
 );

@@ -39,6 +39,15 @@ function isAlumni(user: any): boolean {
   return roleName.includes("alumni");
 }
 
+// Helper: does the user hold any of the given roles (by role_name or roles[])?
+function hasAnyRole(user: any, wanted: string[]): boolean {
+  if (!user) return false;
+  const names = [user.role_name, ...(user.roles ?? [])]
+    .filter(Boolean)
+    .map((r: string) => r.toLowerCase());
+  return wanted.some((w) => names.includes(w));
+}
+
 // Helper to check if user is authorized for internal app
 function isInternalAuthorized(user: any): boolean {
   if (!user || !user.email) return false;
@@ -60,120 +69,38 @@ function PlatformSelectionContent(): React.JSX.Element {
   const userTypeParam = searchParams.get("user");
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      toast.error("Please log in first");
-      router.push("/login");
-      return;
-    }
-
-    // Fetch user profile from API to get complete role information
-    const fetchUserProfile = async () => {
-      // First, try to get user from localStorage for faster initial load
-      const cachedUser = localStorage.getItem("user");
-      if (cachedUser) {
-        try {
-          const parsedUser = JSON.parse(cachedUser);
-          setUser(parsedUser);
-          // Don't redirect yet - wait for fresh API data with role_name
-        } catch (error) {
-          console.error("Error parsing cached user:", error);
-        }
-      }
-
-      // Fetch fresh data from API - this has complete user data including role_name
+    const loadUser = async () => {
       try {
-        const response = await apiClient.get("/users/profile/me");
-        if (response.data && response.data.profile) {
-          const profile = response.data.profile;
-          const userData = {
-            id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            role_id: profile.role_id,
-            role_name: profile.role_name,
-            avatar_url: profile.avatar_url,
-            email_verified: profile.email_verified,
-          };
-          setUser(userData);
-          // Update localStorage with fresh data that includes role_name
-          localStorage.setItem("user", JSON.stringify(userData));
+        const response = await apiClient.get("/auth/me");
+        const me = response.data.user;
+        if (!me) {
+          router.push("/login");
+          return;
+        }
+        const userData = {
+          id: me.id,
+          name: me.name,
+          email: me.email,
+          role_id: me.role_id,
+          role_name: me.roles?.[0] ?? me.role_name,
+          roles: me.roles,
+          avatar_url: me.avatar_url,
+          email_verified: me.email_verified,
+        };
+        setUser(userData);
 
-          // NOW redirect if user=alumni param is present (after we have role_name)
-          if (userTypeParam === "alumni") {
-            redirectToAlumni(token, JSON.stringify(userData));
-            return;
-          }
-
-          setIsLoading(false);
+        if (userTypeParam === "alumni") {
+          redirectToAlumni("", "");
           return;
         }
       } catch (error) {
-        console.error("Error fetching user profile:", error);
-        // If API fails but we have cached data, keep using it
-        setIsLoading(false);
+        router.push("/login");
+        return;
       }
-
-      // Fallback: Get user data from localStorage (stored during login)
-      const userData = localStorage.getItem("user");
-      if (userData) {
-        try {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-        } catch (error) {
-          console.error("Error parsing user data:", error);
-          // If parsing fails, try to get user from token
-          try {
-            const { jwtDecode } = require("jwt-decode");
-            const decoded = jwtDecode(token);
-            setUser({
-              id: decoded.id,
-              name: decoded.name,
-              email: decoded.email,
-              role_id: decoded.role_id,
-              role_name: decoded.role_name,
-              avatar_url: decoded.avatar_url,
-              email_verified: decoded.email_verified,
-            });
-          } catch (tokenError) {
-            console.error("Error decoding token:", tokenError);
-            setUser({
-              name: "User",
-              email: "user@ganzafrica.org",
-              role: "user",
-            });
-          }
-        }
-      } else {
-        // If no user data in localStorage, try to get from token
-        try {
-          const { jwtDecode } = require("jwt-decode");
-          const decoded = jwtDecode(token);
-          setUser({
-            id: decoded.id,
-            name: decoded.name,
-            email: decoded.email,
-            role_id: decoded.role_id,
-            role_name: decoded.role_name,
-            avatar_url: decoded.avatar_url,
-            email_verified: decoded.email_verified,
-          });
-        } catch (error) {
-          console.error("Error decoding token:", error);
-          setUser({
-            name: "User",
-            email: "user@ganzafrica.org",
-            role: "user",
-          });
-        }
-      }
-
       setIsLoading(false);
     };
 
-    fetchUserProfile();
+    loadUser();
   }, [router, userTypeParam]);
 
   const redirectToAlumni = (_token: string, _userData: string) => {
@@ -182,16 +109,16 @@ function PlatformSelectionContent(): React.JSX.Element {
     redirectToApp("alumni", alumniAppUrl, "/");
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch {}
     toast.success("Logged out successfully");
     router.push("/login");
   };
 
   const handlePlatformSelect = (
-    platform: "portal" | "task" | "website" | "alumni" | "internal",
+    platform: "portal" | "task" | "website" | "alumni" | "internal" | "hr",
   ) => {
     if (platform === "portal") {
       // Check if user is admin or manager before allowing portal access
@@ -230,6 +157,10 @@ function PlatformSelectionContent(): React.JSX.Element {
       const internalAppUrl = process.env.NEXT_PUBLIC_INTERNAL_URL || "http://localhost:3005";
       toast.info("Redirecting to HR & Finance...", { duration: 2000 });
       redirectToApp("internal", internalAppUrl, "/payroll/payslips");
+    } else if (platform === "hr") {
+      const hrAppUrl = process.env.NEXT_PUBLIC_HR_URL || "http://localhost:3005";
+      toast.info("Redirecting to HR...", { duration: 2000 });
+      redirectToApp("hr", hrAppUrl, "/dashboard");
     }
   };
 
@@ -252,6 +183,8 @@ function PlatformSelectionContent(): React.JSX.Element {
   const showTask = !isAlumni(user);
   // Show Internal (HR & Finance) card only to authorized users
   const showInternal = isInternalAuthorized(user);
+  // Show HR card to anyone with an employee/hr/admin role (auth-and-rbac.md §5)
+  const showHr = hasAnyRole(user, ["employee", "hr", "admin"]);
 
   // Calculate grid columns based on visible cards
   let visibleCards = 1; // Website is always visible
@@ -259,6 +192,7 @@ function PlatformSelectionContent(): React.JSX.Element {
   if (showAlumni) visibleCards++;
   if (showTask) visibleCards++;
   if (showInternal) visibleCards++;
+  if (showHr) visibleCards++;
 
   const gridClass =
     visibleCards <= 2
@@ -531,6 +465,38 @@ function PlatformSelectionContent(): React.JSX.Element {
                         className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
                       >
                         Connect to HR & Finance{" "}
+                        <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* HR Platform - visible to any employee/hr/admin */}
+              {showHr && (
+                <div className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col h-full relative overflow-visible pt-10 pb-6 px-4 sm:px-6">
+                  <div
+                    className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-18 lg:h-18 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg z-10"
+                    style={{ backgroundColor: "#045F3C" }}
+                  >
+                    <Users className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-9 lg:w-9 text-white" />
+                  </div>
+                  <div className="text-center flex flex-col flex-grow">
+                    <h3
+                      className="text-lg sm:text-xl md:text-xl lg:text-2xl font-bold mb-3 sm:mb-4 mt-2"
+                      style={{ color: "#1e293b" }}
+                    >
+                      HR
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
+                      Leave, assets, documents, policies, and your employee profile.
+                    </p>
+                    <div className="mt-auto">
+                      <button
+                        onClick={() => handlePlatformSelect("hr")}
+                        className="text-[#045F3C] font-medium hover:text-[#03452f] transition-colors duration-300 flex items-center gap-1 justify-center group text-sm sm:text-base"
+                      >
+                        Connect to HR{" "}
                         <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
                       </button>
                     </div>

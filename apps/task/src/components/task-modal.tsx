@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useRef } from "react";
+import { getCurrentUserRole } from "@/lib/auth-utils";
 import {
   X,
   Users,
@@ -76,17 +77,8 @@ export function TaskModal({
 
   // Helper function to get current user ID
   const getCurrentUserId = (): number | null => {
-    try {
-      if (typeof window === "undefined") return null;
-      const userStr = localStorage.getItem("task_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        return user.id || null;
-      }
-    } catch (error) {
-      // Error getting current user
-    }
-    return null;
+    const user = getCurrentUserRole();
+    return user?.id != null ? Number(user.id) : null;
   };
 
   // Check if current user is the creator of the task
@@ -297,19 +289,7 @@ export function TaskModal({
               if (isAdminOrManager) {
                 resp = await taskApi.getTaskTeamProjects();
               } else {
-                const currentUserId =
-                  typeof window !== "undefined"
-                    ? (() => {
-                        try {
-                          const userStr = localStorage.getItem("task_user");
-                          if (userStr) {
-                            const user = JSON.parse(userStr);
-                            return user.id;
-                          }
-                        } catch (error) {}
-                        return null;
-                      })()
-                    : null;
+                const currentUserId = typeof window !== "undefined" ? getCurrentUserId() : null;
 
                 if (currentUserId) {
                   resp = await taskApi.getTaskTeamProjects(currentUserId);
@@ -463,21 +443,7 @@ export function TaskModal({
             resp = await taskApi.getTaskTeamProjects();
           } else {
             // For non-admin/management users, only load projects they are members of
-            const currentUserId =
-              typeof window !== "undefined"
-                ? (() => {
-                    try {
-                      const userStr = localStorage.getItem("task_user");
-                      if (userStr) {
-                        const user = JSON.parse(userStr);
-                        return user.id;
-                      }
-                    } catch (error) {
-                      console.error("Error getting current user:", error);
-                    }
-                    return null;
-                  })()
-                : null;
+            const currentUserId = getCurrentUserId();
 
             if (currentUserId) {
               resp = await taskApi.getTaskTeamProjects(currentUserId);
@@ -551,21 +517,7 @@ export function TaskModal({
         response = await taskTeamsApi.listTeams();
       } else {
         // For non-admin/management users, only load teams they are members of
-        const currentUserId =
-          typeof window !== "undefined"
-            ? (() => {
-                try {
-                  const userStr = localStorage.getItem("task_user");
-                  if (userStr) {
-                    const user = JSON.parse(userStr);
-                    return user.id;
-                  }
-                } catch (error) {
-                  console.error("Error getting current user:", error);
-                }
-                return null;
-              })()
-            : null;
+        const currentUserId = getCurrentUserId();
 
         if (currentUserId) {
           response = await taskTeamsApi.listTeams({ user_id: currentUserId });
@@ -1061,8 +1013,7 @@ export function TaskModal({
     setCommentText(""); // Clear input immediately for better UX
 
     // Get current user ID
-    const currentUser =
-      typeof window !== "undefined" ? JSON.parse(localStorage.getItem("task_user") || "{}") : {};
+    const currentUser = typeof window !== "undefined" ? getCurrentUserRole() || {} : {};
     const currentUserId = currentUser?.id?.toString() || "1";
     const currentUserName = currentUser?.name || "You";
 
@@ -1928,9 +1879,7 @@ export function TaskModal({
                               {/* Inline actions for own comments - optimistic UI, permission enforced server-side */}
                               {(() => {
                                 const currentUser =
-                                  typeof window !== "undefined"
-                                    ? JSON.parse(localStorage.getItem("task_user") || "{}")
-                                    : {};
+                                  typeof window !== "undefined" ? getCurrentUserRole() || {} : {};
                                 const isOwner =
                                   currentUser?.id &&
                                   currentUser.id.toString() === comment.userId?.toString();

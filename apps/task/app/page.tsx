@@ -1,25 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import apiClient from "@/lib/api-client";
+
+const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
 
 export default function HomePage(): React.JSX.Element {
   const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem("accessToken");
-
-    if (token) {
-      // User is authenticated, redirect to my-tasks
-      router.push("/my-tasks");
-    } else {
-      // User is not authenticated, redirect to login page
-      router.push("/login");
-    }
-
-    setIsChecking(false);
+    apiClient
+      .get("/auth/me")
+      .then(() => router.push("/my-tasks"))
+      .catch(() => {
+        window.location.href = `${PORTAL_URL}/login`;
+      });
   }, [router]);
 
   return (

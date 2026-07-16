@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Table,
@@ -129,11 +130,7 @@ export default function PayslipsPage() {
         ...(emailSent && { email_sent: emailSent }),
       });
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll?${params}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-      });
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll?${params}`, {});
 
       if (!response.ok) throw new Error("Failed to fetch payrolls");
 
@@ -223,11 +220,8 @@ export default function PayslipsPage() {
       const formData = new FormData();
       formData.append("file", uploadFile);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/upload-csv`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/upload-csv`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
         body: formData,
       });
 
@@ -248,11 +242,10 @@ export default function PayslipsPage() {
     if (!uploadResult?.valid_records) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
         body: JSON.stringify({ payrolls: uploadResult.valid_records }),
       });
@@ -272,11 +265,10 @@ export default function PayslipsPage() {
 
   const handleSendEmail = async (payrollId: number) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/send-emails`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/send-emails`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
         body: JSON.stringify({ payroll_ids: [payrollId] }),
       });
@@ -300,13 +292,12 @@ export default function PayslipsPage() {
       return;
     }
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL}/payroll/${payrollId}/revoke-links`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
           },
         },
       );
@@ -327,11 +318,10 @@ export default function PayslipsPage() {
 
     try {
       setSendingBulkEmails(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/send-emails`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/send-emails`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         },
         body: JSON.stringify({ payroll_ids: selectedIds }),
       });
@@ -363,13 +353,9 @@ export default function PayslipsPage() {
 
   const handleViewPayslip = async (payrollId: number) => {
     try {
-      const response = await fetch(
+      const response = await authFetch(
         `${process.env.NEXT_PUBLIC_API_URL}/payroll/${payrollId}/signed-url`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-          },
-        },
+        {},
       );
 
       if (!response.ok) throw new Error("Failed to get signed URL");
@@ -386,11 +372,8 @@ export default function PayslipsPage() {
     if (!deleteId) return;
     try {
       setDeleting(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/${deleteId}`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL}/payroll/${deleteId}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
       });
       if (!response.ok) throw new Error("Failed to delete payroll");
       toast.success("Payroll deleted");

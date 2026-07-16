@@ -1,21 +1,43 @@
 ﻿import { Router } from "express";
-import { validate } from "@/middlewares";
+import { validate, authenticate, requirePermission } from "@/middlewares";
 import * as policyController from "../../controllers/hr/policy.controller";
 import * as policyValidation from "../../validations/hr/policy.validation";
 
 const router: Router = Router();
 
-router.get("/", validate(policyValidation.listPoliciesSchema), policyController.listPolicies);
-router.get("/:id", validate(policyValidation.policyIdParamSchema), policyController.getPolicy);
+const read = requirePermission("policies:read", "policies:manage");
+const manage = requirePermission("policies:manage");
+
+router.use(authenticate);
+
+router.get("/", read, validate(policyValidation.listPoliciesSchema), policyController.listPolicies);
+router.get(
+  "/:id",
+  read,
+  validate(policyValidation.policyIdParamSchema),
+  policyController.getPolicy,
+);
 router.get(
   "/:id/download",
+  read,
   validate(policyValidation.policyIdParamSchema),
   policyController.downloadPolicy,
 );
-router.post("/", validate(policyValidation.createPolicySchema), policyController.createPolicy);
-router.patch("/:id", validate(policyValidation.updatePolicySchema), policyController.updatePolicy);
+router.post(
+  "/",
+  manage,
+  validate(policyValidation.createPolicySchema),
+  policyController.createPolicy,
+);
+router.patch(
+  "/:id",
+  manage,
+  validate(policyValidation.updatePolicySchema),
+  policyController.updatePolicy,
+);
 router.delete(
   "/:id",
+  manage,
   validate(policyValidation.policyIdParamSchema),
   policyController.deletePolicy,
 );

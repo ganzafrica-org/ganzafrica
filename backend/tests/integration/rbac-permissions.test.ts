@@ -1,34 +1,11 @@
-import { describe, it, expect, beforeEach, beforeAll } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import supertest from "supertest";
 import app from "../../src/app";
 import { resetDb } from "../setup";
 import { loginAs } from "../helpers/auth";
-import { makeUser, makePayroll, ensureRole } from "../factories";
-import { db } from "../../src/db/client";
-import { roles, permissions, role_permissions } from "../../src/db/schema";
-import { eq } from "drizzle-orm";
+import { makeUser, makePayroll } from "../factories";
+import { grant } from "../helpers/rbac";
 import { clearPermissionCache } from "../../src/middlewares";
-
-async function grant(roleName: string, resource: string, action: string) {
-  const role = await ensureRole(roleName);
-  const [perm] = await db
-    .insert(permissions)
-    .values({
-      id: Math.floor(Math.random() * 1e9),
-      name: `${resource}:${action}`,
-      resource,
-      action,
-    })
-    .onConflictDoNothing()
-    .returning();
-  const permId =
-    perm?.id ??
-    (await db.select().from(permissions).where(eq(permissions.resource, resource)).limit(1))[0].id;
-  await db
-    .insert(role_permissions)
-    .values({ id: Math.floor(Math.random() * 1e9), role_id: role.id, permission_id: permId })
-    .onConflictDoNothing();
-}
 
 describe("requirePermission on /api/payroll", () => {
   beforeEach(async () => {

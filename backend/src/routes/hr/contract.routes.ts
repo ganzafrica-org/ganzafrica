@@ -1,45 +1,44 @@
 import { Router } from "express";
-import { authenticateHr, enforceHrPasswordPolicy } from "@/middlewares/hr/hr.auth.middleware";
-import { requireRole } from "@/middlewares/auth.middleware";
+import { authenticate, requirePermission } from "@/middlewares/auth.middleware";
 import { validate } from "@/middlewares/validation.middleware";
 import * as contractController from "@/controllers/hr/contract.controller";
 import * as contractValidation from "@/validations/hr/contract.validation";
 
 const router: Router = Router({ mergeParams: true });
 
-router.use(authenticateHr, enforceHrPasswordPolicy);
+router.use(authenticate);
 
 router.post(
   "/",
-  requireRole("HR"),
+  requirePermission("contracts:manage"),
   validate(contractValidation.createContractSchema),
   contractController.createContract,
 );
 
 router.get(
   "/",
-  requireRole("HR", "IT"),
+  requirePermission("contracts:read"),
   validate(contractValidation.listContractsSchema),
   contractController.listContracts,
 );
 
 router.get(
   "/:contractId",
-  requireRole("HR", "IT"),
+  requirePermission("contracts:read"),
   validate(contractValidation.contractIdParamSchema),
   contractController.getContract,
 );
 
 router.patch(
   "/:contractId",
-  requireRole("HR"),
+  requirePermission("contracts:manage"),
   validate(contractValidation.updateContractSchema),
   contractController.updateContract,
 );
 
 router.delete(
   "/:contractId",
-  requireRole("HR"),
+  requirePermission("contracts:manage"),
   validate(contractValidation.contractIdParamSchema),
   contractController.deleteContract,
 );

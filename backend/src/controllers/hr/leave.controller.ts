@@ -164,7 +164,7 @@ function parseLeaveInput(body: Record<string, unknown>): CreateLeaveInput {
 
 export const listAllLeaves = async (req: Request, res: Response): Promise<void> => {
   try {
-    const leaves = await leaveService.listAllLeaves(getHrRequester(req));
+    const leaves = await leaveService.listAllLeaves(await getHrRequester(req));
     res.status(200).json(leaves);
   } catch (error) {
     logger.error("List all leaves error", error);
@@ -175,7 +175,7 @@ export const listAllLeaves = async (req: Request, res: Response): Promise<void> 
 export const listEmployeeLeaves = async (req: Request, res: Response): Promise<void> => {
   try {
     const leaves = await leaveService.listLeavesByEmployee(
-      getHrRequester(req),
+      await getHrRequester(req),
       req.params.employeeId,
     );
     res.status(200).json(leaves);
@@ -188,7 +188,7 @@ export const listEmployeeLeaves = async (req: Request, res: Response): Promise<v
 export const createLeave = async (req: Request, res: Response): Promise<void> => {
   try {
     const leave = await leaveService.createLeave(
-      getHrRequester(req),
+      await getHrRequester(req),
       req.params.employeeId,
       parseLeaveInput(req.body),
     );
@@ -202,7 +202,7 @@ export const createLeave = async (req: Request, res: Response): Promise<void> =>
 export const updateLeave = async (req: Request, res: Response): Promise<void> => {
   try {
     const body = req.body as UpdateLeaveInput & { startDate?: string; endDate?: string };
-    const leave = await leaveService.updateLeave(getHrRequester(req), req.params.id, {
+    const leave = await leaveService.updateLeave(await getHrRequester(req), req.params.id, {
       type: body.type,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       endDate: body.endDate ? new Date(body.endDate) : undefined,
@@ -217,7 +217,7 @@ export const updateLeave = async (req: Request, res: Response): Promise<void> =>
 
 export const cancelLeave = async (req: Request, res: Response): Promise<void> => {
   try {
-    const leave = await leaveService.cancelLeave(getHrRequester(req), req.params.id);
+    const leave = await leaveService.cancelLeave(await getHrRequester(req), req.params.id);
     res.status(200).json(leave);
   } catch (error) {
     logger.error("Cancel leave error", error);
@@ -227,7 +227,7 @@ export const cancelLeave = async (req: Request, res: Response): Promise<void> =>
 
 export const approveLeave = async (req: Request, res: Response): Promise<void> => {
   try {
-    const leave = await leaveService.approveLeave(getHrRequester(req), req.params.id);
+    const leave = await leaveService.approveLeave(await getHrRequester(req), req.params.id);
     res.status(200).json(leave);
   } catch (error) {
     logger.error("Approve leave error", error);
@@ -237,7 +237,7 @@ export const approveLeave = async (req: Request, res: Response): Promise<void> =
 
 export const rejectLeave = async (req: Request, res: Response): Promise<void> => {
   try {
-    const leave = await leaveService.rejectLeave(getHrRequester(req), req.params.id);
+    const leave = await leaveService.rejectLeave(await getHrRequester(req), req.params.id);
     res.status(200).json(leave);
   } catch (error) {
     logger.error("Reject leave error", error);

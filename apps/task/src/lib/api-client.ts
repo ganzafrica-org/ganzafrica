@@ -1,176 +1,54 @@
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
 import { logger } from "./logger";
 
-// Interface for token payload
-interface TokenPayload {
-  exp?: number;
-  id?: string;
-  email?: string;
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
+const PORTAL_URL = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api",
+  baseURL: API_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// Helper to check if token is expired
-const isTokenExpired = (token: string): boolean => {
-  try {
-    const decoded = jwtDecode<TokenPayload>(token);
-    const currentTime = Date.now() / 1000;
-    return decoded.exp ? decoded.exp < currentTime : true;
-  } catch {
-    return true;
+function readCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
+  return match && match[1] ? decodeURIComponent(match[1]) : null;
+}
+
+apiClient.interceptors.request.use((config) => {
+  const method = (config.method || "get").toUpperCase();
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const csrf = readCookie("ganzafrica_csrf");
+    if (csrf) config.headers["X-CSRF-Token"] = csrf;
   }
-};
+  return config;
+});
 
-// Helper function to refresh the access token
-const refreshAccessToken = async (): Promise<string | null> => {
-  try {
-    const refreshToken = localStorage.getItem("refreshToken");
-    if (!refreshToken) {
-      logger.debug("No refresh token available");
-      return null;
-    }
+let refreshPromise: Promise<boolean> | null = null;
 
-    logger.debug("Attempting to refresh access token...");
-
-    // Call refresh token endpoint
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api"}/auth/refresh-token`,
-      { refresh_token: refreshToken },
-      {
-        withCredentials: true,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    );
-
-    logger.debug("Refresh token response:", {
-      status: response.status,
-      hasToken: !!response.data?.token,
-      dataKeys: Object.keys(response.data || {}),
-    });
-
-    if (response.data?.token) {
-      const newAccessToken = response.data.token;
-      localStorage.setItem("accessToken", newAccessToken);
-
-      // Update refresh token if a new one is provided
-      if (response.data.refresh_token) {
-        localStorage.setItem("refreshToken", response.data.refresh_token);
-        logger.debug("Refresh token also updated");
-      }
-
-      logger.debug("Token refreshed successfully");
-      return newAccessToken;
-    }
-
-    logger.warn("Refresh token response did not contain a token");
-    return null;
-  } catch (error: any) {
-    logger.error("Failed to refresh token:", {
-      message: error?.message,
-      status: error?.response?.status,
-      data: error?.response?.data,
-    });
-
-    // Clear tokens on refresh failure
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("task_user");
-    return null;
-  }
-};
-
-// Flag to prevent multiple simultaneous refresh attempts
-let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
-
-// Request interceptor for adding tokens
-apiClient.interceptors.request.use(
-  async (config) => {
-    let token = localStorage.getItem("accessToken");
-
-    if (token) {
-      // If token exists but is expired, try to refresh it first
-      if (isTokenExpired(token)) {
-        logger.debug("Token expired, attempting to refresh...");
-
-        // If already refreshing, wait for that promise
-        if (isRefreshing && refreshPromise) {
-          logger.debug("Waiting for ongoing token refresh...");
-          token = await refreshPromise;
-        } else {
-          // Start new refresh
-          isRefreshing = true;
-          refreshPromise = refreshAccessToken();
-          token = await refreshPromise;
-          isRefreshing = false;
-          refreshPromise = null;
-        }
-      }
-    } else {
-      // No token at all - try to refresh if refresh token exists
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (refreshToken && !isRefreshing) {
-        logger.debug("No access token, attempting to refresh...");
-        isRefreshing = true;
-        refreshPromise = refreshAccessToken();
-        token = await refreshPromise;
-        isRefreshing = false;
-        refreshPromise = null;
-      }
-    }
-
-    // Add token to headers if it exists
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
-    }
-
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
-// Response interceptor for handling authentication errors
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
-    // Handle 401 errors (unauthorized) - try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
-      // Try to refresh the token
-      const newToken = await refreshAccessToken();
-
-      if (newToken) {
-        // Retry the original request with the new token
-        originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
-        return apiClient(originalRequest);
-      } else {
-        // Refresh failed - clear tokens and redirect to portal login
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        localStorage.removeItem("task_user");
-
-        // Redirect to portal login page if in browser environment
-        if (typeof window !== "undefined") {
-          const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
-          window.location.href = `${portalUrl}/login`;
-        }
+      if (!refreshPromise) {
+        refreshPromise = axios
+          .post(`${API_URL}/auth/refresh-token`, {}, { withCredentials: true })
+          .then(() => true)
+          .catch(() => false)
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+      if (await refreshPromise) return apiClient(originalRequest);
+      if (typeof window !== "undefined") {
+        const login = new URL(`${PORTAL_URL}/login`);
+        login.searchParams.set("next", window.location.href);
+        window.location.href = login.toString();
       }
     }
-
     return Promise.reject(error);
   },
 );

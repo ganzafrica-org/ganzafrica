@@ -179,7 +179,7 @@ function parseContractBody(body: Record<string, unknown>): CreateContractInput {
 export const listContracts = async (req: Request, res: Response): Promise<void> => {
   try {
     const contracts = await contractService.listContractsByEmployee(
-      getHrRequester(req),
+      await getHrRequester(req),
       req.params.employeeId,
     );
     res.status(200).json(contracts);
@@ -192,7 +192,7 @@ export const listContracts = async (req: Request, res: Response): Promise<void> 
 export const getContract = async (req: Request, res: Response): Promise<void> => {
   try {
     const contract = await contractService.getContractById(
-      getHrRequester(req),
+      await getHrRequester(req),
       req.params.employeeId,
       req.params.contractId,
     );
@@ -206,7 +206,7 @@ export const getContract = async (req: Request, res: Response): Promise<void> =>
 export const createContract = async (req: Request, res: Response): Promise<void> => {
   try {
     const contract = await contractService.createContract(
-      getHrRequester(req),
+      await getHrRequester(req),
       req.params.employeeId,
       parseContractBody(req.body),
     );
@@ -221,7 +221,7 @@ export const updateContract = async (req: Request, res: Response): Promise<void>
   try {
     const body = req.body;
     const contract = await contractService.updateContract(
-      getHrRequester(req),
+      await getHrRequester(req),
       req.params.employeeId,
       req.params.contractId,
       {
@@ -258,7 +258,7 @@ export const updateContract = async (req: Request, res: Response): Promise<void>
 export const deleteContract = async (req: Request, res: Response): Promise<void> => {
   try {
     await contractService.deleteContract(
-      getHrRequester(req),
+      await getHrRequester(req),
       req.params.employeeId,
       req.params.contractId,
     );

@@ -3,6 +3,10 @@
  */
 
 export interface UserRole {
+  id?: number | string;
+  name?: string;
+  email?: string;
+  avatar_url?: string;
   role_name?: string;
   roleName?: string;
   role?: string;
@@ -73,66 +77,36 @@ export function shouldBlockUser(user: UserRole | null): boolean {
   return isAlumni(user);
 }
 
-/**
- * Get user role information from localStorage
- * @returns User role information or null if not found
- */
-export function getCurrentUserRole(): UserRole | null {
-  try {
-    // Check if we're in the browser environment
-    if (typeof window === "undefined") {
-      return null;
-    }
+// In-memory cache of the current user, populated by fetchUserProfile (from /auth/me over the
+// session cookie). Sync callers read this; there is no token/user in localStorage anymore.
+let cachedUser: UserRole | null = null;
 
-    const userStr = localStorage.getItem("task_user") || localStorage.getItem("user");
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      return {
-        role_name: user.role_name,
-        roleName: user.roleName,
-        role: user.role,
-        role_id: user.role_id,
-        roleId: user.roleId,
-      };
-    }
-  } catch (error) {}
-  return null;
+export function getCurrentUserRole(): UserRole | null {
+  return cachedUser;
 }
 
 /**
- * Fetch user profile from API
- * @returns Promise<UserRole | null> - User role information or null if not found
+ * Fetch the current user from /auth/me (cookie session) and cache it for sync callers.
  */
 export async function fetchUserProfile(): Promise<UserRole | null> {
+  if (typeof window === "undefined") return null;
   try {
-    // Check if we're in the browser environment
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    const token = localStorage.getItem("accessToken") || localStorage.getItem("task_token");
-    if (!token) {
-      return null;
-    }
-
-    // Import apiClient dynamically to avoid circular imports
     const { default: apiClient } = await import("./api-client");
-
-    const response = await apiClient.get("/users/profile/me");
-    const profile = response.data.profile;
-
-    if (profile) {
-      // Update localStorage with fresh profile data
-      localStorage.setItem("task_user", JSON.stringify(profile));
-      localStorage.setItem("user", JSON.stringify(profile));
-
-      return {
-        role_name: profile.role_name,
-        roleName: profile.role_name,
-        role: profile.role_name,
-        role_id: profile.role_id,
-        roleId: profile.role_id,
+    const response = await apiClient.get("/auth/me");
+    const user = response.data.user;
+    if (user) {
+      cachedUser = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        role_name: user.roles?.[0] ?? user.role_name,
+        roleName: user.roles?.[0] ?? user.role_name,
+        role: user.roles?.[0] ?? user.role_name,
+        role_id: user.role_id,
+        roleId: user.role_id,
       };
+      return cachedUser;
     }
   } catch (error) {}
   return null;
@@ -198,9 +172,7 @@ export function canEditTask(taskCreatorId: number | string): boolean {
 
   // Check if current user is the task creator
   try {
-    const currentUserId = parseInt(
-      localStorage.getItem("task_user_id") || localStorage.getItem("user_id") || "0",
-    );
+    const currentUserId = user?.id != null ? parseInt(String(user.id)) : 0;
     return currentUserId === parseInt(taskCreatorId.toString());
   } catch (error) {
     return false;
@@ -222,9 +194,7 @@ export async function canEditTaskAsync(taskCreatorId: number | string): Promise<
 
   // Check if current user is the task creator
   try {
-    const currentUserId = parseInt(
-      localStorage.getItem("task_user_id") || localStorage.getItem("user_id") || "0",
-    );
+    const currentUserId = user?.id != null ? parseInt(String(user.id)) : 0;
     return currentUserId === parseInt(taskCreatorId.toString());
   } catch (error) {
     return false;

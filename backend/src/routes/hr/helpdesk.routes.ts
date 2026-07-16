@@ -1,25 +1,48 @@
 ﻿import { Router } from "express";
-import { validate } from "../../middlewares";
+import { validate, authenticate, requirePermission } from "../../middlewares";
 import * as helpdeskController from "../../controllers/hr/helpdesk.controller";
 import * as helpdeskValidation from "../../validations/hr/helpdesk.validation";
 
 const router: Router = Router();
 
-router.post("/", validate(helpdeskValidation.createTicketSchema), helpdeskController.createTicket);
-router.get("/", validate(helpdeskValidation.listTicketsSchema), helpdeskController.listTickets);
-router.get("/:id", validate(helpdeskValidation.ticketIdParamSchema), helpdeskController.getTicket);
+const manage = requirePermission("helpdesk:manage");
+const createOrManage = requirePermission("helpdesk:create", "helpdesk:manage");
+
+router.use(authenticate);
+
+router.post(
+  "/",
+  createOrManage,
+  validate(helpdeskValidation.createTicketSchema),
+  helpdeskController.createTicket,
+);
+router.get(
+  "/",
+  createOrManage,
+  validate(helpdeskValidation.listTicketsSchema),
+  helpdeskController.listTickets,
+);
+router.get(
+  "/:id",
+  createOrManage,
+  validate(helpdeskValidation.ticketIdParamSchema),
+  helpdeskController.getTicket,
+);
 router.patch(
   "/:id/answer",
+  manage,
   validate(helpdeskValidation.answerTicketSchema),
   helpdeskController.answerTicket,
 );
 router.patch(
   "/:id",
+  manage,
   validate(helpdeskValidation.updateTicketSchema),
   helpdeskController.updateTicket,
 );
 router.delete(
   "/:id",
+  manage,
   validate(helpdeskValidation.ticketIdParamSchema),
   helpdeskController.deleteTicket,
 );

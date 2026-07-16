@@ -12,7 +12,7 @@ import type {
   UpdateMaintenanceRequest,
 } from "@/types/api";
 
-const BASE = "/assets";
+const BASE = "/hr/assets";
 
 export const assetsService = {
   // ── Assets ────────────────────────────────────────────────────────────────

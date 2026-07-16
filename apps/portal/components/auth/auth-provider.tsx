@@ -97,50 +97,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Function to load user from token or API (but skip API if no token exists)
+  // Load the current user from the session cookie via /auth/me.
   const loadUser = async (): Promise<boolean> => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        // If no token exists, don't try API fallback
-        return false;
-      }
-
-      const tokenUser = getUserFromToken(token);
-      if (tokenUser) {
-        setUser(tokenUser);
+      const res = await apiClient.get("/auth/me");
+      const me = res.data.user;
+      if (me) {
+        setUser({ ...me, role_name: me.roles?.[0] ?? me.role_name });
         return true;
       }
-
-      // Try refreshing token
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (refreshToken) {
-          const response = await apiClient.post("/auth/refresh-token", {
-            refresh_token: refreshToken,
-          });
-
-          if (response.data?.token) {
-            localStorage.setItem("accessToken", response.data.token);
-            const newTokenUser = getUserFromToken(response.data.token);
-            if (newTokenUser) {
-              setUser(newTokenUser);
-              return true;
-            }
-          }
-        }
-      } catch (refreshError) {
-        console.error("Token refresh failed:", refreshError);
-      }
-
-      // IMPORTANT: Remove the API fallback completely
-      // We're getting rate limited, and the token-based auth should be sufficient
-      // If token auth fails, consider the user unauthenticated
-      return false;
-
+      setUser(null);
       return false;
     } catch (error) {
-      console.error("Error loading user:", error);
       setUser(null);
       return false;
     } finally {
@@ -162,22 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Only run auth check on initial load or when navigating to protected routes
     if (!authChecked || isProtectedRoute) {
       const checkAuth = async () => {
-        // Create a flag to indicate we're currently checking auth
-        if (localStorage.getItem("authCheckInProgress") === "true") {
-          return; // Don't run concurrent auth checks
-        }
-
-        try {
-          localStorage.setItem("authCheckInProgress", "true");
-          const hasUser = await loadUser();
-          setAuthChecked(true);
-
-          if (!hasUser && isProtectedRoute) {
-            toast.error("Please log in to access this page");
-            router.replace("/login");
-          }
-        } finally {
-          localStorage.removeItem("authCheckInProgress");
+        const hasUser = await loadUser();
+        setAuthChecked(true);
+        if (!hasUser && isProtectedRoute) {
+          toast.error("Please log in to access this page");
+          router.replace("/login");
         }
       };
 
@@ -190,12 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await apiClient.post("/auth/logout");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Logout failed");
       console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("lastApiCallTime"); // Clear API call timestamp
       setUser(null);
       toast.success("Logged out successfully");
       router.push("/login");

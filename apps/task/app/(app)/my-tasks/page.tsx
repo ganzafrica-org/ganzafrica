@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { getCurrentUserRole } from "@/lib/auth-utils";
 import { KanbanBoard } from "@/components/kanban-board";
 import { TaskCard } from "@/components/task-card";
 import { Navbar } from "@/components/navbar";
@@ -67,73 +68,37 @@ export default function BoardPage(): React.JSX.Element {
   const [taskMembers, setTaskMembers] = useState<any[]>([]);
   const { toasts, removeToast, showSuccess, showError } = useToast();
 
-  // Get current user ID from localStorage
+  // Get current user ID from the cookie-session cache
   const getCurrentUserId = () => {
-    try {
-      // Check if we're in the browser environment
-      if (typeof window === "undefined") {
-        return 1; // fallback for SSR
-      }
-
-      const userStr = localStorage.getItem("task_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        return user.id || 1; // fallback to 1 if no id
-      }
-    } catch (error) {
-      // Error getting current user
-    }
-    return 1; // fallback
+    const user = getCurrentUserRole();
+    return user?.id != null ? Number(user.id) : 1;
   };
 
-  // Check if current user has manager role
+  // Check if current user has manager role (from the cookie-session cache)
   const isCurrentUserManager = () => {
-    try {
-      // Check if we're in the browser environment
-      if (typeof window === "undefined") {
-        return false;
-      }
-
-      const userStr = localStorage.getItem("task_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        const roleName = user.role_name || user.roleName;
-        const roleId = user.role_id || user.roleId;
-
-        // Consider admin, staff, and mentor roles as manager roles
-        const isManagerRole =
-          roleName &&
-          (roleName.toLowerCase().includes("admin") ||
-            roleName.toLowerCase().includes("staff") ||
-            roleName.toLowerCase().includes("mentor") ||
-            roleName.toLowerCase().includes("manager") ||
-            (roleId && roleId < 1000)); // Assuming manager roles have IDs < 1000
-
-        return isManagerRole;
-      }
-    } catch (error: unknown) {
-      // Error checking user role
-    }
-    return false; // Default to non-manager
+    const user = getCurrentUserRole();
+    const roleName = user?.role_name || user?.roleName;
+    const roleId = user?.role_id || user?.roleId;
+    return !!(
+      roleName &&
+      (roleName.toLowerCase().includes("admin") ||
+        roleName.toLowerCase().includes("staff") ||
+        roleName.toLowerCase().includes("mentor") ||
+        roleName.toLowerCase().includes("manager") ||
+        (roleId && roleId < 1000))
+    );
   };
 
-  // Get current user info from localStorage
   const getCurrentUser = () => {
-    try {
-      // Check if we're in the browser environment
-      if (typeof window === "undefined") {
-        return { id: 1, name: "Current User" }; // fallback for SSR
-      }
-
-      const userStr = localStorage.getItem("task_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        return user;
-      }
-    } catch (error) {
-      // Error getting current user
-    }
-    return { id: 1, name: "Current User" }; // fallback
+    const user = getCurrentUserRole();
+    return user
+      ? {
+          id: Number(user.id ?? 1),
+          name: user.name,
+          email: user.email,
+          avatar_url: user.avatar_url,
+        }
+      : { id: 1, name: "Current User" };
   };
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;

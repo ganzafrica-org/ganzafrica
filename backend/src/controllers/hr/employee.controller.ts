@@ -2,6 +2,7 @@
 import { sendResponse } from "@/utils/sendResponse";
 import { AppError } from "@/middlewares";
 import * as employeesService from "@/services/hr/employee.service";
+import { getHrRequester } from "../../utils/hr-requester";
 import { HrRole } from "@/types/employee.types";
 
 /**
@@ -91,21 +92,18 @@ export const createEmployee = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const employee = await employeesService.createEmployee(
-      { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },
-      {
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        personalEmail: req.body.personalEmail,
-        workEmail: req.body.workEmail ?? null,
-        phone: req.body.phone ?? null,
-        citizenship: req.body.citizenship ?? null,
-        homeCountry: req.body.homeCountry ?? null,
-        homeCity: req.body.homeCity ?? null,
-        role: req.body.role,
-        platformUserId: req.body.platformUserId,
-      },
-    );
+    const employee = await employeesService.createEmployee(await getHrRequester(req), {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      personalEmail: req.body.personalEmail,
+      workEmail: req.body.workEmail ?? null,
+      phone: req.body.phone ?? null,
+      citizenship: req.body.citizenship ?? null,
+      homeCountry: req.body.homeCountry ?? null,
+      homeCity: req.body.homeCity ?? null,
+      role: req.body.role,
+      platformUserId: req.body.platformUserId,
+    });
 
     sendResponse(res, {
       success: true,
@@ -127,17 +125,14 @@ export const listEmployees = async (
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 10;
 
-    const { data, total } = await employeesService.listEmployees(
-      { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },
-      {
-        page,
-        limit,
-        status: query.status,
-        location: query.location,
-        sortBy: query.sortBy || "joinDate",
-        sortOrder: query.sortOrder || "desc",
-      },
-    );
+    const { data, total } = await employeesService.listEmployees(await getHrRequester(req), {
+      page,
+      limit,
+      status: query.status,
+      location: query.location,
+      sortBy: query.sortBy || "joinDate",
+      sortOrder: query.sortOrder || "desc",
+    });
 
     sendResponse(res, {
       success: true,
@@ -162,7 +157,7 @@ export const getEmployee = async (
 ): Promise<void> => {
   try {
     const employee = await employeesService.getEmployeeById(
-      { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },
+      await getHrRequester(req),
       req.params.id,
     );
 
@@ -182,16 +177,13 @@ export const updateEmployee = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    // Ownership check: EMPLOYEE can only update their own profile
-    if (req.user!.role === "EMPLOYEE" && req.params.id !== req.user!.id) {
+    const requester = await getHrRequester(req);
+    // Ownership check: a plain employee can only update their own profile.
+    if (requester.role === "EMPLOYEE" && req.params.id !== requester.id) {
       throw new AppError("You can only modify your own profile", 403);
     }
 
-    const updated = await employeesService.updateEmployee(
-      { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },
-      req.params.id,
-      req.body,
-    );
+    const updated = await employeesService.updateEmployee(requester, req.params.id, req.body);
 
     sendResponse(res, {
       success: true,
@@ -209,10 +201,7 @@ export const deleteEmployee = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    await employeesService.softDeleteEmployee(
-      { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },
-      req.params.id,
-    );
+    await employeesService.softDeleteEmployee(await getHrRequester(req), req.params.id);
 
     sendResponse(res, {
       success: true,

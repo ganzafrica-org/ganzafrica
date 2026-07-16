@@ -120,30 +120,10 @@ export default function CalendarPage(): React.JSX.Element {
     }
   };
 
-  // Get current user ID from localStorage
+  // Get current user ID from the cookie-session cache
   const getCurrentUserId = (): number => {
-    try {
-      // Check if we're in the browser environment
-      if (typeof window === "undefined") {
-        return 0; // fallback for SSR
-      }
-
-      // Try task_user first (most common)
-      const userStr = localStorage.getItem("task_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        return user.id || 0;
-      }
-
-      // Fallback to task_user_id or user_id
-      const userIdStr = localStorage.getItem("task_user_id") || localStorage.getItem("user_id");
-      if (userIdStr) {
-        return parseInt(userIdStr, 10);
-      }
-    } catch (error) {
-      // Error getting current user ID
-    }
-    return 0;
+    const user = getCurrentUserRole();
+    return user?.id != null ? Number(user.id) : 0;
   };
 
   // Check Google Calendar connection status

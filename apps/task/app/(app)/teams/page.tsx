@@ -43,11 +43,10 @@ export default function TeamsPage(): React.JSX.Element {
     // Admin and Manager can always manage teams
     if (isUserAdminOrManager) return true;
 
-    // Get current user ID from localStorage
+    // Get current user ID from the cookie-session cache
     try {
-      const currentUserId = parseInt(
-        localStorage.getItem("task_user_id") || localStorage.getItem("user_id") || "0",
-      );
+      const cu = getCurrentUserRole();
+      const currentUserId = cu?.id != null ? Number(cu.id) : 0;
       if (currentUserId === 0) return false;
 
       // Check if current user is a member of this team
@@ -210,8 +209,7 @@ export default function TeamsPage(): React.JSX.Element {
 
     try {
       setCreating(true);
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
+      const user = getCurrentUserRole();
 
       if (!user || !user.id) {
         setErrorModal({
@@ -268,7 +266,7 @@ export default function TeamsPage(): React.JSX.Element {
         name: newTeam.name,
         description: newTeam.description,
         color: newTeam.color,
-        created_by: parseInt(user.id),
+        created_by: parseInt(String(user.id)),
         status: "active",
         members: members.length > 0 ? members : undefined,
         projects: projects.length > 0 ? projects : undefined,
