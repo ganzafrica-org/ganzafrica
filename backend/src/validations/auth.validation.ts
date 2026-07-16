@@ -64,7 +64,9 @@ export const verifyEmailSchema = z.object({
 
 // Refresh token validation
 export const refreshTokenSchema = z.object({
+  // Optional: the refresh token normally arrives via the httpOnly cookie (FND-06 SSO). The body
+  // form remains supported for non-browser clients.
   body: z.object({
-    refresh_token: z.string().min(1, "Refresh token is required"),
+    refresh_token: z.string().min(1).optional(),
   }),
 });

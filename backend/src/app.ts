@@ -9,6 +9,7 @@ import swaggerSpecs from "./swagger/specs";
 import { env, Logger, constants } from "./config";
 import { checkDatabaseConnection } from "./db/client";
 import { errorHandler, notFoundHandler } from "./middlewares";
+import { csrfProtection } from "./middlewares/csrf.middleware";
 import path from "path";
 
 // Import routes - corrected to match your existing import
@@ -78,6 +79,9 @@ app.get("/api/health", async (req: Request, res: Response) => {
 
 // API documentation
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+
+// CSRF (double-submit) on all API routes; entry-point routes are exempted inside the middleware.
+app.use("/api", csrfProtection);
 
 // API routes
 app.use("/api", apiRoutes);

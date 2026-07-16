@@ -1,6 +1,7 @@
 export * from "./users";
 export * from "./projects";
 export * from "./security";
+export * from "./auth-handoff";
 export * from "./audit";
 export * from "./teams";
 export * from "./partners";

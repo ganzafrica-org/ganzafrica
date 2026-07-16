@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import apiClient from "@/lib/api-client";
 import { isAdminOrManager } from "@/lib/auth-utils";
+import { redirectToApp } from "@/lib/sso";
 
 // Helper to check if user is alumni
 function isAlumni(user: any): boolean {
@@ -175,20 +176,10 @@ function PlatformSelectionContent(): React.JSX.Element {
     fetchUserProfile();
   }, [router, userTypeParam]);
 
-  const redirectToAlumni = (token: string, userData: string) => {
+  const redirectToAlumni = (_token: string, _userData: string) => {
     const alumniAppUrl = process.env.NEXT_PUBLIC_ALUMNI_URL || "http://localhost:3004";
-    try {
-      const alumniUrl = new URL(`${alumniAppUrl}/auth-callback`);
-      alumniUrl.searchParams.set("token", token);
-      if (userData) {
-        alumniUrl.searchParams.set("user", encodeURIComponent(userData));
-      }
-      toast.info("Redirecting to Alumni Portal...", { duration: 2000 });
-      window.location.href = alumniUrl.toString();
-    } catch (error) {
-      console.error("Error constructing redirect URL:", error);
-      toast.error("Failed to redirect. Please try again.");
-    }
+    toast.info("Redirecting to Alumni Portal...", { duration: 2000 });
+    redirectToApp("alumni", alumniAppUrl, "/");
   };
 
   const handleLogout = () => {
@@ -213,49 +204,13 @@ function PlatformSelectionContent(): React.JSX.Element {
       }
       router.push("/dashboard");
     } else if (platform === "task") {
-      // Pass authentication data to task management app
-      const token = localStorage.getItem("accessToken");
-      const userData = localStorage.getItem("user");
-
-      if (!token) {
-        toast.error("Authentication token not found. Please log in again.");
-        router.push("/login");
-        return;
-      }
-
-      // Use environment variable for task app URL, fallback to localhost for development
       const taskAppUrl = process.env.NEXT_PUBLIC_TASK_URL || "http://localhost:3003";
-
-      try {
-        const taskManagementUrl = new URL(`${taskAppUrl}/auth-callback`);
-        if (token) {
-          taskManagementUrl.searchParams.set("token", token);
-        }
-        if (userData) {
-          taskManagementUrl.searchParams.set("user", encodeURIComponent(userData));
-        }
-
-        // Show loading message
-        toast.info("Redirecting to Task Management...", { duration: 2000 });
-
-        // Redirect immediately without delay
-        window.location.href = taskManagementUrl.toString();
-      } catch (error) {
-        console.error("Error constructing redirect URL:", error);
-        toast.error("Failed to redirect. Please try again.");
-      }
+      toast.info("Redirecting to Task Management...", { duration: 2000 });
+      redirectToApp("task", taskAppUrl, "/my-tasks");
     } else if (platform === "alumni") {
-      // Pass authentication data to alumni app
-      const token = localStorage.getItem("accessToken");
-      const userData = localStorage.getItem("user");
-
-      if (!token) {
-        toast.error("Authentication token not found. Please log in again.");
-        router.push("/login");
-        return;
-      }
-
-      redirectToAlumni(token, userData || "");
+      const alumniAppUrl = process.env.NEXT_PUBLIC_ALUMNI_URL || "http://localhost:3004";
+      toast.info("Redirecting to Alumni...", { duration: 2000 });
+      redirectToApp("alumni", alumniAppUrl, "/");
     } else if (platform === "website") {
       // Use environment variable for website URL, fallback to localhost for development
       const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || "http://localhost:3000";
@@ -268,43 +223,13 @@ function PlatformSelectionContent(): React.JSX.Element {
         window.location.href = websiteUrl;
       }, 300);
     } else if (platform === "internal") {
-      // Pass authentication data to internal app
-      const token = localStorage.getItem("accessToken");
-      const userData = localStorage.getItem("user");
-
-      if (!token) {
-        toast.error("Authentication token not found. Please log in again.");
-        router.push("/login");
-        return;
-      }
-
-      // Check if user is authorized for internal app
       if (!isInternalAuthorized(user)) {
         toast.error("You are not authorized to access the Internal Platform.");
         return;
       }
-
-      // Use environment variable for internal app URL, fallback to localhost for development
       const internalAppUrl = process.env.NEXT_PUBLIC_INTERNAL_URL || "http://localhost:3005";
-
-      try {
-        const internalUrl = new URL(`${internalAppUrl}/auth-callback`);
-        if (token) {
-          internalUrl.searchParams.set("token", token);
-        }
-        if (userData) {
-          internalUrl.searchParams.set("user", encodeURIComponent(userData));
-        }
-
-        // Show loading message
-        toast.info("Redirecting to HR & Finance...", { duration: 2000 });
-
-        // Redirect immediately without delay
-        window.location.href = internalUrl.toString();
-      } catch (error) {
-        console.error("Error constructing redirect URL:", error);
-        toast.error("Failed to redirect. Please try again.");
-      }
+      toast.info("Redirecting to HR & Finance...", { duration: 2000 });
+      redirectToApp("internal", internalAppUrl, "/payroll/payslips");
     }
   };
 
