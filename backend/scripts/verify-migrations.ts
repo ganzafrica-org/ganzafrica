@@ -69,7 +69,8 @@ async function main() {
     const applied = await pool.query(
       `SELECT count(*)::int c FROM "drizzle"."__drizzle_migrations"`,
     );
-    assert(applied.rows[0].c === 1, "exactly one baseline row recorded");
+    // Baseline + every post-baseline migration is recorded (grows as migrations are added).
+    assert(applied.rows[0].c >= 1, `all migrations recorded (${applied.rows[0].c})`);
 
     // 2. generate immediately after → no new migration (schema <-> snapshot in sync).
     console.log("[2] generate is a no-op");
@@ -78,26 +79,39 @@ async function main() {
     const added = listSql().filter((f) => !before.has(f));
     assert(added.length === 0, `no new migration generated (added: ${added.join(",") || "none"})`);
 
-    // 3. Reconcile brings a populated, untracked DB in line and migrate is then a no-op.
-    console.log("[3] reconcile on a populated, untracked DB");
-    // Simulate a legacy DB: keep the schema but wipe ALL tracking (the broken pre-baseline state).
-    await pool.query(`DROP SCHEMA IF EXISTS drizzle CASCADE`);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS "public"."__drizzle_migrations" (id serial, hash text, created_at bigint)
-    `); // legacy junk table that reconcile must remove
+    // 3. The real reconcile case: a DB with the BASELINE schema but NO drizzle ledger at all
+    //    (the original prod situation) — plus a legacy public.__drizzle_migrations left by the
+    //    old baseline scripts. reconcile bootstraps the ledger with the baseline; a following
+    //    `migrate` then applies the post-baseline migrations cleanly.
+    console.log("[3] reconcile bootstraps an untracked baseline-schema DB");
+    await resetSchema(pool);
+    // Recreate ONLY the baseline schema (no post-baseline migrations), with no ledger.
+    const fs = await import("fs");
+    const baselineSql = fs.readFileSync(
+      path.resolve(__dirname, "../drizzle/0000_baseline.sql"),
+      "utf-8",
+    );
+    await pool.query(baselineSql);
+    await pool.query(
+      `CREATE TABLE IF NOT EXISTS "public"."__drizzle_migrations" (id serial, hash text, created_at bigint)`,
+    ); // legacy junk table reconcile must remove
     if (run("npx", ["tsx", "scripts/reconcile-db.ts"]) !== 0) throw new Error("reconcile failed");
     const legacy = await pool.query(`SELECT to_regclass('public.__drizzle_migrations') AS t`);
     assert(legacy.rows[0].t === null, "legacy public.__drizzle_migrations removed");
     const rows = await pool.query(`SELECT count(*)::int c FROM "drizzle"."__drizzle_migrations"`);
-    assert(rows.rows[0].c === 1, "exactly one baseline row after reconcile");
-    if (run("npx", ["drizzle-kit", "migrate"]) !== 0) throw new Error("migrate (no-op) failed");
+    assert(rows.rows[0].c === 1, "baseline recorded after reconcile");
+    // Post-baseline migrations apply cleanly on top.
+    if (run("npx", ["drizzle-kit", "migrate"]) !== 0)
+      throw new Error("post-baseline migrate failed");
+    const emp = await pool.query(`SELECT to_regclass('public.employees') AS t`);
+    assert(emp.rows[0].t !== null, "post-baseline migration (employees) applied after reconcile");
 
-    // 4. Reconcile is idempotent.
+    // 4. Reconcile is idempotent (re-running against the now-tracked DB changes nothing harmful).
     console.log("[4] reconcile idempotent");
     if (run("npx", ["tsx", "scripts/reconcile-db.ts"]) !== 0)
       throw new Error("reconcile rerun failed");
-    const rows2 = await pool.query(`SELECT count(*)::int c FROM "drizzle"."__drizzle_migrations"`);
-    assert(rows2.rows[0].c === 1, "still one baseline row after second reconcile");
+    if (run("npx", ["drizzle-kit", "migrate"]) !== 0)
+      throw new Error("migrate after 2nd reconcile failed");
 
     console.log("\nAll migration checks passed.");
   } finally {

@@ -35,6 +35,19 @@ const baselinePath = path.join(drizzleDir, "0000_baseline.sql");
 
 type JournalEntry = { idx: number; tag: string; when: number };
 
+/** sha256 of every migration file in the journal — drizzle's tracking hashes. */
+function allMigrationHashes(): string[] {
+  const journal = JSON.parse(
+    fs.readFileSync(path.join(drizzleDir, "meta", "_journal.json"), "utf-8"),
+  ) as { entries: JournalEntry[] };
+  return journal.entries.map((e) =>
+    crypto
+      .createHash("sha256")
+      .update(fs.readFileSync(path.join(drizzleDir, `${e.tag}.sql`)))
+      .digest("hex"),
+  );
+}
+
 async function main() {
   const journal = JSON.parse(
     fs.readFileSync(path.join(drizzleDir, "meta", "_journal.json"), "utf-8"),
@@ -73,13 +86,25 @@ async function main() {
         created_at bigint
       )
     `);
-    // Reset tracking to exactly the squashed baseline: clear stale rows (e.g. an orphan hash
-    // from a previous baseline attempt) and insert the one true baseline row.
-    await client.query(`DELETE FROM "drizzle"."__drizzle_migrations"`);
+    // Drop any orphan tracking rows whose hash matches NONE of our real migration files (left by
+    // earlier ad-hoc baseline attempts), then ensure the baseline row exists. Rows for real
+    // migrations (baseline + any already-applied post-baseline ones) are preserved, so running
+    // reconcile again on an already-tracked DB is safe.
+    const knownHashes = allMigrationHashes();
     await client.query(
-      `INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)`,
-      [trackedHash, baselineEntry.when],
+      `DELETE FROM "drizzle"."__drizzle_migrations" WHERE hash <> ALL($1::text[])`,
+      [knownHashes],
     );
+    const already = await client.query(
+      `SELECT 1 FROM "drizzle"."__drizzle_migrations" WHERE hash = $1 LIMIT 1`,
+      [trackedHash],
+    );
+    if (already.rowCount === 0) {
+      await client.query(
+        `INSERT INTO "drizzle"."__drizzle_migrations" ("hash", "created_at") VALUES ($1, $2)`,
+        [trackedHash, baselineEntry.when],
+      );
+    }
 
     console.log(
       "\nDone. `pnpm db:migrate` will now apply only migrations added after the baseline.",

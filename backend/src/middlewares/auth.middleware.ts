@@ -3,8 +3,8 @@ import * as jwt from "jsonwebtoken";
 import { constants, Logger, env } from "../config";
 import { verifyToken } from "../services/auth.service";
 import { db } from "../db/client";
-import { users, roles, user_roles, hr_users } from "../db/schema";
-import { eq, and } from "drizzle-orm";
+import { users, roles, user_roles, hr_users, role_permissions, permissions } from "../db/schema";
+import { eq, and, inArray } from "drizzle-orm";
 
 const logger = new Logger("AuthMiddleware");
 
@@ -284,6 +284,79 @@ export const isTeamOrAdmin = authorize(["admin", "team"]);
 
 /** Shorthand for `authorize([...roles])` (e.g. HR portal `requireRole("IT", "HR")`). */
 export const requireRole = (...allowedRoles: string[]) => authorize(allowedRoles);
+
+type Permission = `${string}:${string}`;
+interface CachedPerms {
+  roles: Set<string>;
+  perms: Set<string>;
+  expires: number;
+}
+
+const PERMISSION_TTL_MS = 60_000;
+const permissionCache = new Map<number, CachedPerms>();
+
+export function clearPermissionCache(userId?: number) {
+  if (userId === undefined) permissionCache.clear();
+  else permissionCache.delete(userId);
+}
+
+async function loadPermissions(userId: number): Promise<CachedPerms> {
+  const cached = permissionCache.get(userId);
+  if (cached && cached.expires > Date.now()) return cached;
+
+  const roleRows = await db
+    .select({ name: roles.name })
+    .from(user_roles)
+    .innerJoin(roles, eq(user_roles.role_id, roles.id))
+    .where(eq(user_roles.user_id, userId));
+  const roleNames = new Set(roleRows.map((r) => r.name));
+
+  const roleIds = (
+    await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(inArray(roles.name, roleNames.size ? [...roleNames] : [""]))
+  ).map((r) => r.id);
+
+  const perms = new Set<string>();
+  if (roleIds.length) {
+    const permRows = await db
+      .select({ resource: permissions.resource, action: permissions.action })
+      .from(role_permissions)
+      .innerJoin(permissions, eq(role_permissions.permission_id, permissions.id))
+      .where(inArray(role_permissions.role_id, roleIds));
+    for (const p of permRows) perms.add(`${p.resource}:${p.action}`);
+  }
+
+  const entry = { roles: roleNames, perms, expires: Date.now() + PERMISSION_TTL_MS };
+  permissionCache.set(userId, entry);
+  return entry;
+}
+
+/**
+ * Gate a route on a `resource:action` permission (RBAC via user_roles → role_permissions).
+ * `admin` is allowed everything. Ownership ("own row") is enforced in services, not here.
+ * Run after `authenticate`.
+ */
+export const requirePermission = (perm: Permission) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+    }
+    try {
+      const { roles: roleNames, perms } = await loadPermissions(Number(req.user.id));
+      if (roleNames.has("admin") || perms.has(perm)) return next();
+      return res
+        .status(403)
+        .json({ error: "Forbidden", message: constants.ERROR_MESSAGES.FORBIDDEN });
+    } catch (error) {
+      logger.error("Permission check error:", error);
+      return res
+        .status(500)
+        .json({ error: "Internal Server Error", message: "Failed to verify permissions" });
+    }
+  };
+};
 
 /**
  * Set database context middleware

@@ -2,6 +2,7 @@
 import { timestampFields } from "../common";
 import { documentCategoryEnum, documentStatusEnum } from "./hr.enums";
 import { hr_users } from "./employee";
+import { employees } from "./employees";
 import { hr_contracts } from "@/db/schema/hr/contract";
 
 export const hr_documents = pgTable("hr_documents", {
@@ -20,6 +21,8 @@ export const hr_documents = pgTable("hr_documents", {
   created_by_id: uuid("created_by_id")
     .references(() => hr_users.id)
     .notNull(),
+  // FND-05 expand: new employees FK, backfilled by the merge script.
+  created_by_employee_id: uuid("created_by_employee_id").references(() => employees.id),
   ...timestampFields,
 });
 

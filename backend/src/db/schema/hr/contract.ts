@@ -2,6 +2,7 @@
 import { timestampFields } from "../common";
 import { contractStatusEnum, contractTypeEnum } from "./hr.enums";
 import { hr_users } from "./employee";
+import { employees } from "./employees";
 
 export const hr_contracts = pgTable("hr_contracts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -10,6 +11,9 @@ export const hr_contracts = pgTable("hr_contracts", {
   employee_id: uuid("employee_id")
     .notNull()
     .references(() => hr_users.id, { onDelete: "cascade" }),
+  // FND-05 expand: FK to the new employees table (existing employee_id points at hr_users and
+  // is dropped in FND-07). Backfilled by the merge script via legacy_hr_user_id.
+  employee_ref_id: uuid("employee_ref_id").references(() => employees.id, { onDelete: "cascade" }),
 
   // ── Job Details (Step 2) ───────────────────
   job_title: text("job_title").notNull(),

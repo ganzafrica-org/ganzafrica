@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import * as payrollController from "../controllers/hr/payroll.controller";
-import { authenticate } from "../middlewares";
+import { authenticate, requirePermission } from "../middlewares";
 
 const router = express.Router();
 
@@ -57,8 +57,9 @@ const upload = multer({
   },
 });
 
-// All routes require authentication
+// All routes require authentication + payroll management permission (finance/hr/admin).
 router.use(authenticate);
+router.use(requirePermission("payroll:manage"));
 
 /**
  * @swagger

@@ -1,5 +1,16 @@
 # Backend — agent notes
 
+## Code quality
+
+If a change needs a paragraph-long comment to justify why a workaround is necessary, the code
+is wrong: fix the root cause properly, or — if a proper fix is too complex and the current
+simple state is not actually a problem — leave it as-is. Never ship the justified-workaround
+middle path. In particular, NEVER hand-edit drizzle-generated migration SQL
+(`drizzle/NNNN_*.sql`); only hand-author `--custom` migrations.
+
+Comment sparingly. Explain why, not what; don't comment every function. Prefer clear names and
+self-documenting code over narration that goes stale.
+
 ## Database migrations (read before ANY schema change)
 
 The ONLY migration workflow:
