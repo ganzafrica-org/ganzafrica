@@ -115,23 +115,16 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/events")}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => router.push("/events")} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Events
         </Button>
         <Card>
           <CardContent className="p-12 text-center">
             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Event not found
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Event not found</h3>
             <p className="text-gray-600">
-              The event you&apos;re looking for doesn&apos;t exist or has been
-              removed.
+              The event you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
           </CardContent>
         </Card>
@@ -144,9 +137,7 @@ export default function EventDetailPage() {
   const attendeePercentage = event.maxAttendees
     ? Math.round((event.attendees / event.maxAttendees) * 100)
     : 0;
-  const isFull = event.maxAttendees
-    ? event.attendees >= event.maxAttendees
-    : false;
+  const isFull = event.maxAttendees ? event.attendees >= event.maxAttendees : false;
 
   return (
     <div className="space-y-8 bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/30 min-h-screen p-6">
@@ -195,17 +186,11 @@ export default function EventDetailPage() {
                   {event.category}
                 </Badge>
                 {event.isRegistered && (
-                  <Badge className="bg-green-primary text-sm">
-                    ✓ Registered
-                  </Badge>
+                  <Badge className="bg-green-primary text-sm">✓ Registered</Badge>
                 )}
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                {event.title}
-              </h1>
-              <p className="text-gray-700 text-lg leading-relaxed">
-                {event.description}
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">{event.title}</h1>
+              <p className="text-gray-700 text-lg leading-relaxed">{event.description}</p>
             </div>
           </div>
 
@@ -236,19 +221,13 @@ export default function EventDetailPage() {
                 {event.endTime && ` - ${event.endTime}`}
               </p>
               {event.duration && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Duration: {event.duration}
-                </p>
+                <p className="text-sm text-gray-600 mt-1">Duration: {event.duration}</p>
               )}
             </div>
 
             <div className="bg-orange-50 rounded-lg p-4">
               <div className="flex items-center gap-2 text-orange-600 mb-2">
-                {isOnline ? (
-                  <Video className="h-5 w-5" />
-                ) : (
-                  <MapPin className="h-5 w-5" />
-                )}
+                {isOnline ? <Video className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
                 <span className="font-medium">Location</span>
               </div>
               <p className="text-gray-900 font-semibold">
@@ -284,9 +263,7 @@ export default function EventDetailPage() {
                       style={{ width: `${attendeePercentage}%` }}
                     />
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">
-                    {attendeePercentage}% full
-                  </p>
+                  <p className="text-xs text-gray-600 mt-1">{attendeePercentage}% full</p>
                 </div>
               )}
             </div>
@@ -324,14 +301,10 @@ export default function EventDetailPage() {
             <div className="grid md:grid-cols-2 gap-4">
               {event.speakers.map((speaker: any, index: number) => (
                 <div key={index} className="bg-slate-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900 mb-1">
-                    {speaker.name}
-                  </h4>
+                  <h4 className="font-semibold text-gray-900 mb-1">{speaker.name}</h4>
                   <p className="text-sm text-gray-700">{speaker.title}</p>
                   {speaker.company && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {speaker.company}
-                    </p>
+                    <p className="text-sm text-gray-600 mt-1">{speaker.company}</p>
                   )}
                 </div>
               ))}
@@ -349,13 +322,8 @@ export default function EventDetailPage() {
           <CardContent>
             <div className="space-y-3">
               {event.agenda.map((item: any, index: number) => (
-                <div
-                  key={index}
-                  className="flex gap-4 pb-3 border-b last:border-0"
-                >
-                  <div className="flex-shrink-0 w-24 font-medium text-blue-600">
-                    {item.time}
-                  </div>
+                <div key={index} className="flex gap-4 pb-3 border-b last:border-0">
+                  <div className="flex-shrink-0 w-24 font-medium text-blue-600">{item.time}</div>
                   <div className="flex-1 text-gray-700">{item.activity}</div>
                 </div>
               ))}

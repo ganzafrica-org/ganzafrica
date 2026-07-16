@@ -84,11 +84,7 @@ router.use(authenticate);
  *       400:
  *         description: Invalid CSV file
  */
-router.post(
-  "/upload-csv",
-  upload.single("file"),
-  payrollController.uploadPayrollCSV,
-);
+router.post("/upload-csv", upload.single("file"), payrollController.uploadPayrollCSV);
 
 /**
  * @swagger

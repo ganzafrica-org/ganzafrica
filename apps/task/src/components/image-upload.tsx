@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useCallback } from 'react';
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { Button } from '@/components/button';
-import { toast } from 'sonner';
+import React, { useState, useRef, useCallback } from "react";
+import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Button } from "@/components/button";
+import { toast } from "sonner";
 
 interface ImageUploadProps {
   onImageChange: (file: File | null) => void;
@@ -14,13 +14,13 @@ interface ImageUploadProps {
   isUploading?: boolean;
 }
 
-export function ImageUpload({ 
-  onImageChange, 
-  initialImage, 
+export function ImageUpload({
+  onImageChange,
+  initialImage,
   className,
-  label = 'Profile Image',
-  description = 'Upload a profile image (JPG, PNG, GIF up to 5MB)',
-  isUploading = false
+  label = "Profile Image",
+  description = "Upload a profile image (JPG, PNG, GIF up to 5MB)",
+  isUploading = false,
 }: ImageUploadProps): React.JSX.Element {
   const [preview, setPreview] = useState<string | null>(initialImage || null);
   const [isDragging, setIsDragging] = useState(false);
@@ -28,14 +28,14 @@ export function ImageUpload({
 
   const validateFile = (file: File) => {
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file (JPG, PNG, or GIF)');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (JPG, PNG, or GIF)");
       return false;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+      toast.error("Image size should be less than 5MB");
       return false;
     }
 
@@ -87,27 +87,19 @@ export function ImageUpload({
     setPreview(null);
     onImageChange(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   return (
-    <div className={`space-y-2 ${className || ''}`}>
-      {label && (
-        <label className="text-sm font-medium text-gray-700">
-          {label}
-        </label>
-      )}
-      {description && (
-        <p className="text-sm text-gray-500">
-          {description}
-        </p>
-      )}
+    <div className={`space-y-2 ${className || ""}`}>
+      {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+      {description && <p className="text-sm text-gray-500">{description}</p>}
       <div
         className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg transition-colors ${
           isDragging
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-blue-500 hover:bg-gray-50'
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 hover:border-blue-500 hover:bg-gray-50"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -116,11 +108,7 @@ export function ImageUpload({
         {preview ? (
           <div className="relative group">
             <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-offset-2 ring-blue-500">
-              <img 
-                src={preview} 
-                alt="Profile preview" 
-                className="w-full h-full object-cover"
-              />
+              <img src={preview} alt="Profile preview" className="w-full h-full object-cover" />
             </div>
             <button
               onClick={handleRemoveImage}
@@ -136,12 +124,8 @@ export function ImageUpload({
               <ImageIcon className="h-6 w-6 text-gray-500" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-medium text-gray-700">
-                Drag and drop or click to upload
-              </p>
-              <p className="text-xs text-gray-500">
-                JPG, PNG, GIF up to 5MB
-              </p>
+              <p className="text-sm font-medium text-gray-700">Drag and drop or click to upload</p>
+              <p className="text-xs text-gray-500">JPG, PNG, GIF up to 5MB</p>
             </div>
           </div>
         )}
@@ -165,8 +149,10 @@ export function ImageUpload({
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               Uploading...
             </>
+          ) : preview ? (
+            "Change Image"
           ) : (
-            preview ? 'Change Image' : 'Select Image'
+            "Select Image"
           )}
         </Button>
       </div>

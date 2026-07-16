@@ -123,13 +123,11 @@ export const createTeam = async (req: Request, res: Response) => {
  */
 export const listTeams = async (req: Request, res: Response) => {
   try {
-    const teamTypeId = req.query.team_type_id
-      ? Number(req.query.team_type_id)
-      : undefined;
-    
+    const teamTypeId = req.query.team_type_id ? Number(req.query.team_type_id) : undefined;
+
     // Get sort parameters with defaults
-    const sortBy = req.query.sort_by?.toString() || 'created_at';
-    const sortOrder = req.query.sort_order?.toString() || 'desc';
+    const sortBy = req.query.sort_by?.toString() || "created_at";
+    const sortOrder = req.query.sort_order?.toString() || "desc";
 
     // Pass sorting parameters to service
     const teams = await teamService.listTeams(teamTypeId, sortBy, sortOrder);

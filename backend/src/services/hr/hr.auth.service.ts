@@ -57,10 +57,15 @@ async function signRefreshToken(
   payload: Omit<HrJwtPayload, "type">,
   expiresIn: string,
 ): Promise<string> {
-  return jwt.sign({ ...payload, type: "refresh" }, env.JWT_REFRESH_SECRET, { expiresIn: expiresIn as any });
+  return jwt.sign({ ...payload, type: "refresh" }, env.JWT_REFRESH_SECRET, {
+    expiresIn: expiresIn as any,
+  });
 }
 
-export async function createOtp(createdById: string, email: string): Promise<{ code: string; expiresAt: Date }> {
+export async function createOtp(
+  createdById: string,
+  email: string,
+): Promise<{ code: string; expiresAt: Date }> {
   const code = generateOTP();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -80,7 +85,9 @@ export async function registerWithOtp(input: RegisterInput): Promise<{ userId: s
     const otp = await tx
       .select()
       .from(hr_otps)
-      .where(and(eq(hr_otps.email, input.email), eq(hr_otps.code, input.code), eq(hr_otps.used, false)))
+      .where(
+        and(eq(hr_otps.email, input.email), eq(hr_otps.code, input.code), eq(hr_otps.used, false)),
+      )
       .limit(1);
 
     if (!otp.length) throw new AppError("Invalid OTP code", 400);
@@ -90,14 +97,9 @@ export async function registerWithOtp(input: RegisterInput): Promise<{ userId: s
     const existing = await tx
       .select({ id: hr_users.id })
       .from(hr_users)
-      .where(
-        or(
-          eq(hr_users.personal_email, input.email),
-          eq(hr_users.work_email, input.email)
-        )
-      )
+      .where(or(eq(hr_users.personal_email, input.email), eq(hr_users.work_email, input.email)))
       .limit(1);
-      
+
     if (existing.length) throw new AppError("Email already in use", 409);
 
     const passwordHash = await bcrypt.hash(input.password, 10);
@@ -121,9 +123,15 @@ export async function registerWithOtp(input: RegisterInput): Promise<{ userId: s
   });
 }
 
-export async function login(input: LoginInput): Promise<{ user: { id: string; email: string; role: HrRole }; tokens: AuthTokens }> {
+export async function login(
+  input: LoginInput,
+): Promise<{ user: { id: string; email: string; role: HrRole }; tokens: AuthTokens }> {
   // Enforce authentication exclusively via the work_email column
-  const rows = await db.select().from(hr_users).where(eq(hr_users.work_email, input.email)).limit(1);
+  const rows = await db
+    .select()
+    .from(hr_users)
+    .where(eq(hr_users.work_email, input.email))
+    .limit(1);
   if (!rows.length) throw new AppError("Invalid credentials", 401);
 
   const user = rows[0];
@@ -142,7 +150,10 @@ export async function login(input: LoginInput): Promise<{ user: { id: string; em
   );
 
   const refreshHash = await bcrypt.hash(refreshToken, 10);
-  await db.update(hr_users).set({ refresh_token_hash: refreshHash }).where(eq(hr_users.id, user.id));
+  await db
+    .update(hr_users)
+    .set({ refresh_token_hash: refreshHash })
+    .where(eq(hr_users.id, user.id));
 
   return {
     user: { id: String(user.id), email: userEmail, role: user.role as HrRole },
@@ -161,7 +172,11 @@ export async function refresh(refreshToken: string): Promise<AuthTokens> {
   const payload = decoded as Partial<HrJwtPayload>;
   if (!payload.id || payload.type !== "refresh") throw new AppError("Invalid refresh token", 401);
 
-  const rows = await db.select().from(hr_users).where(eq(hr_users.id, String(payload.id))).limit(1);
+  const rows = await db
+    .select()
+    .from(hr_users)
+    .where(eq(hr_users.id, String(payload.id)))
+    .limit(1);
   if (!rows.length) throw new AppError("User not found", 404);
 
   const user = rows[0];
@@ -182,7 +197,10 @@ export async function refresh(refreshToken: string): Promise<AuthTokens> {
   );
 
   const refreshHash = await bcrypt.hash(newRefreshToken, 10);
-  await db.update(hr_users).set({ refresh_token_hash: refreshHash }).where(eq(hr_users.id, user.id));
+  await db
+    .update(hr_users)
+    .set({ refresh_token_hash: refreshHash })
+    .where(eq(hr_users.id, user.id));
 
   return { accessToken, refreshToken: newRefreshToken };
 }
@@ -195,7 +213,7 @@ export async function getMe(userId: string) {
   const rows = await db.select().from(hr_users).where(eq(hr_users.id, userId)).limit(1);
   if (!rows.length) throw new AppError("User not found", 404);
   const u = rows[0];
-  
+
   return {
     id: u.id,
     platformUserId: u.platform_user_id,

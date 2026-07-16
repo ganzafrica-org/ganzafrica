@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 interface QuickAccessCardProps {
   icon: ReactNode;
@@ -7,12 +7,7 @@ interface QuickAccessCardProps {
   onClick: () => void;
 }
 
-export function QuickAccessCard({
-  icon,
-  title,
-  description,
-  onClick,
-}: QuickAccessCardProps) {
+export function QuickAccessCard({ icon, title, description, onClick }: QuickAccessCardProps) {
   return (
     <button
       onClick={onClick}

@@ -16,46 +16,58 @@ const s3Client = new S3Client({
 
 // Define allowed file types
 const allowedImageTypes = [
-  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-  'image/bmp', 'image/tiff', 'image/x-icon', 'image/vnd.microsoft.icon'
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  "image/bmp",
+  "image/tiff",
+  "image/x-icon",
+  "image/vnd.microsoft.icon",
 ];
 const allowedVideoTypes = [
-  'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
-  'video/x-msvideo', 'video/x-matroska', 'video/avi'
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
+  "video/quicktime",
+  "video/x-msvideo",
+  "video/x-matroska",
+  "video/avi",
 ];
 const allowedDocumentTypes = [
-  'application/pdf',
+  "application/pdf",
   // Word documents
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   // Spreadsheets
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   // Presentations
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   // Text files
-  'text/plain',
-  'text/csv',
-  'text/html',
-  'text/css',
-  'text/javascript',
-  'application/json',
+  "text/plain",
+  "text/csv",
+  "text/html",
+  "text/css",
+  "text/javascript",
+  "application/json",
   // Archives
-  'application/zip',
-  'application/x-zip-compressed',
-  'application/x-rar-compressed',
-  'application/x-7z-compressed',
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/x-rar-compressed",
+  "application/x-7z-compressed",
   // Other common formats
-  'application/rtf',
-  'application/xml',
-  'text/xml',
-  'application/vnd.oasis.opendocument.text',
-  'application/vnd.oasis.opendocument.spreadsheet',
-  'application/vnd.oasis.opendocument.presentation',
+  "application/rtf",
+  "application/xml",
+  "text/xml",
+  "application/vnd.oasis.opendocument.text",
+  "application/vnd.oasis.opendocument.spreadsheet",
+  "application/vnd.oasis.opendocument.presentation",
   // Additional formats
-  'application/octet-stream', // Generic binary
-  'application/x-binary', // Generic binary
+  "application/octet-stream", // Generic binary
+  "application/x-binary", // Generic binary
 ];
 const allowedFileTypes = [...allowedImageTypes, ...allowedVideoTypes, ...allowedDocumentTypes];
 
@@ -69,13 +81,13 @@ export function getFileSubdirectory(mimetype: string): string {
     return "video";
   } else if (allowedDocumentTypes.includes(mimetype)) {
     return "document";
-  } else if (mimetype.startsWith('image/')) {
+  } else if (mimetype.startsWith("image/")) {
     return "image";
-  } else if (mimetype.startsWith('video/')) {
+  } else if (mimetype.startsWith("video/")) {
     return "video";
-  } else if (mimetype.startsWith('audio/')) {
+  } else if (mimetype.startsWith("audio/")) {
     return "document"; // Audio files go to documents
-  } else if (mimetype.startsWith('application/') || mimetype.startsWith('text/')) {
+  } else if (mimetype.startsWith("application/") || mimetype.startsWith("text/")) {
     return "document";
   }
   return "document"; // Default fallback
@@ -83,8 +95,10 @@ export function getFileSubdirectory(mimetype: string): string {
 
 export function getFileUrl(location: string): string {
   if (env.DO_SPACES_CDN_URL) {
-    return location.replace(env.DO_SPACES_ENDPOINT.replace(/\/$/, ""), 
- env.DO_SPACES_CDN_URL.replace(/\/$/, ""));
+    return location.replace(
+      env.DO_SPACES_ENDPOINT.replace(/\/$/, ""),
+      env.DO_SPACES_CDN_URL.replace(/\/$/, ""),
+    );
   }
   return location;
 }
@@ -92,21 +106,21 @@ export function getFileUrl(location: string): string {
 const spacesStorage = multerS3({
   s3: s3Client,
   bucket: env.DO_SPACES_BUCKET,
-  acl: 'public-read', // Make files publicly accessible
+  acl: "public-read", // Make files publicly accessible
   key: function (req, file, cb) {
     // Determine the appropriate directory based on file type
     const subdir = getFileSubdirectory(file.mimetype);
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
     const filename = uniqueSuffix + "-" + originalName;
-    
+
     // Create key with subdirectory
     const key = `uploads/${subdir}/${filename}`;
     cb(null, key);
   },
   contentType: multerS3.AUTO_CONTENT_TYPE,
   metadata: function (req, file, cb) {
-    cb(null, { 
+    cb(null, {
       originalName: file.originalname,
       uploadedAt: new Date().toISOString(),
     });
@@ -123,60 +137,120 @@ interface MulterRequest extends Express.Request {}
 const fileFilter = (req: MulterRequest, file: MulterFile, cb: multer.FileFilterCallback): void => {
   // NOTE: If production shows "Only images, videos, PDF, DOC, and DOCX" the deployed
   // backend is outdated. Run: cd backend && npm run build && restart the server.
-  console.log('File upload attempt:', {
+  console.log("File upload attempt:", {
     originalname: file.originalname,
     mimetype: file.mimetype,
-    allowedTypes: allowedFileTypes.length
+    allowedTypes: allowedFileTypes.length,
   });
 
   // Allow if mimetype is in allowed list (handle undefined/empty from some proxies)
-  const mimetype = file.mimetype || '';
+  const mimetype = file.mimetype || "";
   if (mimetype && allowedFileTypes.includes(mimetype)) {
     cb(null, true);
     return;
   }
 
   // Special handling for generic binary types - check file extension
-  if (mimetype === 'application/octet-stream' || mimetype === 'application/x-binary') {
-    const extension = file.originalname.toLowerCase().split('.').pop();
+  if (mimetype === "application/octet-stream" || mimetype === "application/x-binary") {
+    const extension = file.originalname.toLowerCase().split(".").pop();
     const allowedExtensions = [
-      'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'rtf',
-      'zip', 'rar', '7z', 'json', 'xml', 'html', 'css', 'js', 'jpg', 'jpeg',
-      'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'
+      "pdf",
+      "doc",
+      "docx",
+      "xls",
+      "xlsx",
+      "ppt",
+      "pptx",
+      "txt",
+      "csv",
+      "rtf",
+      "zip",
+      "rar",
+      "7z",
+      "json",
+      "xml",
+      "html",
+      "css",
+      "js",
+      "jpg",
+      "jpeg",
+      "png",
+      "gif",
+      "webp",
+      "svg",
+      "mp4",
+      "webm",
+      "ogg",
+      "mov",
+      "avi",
+      "mkv",
     ];
 
     if (extension && allowedExtensions.includes(extension)) {
-      console.log('Allowed file with generic mimetype based on extension:', extension);
+      console.log("Allowed file with generic mimetype based on extension:", extension);
       cb(null, true);
       return;
     }
   }
 
   // Check for common file extensions even with unknown mimetypes
-  const extension = file.originalname.toLowerCase().split('.').pop();
+  const extension = file.originalname.toLowerCase().split(".").pop();
   const commonExtensions = [
-    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'rtf',
-    'zip', 'rar', '7z', 'json', 'xml', 'html', 'css', 'js', 'jpg', 'jpeg',
-    'png', 'gif', 'webp', 'svg', 'mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv',
-    'bmp', 'tiff', 'ico'
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "txt",
+    "csv",
+    "rtf",
+    "zip",
+    "rar",
+    "7z",
+    "json",
+    "xml",
+    "html",
+    "css",
+    "js",
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "webp",
+    "svg",
+    "mp4",
+    "webm",
+    "ogg",
+    "mov",
+    "avi",
+    "mkv",
+    "bmp",
+    "tiff",
+    "ico",
   ];
 
   if (extension && commonExtensions.includes(extension)) {
-    console.log('Allowed file based on extension:', extension, 'despite mimetype:', mimetype);
+    console.log("Allowed file based on extension:", extension, "despite mimetype:", mimetype);
     cb(null, true);
     return;
   }
 
-  console.log('Rejected file type:', mimetype, 'for file:', file.originalname);
-  cb(new Error("Invalid file type. Allowed: images, videos, PDF, DOC, DOCX, XLS, XLSX, and other common formats."));
+  console.log("Rejected file type:", mimetype, "for file:", file.originalname);
+  cb(
+    new Error(
+      "Invalid file type. Allowed: images, videos, PDF, DOC, DOCX, XLS, XLSX, and other common formats.",
+    ),
+  );
 };
 
-const upload = multer({ 
+const upload = multer({
   storage: spacesStorage,
   fileFilter: fileFilter,
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB limit
-  }
+  },
 });
 
 export default upload;

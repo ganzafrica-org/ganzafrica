@@ -11,7 +11,11 @@ const assertAdminControlRole = (req: Request) => {
   }
 };
 
-export const listDocuments = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const listDocuments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     // Open visibility list checks can be left unrestricted or constrained based on permissions setup
     const q = req.query as unknown as Record<string, string | undefined>;
@@ -38,7 +42,11 @@ export const listDocuments = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const getDocument = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const document = await documentService.getDocument(req.params.id);
     sendResponse(res, { success: true, message: "Document details retrieved", data: document });
@@ -47,24 +55,36 @@ export const getDocument = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const createDocument = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const createDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     assertAdminControlRole(req);
     const createdById = (req as any).user?.id || req.body.createdById; // Prioritize validated session identity
-    
+
     const created = await documentService.createDocument({
       ...req.body,
-      createdById
+      createdById,
     });
-    
+
     res.status(201);
-    sendResponse(res, { success: true, message: "Document structure created successfully", data: created });
+    sendResponse(res, {
+      success: true,
+      message: "Document structure created successfully",
+      data: created,
+    });
   } catch (err) {
     next(err);
   }
 };
 
-export const updateDocument = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updateDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     assertAdminControlRole(req);
     const updated = await documentService.updateDocument(req.params.id, req.body);
@@ -74,7 +94,11 @@ export const updateDocument = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const deleteDocument = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const deleteDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     assertAdminControlRole(req);
     await documentService.deleteDocument(req.params.id);
@@ -84,9 +108,15 @@ export const deleteDocument = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const downloadDocument = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const downloadDocument = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
-    const { absolutePath, fileName } = await documentService.incrementDownloadsAndGetPath(req.params.id);
+    const { absolutePath, fileName } = await documentService.incrementDownloadsAndGetPath(
+      req.params.id,
+    );
 
     res.download(absolutePath, fileName, (err) => {
       if (err) next(err);

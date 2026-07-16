@@ -15,47 +15,19 @@ const router: Router = Router();
 // Tag routes - placing these first to avoid path conflicts
 router.get("/tags", newsController.listTags);
 
-router.post(
-  "/tags",
-  validate(newsValidation.createTagSchema),
-  newsController.createTag,
-);
+router.post("/tags", validate(newsValidation.createTagSchema), newsController.createTag);
 
-router.delete(
-  "/tags/:id",
-  validate(newsValidation.deleteTagSchema),
-  newsController.deleteTag,
-);
+router.delete("/tags/:id", validate(newsValidation.deleteTagSchema), newsController.deleteTag);
 
 // News routes
-router.post(
-  "/",
-  validate(newsValidation.createNewsSchema),
-  newsController.createNews,
-);
+router.post("/", validate(newsValidation.createNewsSchema), newsController.createNews);
 
-router.get(
-  "/",
-  validate(newsValidation.listNewsSchema),
-  newsController.listNews,
-);
+router.get("/", validate(newsValidation.listNewsSchema), newsController.listNews);
 
-router.get(
-  "/:id",
-  validate(newsValidation.getNewsSchema),
-  newsController.getNewsById,
-);
+router.get("/:id", validate(newsValidation.getNewsSchema), newsController.getNewsById);
 
-router.put(
-  "/:id",
-  validate(newsValidation.updateNewsSchema),
-  newsController.updateNews,
-);
+router.put("/:id", validate(newsValidation.updateNewsSchema), newsController.updateNews);
 
-router.delete(
-  "/:id",
-  validate(newsValidation.deleteNewsSchema),
-  newsController.deleteNews,
-);
+router.delete("/:id", validate(newsValidation.deleteNewsSchema), newsController.deleteNews);
 
 export default router;

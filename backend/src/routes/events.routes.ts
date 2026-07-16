@@ -1,11 +1,6 @@
 import { Router } from "express";
 import { authenticate, authorize } from "../middlewares";
-import {
-  getEventStats,
-  getAllEvents,
-  getEvent,
-  toggleRegistration,
-} from "../controllers/events";
+import { getEventStats, getAllEvents, getEvent, toggleRegistration } from "../controllers/events";
 
 const router = Router();
 
@@ -23,12 +18,7 @@ const router = Router();
  *       403:
  *         description: Forbidden - Requires alumni or admin role
  */
-router.get(
-  "/stats",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getEventStats,
-);
+router.get("/stats", authenticate, authorize(["alumni", "admin"]), getEventStats);
 
 /**
  * @swagger
@@ -125,11 +115,6 @@ router.get("/:id", authenticate, authorize(["alumni", "admin"]), getEvent);
  *       404:
  *         description: Event not found
  */
-router.post(
-  "/:id/register",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  toggleRegistration,
-);
+router.post("/:id/register", authenticate, authorize(["alumni", "admin"]), toggleRegistration);
 
 export default router;

@@ -19,17 +19,10 @@ const logger = new Logger("AlumniController");
  * Get alumni directory statistics
  * Returns total alumni count, active mentors count, countries count, industries count
  */
-export const getAlumniStats = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAlumniStats = async (req: Request, res: Response): Promise<void> => {
   try {
     // Get the alumni role ID
-    const alumniRole = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.name, "alumni"))
-      .limit(1);
+    const alumniRole = await db.select().from(roles).where(eq(roles.name, "alumni")).limit(1);
 
     if (!alumniRole || alumniRole.length === 0) {
       res.status(200).json({
@@ -100,26 +93,15 @@ export const getAlumniStats = async (
  * Get all alumni with their profiles
  * Supports filtering by country, industry, graduation year, search, and pagination
  */
-export const getAllAlumni = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAllAlumni = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { country, industry, graduationYear, search, page, limit } =
-      req.query;
+    const { country, industry, graduationYear, search, page, limit } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(
-      50,
-      Math.max(1, parseInt(limit as string, 10) || 15),
-    );
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 15));
 
     // Get the alumni role ID
-    const alumniRole = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.name, "alumni"))
-      .limit(1);
+    const alumniRole = await db.select().from(roles).where(eq(roles.name, "alumni")).limit(1);
 
     if (!alumniRole || alumniRole.length === 0) {
       res.status(200).json({ alumni: [] });
@@ -168,9 +150,7 @@ export const getAllAlumni = async (
       .where(eq(alumni_mentorships.status, "active"))
       .groupBy(alumni_mentorships.mentor_id);
 
-    const menteeCountMap = new Map(
-      menteeCounts.map((m) => [m.mentor_id, m.count]),
-    );
+    const menteeCountMap = new Map(menteeCounts.map((m) => [m.mentor_id, m.count]));
 
     // Format and filter the response
     let formattedAlumni = alumniList.map((alumni) => ({
@@ -221,15 +201,11 @@ export const getAllAlumni = async (
     }
 
     // Get unique filter options
-    const allCountries = [
-      ...new Set(alumniList.map((a) => a.country).filter(Boolean)),
-    ].sort();
-    const allIndustries = [
-      ...new Set(alumniList.map((a) => a.industry).filter(Boolean)),
-    ].sort();
-    const allYears = [
-      ...new Set(alumniList.map((a) => a.graduation_year).filter(Boolean)),
-    ].sort((a, b) => (b || 0) - (a || 0));
+    const allCountries = [...new Set(alumniList.map((a) => a.country).filter(Boolean))].sort();
+    const allIndustries = [...new Set(alumniList.map((a) => a.industry).filter(Boolean))].sort();
+    const allYears = [...new Set(alumniList.map((a) => a.graduation_year).filter(Boolean))].sort(
+      (a, b) => (b || 0) - (a || 0),
+    );
 
     // Apply pagination
     const totalCount = formattedAlumni.length;
@@ -264,10 +240,7 @@ export const getAllAlumni = async (
 /**
  * Get current user's alumni profile
  */
-export const getAlumniProfile = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAlumniProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -339,10 +312,7 @@ export const getAlumniProfile = async (
 /**
  * Update current user's alumni profile
  */
-export const updateAlumniProfile = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const updateAlumniProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -476,10 +446,7 @@ export const updateAlumniProfile = async (
 /**
  * Get dashboard statistics
  */
-export const getDashboardStats = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user ? parseInt(req.user.id, 10) : null;
 
@@ -490,10 +457,7 @@ export const getDashboardStats = async (
         .select({ count: count() })
         .from(alumni_mentorships)
         .where(
-          and(
-            eq(alumni_mentorships.status, "active"),
-            eq(alumni_mentorships.mentee_id, userId),
-          ),
+          and(eq(alumni_mentorships.status, "active"), eq(alumni_mentorships.mentee_id, userId)),
         );
       myMentorshipPairs = mentorshipResult[0]?.count || 0;
     }
@@ -502,12 +466,7 @@ export const getDashboardStats = async (
     const upcomingEventsResult = await db
       .select({ count: count() })
       .from(alumni_events)
-      .where(
-        and(
-          eq(alumni_events.status, "Open"),
-          gte(alumni_events.event_date, new Date()),
-        ),
-      );
+      .where(and(eq(alumni_events.status, "Open"), gte(alumni_events.event_date, new Date())));
 
     // Job Postings (active jobs - jobs that haven't expired yet or have no expiry)
     const jobPostingsResult = await db
@@ -521,9 +480,7 @@ export const getDashboardStats = async (
       );
 
     // Achievements (all time, since filtering by year might cause SQL issues)
-    const achievementsResult = await db
-      .select({ count: count() })
-      .from(alumni_achievements);
+    const achievementsResult = await db.select({ count: count() }).from(alumni_achievements);
 
     res.status(200).json({
       stats: {

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from "react";
 
 interface TranslationResult {
   translatedText: string;
@@ -47,7 +47,7 @@ interface UseTranslationReturn {
  * ```
  */
 export function useTranslation(options: UseTranslationOptions = {}): UseTranslationReturn {
-  const { enableCache = true, defaultSource = 'en' } = options;
+  const { enableCache = true, defaultSource = "en" } = options;
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<TranslationError | null>(null);
@@ -59,86 +59,82 @@ export function useTranslation(options: UseTranslationOptions = {}): UseTranslat
     return `${source}:${target}:${text}`;
   };
 
-  const translate = useCallback(async (
-    text: string,
-    target: string,
-    source: string = defaultSource
-  ): Promise<string> => {
-    // Return original text if empty or same language
-    if (!text.trim() || source === target) {
-      return text;
-    }
-
-    // Check cache first
-    if (enableCache) {
-      const cacheKey = getCacheKey(text, source, target);
-      const cached = cacheRef.current.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/translate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text,
-          source,
-          target,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        const errorData = data as TranslationError;
-        setError(errorData);
-        throw new Error(errorData.error);
+  const translate = useCallback(
+    async (text: string, target: string, source: string = defaultSource): Promise<string> => {
+      // Return original text if empty or same language
+      if (!text.trim() || source === target) {
+        return text;
       }
 
-      const result = data as TranslationResult;
-
-      // Cache the result
+      // Check cache first
       if (enableCache) {
         const cacheKey = getCacheKey(text, source, target);
-        cacheRef.current.set(cacheKey, result.translatedText);
+        const cached = cacheRef.current.get(cacheKey);
+        if (cached) {
+          return cached;
+        }
       }
 
-      return result.translatedText;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Translation failed';
-      setError({ error: errorMessage });
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [defaultSource, enableCache]);
+      setIsLoading(true);
+      setError(null);
 
-  const translateBatch = useCallback(async (
-    texts: string[],
-    target: string,
-    source: string = defaultSource
-  ): Promise<string[]> => {
-    setIsLoading(true);
-    setError(null);
+      try {
+        const response = await fetch("/api/translate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text,
+            source,
+            target,
+          }),
+        });
 
-    try {
-      const results = await Promise.all(
-        texts.map(text => translate(text, target, source))
-      );
-      return results;
-    } catch (err) {
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [translate, defaultSource]);
+        const data = await response.json();
+
+        if (!response.ok) {
+          const errorData = data as TranslationError;
+          setError(errorData);
+          throw new Error(errorData.error);
+        }
+
+        const result = data as TranslationResult;
+
+        // Cache the result
+        if (enableCache) {
+          const cacheKey = getCacheKey(text, source, target);
+          cacheRef.current.set(cacheKey, result.translatedText);
+        }
+
+        return result.translatedText;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Translation failed";
+        setError({ error: errorMessage });
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [defaultSource, enableCache],
+  );
+
+  const translateBatch = useCallback(
+    async (texts: string[], target: string, source: string = defaultSource): Promise<string[]> => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const results = await Promise.all(texts.map((text) => translate(text, target, source)));
+        return results;
+      } catch (err) {
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [translate, defaultSource],
+  );
 
   const clearCache = useCallback(() => {
     cacheRef.current.clear();

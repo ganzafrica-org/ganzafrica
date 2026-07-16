@@ -9,9 +9,7 @@ export function safeAccess(obj: any, path: string, fallback: any = "") {
   return (
     path
       .split(".")
-      .reduce(
-        (acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined),
-        obj,
-      ) || fallback
+      .reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), obj) ||
+    fallback
   );
 }

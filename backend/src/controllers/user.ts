@@ -209,11 +209,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
     // If user is updating their own profile but not an admin,
     // prevent them from changing their role
-    if (
-      req.user?.id === id &&
-      currentUser.role_id !== adminRole.id &&
-      userData.role_id
-    ) {
+    if (req.user?.id === id && currentUser.role_id !== adminRole.id && userData.role_id) {
       delete userData.role_id; // Remove role_id from update data
     }
 
@@ -370,7 +366,7 @@ export const deactivateUser = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
+
     if (!id) {
       return res.status(400).json({
         error: "User Deletion Error",
@@ -460,19 +456,14 @@ export const listUsers = async (req: Request, res: Response) => {
       search: req.query.search as string,
       sort_by: req.query.sort_by as string,
       sort_order: req.query.sort_order as "asc" | "desc",
-      role_id: req.query.role_id
-        ? parseInt(req.query.role_id as string, 10)
-        : undefined,
-      is_active:
-        req.query.is_active === undefined
-          ? undefined
-          : req.query.is_active === "true",
+      role_id: req.query.role_id ? parseInt(req.query.role_id as string, 10) : undefined,
+      is_active: req.query.is_active === undefined ? undefined : req.query.is_active === "true",
     };
 
     // Add cache control headers to prevent caching
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     const { users, total } = await userService.listUsers(params);
 
@@ -597,7 +588,7 @@ export const importUsers = async (req: Request, res: Response) => {
 export const getCurrentUserProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    
+
     const profile = await userService.getUserProfile(userId);
 
     res.status(200).json({

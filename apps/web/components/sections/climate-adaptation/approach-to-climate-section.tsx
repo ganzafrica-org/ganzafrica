@@ -79,13 +79,11 @@ const ApproachToClimateSection = () => {
             </h2>
 
             <p className="text-gray-700 leading-relaxed">
-              At GanzAfrica, we are committed to shaping a sustainable and
-              prosperous Africa by empowering youth through training,
-              mentorship, and work placement programs in the fields of land
-              management, environmental sustainability, and agriculture. Our
-              holistic approach integrates knowledge, innovation, and policy
-              engagement to build future leaders who can drive meaningful change
-              in Africa's food systems.
+              At GanzAfrica, we are committed to shaping a sustainable and prosperous Africa by
+              empowering youth through training, mentorship, and work placement programs in the
+              fields of land management, environmental sustainability, and agriculture. Our holistic
+              approach integrates knowledge, innovation, and policy engagement to build future
+              leaders who can drive meaningful change in Africa's food systems.
             </p>
           </motion.div>
 

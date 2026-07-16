@@ -6,18 +6,6 @@ interface AlumniCardProps {
   className?: string;
 }
 
-export const AlumniCard = ({
-  children,
-  className,
-}: AlumniCardProps) => {
-  return (
-    <div
-      className={cn(
-        "rounded-lg shadow-lg bg-white",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
-}; 
+export const AlumniCard = ({ children, className }: AlumniCardProps) => {
+  return <div className={cn("rounded-lg shadow-lg bg-white", className)}>{children}</div>;
+};

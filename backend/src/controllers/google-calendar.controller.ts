@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { AppError } from '../middlewares';
-import * as googleCalendarService from '../services/google-calendar.service';
-import Logger from '../config/logger';
+import { Request, Response } from "express";
+import { AppError } from "../middlewares";
+import * as googleCalendarService from "../services/google-calendar.service";
+import Logger from "../config/logger";
 
-const logger = new Logger('GoogleCalendarController');
+const logger = new Logger("GoogleCalendarController");
 
 /**
  * @swagger
@@ -24,7 +24,7 @@ const logger = new Logger('GoogleCalendarController');
 export const getAuthUrl = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) {
-      throw new AppError('User not authenticated', 401);
+      throw new AppError("User not authenticated", 401);
     }
 
     // Use the logged-in user's email to pre-select their Google account
@@ -33,16 +33,18 @@ export const getAuthUrl = async (req: Request, res: Response): Promise<void> => 
       logger.warn(`No email found for user ${req.user.id}`);
     }
     const authUrl = googleCalendarService.getGoogleCalendarAuthUrl(req.user.id, userEmail);
-    
-    logger.info(`Generating Google Calendar auth URL for user ${req.user.id} with email ${userEmail || 'none'}`);
-    
+
+    logger.info(
+      `Generating Google Calendar auth URL for user ${req.user.id} with email ${userEmail || "none"}`,
+    );
+
     res.json({
       success: true,
       authUrl,
     });
   } catch (error: unknown) {
-    logger.error('Error getting Google Calendar auth URL:', error);
-    
+    logger.error("Error getting Google Calendar auth URL:", error);
+
     // Check if it's an AppError
     if (error instanceof AppError) {
       res.status(error.statusCode).json({
@@ -51,24 +53,25 @@ export const getAuthUrl = async (req: Request, res: Response): Promise<void> => 
       });
       return;
     }
-    
+
     // Handle regular Error or other errors
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get Google Calendar auth URL';
-    logger.error('Error details:', errorMessage);
-    
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to get Google Calendar auth URL";
+    logger.error("Error details:", errorMessage);
+
     // Check if it's a configuration error
-    if (errorMessage.includes('not configured')) {
+    if (errorMessage.includes("not configured")) {
       res.status(500).json({
         success: false,
-        error: 'Google Calendar is not configured. Please contact administrator.',
+        error: "Google Calendar is not configured. Please contact administrator.",
         message: errorMessage,
       });
       return;
     }
-    
+
     res.status(500).json({
       success: false,
-      error: 'Failed to get Google Calendar auth URL',
+      error: "Failed to get Google Calendar auth URL",
       message: errorMessage,
     });
   }
@@ -109,48 +112,52 @@ export const handleCallback = async (req: Request, res: Response): Promise<void>
 
     // Check if Google returned an error
     if (oauthError) {
-      logger.error('Google OAuth error:', oauthError);
-      const taskUrl = process.env.TASK_URL || 'http://localhost:3003';
-      res.redirect(`${taskUrl}/calendar?error=google_auth_failed&message=${encodeURIComponent(String(oauthError))}`);
+      logger.error("Google OAuth error:", oauthError);
+      const taskUrl = process.env.TASK_URL || "http://localhost:3003";
+      res.redirect(
+        `${taskUrl}/calendar?error=google_auth_failed&message=${encodeURIComponent(String(oauthError))}`,
+      );
       return;
     }
 
-    if (!code || typeof code !== 'string') {
-      logger.error('Authorization code is missing');
-      throw new AppError('Authorization code is required', 400);
+    if (!code || typeof code !== "string") {
+      logger.error("Authorization code is missing");
+      throw new AppError("Authorization code is required", 400);
     }
 
-    if (!state || typeof state !== 'string') {
-      logger.error('State parameter is missing');
-      throw new AppError('State parameter is required', 400);
+    if (!state || typeof state !== "string") {
+      logger.error("State parameter is missing");
+      throw new AppError("State parameter is required", 400);
     }
 
     // Decode state to get userId
     let userId: string;
     try {
-      const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
+      const decodedState = JSON.parse(Buffer.from(state, "base64").toString());
       userId = decodedState.userId;
       logger.info(`Processing Google Calendar callback for user: ${userId}`);
     } catch (decodeError) {
-      logger.error('Error decoding state parameter:', decodeError);
-      throw new AppError('Invalid state parameter', 400);
+      logger.error("Error decoding state parameter:", decodeError);
+      throw new AppError("Invalid state parameter", 400);
     }
 
     // Note: We trust the userId from the state parameter since it was encoded by us
     // In production, you might want to add additional validation or use a signed state
     await googleCalendarService.exchangeGoogleCalendarCode(code, userId);
-    
+
     logger.info(`Google Calendar connected successfully for user: ${userId}`);
-    
+
     // Redirect back to calendar page (task app runs on port 3003)
-    const taskUrl = process.env.TASK_URL || 'http://localhost:3003';
+    const taskUrl = process.env.TASK_URL || "http://localhost:3003";
     res.redirect(`${taskUrl}/calendar?google_calendar_connected=true`);
   } catch (error) {
-    logger.error('Error handling Google Calendar callback:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Error details:', errorMessage);
-    const taskUrl = process.env.TASK_URL || 'http://localhost:3003';
-    res.redirect(`${taskUrl}/calendar?error=google_auth_failed&message=${encodeURIComponent(errorMessage)}`);
+    logger.error("Error handling Google Calendar callback:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logger.error("Error details:", errorMessage);
+    const taskUrl = process.env.TASK_URL || "http://localhost:3003";
+    res.redirect(
+      `${taskUrl}/calendar?error=google_auth_failed&message=${encodeURIComponent(errorMessage)}`,
+    );
   }
 };
 
@@ -173,16 +180,16 @@ export const handleCallback = async (req: Request, res: Response): Promise<void>
 export const getConnectionStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) {
-      throw new AppError('User not authenticated', 401);
+      throw new AppError("User not authenticated", 401);
     }
 
     const { userIds } = req.query;
-    
+
     // If userIds provided, check status for multiple users
-    if (userIds && typeof userIds === 'string') {
-      const userIdArray = userIds.split(',').filter(id => id.trim());
+    if (userIds && typeof userIds === "string") {
+      const userIdArray = userIds.split(",").filter((id) => id.trim());
       const connectedIds = await googleCalendarService.getConnectedUserIds(userIdArray);
-      
+
       res.json({
         success: true,
         connected: connectedIds.length > 0,
@@ -193,14 +200,14 @@ export const getConnectionStatus = async (req: Request, res: Response): Promise<
 
     // Single user (default behavior)
     const connected = await googleCalendarService.isGoogleCalendarConnected(req.user.id);
-    
+
     res.json({
       success: true,
       connected,
     });
   } catch (error) {
-    logger.error('Error getting Google Calendar connection status:', error);
-    handleErrorResponse(error, res, 'Failed to get connection status');
+    logger.error("Error getting Google Calendar connection status:", error);
+    handleErrorResponse(error, res, "Failed to get connection status");
   }
 };
 
@@ -236,42 +243,42 @@ export const getConnectionStatus = async (req: Request, res: Response): Promise<
 export const getEvents = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) {
-      throw new AppError('User not authenticated', 401);
+      throw new AppError("User not authenticated", 401);
     }
 
     const { timeMin, timeMax, userIds } = req.query;
 
-    if (!timeMin || typeof timeMin !== 'string' || !timeMax || typeof timeMax !== 'string') {
-      throw new AppError('timeMin and timeMax are required', 400);
+    if (!timeMin || typeof timeMin !== "string" || !timeMax || typeof timeMax !== "string") {
+      throw new AppError("timeMin and timeMax are required", 400);
     }
 
     // If userIds is provided (for managers viewing multiple users), fetch events for all users
-    if (userIds && typeof userIds === 'string') {
-      const userIdArray = userIds.split(',').filter(id => id.trim());
-      logger.info(`Getting Google Calendar events for multiple users: ${userIdArray.join(', ')}`, {
+    if (userIds && typeof userIds === "string") {
+      const userIdArray = userIds.split(",").filter((id) => id.trim());
+      logger.info(`Getting Google Calendar events for multiple users: ${userIdArray.join(", ")}`, {
         timeMin,
-        timeMax
+        timeMax,
       });
 
       const results = await googleCalendarService.getGoogleCalendarEventsForUsers(
         userIdArray,
         timeMin,
-        timeMax
+        timeMax,
       );
 
       // Flatten all events into a single array with userId attached
       const allEvents: any[] = [];
       results.forEach(({ userId, events }) => {
-        events.forEach(event => {
+        events.forEach((event) => {
           allEvents.push({
             ...event,
-            userId: userId
+            userId: userId,
           });
         });
       });
 
       logger.info(`Returning ${allEvents.length} events for ${userIdArray.length} users`);
-      
+
       res.json({
         success: true,
         events: allEvents,
@@ -282,24 +289,24 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
     // Single user (default behavior)
     logger.info(`Getting Google Calendar events for user ${req.user.id}`, {
       timeMin,
-      timeMax
+      timeMax,
     });
 
     const events = await googleCalendarService.getGoogleCalendarEvents(
       req.user.id,
       timeMin,
-      timeMax
+      timeMax,
     );
-    
+
     logger.info(`Returning ${events.length} events to user ${req.user.id}`);
-    
+
     res.json({
       success: true,
       events,
     });
   } catch (error) {
-    logger.error('Error getting Google Calendar events:', error);
-    handleErrorResponse(error, res, 'Failed to get Google Calendar events');
+    logger.error("Error getting Google Calendar events:", error);
+    handleErrorResponse(error, res, "Failed to get Google Calendar events");
   }
 };
 
@@ -322,18 +329,18 @@ export const getEvents = async (req: Request, res: Response): Promise<void> => {
 export const disconnect = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user?.id) {
-      throw new AppError('User not authenticated', 401);
+      throw new AppError("User not authenticated", 401);
     }
 
     await googleCalendarService.disconnectGoogleCalendar(req.user.id);
-    
+
     res.json({
       success: true,
-      message: 'Google Calendar disconnected successfully',
+      message: "Google Calendar disconnected successfully",
     });
   } catch (error) {
-    logger.error('Error disconnecting Google Calendar:', error);
-    handleErrorResponse(error, res, 'Failed to disconnect Google Calendar');
+    logger.error("Error disconnecting Google Calendar:", error);
+    handleErrorResponse(error, res, "Failed to disconnect Google Calendar");
   }
 };
 
@@ -352,4 +359,3 @@ const handleErrorResponse = (error: unknown, res: Response, defaultMessage: stri
     });
   }
 };
-

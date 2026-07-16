@@ -1,8 +1,8 @@
-﻿import { jsonb , integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
+﻿import { jsonb, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { timestampFields } from "../common";
 import { documentCategoryEnum, documentStatusEnum } from "./hr.enums";
 import { hr_users } from "./employee";
-import {  hr_contracts } from "@/db/schema/hr/contract"
+import { hr_contracts } from "@/db/schema/hr/contract";
 
 export const hr_documents = pgTable("hr_documents", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -17,7 +17,9 @@ export const hr_documents = pgTable("hr_documents", {
   status: documentStatusEnum("status").default("DRAFT").notNull(),
   access: jsonb("access").notNull(), // Stores rules containing types, targets, permissions, and owners
   contract_id: uuid("contract_id").references(() => hr_contracts.id), // The dynamic Foreign Key link requested
-  created_by_id: uuid("created_by_id").references(() => hr_users.id).notNull(),
+  created_by_id: uuid("created_by_id")
+    .references(() => hr_users.id)
+    .notNull(),
   ...timestampFields,
 });
 

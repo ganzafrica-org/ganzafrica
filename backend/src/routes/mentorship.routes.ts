@@ -52,12 +52,7 @@ const router: Router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get(
-  "/stats",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getMentorshipStats,
-);
+router.get("/stats", authenticate, authorize(["alumni", "admin"]), getMentorshipStats);
 
 /**
  * @swagger
@@ -133,12 +128,7 @@ router.get(
  *       403:
  *         description: Forbidden - Requires alumni or admin role
  */
-router.get(
-  "/fellows",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getFellows,
-);
+router.get("/fellows", authenticate, authorize(["alumni", "admin"]), getFellows);
 
 /**
  * @swagger
@@ -181,12 +171,7 @@ router.get(
  *       404:
  *         description: Fellow not found
  */
-router.post(
-  "/add-mentee",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  addMentee,
-);
+router.post("/add-mentee", authenticate, authorize(["alumni", "admin"]), addMentee);
 
 /**
  * @swagger
@@ -230,12 +215,7 @@ router.post(
  *       403:
  *         description: Forbidden - Requires alumni or admin role
  */
-router.get(
-  "/connections",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getMyConnections,
-);
+router.get("/connections", authenticate, authorize(["alumni", "admin"]), getMyConnections);
 
 /**
  * @swagger
@@ -284,12 +264,7 @@ router.get(
  *       404:
  *         description: Connection not found
  */
-router.get(
-  "/connections/:id",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getConnection,
-);
+router.get("/connections/:id", authenticate, authorize(["alumni", "admin"]), getConnection);
 
 /**
  * @swagger
@@ -330,12 +305,7 @@ router.get(
  *       404:
  *         description: Connection not found
  */
-router.put(
-  "/connections/:id",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  updateConnection,
-);
+router.put("/connections/:id", authenticate, authorize(["alumni", "admin"]), updateConnection);
 
 /**
  * @swagger
@@ -377,12 +347,7 @@ router.put(
  *       404:
  *         description: Connection not found
  */
-router.post(
-  "/connections/:id/goals",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  addGoal,
-);
+router.post("/connections/:id/goals", authenticate, authorize(["alumni", "admin"]), addGoal);
 
 /**
  * @swagger

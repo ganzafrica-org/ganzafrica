@@ -51,9 +51,7 @@ export default function EntryPage() {
       <div className="text-center w-full max-w-md px-4">
         <Image
           src={
-            process.env.NODE_ENV === "production"
-              ? "/portal/images/logo.png"
-              : "/images/logo.png"
+            process.env.NODE_ENV === "production" ? "/portal/images/logo.png" : "/images/logo.png"
           }
           alt="Ganz Africa Logo"
           width={200}
@@ -61,12 +59,8 @@ export default function EntryPage() {
           className="mx-auto mb-6"
           priority
         />
-        <h1 className="text-2xl font-bold text-primary-green">
-          Empowering Youth Changemakers
-        </h1>
-        <p className="text-primary-orange mt-2">
-          Transforming Land, Environment, and Agriculture
-        </p>
+        <h1 className="text-2xl font-bold text-primary-green">Empowering Youth Changemakers</h1>
+        <p className="text-primary-orange mt-2">Transforming Land, Environment, and Agriculture</p>
 
         <div className="mt-6 w-full">
           <Progress value={progress} className="w-full" />

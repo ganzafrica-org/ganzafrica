@@ -20,7 +20,8 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: env.NODE_ENV === "production"
+      url:
+        env.NODE_ENV === "production"
           ? `https://backend-cbx8.onrender.com/api`
           : `${env.API_BASE_URL}:${env.API_PORT}/api`,
       description: env.NODE_ENV === "production" ? "Production server" : "Development server",
@@ -42,14 +43,7 @@ const swaggerDefinition = {
     schemas: {
       User: {
         type: "object",
-        required: [
-          "id",
-          "email",
-          "name",
-          "base_role",
-          "created_at",
-          "updated_at",
-        ],
+        required: ["id", "email", "name", "base_role", "created_at", "updated_at"],
         properties: {
           id: {
             type: "string",
@@ -96,15 +90,7 @@ const swaggerDefinition = {
       },
       Project: {
         type: "object",
-        required: [
-          "id",
-          "name",
-          "status",
-          "start_date",
-          "created_by",
-          "created_at",
-          "updated_at",
-        ],
+        required: ["id", "name", "status", "start_date", "created_by", "created_at", "updated_at"],
         properties: {
           id: {
             type: "string",

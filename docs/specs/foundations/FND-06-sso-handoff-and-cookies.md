@@ -36,7 +36,9 @@ log out everywhere at once. No tokens in URLs or localStorage.
 export const auth_handoff_codes = pgTable("auth_handoff_codes", {
   id: serial("id").primaryKey(),
   code_hash: char("code_hash", { length: 64 }).notNull().unique(),
-  user_id: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  user_id: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   target_app: text("target_app").notNull(), // 'hr'|'alumni'|'task'|'portal'|'internal'
   expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
   used_at: timestamp("used_at", { withTimezone: true }),
@@ -51,6 +53,7 @@ the existing shape.
 ## 4. Backend
 
 ### 4a. Cookies
+
 - `COOKIE_OPTIONS`: `sameSite: "lax"`; add `domain: env.COOKIE_DOMAIN` (new env var —
   `.ganzafrica.org` prod, UNSET dev → host-only localhost). Both auth + refresh cookies.
 - CORS: exact-origin allowlist from env `CORS_ORIGINS` (comma-sep; dev = the six localhost
@@ -61,17 +64,19 @@ the existing shape.
   entry points without a prior cookie).
 
 ### 4b. Endpoints
-| Endpoint | Auth | Behavior |
-|---|---|---|
-| `POST /auth/handoff` `{target_app}` | authenticate | 16 random bytes base64url; store sha256, 60s expiry; `200 {code}` |
+
+| Endpoint                               | Auth                | Behavior                                                                                                                                                                                                                                                                     |
+| -------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /auth/handoff` `{target_app}`    | authenticate        | 16 random bytes base64url; store sha256, 60s expiry; `200 {code}`                                                                                                                                                                                                            |
 | `POST /auth/handoff/exchange` `{code}` | none (code IS auth) | Validate unused+unexpired (single `UPDATE ... SET used_at=now() WHERE used_at IS NULL AND expires_at>now() RETURNING` — atomic). Create session, Set-Cookie (both cookies, §4a options), `200 {user: {id,email,name,roles:[...]}}`. Invalid → `401 {"error":"invalid_code"}` |
-| `GET /auth/me` | authenticate | `200 {user}` (exists? verify; create/extend to include `roles` array) |
-| `POST /auth/refresh` | refresh cookie | Rotation WITH grace: accept current OR previous hash if `refresh_rotated_at > now()-60s`; issue new pair, shift current→previous |
-| `POST /auth/logout` | authenticate | Revoke session row; clear both cookies WITH the domain attribute |
+| `GET /auth/me`                         | authenticate        | `200 {user}` (exists? verify; create/extend to include `roles` array)                                                                                                                                                                                                        |
+| `POST /auth/refresh`                   | refresh cookie      | Rotation WITH grace: accept current OR previous hash if `refresh_rotated_at > now()-60s`; issue new pair, shift current→previous                                                                                                                                             |
+| `POST /auth/logout`                    | authenticate        | Revoke session row; clear both cookies WITH the domain attribute                                                                                                                                                                                                             |
 
 ## 5. Frontend
 
 ### 5a. Portal
+
 - `platform-selection/page.tsx`: card click → `POST /auth/handoff {target_app}` →
   `window.location = "<appOrigin>/auth-callback?code=" + code + "&next=" + encodeURIComponent(path)`.
   App origins from env (`NEXT_PUBLIC_APP_URL_HR` etc.). Cards filtered by `user.roles` per
@@ -81,11 +86,13 @@ the existing shape.
   minting a handoff code post-login and forwarding.
 
 ### 5b. Every app's auth-callback (task, alumni, internal now; hr in FND-07)
+
 Standard sequence: `GET /auth/me` (withCredentials) → 200? `router.replace(next)` :
 `POST /auth/handoff/exchange {code}` → 200? store user in app state, `router.replace(next)` :
 redirect to portal login with `?next=<here>`. No localStorage writes.
 
 ### 5c. API clients
+
 All apps: axios/fetch `withCredentials: true`; DELETE Bearer interceptors and localStorage
 token reads; add CSRF header injection (read cookie, set `X-CSRF-Token`) on mutations;
 on 401 → single silent `POST /auth/refresh` retry → still 401 → portal login redirect.
@@ -95,6 +102,7 @@ package) so all apps share ONE implementation — decide by effort, prefer the n
 ## 6. Tests to write FIRST
 
 Backend integration:
+
 1. Handoff: mint → exchange → 200 + Set-Cookie with expected attributes (lax, httpOnly,
    domain when env set); user JSON has roles.
 2. Exchange twice → second gets 401 (atomicity: fire 5 concurrent exchanges → exactly one 200).
@@ -105,10 +113,8 @@ Backend integration:
 6. CSRF: mutation without header → 403; with matching header → passes; exempt routes pass without.
 7. CORS: disallowed origin gets no ACAO header.
 
-E2E (Playwright — THE acceptance test for this whole spec):
-8. Login at portal → click Task card → land on task WITHOUT any login form → reload task →
-   still authenticated → logout from task → portal also logged out.
-9. Deep link: visit task route unauthenticated → portal login → back to the exact task route.
+E2E (Playwright — THE acceptance test for this whole spec): 8. Login at portal → click Task card → land on task WITHOUT any login form → reload task →
+still authenticated → logout from task → portal also logged out. 9. Deep link: visit task route unauthenticated → portal login → back to the exact task route.
 
 ## 7. Acceptance criteria
 

@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { X } from "lucide-react";
 
 interface InputDialogProps {
   open: boolean;
@@ -16,7 +16,7 @@ interface InputDialogProps {
 
 /**
  * Reusable Input Dialog Component
- * 
+ *
  * @example
  * <InputDialog
  *   open={showDialog}
@@ -34,10 +34,10 @@ export function InputDialog({
   onSubmit,
   title,
   label,
-  placeholder = '',
-  submitText = 'Submit',
-  cancelText = 'Cancel',
-  defaultValue = '',
+  placeholder = "",
+  submitText = "Submit",
+  cancelText = "Cancel",
+  defaultValue = "",
 }: InputDialogProps): React.JSX.Element | null {
   const [inputValue, setInputValue] = useState(defaultValue);
 
@@ -52,33 +52,30 @@ export function InputDialog({
   const handleSubmit = () => {
     if (inputValue.trim()) {
       onSubmit(inputValue.trim());
-      setInputValue('');
+      setInputValue("");
       onOpenChange(false);
     }
   };
 
   const handleCancel = () => {
-    setInputValue('');
+    setInputValue("");
     onOpenChange(false);
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div 
+      <div
         className="bg-white rounded-xl p-6 w-96 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-          <button
-            onClick={handleCancel}
-            className="text-gray-400 hover:text-gray-600"
-          >
+          <button onClick={handleCancel} className="text-gray-400 hover:text-gray-600">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -90,9 +87,9 @@ export function InputDialog({
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={placeholder}
             className="w-full px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            style={{ borderRadius: '7px', border: '1px solid #e5e7eb' }}
+            style={{ borderRadius: "7px", border: "1px solid #e5e7eb" }}
             onKeyPress={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 handleSubmit();
               }
             }}
@@ -104,20 +101,20 @@ export function InputDialog({
             onClick={handleSubmit}
             disabled={!inputValue.trim()}
             className="flex-1 px-4 py-2 font-medium text-sm transition"
-            style={{ 
-              backgroundColor: inputValue.trim() ? '#076297' : '#e5e7eb', 
-              color: inputValue.trim() ? '#ffffff' : '#9ca3af',
-              borderRadius: '7px',
-              cursor: inputValue.trim() ? 'pointer' : 'not-allowed'
+            style={{
+              backgroundColor: inputValue.trim() ? "#076297" : "#e5e7eb",
+              color: inputValue.trim() ? "#ffffff" : "#9ca3af",
+              borderRadius: "7px",
+              cursor: inputValue.trim() ? "pointer" : "not-allowed",
             }}
             onMouseEnter={(e) => {
               if (inputValue.trim()) {
-                e.currentTarget.style.backgroundColor = '#054a73';
+                e.currentTarget.style.backgroundColor = "#054a73";
               }
             }}
             onMouseLeave={(e) => {
               if (inputValue.trim()) {
-                e.currentTarget.style.backgroundColor = '#076297';
+                e.currentTarget.style.backgroundColor = "#076297";
               }
             }}
           >
@@ -126,9 +123,9 @@ export function InputDialog({
           <button
             onClick={handleCancel}
             className="flex-1 px-4 py-2 font-medium text-sm transition"
-            style={{ backgroundColor: '#f3f4f6', color: '#374151', borderRadius: '7px' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e5e7eb')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+            style={{ backgroundColor: "#f3f4f6", color: "#374151", borderRadius: "7px" }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
           >
             {cancelText}
           </button>
@@ -137,4 +134,3 @@ export function InputDialog({
     </div>
   );
 }
-

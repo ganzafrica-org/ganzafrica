@@ -32,7 +32,7 @@
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
-  
+
   /* Prevent horizontal scrolling and unwanted touch gestures */
   html {
     height: 100%;
@@ -42,7 +42,7 @@
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
-  
+
   body {
     height: 100%;
     width: 100%;
@@ -56,7 +56,7 @@
     margin: 0;
     padding: 0;
   }
-  
+
   #__next {
     height: 100%;
     width: 100%;
@@ -91,8 +91,6 @@
   }
 }
 
-
-
 @layer base {
   * {
     @apply border-border;
@@ -109,7 +107,7 @@
     max-width: 100%;
     box-sizing: border-box;
   }
-  
+
   /* Ensure fixed elements stay in place */
   [style*="position: fixed"],
   [style*="position:fixed"] {
@@ -118,13 +116,13 @@
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }
-  
+
   /* Prevent unwanted touch gestures */
   .no-touch-action {
     touch-action: none;
     -ms-touch-action: none;
   }
-  
+
   /* Prevent text selection on touch devices for better UX */
   .no-select {
     -webkit-user-select: none;
@@ -133,45 +131,43 @@
     user-select: none;
     -webkit-touch-callout: none;
   }
-  
+
   /* Smooth scrolling for better performance */
   html {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Fix for IE/Edge sticky positioning */
   @supports not (position: sticky) {
     .sticky-fallback {
       position: relative;
     }
   }
-  
+
   /* Prevent layout shift on scroll */
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   /* Ensure hamburger menu is completely hidden on desktop */
   @media (min-width: 1024px) {
     .sidebar-toggle {
       display: none !important;
     }
   }
-  
+
   /* Ensure mobile sidebar is completely hidden by default */
   @media (max-width: 1023px) {
     .sidebar-container[class*="lg:hidden"] {
       transform: translateX(-100%);
       opacity: 0;
     }
-    
+
     .sidebar-container[class*="lg:hidden"][style*="translate-x-0"] {
       transform: translateX(0);
       opacity: 1;
     }
   }
 }
-
-

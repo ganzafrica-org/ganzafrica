@@ -2,18 +2,7 @@ import { Request, Response } from "express";
 import { db } from "../db/client";
 import { alumni_events, event_registrations } from "../db/schema";
 import { users } from "../db/schema";
-import {
-  eq,
-  and,
-  or,
-  ilike,
-  sql,
-  desc,
-  asc,
-  count,
-  gte,
-  lte,
-} from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, count, gte, lte } from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("EventsController");
@@ -43,10 +32,7 @@ const EVENT_CATEGORIES = [
 /**
  * Get events statistics
  */
-export const getEventStats = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getEventStats = async (req: Request, res: Response): Promise<void> => {
   try {
     // Total events
     const totalResult = await db
@@ -58,12 +44,7 @@ export const getEventStats = async (
     const upcomingResult = await db
       .select({ count: count() })
       .from(alumni_events)
-      .where(
-        and(
-          eq(alumni_events.status, "Open"),
-          gte(alumni_events.event_date, new Date()),
-        ),
-      );
+      .where(and(eq(alumni_events.status, "Open"), gte(alumni_events.event_date, new Date())));
 
     // User's registered events
     let myEvents = 0;
@@ -99,28 +80,12 @@ export const getEventStats = async (
 /**
  * Get all events with pagination and filters
  */
-export const getAllEvents = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAllEvents = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {
-      page,
-      limit,
-      search,
-      type,
-      category,
-      status,
-      myEvents,
-      startDate,
-      endDate,
-    } = req.query;
+    const { page, limit, search, type, category, status, myEvents, startDate, endDate } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(
-      50,
-      Math.max(1, parseInt(limit as string, 10) || 15),
-    );
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 15));
     const offset = (pageNum - 1) * limitNum;
 
     // Build conditions
@@ -154,14 +119,10 @@ export const getAllEvents = async (
 
     // Date range filters
     if (startDate) {
-      conditions.push(
-        gte(alumni_events.event_date, new Date(startDate as string)),
-      );
+      conditions.push(gte(alumni_events.event_date, new Date(startDate as string)));
     }
     if (endDate) {
-      conditions.push(
-        lte(alumni_events.event_date, new Date(endDate as string)),
-      );
+      conditions.push(lte(alumni_events.event_date, new Date(endDate as string)));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -211,8 +172,7 @@ export const getAllEvents = async (
       }
     }
 
-    const finalWhereClause =
-      conditions.length > 0 ? and(...conditions) : undefined;
+    const finalWhereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get total count
     const totalResult = await db
@@ -322,12 +282,8 @@ export const getAllEvents = async (
       })
       .from(alumni_events);
 
-    const types = [
-      ...new Set(allEvents.map((e) => e.type).filter(Boolean)),
-    ].sort();
-    const categories = [
-      ...new Set(allEvents.map((e) => e.category).filter(Boolean)),
-    ].sort();
+    const types = [...new Set(allEvents.map((e) => e.type).filter(Boolean))].sort();
+    const categories = [...new Set(allEvents.map((e) => e.category).filter(Boolean))].sort();
 
     res.status(200).json({
       events: events.map((e: any) => ({
@@ -484,10 +440,7 @@ export const getEvent = async (req: Request, res: Response): Promise<void> => {
 /**
  * Register/Unregister for an event
  */
-export const toggleRegistration = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const toggleRegistration = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -524,10 +477,7 @@ export const toggleRegistration = async (
       .select()
       .from(event_registrations)
       .where(
-        and(
-          eq(event_registrations.event_id, eventId),
-          eq(event_registrations.user_id, userId),
-        ),
+        and(eq(event_registrations.event_id, eventId), eq(event_registrations.user_id, userId)),
       )
       .limit(1);
 
@@ -591,9 +541,7 @@ export const toggleRegistration = async (
     res.status(200).json({
       registered,
       attendees: attendeeResult[0]?.count || 0,
-      message: registered
-        ? "Successfully registered for event"
-        : "Registration cancelled",
+      message: registered ? "Successfully registered for event" : "Registration cancelled",
     });
   } catch (error) {
     logger.error("Error toggling registration", error);

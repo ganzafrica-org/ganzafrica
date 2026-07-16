@@ -203,9 +203,7 @@ function parsePayrollCSV(filePath: string): Promise<any[]> {
  * Format 3: has 'Housing allowances' column (Burkina Faso XOF)
  * Format 4: has 'WOP' + 'Net USD' but NO 'Basic Salary' / 'MEDICAL' (Rwanda RWF withholding)
  */
-function detectFormat(
-  headers: string[],
-): "format1" | "format2" | "format3" | "format4" {
+function detectFormat(headers: string[]): "format1" | "format2" | "format3" | "format4" {
   const h = headers.map((x) => x.toLowerCase().trim());
   const has = (substr: string) => h.some((col) => col.includes(substr));
 
@@ -294,7 +292,9 @@ function processFormat1Row(
     date_of_payment: dateOfPayment,
     name,
     email,
-    staff_fellow_number: (row["Employee No."] || row["Employee No"] || row["staff_fellow_number"] || "").trim() || undefined,
+    staff_fellow_number:
+      (row["Employee No."] || row["Employee No"] || row["staff_fellow_number"] || "").trim() ||
+      undefined,
     employee_id: (row["Employees ID"] || row["employee_id"] || "").trim() || undefined,
     program: (row.Program || row.program || "").trim() || undefined,
     payroll_type: isUsdEmployee ? "rwf_usd" : "rwf",
@@ -302,12 +302,22 @@ function processFormat1Row(
     basic_salary: parseNumber(row["Basic Salary"] || row["basic_salary"]),
     gross_salary: parseNumber(row["Gross Salary"] || row["gross_salary"]),
     csr_employer: parseNumber(row["CSR 6% /Employer contribution/RSSB"] || row["csr_employer"]),
-    occupational_hazards: parseNumber(row["Employer_ Occupational Hazards contribution   (2%)"] || row["Employer_ Occupational Hazards contribution (2%)"] || row["occupational_hazards"]),
-    maternity_employer: parseNumber(row["MATERNITY 0.3% /Employer contribution"] || row["maternity_employer"]),
+    occupational_hazards: parseNumber(
+      row["Employer_ Occupational Hazards contribution   (2%)"] ||
+        row["Employer_ Occupational Hazards contribution (2%)"] ||
+        row["occupational_hazards"],
+    ),
+    maternity_employer: parseNumber(
+      row["MATERNITY 0.3% /Employer contribution"] || row["maternity_employer"],
+    ),
     csr_employee: parseNumber(row["CSR 6%/Employee contribution/RSSB"] || row["csr_employee"]),
-    maternity_employee: parseNumber(row["MATERNITY 0.3% /Employee contribution"] || row["maternity_employee"]),
+    maternity_employee: parseNumber(
+      row["MATERNITY 0.3% /Employee contribution"] || row["maternity_employee"],
+    ),
     tpr: parseNumber(row["TPR 30%"] || row.tpr),
-    net_salary_before_cbhi: parseNumber(row["Net Salary before CBHI"] || row["net_salary_before_cbhi"]),
+    net_salary_before_cbhi: parseNumber(
+      row["Net Salary before CBHI"] || row["net_salary_before_cbhi"],
+    ),
     cbhi: parseNumber(row["CBHI 0.5%"] || row.cbhi),
     net_salary: parseNumber(row["Net Salary"] || row["net_salary"]),
     net_salary_usd: isUsdEmployee
@@ -356,7 +366,8 @@ function processFormat2Row(
     date_of_payment: dateOfPayment || period,
     name,
     email,
-    staff_fellow_number: (row["Consultant ID"] || row["staff_fellow_number"] || "").trim() || undefined,
+    staff_fellow_number:
+      (row["Consultant ID"] || row["staff_fellow_number"] || "").trim() || undefined,
     payroll_type: "wop_usd",
     currency: "USD",
     gross_usd: grossUsd,
@@ -405,9 +416,17 @@ function processFormat3Row(
     payroll_type: "xof",
     currency: "XOF",
     basic_salary: parseNumber(row.Basic || row.basic_salary),
-    housing_allowance: parseNumber(row["Housing allowances 20%"] || row["Housing allowances"] || row["housing_allowance"]),
-    function_allowance: parseNumber(row["Function allowance 5%"] || row["Function allowance"] || row["function_allowance"]),
-    transport_allowance: parseNumber(row[" Transport allowance 5% "] || row["Transport allowance 5%"] || row["transport_allowance"]),
+    housing_allowance: parseNumber(
+      row["Housing allowances 20%"] || row["Housing allowances"] || row["housing_allowance"],
+    ),
+    function_allowance: parseNumber(
+      row["Function allowance 5%"] || row["Function allowance"] || row["function_allowance"],
+    ),
+    transport_allowance: parseNumber(
+      row[" Transport allowance 5% "] ||
+        row["Transport allowance 5%"] ||
+        row["transport_allowance"],
+    ),
     gross_salary: gross,
     net_salary: gross,
     uploaded_by: uploadedBy,
@@ -432,9 +451,7 @@ function processFormat4Row(
   const period = (row["Payroll Period"] || row["payroll_period"] || "").trim();
   if (!period) return null;
 
-  const dateOfPayment = parseDate(
-    row["Date of payment"] || row["date_of_payment"],
-  );
+  const dateOfPayment = parseDate(row["Date of payment"] || row["date_of_payment"]);
 
   return {
     user_id: userId,
@@ -442,7 +459,8 @@ function processFormat4Row(
     date_of_payment: dateOfPayment || period,
     name,
     email,
-    employee_id: (row["Employee Id"] || row["Employee ID"] || row["employee_id"] || "").trim() || undefined,
+    employee_id:
+      (row["Employee Id"] || row["Employee ID"] || row["employee_id"] || "").trim() || undefined,
     payroll_type: "rwf_wop",
     currency: "RWF",
     gross_salary: parseNumber(row.Gross || row.gross_salary),
@@ -456,11 +474,7 @@ function processFormat4Row(
 /**
  * Upload payroll from CSV — auto-detects format
  */
-export async function uploadPayrollCSV(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function uploadPayrollCSV(req: Request, res: Response, next: NextFunction) {
   try {
     if (!req.file) throw new AppError("No file uploaded", 400);
 
@@ -480,26 +494,14 @@ export async function uploadPayrollCSV(
     const invalidRecords: any[] = [];
 
     for (const row of rows) {
-      const email = (
-        row["Email address"] ||
-        row.Email ||
-        row.email ||
-        ""
-      ).trim();
-      const name = (
-        row.Name ||
-        row["Program name"] ||
-        row.name ||
-        ""
-      ).trim();
+      const email = (row["Email address"] || row.Email || row.email || "").trim();
+      const name = (row.Name || row["Program name"] || row.name || "").trim();
 
       // Skip totals / blank rows
       if (!email && !name) continue;
 
       // Optionally link to existing user (not required)
-      const user = email
-        ? await payrollService.findUserByEmail(email.toLowerCase())
-        : null;
+      const user = email ? await payrollService.findUserByEmail(email.toLowerCase()) : null;
 
       let record: any = null;
 
@@ -551,11 +553,7 @@ export async function uploadPayrollCSV(
 /**
  * Create payroll records (bulk or single)
  */
-export async function createPayrolls(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function createPayrolls(req: Request, res: Response, next: NextFunction) {
   try {
     const { payrolls: payrollData } = req.body;
 
@@ -582,11 +580,7 @@ export async function createPayrolls(
 /**
  * Get all payrolls with filters and pagination
  */
-export async function getPayrolls(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function getPayrolls(req: Request, res: Response, next: NextFunction) {
   try {
     const {
       user_id,
@@ -629,11 +623,7 @@ export async function getPayrolls(
 /**
  * Get single payroll by ID
  */
-export async function getPayrollById(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function getPayrollById(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
     const payroll = await payrollService.getPayrollById(parseInt(id));
@@ -647,11 +637,7 @@ export async function getPayrollById(
 /**
  * Update payroll
  */
-export async function updatePayroll(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function updatePayroll(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
     const payroll = await payrollService.updatePayroll(parseInt(id), req.body);
@@ -664,11 +650,7 @@ export async function updatePayroll(
 /**
  * Delete payroll
  */
-export async function deletePayroll(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function deletePayroll(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
     await payrollService.deletePayroll(parseInt(id));
@@ -681,11 +663,7 @@ export async function deletePayroll(
 /**
  * Get signed URL for payslip file
  */
-export async function getPayslipSignedUrl(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function getPayslipSignedUrl(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
     const payrollData = await payrollService.getPayrollById(parseInt(id));
@@ -708,11 +686,7 @@ export async function getPayslipSignedUrl(
 /**
  * Send payslip email (single or batch)
  */
-export async function sendPayslipEmails(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export async function sendPayslipEmails(req: Request, res: Response, next: NextFunction) {
   try {
     const { payroll_ids } = req.body;
     if (!Array.isArray(payroll_ids) || payroll_ids.length === 0) {
@@ -722,9 +696,7 @@ export async function sendPayslipEmails(
     payrollEmailService
       .sendPayslipsBatch(payroll_ids)
       .then((result: any) => {
-        logger.info(
-          `Email batch complete: ${result.successful}/${result.total} sent successfully`,
-        );
+        logger.info(`Email batch complete: ${result.successful}/${result.total} sent successfully`);
       })
       .catch((error: any) => {
         logger.error("Error in background email sending:", error);

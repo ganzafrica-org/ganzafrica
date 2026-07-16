@@ -7,20 +7,10 @@ export const createContactSchema = z.object({
       .string()
       .min(2, "Name must be at least 2 characters long")
       .max(200, "Name must be at most 200 characters long"),
-    email: z
-      .string()
-      .email("Email must be a valid email address"),
-    phone: z
-      .string()
-      .max(50, "Phone number must be at most 50 characters long")
-      .optional(),
-    message: z
-      .string()
-      .min(10, "Message must be at least 10 characters long"),
-    location: z
-      .string()
-      .max(100, "Location must be at most 100 characters long")
-      .optional(),
+    email: z.string().email("Email must be a valid email address"),
+    phone: z.string().max(50, "Phone number must be at most 50 characters long").optional(),
+    message: z.string().min(10, "Message must be at least 10 characters long"),
+    location: z.string().max(100, "Location must be at most 100 characters long").optional(),
   }),
 });
 
@@ -47,14 +37,8 @@ export const updateContactSchema = z.object({
         .min(2, "Status must be at least 2 characters long")
         .max(50, "Status must be at most 50 characters long")
         .optional(),
-      is_resolved: z
-        .boolean()
-        .optional(),
-      responded_at: z
-        .string()
-        .datetime({ offset: true })
-        .optional()
-        .nullable(),
+      is_resolved: z.boolean().optional(),
+      responded_at: z.string().datetime({ offset: true }).optional().nullable(),
     })
     .refine((data) => Object.keys(data).length > 0, {
       message: "At least one field to update must be provided",
@@ -73,21 +57,15 @@ export const deleteContactSchema = z.object({
 // Schema for listing contacts with optional filters
 export const listContactsSchema = z.object({
   query: z.object({
-    status: z
-      .string()
-      .optional(),
+    status: z.string().optional(),
     is_resolved: z
       .string()
       .refine((value) => value === "true" || value === "false" || value === undefined, {
         message: "is_resolved must be 'true' or 'false'",
       })
       .optional(),
-    location: z
-      .string()
-      .optional(),
-    sort_by: z
-      .string()
-      .optional(),
+    location: z.string().optional(),
+    sort_by: z.string().optional(),
     sort_order: z
       .string()
       .refine((value) => value === "asc" || value === "desc" || value === undefined, {
@@ -100,9 +78,7 @@ export const listContactsSchema = z.object({
 // Newsletter subscription schema
 export const newsletterSubscribeSchema = z.object({
   body: z.object({
-    email: z
-      .string()
-      .email("Email must be a valid email address"),
+    email: z.string().email("Email must be a valid email address"),
   }),
 });
 
@@ -116,24 +92,22 @@ export const newsletterUnsubscribeSchema = z.object({
 });
 // Schema for listing newsletter subscribers
 export const listNewsletterSubscribersSchema = z.object({
-    query: z.object({
-      active_only: z
-        .string()
-        .refine((value) => value === "true" || value === "false" || value === undefined, {
-          message: "active_only must be 'true' or 'false'",
-        })
-        .optional(),
-      sort_by: z
-        .string()
-        .optional(),
-      sort_order: z
-        .string()
-        .refine((value) => value === "asc" || value === "desc" || value === undefined, {
-          message: "sort_order must be 'asc' or 'desc'",
-        })
-        .optional(),
-    }),
-  });
+  query: z.object({
+    active_only: z
+      .string()
+      .refine((value) => value === "true" || value === "false" || value === undefined, {
+        message: "active_only must be 'true' or 'false'",
+      })
+      .optional(),
+    sort_by: z.string().optional(),
+    sort_order: z
+      .string()
+      .refine((value) => value === "asc" || value === "desc" || value === undefined, {
+        message: "sort_order must be 'asc' or 'desc'",
+      })
+      .optional(),
+  }),
+});
 // Export all contact validation schemas
 export const contactValidation = {
   createContactSchema,
@@ -143,7 +117,7 @@ export const contactValidation = {
   listContactsSchema,
   newsletterSubscribeSchema,
   newsletterUnsubscribeSchema,
-  listNewsletterSubscribersSchema
+  listNewsletterSubscribersSchema,
 };
 
 // Default export

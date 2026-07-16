@@ -1,7 +1,7 @@
 # FND-07: HR App Joins SSO + hr_users Auth Retirement (cutover day)
 
 > **Status:** Ready
-> **Track:** A — **coordinated cutover with Track B (merge freeze on backend/src/routes/hr/** that day)**
+> **Track:** A — **coordinated cutover with Track B (merge freeze on backend/src/routes/hr/** that day)\*\*
 > **Depends on:** FND-06 (handoff live), FND-05 (merge script has run on prod)
 > **Blocks:** MOD-07 (internal absorption starts after), MOD-03
 > **Branch:** `feat/fnd-07-hr-sso`
@@ -31,7 +31,7 @@ stack (hr_users credentials, OTP registration, hr JWTs, authenticateHr) is delet
 
 ## 3. Schema changes (contract phase of FND-05 §3b)
 
-One migration: for each hr_* table that got `employee_id` in FND-05 — set NOT NULL where the
+One migration: for each hr\_\* table that got `employee_id` in FND-05 — set NOT NULL where the
 old column was NOT NULL, drop the old hr_users FK columns (`hr_leaves.user_id`,
 `hr_assets.assigned_to_id` → keep column name `assigned_to_id` but repoint? NO — the new
 column is already named `employee_id`/`assigned_employee_id`; drop old), then

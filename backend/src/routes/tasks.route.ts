@@ -26,7 +26,11 @@ router.put("/:id/comments/:commentId", authenticate, taskController.updateTaskCo
 router.delete("/:id/comments/:commentId", authenticate, taskController.deleteTaskComment);
 
 // Task File Uploads - uses Digital Ocean Spaces (same as portal)
-router.post("/:id/upload", authenticate, upload.array('files', 10), taskController.uploadTaskAttachments);
+router.post(
+  "/:id/upload",
+  authenticate,
+  upload.array("files", 10),
+  taskController.uploadTaskAttachments,
+);
 
 export default router;
-

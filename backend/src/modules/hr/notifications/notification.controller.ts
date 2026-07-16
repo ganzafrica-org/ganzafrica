@@ -2,7 +2,11 @@
 import { constants, Logger } from "@/config";
 import { AppError } from "@/middlewares";
 import * as notificationService from "./notification.service";
-import type { NotificationFilters, NotificationStatus, NotificationType } from "./notification.types";
+import type {
+  NotificationFilters,
+  NotificationStatus,
+  NotificationType,
+} from "./notification.types";
 
 const logger = new Logger("NotificationController");
 

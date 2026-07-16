@@ -54,7 +54,11 @@ function mapTicket(row: typeof hr_helpdesk_tickets.$inferSelect): TicketRecord {
 }
 
 async function assertUserExists(userId: string, label: string): Promise<void> {
-  const rows = await db.select({ id: hr_users.id }).from(hr_users).where(eq(hr_users.id, userId)).limit(1);
+  const rows = await db
+    .select({ id: hr_users.id })
+    .from(hr_users)
+    .where(eq(hr_users.id, userId))
+    .limit(1);
   if (!rows.length) throw new AppError(`${label} not found`, 404);
 }
 
@@ -62,8 +66,10 @@ export async function listTickets(filters: ListTicketsFilters = {}): Promise<Tic
   const conditions = [];
 
   if (filters.status) conditions.push(eq(hr_helpdesk_tickets.status, filters.status));
-  if (filters.submittedBy) conditions.push(eq(hr_helpdesk_tickets.submitted_by_id, filters.submittedBy));
-  if (filters.assignedTo) conditions.push(eq(hr_helpdesk_tickets.assigned_to_id, filters.assignedTo));
+  if (filters.submittedBy)
+    conditions.push(eq(hr_helpdesk_tickets.submitted_by_id, filters.submittedBy));
+  if (filters.assignedTo)
+    conditions.push(eq(hr_helpdesk_tickets.assigned_to_id, filters.assignedTo));
 
   const whereClause = conditions.length ? and(...conditions) : undefined;
   const rows = await db.select().from(hr_helpdesk_tickets).where(whereClause);
@@ -72,7 +78,11 @@ export async function listTickets(filters: ListTicketsFilters = {}): Promise<Tic
 }
 
 export async function getTicketById(id: string): Promise<TicketRecord> {
-  const rows = await db.select().from(hr_helpdesk_tickets).where(eq(hr_helpdesk_tickets.id, id)).limit(1);
+  const rows = await db
+    .select()
+    .from(hr_helpdesk_tickets)
+    .where(eq(hr_helpdesk_tickets.id, id))
+    .limit(1);
   if (!rows.length) throw new AppError("Ticket not found", 404);
   return mapTicket(rows[0]);
 }
@@ -109,7 +119,11 @@ export async function createTicket(input: CreateTicketInput): Promise<TicketReco
 }
 
 export async function updateTicket(id: string, input: UpdateTicketInput): Promise<TicketRecord> {
-  const rows = await db.select().from(hr_helpdesk_tickets).where(eq(hr_helpdesk_tickets.id, id)).limit(1);
+  const rows = await db
+    .select()
+    .from(hr_helpdesk_tickets)
+    .where(eq(hr_helpdesk_tickets.id, id))
+    .limit(1);
   if (!rows.length) throw new AppError("Ticket not found", 404);
   const previous = rows[0];
 
@@ -167,7 +181,11 @@ export async function updateTicket(id: string, input: UpdateTicketInput): Promis
 }
 
 export async function answerTicket(id: string, answer: string): Promise<TicketRecord> {
-  const rows = await db.select().from(hr_helpdesk_tickets).where(eq(hr_helpdesk_tickets.id, id)).limit(1);
+  const rows = await db
+    .select()
+    .from(hr_helpdesk_tickets)
+    .where(eq(hr_helpdesk_tickets.id, id))
+    .limit(1);
   if (!rows.length) throw new AppError("Ticket not found", 404);
 
   const now = new Date();

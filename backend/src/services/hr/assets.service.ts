@@ -98,7 +98,11 @@ function mapAsset(row: typeof hr_assets.$inferSelect): AssetRecord {
 }
 
 async function assertUserExists(userId: string): Promise<void> {
-  const rows = await db.select({ id: hr_users.id }).from(hr_users).where(eq(hr_users.id, userId)).limit(1);
+  const rows = await db
+    .select({ id: hr_users.id })
+    .from(hr_users)
+    .where(eq(hr_users.id, userId))
+    .limit(1);
   if (!rows.length) throw new AppError("Assigned user not found", 404);
 }
 
@@ -215,7 +219,7 @@ export async function createAsset(input: CreateAssetInput): Promise<AssetRecord>
         asset_id: inserted.id,
         spec_key: s.key,
         spec_value: s.value,
-      }))
+      })),
     );
   }
 
@@ -228,7 +232,7 @@ export async function createAsset(input: CreateAssetInput): Promise<AssetRecord>
         storage_key: i.storageKey,
         is_primary: i.isPrimary,
         sort_order: i.sortOrder,
-      }))
+      })),
     );
   }
 
@@ -288,7 +292,7 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
           asset_id: id,
           spec_key: s.key,
           spec_value: s.value,
-        }))
+        })),
       );
     }
   }
@@ -302,7 +306,7 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
         storage_key: i.storageKey,
         is_primary: i.isPrimary,
         sort_order: i.sortOrder,
-      }))
+      })),
     );
   }
 
@@ -353,7 +357,10 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
 }
 
 export async function deleteAsset(id: string): Promise<void> {
-  const deleted = await db.delete(hr_assets).where(eq(hr_assets.id, id)).returning({ id: hr_assets.id });
+  const deleted = await db
+    .delete(hr_assets)
+    .where(eq(hr_assets.id, id))
+    .returning({ id: hr_assets.id });
   if (!deleted.length) throw new AppError("Asset not found", 404);
 }
 
@@ -378,7 +385,11 @@ export async function listAssetCategories() {
 
 // Get a single category with its spec_schema
 export async function getAssetCategory(id: string) {
-  const rows = await db.select().from(hr_asset_categories).where(eq(hr_asset_categories.id, id)).limit(1);
+  const rows = await db
+    .select()
+    .from(hr_asset_categories)
+    .where(eq(hr_asset_categories.id, id))
+    .limit(1);
   if (!rows.length) throw new AppError("Category not found", 404);
   return rows[0];
 }
@@ -472,12 +483,20 @@ export async function listAssetMaintenance(assetId?: string) {
   }
   const whereClause = conditions.length ? and(...conditions) : undefined;
 
-  return db.select().from(hr_asset_maintenance).where(whereClause).orderBy(asc(hr_asset_maintenance.maintenance_date));
+  return db
+    .select()
+    .from(hr_asset_maintenance)
+    .where(whereClause)
+    .orderBy(asc(hr_asset_maintenance.maintenance_date));
 }
 
 export async function createAssetMaintenance(input: CreateMaintenanceInput) {
   // Verify asset exists
-  const asset = await db.select({ id: hr_assets.id }).from(hr_assets).where(eq(hr_assets.id, input.assetId)).limit(1);
+  const asset = await db
+    .select({ id: hr_assets.id })
+    .from(hr_assets)
+    .where(eq(hr_assets.id, input.assetId))
+    .limit(1);
   if (!asset.length) throw new AppError("Asset not found", 404);
 
   // Verify requester exists
@@ -521,6 +540,9 @@ export async function updateAssetMaintenance(id: string, input: UpdateMaintenanc
 }
 
 export async function deleteAssetMaintenance(id: string) {
-  const deleted = await db.delete(hr_asset_maintenance).where(eq(hr_asset_maintenance.id, id)).returning();
+  const deleted = await db
+    .delete(hr_asset_maintenance)
+    .where(eq(hr_asset_maintenance.id, id))
+    .returning();
   if (!deleted.length) throw new AppError("Maintenance record not found", 404);
 }

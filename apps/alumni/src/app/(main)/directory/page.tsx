@@ -28,13 +28,7 @@ import {
 } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  alumniApi,
-  Alumni,
-  AlumniStats,
-  AlumniFilters,
-  Pagination,
-} from "@/lib/api/alumni";
+import { alumniApi, Alumni, AlumniStats, AlumniFilters, Pagination } from "@/lib/api/alumni";
 
 const getDepartmentColor = (industry: string) => {
   switch (industry?.toLowerCase()) {
@@ -156,10 +150,7 @@ const AlumniListItem = ({
                   </Badge>
                 )}
                 {alumni.activeMenteesCount > 0 && (
-                  <Badge
-                    variant="outline"
-                    className="text-green-600 border-green-200"
-                  >
+                  <Badge variant="outline" className="text-green-600 border-green-200">
                     <Heart className="h-3 w-3 mr-1" />
                     {alumni.activeMenteesCount}
                   </Badge>
@@ -202,9 +193,7 @@ const StatsCards = ({ stats }: { stats: AlumniStats }) => (
   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
     <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-emerald-100">
-          Total Alumni
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-emerald-100">Total Alumni</CardTitle>
         <Users className="h-5 w-5 text-emerald-200" />
       </CardHeader>
       <CardContent>
@@ -218,9 +207,7 @@ const StatsCards = ({ stats }: { stats: AlumniStats }) => (
 
     <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-blue-100">
-          Active Mentors
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-blue-100">Active Mentors</CardTitle>
         <Heart className="h-5 w-5 text-blue-200" />
       </CardHeader>
       <CardContent>
@@ -231,9 +218,7 @@ const StatsCards = ({ stats }: { stats: AlumniStats }) => (
 
     <Card className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-amber-100">
-          Countries
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-amber-100">Countries</CardTitle>
         <Globe className="h-5 w-5 text-amber-200" />
       </CardHeader>
       <CardContent>
@@ -244,9 +229,7 @@ const StatsCards = ({ stats }: { stats: AlumniStats }) => (
 
     <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-purple-100">
-          Industries
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-purple-100">Industries</CardTitle>
         <Briefcase className="h-5 w-5 text-purple-200" />
       </CardHeader>
       <CardContent>
@@ -358,14 +341,7 @@ export default function AlumniDirectory() {
     };
 
     fetchAlumni();
-  }, [
-    currentPage,
-    pageLimit,
-    selectedCountry,
-    selectedIndustry,
-    selectedYear,
-    debouncedSearch,
-  ]);
+  }, [currentPage, pageLimit, selectedCountry, selectedIndustry, selectedYear, debouncedSearch]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -388,10 +364,7 @@ export default function AlumniDirectory() {
   ]);
 
   // Reset to page 1 when filters change
-  const handleFilterChange = (
-    setter: (value: string) => void,
-    value: string,
-  ) => {
+  const handleFilterChange = (setter: (value: string) => void, value: string) => {
     setter(value);
     setCurrentPage(1);
   };
@@ -413,18 +386,13 @@ export default function AlumniDirectory() {
             Alumni Directory
           </h1>
           <p className="text-gray-600">
-            Connect with {stats?.totalAlumni || 0} amazing alumni from our
-            community
+            Connect with {stats?.totalAlumni || 0} amazing alumni from our community
           </p>
         </div>
       </div>
 
       {/* Stats Overview */}
-      {isLoadingStats ? (
-        <StatsSkeleton />
-      ) : (
-        stats && <StatsCards stats={stats} />
-      )}
+      {isLoadingStats ? <StatsSkeleton /> : stats && <StatsCards stats={stats} />}
 
       {/* Search and Filters */}
       <Card className="shadow-sm">
@@ -463,9 +431,7 @@ export default function AlumniDirectory() {
 
               <Select
                 value={selectedIndustry}
-                onValueChange={(v) =>
-                  handleFilterChange(setSelectedIndustry, v)
-                }
+                onValueChange={(v) => handleFilterChange(setSelectedIndustry, v)}
               >
                 <SelectTrigger className="border-slate-200">
                   <SelectValue placeholder="Industry" />
@@ -532,9 +498,7 @@ export default function AlumniDirectory() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-              }
+              onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
               disabled={!pagination.hasMore}
             >
               <ChevronRight className="h-4 w-4" />
@@ -560,9 +524,7 @@ export default function AlumniDirectory() {
         <Card className="shadow-sm">
           <CardContent className="p-12 text-center">
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No alumni found
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No alumni found</h3>
             <p className="text-gray-600 mb-4">
               Try adjusting your search criteria or clearing filters
             </p>
@@ -590,9 +552,7 @@ export default function AlumniDirectory() {
           </Button>
           <Button
             variant="outline"
-            onClick={() =>
-              setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-            }
+            onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
             disabled={!pagination.hasMore}
           >
             Next

@@ -16,19 +16,11 @@ const router: Router = Router();
 // router.use(authenticate);
 
 // Partner routes
-router.post(
-  "/",
-  validate(partnerValidation.createPartnerSchema),
-  partnerController.createPartner,
-);
+router.post("/", validate(partnerValidation.createPartnerSchema), partnerController.createPartner);
 
 router.get("/", partnerController.listPartners);
 
-router.get(
-  "/:id",
-  validate(partnerValidation.getPartnerSchema),
-  partnerController.getPartnerById,
-);
+router.get("/:id", validate(partnerValidation.getPartnerSchema), partnerController.getPartnerById);
 
 router.put(
   "/:id",

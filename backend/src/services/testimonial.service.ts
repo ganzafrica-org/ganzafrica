@@ -58,9 +58,7 @@ export async function createTestimonial(
         description: testimonialData.description,
         company: testimonialData.company || null,
         occupation: testimonialData.occupation || null,
-        date: testimonialData.date
-          ? new Date(testimonialData.date)
-          : new Date(),
+        date: testimonialData.date ? new Date(testimonialData.date) : new Date(),
         rating: testimonialData.rating || null,
         created_at: new Date(),
         updated_at: new Date(),
@@ -82,15 +80,9 @@ export async function createTestimonial(
 }
 
 // Get testimonial by ID
-export async function getTestimonialById(
-  id: number,
-): Promise<TestimonialOutput> {
+export async function getTestimonialById(id: number): Promise<TestimonialOutput> {
   try {
-    const result = await db
-      .select()
-      .from(testimonials)
-      .where(eq(testimonials.id, id))
-      .limit(1);
+    const result = await db.select().from(testimonials).where(eq(testimonials.id, id)).limit(1);
 
     if (!result.length) {
       throw new AppError("Testimonial not found", 404);

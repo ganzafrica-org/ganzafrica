@@ -46,12 +46,7 @@ const titleVariants = {
 };
 
 // Card component for focus areas - for the right column cards
-const FocusAreaCard = ({
-  title,
-  description,
-  image,
-  iconColor = "bg-primary-green",
-}) => {
+const FocusAreaCard = ({ title, description, image, iconColor = "bg-primary-green" }) => {
   return (
     <motion.div
       variants={itemVariants}
@@ -103,9 +98,8 @@ const KeyFocusAreasSection = () => {
             <span className="text-primary-green">Areas</span>
           </h2>
           <p className="text-gray-600 max-w-3xl mx-auto">
-            Our holistic approach integrates knowledge, innovation, and policy
-            engagement to build future leaders who can drive meaningful change
-            in Africa's food systems
+            Our holistic approach integrates knowledge, innovation, and policy engagement to build
+            future leaders who can drive meaningful change in Africa's food systems
           </p>
         </motion.div>
 
@@ -135,9 +129,8 @@ const KeyFocusAreasSection = () => {
                         Soil Health & Crop Suitability
                       </h3>
                       <p className="text-gray-600">
-                        Conducting soil analysis and crop suitability
-                        assessments to optimize land use and promote sustainable
-                        agricultural production.
+                        Conducting soil analysis and crop suitability assessments to optimize land
+                        use and promote sustainable agricultural production.
                       </p>
                     </div>
                     <div className="ml-4">
@@ -156,10 +149,7 @@ const KeyFocusAreasSection = () => {
           </motion.div>
 
           {/* Right column - two smaller cards */}
-          <div
-            className="md:col-span-7 flex flex-col gap-6"
-            style={{ height: "100%" }}
-          >
+          <div className="md:col-span-7 flex flex-col gap-6" style={{ height: "100%" }}>
             <div className="h-1/2">
               <FocusAreaCard
                 title="Sustainable Land Management"
@@ -202,9 +192,8 @@ const KeyFocusAreasSection = () => {
                         Community Engagement & Information Sharing
                       </h3>
                       <p className="text-gray-600">
-                        Implementing climate-smart land management practices to
-                        prevent soil degradation and improve agricultural
-                        resilience.
+                        Implementing climate-smart land management practices to prevent soil
+                        degradation and improve agricultural resilience.
                       </p>
                     </div>
                     <div className="ml-4">

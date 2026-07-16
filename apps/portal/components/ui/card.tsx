@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Users,
-  FolderGit2,
-  Briefcase,
-  FileText,
-  ChevronDown,
-} from "lucide-react";
+import { Users, FolderGit2, Briefcase, FileText, ChevronDown } from "lucide-react";
 import Image from "next/image";
 
 export default function DashboardPage() {
@@ -52,8 +46,7 @@ export default function DashboardPage() {
         name: "Emmanuel N.",
         avatar: "/avatars/emmanuel.jpg",
       },
-      action:
-        "submitted a new comprehensive agricultural development project proposal for",
+      action: "submitted a new comprehensive agricultural development project proposal for",
       time: "2 hours ago",
     },
     {
@@ -119,17 +112,13 @@ export default function DashboardPage() {
         {stats.map((stat, index) => (
           <div key={index} className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-start mb-4">
-              <span className="text-sm font-medium text-gray-600">
-                {stat.title}
-              </span>
+              <span className="text-sm font-medium text-gray-600">{stat.title}</span>
               {stat.icon}
             </div>
             <div className="flex items-baseline">
               <h3 className="text-2xl font-bold">{stat.value}</h3>
               {stat.change && (
-                <span className={`ml-2 text-sm text-${stat.color}-600`}>
-                  {stat.change}%
-                </span>
+                <span className={`ml-2 text-sm text-${stat.color}-600`}>{stat.change}%</span>
               )}
             </div>
             <p className="text-sm text-gray-500 mt-1">{stat.period}</p>
@@ -142,9 +131,7 @@ export default function DashboardPage() {
         {/* Project Statistics */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="font-semibold">
-              Project Statistics (Last 6 Months)
-            </h3>
+            <h3 className="font-semibold">Project Statistics (Last 6 Months)</h3>
             <button className="flex items-center text-sm text-gray-600 hover:bg-gray-100 px-3 py-1 rounded">
               2020-2024 <ChevronDown className="w-4 h-4 ml-1" />
             </button>
@@ -183,8 +170,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm">
-                    <span className="font-medium">{activity.user.name}</span>{" "}
-                    {activity.action}
+                    <span className="font-medium">{activity.user.name}</span> {activity.action}
                   </p>
                   <span className="text-xs text-gray-500">{activity.time}</span>
                 </div>

@@ -24,7 +24,7 @@ FND-07; this spec builds everything FND-07 cuts over to.
   `platform_user_id` nullable unique FK → users.id) + `hr_otps` —
   `backend/src/db/schema/hr/employee.ts`; service `services/hr/hr.auth.service.ts`;
   middleware `middlewares/hr/hr.auth.middleware.ts` (`authenticateHr`).
-- `hr_contracts.employee_id` → `hr_users.id` (uuid). Other hr_* tables (leaves, assets
+- `hr_contracts.employee_id` → `hr_users.id` (uuid). Other hr\_\* tables (leaves, assets
   `assigned_to_id`, documents, helpdesk, notifications) also reference `hr_users.id`.
 - Roles seeded today: admin/team/public (`src/db/migrations/01_create_roles.ts` — archived by
   FND-02; re-seed below). Constants: `backend/src/config/constants.ts` ROLES/BASE_ROLES.
@@ -37,7 +37,10 @@ FND-07; this spec builds everything FND-07 cuts over to.
 ```ts
 export const employees = pgTable("employees", {
   id: uuid("id").primaryKey().defaultRandom(),
-  user_id: integer("user_id").notNull().unique().references(() => users.id),
+  user_id: integer("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id),
   legacy_hr_user_id: uuid("legacy_hr_user_id").unique(), // audit trail of the migration; drop later
   employee_number: text("employee_number").unique(),
   work_email: text("work_email").unique(),
@@ -51,11 +54,13 @@ export const employees = pgTable("employees", {
   home_city: text("home_city"),
   department: text("department"),
   job_title: text("job_title"),
-  manager_id: uuid("manager_id").references((): AnyPgColumn => employees.id, { onDelete: "set null" }),
+  manager_id: uuid("manager_id").references((): AnyPgColumn => employees.id, {
+    onDelete: "set null",
+  }),
   employment_type: text("employment_type").notNull().default("staff"),
-    // 'fellow' | 'analyst' | 'staff' | 'contractor' | 'intern' — CHECK constraint
+  // 'fellow' | 'analyst' | 'staff' | 'contractor' | 'intern' — CHECK constraint
   status: text("status").notNull().default("active"),
-    // 'onboarding' | 'active' | 'on_leave' | 'offboarding' | 'exited' — CHECK constraint
+  // 'onboarding' | 'active' | 'on_leave' | 'offboarding' | 'exited' — CHECK constraint
   hired_at: date("hired_at"),
   exited_at: date("exited_at"),
   ...timestampFields,
@@ -72,7 +77,7 @@ hr_users FKs on: `hr_contracts`, `hr_leaves` (`user_id`), `hr_assets` (`assigned
 ### 3c. Roles & permissions seed — `backend/scripts/seed-rbac.ts` (idempotent upserts)
 
 - Roles: `admin, director, hr, finance, program_manager, staff, fellow, analyst, mentor,
-  alumni, employee, public` (upsert by name; keep existing ids).
+alumni, employee, public` (upsert by name; keep existing ids).
 - Permissions + role_permissions: the full catalog from `auth-and-rbac.md` §3 — the script
   contains the matrix as data (`{resource, action, roles: [...]}[]`). Fix the permissions
   tables first if needed: `permissions.id` / `role_permissions.id` are plain integer PKs
@@ -86,6 +91,7 @@ hr_users FKs on: `hr_contracts`, `hr_leaves` (`user_id`), `hr_assets` (`assigned
 ```ts
 requirePermission(perm: `${string}:${string}`)
 ```
+
 - Runs after `authenticate`. Loads the user's permission set:
   `user_roles → role_permissions → permissions` as `Set<"resource:action">`,
   cached in-memory `Map<userId, {perms, expires}>` for 60s (export `clearPermissionCache(userId)`
@@ -97,6 +103,7 @@ requirePermission(perm: `${string}:${string}`)
 ### 4b. hr_users merge script — `backend/scripts/migrate-hr-users.ts` (idempotent, run once per env)
 
 For each `hr_users` row, in a transaction:
+
 1. **Linked** (`platform_user_id` set) → upsert `employees` with `user_id = platform_user_id`.
    HR password hash discarded.
 2. **Unlinked, email matches** (`work_email` or `personal_email` = some `users.email`,
@@ -105,6 +112,7 @@ For each `hr_users` row, in a transaction:
 3. **No user** → create `users` row: email = work_email ?? personal_email,
    name = "first last", `password_hash` COPIED from hr_users (both bcrypt — portable),
    `email_verified = true`, legacy `role_id` = the `employee` role id.
+
 - Always: map hr role → user_roles (`HR`→hr, `IT`→admin, `EMPLOYEE`→employee) + everyone
   gets `employee`; copy profile fields into `employees`; set `legacy_hr_user_id`;
   backfill the new `employee_id` columns from §3b by joining through `legacy_hr_user_id`;
@@ -136,6 +144,7 @@ None in this spec (portal/hr UI changes come with FND-06/07). Exception: nothing
 ## 6. Tests to write FIRST
 
 Backend integration:
+
 1. seed-rbac idempotency: run twice → same row counts.
 2. `requirePermission("payroll:manage")`: finance user → 200; staff-only user → 403;
    admin → 200; anonymous → 401.

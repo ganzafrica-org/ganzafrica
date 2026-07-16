@@ -15,7 +15,7 @@ Backend builds to a self-contained `dist/` with native path resolution — no ru
 
 - `backend/package.json`: `build` = `tsc` with `--max-old-space-size=4096`; `start` =
   `node dist/server.js`; `dev` = `tsx watch src/server.ts`; `_moduleAliases: {"@": "dist"}`
-  + `module-alias` runtime dep resolving `@/...` imports.
+  - `module-alias` runtime dep resolving `@/...` imports.
 - tsconfig paths `@/* → src/*` (verify exact mapping in `backend/tsconfig.json`).
 - Non-code runtime assets: `drizzle/` (migrations), `public/images/logo.png` (payslip PDF
   header), `swagger/` output.

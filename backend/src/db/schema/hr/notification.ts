@@ -1,11 +1,16 @@
-﻿import { boolean, integer, jsonb, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+﻿import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { timestampFields } from "../common";
 import { users } from "../users";
-import {
-  notificationPriorityEnum,
-  notificationStatusEnum,
-  notificationTypeEnum,
-} from "./hr.enums";
+import { notificationPriorityEnum, notificationStatusEnum, notificationTypeEnum } from "./hr.enums";
 
 export const hr_notifications = pgTable("hr_notifications", {
   id: uuid("id").primaryKey().defaultRandom(),

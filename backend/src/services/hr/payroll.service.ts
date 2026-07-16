@@ -14,10 +14,10 @@ export interface CreatePayrollData {
   name: string;
   email: string;
   staff_fellow_number?: string; // Format1: Employee No. / Format2: Consultant ID
-  employee_id?: string;         // Format1: Employees ID / Format3: ID Number / Format4: Employee Id
+  employee_id?: string; // Format1: Employees ID / Format3: ID Number / Format4: Employee Id
   program?: string;
   payroll_type?: string; // 'rwf' | 'rwf_usd' | 'wop_usd' | 'xof' | 'rwf_wop'
-  currency?: string;     // 'RWF' | 'USD' | 'XOF'
+  currency?: string; // 'RWF' | 'USD' | 'XOF'
   // Format 1: Rwanda RWF/USD staff
   basic_salary?: string;
   gross_salary?: string;
@@ -70,11 +70,7 @@ export interface PaginationOptions {
  */
 export async function findUserByEmail(email: string) {
   try {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
     return user || null;
   } catch (error) {
@@ -150,23 +146,10 @@ export async function getPayrolls(
   pagination: PaginationOptions = {},
 ) {
   try {
-    const {
-      user_id,
-      payroll_period,
-      email,
-      name,
-      email_sent,
-      search,
-      start_date,
-      end_date,
-    } = filters;
+    const { user_id, payroll_period, email, name, email_sent, search, start_date, end_date } =
+      filters;
 
-    const {
-      page = 1,
-      limit = 20,
-      sort_by = "created_at",
-      sort_order = "desc",
-    } = pagination;
+    const { page = 1, limit = 20, sort_by = "created_at", sort_order = "desc" } = pagination;
 
     const offset = (page - 1) * limit;
 
@@ -230,9 +213,7 @@ export async function getPayrolls(
       "net_salary",
       "email_sent",
     ];
-    const sortColumnName = validSortColumns.includes(sort_by)
-      ? sort_by
-      : "created_at";
+    const sortColumnName = validSortColumns.includes(sort_by) ? sort_by : "created_at";
     const sortColumn = payrolls[sortColumnName as keyof typeof payrolls] as any;
     const orderFn = sort_order === "asc" ? asc : desc;
 
@@ -271,10 +252,7 @@ export async function getPayrolls(
 /**
  * Update payroll record
  */
-export async function updatePayroll(
-  id: number,
-  data: Partial<CreatePayrollData>,
-) {
+export async function updatePayroll(id: number, data: Partial<CreatePayrollData>) {
   try {
     const [payroll] = await db
       .update(payrolls)
@@ -300,11 +278,7 @@ export async function updatePayroll(
 /**
  * Update payslip file information
  */
-export async function updatePayslipFile(
-  id: number,
-  fileUrl: string,
-  fileKey: string,
-) {
+export async function updatePayslipFile(id: number, fileUrl: string, fileKey: string) {
   try {
     const [payroll] = await db
       .update(payrolls)
@@ -327,11 +301,7 @@ export async function updatePayslipFile(
 /**
  * Mark payroll email as sent
  */
-export async function markEmailSent(
-  id: number,
-  success: boolean,
-  error?: string,
-) {
+export async function markEmailSent(id: number, success: boolean, error?: string) {
   try {
     const [payroll] = await db
       .update(payrolls)
@@ -344,9 +314,7 @@ export async function markEmailSent(
       .where(eq(payrolls.id, id))
       .returning();
 
-    logger.info(
-      `Email status updated for payroll ${id}: ${success ? "sent" : "failed"}`,
-    );
+    logger.info(`Email status updated for payroll ${id}: ${success ? "sent" : "failed"}`);
     return payroll;
   } catch (error) {
     logger.error("Error marking email sent:", error);
@@ -359,10 +327,7 @@ export async function markEmailSent(
  */
 export async function deletePayroll(id: number) {
   try {
-    const [payroll] = await db
-      .delete(payrolls)
-      .where(eq(payrolls.id, id))
-      .returning();
+    const [payroll] = await db.delete(payrolls).where(eq(payrolls.id, id)).returning();
 
     if (!payroll) {
       throw new AppError("Payroll not found", 404);
@@ -399,12 +364,7 @@ export async function getPendingEmailPayrolls(limit = 50) {
       })
       .from(payrolls)
       .leftJoin(users, eq(payrolls.user_id, users.id))
-      .where(
-        and(
-          eq(payrolls.email_sent, false),
-          sql`${payrolls.payslip_file_url} IS NOT NULL`,
-        ),
-      )
+      .where(and(eq(payrolls.email_sent, false), sql`${payrolls.payslip_file_url} IS NOT NULL`))
       .limit(limit);
 
     return results;

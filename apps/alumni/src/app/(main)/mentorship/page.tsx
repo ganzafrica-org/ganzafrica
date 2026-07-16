@@ -24,11 +24,7 @@ import {
 import { useDebounce } from "@/hooks/use-debounce";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import {
-  mentorshipApi,
-  type Fellow,
-  type MentorshipStats,
-} from "@/lib/api/alumni";
+import { mentorshipApi, type Fellow, type MentorshipStats } from "@/lib/api/alumni";
 
 // Types
 interface Pagination {
@@ -151,9 +147,7 @@ const StatsCards = ({ stats }: { stats: MentorshipStats }) => (
   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
     <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-emerald-100">
-          Available Mentees
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-emerald-100">Available Mentees</CardTitle>
         <Users className="h-5 w-5 text-emerald-200" />
       </CardHeader>
       <CardContent>
@@ -167,9 +161,7 @@ const StatsCards = ({ stats }: { stats: MentorshipStats }) => (
 
     <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-blue-100">
-          Active Relationships
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-blue-100">Active Relationships</CardTitle>
         <Heart className="h-5 w-5 text-blue-200" />
       </CardHeader>
       <CardContent>
@@ -180,9 +172,7 @@ const StatsCards = ({ stats }: { stats: MentorshipStats }) => (
 
     <Card className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-amber-100">
-          Sessions Completed
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-amber-100">Sessions Completed</CardTitle>
         <Target className="h-5 w-5 text-amber-200" />
       </CardHeader>
       <CardContent>
@@ -193,9 +183,7 @@ const StatsCards = ({ stats }: { stats: MentorshipStats }) => (
 
     <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-purple-100">
-          Average Rating
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-purple-100">Average Rating</CardTitle>
         <Star className="h-5 w-5 text-purple-200" />
       </CardHeader>
       <CardContent>
@@ -309,9 +297,7 @@ export default function MentorshipPage() {
       await mentorshipApi.addMentee(fellowId);
       toast.success("Mentee added successfully!");
       // Refresh the list
-      setFellows((prev) =>
-        prev.map((f) => (f.id === fellowId ? { ...f, isAvailable: false } : f)),
-      );
+      setFellows((prev) => prev.map((f) => (f.id === fellowId ? { ...f, isAvailable: false } : f)));
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to add mentee");
     } finally {
@@ -340,11 +326,7 @@ export default function MentorshipPage() {
       </div>
 
       {/* Stats Overview */}
-      {isLoadingStats ? (
-        <StatsSkeleton />
-      ) : (
-        stats && <StatsCards stats={stats} />
-      )}
+      {isLoadingStats ? <StatsSkeleton /> : stats && <StatsCards stats={stats} />}
 
       {/* Search and Filters */}
       <Card className="shadow-sm">
@@ -418,9 +400,7 @@ export default function MentorshipPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-              }
+              onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
               disabled={!pagination.hasMore}
             >
               <ChevronRight className="h-4 w-4" />
@@ -447,9 +427,7 @@ export default function MentorshipPage() {
         <Card className="shadow-sm">
           <CardContent className="p-12 text-center">
             <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No fellows found
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No fellows found</h3>
             <p className="text-gray-600 mb-4">
               Try adjusting your search criteria or clearing filters
             </p>
@@ -477,9 +455,7 @@ export default function MentorshipPage() {
           </Button>
           <Button
             variant="outline"
-            onClick={() =>
-              setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-            }
+            onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
             disabled={!pagination.hasMore}
           >
             Next

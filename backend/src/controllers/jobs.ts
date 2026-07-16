@@ -1,39 +1,19 @@
 import { Request, Response } from "express";
 import { db } from "../db/client";
 import { job_opportunities } from "../db/schema";
-import {
-  eq,
-  and,
-  or,
-  ilike,
-  sql,
-  desc,
-  asc,
-  count,
-  gte,
-  lte,
-} from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, count, gte, lte } from "drizzle-orm";
 import { Logger } from "../config";
 import { runWeeklyJobTask } from "../services/job-scraper.service";
 
 const logger = new Logger("JobsController");
 
 // Default sectors that should always be available
-const DEFAULT_SECTORS = [
-  "Land",
-  "Agriculture",
-  "Environment",
-  "Communications",
-  "ICT",
-];
+const DEFAULT_SECTORS = ["Land", "Agriculture", "Environment", "Communications", "ICT"];
 
 /**
  * Get job opportunities statistics
  */
-export const getJobStats = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getJobStats = async (req: Request, res: Response): Promise<void> => {
   try {
     // Total jobs
     const totalJobs = await db
@@ -93,10 +73,7 @@ export const getJobStats = async (
 /**
  * Get trending skills across all jobs
  */
-export const getTrendingSkills = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getTrendingSkills = async (req: Request, res: Response): Promise<void> => {
   try {
     const jobs = await db
       .select({ skills: job_opportunities.skills })
@@ -138,10 +115,7 @@ export const getTrendingSkills = async (
 /**
  * Get all job opportunities with pagination and filters
  */
-export const getAllJobs = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAllJobs = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       page,
@@ -157,10 +131,7 @@ export const getAllJobs = async (
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(
-      50,
-      Math.max(1, parseInt(limit as string, 10) || 15),
-    );
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 15));
     const offset = (pageNum - 1) * limitNum;
 
     // Build conditions
@@ -212,9 +183,7 @@ export const getAllJobs = async (
 
     // Experience level filter
     if (experience_level && experience_level !== "all") {
-      conditions.push(
-        eq(job_opportunities.experience_level, experience_level as string),
-      );
+      conditions.push(eq(job_opportunities.experience_level, experience_level as string));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -275,15 +244,9 @@ export const getAllJobs = async (
         ),
       );
 
-    const sectors = [
-      ...new Set(allJobs.map((j) => j.sector).filter(Boolean)),
-    ].sort();
-    const jobTypes = [
-      ...new Set(allJobs.map((j) => j.job_type).filter(Boolean)),
-    ].sort();
-    const locations = [
-      ...new Set(allJobs.map((j) => j.location).filter(Boolean)),
-    ].sort();
+    const sectors = [...new Set(allJobs.map((j) => j.sector).filter(Boolean))].sort();
+    const jobTypes = [...new Set(allJobs.map((j) => j.job_type).filter(Boolean))].sort();
+    const locations = [...new Set(allJobs.map((j) => j.location).filter(Boolean))].sort();
     const experienceLevels = [
       ...new Set(allJobs.map((j) => j.experience_level).filter(Boolean)),
     ].sort();
@@ -425,9 +388,7 @@ export const createJob = async (req: Request, res: Response): Promise<void> => {
     } = req.body;
 
     if (!title || !company || !sector) {
-      res
-        .status(400)
-        .json({ error: "Title, company, and sector are required" });
+      res.status(400).json({ error: "Title, company, and sector are required" });
       return;
     }
 
@@ -491,10 +452,7 @@ export const deleteExpiredJobs = async (): Promise<number> => {
 /**
  * Manually trigger job scraping (for testing)
  */
-export const triggerJobScraping = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const triggerJobScraping = async (req: Request, res: Response): Promise<void> => {
   try {
     logger.info("Manual job scraping triggered");
 

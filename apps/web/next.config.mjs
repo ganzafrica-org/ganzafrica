@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
-  
+
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -15,13 +15,13 @@ const nextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "http", hostname: "localhost" },
     ],
-    formats: ['image/avif', 'image/webp'],
+    formats: ["image/avif", "image/webp"],
   },
 
   compress: true,
-  
+
   experimental: {
-    optimizePackageImports: ['gsap', 'lucide-react'],
+    optimizePackageImports: ["gsap", "lucide-react"],
   },
 };
 

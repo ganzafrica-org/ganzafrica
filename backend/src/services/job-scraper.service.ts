@@ -108,9 +108,7 @@ const scrapeRemotive = async (): Promise<ScrapedJob[]> => {
             title: job.title || "",
             company: job.company_name || "Unknown Company",
             location: job.candidate_required_location || "Remote",
-            description: job.description
-              ? job.description.substring(0, 2000)
-              : null,
+            description: job.description ? job.description.substring(0, 2000) : null,
             applicationUrl: job.url || "",
             sector,
             jobType: job.job_type || "Full-time",
@@ -139,12 +137,9 @@ const scrapeArbeitnow = async (): Promise<ScrapedJob[]> => {
   try {
     logger.info("Scraping Arbeitnow API...");
 
-    const response = await axios.get(
-      "https://www.arbeitnow.com/api/job-board-api",
-      {
-        timeout: 30000,
-      },
-    );
+    const response = await axios.get("https://www.arbeitnow.com/api/job-board-api", {
+      timeout: 30000,
+    });
 
     if (response.data?.data && Array.isArray(response.data.data)) {
       for (const job of response.data.data) {
@@ -156,9 +151,7 @@ const scrapeArbeitnow = async (): Promise<ScrapedJob[]> => {
             title: job.title || "",
             company: job.company_name || "Unknown Company",
             location: job.location || "Remote",
-            description: job.description
-              ? job.description.substring(0, 2000)
-              : null,
+            description: job.description ? job.description.substring(0, 2000) : null,
             applicationUrl: job.url || "",
             sector,
             jobType: job.job_types?.join(", ") || "Full-time",
@@ -202,15 +195,8 @@ const scrapeReliefWeb = async (): Promise<ScrapedJob[]> => {
       "Information Technology",
       "Information Management",
     ],
-    Communications: [
-      "Public Information and Advocacy",
-      "Communications",
-      "Advocacy",
-    ],
-    Land: [
-      "Shelter and Non-Food Items",
-      "Camp Coordination and Camp Management",
-    ],
+    Communications: ["Public Information and Advocacy", "Communications", "Advocacy"],
+    Land: ["Shelter and Non-Food Items", "Camp Coordination and Camp Management"],
   };
 
   // African countries to filter for
@@ -281,12 +267,9 @@ const scrapeReliefWeb = async (): Promise<ScrapedJob[]> => {
 
         // Determine sector based on career categories
         let sector = "ICT"; // default
-        const categories =
-          fields.career_categories?.map((c: any) => c.name) || [];
+        const categories = fields.career_categories?.map((c: any) => c.name) || [];
 
-        for (const [sectorName, sectorCategories] of Object.entries(
-          categoryMappings,
-        )) {
+        for (const [sectorName, sectorCategories] of Object.entries(categoryMappings)) {
           if (
             categories.some((cat: string) =>
               sectorCategories.some(

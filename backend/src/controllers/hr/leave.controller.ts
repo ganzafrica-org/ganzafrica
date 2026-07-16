@@ -174,7 +174,10 @@ export const listAllLeaves = async (req: Request, res: Response): Promise<void> 
 
 export const listEmployeeLeaves = async (req: Request, res: Response): Promise<void> => {
   try {
-    const leaves = await leaveService.listLeavesByEmployee(getHrRequester(req), req.params.employeeId);
+    const leaves = await leaveService.listLeavesByEmployee(
+      getHrRequester(req),
+      req.params.employeeId,
+    );
     res.status(200).json(leaves);
   } catch (error) {
     logger.error("List employee leaves error", error);

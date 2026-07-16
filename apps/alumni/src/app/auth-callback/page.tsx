@@ -6,15 +6,9 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
 
-function LoadingScreen({
-  message = "Initializing application",
-}: {
-  message?: string;
-}) {
+function LoadingScreen({ message = "Initializing application" }: { message?: string }) {
   const logoSrc =
-    process.env.NODE_ENV === "production"
-      ? "/alumni/images/logo.png"
-      : "/images/logo.png";
+    process.env.NODE_ENV === "production" ? "/alumni/images/logo.png" : "/images/logo.png";
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
@@ -46,9 +40,7 @@ function AuthCallbackContent() {
   const [progress, setProgress] = useState(0);
   const [loadingStep, setLoadingStep] = useState("Initializing application");
   const logoSrc =
-    process.env.NODE_ENV === "production"
-      ? "/alumni/images/logo.png"
-      : "/images/logo.png";
+    process.env.NODE_ENV === "production" ? "/alumni/images/logo.png" : "/images/logo.png";
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -75,8 +67,7 @@ function AuthCallbackContent() {
       try {
         const token = searchParams.get("token");
         const user = searchParams.get("user");
-        const portalUrl =
-          process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
 
         if (token && user) {
           try {
@@ -113,8 +104,7 @@ function AuthCallbackContent() {
               clearInterval(timer);
               // In production, basePath is /alumni, so we need to redirect relative to current location
               // Using relative path ensures it works in both dev (no basePath) and prod (with /alumni basePath)
-              const basePath =
-                process.env.NODE_ENV === "production" ? "/alumni" : "";
+              const basePath = process.env.NODE_ENV === "production" ? "/alumni" : "";
               window.location.href = `${basePath}/`;
             }, 2000);
           } catch (error: unknown) {
@@ -132,8 +122,7 @@ function AuthCallbackContent() {
       } catch (error: unknown) {
         console.error("Error in auth callback:", error);
         clearInterval(timer);
-        const portalUrl =
-          process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
+        const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
         window.location.href = `${portalUrl}/login?user=alumni`;
       }
     };

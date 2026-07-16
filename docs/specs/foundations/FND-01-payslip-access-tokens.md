@@ -86,12 +86,13 @@ New service `backend/src/services/hr/payslip-token.service.ts`:
 New routes in `backend/src/routes/payslip-view.ts`, mounted in `routes/index.ts` as
 `router.use("/payslips", payslipViewRoutes)`:
 
-| Method & path | Auth | Behavior |
-|---|---|---|
-| `GET /payslips/view/:token` | **none** (public, the token IS the auth) + rate limit 10/min/IP (use existing rate-limit middleware if present in `backend/src/middlewares/`; else add `express-rate-limit` scoped to this router only) | Redeem. Success → `302 Location: <5-min presigned URL from generateSignedPayslipUrl(key, 300)>`. Failure → `410 Gone` with a small self-contained HTML page (inline styles, GanzAfrica green #045F3C header like the email): "This payslip link has expired or been revoked. Contact HR at info@ganzafrica.org." Same page for not_found/expired/revoked — do not leak which. |
-| `POST /payroll/:id/revoke-links` | `authenticate` + same guard as `sendPayslipEmails` (today: existing payroll controller auth; after FND-05: `requirePermission("payroll:manage")`) | Body: none. Revokes all tokens for payroll `:id`. `200 {"revoked": n}`. `404` if payroll doesn't exist. |
+| Method & path                    | Auth                                                                                                                                                                                                    | Behavior                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /payslips/view/:token`      | **none** (public, the token IS the auth) + rate limit 10/min/IP (use existing rate-limit middleware if present in `backend/src/middlewares/`; else add `express-rate-limit` scoped to this router only) | Redeem. Success → `302 Location: <5-min presigned URL from generateSignedPayslipUrl(key, 300)>`. Failure → `410 Gone` with a small self-contained HTML page (inline styles, GanzAfrica green #045F3C header like the email): "This payslip link has expired or been revoked. Contact HR at info@ganzafrica.org." Same page for not_found/expired/revoked — do not leak which. |
+| `POST /payroll/:id/revoke-links` | `authenticate` + same guard as `sendPayslipEmails` (today: existing payroll controller auth; after FND-05: `requirePermission("payroll:manage")`)                                                       | Body: none. Revokes all tokens for payroll `:id`. `200 {"revoked": n}`. `404` if payroll doesn't exist.                                                                                                                                                                                                                                                                       |
 
 Changes to existing code:
+
 - `payroll-email.service.ts` lines 171–174: replace the presign call with
   `const link = await payslipTokenService.mintAndBuildLink(payrollId)` (helper combining mint +
   URL build). Email HTML unchanged apart from the URL; update the sentence "You can view and
@@ -112,6 +113,7 @@ available from the existing payroll GET (optional — do not build a new endpoin
 ## 6. Tests to write FIRST (TDD)
 
 Backend integration (`backend/tests/integration/payslip-tokens.test.ts`):
+
 1. minting stores only a 64-char hash, never the raw token.
 2. `GET /payslips/view/:token` with a valid token → 302 whose Location contains the Spaces
    host + `X-Amz-Expires=300`.

@@ -92,6 +92,7 @@ Branch protection (manual step, document in PR): `dev` and `main` require the `c
 ## 6. Tests to write FIRST
 
 The harness IS the deliverable; prove it with:
+
 1. A trivial backend integration test (`GET /health → 200`) passing locally + in CI.
 2. A factory + loginAs round-trip test (create admin, login, `GET` an authenticated route → 200).
 3. `resetDb()` isolation test (two files inserting the same unique email both pass).

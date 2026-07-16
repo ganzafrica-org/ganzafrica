@@ -35,9 +35,7 @@ export type UserRoleOutput = {
 };
 
 // Create a new role
-export async function createRole(
-  roleData: CreateRoleInput,
-): Promise<RoleOutput> {
+export async function createRole(roleData: CreateRoleInput): Promise<RoleOutput> {
   try {
     // Check if a role with the same name already exists
     const existingRole = await db
@@ -47,10 +45,7 @@ export async function createRole(
       .limit(1);
 
     if (existingRole.length > 0) {
-      throw new AppError(
-        `Role with name '${roleData.name}' already exists`,
-        409,
-      );
+      throw new AppError(`Role with name '${roleData.name}' already exists`, 409);
     }
 
     // Get the maximum ID to generate next ID
@@ -68,11 +63,7 @@ export async function createRole(
     });
 
     // Get the created role
-    const createdRole = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.id, roleId))
-      .limit(1);
+    const createdRole = await db.select().from(roles).where(eq(roles.id, roleId)).limit(1);
 
     if (!createdRole.length) {
       throw new AppError("Failed to create role", 500);
@@ -91,11 +82,7 @@ export async function createRole(
 // Get role by ID
 export async function getRoleById(id: number): Promise<RoleOutput> {
   try {
-    const result = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.id, id))
-      .limit(1);
+    const result = await db.select().from(roles).where(eq(roles.id, id)).limit(1);
 
     if (!result.length) {
       throw new AppError("Role not found", 404);
@@ -114,11 +101,7 @@ export async function getRoleById(id: number): Promise<RoleOutput> {
 // Get role by name
 export async function getRoleByName(name: string): Promise<RoleOutput> {
   try {
-    const result = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.name, name))
-      .limit(1);
+    const result = await db.select().from(roles).where(eq(roles.name, name)).limit(1);
 
     if (!result.length) {
       throw new AppError("Role not found", 404);
@@ -135,17 +118,10 @@ export async function getRoleByName(name: string): Promise<RoleOutput> {
 }
 
 // Update role
-export async function updateRole(
-  id: number,
-  roleData: UpdateRoleInput,
-): Promise<RoleOutput> {
+export async function updateRole(id: number, roleData: UpdateRoleInput): Promise<RoleOutput> {
   try {
     // Check if role exists
-    const existingRole = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.id, id))
-      .limit(1);
+    const existingRole = await db.select().from(roles).where(eq(roles.id, id)).limit(1);
 
     if (!existingRole.length) {
       throw new AppError("Role not found", 404);
@@ -160,10 +136,7 @@ export async function updateRole(
         .limit(1);
 
       if (nameExists.length > 0) {
-        throw new AppError(
-          `Role with name '${roleData.name}' already exists`,
-          409,
-        );
+        throw new AppError(`Role with name '${roleData.name}' already exists`, 409);
       }
     }
 
@@ -172,19 +145,13 @@ export async function updateRole(
       .update(roles)
       .set({
         ...(roleData.name ? { name: roleData.name } : {}),
-        ...(roleData.description !== undefined
-          ? { description: roleData.description }
-          : {}),
+        ...(roleData.description !== undefined ? { description: roleData.description } : {}),
         updated_at: new Date(),
       })
       .where(eq(roles.id, id));
 
     // Get updated role
-    const updatedRole = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.id, id))
-      .limit(1);
+    const updatedRole = await db.select().from(roles).where(eq(roles.id, id)).limit(1);
 
     return mapToRoleOutput(updatedRole[0]);
   } catch (error) {
@@ -200,22 +167,14 @@ export async function updateRole(
 export async function deleteRole(id: number): Promise<boolean> {
   try {
     // Check if role exists
-    const existingRole = await db
-      .select()
-      .from(roles)
-      .where(eq(roles.id, id))
-      .limit(1);
+    const existingRole = await db.select().from(roles).where(eq(roles.id, id)).limit(1);
 
     if (!existingRole.length) {
       throw new AppError("Role not found", 404);
     }
 
     // Check if the role is assigned to any users
-    const roleInUse = await db
-      .select()
-      .from(user_roles)
-      .where(eq(user_roles.role_id, id))
-      .limit(1);
+    const roleInUse = await db.select().from(user_roles).where(eq(user_roles.role_id, id)).limit(1);
 
     if (roleInUse.length > 0) {
       throw new AppError("Cannot delete role that is assigned to users", 409);
@@ -247,29 +206,18 @@ export async function listRoles(): Promise<RoleOutput[]> {
 }
 
 // Assign role to user
-export async function assignRoleToUser(
-  userId: number,
-  roleId: number,
-): Promise<UserRoleOutput> {
+export async function assignRoleToUser(userId: number, roleId: number): Promise<UserRoleOutput> {
   try {
     return await withDbTransaction(async (txDb) => {
       // First check if user exists
-      const user = await txDb
-        .select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
+      const user = await txDb.select().from(users).where(eq(users.id, userId)).limit(1);
 
       if (!user.length) {
         throw new AppError("User not found", 404);
       }
 
       // Check if role exists
-      const role = await txDb
-        .select()
-        .from(roles)
-        .where(eq(roles.id, roleId))
-        .limit(1);
+      const role = await txDb.select().from(roles).where(eq(roles.id, roleId)).limit(1);
 
       if (!role.length) {
         throw new AppError("Role not found", 404);
@@ -279,9 +227,7 @@ export async function assignRoleToUser(
       const existingUserRole = await txDb
         .select()
         .from(user_roles)
-        .where(
-          and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
-        )
+        .where(and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)))
         .limit(1);
 
       if (existingUserRole.length > 0) {
@@ -292,7 +238,7 @@ export async function assignRoleToUser(
       const maxIdResult = await txDb.select({ maxId: max(user_roles.id) }).from(user_roles);
       const maxUserRoleId = maxIdResult[0]?.maxId || 5000;
       const userRoleId = maxUserRoleId + 1;
-      
+
       const now = new Date();
 
       // Perform the actual insertion of user_role
@@ -311,7 +257,8 @@ export async function assignRoleToUser(
 
       // Update the user's role_id in the users table
       try {
-        await txDb.update(users)
+        await txDb
+          .update(users)
           .set({
             role_id: roleId,
             updated_at: now,
@@ -353,29 +300,18 @@ export async function assignRoleToUser(
 }
 
 // Replace all user roles with a single role
-export async function replaceUserRole(
-  userId: number,
-  newRoleId: number,
-): Promise<UserRoleOutput> {
+export async function replaceUserRole(userId: number, newRoleId: number): Promise<UserRoleOutput> {
   try {
     return await withDbTransaction(async (txDb) => {
       // Check if user exists
-      const user = await txDb
-        .select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
+      const user = await txDb.select().from(users).where(eq(users.id, userId)).limit(1);
 
       if (!user.length) {
         throw new AppError("User not found", 404);
       }
 
       // Check if role exists
-      const role = await txDb
-        .select()
-        .from(roles)
-        .where(eq(roles.id, newRoleId))
-        .limit(1);
+      const role = await txDb.select().from(roles).where(eq(roles.id, newRoleId)).limit(1);
 
       if (!role.length) {
         throw new AppError("Role not found", 404);
@@ -401,7 +337,8 @@ export async function replaceUserRole(
       });
 
       // Update the user's role_id in the users table
-      await txDb.update(users)
+      await txDb
+        .update(users)
         .set({
           role_id: newRoleId,
           updated_at: now,
@@ -430,10 +367,7 @@ export async function replaceUserRole(
       return createdUserRole[0];
     });
   } catch (error) {
-    logger.error(
-      `Error replacing roles for user ${userId} with role ${newRoleId}`,
-      error,
-    );
+    logger.error(`Error replacing roles for user ${userId} with role ${newRoleId}`, error);
     if (error instanceof AppError) {
       throw error;
     }
@@ -442,19 +376,14 @@ export async function replaceUserRole(
 }
 
 // Remove role from user
-export async function removeRoleFromUser(
-  userId: number,
-  roleId: number,
-): Promise<boolean> {
+export async function removeRoleFromUser(userId: number, roleId: number): Promise<boolean> {
   try {
     return await withDbTransaction(async (txDb) => {
       // Check if user has this role
       const existingUserRole = await txDb
         .select()
         .from(user_roles)
-        .where(
-          and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
-        )
+        .where(and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)))
         .limit(1);
 
       if (!existingUserRole.length) {
@@ -464,21 +393,20 @@ export async function removeRoleFromUser(
       // Remove role from user in user_roles table
       await txDb
         .delete(user_roles)
-        .where(
-          and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)),
-        );
+        .where(and(eq(user_roles.user_id, userId), eq(user_roles.role_id, roleId)));
 
       // Get remaining roles for this user, if any
       const remainingRoles = await txDb
         .select()
         .from(user_roles)
         .where(eq(user_roles.user_id, userId))
-        .orderBy(user_roles.created_at, 'desc');
+        .orderBy(user_roles.created_at, "desc");
 
       // Update the users table to reflect the most recent role assignment
       // If no roles remain, you might need a default role or handle that accordingly
       if (remainingRoles.length > 0) {
-        await txDb.update(users)
+        await txDb
+          .update(users)
           .set({
             role_id: remainingRoles[0].role_id,
             updated_at: new Date(),
@@ -488,7 +416,7 @@ export async function removeRoleFromUser(
         // If the user has no roles left, you might want to assign a default role
         // or handle this case according to your application's requirements
         logger.warn(`User ${userId} has no remaining roles after removal.`);
-        
+
         // Option 1: Set to a default role (e.g., "user" role with ID 1)
         // await txDb.update(users)
         //   .set({
@@ -496,7 +424,7 @@ export async function removeRoleFromUser(
         //     updated_at: new Date(),
         //   })
         //   .where(eq(users.id, userId));
-        
+
         // Option 2: Log a warning but don't change user's current role_id
         // This is the current implementation
       }
@@ -516,11 +444,7 @@ export async function removeRoleFromUser(
 export async function getUserRoles(userId: number): Promise<UserRoleOutput[]> {
   try {
     // Check if user exists
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!user.length) {
       throw new AppError("User not found", 404);

@@ -26,11 +26,7 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-const Sidebar = ({
-  isCollapsed,
-  isMobile = false,
-  onMobileClose,
-}: SidebarProps) => {
+const Sidebar = ({ isCollapsed, isMobile = false, onMobileClose }: SidebarProps) => {
   const pathname = usePathname();
   const { logout } = useAuth();
   const [mentorshipOpen, setMentorshipOpen] = useState(false);
@@ -173,8 +169,7 @@ const Sidebar = ({
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive =
-                      pathname === item.href ||
-                      pathname?.startsWith(item.href + "/");
+                      pathname === item.href || pathname?.startsWith(item.href + "/");
                     return (
                       <Link
                         key={item.href}
@@ -187,9 +182,7 @@ const Sidebar = ({
                         }`}
                       >
                         <Icon className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium">{item.label}</span>
-                        )}
+                        {!isCollapsed && <span className="ml-3 font-medium">{item.label}</span>}
                       </Link>
                     );
                   })}
@@ -202,15 +195,11 @@ const Sidebar = ({
                           ? "bg-white/10 text-white"
                           : "text-white/80 hover:bg-white/5 hover:text-white"
                       }`}
-                      onClick={() =>
-                        !isCollapsed && setMentorshipOpen(!mentorshipOpen)
-                      }
+                      onClick={() => !isCollapsed && setMentorshipOpen(!mentorshipOpen)}
                     >
                       <div className="flex items-center">
                         <UserPlus className="w-5 h-5 flex-shrink-0" />
-                        {!isCollapsed && (
-                          <span className="ml-3 font-medium">Mentorship</span>
-                        )}
+                        {!isCollapsed && <span className="ml-3 font-medium">Mentorship</span>}
                       </div>
                       {!isCollapsed &&
                         (mentorshipOpen ? (
@@ -232,9 +221,7 @@ const Sidebar = ({
                           }`}
                         >
                           <Users className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">
-                            Find Mentees
-                          </span>
+                          <span className="ml-3 font-medium text-sm">Find Mentees</span>
                         </Link>
                         <Link
                           href="/mentorship/my-connections"
@@ -246,9 +233,7 @@ const Sidebar = ({
                           }`}
                         >
                           <MessageSquare className="w-4 h-4 flex-shrink-0" />
-                          <span className="ml-3 font-medium text-sm">
-                            My Connections
-                          </span>
+                          <span className="ml-3 font-medium text-sm">My Connections</span>
                         </Link>
                       </>
                     )}

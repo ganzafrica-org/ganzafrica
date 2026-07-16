@@ -25,8 +25,8 @@ export const payrolls = pgTable("payrolls", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   staff_fellow_number: text("staff_fellow_number"), // Format1: "Employee No." / Format2: "Consultant ID"
-  employee_id: text("employee_id"),                 // Format1: "Employees ID" / Format3: "ID Number" / Format4: "Employee Id"
-  program: text("program"),                          // Format1: "Program" / Format2: used as name
+  employee_id: text("employee_id"), // Format1: "Employees ID" / Format3: "ID Number" / Format4: "Employee Id"
+  program: text("program"), // Format1: "Program" / Format2: used as name
 
   // Format type and currency
   payroll_type: text("payroll_type").default("rwf"), // 'rwf' | 'rwf_usd' | 'wop_usd' | 'xof' | 'rwf_wop'
@@ -52,11 +52,11 @@ export const payrolls = pgTable("payrolls", {
   net_salary_usd: decimal("net_salary_usd", { precision: 15, scale: 2 }),
 
   // Format 2: International WOP/USD
-  gross_usd: decimal("gross_usd", { precision: 15, scale: 2 }),   // "Gross fees" in USD
-  wop_usd: decimal("wop_usd", { precision: 15, scale: 2 }),        // "WOP USD"
-  date_rate: date("date_rate"),                                      // "Date rate"
-  wop_rwf: decimal("wop_rwf", { precision: 15, scale: 2 }),        // "WOP RWF"
-  gross_rwf: decimal("gross_rwf", { precision: 15, scale: 2 }),    // "Gross" (RWF equivalent)
+  gross_usd: decimal("gross_usd", { precision: 15, scale: 2 }), // "Gross fees" in USD
+  wop_usd: decimal("wop_usd", { precision: 15, scale: 2 }), // "WOP USD"
+  date_rate: date("date_rate"), // "Date rate"
+  wop_rwf: decimal("wop_rwf", { precision: 15, scale: 2 }), // "WOP RWF"
+  gross_rwf: decimal("gross_rwf", { precision: 15, scale: 2 }), // "Gross" (RWF equivalent)
 
   // Format 3: Burkina Faso XOF allowances
   housing_allowance: decimal("housing_allowance", { precision: 15, scale: 2 }),
@@ -73,7 +73,9 @@ export const payrolls = pgTable("payrolls", {
   email_error: text("email_error"),
 
   // Upload/Creation Tracking
-  uploaded_by: integer("uploaded_by").notNull().references(() => users.id),
+  uploaded_by: integer("uploaded_by")
+    .notNull()
+    .references(() => users.id),
   source_filename: text("source_filename"),
 
   ...timestampFields,

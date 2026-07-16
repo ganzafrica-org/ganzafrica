@@ -21,7 +21,10 @@ describe("HR System - Employee Management", () => {
 
     adminToken = jwt.sign({ id: IDS.admin, role: "IT", type: "access" }, env.JWT_SECRET);
     hrToken = jwt.sign({ id: IDS.hr, role: "HR", type: "access" }, env.JWT_SECRET);
-    employeeToken = jwt.sign({ id: IDS.employee, role: "EMPLOYEE", type: "access" }, env.JWT_SECRET);
+    employeeToken = jwt.sign(
+      { id: IDS.employee, role: "EMPLOYEE", type: "access" },
+      env.JWT_SECRET,
+    );
 
     stubHrAuthDb(sandbox, IDS.hr);
   });
@@ -96,9 +99,7 @@ describe("HR System - Employee Management", () => {
         total: 1,
       });
 
-      const res = await request
-        .get("/api/hr/employees")
-        .set("Authorization", `Bearer ${hrToken}`);
+      const res = await request.get("/api/hr/employees").set("Authorization", `Bearer ${hrToken}`);
 
       expect(res.status).to.equal(200);
       expect(res.body.data).to.be.an("array");
@@ -136,9 +137,7 @@ describe("HR System - Employee Management", () => {
     it("should return 404 if employee not found (Edge Case)", async () => {
       stubHrAuthDb(sandbox, IDS.hr);
 
-      sandbox
-        .stub(employeesService, "getEmployeeById")
-        .rejects(new AppError("Not Found", 404));
+      sandbox.stub(employeesService, "getEmployeeById").rejects(new AppError("Not Found", 404));
 
       const res = await request
         .get(`/api/hr/employees/${IDS.employee}`)
@@ -150,7 +149,10 @@ describe("HR System - Employee Management", () => {
 
   describe("PATCH /api/hr/employees/:id", () => {
     it("should allow employee to update their own profile (Positive)", async () => {
-      const myToken = jwt.sign({ id: IDS.employee, role: "EMPLOYEE", type: "access" }, env.JWT_SECRET);
+      const myToken = jwt.sign(
+        { id: IDS.employee, role: "EMPLOYEE", type: "access" },
+        env.JWT_SECRET,
+      );
       stubHrAuthDb(sandbox, IDS.employee);
 
       const updateStub = sandbox.stub(employeesService, "updateEmployee").resolves({
@@ -168,7 +170,10 @@ describe("HR System - Employee Management", () => {
     });
 
     it("should return 403 if employee tries to update someone else's profile (Authorization)", async () => {
-      const myToken = jwt.sign({ id: IDS.employee, role: "EMPLOYEE", type: "access" }, env.JWT_SECRET);
+      const myToken = jwt.sign(
+        { id: IDS.employee, role: "EMPLOYEE", type: "access" },
+        env.JWT_SECRET,
+      );
       stubHrAuthDb(sandbox, IDS.employee);
 
       const res = await request

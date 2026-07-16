@@ -1,12 +1,12 @@
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import * as crypto from "crypto";
-import {db, withDbTransaction} from "../db/client";
-import {password_reset_tokens, sessions, users, verification_tokens, roles} from "../db/schema";
-import {and, eq} from "drizzle-orm";
-import {constants, env, Logger} from "../config";
-import {sendPasswordResetEmail, } from "./email.service";
-import {AppError} from "../middlewares";
+import { db, withDbTransaction } from "../db/client";
+import { password_reset_tokens, sessions, users, verification_tokens, roles } from "../db/schema";
+import { and, eq } from "drizzle-orm";
+import { constants, env, Logger } from "../config";
+import { sendPasswordResetEmail } from "./email.service";
+import { AppError } from "../middlewares";
 
 const logger = new Logger("AuthService");
 
@@ -14,16 +14,12 @@ const logger = new Logger("AuthService");
 const SALT_ROUNDS = 10;
 
 // Set secret key for JWT
-const JWT_SECRET =
-  env.JWT_SECRET || "your-default-jwt-secret-key-should-be-updated";
+const JWT_SECRET = env.JWT_SECRET || "your-default-jwt-secret-key-should-be-updated";
 const JWT_REFRESH_SECRET =
-  env.JWT_REFRESH_SECRET ||
-  "your-default-jwt-refresh-secret-key-should-be-updated";
+  env.JWT_REFRESH_SECRET || "your-default-jwt-refresh-secret-key-should-be-updated";
 
 if (JWT_SECRET === "your-default-jwt-secret-key-should-be-updated") {
-  logger.warn(
-    "Using default JWT secret key. This is insecure for production environments.",
-  );
+  logger.warn("Using default JWT secret key. This is insecure for production environments.");
 }
 
 // Define interfaces for token payloads and session data
@@ -59,10 +55,7 @@ export async function hashPassword(password: string): Promise<string> {
  * @param {string} hash - Stored hash to verify against
  * @returns {Promise<boolean>} - True if password matches hash
  */
-export async function verifyPassword(
-  password: string,
-  hash: string,
-): Promise<boolean> {
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   try {
     return await bcrypt.compare(password, hash);
   } catch (error) {
@@ -88,14 +81,14 @@ export async function createToken(
     const secret = isRefresh ? JWT_REFRESH_SECRET : JWT_SECRET;
 
     return jwt.sign(
-        {
-          ...payload,
-          jti: crypto.randomUUID(),
-        },
-        secret,
-        {
-          expiresIn: Math.floor(expiresInMs / 1000), // JWT uses seconds for expiration
-        },
+      {
+        ...payload,
+        jti: crypto.randomUUID(),
+      },
+      secret,
+      {
+        expiresIn: Math.floor(expiresInMs / 1000), // JWT uses seconds for expiration
+      },
     );
   } catch (error) {
     logger.error("Token creation error", error);
@@ -105,7 +98,7 @@ export async function createToken(
 
 /**
  * Create a JWT token with complete user information
- * @param {number} userId - User ID 
+ * @param {number} userId - User ID
  * @param {string} tokenType - Token type (access or refresh)
  * @param {string} expiresIn - Token expiration time
  * @param {boolean} isRefresh - Whether this is a refresh token
@@ -127,7 +120,7 @@ export async function createUserToken(
 
     // Use the first user from the array with explicit type casting
     const userData = userResult[0];
-    
+
     if (!userData) {
       throw new Error(`User with ID ${userId} not found or has no data`);
     }
@@ -137,11 +130,8 @@ export async function createUserToken(
     try {
       if (userData.role_id) {
         // Using Drizzle ORM query instead of raw SQL to avoid parameter issues
-        const roleResult = await db
-          .select()
-          .from(roles)
-          .where(eq(roles.id, userData.role_id));
-        
+        const roleResult = await db.select().from(roles).where(eq(roles.id, userData.role_id));
+
         if (roleResult && roleResult.length > 0) {
           roleName = roleResult[0].name;
         }
@@ -214,23 +204,21 @@ export async function createSession(
       userId,
       constants.TOKEN_TYPES.ACCESS,
       env.ACCESS_TOKEN_EXPIRY,
-      false
+      false,
     );
 
     const refreshToken = await createUserToken(
       userId,
       constants.TOKEN_TYPES.REFRESH,
       env.REFRESH_TOKEN_EXPIRY,
-      true
+      true,
     );
 
     // Hash tokens for secure storage
     const refreshTokenHash = await bcrypt.hash(refreshToken, SALT_ROUNDS);
     const accessTokenHash = await bcrypt.hash(accessToken, SALT_ROUNDS);
 
-    const expiresAt = new Date(
-      Date.now() + parseTimeToMs(env.REFRESH_TOKEN_EXPIRY || "7d"),
-    );
+    const expiresAt = new Date(Date.now() + parseTimeToMs(env.REFRESH_TOKEN_EXPIRY || "7d"));
 
     // Option to limit number of active sessions per user
     const maxSessions = 5; // Configurable value
@@ -243,9 +231,7 @@ export async function createSession(
     if (activeSessions.length >= maxSessions) {
       // Sort by last activity
       const sortedSessions = [...activeSessions].sort(
-        (a, b) =>
-          new Date(a.last_activity).getTime() -
-          new Date(b.last_activity).getTime(),
+        (a, b) => new Date(a.last_activity).getTime() - new Date(b.last_activity).getTime(),
       );
 
       // Invalidate oldest sessions to stay under limit
@@ -330,9 +316,7 @@ export async function invalidateSession(
 
         // If no specific session found, invalidate all (fallback behavior)
         if (!foundSession && userSessions.length > 0) {
-          logger.warn(
-            "Could not find specific session, invalidating all for user",
-          );
+          logger.warn("Could not find specific session, invalidating all for user");
           for (const session of userSessions) {
             await db
               .update(sessions)
@@ -341,10 +325,7 @@ export async function invalidateSession(
           }
         }
       } catch (error) {
-        logger.error(
-          "Error during token verification for session invalidation",
-          error,
-        );
+        logger.error("Error during token verification for session invalidation", error);
         return false;
       }
     } else {
@@ -379,9 +360,7 @@ export async function invalidateSession(
  * @param {string} sessionId - Session ID to update
  * @returns {Promise<boolean>} - Result of update operation
  */
-export async function updateSessionActivity(
-  sessionId: string,
-): Promise<boolean> {
+export async function updateSessionActivity(sessionId: string): Promise<boolean> {
   try {
     // Ensure sessionId is a valid number
     const sessionIdNum = parseInt(sessionId, 10);
@@ -425,12 +404,7 @@ export async function sendPasswordReset(
     await db
       .update(password_reset_tokens)
       .set({ used: true })
-      .where(
-        and(
-          eq(password_reset_tokens.user_id, userId),
-          eq(password_reset_tokens.used, false),
-        ),
-      );
+      .where(and(eq(password_reset_tokens.user_id, userId), eq(password_reset_tokens.used, false)));
 
     // Create new password reset token
     await db.insert(password_reset_tokens).values({
@@ -461,10 +435,7 @@ export async function sendPasswordReset(
  * @param {number} userId - User ID
  * @returns {Promise<boolean>} - Result of verification
  */
-export async function verifyEmailToken(
-  token: string,
-  userId: number,
-): Promise<boolean> {
+export async function verifyEmailToken(token: string, userId: number): Promise<boolean> {
   return await withDbTransaction(async (txDb) => {
     const tokens = await txDb
       .select()
@@ -534,12 +505,7 @@ export async function resetPassword(
     const tokens = await txDb
       .select()
       .from(password_reset_tokens)
-      .where(
-        and(
-          eq(password_reset_tokens.user_id, userId),
-          eq(password_reset_tokens.used, false),
-        ),
-      );
+      .where(and(eq(password_reset_tokens.user_id, userId), eq(password_reset_tokens.used, false)));
 
     for (const dbToken of tokens) {
       try {
@@ -548,10 +514,7 @@ export async function resetPassword(
           break;
         }
       } catch (error) {
-        logger.warn(
-          "Error verifying reset token hash during password reset",
-          error,
-        );
+        logger.warn("Error verifying reset token hash during password reset", error);
         // Continue to next token
       }
     }
@@ -601,9 +564,7 @@ export async function resetPassword(
 function parseTimeToMs(timeStr: string): number {
   const match = timeStr.match(/^(\d+)([smhd])$/);
   if (!match) {
-    throw new Error(
-      `Invalid time format: ${timeStr}. Expected format: 30s, 15m, 24h, 7d`,
-    );
+    throw new Error(`Invalid time format: ${timeStr}. Expected format: 30s, 15m, 24h, 7d`);
   }
 
   const [, value, unit] = match;

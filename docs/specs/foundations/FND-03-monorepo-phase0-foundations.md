@@ -30,6 +30,7 @@ lint-staged pre-commit/pre-push gates, and the repo swept of cruft and burned se
 ## 3. Steps (each = one PR)
 
 ### 3.1 Root package.json + workspace merge
+
 - Remove `"workspaces"` field and ALL runtime deps from root. Keep devDeps only:
   `turbo`, `prettier`, `husky`, `lint-staged`, `typescript`.
 - Delete `backend/pnpm-lock.yaml` and `backend/pnpm-workspace.yaml`.
@@ -42,17 +43,20 @@ lint-staged pre-commit/pre-push gates, and the repo swept of cruft and burned se
   type-check-disabling env kept for now — do NOT fix web types here, that's FND-09).
 
 ### 3.2 Prettier
+
 - Root `.prettierrc.json`: `{ "semi": true, "singleQuote": false, "trailingComma": "all", "printWidth": 100 }`
-  + `.prettierignore` (`dist`, `.next`, `drizzle/*.sql`, `pnpm-lock.yaml`, `apps/_archived`).
+  - `.prettierignore` (`dist`, `.next`, `drizzle/*.sql`, `pnpm-lock.yaml`, `apps/_archived`).
 - One whole-repo `prettier --write .` commit; add its hash to `.git-blame-ignore-revs`.
 
 ### 3.3 husky + lint-staged
+
 - `pre-commit`: lint-staged → `prettier --write` on staged files, `eslint --fix` on staged
   `*.{ts,tsx}` (per-package config resolution).
 - `pre-push`: `pnpm turbo typecheck --filter=...[origin/dev]` (affected only, cached — fast).
 - `prepare` script at root: `husky`.
 
 ### 3.4 ESLint alignment (config only, not fixing the world)
+
 - Point hr/internal/alumni/task/backend at `@workspace/eslint-config` (next-js preset for the
   apps, base for backend); backend moves ESLint 8 → 9 flat.
 - Where a package has a wall of existing violations: silence those specific rules per-package
@@ -60,6 +64,7 @@ lint-staged pre-commit/pre-push gates, and the repo swept of cruft and burned se
   tightened later. No mass auto-fix commits mixed with config changes.
 
 ### 3.5 Secrets sweep (treat everything committed as burned)
+
 - Add `.env`, `.env.*`, `*.tsbuildinfo`, `*.csv` (scoped: `apps/internal/*.csv`) to root
   `.gitignore`; `git rm --cached` every tracked `.env`.
 - Create `.env.example` for backend and each app (every key from `backend/src/config/env.ts`
@@ -78,6 +83,7 @@ lint-staged pre-commit/pre-push gates, and the repo swept of cruft and burned se
   (`backend/tests/fixtures/payroll/` — anonymized copies with fake names/amounts).
 
 ### 3.6 Cruft
+
 - Tag first: `git tag archive/pre-cleanup && git push origin archive/pre-cleanup`.
 - Delete: `backend/git_history*.txt`, `backend/prisma/`, `apps/internal/tsconfig.tsbuildinfo`
   (+ gitignore), root `public/` and `components/ContactUsContent.tsx` **after** `grep -r` shows
@@ -91,6 +97,7 @@ None.
 ## 6. Tests to write FIRST
 
 Procedural spec — proofs instead:
+
 1. `pnpm install --frozen-lockfile` clean at root; exactly one `pnpm-lock.yaml` in the repo.
 2. `pnpm turbo build` — all 7 packages build.
 3. `git ls-files | grep -E "\.env$|tsbuildinfo|git_history"` → empty.

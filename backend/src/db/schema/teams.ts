@@ -1,12 +1,4 @@
-import {
-  integer,
-  pgTable,
-  text,
-  serial,
-  varchar,
-  index,
-  jsonb,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, serial, varchar, index, jsonb } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 
 // Team Types Table

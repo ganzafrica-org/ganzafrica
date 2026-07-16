@@ -38,29 +38,33 @@ onboarding process — the exact "automatic transfer to onboarding" the user des
 ```ts
 export const offers = pgTable("offers", {
   id: serial("id").primaryKey(),
-  application_id: integer("application_id").notNull().unique()
+  application_id: integer("application_id")
+    .notNull()
+    .unique()
     .references(() => applications.id, { onDelete: "cascade" }),
   position_title: text("position_title").notNull(),
-  employment_type: text("employment_type").notNull(),   // fellow|analyst|staff|contractor|intern
+  employment_type: text("employment_type").notNull(), // fellow|analyst|staff|contractor|intern
   department: text("department"),
   start_date: date("start_date"),
   gross_salary: numeric("gross_salary", { precision: 15, scale: 2 }),
   currency: text("currency").notNull().default("RWF"),
   additional_terms: text("additional_terms"),
-  letter_file_key: text("letter_file_key"),              // uploaded PDF, private
-  status: text("status").notNull().default("draft"),     // draft|sent|accepted|declined|expired|withdrawn
+  letter_file_key: text("letter_file_key"), // uploaded PDF, private
+  status: text("status").notNull().default("draft"), // draft|sent|accepted|declined|expired|withdrawn
   expires_at: timestamp("expires_at", { withTimezone: true }), // acceptance deadline
   sent_at: timestamp("sent_at", { withTimezone: true }),
   responded_at: timestamp("responded_at", { withTimezone: true }),
   decline_reason: text("decline_reason"),
-  created_by: integer("created_by").notNull().references(() => users.id),
+  created_by: integer("created_by")
+    .notNull()
+    .references(() => users.id),
   ...timestampFields,
 });
 
 export const secure_link_tokens = pgTable("secure_link_tokens", {
   id: serial("id").primaryKey(),
-  kind: text("kind").notNull(),                 // 'offer' | (future: 'invite', ...)
-  subject_id: integer("subject_id").notNull(),  // offer.id for kind=offer
+  kind: text("kind").notNull(), // 'offer' | (future: 'invite', ...)
+  subject_id: integer("subject_id").notNull(), // offer.id for kind=offer
   token_hash: char("token_hash", { length: 64 }).notNull().unique(),
   expires_at: timestamp("expires_at", { withTimezone: true }).notNull(),
   revoked_at: timestamp("revoked_at", { withTimezone: true }),

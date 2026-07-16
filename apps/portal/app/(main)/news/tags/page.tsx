@@ -51,7 +51,7 @@ export default function NewsTagsPage() {
       setCreating(true);
       const res = await apiClient.post("/news/tags", { name: newTag.trim() });
       const created = res.data;
-      setTags(prev => [...prev, created]);
+      setTags((prev) => [...prev, created]);
       setNewTag("");
       toast.success("Tag created");
     } catch (e: any) {
@@ -66,7 +66,7 @@ export default function NewsTagsPage() {
     try {
       setDeletingId(id);
       await apiClient.delete(`/news/tags/${id}`);
-      setTags(prev => prev.filter(t => t.id !== id));
+      setTags((prev) => prev.filter((t) => t.id !== id));
       toast.success("Tag deleted");
     } catch (e: any) {
       toast.error(e?.response?.data?.message || "Failed to delete tag");
@@ -130,8 +130,11 @@ export default function NewsTagsPage() {
             {tags.length === 0 ? (
               <p className="text-gray-500">No tags yet.</p>
             ) : (
-              tags.map(tag => (
-                <div key={tag.id} className="flex items-center justify-between border rounded-md p-3">
+              tags.map((tag) => (
+                <div
+                  key={tag.id}
+                  className="flex items-center justify-between border rounded-md p-3"
+                >
                   <div className="flex items-center gap-2">
                     <TagIcon className="w-4 h-4 text-gray-500" />
                     <span>{tag.name}</span>
@@ -157,5 +160,3 @@ export default function NewsTagsPage() {
     </div>
   );
 }
-
-

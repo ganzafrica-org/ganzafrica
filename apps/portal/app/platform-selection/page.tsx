@@ -42,9 +42,7 @@ function isAlumni(user: any): boolean {
 function isInternalAuthorized(user: any): boolean {
   if (!user || !user.email) return false;
   const authorizedEmails =
-    process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(",").map((e) =>
-      e.trim(),
-    ) || [];
+    process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(",").map((e) => e.trim()) || [];
   return authorizedEmails.includes(user.email);
 }
 
@@ -178,8 +176,7 @@ function PlatformSelectionContent(): React.JSX.Element {
   }, [router, userTypeParam]);
 
   const redirectToAlumni = (token: string, userData: string) => {
-    const alumniAppUrl =
-      process.env.NEXT_PUBLIC_ALUMNI_URL || "http://localhost:3004";
+    const alumniAppUrl = process.env.NEXT_PUBLIC_ALUMNI_URL || "http://localhost:3004";
     try {
       const alumniUrl = new URL(`${alumniAppUrl}/auth-callback`);
       alumniUrl.searchParams.set("token", token);
@@ -227,8 +224,7 @@ function PlatformSelectionContent(): React.JSX.Element {
       }
 
       // Use environment variable for task app URL, fallback to localhost for development
-      const taskAppUrl =
-        process.env.NEXT_PUBLIC_TASK_URL || "http://localhost:3003";
+      const taskAppUrl = process.env.NEXT_PUBLIC_TASK_URL || "http://localhost:3003";
 
       try {
         const taskManagementUrl = new URL(`${taskAppUrl}/auth-callback`);
@@ -236,10 +232,7 @@ function PlatformSelectionContent(): React.JSX.Element {
           taskManagementUrl.searchParams.set("token", token);
         }
         if (userData) {
-          taskManagementUrl.searchParams.set(
-            "user",
-            encodeURIComponent(userData),
-          );
+          taskManagementUrl.searchParams.set("user", encodeURIComponent(userData));
         }
 
         // Show loading message
@@ -265,8 +258,7 @@ function PlatformSelectionContent(): React.JSX.Element {
       redirectToAlumni(token, userData || "");
     } else if (platform === "website") {
       // Use environment variable for website URL, fallback to localhost for development
-      const websiteUrl =
-        process.env.NEXT_PUBLIC_WEBSITE_URL || "http://localhost:3000";
+      const websiteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL || "http://localhost:3000";
 
       // Show a helpful message before redirecting
       toast.info("Redirecting to website...");
@@ -293,8 +285,7 @@ function PlatformSelectionContent(): React.JSX.Element {
       }
 
       // Use environment variable for internal app URL, fallback to localhost for development
-      const internalAppUrl =
-        process.env.NEXT_PUBLIC_INTERNAL_URL || "http://localhost:3005";
+      const internalAppUrl = process.env.NEXT_PUBLIC_INTERNAL_URL || "http://localhost:3005";
 
       try {
         const internalUrl = new URL(`${internalAppUrl}/auth-callback`);
@@ -416,10 +407,7 @@ function PlatformSelectionContent(): React.JSX.Element {
           </div>
 
           {/* Profile Modal */}
-          <Dialog
-            open={isProfileModalOpen}
-            onOpenChange={setIsProfileModalOpen}
-          >
+          <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
             <DialogContent className="w-[90%] max-w-[90%] sm:max-w-md mx-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
@@ -460,26 +448,20 @@ function PlatformSelectionContent(): React.JSX.Element {
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Name
-                    </label>
+                    <label className="text-sm font-medium text-gray-500">Name</label>
                     <p className="text-base font-semibold text-gray-900 mt-1">
                       {user?.name || "N/A"}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Email
-                    </label>
+                    <label className="text-sm font-medium text-gray-500">Email</label>
                     <p className="text-base font-semibold text-gray-900 mt-1">
                       {user?.email || "N/A"}
                     </p>
                   </div>
                   {user?.role_name && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Role
-                      </label>
+                      <label className="text-sm font-medium text-gray-500">Role</label>
                       <p className="text-base font-semibold text-gray-900 mt-1">
                         <span className="px-2 py-1 bg-gray-100 rounded-full text-sm">
                           {user.role_name}
@@ -515,8 +497,8 @@ function PlatformSelectionContent(): React.JSX.Element {
                       Portal
                     </h3>
                     <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                      Access your organization's main portal with projects,
-                      teams, and content management.
+                      Access your organization's main portal with projects, teams, and content
+                      management.
                     </p>
                     <div className="mt-auto">
                       <button
@@ -549,8 +531,8 @@ function PlatformSelectionContent(): React.JSX.Element {
                       Alumni Network
                     </h3>
                     <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                      Connect with fellow alumni, find mentors, and explore
-                      career opportunities. Build your professional network.
+                      Connect with fellow alumni, find mentors, and explore career opportunities.
+                      Build your professional network.
                     </p>
                     <div className="mt-auto">
                       <button
@@ -582,8 +564,8 @@ function PlatformSelectionContent(): React.JSX.Element {
                     Website
                   </h3>
                   <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                    Visit the public-facing website to explore programs, news,
-                    and opportunities. Discover what we offer.
+                    Visit the public-facing website to explore programs, news, and opportunities.
+                    Discover what we offer.
                   </p>
                   <div className="mt-auto">
                     <button
@@ -615,8 +597,8 @@ function PlatformSelectionContent(): React.JSX.Element {
                       HR & Finance
                     </h3>
                     <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                      Access HR and finance tools including payroll, payslips,
-                      and employee management.
+                      Access HR and finance tools including payroll, payslips, and employee
+                      management.
                     </p>
                     <div className="mt-auto">
                       <button
@@ -651,8 +633,8 @@ function PlatformSelectionContent(): React.JSX.Element {
                       Task Management
                     </h3>
                     <p className="text-gray-600 text-xs sm:text-sm md:text-sm lg:text-base leading-relaxed mb-4 sm:mb-6 flex-grow">
-                      Manage tasks, track progress, and collaborate with your
-                      team. Stay organized and productive.
+                      Manage tasks, track progress, and collaborate with your team. Stay organized
+                      and productive.
                     </p>
                     <div className="mt-auto">
                       <button

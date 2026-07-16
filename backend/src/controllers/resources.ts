@@ -46,15 +46,10 @@ const RESOURCE_TYPES = [
 /**
  * Get resources statistics
  */
-export const getResourceStats = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getResourceStats = async (req: Request, res: Response): Promise<void> => {
   try {
     // Total resources
-    const totalResult = await db
-      .select({ count: count() })
-      .from(alumni_resources);
+    const totalResult = await db.select({ count: count() }).from(alumni_resources);
 
     // Featured resources
     const featuredResult = await db
@@ -95,18 +90,12 @@ export const getResourceStats = async (
 /**
  * Get all resources with pagination and filters
  */
-export const getAllResources = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAllResources = async (req: Request, res: Response): Promise<void> => {
   try {
     const { page, limit, search, category, type, sort } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(
-      50,
-      Math.max(1, parseInt(limit as string, 10) || 15),
-    );
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 15));
     const offset = (pageNum - 1) * limitNum;
 
     // Build conditions
@@ -234,12 +223,8 @@ export const getAllResources = async (
       })
       .from(alumni_resources);
 
-    const categories = [
-      ...new Set(allResources.map((r) => r.category).filter(Boolean)),
-    ].sort();
-    const types = [
-      ...new Set(allResources.map((r) => r.type).filter(Boolean)),
-    ].sort();
+    const categories = [...new Set(allResources.map((r) => r.category).filter(Boolean))].sort();
+    const types = [...new Set(allResources.map((r) => r.type).filter(Boolean))].sort();
 
     res.status(200).json({
       resources: resources.map((r) => ({
@@ -265,9 +250,7 @@ export const getAllResources = async (
         downloads: r.downloads || 0,
         likes: likesMap[r.id] || 0,
         rating:
-          r.ratingCount && r.ratingCount > 0
-            ? (r.ratingSum! / r.ratingCount).toFixed(1)
-            : "0.0",
+          r.ratingCount && r.ratingCount > 0 ? (r.ratingSum! / r.ratingCount).toFixed(1) : "0.0",
         ratingCount: r.ratingCount || 0,
         isFeatured: r.isFeatured,
         externalUrl: r.externalUrl,
@@ -297,10 +280,7 @@ export const getAllResources = async (
 /**
  * Get single resource
  */
-export const getResource = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getResource = async (req: Request, res: Response): Promise<void> => {
   try {
     const resourceId = parseInt(req.params.id, 10);
 
@@ -414,9 +394,7 @@ export const getResource = async (
         likes: likesResult[0]?.count || 0,
         hasLiked,
         rating:
-          r.ratingCount && r.ratingCount > 0
-            ? (r.ratingSum! / r.ratingCount).toFixed(1)
-            : "0.0",
+          r.ratingCount && r.ratingCount > 0 ? (r.ratingSum! / r.ratingCount).toFixed(1) : "0.0",
         ratingCount: r.ratingCount || 0,
         userRating,
         isFeatured: r.isFeatured,
@@ -436,10 +414,7 @@ export const getResource = async (
 /**
  * Create/Contribute a resource
  */
-export const createResource = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const createResource = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -488,11 +463,7 @@ export const createResource = async (
     const userId = parseInt(req.user.id, 10);
 
     // Get user info for caching
-    const userQuery = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const userQuery = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     const userName = userQuery[0]?.name || "Unknown";
 
@@ -543,10 +514,7 @@ export const createResource = async (
 /**
  * Update a resource (owner or admin)
  */
-export const updateResource = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const updateResource = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -650,10 +618,7 @@ export const updateResource = async (
 /**
  * Delete a resource (owner or admin)
  */
-export const deleteResource = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const deleteResource = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -685,9 +650,7 @@ export const deleteResource = async (
       return;
     }
 
-    await db
-      .delete(alumni_resources)
-      .where(eq(alumni_resources.id, resourceId));
+    await db.delete(alumni_resources).where(eq(alumni_resources.id, resourceId));
 
     res.status(200).json({ message: "Resource deleted successfully" });
   } catch (error) {
@@ -702,10 +665,7 @@ export const deleteResource = async (
 /**
  * Like/Unlike a resource
  */
-export const toggleLike = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const toggleLike = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -736,20 +696,13 @@ export const toggleLike = async (
     const existingLike = await db
       .select({ id: resource_likes.id })
       .from(resource_likes)
-      .where(
-        and(
-          eq(resource_likes.resource_id, resourceId),
-          eq(resource_likes.user_id, userId),
-        ),
-      )
+      .where(and(eq(resource_likes.resource_id, resourceId), eq(resource_likes.user_id, userId)))
       .limit(1);
 
     let liked: boolean;
     if (existingLike.length > 0) {
       // Unlike
-      await db
-        .delete(resource_likes)
-        .where(eq(resource_likes.id, existingLike[0].id));
+      await db.delete(resource_likes).where(eq(resource_likes.id, existingLike[0].id));
       liked = false;
     } else {
       // Like
@@ -782,10 +735,7 @@ export const toggleLike = async (
 /**
  * Track resource download
  */
-export const trackDownload = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const trackDownload = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -843,10 +793,7 @@ export const trackDownload = async (
 /**
  * Rate a resource
  */
-export const rateResource = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const rateResource = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -888,10 +835,7 @@ export const rateResource = async (
       .select({ id: resource_ratings.id, rating: resource_ratings.rating })
       .from(resource_ratings)
       .where(
-        and(
-          eq(resource_ratings.resource_id, resourceId),
-          eq(resource_ratings.user_id, userId),
-        ),
+        and(eq(resource_ratings.resource_id, resourceId), eq(resource_ratings.user_id, userId)),
       )
       .limit(1);
 
@@ -929,8 +873,7 @@ export const rateResource = async (
       })
       .where(eq(alumni_resources.id, resourceId));
 
-    const avgRating =
-      newRatingCount > 0 ? (newRatingSum / newRatingCount).toFixed(1) : "0.0";
+    const avgRating = newRatingCount > 0 ? (newRatingSum / newRatingCount).toFixed(1) : "0.0";
 
     res.status(200).json({
       message: existingRating.length > 0 ? "Rating updated" : "Rating added",
@@ -949,10 +892,7 @@ export const rateResource = async (
 /**
  * Feature/unfeature a resource (admin only - would need role check)
  */
-export const toggleFeatured = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const toggleFeatured = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });

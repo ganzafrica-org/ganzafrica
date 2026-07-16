@@ -52,10 +52,7 @@ export const createTeamSchema = z.object({
       .string()
       .min(2, "Name must be at least 2 characters long")
       .max(200, "Name must be at most 200 characters long"),
-    position: z
-      .string()
-      .max(200, "Position must be at most 200 characters long")
-      .optional(),
+    position: z.string().max(200, "Position must be at most 200 characters long").optional(),
     photo_url: z.string().url("Photo URL must be a valid URL").optional(),
     bio: z.string().optional(),
     email: z.string().email("Email must be a valid email address").optional(),
@@ -84,26 +81,11 @@ export const updateTeamSchema = z.object({
         .min(2, "Name must be at least 2 characters long")
         .max(200, "Name must be at most 200 characters long")
         .optional(),
-      position: z
-        .string()
-        .max(200, "Position must be at most 200 characters long")
-        .optional(),
-      photo_url: z
-        .string()
-        .url("Photo URL must be a valid URL")
-        .optional()
-        .nullable(),
+      position: z.string().max(200, "Position must be at most 200 characters long").optional(),
+      photo_url: z.string().url("Photo URL must be a valid URL").optional().nullable(),
       bio: z.string().optional().nullable(),
-      email: z
-        .string()
-        .email("Email must be a valid email address")
-        .optional()
-        .nullable(),
-      profile_link: z
-        .string()
-        .url("Profile link must be a valid URL")
-        .optional()
-        .nullable(),
+      email: z.string().email("Email must be a valid email address").optional().nullable(),
+      profile_link: z.string().url("Profile link must be a valid URL").optional().nullable(),
       skills: z.array(z.string()).optional().nullable(),
       sort_order: z.number().optional().nullable(),
       team_type_id: z

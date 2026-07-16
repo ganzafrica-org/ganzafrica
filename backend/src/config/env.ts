@@ -25,9 +25,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
 
   // Application
-  NODE_ENV: z
-    .enum(["development", "test", "production"])
-    .default("development"),
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   API_PORT: z.coerce.number().default(3002),
   API_BASE_URL: z.string().url(),
   PORT: z.coerce.number().default(3002),

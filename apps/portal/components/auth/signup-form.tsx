@@ -6,10 +6,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  showSuccessToast,
-  showErrorToast,
-} from "@/components/ui/success-toast";
+import { showSuccessToast, showErrorToast } from "@/components/ui/success-toast";
 
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -136,10 +133,7 @@ export function SignupForm({ userType }: SignupFormProps) {
           : "Signup failed. Please try again.");
 
       // Check if error is related to email (e.g., email already exists)
-      if (
-        errorMessage.toLowerCase().includes("email") ||
-        error.response?.status === 409
-      ) {
+      if (errorMessage.toLowerCase().includes("email") || error.response?.status === 409) {
         setApiError({ field: "email", message: errorMessage });
         form.setError("email", { type: "server", message: errorMessage });
       } else {
@@ -188,22 +182,15 @@ export function SignupForm({ userType }: SignupFormProps) {
       {/* Right panel - white with signup form */}
       <div className="w-full lg:w-2/3 bg-white p-6 md:p-8">
         <div className="max-w-md mx-auto">
-          <h2 className="text-2xl font-semibold text-center mb-2">
-            Create Account
-          </h2>
+          <h2 className="text-2xl font-semibold text-center mb-2">Create Account</h2>
           <p className="text-gray-500 text-center mb-6">
             Join our community and start your journey with us
           </p>
 
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSignup)}
-              className="space-y-5"
-            >
+            <form onSubmit={form.handleSubmit(handleSignup)} className="space-y-5">
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Full Name
-                </label>
+                <label className="block text-sm font-medium mb-1">Full Name</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg
@@ -239,9 +226,7 @@ export function SignupForm({ userType }: SignupFormProps) {
                   />
                 </div>
                 {form.formState.errors.name && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.name.message}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
                 )}
               </div>
 
@@ -282,16 +267,12 @@ export function SignupForm({ userType }: SignupFormProps) {
                   />
                 </div>
                 {form.formState.errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.email.message}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
                 )}
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Password
-                </label>
+                <label className="block text-sm font-medium mb-1">Password</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg
@@ -313,8 +294,7 @@ export function SignupForm({ userType }: SignupFormProps) {
                     placeholder="••••••••"
                     disabled={isLoading}
                     className={`pl-10 pr-10 py-2 block w-full border-2 rounded ${
-                      form.formState.errors.password ||
-                      apiError?.field === "password"
+                      form.formState.errors.password || apiError?.field === "password"
                         ? "border-red-600 bg-red-50 text-red-700 placeholder-red-300 focus:border-red-600 focus:ring-red-600"
                         : "border-gray-200 text-gray-900 focus:border-primary-green focus:ring-primary-green"
                     } focus:outline-none focus:ring-2 ${isLoading ? "opacity-60 cursor-not-allowed" : ""}`}
@@ -331,10 +311,7 @@ export function SignupForm({ userType }: SignupFormProps) {
                         const hasSpecialChar = /[^A-Za-z0-9]/.test(value);
 
                         return (
-                          (hasUpperCase &&
-                            hasLowerCase &&
-                            hasNumber &&
-                            hasSpecialChar) ||
+                          (hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar) ||
                           "Password must include uppercase, lowercase, number, and special character"
                         );
                       },
@@ -345,11 +322,7 @@ export function SignupForm({ userType }: SignupFormProps) {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {form.formState.errors.password && (
@@ -361,9 +334,7 @@ export function SignupForm({ userType }: SignupFormProps) {
 
               {/* Added Confirm Password Field */}
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Confirm Password
-                </label>
+                <label className="block text-sm font-medium mb-1">Confirm Password</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg
@@ -392,10 +363,7 @@ export function SignupForm({ userType }: SignupFormProps) {
                     {...form.register("confirm_password", {
                       required: "Please confirm your password",
                       validate: (value) => {
-                        return (
-                          value === form.getValues("password") ||
-                          "Passwords do not match"
-                        );
+                        return value === form.getValues("password") || "Passwords do not match";
                       },
                     })}
                   />
@@ -412,10 +380,7 @@ export function SignupForm({ userType }: SignupFormProps) {
                   </button>
                 </div>
                 {form.formState.errors.confirm_password && (
-                  <p
-                    className="text-sm font-semibold mt-1"
-                    style={{ color: "#dc2626" }}
-                  >
+                  <p className="text-sm font-semibold mt-1" style={{ color: "#dc2626" }}>
                     {form.formState.errors.confirm_password.message}
                   </p>
                 )}
@@ -440,9 +405,7 @@ export function SignupForm({ userType }: SignupFormProps) {
                 <p className="text-sm text-gray-600">
                   Already have an account?{" "}
                   <Link
-                    href={
-                      userType === "alumni" ? "/login?user=alumni" : "/login"
-                    }
+                    href={userType === "alumni" ? "/login?user=alumni" : "/login"}
                     className="text-primary-green hover:underline"
                   >
                     Log in

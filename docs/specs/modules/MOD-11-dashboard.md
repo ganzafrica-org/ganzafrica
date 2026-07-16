@@ -69,7 +69,7 @@ payroll email_error rows, MOD-02 unresolved table, overdue process tasks.
 3. Manager scope: team counts only.
 4. Permission: employee → 403 (API) and redirect (UI test).
 5. Frontend: cards render from MSW payload incl. null sections; links carry filters.
-E2E: seeded org → dashboard numbers match seed expectations (spot-check 3).
+   E2E: seeded org → dashboard numbers match seed expectations (spot-check 3).
 
 ## 7. Acceptance criteria
 

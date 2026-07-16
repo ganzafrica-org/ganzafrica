@@ -1,12 +1,26 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@workspace/ui';
-import { Card } from '@workspace/ui';
-import { Twitter, Linkedin, ChevronDown, ChevronUp, X, Check, Loader2, User, Mail, Phone, MapPin, Calendar, Shield } from 'lucide-react';
-import { Input } from '@workspace/ui';
-import { toast } from 'sonner';
-import { profileApi } from '@/lib/api-client';
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "@workspace/ui";
+import { Card } from "@workspace/ui";
+import {
+  Twitter,
+  Linkedin,
+  ChevronDown,
+  ChevronUp,
+  X,
+  Check,
+  Loader2,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Shield,
+} from "lucide-react";
+import { Input } from "@workspace/ui";
+import { toast } from "sonner";
+import { profileApi } from "@/lib/api-client";
 
 interface SocialLinks {
   linkedin?: string;
@@ -22,7 +36,7 @@ interface NotificationPreferences {
 }
 
 interface UserPreferences {
-  theme?: 'light' | 'dark' | 'auto';
+  theme?: "light" | "dark" | "auto";
   notifications?: NotificationPreferences;
   language?: string;
   timezone?: string;
@@ -92,14 +106,14 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
   useEffect(() => {
     const loadProfile = async () => {
       if (initialUser) return; // Don't load if user is already provided
-      
+
       try {
         setLoading(true);
         const response = await profileApi.getCurrentProfile();
         setUser(response.profile);
       } catch (error) {
-        console.error('Failed to load profile:', error);
-        toast.error('Failed to load profile data');
+        console.error("Failed to load profile:", error);
+        toast.error("Failed to load profile data");
       } finally {
         setLoading(false);
       }
@@ -117,8 +131,8 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
     };
 
     checkScrollable();
-    window.addEventListener('resize', checkScrollable);
-    return () => window.removeEventListener('resize', checkScrollable);
+    window.addEventListener("resize", checkScrollable);
+    return () => window.removeEventListener("resize", checkScrollable);
   }, []);
 
   const handleScroll = () => {
@@ -133,45 +147,57 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
     const container = scrollContainerRef.current;
     if (container) {
       if (isScrolledDown) {
-        container.scrollTo({ top: 0, behavior: 'smooth' });
+        container.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
       }
     }
   };
 
   const handleEdit = (field: string, value: string) => {
-    setUser(prev => prev ? ({
-      ...prev,
-      [field]: value
-    }) : null);
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            [field]: value,
+          }
+        : null,
+    );
   };
 
   const handleSocialEdit = (platform: keyof SocialLinks, value: string) => {
-    setUser(prev => prev ? ({
-      ...prev,
-      social_links: {
-        ...prev.social_links,
-        [platform]: value
-      }
-    }) : null);
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            social_links: {
+              ...prev.social_links,
+              [platform]: value,
+            },
+          }
+        : null,
+    );
   };
 
   const handlePreferencesEdit = (field: string, value: any) => {
-    setUser(prev => prev ? ({
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        [field]: value
-      }
-    }) : null);
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            preferences: {
+              ...prev.preferences,
+              [field]: value,
+            },
+          }
+        : null,
+    );
   };
 
   const toggleEdit = async () => {
     if (isEditing) {
       // Save to backend
       if (!user) return;
-      
+
       try {
         setSaving(true);
         const updateData = {
@@ -183,13 +209,13 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
           social_links: user.social_links,
           preferences: user.preferences,
         };
-        
+
         const response = await profileApi.updateProfile(updateData);
         setUser(response.profile);
-        toast.success('Profile updated successfully');
+        toast.success("Profile updated successfully");
       } catch (error) {
-        console.error('Failed to update profile:', error);
-        toast.error('Failed to update profile');
+        console.error("Failed to update profile:", error);
+        toast.error("Failed to update profile");
       } finally {
         setSaving(false);
       }
@@ -226,7 +252,7 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
           <h1 className="text-2xl font-bold">My Profile</h1>
           <p className="text-gray-500">Manage your profile information</p>
         </div>
-        <Button 
+        <Button
           onClick={toggleEdit}
           disabled={saving}
           className="bg-green-700 hover:bg-green-800 transition-colors"
@@ -242,36 +268,40 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
               Save Changes
             </>
           ) : (
-            <>
-              Edit Profile
-            </>
+            <>Edit Profile</>
           )}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* User Profile Card - Static Left Column */}
-        <Card className="p-6 shadow-sm animate-fade-in relative h-fit" style={{ animationDelay: '0.1s' }}>
+        <Card
+          className="p-6 shadow-sm animate-fade-in relative h-fit"
+          style={{ animationDelay: "0.1s" }}
+        >
           <div className="flex flex-col items-center mb-6">
-            <div className="w-32 h-32 rounded-full bg-gray-100 mb-4 overflow-hidden flex items-center justify-center relative group" style={{ minWidth: '128px', minHeight: '128px' }}>
+            <div
+              className="w-32 h-32 rounded-full bg-gray-100 mb-4 overflow-hidden flex items-center justify-center relative group"
+              style={{ minWidth: "128px", minHeight: "128px" }}
+            >
               {user.avatar_url ? (
-                <img 
-                  alt="Profile" 
-                  src={user.avatar_url} 
+                <img
+                  alt="Profile"
+                  src={user.avatar_url}
                   className="absolute inset-0 w-full h-full object-cover"
-                  style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    objectFit: 'cover',
-                    objectPosition: 'center'
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
                   }}
                 />
               ) : (
                 <div className="bg-purple-700 text-white w-full h-full flex items-center justify-center text-3xl font-semibold absolute inset-0">
                   {user.name
-                    .split(' ')
-                    .map(part => part[0])
-                    .join('')
+                    .split(" ")
+                    .map((part) => part[0])
+                    .join("")
                     .toUpperCase()}
                 </div>
               )}
@@ -286,45 +316,42 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
             {isEditing ? (
               <Input
                 value={user.name}
-                onChange={(e) => handleEdit('name', e.target.value)}
+                onChange={(e) => handleEdit("name", e.target.value)}
                 className="text-xl font-bold text-center mb-2"
               />
             ) : (
               <h2 className="text-xl font-bold">{user.name}</h2>
             )}
             <div className="flex items-center mt-1">
-              <span className={`h-2 w-2 rounded-full mr-2 ${user.is_active ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              <span
+                className={`h-2 w-2 rounded-full mr-2 ${user.is_active ? "bg-green-500" : "bg-red-500"}`}
+              ></span>
               <span className="text-sm text-gray-500">
-                {user.is_active ? 'Active' : 'Inactive'}
+                {user.is_active ? "Active" : "Inactive"}
               </span>
             </div>
           </div>
 
-          <InfoItem 
-            label="Email" 
-            value={user.email} 
-            isEditing={false}
-            onEdit={() => {}}
-          />
-          <InfoItem 
-            label="Phone Number" 
-            value={user.phone_number || 'Not provided'} 
+          <InfoItem label="Email" value={user.email} isEditing={false} onEdit={() => {}} />
+          <InfoItem
+            label="Phone Number"
+            value={user.phone_number || "Not provided"}
             isEditing={isEditing}
-            onEdit={(value) => handleEdit('phone_number', value)}
+            onEdit={(value) => handleEdit("phone_number", value)}
           />
-          <InfoItem 
-            label="Email Verified" 
-            value={user.email_verified ? 'Yes' : 'No'} 
+          <InfoItem
+            label="Email Verified"
+            value={user.email_verified ? "Yes" : "No"}
             isEditing={false}
             onEdit={() => {}}
           />
-          <InfoItem 
-            label="Phone Verified" 
-            value={user.phone_verified ? 'Yes' : 'No'} 
+          <InfoItem
+            label="Phone Verified"
+            value={user.phone_verified ? "Yes" : "No"}
             isEditing={false}
             onEdit={() => {}}
           />
-          
+
           {/* Social Media Links */}
           <div className="flex items-center justify-center space-x-4 mt-6 pt-4 border-t border-gray-100">
             {user.social_links?.twitter && (
@@ -333,11 +360,11 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
                 {isEditing ? (
                   <Input
                     value={user.social_links.twitter}
-                    onChange={(e) => handleSocialEdit('twitter', e.target.value)}
+                    onChange={(e) => handleSocialEdit("twitter", e.target.value)}
                     className="text-sm w-40"
                   />
                 ) : (
-                  <a 
+                  <a
                     href={user.social_links.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -354,11 +381,11 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
                 {isEditing ? (
                   <Input
                     value={user.social_links.linkedin}
-                    onChange={(e) => handleSocialEdit('linkedin', e.target.value)}
+                    onChange={(e) => handleSocialEdit("linkedin", e.target.value)}
                     className="text-sm w-40"
                   />
                 ) : (
-                  <a 
+                  <a
                     href={user.social_links.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -374,54 +401,49 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
 
         {/* Right Column - Scrollable with Hidden Scrollbar */}
         <div className="col-span-2 relative">
-          <div 
+          <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
             className="space-y-6 max-h-[calc(100vh-12rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
           >
             {/* Biography Card */}
-            <Card className="p-6 shadow-sm animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <Card className="p-6 shadow-sm animate-fade-in" style={{ animationDelay: "0.2s" }}>
               <h3 className="text-lg font-bold mb-4">Biography</h3>
               {isEditing ? (
                 <textarea
-                  value={user.bio || ''}
-                  onChange={(e) => handleEdit('bio', e.target.value)}
+                  value={user.bio || ""}
+                  onChange={(e) => handleEdit("bio", e.target.value)}
                   className="w-full p-2 border rounded-md text-sm text-gray-600 min-h-[100px]"
                   aria-label="Biography"
                   title="Biography"
                   placeholder="Tell us about yourself..."
                 />
               ) : (
-                <p className="text-sm text-gray-600">{user.bio || 'No biography provided'}</p>
+                <p className="text-sm text-gray-600">{user.bio || "No biography provided"}</p>
               )}
             </Card>
 
             {/* Account Information */}
-            <Card className="p-6 shadow-sm animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <Card className="p-6 shadow-sm animate-fade-in" style={{ animationDelay: "0.2s" }}>
               <h3 className="text-lg font-bold mb-6">Account Information</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                <InfoItem 
-                  label="Role" 
-                  value={user.role_name} 
+                <InfoItem label="Role" value={user.role_name} isEditing={false} onEdit={() => {}} />
+                <InfoItem
+                  label="Account Status"
+                  value={user.is_active ? "Active" : "Inactive"}
                   isEditing={false}
                   onEdit={() => {}}
                 />
-                <InfoItem 
-                  label="Account Status" 
-                  value={user.is_active ? 'Active' : 'Inactive'} 
+                <InfoItem
+                  label="Member Since"
+                  value={new Date(user.created_at).toLocaleDateString()}
                   isEditing={false}
                   onEdit={() => {}}
                 />
-                <InfoItem 
-                  label="Member Since" 
-                  value={new Date(user.created_at).toLocaleDateString()} 
-                  isEditing={false}
-                  onEdit={() => {}}
-                />
-                <InfoItem 
-                  label="Last Updated" 
-                  value={new Date(user.updated_at).toLocaleDateString()} 
+                <InfoItem
+                  label="Last Updated"
+                  value={new Date(user.updated_at).toLocaleDateString()}
                   isEditing={false}
                   onEdit={() => {}}
                 />
@@ -429,25 +451,24 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
             </Card>
 
             {/* Contact Information */}
-            <Card className="p-6 shadow-sm animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <Card className="p-6 shadow-sm animate-fade-in" style={{ animationDelay: "0.3s" }}>
               <h3 className="text-lg font-bold mb-6">Contact Information</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                <InfoItem 
-                  label="Address" 
-                  value={user.address || 'Not provided'} 
+                <InfoItem
+                  label="Address"
+                  value={user.address || "Not provided"}
                   isEditing={isEditing}
-                  onEdit={(value) => handleEdit('address', value)}
+                  onEdit={(value) => handleEdit("address", value)}
                 />
-                <InfoItem 
-                  label="Phone Number" 
-                  value={user.phone_number || 'Not provided'} 
+                <InfoItem
+                  label="Phone Number"
+                  value={user.phone_number || "Not provided"}
                   isEditing={isEditing}
-                  onEdit={(value) => handleEdit('phone_number', value)}
+                  onEdit={(value) => handleEdit("phone_number", value)}
                 />
               </div>
             </Card>
-
           </div>
 
           {/* Scroll Button */}
@@ -468,7 +489,7 @@ export function UserProfile({ user: initialUser }: UserProfileProps) {
       </div>
     </div>
   );
-};
+}
 
 export default function Page() {
   return (

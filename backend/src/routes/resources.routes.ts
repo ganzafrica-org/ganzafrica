@@ -45,12 +45,7 @@ const router = Router();
  *       403:
  *         description: Forbidden - Requires alumni or admin role
  */
-router.get(
-  "/stats",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  getResourceStats,
-);
+router.get("/stats", authenticate, authorize(["alumni", "admin"]), getResourceStats);
 
 /**
  * @swagger
@@ -209,12 +204,7 @@ router.post("/", authenticate, authorize(["alumni", "admin"]), createResource);
  *       404:
  *         description: Resource not found
  */
-router.put(
-  "/:id",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  updateResource,
-);
+router.put("/:id", authenticate, authorize(["alumni", "admin"]), updateResource);
 
 /**
  * @swagger
@@ -238,12 +228,7 @@ router.put(
  *       404:
  *         description: Resource not found
  */
-router.delete(
-  "/:id",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  deleteResource,
-);
+router.delete("/:id", authenticate, authorize(["alumni", "admin"]), deleteResource);
 
 /**
  * @swagger
@@ -267,12 +252,7 @@ router.delete(
  *       404:
  *         description: Resource not found
  */
-router.post(
-  "/:id/like",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  toggleLike,
-);
+router.post("/:id/like", authenticate, authorize(["alumni", "admin"]), toggleLike);
 
 /**
  * @swagger
@@ -296,12 +276,7 @@ router.post(
  *       404:
  *         description: Resource not found
  */
-router.post(
-  "/:id/download",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  trackDownload,
-);
+router.post("/:id/download", authenticate, authorize(["alumni", "admin"]), trackDownload);
 
 /**
  * @swagger
@@ -342,12 +317,7 @@ router.post(
  *       404:
  *         description: Resource not found
  */
-router.post(
-  "/:id/rate",
-  authenticate,
-  authorize(["alumni", "admin"]),
-  rateResource,
-);
+router.post("/:id/rate", authenticate, authorize(["alumni", "admin"]), rateResource);
 
 /**
  * @swagger

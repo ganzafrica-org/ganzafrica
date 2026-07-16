@@ -9,4 +9,3 @@ router.get("/teams", authenticate, portalDataController.getTeamsByType);
 router.get("/projects", authenticate, portalDataController.getAllProjects);
 
 export default router;
-

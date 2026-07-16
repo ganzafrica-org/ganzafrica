@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 
 interface Tab {
   id: string;
@@ -14,30 +14,36 @@ interface TabsProps {
   className?: string;
 }
 
-export function Tabs({ tabs, activeTab, onTabChange, className = '' }: TabsProps): React.JSX.Element {
+export function Tabs({
+  tabs,
+  activeTab,
+  onTabChange,
+  className = "",
+}: TabsProps): React.JSX.Element {
   return (
-    <div className={`flex flex-wrap gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 ${className}`} style={{ WebkitOverflowScrolling: 'touch' }}>
+    <div
+      className={`flex flex-wrap gap-1 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 ${className}`}
+      style={{ WebkitOverflowScrolling: "touch" }}
+    >
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
           className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base font-semibold transition-all relative touch-manipulation whitespace-nowrap flex-shrink-0 ${
-            activeTab === tab.id
-              ? ''
-              : 'text-gray-500 hover:text-gray-700'
+            activeTab === tab.id ? "" : "text-gray-500 hover:text-gray-700"
           }`}
           style={{
-            color: activeTab === tab.id ? '#076297' : undefined,
-            minHeight: '44px', // Better touch target for mobile
+            color: activeTab === tab.id ? "#076297" : undefined,
+            minHeight: "44px", // Better touch target for mobile
           }}
         >
           {tab.label}
           {activeTab === tab.id && (
-            <div 
+            <div
               className="absolute bottom-0 left-0 right-0 h-[3px]"
-              style={{ 
-                backgroundColor: '#076297',
-                borderRadius: '3px 3px 0 0'
+              style={{
+                backgroundColor: "#076297",
+                borderRadius: "3px 3px 0 0",
               }}
             />
           )}

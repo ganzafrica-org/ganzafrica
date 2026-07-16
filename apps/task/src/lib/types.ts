@@ -51,13 +51,13 @@ export interface Task {
  * Check if a task is overdue (past due date and not completed)
  */
 export const isTaskOverdue = (task: Task): boolean => {
-  if (!task.dueDate || task.status === 'done') {
+  if (!task.dueDate || task.status === "done") {
     return false;
   }
-  
+
   const dueDate = new Date(task.dueDate);
   const now = new Date();
-  
+
   return dueDate < now;
 };
 
@@ -66,9 +66,7 @@ export const isTaskOverdue = (task: Task): boolean => {
  */
 export const updateTaskStatusIfOverdue = (task: Task): Task => {
   if (isTaskOverdue(task)) {
-    return { ...task, status: 'overdue' };
+    return { ...task, status: "overdue" };
   }
   return task;
 };
-
-

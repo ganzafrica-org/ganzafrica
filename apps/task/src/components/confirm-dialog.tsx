@@ -1,6 +1,6 @@
 "use client";
-import React from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import React from "react";
+import { X, AlertTriangle } from "lucide-react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -10,13 +10,13 @@ interface ConfirmDialogProps {
   description: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'danger' | 'warning' | 'info';
+  variant?: "danger" | "warning" | "info";
   icon?: React.ReactNode;
 }
 
 /**
  * Reusable Confirmation Dialog Component
- * 
+ *
  * @example
  * <ConfirmDialog
  *   open={showConfirm}
@@ -34,42 +34,42 @@ export function ConfirmDialog({
   onConfirm,
   title,
   description,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  variant = 'danger',
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  variant = "danger",
   icon,
 }: ConfirmDialogProps): React.JSX.Element | null {
   if (!open) return null;
 
   const getVariantStyles = () => {
     switch (variant) {
-      case 'danger':
+      case "danger":
         return {
-          iconBg: '#fee2e2',
-          iconColor: '#dc2626',
-          buttonBg: '#dc2626',
-          buttonHoverBg: '#b91c1c',
+          iconBg: "#fee2e2",
+          iconColor: "#dc2626",
+          buttonBg: "#dc2626",
+          buttonHoverBg: "#b91c1c",
         };
-      case 'warning':
+      case "warning":
         return {
-          iconBg: '#fef3c7',
-          iconColor: '#f59e0b',
-          buttonBg: '#f59e0b',
-          buttonHoverBg: '#d97706',
+          iconBg: "#fef3c7",
+          iconColor: "#f59e0b",
+          buttonBg: "#f59e0b",
+          buttonHoverBg: "#d97706",
         };
-      case 'info':
+      case "info":
         return {
-          iconBg: '#dbeafe',
-          iconColor: '#3b82f6',
-          buttonBg: '#3b82f6',
-          buttonHoverBg: '#2563eb',
+          iconBg: "#dbeafe",
+          iconColor: "#3b82f6",
+          buttonBg: "#3b82f6",
+          buttonHoverBg: "#2563eb",
         };
       default:
         return {
-          iconBg: '#fee2e2',
-          iconColor: '#dc2626',
-          buttonBg: '#dc2626',
-          buttonHoverBg: '#b91c1c',
+          iconBg: "#fee2e2",
+          iconColor: "#dc2626",
+          buttonBg: "#dc2626",
+          buttonHoverBg: "#b91c1c",
         };
     }
   };
@@ -77,18 +77,18 @@ export function ConfirmDialog({
   const styles = getVariantStyles();
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]"
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <div 
+      <div
         className="bg-white rounded-xl p-6 w-96 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-4">
-          <div 
+          <div
             className="w-12 h-12 rounded-full flex items-center justify-center"
             style={{ backgroundColor: styles.iconBg }}
           >
@@ -107,7 +107,7 @@ export function ConfirmDialog({
               onOpenChange(false);
             }}
             className="flex-1 px-4 py-2 font-medium text-sm transition"
-            style={{ backgroundColor: styles.buttonBg, color: '#ffffff', borderRadius: '7px' }}
+            style={{ backgroundColor: styles.buttonBg, color: "#ffffff", borderRadius: "7px" }}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = styles.buttonHoverBg)}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = styles.buttonBg)}
           >
@@ -116,9 +116,9 @@ export function ConfirmDialog({
           <button
             onClick={() => onOpenChange(false)}
             className="flex-1 px-4 py-2 font-medium text-sm transition"
-            style={{ backgroundColor: '#f3f4f6', color: '#374151', borderRadius: '7px' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#e5e7eb')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+            style={{ backgroundColor: "#f3f4f6", color: "#374151", borderRadius: "7px" }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
           >
             {cancelText}
           </button>
@@ -127,4 +127,3 @@ export function ConfirmDialog({
     </div>
   );
 }
-

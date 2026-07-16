@@ -15,9 +15,7 @@ export default function Header() {
     <>
       {isHomePage ? (
         // For homepage, use the HomeHero component which includes navigation and hero section
-        <HomeHero
-          backgroundImage="/images/hero-test.jpg"
-        />
+        <HomeHero backgroundImage="/images/hero-test.jpg" />
       ) : (
         // For other pages, just use the Navigation component without a hero section
         <Navigation isHomePage={false} />

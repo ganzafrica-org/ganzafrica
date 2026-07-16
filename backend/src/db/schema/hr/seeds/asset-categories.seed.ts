@@ -11,10 +11,22 @@ const seedData = [
     parent_name: "Electronics",
     slug: "electronics_phone",
     spec_schema: [
-      { key: "brand",   label: "Brand",   type: "enum",   options: ["Apple","Samsung","Google","Other"], required: true },
-      { key: "storage", label: "Storage", type: "enum",   options: ["64GB","128GB","256GB","512GB"],     required: true },
-      { key: "color",   label: "Color",   type: "text",   required: false },
-      { key: "os",      label: "OS",      type: "enum",   options: ["iOS","Android"],                   required: true },
+      {
+        key: "brand",
+        label: "Brand",
+        type: "enum",
+        options: ["Apple", "Samsung", "Google", "Other"],
+        required: true,
+      },
+      {
+        key: "storage",
+        label: "Storage",
+        type: "enum",
+        options: ["64GB", "128GB", "256GB", "512GB"],
+        required: true,
+      },
+      { key: "color", label: "Color", type: "text", required: false },
+      { key: "os", label: "OS", type: "enum", options: ["iOS", "Android"], required: true },
     ],
   },
 
@@ -24,11 +36,35 @@ const seedData = [
     parent_name: "Electronics",
     slug: "electronics_laptop",
     spec_schema: [
-      { key: "brand",      label: "Brand",      type: "enum", options: ["Dell","HP","Apple","Lenovo","Asus"], required: true },
+      {
+        key: "brand",
+        label: "Brand",
+        type: "enum",
+        options: ["Dell", "HP", "Apple", "Lenovo", "Asus"],
+        required: true,
+      },
       { key: "generation", label: "Generation", type: "text", required: false },
-      { key: "core",       label: "Processor",  type: "enum", options: ["i5","i7","i9","M1","M2","M3"],      required: true },
-      { key: "ram",        label: "RAM",        type: "enum", options: ["8GB","16GB","32GB","64GB"],         required: true },
-      { key: "hard_disk",  label: "Storage",    type: "enum", options: ["256GB","512GB","1TB","2TB"],        required: true },
+      {
+        key: "core",
+        label: "Processor",
+        type: "enum",
+        options: ["i5", "i7", "i9", "M1", "M2", "M3"],
+        required: true,
+      },
+      {
+        key: "ram",
+        label: "RAM",
+        type: "enum",
+        options: ["8GB", "16GB", "32GB", "64GB"],
+        required: true,
+      },
+      {
+        key: "hard_disk",
+        label: "Storage",
+        type: "enum",
+        options: ["256GB", "512GB", "1TB", "2TB"],
+        required: true,
+      },
     ],
   },
 
@@ -38,10 +74,34 @@ const seedData = [
     parent_name: "Electronics",
     slug: "electronics_pc",
     spec_schema: [
-      { key: "brand",     label: "Brand",     type: "enum", options: ["Dell","HP","Lenovo","Custom"], required: true },
-      { key: "core",      label: "Processor", type: "enum", options: ["i5","i7","i9","Ryzen 5","Ryzen 7","Ryzen 9"], required: true },
-      { key: "ram",       label: "RAM",       type: "enum", options: ["8GB","16GB","32GB","64GB"],   required: true },
-      { key: "hard_disk", label: "Storage",   type: "enum", options: ["256GB","512GB","1TB","2TB"],  required: true },
+      {
+        key: "brand",
+        label: "Brand",
+        type: "enum",
+        options: ["Dell", "HP", "Lenovo", "Custom"],
+        required: true,
+      },
+      {
+        key: "core",
+        label: "Processor",
+        type: "enum",
+        options: ["i5", "i7", "i9", "Ryzen 5", "Ryzen 7", "Ryzen 9"],
+        required: true,
+      },
+      {
+        key: "ram",
+        label: "RAM",
+        type: "enum",
+        options: ["8GB", "16GB", "32GB", "64GB"],
+        required: true,
+      },
+      {
+        key: "hard_disk",
+        label: "Storage",
+        type: "enum",
+        options: ["256GB", "512GB", "1TB", "2TB"],
+        required: true,
+      },
     ],
   },
 
@@ -51,9 +111,21 @@ const seedData = [
     parent_name: "Electronics",
     slug: "electronics_monitor",
     spec_schema: [
-      { key: "brand",      label: "Brand",      type: "enum",   options: ["LG","Samsung","Dell","BenQ","Asus"], required: true },
-      { key: "size",       label: "Size",       type: "text",   required: true,  unit: "inches" },
-      { key: "resolution", label: "Resolution", type: "enum",   options: ["1080p","1440p","4K"],               required: true },
+      {
+        key: "brand",
+        label: "Brand",
+        type: "enum",
+        options: ["LG", "Samsung", "Dell", "BenQ", "Asus"],
+        required: true,
+      },
+      { key: "size", label: "Size", type: "text", required: true, unit: "inches" },
+      {
+        key: "resolution",
+        label: "Resolution",
+        type: "enum",
+        options: ["1080p", "1440p", "4K"],
+        required: true,
+      },
     ],
   },
 
@@ -63,8 +135,14 @@ const seedData = [
     parent_name: "Furniture",
     slug: "furniture_chair",
     spec_schema: [
-      { key: "color",    label: "Color",    type: "text", required: true },
-      { key: "material", label: "Material", type: "enum", options: ["Leather","Fabric","Mesh"], required: true },
+      { key: "color", label: "Color", type: "text", required: true },
+      {
+        key: "material",
+        label: "Material",
+        type: "enum",
+        options: ["Leather", "Fabric", "Mesh"],
+        required: true,
+      },
       { key: "quantity", label: "Quantity", type: "number", required: true },
     ],
   },
@@ -75,8 +153,14 @@ const seedData = [
     parent_name: "Furniture",
     slug: "furniture_desk",
     spec_schema: [
-      { key: "color",    label: "Color",    type: "text", required: true },
-      { key: "material", label: "Material", type: "enum", options: ["Wood","Metal","Glass"], required: true },
+      { key: "color", label: "Color", type: "text", required: true },
+      {
+        key: "material",
+        label: "Material",
+        type: "enum",
+        options: ["Wood", "Metal", "Glass"],
+        required: true,
+      },
       { key: "quantity", label: "Quantity", type: "number", required: true },
     ],
   },
@@ -88,7 +172,7 @@ const seedData = [
     slug: "other_miscellaneous",
     spec_schema: [
       { key: "description", label: "Description", type: "text", required: false },
-      { key: "quantity",    label: "Quantity",    type: "number", required: false },
+      { key: "quantity", label: "Quantity", type: "number", required: false },
     ],
   },
 ];
@@ -97,7 +181,8 @@ export async function seedAssetCategories() {
   logger.info("Seeding asset categories...");
   try {
     for (const category of seedData) {
-      await db.insert(hr_asset_categories)
+      await db
+        .insert(hr_asset_categories)
         .values(category)
         .onConflictDoNothing({ target: hr_asset_categories.slug });
     }

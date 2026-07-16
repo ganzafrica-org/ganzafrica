@@ -26,9 +26,7 @@ export type TeamTypeOutput = {
 };
 
 // Create a new team type
-export async function createTeamType(
-  teamTypeData: CreateTeamTypeInput,
-): Promise<TeamTypeOutput> {
+export async function createTeamType(teamTypeData: CreateTeamTypeInput): Promise<TeamTypeOutput> {
   try {
     // Check if a team type with the same name already exists
     const existingTeamType = await db
@@ -38,10 +36,7 @@ export async function createTeamType(
       .limit(1);
 
     if (existingTeamType.length > 0) {
-      throw new AppError(
-        `Team type with name '${teamTypeData.name}' already exists`,
-        409,
-      );
+      throw new AppError(`Team type with name '${teamTypeData.name}' already exists`, 409);
     }
 
     // Insert the team type
@@ -76,11 +71,7 @@ export async function createTeamType(
 // Get team type by ID
 export async function getTeamTypeById(id: number): Promise<TeamTypeOutput> {
   try {
-    const result = await db
-      .select()
-      .from(team_types)
-      .where(eq(team_types.id, id))
-      .limit(1);
+    const result = await db.select().from(team_types).where(eq(team_types.id, id)).limit(1);
 
     if (!result.length) {
       throw new AppError("Team type not found", 404);
@@ -122,10 +113,7 @@ export async function updateTeamType(
         .limit(1);
 
       if (nameExists.length > 0) {
-        throw new AppError(
-          `Team type with name '${teamTypeData.name}' already exists`,
-          409,
-        );
+        throw new AppError(`Team type with name '${teamTypeData.name}' already exists`, 409);
       }
     }
 

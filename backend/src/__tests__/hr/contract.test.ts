@@ -17,7 +17,10 @@ describe("HR System - Contract Management", () => {
   beforeEach(() => {
     sandbox = sinon.createSandbox();
     hrToken = jwt.sign({ id: IDS.hr, role: "HR", type: "access" }, env.JWT_SECRET);
-    employeeToken = jwt.sign({ id: IDS.employee, role: "EMPLOYEE", type: "access" }, env.JWT_SECRET);
+    employeeToken = jwt.sign(
+      { id: IDS.employee, role: "EMPLOYEE", type: "access" },
+      env.JWT_SECRET,
+    );
     stubHrAuthDb(sandbox, IDS.hr);
   });
 
@@ -56,9 +59,9 @@ describe("HR System - Contract Management", () => {
 
   describe("GET /api/hr/employees/:employeeId/contracts", () => {
     it("should allow HR to list contracts", async () => {
-      const listStub = sandbox.stub(contractService, "listContractsByEmployee").resolves([
-        { id: IDS.contract, jobTitle: "Software Engineer" } as any,
-      ]);
+      const listStub = sandbox
+        .stub(contractService, "listContractsByEmployee")
+        .resolves([{ id: IDS.contract, jobTitle: "Software Engineer" } as any]);
 
       const res = await request
         .get(`/api/hr/employees/${IDS.employee}/contracts`)

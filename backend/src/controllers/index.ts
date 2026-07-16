@@ -4,4 +4,10 @@ import * as projectController from "./auth";
 import * as taskController from "./task.controller";
 import * as googleCalendarController from "./google-calendar.controller";
 
-export { authController, userController, projectController, taskController, googleCalendarController };
+export {
+  authController,
+  userController,
+  projectController,
+  taskController,
+  googleCalendarController,
+};

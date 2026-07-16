@@ -3,7 +3,7 @@ import { projectController } from "../controllers/project";
 import { validate } from "../middlewares";
 import { projectValidation } from "../validations";
 import { constants } from "../config";
-import upload from '../middlewares/upload'; // Import the upload middleware
+import upload from "../middlewares/upload"; // Import the upload middleware
 
 const router: Router = Router();
 
@@ -23,23 +23,15 @@ router.post(
 );
 
 // Other routes remain unchanged
-router.get(
-  "/",
-  validate(projectValidation.listProjectsSchema),
-  projectController.listProjects,
-);
+router.get("/", validate(projectValidation.listProjectsSchema), projectController.listProjects);
 
-router.get(
-  "/:id",
-  validate(projectValidation.getProjectSchema),
-  projectController.getProjectById,
-);
+router.get("/:id", validate(projectValidation.getProjectSchema), projectController.getProjectById);
 
 router.put(
   "/:id",
   validate(projectValidation.updateProjectSchema),
   upload.array("files", 10),
-   projectController.updateProject,
+  projectController.updateProject,
 );
 
 router.post(

@@ -7,18 +7,9 @@ const router: Router = Router();
 
 router.use(authenticateHr, enforceHrPasswordPolicy);
 
-router.get(
-  "/unread-count",
-  notificationController.getUnreadCount,
-);
-router.patch(
-  "/read-all",
-  notificationController.markAllNotificationsRead,
-);
-router.get(
-  "/preferences",
-  notificationController.getNotificationPreferences,
-);
+router.get("/unread-count", notificationController.getUnreadCount);
+router.patch("/read-all", notificationController.markAllNotificationsRead);
+router.get("/preferences", notificationController.getNotificationPreferences);
 router.patch(
   "/preferences",
   validate(notificationValidation.updatePreferencesBodySchema),

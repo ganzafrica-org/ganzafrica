@@ -1,8 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { profileApi } from '@/lib/api-client';
-import { logger } from '@/lib/logger';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { profileApi } from "@/lib/api-client";
+import { logger } from "@/lib/logger";
 
 interface UserProfile {
   id: number;
@@ -46,7 +46,7 @@ const ProfileContext = createContext<ProfileContextType>({
   loadUserProfile: async () => null,
   refreshCurrentUserProfile: async () => {},
   refreshUserProfile: async () => {},
-  getUserInitials: () => 'U',
+  getUserInitials: () => "U",
   getUserDisplayImage: () => null,
 });
 
@@ -63,9 +63,9 @@ export function ProfileProvider({ children }: { children: ReactNode }): React.JS
         const response = await profileApi.getCurrentProfile();
         const profile = response.profile;
         setCurrentUserProfile(profile);
-        setUserProfiles(prev => new Map(prev).set(profile.id, profile));
+        setUserProfiles((prev) => new Map(prev).set(profile.id, profile));
       } catch (error: unknown) {
-        logger.error('Failed to load current user profile:', error);
+        logger.error("Failed to load current user profile:", error);
       } finally {
         setIsLoading(false);
       }
@@ -77,12 +77,12 @@ export function ProfileProvider({ children }: { children: ReactNode }): React.JS
   // Update current user profile
   const updateCurrentUserProfile = (profile: UserProfile) => {
     setCurrentUserProfile(profile);
-    setUserProfiles(prev => new Map(prev).set(profile.id, profile));
+    setUserProfiles((prev) => new Map(prev).set(profile.id, profile));
   };
 
   // Update any user profile
   const updateUserProfile = (userId: number, profile: UserProfile) => {
-    setUserProfiles(prev => new Map(prev).set(userId, profile));
+    setUserProfiles((prev) => new Map(prev).set(userId, profile));
     // If it's the current user, also update current user profile
     if (currentUserProfile && currentUserProfile.id === userId) {
       setCurrentUserProfile(profile);
@@ -106,20 +106,20 @@ export function ProfileProvider({ children }: { children: ReactNode }): React.JS
       // Load profile from API
       const response = await profileApi.getUserProfile(userId);
       const profile = response.user || response; // Handle different response formats
-      
+
       // Store the profile
-      setUserProfiles(prev => new Map(prev).set(userId, profile));
+      setUserProfiles((prev) => new Map(prev).set(userId, profile));
       return profile;
     } catch (error: unknown) {
-      logger.error('Failed to load user profile:', error);
-      
+      logger.error("Failed to load user profile:", error);
+
       // Create a fallback profile if API fails
       const fallbackProfile: UserProfile = {
         id: userId,
         email: `user${userId}@example.com`,
         name: `User ${userId}`,
         role_id: 1,
-        role_name: 'User',
+        role_name: "User",
         avatar_url: undefined,
         phone_number: undefined,
         email_verified: false,
@@ -133,7 +133,7 @@ export function ProfileProvider({ children }: { children: ReactNode }): React.JS
       };
 
       // Store the fallback profile
-      setUserProfiles(prev => new Map(prev).set(userId, fallbackProfile));
+      setUserProfiles((prev) => new Map(prev).set(userId, fallbackProfile));
       return fallbackProfile;
     }
   };
@@ -145,7 +145,7 @@ export function ProfileProvider({ children }: { children: ReactNode }): React.JS
       const profile = response.profile;
       updateCurrentUserProfile(profile);
     } catch (error: unknown) {
-      logger.error('Failed to refresh current user profile:', error);
+      logger.error("Failed to refresh current user profile:", error);
     }
   };
 
@@ -158,19 +158,19 @@ export function ProfileProvider({ children }: { children: ReactNode }): React.JS
         await refreshCurrentUserProfile();
       }
     } catch (error: unknown) {
-      logger.error('Failed to refresh user profile:', error);
+      logger.error("Failed to refresh user profile:", error);
     }
   };
 
   // Get user initials
   const getUserInitials = (userId: number): string => {
     const profile = getUserProfile(userId);
-    if (!profile) return 'U';
-    
+    if (!profile) return "U";
+
     return profile.name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
       .toUpperCase();
   };
 
@@ -178,7 +178,7 @@ export function ProfileProvider({ children }: { children: ReactNode }): React.JS
   const getUserDisplayImage = (userId: number): string | null => {
     const profile = getUserProfile(userId);
     if (!profile) return null;
-    
+
     return profile.avatar_url || null;
   };
 
@@ -206,7 +206,7 @@ export function ProfileProvider({ children }: { children: ReactNode }): React.JS
 export function useProfile() {
   const context = useContext(ProfileContext);
   if (!context) {
-    throw new Error('useProfile must be used within a ProfileProvider');
+    throw new Error("useProfile must be used within a ProfileProvider");
   }
   return context;
 }

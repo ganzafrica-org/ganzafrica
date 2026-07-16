@@ -6,10 +6,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  showSuccessToast,
-  showErrorToast,
-} from "@/components/ui/success-toast";
+import { showSuccessToast, showErrorToast } from "@/components/ui/success-toast";
 
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -20,11 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@workspace/ui/components/form";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@workspace/ui/components/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@workspace/ui/components/input-otp";
 import { Card } from "@workspace/ui/components/card";
 
 import apiClient from "@/lib/api-client";
@@ -40,9 +33,9 @@ export function LoginForm({ userType }: LoginFormProps) {
   const { refreshUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
-  const [twoFactorMethod, setTwoFactorMethod] = useState<
-    "authenticator" | "email"
-  >("authenticator");
+  const [twoFactorMethod, setTwoFactorMethod] = useState<"authenticator" | "email">(
+    "authenticator",
+  );
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -198,29 +191,20 @@ export function LoginForm({ userType }: LoginFormProps) {
   if (requiresTwoFactor) {
     return (
       <Card className="w-full max-w-md mx-auto p-6 shadow-lg rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">
-          Two-Factor Authentication
-        </h2>
+        <h2 className="text-xl font-semibold mb-4">Two-Factor Authentication</h2>
         <p className="text-gray-500 mb-6">
           Enter the verification code from your{" "}
           {twoFactorMethod === "authenticator" ? "authenticator app" : "email"}
         </p>
         <Form {...totpForm}>
-          <form
-            onSubmit={totpForm.handleSubmit(handleVerify)}
-            className="space-y-6"
-          >
+          <form onSubmit={totpForm.handleSubmit(handleVerify)} className="space-y-6">
             <FormField
               control={totpForm.control}
               name="totpCode"
               render={({ field }) => (
                 <FormItem className="mx-auto flex flex-col items-center space-y-2">
                   <FormControl>
-                    <InputOTP
-                      maxLength={6}
-                      value={field.value}
-                      onChange={field.onChange}
-                    >
+                    <InputOTP maxLength={6} value={field.value} onChange={field.onChange}>
                       <InputOTPGroup>
                         {[0, 1, 2, 3, 4, 5].map((index) => (
                           <InputOTPSlot key={index} index={index} />
@@ -314,10 +298,7 @@ export function LoginForm({ userType }: LoginFormProps) {
           </div>
 
           <Form {...loginForm}>
-            <form
-              onSubmit={loginForm.handleSubmit(handleLogin)}
-              className="space-y-5"
-            >
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-5">
               <div className="mb-4">
                 <label
                   className={`block text-sm font-medium mb-1 ${loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? "text-red-600" : ""}`}
@@ -446,11 +427,7 @@ export function LoginForm({ userType }: LoginFormProps) {
                     onClick={() => setShowPassword(!showPassword)}
                     className={`absolute inset-y-0 right-0 pr-3 flex items-center ${loginError || loginForm.formState.errors.email || loginForm.formState.errors.password ? "text-red-600 hover:text-red-700" : "text-gray-500 hover:text-gray-700"}`}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
                 {loginForm.formState.errors.password && (
@@ -461,10 +438,7 @@ export function LoginForm({ userType }: LoginFormProps) {
               </div>
 
               <div className="flex justify-end">
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-blue-600 hover:underline"
-                >
+                <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -481,9 +455,7 @@ export function LoginForm({ userType }: LoginFormProps) {
                 <p className="text-sm text-primary-green">
                   Don&apos;t have an account?{" "}
                   <Link
-                    href={
-                      userType === "alumni" ? "/signup?user=alumni" : "/signup"
-                    }
+                    href={userType === "alumni" ? "/signup?user=alumni" : "/signup"}
                     className="text-blue-600 hover:underline"
                   >
                     Sign up

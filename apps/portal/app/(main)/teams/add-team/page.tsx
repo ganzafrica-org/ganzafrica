@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  ArrowLeft, 
-  Upload, 
-  X, 
-  Plus, 
-  AlertCircle, 
-  Loader, 
-  ChevronDown, 
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Plus,
+  AlertCircle,
+  Loader,
+  ChevronDown,
   UserPlus,
   Check,
   Mail,
@@ -18,16 +18,16 @@ import {
   Briefcase,
   Tag,
   Image,
-  LinkIcon
-} from 'lucide-react';
-import Link from 'next/link';
-import apiClient from '@/lib/api-client';
+  LinkIcon,
+} from "lucide-react";
+import Link from "next/link";
+import apiClient from "@/lib/api-client";
 
 const AddTeamPage = () => {
   const router = useRouter();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [teamTypes, setTeamTypes] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -36,25 +36,25 @@ const AddTeamPage = () => {
 
   // Form state
   const [formData, setFormData] = useState({
-    name: '',
-    position: '',
-    photo_url: '',
-    bio: '',
-    email: '',
-    profile_link: '',
+    name: "",
+    position: "",
+    photo_url: "",
+    bio: "",
+    email: "",
+    profile_link: "",
     skills: [],
-    team_type_id: ''
+    team_type_id: "",
   });
 
   // Temporary state for skills input
-  const [newSkill, setNewSkill] = useState('');
+  const [newSkill, setNewSkill] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
 
   // Clean up blob URLs when component unmounts
   useEffect(() => {
     return () => {
       // Revoke any photo preview URL
-      if (formData.photo_url && formData.photo_url.startsWith('blob:')) {
+      if (formData.photo_url && formData.photo_url.startsWith("blob:")) {
         URL.revokeObjectURL(formData.photo_url);
       }
     };
@@ -65,8 +65,8 @@ const AddTeamPage = () => {
     const fetchTeamTypes = async () => {
       try {
         // Use apiClient instead of direct axios
-        const response = await apiClient.get('/team-types');
-        
+        const response = await apiClient.get("/team-types");
+
         // Check the structure of the response and extract team types array
         if (response.data && response.data.teamTypes && Array.isArray(response.data.teamTypes)) {
           // This handles the structure you're seeing in console: {teamTypes: Array(5)}
@@ -76,34 +76,34 @@ const AddTeamPage = () => {
         } else if (Array.isArray(response.data)) {
           setTeamTypes(response.data);
         } else {
-          console.error('Unexpected team types response format:', response.data);
+          console.error("Unexpected team types response format:", response.data);
           // Set default team types if response format is not as expected
           setTeamTypes([
-            { id: 1, name: 'Leadership' },
-            { id: 2, name: 'Technical' },
-            { id: 3, name: 'Support' }
+            { id: 1, name: "Leadership" },
+            { id: 2, name: "Technical" },
+            { id: 3, name: "Support" },
           ]);
         }
       } catch (error) {
-        console.error('Error fetching team types:', error);
+        console.error("Error fetching team types:", error);
         // Set default team types if API fails
         setTeamTypes([
-          { id: 1, name: 'Leadership' },
-          { id: 2, name: 'Technical' },
-          { id: 3, name: 'Support' }
+          { id: 1, name: "Leadership" },
+          { id: 2, name: "Technical" },
+          { id: 3, name: "Support" },
         ]);
       }
     };
-    
+
     fetchTeamTypes();
   }, []);
 
   // Handle input change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -111,44 +111,44 @@ const AddTeamPage = () => {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      
+
       // Validate file size (5MB max)
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (file.size > maxSize) {
         setError(`File size exceeds maximum limit of ${formatFileSize(maxSize)}`);
         // Reset file input
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
         return;
       }
-      
+
       // Validate file type
-      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      
+      const validImageTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
       if (!validImageTypes.includes(file.type)) {
-        setError('File type not supported. Please upload images (JPEG, PNG, GIF, WEBP)');
+        setError("File type not supported. Please upload images (JPEG, PNG, GIF, WEBP)");
         // Reset file input
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
         return;
       }
-      
+
       // Clear previous error if any
-      setError('');
-      
+      setError("");
+
       // Revoke previous blob URL if exists
-      if (formData.photo_url && formData.photo_url.startsWith('blob:')) {
+      if (formData.photo_url && formData.photo_url.startsWith("blob:")) {
         URL.revokeObjectURL(formData.photo_url);
       }
-      
+
       setPhotoFile(file);
       // Create a local preview URL
       const localUrl = URL.createObjectURL(file);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        photo_url: localUrl
+        photo_url: localUrl,
       }));
       setUsePhotoUrl(false);
     }
@@ -157,9 +157,9 @@ const AddTeamPage = () => {
   // Handle photo URL input
   const handlePhotoUrlChange = (e) => {
     const url = e.target.value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      photo_url: url
+      photo_url: url,
     }));
   };
 
@@ -169,19 +169,19 @@ const AddTeamPage = () => {
       // Switching to file upload mode
       setUsePhotoUrl(false);
       if (!photoFile) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          photo_url: ''
+          photo_url: "",
         }));
       }
     } else {
       // Switching to URL mode
       setUsePhotoUrl(true);
-      if (formData.photo_url && formData.photo_url.startsWith('blob:')) {
+      if (formData.photo_url && formData.photo_url.startsWith("blob:")) {
         URL.revokeObjectURL(formData.photo_url);
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          photo_url: ''
+          photo_url: "",
         }));
         setPhotoFile(null);
       }
@@ -196,20 +196,20 @@ const AddTeamPage = () => {
   // Add skill to skills list
   const addSkill = () => {
     if (!newSkill.trim()) return;
-    
+
     if (!formData.skills.includes(newSkill.trim())) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        skills: [...prev.skills, newSkill.trim()]
+        skills: [...prev.skills, newSkill.trim()],
       }));
     }
-    
-    setNewSkill('');
+
+    setNewSkill("");
   };
 
   // Handle new skill key press (add on Enter)
   const handleSkillKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       addSkill();
     }
@@ -217,9 +217,9 @@ const AddTeamPage = () => {
 
   // Remove skill from list
   const removeSkill = (skillToRemove) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove)
+      skills: prev.skills.filter((skill) => skill !== skillToRemove),
     }));
   };
 
@@ -227,34 +227,34 @@ const AddTeamPage = () => {
   const uploadFileToServer = async (file) => {
     setIsUploading(true);
     setUploadProgress(0);
-    
+
     try {
       // Create form data for file upload
       const formData = new FormData();
-      formData.append('file', file);
-      
+      formData.append("file", file);
+
       // Make the upload request to the backend
-      const response = await apiClient.post('/uploads/file', formData, {
+      const response = await apiClient.post("/uploads/file", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          "Content-Type": "multipart/form-data",
         },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
-        }
+        },
       });
-      
+
       // Check if upload was successful
       if (response.data && response.data.success) {
-        console.log('File uploaded successfully:', response.data.file);
+        console.log("File uploaded successfully:", response.data.file);
         setUploadProgress(100);
         setIsUploading(false);
         return response.data.file.url;
       } else {
-        throw new Error('Upload failed: Server returned unsuccessful response');
+        throw new Error("Upload failed: Server returned unsuccessful response");
       }
     } catch (error) {
-      console.error('Error uploading file to server:', error);
+      console.error("Error uploading file to server:", error);
       setIsUploading(false);
       throw error; // Re-throw to handle in the calling function
     } finally {
@@ -266,92 +266,97 @@ const AddTeamPage = () => {
   const handleImageError = (e, fallbackText) => {
     console.error(`Failed to load image: ${e.target.src}`);
     // Create a canvas element for the fallback
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = 40;
     canvas.height = 40;
-    const ctx = canvas.getContext('2d');
-    
+    const ctx = canvas.getContext("2d");
+
     // Fill background
-    ctx.fillStyle = '#f3f4f6';
+    ctx.fillStyle = "#f3f4f6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Add text
-    ctx.fillStyle = '#6b7280';
-    ctx.font = 'bold 16px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(fallbackText || 'T', canvas.width/2, canvas.height/2);
-    
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "bold 16px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(fallbackText || "T", canvas.width / 2, canvas.height / 2);
+
     // Replace image with canvas data
     e.target.onerror = null; // Prevent infinite error loop
-    e.target.src = canvas.toDataURL('image/png');
+    e.target.src = canvas.toDataURL("image/png");
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
     setSuccess(false);
-    
+
     // Validate form data
     if (!formData.name || !formData.position || !formData.email || !formData.team_type_id) {
-      setError('Please fill in all required fields (Name, Position, Email, and Team Type)');
+      setError("Please fill in all required fields (Name, Position, Email, and Team Type)");
       setLoading(false);
       return;
     }
-    
+
     try {
       // Process the photo file if it exists and we're in file upload mode
       let finalPhotoUrl = formData.photo_url;
-      
+
       if (photoFile && !usePhotoUrl) {
         try {
           // Upload the photo file to the backend server
           finalPhotoUrl = await uploadFileToServer(photoFile);
-          
+
           if (!finalPhotoUrl) {
-            setError('Failed to upload the photo. Please try again.');
+            setError("Failed to upload the photo. Please try again.");
             setLoading(false);
             return;
           }
         } catch (error) {
-          setError('Failed to upload the photo. Please try again.');
+          setError("Failed to upload the photo. Please try again.");
           setLoading(false);
           return;
         }
       }
-      
+
       // Prepare data for API
       const teamData = {
         ...formData,
         photo_url: finalPhotoUrl,
-        team_type_id: parseInt(formData.team_type_id)
+        team_type_id: parseInt(formData.team_type_id),
       };
-      
-      console.log('Submitting team data:', teamData);
-      
+
+      console.log("Submitting team data:", teamData);
+
       // Use apiClient instead of direct axios
-      const response = await apiClient.post('/teams', teamData);
-      
-      console.log('Team created:', response.data);
+      const response = await apiClient.post("/teams", teamData);
+
+      console.log("Team created:", response.data);
       setSuccess(true);
-      
+
       // Navigate back to teams list after a brief delay
       setTimeout(() => {
-        router.push('/teams');
+        router.push("/teams");
       }, 2000);
-      
     } catch (error) {
-      console.error('Error creating team member:', error);
-      
+      console.error("Error creating team member:", error);
+
       // Check if error is related to data size
-      if (error.response?.data?.message?.includes('too long') || 
-          error.message?.includes('too long') ||
-          error.response?.status === 413) {
-        setError('The image file is too large. Please use a smaller image or compress the current one.');
+      if (
+        error.response?.data?.message?.includes("too long") ||
+        error.message?.includes("too long") ||
+        error.response?.status === 413
+      ) {
+        setError(
+          "The image file is too large. Please use a smaller image or compress the current one.",
+        );
       } else {
-        setError(error.response?.data?.message || 'Failed to create team member. Please try again.');
+        setError(
+          error.response?.data?.message || "Failed to create team member. Please try again.",
+        );
       }
     } finally {
       setLoading(false);
@@ -360,11 +365,11 @@ const AddTeamPage = () => {
 
   // Format file size display
   const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   return (
@@ -379,7 +384,7 @@ const AddTeamPage = () => {
         </div>
         <p className="text-gray-600">Teams/Add Team Member</p>
       </div>
-      
+
       {/* Success message */}
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
@@ -389,7 +394,7 @@ const AddTeamPage = () => {
           </div>
         </div>
       )}
-      
+
       {/* Error message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 flex items-center">
@@ -397,7 +402,7 @@ const AddTeamPage = () => {
           <span>{error}</span>
         </div>
       )}
-      
+
       {/* Team form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md">
         {/* Basic information */}
@@ -408,7 +413,7 @@ const AddTeamPage = () => {
               <h2 className="text-xl font-bold">Basic Information</h2>
               <p className="text-gray-600 text-sm">Personal and contact details</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -432,7 +437,7 @@ const AddTeamPage = () => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Position */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -453,7 +458,7 @@ const AddTeamPage = () => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -474,7 +479,7 @@ const AddTeamPage = () => {
                     />
                   </div>
                 </div>
-                
+
                 {/* Team Type */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
@@ -492,7 +497,7 @@ const AddTeamPage = () => {
                       required
                     >
                       <option value="">Select a team type</option>
-                      {teamTypes.map(type => (
+                      {teamTypes.map((type) => (
                         <option key={type.id} value={type.id}>
                           {type.name}
                         </option>
@@ -501,12 +506,10 @@ const AddTeamPage = () => {
                     <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
-                
+
                 {/* Profile Link */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Profile Link
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Profile Link</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                       <Globe className="w-5 h-5 text-gray-400" />
@@ -537,13 +540,11 @@ const AddTeamPage = () => {
               <h2 className="text-xl font-bold">Biography</h2>
               <p className="text-gray-600 text-sm">Professional background and experience</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Bio
-                </label>
+                <label className="block text-sm font-medium mb-1">Bio</label>
                 <textarea
                   name="bio"
                   value={formData.bio}
@@ -568,19 +569,20 @@ const AddTeamPage = () => {
               <h2 className="text-xl font-bold">Skills</h2>
               <p className="text-gray-600 text-sm">Areas of expertise and competencies</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               {/* Skills list */}
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">
-                  Skills & Expertise
-                </label>
-                
+                <label className="block text-sm font-medium mb-2">Skills & Expertise</label>
+
                 {formData.skills.length > 0 ? (
                   <div className="flex flex-wrap gap-2 mb-4">
                     {formData.skills.map((skill, index) => (
-                      <div key={index} className="bg-gray-100 rounded-full px-3 py-1 text-sm flex items-center">
+                      <div
+                        key={index}
+                        className="bg-gray-100 rounded-full px-3 py-1 text-sm flex items-center"
+                      >
                         <span className="mr-1">{skill}</span>
                         <button
                           type="button"
@@ -595,7 +597,7 @@ const AddTeamPage = () => {
                 ) : (
                   <p className="text-gray-500 text-sm italic mb-4">No skills added yet.</p>
                 )}
-                
+
                 {/* Add skill form */}
                 <div className="flex space-x-2">
                   <input
@@ -630,24 +632,20 @@ const AddTeamPage = () => {
               <h2 className="text-xl font-bold">Profile Photo</h2>
               <p className="text-gray-600 text-sm">Upload a professional photo</p>
             </div>
-            
+
             {/* Right column - form fields */}
             <div className="w-3/4">
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-4">
-                  <label className="block text-sm font-medium">
-                    Photo
-                  </label>
-                  
+                  <label className="block text-sm font-medium">Photo</label>
+
                   {/* Toggle between URL and file upload */}
                   <div className="flex items-center mb-2">
                     <button
                       type="button"
                       onClick={togglePhotoUrlMode}
                       className={`text-sm py-1 px-3 rounded-md ${
-                        usePhotoUrl 
-                          ? 'bg-green-700 text-white' 
-                          : 'bg-gray-200 text-gray-700'
+                        usePhotoUrl ? "bg-green-700 text-white" : "bg-gray-200 text-gray-700"
                       }`}
                     >
                       Use URL
@@ -657,16 +655,14 @@ const AddTeamPage = () => {
                       type="button"
                       onClick={togglePhotoUrlMode}
                       className={`text-sm py-1 px-3 rounded-md ${
-                        !usePhotoUrl 
-                          ? 'bg-green-700 text-white' 
-                          : 'bg-gray-200 text-gray-700'
+                        !usePhotoUrl ? "bg-green-700 text-white" : "bg-gray-200 text-gray-700"
                       }`}
                     >
                       Upload File
                     </button>
                   </div>
                 </div>
-                
+
                 {usePhotoUrl ? (
                   // URL input option
                   <div className="mb-6">
@@ -682,33 +678,35 @@ const AddTeamPage = () => {
                         placeholder="Enter image URL (https://...)"
                       />
                     </div>
-                    
+
                     {/* URL preview */}
-                    {formData.photo_url && !formData.photo_url.startsWith('blob:') && (
+                    {formData.photo_url && !formData.photo_url.startsWith("blob:") && (
                       <div className="mt-4 p-4 bg-gray-50 rounded-md">
                         <div className="flex items-center mb-3">
                           <Image className="w-6 h-6 mr-2 text-blue-500" />
                           <span className="text-sm font-medium">Image from URL</span>
                         </div>
                         <div className="mb-4 border rounded overflow-hidden">
-                          <img 
-                            src={formData.photo_url} 
-                            alt="Profile preview" 
+                          <img
+                            src={formData.photo_url}
+                            alt="Profile preview"
                             className="w-full h-auto max-h-60 object-contain"
-                            onLoad={() => console.log(`Successfully loaded image: ${formData.photo_url}`)}
+                            onLoad={() =>
+                              console.log(`Successfully loaded image: ${formData.photo_url}`)
+                            }
                             onError={(e) => {
                               console.error(`Failed to load image: ${formData.photo_url}`);
                               e.target.onerror = null; // Prevent infinite error loops
-                              
+
                               // Create fallback with initial letter
-                              const fallbackText = formData.name?.charAt(0)?.toUpperCase() || 'T';
+                              const fallbackText = formData.name?.charAt(0)?.toUpperCase() || "T";
                               handleImageError(e, fallbackText);
                             }}
                           />
                         </div>
                         <button
                           type="button"
-                          onClick={() => setFormData(prev => ({...prev, photo_url: ''}))}
+                          onClick={() => setFormData((prev) => ({ ...prev, photo_url: "" }))}
                           className="text-sm text-red-500 hover:text-red-700 flex items-center"
                         >
                           <X className="w-4 h-4 mr-1" /> Clear URL
@@ -720,14 +718,16 @@ const AddTeamPage = () => {
                   // File upload option
                   <>
                     {/* Upload area */}
-                    <div 
+                    <div
                       className="border-2 border-dashed border-gray-300 p-6 rounded-md text-center mb-6 cursor-pointer"
                       onClick={!photoFile ? triggerFileInput : undefined}
                     >
                       {!photoFile ? (
                         <div className="flex flex-col items-center justify-center">
                           <Upload className="h-12 w-12 text-gray-400 mb-3" />
-                          <p className="text-gray-700 font-medium mb-1">Drag and drop an image here</p>
+                          <p className="text-gray-700 font-medium mb-1">
+                            Drag and drop an image here
+                          </p>
                           <p className="text-gray-500 text-sm mb-3">or click to browse</p>
                           <p className="text-xs text-gray-400">Supports JPG, PNG, GIF (max 5MB)</p>
                         </div>
@@ -736,39 +736,48 @@ const AddTeamPage = () => {
                           <div className="flex items-center mb-3">
                             <Image className="w-6 h-6 mr-2 text-blue-500" />
                             <span className="text-sm font-medium">
-                              {photoFile ? photoFile.name : 'Profile photo'}
+                              {photoFile ? photoFile.name : "Profile photo"}
                             </span>
                           </div>
-                          
+
                           {photoFile && (
                             <div className="text-xs text-gray-500 mb-4">
-                              Type: {photoFile.type.split('/')[1].toUpperCase()} | 
-                              Size: {formatFileSize(photoFile.size)}
+                              Type: {photoFile.type.split("/")[1].toUpperCase()} | Size:{" "}
+                              {formatFileSize(photoFile.size)}
                             </div>
                           )}
-                          
+
                           {/* Image preview */}
                           <div className="mb-4 border rounded overflow-hidden">
-                            <img 
-                              src={formData.photo_url} 
-                              alt="Profile preview" 
+                            <img
+                              src={formData.photo_url}
+                              alt="Profile preview"
                               className="w-full h-auto max-h-60 object-contain"
-                              onLoad={() => console.log(`Successfully loaded image preview: ${formData.photo_url}`)}
+                              onLoad={() =>
+                                console.log(
+                                  `Successfully loaded image preview: ${formData.photo_url}`,
+                                )
+                              }
                               onError={(e) => {
-                                console.error(`Failed to load image preview: ${formData.photo_url}`);
+                                console.error(
+                                  `Failed to load image preview: ${formData.photo_url}`,
+                                );
                                 e.target.onerror = null; // Prevent infinite error loops
-                                
+
                                 // Create fallback with initial letter
-                                const fallbackText = formData.name?.charAt(0)?.toUpperCase() || 'T';
+                                const fallbackText = formData.name?.charAt(0)?.toUpperCase() || "T";
                                 handleImageError(e, fallbackText);
                               }}
                             />
                           </div>
-                          
+
                           {isUploading && (
                             <div className="mb-4">
                               <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                <div className="bg-green-600 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                                <div
+                                  className="bg-green-600 h-2.5 rounded-full"
+                                  style={{ width: `${uploadProgress}%` }}
+                                ></div>
                               </div>
                               <div className="text-xs text-gray-500 mt-1 text-center">
                                 Uploading: {uploadProgress}%
@@ -785,28 +794,28 @@ const AddTeamPage = () => {
                         accept="image/*"
                       />
                     </div>
-                    
+
                     {photoFile && (
                       <div className="flex justify-between">
                         <button
                           type="button"
                           onClick={() => {
-                            if (formData.photo_url && formData.photo_url.startsWith('blob:')) {
+                            if (formData.photo_url && formData.photo_url.startsWith("blob:")) {
                               URL.revokeObjectURL(formData.photo_url);
                             }
-                            setFormData(prev => ({...prev, photo_url: ''}));
+                            setFormData((prev) => ({ ...prev, photo_url: "" }));
                             setPhotoFile(null);
-                            
+
                             // Reset file input
                             if (fileInputRef.current) {
-                              fileInputRef.current.value = '';
+                              fileInputRef.current.value = "";
                             }
                           }}
                           className="text-sm text-red-500 hover:text-red-700 flex items-center"
                         >
                           <X className="w-4 h-4 mr-1" /> Remove Image
                         </button>
-                        
+
                         <button
                           type="button"
                           onClick={triggerFileInput}
@@ -828,7 +837,7 @@ const AddTeamPage = () => {
           <button
             type="button"
             className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            onClick={() => router.push('/teams')}
+            onClick={() => router.push("/teams")}
           >
             Cancel
           </button>

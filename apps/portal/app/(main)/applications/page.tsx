@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Filter,
@@ -19,12 +19,12 @@ import {
   XCircle,
   Clock,
   ClipboardList,
-  AlertCircle
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
-import { toast } from 'sonner';
+  AlertCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import apiClient from "@/lib/api-client";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +39,7 @@ import {
 const ApplicationsPage = () => {
   const router = useRouter();
   // State for the active tab
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState("all");
 
   // States for data and UI
   const [applications, setApplications] = useState([]);
@@ -51,25 +51,25 @@ const ApplicationsPage = () => {
   const [limit, setLimit] = useState(10);
   const [totalApplications, setTotalApplications] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
 
   // States for tab counts
   const [tabCounts, setTabCounts] = useState({
     all: 0,
-    'fellowship': 0,
-    'employee': 0
+    fellowship: 0,
+    employee: 0,
   });
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState(null);
-  
+
   // State for status update modal
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
-  const [newStatus, setNewStatus] = useState('');
-  
+  const [newStatus, setNewStatus] = useState("");
+
   // State for delete confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [applicationToDelete, setApplicationToDelete] = useState(null);
@@ -87,7 +87,7 @@ const ApplicationsPage = () => {
   // Open status update modal
   const openStatusUpdateModal = (application) => {
     setSelectedApplication(application);
-    setNewStatus(application.status || 'pending');
+    setNewStatus(application.status || "pending");
     setShowStatusModal(true);
     setOpenMenuId(null);
   };
@@ -95,28 +95,25 @@ const ApplicationsPage = () => {
   // Function to update application status
   const updateApplicationStatus = async () => {
     if (!selectedApplication || !newStatus) return;
-    
+
     try {
       setLoading(true);
-      
-      const response = await apiClient.put(
-        `/applications/${selectedApplication.id}/status`,
-        { status: newStatus }
-      );
-      
+
+      const response = await apiClient.put(`/applications/${selectedApplication.id}/status`, {
+        status: newStatus,
+      });
+
       // Update the application in the local state
-      setApplications(prevApplications => 
-        prevApplications.map(app => 
-          app.id === selectedApplication.id 
-            ? { ...app, status: newStatus }
-            : app
-        )
+      setApplications((prevApplications) =>
+        prevApplications.map((app) =>
+          app.id === selectedApplication.id ? { ...app, status: newStatus } : app,
+        ),
       );
-      
+
       toast.success(`Application status updated to ${newStatus}`);
       setShowStatusModal(false);
     } catch (error) {
-      console.error('Error updating application status:', error);
+      console.error("Error updating application status:", error);
       toast.error(`Failed to update status: ${error.message}`);
     } finally {
       setLoading(false);
@@ -128,22 +125,22 @@ const ApplicationsPage = () => {
     setOpenMenuId(null); // Close the menu
 
     // Find the application object
-    const application = applications.find(app => app.id === applicationId);
+    const application = applications.find((app) => app.id === applicationId);
 
-    switch(action) {
-      case 'view':
+    switch (action) {
+      case "view":
         // Navigate to application details page
         router.push(`/applications/${applicationId}`);
         break;
-      case 'delete':
+      case "delete":
         setApplicationToDelete(applicationId);
         setIsDeleteDialogOpen(true);
         break;
-      case 'update':
+      case "update":
         // Navigate to update page
         router.push(`/applications/edit/${applicationId}`);
         break;
-      case 'status':
+      case "status":
         if (application) {
           openStatusUpdateModal(application);
         }
@@ -160,24 +157,26 @@ const ApplicationsPage = () => {
     try {
       setLoading(true);
       await apiClient.delete(`/applications/${applicationToDelete}`);
-      
+
       // Close dialog and reset state
       setIsDeleteDialogOpen(false);
       setApplicationToDelete(null);
-      
+
       // Show success toast
-      toast.success('Application deleted successfully');
-      
+      toast.success("Application deleted successfully");
+
       // Trigger refresh by updating refreshTrigger
-      setRefreshTrigger(prev => prev + 1);
-      
+      setRefreshTrigger((prev) => prev + 1);
+
       // Adjust page if needed (if we deleted the last item on the page)
       if (applications.length === 1 && page > 1) {
         setPage(page - 1);
       }
     } catch (error: any) {
-      console.error('Error deleting application:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete application. Please try again.');
+      console.error("Error deleting application:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to delete application. Please try again.",
+      );
       setIsDeleteDialogOpen(false);
       setApplicationToDelete(null);
     } finally {
@@ -192,7 +191,7 @@ const ApplicationsPage = () => {
 
   // Calculate sequential row number based on pagination
   const getRowNumber = (index) => {
-    return ((page - 1) * limit) + index + 1;
+    return (page - 1) * limit + index + 1;
   };
 
   // Add click outside listener to close dropdown
@@ -204,10 +203,12 @@ const ApplicationsPage = () => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
       }
-      
-      if (statusModalRef.current && 
-          !statusModalRef.current.contains(event.target) && 
-          showStatusModal) {
+
+      if (
+        statusModalRef.current &&
+        !statusModalRef.current.contains(event.target) &&
+        showStatusModal
+      ) {
         setShowStatusModal(false);
       }
     }
@@ -228,9 +229,11 @@ const ApplicationsPage = () => {
     }
 
     // If response.applications exists and has items property that is an array
-    if (response.applications && 
-        response.applications.items && 
-        Array.isArray(response.applications.items)) {
+    if (
+      response.applications &&
+      response.applications.items &&
+      Array.isArray(response.applications.items)
+    ) {
       // Also capture the pagination info
       if (response.applications.pagination) {
         setTotalApplications(response.applications.pagination.total || 0);
@@ -261,7 +264,7 @@ const ApplicationsPage = () => {
       }
 
       // Check one level deeper
-      if (typeof response[key] === 'object' && response[key] !== null) {
+      if (typeof response[key] === "object" && response[key] !== null) {
         for (const nestedKey in response[key]) {
           if (Array.isArray(response[key][nestedKey])) {
             return response[key][nestedKey];
@@ -271,7 +274,7 @@ const ApplicationsPage = () => {
     }
 
     // If none of the above worked and response is an object, wrap it in an array
-    if (typeof response === 'object' && response !== null && !Array.isArray(response)) {
+    if (typeof response === "object" && response !== null && !Array.isArray(response)) {
       return [response];
     }
 
@@ -284,47 +287,47 @@ const ApplicationsPage = () => {
     if (application.full_name) {
       return application.full_name;
     }
-    
+
     if (application.first_name && application.last_name) {
       return `${application.first_name} ${application.last_name}`;
     }
-    
+
     if (application.name) {
       return application.name;
     }
-    
-    return 'Unknown Applicant';
+
+    return "Unknown Applicant";
   };
 
   // Set application type based on fields or explicit type
   const setApplicationType = (application) => {
     // Check for explicit type field
-    if (application.type === 'fellowship') {
-      return 'fellowship';
-    } else if (application.type === 'employment' || application.type === 'employee') {
-      return 'employee';
+    if (application.type === "fellowship") {
+      return "fellowship";
+    } else if (application.type === "employment" || application.type === "employee") {
+      return "employee";
     }
-    
+
     // Infer from other fields if no explicit type
-    const fields = application.field_of_study || '';
-    const motivation = application.motivation || '';
-    
+    const fields = application.field_of_study || "";
+    const motivation = application.motivation || "";
+
     if (
-      motivation.toLowerCase().includes('fellowship') || 
-      application.opportunity_title?.toLowerCase().includes('fellowship')
+      motivation.toLowerCase().includes("fellowship") ||
+      application.opportunity_title?.toLowerCase().includes("fellowship")
     ) {
-      return 'fellowship';
+      return "fellowship";
     } else if (
-      motivation.toLowerCase().includes('job') || 
-      motivation.toLowerCase().includes('employment') || 
-      application.opportunity_title?.toLowerCase().includes('job') ||
-      application.opportunity_title?.toLowerCase().includes('employment')
+      motivation.toLowerCase().includes("job") ||
+      motivation.toLowerCase().includes("employment") ||
+      application.opportunity_title?.toLowerCase().includes("job") ||
+      application.opportunity_title?.toLowerCase().includes("employment")
     ) {
-      return 'employee';
+      return "employee";
     }
-    
+
     // Default to fellowship if we can't determine
-    return 'fellowship';
+    return "fellowship";
   };
 
   // Get a count of applications by type
@@ -332,47 +335,47 @@ const ApplicationsPage = () => {
     let allCount = applicationsData.length;
     let fellowshipCount = 0;
     let employeeCount = 0;
-    
-    applicationsData.forEach(app => {
+
+    applicationsData.forEach((app) => {
       const appType = setApplicationType(app);
-      if (appType === 'fellowship') {
+      if (appType === "fellowship") {
         fellowshipCount++;
-      } else if (appType === 'employee') {
+      } else if (appType === "employee") {
         employeeCount++;
       }
     });
-    
+
     setTabCounts({
       all: allCount,
       fellowship: fellowshipCount,
-      employee: employeeCount
+      employee: employeeCount,
     });
   };
 
   // Map API status to UI status
   const mapStatusForUI = (apiStatus) => {
     const statusMap = {
-      'under_review': 'pending',
-      'approved': 'approved',
-      'rejected': 'rejected',
-      'pending': 'pending',
-      'waitlisted': 'pending',
-      'shortlisted': 'pending',
-      'withdrawn': 'rejected',
-      'submitted': 'pending'
+      under_review: "pending",
+      approved: "approved",
+      rejected: "rejected",
+      pending: "pending",
+      waitlisted: "pending",
+      shortlisted: "pending",
+      withdrawn: "rejected",
+      submitted: "pending",
     };
 
-    return statusMap[apiStatus] || 'pending';
+    return statusMap[apiStatus] || "pending";
   };
 
   // Filter applications based on active tab
   const getFilteredApplications = () => {
-    if (activeTab === 'all') {
+    if (activeTab === "all") {
       return applications;
-    } else if (activeTab === 'fellowship') {
-      return applications.filter(app => setApplicationType(app) === 'fellowship');
-    } else if (activeTab === 'employee') {
-      return applications.filter(app => setApplicationType(app) === 'employee');
+    } else if (activeTab === "fellowship") {
+      return applications.filter((app) => setApplicationType(app) === "fellowship");
+    } else if (activeTab === "employee") {
+      return applications.filter((app) => setApplicationType(app) === "employee");
     }
     return applications;
   };
@@ -414,12 +417,12 @@ const ApplicationsPage = () => {
 
   // Format date for display
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
 
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -437,16 +440,16 @@ const ApplicationsPage = () => {
         page,
         limit,
         sort_by: sortBy,
-        sort_order: sortOrder
+        sort_order: sortOrder,
       };
 
       // Add optional filters if they exist
       if (searchTerm) params.search = searchTerm;
-      if (activeTab !== 'all') params.type = activeTab;
+      if (activeTab !== "all") params.type = activeTab;
 
       // Make API request with apiClient
-      const response = await apiClient.get('/applications', {
-        params
+      const response = await apiClient.get("/applications", {
+        params,
       });
 
       // Extract the applications from the response using our helper function
@@ -463,10 +466,10 @@ const ApplicationsPage = () => {
 
       // Update tab counts with the applications data
       updateTabCounts(applicationsData);
-      
+
       setError(null); // Clear any previous errors
     } catch (error) {
-      console.error('Error fetching applications:', error);
+      console.error("Error fetching applications:", error);
       setApplications([]);
       setError(`Failed to fetch applications: ${error.message}`);
       toast.error(`Error loading applications: ${error.message}`);
@@ -491,19 +494,22 @@ const ApplicationsPage = () => {
           <p className="text-gray-500 text-sm">Applications List</p>
         </div>
         <div className="flex space-x-3">
-          <button 
+          <button
             onClick={refreshApplications}
             className="flex items-center px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50"
             disabled={loading}
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
           <button className="flex items-center px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50">
             <ArrowUp className="w-4 h-4 mr-2" />
             Export Applications
           </button>
-          <Link href="/applications/add-applications" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
+          <Link
+            href="/applications/add-applications"
+            className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
+          >
             Make an Application
             <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
@@ -511,48 +517,56 @@ const ApplicationsPage = () => {
       </div>
 
       {/*  Tabs  */}
-      <div className='bg-white'>
+      <div className="bg-white">
         <div className="flex border-b border-gray-200 mb-6 bg-white">
           <button
-            onClick={() => handleTabChange('all')}
+            onClick={() => handleTabChange("all")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'all'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "all"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             All Applications
-            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
+            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.all}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('fellowship')}
+            onClick={() => handleTabChange("fellowship")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'fellowship'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "fellowship"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Fellowship
-            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.fellowship}</span>
+            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.fellowship}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('employee')}
+            onClick={() => handleTabChange("employee")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'employee'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "employee"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Employee
-            <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.employee}</span>
+            <span className="ml-2 bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.employee}
+            </span>
           </button>
         </div>
 
         {/* Application list title */}
         <h2 className="text-lg font-bold mb-4">
-          {activeTab === 'all' ? 'All Applications' : 
-           activeTab === 'fellowship' ? 'Fellowship Applications' : 
-           'Employee Applications'}
+          {activeTab === "all"
+            ? "All Applications"
+            : activeTab === "fellowship"
+              ? "Fellowship Applications"
+              : "Employee Applications"}
         </h2>
 
         {/* Search and filter */}
@@ -562,16 +576,16 @@ const ApplicationsPage = () => {
               <Search className="w-4 h-4 text-gray-500" />
             </div>
             <form onSubmit={handleSearchSubmit}>
-              <input 
-                type="text" 
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
+              <input
+                type="text"
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5"
                 placeholder="Search"
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
             </form>
           </div>
-          <button 
+          <button
             className="ml-2 p-2.5 bg-green-700 text-white rounded"
             onClick={() => {
               // Open a filter modal or expand filter options
@@ -594,7 +608,7 @@ const ApplicationsPage = () => {
                 <XCircle className="w-12 h-12 mx-auto" />
               </div>
               <p className="text-red-600 font-medium">{error}</p>
-              <button 
+              <button
                 onClick={refreshApplications}
                 className="mt-4 px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800"
               >
@@ -608,15 +622,15 @@ const ApplicationsPage = () => {
               </div>
               <p className="text-xl font-medium mb-2">No applications found</p>
               <p className="text-gray-500 mb-6">
-                {searchTerm 
-                  ? "Try adjusting your search criteria" 
-                  : activeTab !== 'all' 
+                {searchTerm
+                  ? "Try adjusting your search criteria"
+                  : activeTab !== "all"
                     ? `No ${activeTab} applications available`
                     : "There are no applications in the system yet"}
               </p>
               {searchTerm && (
-                <button 
-                  onClick={() => setSearchTerm('')}
+                <button
+                  onClick={() => setSearchTerm("")}
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
                   Clear Search
@@ -627,12 +641,42 @@ const ApplicationsPage = () => {
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Application Type</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission Date</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    No.
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Applicant
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Application Type
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Submission Date
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -652,12 +696,16 @@ const ApplicationsPage = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        setApplicationType(application) === 'fellowship' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {setApplicationType(application) === 'fellowship' ? 'Fellowship' : 'Employment'}
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          setApplicationType(application) === "fellowship"
+                            ? "bg-purple-100 text-purple-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
+                        {setApplicationType(application) === "fellowship"
+                          ? "Fellowship"
+                          : "Employment"}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -665,70 +713,72 @@ const ApplicationsPage = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div>
-                        {mapStatusForUI(application.status) === 'approved' && (
+                        {mapStatusForUI(application.status) === "approved" && (
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center inline-flex">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Approved
                           </span>
                         )}
-                        {mapStatusForUI(application.status) === 'rejected' && (
+                        {mapStatusForUI(application.status) === "rejected" && (
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 flex items-center inline-flex">
                             <XCircle className="w-3 h-3 mr-1" />
                             Rejected
                           </span>
                         )}
-                        {mapStatusForUI(application.status) === 'pending' && (
+                        {mapStatusForUI(application.status) === "pending" && (
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 flex items-center inline-flex">
                             <Clock className="w-3 h-3 mr-1" />
                             Pending
                           </span>
                         )}
-                        {!['approved', 'rejected', 'pending'].includes(mapStatusForUI(application.status)) && (
+                        {!["approved", "rejected", "pending"].includes(
+                          mapStatusForUI(application.status),
+                        ) && (
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                            {application.status || 'Unknown'}
+                            {application.status || "Unknown"}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center space-x-2">
-                       
-                      
-                     
                         <div className="relative">
-                          <button 
+                          <button
                             className="text-gray-500 hover:text-gray-700"
                             onClick={() => toggleMenu(application.id)}
                           >
                             <MoreHorizontal className="w-5 h-5" />
                           </button>
-                          
+
                           {/* Dropdown menu */}
                           {openMenuId === application.id && (
-                            <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div
+                              ref={menuRef}
+                              className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                            >
                               <button
-                                onClick={() => handleAction('view', application.id)}
+                                onClick={() => handleAction("view", application.id)}
                                 className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               >
                                 <Eye className="w-4 h-4 mr-2" />
                                 View details
                               </button>
                               <button
-                                onClick={() => handleAction('update', application.id)}
+                                onClick={() => handleAction("update", application.id)}
                                 className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Update
                               </button>
                               <button
-                                onClick={() => handleAction('status', application.id)}
+                                onClick={() => handleAction("status", application.id)}
                                 className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               >
                                 <RefreshCw className="w-4 h-4 mr-2" />
                                 Change status
                               </button>
                               <button
-                                onClick={() => handleAction('delete', application.id)}
+                                onClick={() => handleAction("delete", application.id)}
                                 className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                               >
                                 <Trash className="w-4 h-4 mr-2" />
@@ -749,24 +799,25 @@ const ApplicationsPage = () => {
         {/* Pagination */}
         <div className="flex items-center justify-between py-3">
           <div className="text-sm text-gray-500">
-            Showing {filteredApplications.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalApplications)} out of {totalApplications} entries
+            Showing {filteredApplications.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
+            {Math.min(page * limit, totalApplications)} out of {totalApplications} entries
           </div>
           <div className="flex items-center space-x-1">
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => goToPage(1)}
               disabled={page === 1}
             >
               <ChevronsLeft className="w-4 h-4" />
             </button>
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => goToPage(Math.max(1, page - 1))}
               disabled={page === 1}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            
+
             {/* Display page numbers */}
             {[...Array(Math.min(totalPages, 5))].map((_, index) => {
               // Show proper page numbers around current page
@@ -780,16 +831,16 @@ const ApplicationsPage = () => {
               } else {
                 pageNumber = page - 2 + index;
               }
-              
+
               if (pageNumber > 0 && pageNumber <= totalPages) {
                 return (
-                  <button 
+                  <button
                     key={pageNumber}
                     onClick={() => goToPage(pageNumber)}
                     className={`p-2 w-8 h-8 rounded-md ${
                       pageNumber === page
-                        ? 'bg-green-700 text-white'
-                        : 'hover:bg-gray-100 text-gray-700'
+                        ? "bg-green-700 text-white"
+                        : "hover:bg-gray-100 text-gray-700"
                     } flex items-center justify-center`}
                   >
                     {pageNumber}
@@ -798,15 +849,15 @@ const ApplicationsPage = () => {
               }
               return null;
             })}
-            
-            <button 
+
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => goToPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages || totalPages === 0}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => goToPage(totalPages)}
               disabled={page === totalPages || totalPages === 0}
@@ -830,20 +881,22 @@ const ApplicationsPage = () => {
                 Applicant: {getApplicantName(selectedApplication)}
               </label>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Current Status: 
-                <span className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${
-                  mapStatusForUI(selectedApplication?.status) === 'approved' ? 'bg-green-100 text-green-800' :
-                  mapStatusForUI(selectedApplication?.status) === 'rejected' ? 'bg-red-100 text-red-800' :
-                  'bg-orange-100 text-orange-800'
-                }`}>
-                  {selectedApplication?.status || 'Pending'}
+                Current Status:
+                <span
+                  className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${
+                    mapStatusForUI(selectedApplication?.status) === "approved"
+                      ? "bg-green-100 text-green-800"
+                      : mapStatusForUI(selectedApplication?.status) === "rejected"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-orange-100 text-orange-800"
+                  }`}
+                >
+                  {selectedApplication?.status || "Pending"}
                 </span>
               </label>
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Status:
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">New Status:</label>
               <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
@@ -872,13 +925,13 @@ const ApplicationsPage = () => {
                 className="px-4 py-2 bg-green-700 rounded-md text-sm font-medium text-white hover:bg-green-800"
                 disabled={loading}
               >
-                {loading ? 'Updating...' : 'Update Status'}
+                {loading ? "Updating..." : "Update Status"}
               </button>
             </div>
           </div>
         </div>
       )}
-      
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -888,21 +941,24 @@ const ApplicationsPage = () => {
               Delete Application
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this application? This action cannot be undone and will permanently delete the application and all associated data.
+              Are you sure you want to delete this application? This action cannot be undone and
+              will permanently delete the application and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setIsDeleteDialogOpen(false);
-              setApplicationToDelete(null);
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setApplicationToDelete(null);
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+              style={{ backgroundColor: "#dc2626", color: "#ffffff" }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#b91c1c")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
             >
               Delete Application
             </AlertDialogAction>

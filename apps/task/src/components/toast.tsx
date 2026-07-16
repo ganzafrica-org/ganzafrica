@@ -53,7 +53,14 @@ const toastConfig = {
   },
 };
 
-export function Toast({ id, type, title, message, duration = 5000, onClose }: ToastProps): React.JSX.Element {
+export function Toast({
+  id,
+  type,
+  title,
+  message,
+  duration = 5000,
+  onClose,
+}: ToastProps): React.JSX.Element {
   const [isVisible, setIsVisible] = useState(false);
   const config = toastConfig[type];
   const Icon = config.icon;
@@ -61,7 +68,7 @@ export function Toast({ id, type, title, message, duration = 5000, onClose }: To
   useEffect(() => {
     // Show toast with animation
     const showTimer = setTimeout(() => setIsVisible(true), 100);
-    
+
     // Auto-hide toast
     const hideTimer = setTimeout(() => {
       setIsVisible(false);
@@ -83,7 +90,7 @@ export function Toast({ id, type, title, message, duration = 5000, onClose }: To
     <div
       className={`
         fixed top-4 right-4 z-50 max-w-sm w-full transform transition-all duration-300 ease-in-out
-        ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        ${isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
       `}
     >
       <div
@@ -94,12 +101,8 @@ export function Toast({ id, type, title, message, duration = 5000, onClose }: To
         <div className="flex items-start gap-3">
           <Icon className={`w-5 h-5 mt-0.5 ${config.iconColor}`} />
           <div className="flex-1 min-w-0">
-            <h4 className={`text-base font-medium ${config.titleColor} mb-1`}>
-              {title}
-            </h4>
-            <p className={`text-sm ${config.messageColor}`}>
-              {message}
-            </p>
+            <h4 className={`text-base font-medium ${config.titleColor} mb-1`}>{title}</h4>
+            <p className={`text-sm ${config.messageColor}`}>{message}</p>
           </div>
           <button
             onClick={handleClose}
@@ -108,7 +111,7 @@ export function Toast({ id, type, title, message, duration = 5000, onClose }: To
             <X className="w-4 h-4" />
           </button>
         </div>
-        
+
         {/* Bottom accent line */}
         <div className={`absolute bottom-0 left-0 right-0 h-1 ${config.bottomBarColor}`}></div>
       </div>
@@ -132,11 +135,7 @@ export function ToastContainer({ toasts, onRemoveToast }: ToastContainerProps): 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
       {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          {...toast}
-          onClose={onRemoveToast}
-        />
+        <Toast key={toast.id} {...toast} onClose={onRemoveToast} />
       ))}
     </div>
   );
@@ -144,21 +143,23 @@ export function ToastContainer({ toasts, onRemoveToast }: ToastContainerProps): 
 
 // Hook for managing toasts
 export function useToast() {
-  const [toasts, setToasts] = useState<Array<{
-    id: string;
-    type: ToastType;
-    title: string;
-    message: string;
-    duration?: number;
-  }>>([]);
+  const [toasts, setToasts] = useState<
+    Array<{
+      id: string;
+      type: ToastType;
+      title: string;
+      message: string;
+      duration?: number;
+    }>
+  >([]);
 
-  const addToast = (toast: Omit<typeof toasts[0], 'id'>) => {
+  const addToast = (toast: Omit<(typeof toasts)[0], "id">) => {
     const id = Math.random().toString(36).substr(2, 9);
-    setToasts(prev => [...prev, { ...toast, id }]);
+    setToasts((prev) => [...prev, { ...toast, id }]);
   };
 
   const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   const showSuccess = (title: string, message: string, duration?: number) => {

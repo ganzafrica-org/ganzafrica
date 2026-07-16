@@ -2,13 +2,13 @@ import { Metadata } from "next";
 
 // Generate a standard metadata object with defaults
 export function generateMetadata({
-                                   params,
-                                   title,
-                                   description,
-                                   imagePath,
-                                   keywords,
-                                   url,
-                                 }: {
+  params,
+  title,
+  description,
+  imagePath,
+  keywords,
+  url,
+}: {
   params: string;
   title: string;
   description: string;
@@ -17,7 +17,10 @@ export function generateMetadata({
   url?: string;
 }): Metadata {
   const siteName = "GanzAfrica";
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://web.ganzafrica.org").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://web.ganzafrica.org").replace(
+    /\/$/,
+    "",
+  );
   const ogImage = imagePath || "/images/og-default.jpg";
   const canonicalUrl = url || baseUrl + params;
 
@@ -33,7 +36,7 @@ export function generateMetadata({
       "agriculture training Africa",
       "sustainable farming",
       "fellowship program",
-      "food systems transformation"
+      "food systems transformation",
     ],
     openGraph: {
       type: "website",

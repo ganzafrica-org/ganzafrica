@@ -87,8 +87,7 @@ async function sendPayslipEmail(
     logger.error(`Failed to send payslip email to ${userEmail}:`, error);
 
     // Mark email as failed with error message
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     await payrollService.markEmailSent(payrollId, false, errorMessage);
 
     return false;
@@ -98,9 +97,7 @@ async function sendPayslipEmail(
 /**
  * Generate payslip PDF and send email for a single payroll
  */
-export async function generateAndSendPayslip(
-  payrollId: number,
-): Promise<boolean> {
+export async function generateAndSendPayslip(payrollId: number): Promise<boolean> {
   try {
     const payrollData = await payrollService.getPayrollById(payrollId);
 
@@ -168,10 +165,7 @@ export async function generateAndSendPayslip(
     }
 
     // Generate signed URL for email (7 days expiration)
-    const signedUrl = await pdfService.generateSignedPayslipUrl(
-      payslipKey,
-      7 * 24 * 60 * 60,
-    );
+    const signedUrl = await pdfService.generateSignedPayslipUrl(payslipKey, 7 * 24 * 60 * 60);
 
     // Send email with signed URL
     const sent = await sendPayslipEmail(
@@ -184,10 +178,7 @@ export async function generateAndSendPayslip(
 
     return sent;
   } catch (error) {
-    logger.error(
-      `Error generating and sending payslip for payroll ${payrollId}:`,
-      error,
-    );
+    logger.error(`Error generating and sending payslip for payroll ${payrollId}:`, error);
     return false;
   }
 }
@@ -215,9 +206,7 @@ export async function sendPayslipsBatch(payrollIds: number[]): Promise<{
   for (let i = 0; i < payrollIds.length; i += BATCH_SIZE) {
     const batch = payrollIds.slice(i, i + BATCH_SIZE);
 
-    logger.info(
-      `Processing batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.length} payslips`,
-    );
+    logger.info(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.length} payslips`);
 
     // Process batch in parallel
     const batchResults = await Promise.allSettled(
@@ -233,10 +222,7 @@ export async function sendPayslipsBatch(payrollIds: number[]): Promise<{
         results.push({ payrollId, success: true });
       } else {
         failed++;
-        const error =
-          result.status === "rejected"
-            ? result.reason?.message
-            : "Failed to send";
+        const error = result.status === "rejected" ? result.reason?.message : "Failed to send";
         results.push({ payrollId, success: false, error });
       }
     });
@@ -248,9 +234,7 @@ export async function sendPayslipsBatch(payrollIds: number[]): Promise<{
     }
   }
 
-  logger.info(
-    `Batch send complete: ${successful} successful, ${failed} failed`,
-  );
+  logger.info(`Batch send complete: ${successful} successful, ${failed} failed`);
 
   return {
     total: payrollIds.length,

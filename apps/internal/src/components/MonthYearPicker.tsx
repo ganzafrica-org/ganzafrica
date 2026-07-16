@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -74,11 +70,7 @@ export function MonthYearPicker({
   const handleApply = () => {
     if (tempMonth && tempYear) {
       // Generate period format: "01-31.MM.YY"
-      const daysInMonth = new Date(
-        parseInt(`20${tempYear}`),
-        parseInt(tempMonth),
-        0
-      ).getDate();
+      const daysInMonth = new Date(parseInt(`20${tempYear}`), parseInt(tempMonth), 0).getDate();
 
       const period = `01-${daysInMonth.toString().padStart(2, "0")}.${tempMonth}.${tempYear}`;
       onChange(period);
@@ -108,10 +100,7 @@ export function MonthYearPicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="w-full justify-start text-left font-normal"
-        >
+        <Button variant="outline" className="w-full justify-start text-left font-normal">
           <Calendar className="mr-2 h-4 w-4" />
           {displayValue()}
         </Button>
@@ -151,18 +140,10 @@ export function MonthYearPicker({
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleClear}
-            >
+            <Button variant="outline" className="flex-1" onClick={handleClear}>
               Clear
             </Button>
-            <Button
-              className="flex-1"
-              onClick={handleApply}
-              disabled={!tempMonth || !tempYear}
-            >
+            <Button className="flex-1" onClick={handleApply} disabled={!tempMonth || !tempYear}>
               Apply
             </Button>
           </div>

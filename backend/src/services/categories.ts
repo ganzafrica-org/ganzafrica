@@ -26,9 +26,7 @@ export type CategoryOutput = {
 };
 
 // Create a new category
-export async function createCategory(
-  categoryData: CreateCategoryInput,
-): Promise<CategoryOutput> {
+export async function createCategory(categoryData: CreateCategoryInput): Promise<CategoryOutput> {
   try {
     // Check if a category with the same name already exists
     const existingCategory = await db
@@ -38,10 +36,7 @@ export async function createCategory(
       .limit(1);
 
     if (existingCategory.length > 0) {
-      throw new AppError(
-        `Category with name '${categoryData.name}' already exists`,
-        409,
-      );
+      throw new AppError(`Category with name '${categoryData.name}' already exists`, 409);
     }
 
     // Insert the category
@@ -122,10 +117,7 @@ export async function updateCategory(
         .limit(1);
 
       if (nameExists.length > 0) {
-        throw new AppError(
-          `Category with name '${categoryData.name}' already exists`,
-          409,
-        );
+        throw new AppError(`Category with name '${categoryData.name}' already exists`, 409);
       }
     }
 

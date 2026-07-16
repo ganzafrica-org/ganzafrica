@@ -2,7 +2,14 @@
 import { constants, Logger } from "../../config";
 import { AppError } from "../../middlewares";
 import * as contractService from "../../services/hr/contract.service";
-import type { CompensationType, ContractStatus, CreateContractInput, EmploymentTerm, EmploymentType, SalaryScale } from "@/types/contract.types";
+import type {
+  CompensationType,
+  ContractStatus,
+  CreateContractInput,
+  EmploymentTerm,
+  EmploymentType,
+  SalaryScale,
+} from "@/types/contract.types";
 import { getHrRequester } from "../../utils/hr-requester";
 /**
  * @swagger
@@ -227,7 +234,8 @@ export const updateContract = async (req: Request, res: Response): Promise<void>
         // Contract details
         startDate: body.startDate ? new Date(body.startDate) : undefined,
         employmentTerm: body.employmentTerm,
-        endDate: body.endDate !== undefined ? (body.endDate ? new Date(body.endDate) : null) : undefined,
+        endDate:
+          body.endDate !== undefined ? (body.endDate ? new Date(body.endDate) : null) : undefined,
         employmentType: body.employmentType,
         daysPerWeek: body.daysPerWeek !== undefined ? Number(body.daysPerWeek) : undefined,
         compensationType: body.compensationType,

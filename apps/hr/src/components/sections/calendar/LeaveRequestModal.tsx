@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useLeaveContext } from '@/components/sections/calendar/LeaveContext';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { useState } from "react";
+import { useLeaveContext } from "@/components/sections/calendar/LeaveContext";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import {LeaveType} from "@/types/leave";
+} from "@/components/ui/select";
+import { LeaveType } from "@/types/leave";
 
 interface LeaveRequestModalProps {
   isOpen: boolean;
@@ -22,28 +22,22 @@ interface LeaveRequestModalProps {
 
 export function LeaveRequestModal({ isOpen, onClose, employeeId }: LeaveRequestModalProps) {
   const { addLeaveRequest, getTeamMemberById } = useLeaveContext();
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [leaveType, setLeaveType] = useState<LeaveType>('Paid');
-  const [notes, setNotes] = useState('');
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [leaveType, setLeaveType] = useState<LeaveType>("Paid");
+  const [notes, setNotes] = useState("");
   const employee = getTeamMemberById(employeeId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate) return;
 
-    addLeaveRequest(
-      employeeId,
-      leaveType,
-      new Date(startDate),
-      new Date(endDate),
-      notes
-    );
+    addLeaveRequest(employeeId, leaveType, new Date(startDate), new Date(endDate), notes);
 
-    setStartDate('');
-    setEndDate('');
-    setLeaveType('Paid');
-    setNotes('');
+    setStartDate("");
+    setEndDate("");
+    setLeaveType("Paid");
+    setNotes("");
     onClose();
   };
 

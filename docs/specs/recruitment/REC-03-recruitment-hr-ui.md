@@ -41,12 +41,14 @@ with matching tests — note additions in the PR description.
 ## 5. Frontend (all under `apps/hr/src/app/recruitment/` — move out of employees/, add nav item "Recruitment", visible to `recruitment:manage|read`)
 
 ### 5a. `recruitment/page.tsx` — postings list
+
 Cards/table: title, type (fellowship/employment), status (draft/published/closed by
 deadline), per-stage counts (from `GET /hr/recruitment/opportunities`), views→applies mini
 funnel placeholder (filled by REC-04). Actions: New posting, edit, view pipeline.
 States: loading skeletons, empty ("No open positions — create one"), error retry.
 
 ### 5b. `recruitment/new` + `recruitment/[id]/edit` — posting editor
+
 3 steps: (1) Details — title, description (reuse hr app's rich text editor if present, else
 textarea), type, location, deadline, department/position-level (employment) or
 program/cohort (fellowship) writing to `opportunities` + `employment_details`/`fellowship_details`
@@ -57,6 +59,7 @@ submission…", "Screening runs after…"). Publish button = publish opportunity
 (confirm dialog listing what goes live on the public site).
 
 ### 5c. `recruitment/[id]` — pipeline board
+
 - Columns = stages (submitted…hired; rejected/withdrawn collapsed into a footer drawer with
   counts). Cards: name, applied date, flag icon (+tooltip flag_note), weighted score badge
   when scored, "duplicate applicant" chip when same email has another application for this
@@ -67,6 +70,7 @@ submission…", "Screening runs after…"). Publish button = publish opportunity
 - Filters: search name/email, flagged-only, stage select (mobile fallback for the board = list + stage dropdown).
 
 ### 5d. Application detail panel (sheet/drawer from a card click) — the harvested 55KB panel, rebuilt
+
 Tabs: **Profile** (standard fields, links to CV/supporting docs — presigned via existing
 upload URLs), **Answers** (custom answers rendered by form definition of `form_version`),
 **Evaluation** (criteria rows: my score inputs 0..max, comment; other reviewers' scores
@@ -75,19 +79,21 @@ marked "System"), **Emails** (sent types + dates). Footer: stage transition sele
 note (mirrors board rules).
 
 ### Hooks/services
+
 `src/services/recruitment.service.ts` + `src/hooks/useRecruitment.ts` (query keys per
 opportunity/list/detail; mutations invalidate the board + counts).
 
 ## 6. Tests to write FIRST
 
 Frontend (vitest + MSW mirroring REC-02 contracts):
+
 1. Board renders seeded stages/counts; illegal drag → card returns + toast (MSW 409).
 2. Reject dialog: reason required; send_email flag passed through.
 3. Detail Answers tab renders by pinned form_version (fixture with v1 vs v2 forms).
 4. Evaluation tab: my inputs editable, others read-only; total updates after save (MSW echo).
 5. Nav item hidden without recruitment permission (role-driven render test).
-E2E (extends recruitment suite): create posting → publish → (public apply from REC-01 e2e) →
-application appears in board → screen → shortlist (drag) → score → history shows it all.
+   E2E (extends recruitment suite): create posting → publish → (public apply from REC-01 e2e) →
+   application appears in board → screen → shortlist (drag) → score → history shows it all.
 
 ## 7. Acceptance criteria
 

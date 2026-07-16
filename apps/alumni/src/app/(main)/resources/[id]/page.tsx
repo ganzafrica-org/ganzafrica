@@ -167,12 +167,9 @@ export default function ResourceDetailPage() {
         <Card className="shadow-sm">
           <CardContent className="p-12 text-center">
             <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Resource not found
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Resource not found</h3>
             <p className="text-gray-600 mb-4">
-              The resource you&apos;re looking for doesn&apos;t exist or has
-              been removed.
+              The resource you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
             <Button
               onClick={() => router.push("/resources")}
@@ -208,9 +205,7 @@ export default function ResourceDetailPage() {
                       Featured
                     </Badge>
                   )}
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {resource.title}
-                  </h1>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{resource.title}</h1>
                   <div className="flex flex-wrap gap-2">
                     <Badge
                       className={`bg-gradient-to-br ${getDepartmentColor(resource.category)} text-white border-0`}
@@ -222,9 +217,7 @@ export default function ResourceDetailPage() {
                 </div>
               </div>
 
-              <p className="text-gray-700 text-lg leading-relaxed">
-                {resource.description}
-              </p>
+              <p className="text-gray-700 text-lg leading-relaxed">{resource.description}</p>
 
               {/* Tags */}
               {resource.tags && resource.tags.length > 0 && (
@@ -243,33 +236,23 @@ export default function ResourceDetailPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <Eye className="h-5 w-5 text-gray-600 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-gray-900">
-                    {resource.views}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900">{resource.views}</div>
                   <div className="text-xs text-gray-600">Views</div>
                 </div>
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <Download className="h-5 w-5 text-gray-600 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-gray-900">
-                    {resource.downloads}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900">{resource.downloads}</div>
                   <div className="text-xs text-gray-600">Downloads</div>
                 </div>
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <Heart className="h-5 w-5 text-gray-600 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-gray-900">
-                    {resource.likes}
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900">{resource.likes}</div>
                   <div className="text-xs text-gray-600">Likes</div>
                 </div>
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <Star className="h-5 w-5 text-yellow-500 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-gray-900">
-                    {resource.rating}
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    ({resource.ratingCount} ratings)
-                  </div>
+                  <div className="text-2xl font-bold text-gray-900">{resource.rating}</div>
+                  <div className="text-xs text-gray-600">({resource.ratingCount} ratings)</div>
                 </div>
               </div>
 
@@ -291,9 +274,7 @@ export default function ResourceDetailPage() {
                       : "border-blue-secondary text-blue-secondary hover:bg-blue-secondary hover:text-white"
                   }
                 >
-                  <Heart
-                    className={`h-4 w-4 mr-2 ${resource.hasLiked ? "fill-current" : ""}`}
-                  />
+                  <Heart className={`h-4 w-4 mr-2 ${resource.hasLiked ? "fill-current" : ""}`} />
                   {resource.hasLiked ? "Liked" : "Like"}
                 </Button>
                 <Button
@@ -308,11 +289,7 @@ export default function ResourceDetailPage() {
                     asChild
                     className="border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white"
                   >
-                    <a
-                      href={resource.externalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <a href={resource.externalUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </Button>
@@ -321,9 +298,7 @@ export default function ResourceDetailPage() {
 
               {/* Rating Section */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  Rate this resource
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Rate this resource</h3>
                 <div className="flex items-center gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -333,9 +308,7 @@ export default function ResourceDetailPage() {
                     >
                       <Star
                         className={`h-8 w-8 ${
-                          star <= userRating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300"
+                          star <= userRating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
                         }`}
                       />
                     </button>
@@ -372,13 +345,9 @@ export default function ResourceDetailPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-semibold text-gray-900">
-                    {resource.author.name}
-                  </div>
+                  <div className="font-semibold text-gray-900">{resource.author.name}</div>
                   {resource.author.title && (
-                    <div className="text-sm text-gray-600">
-                      {resource.author.title}
-                    </div>
+                    <div className="text-sm text-gray-600">{resource.author.title}</div>
                   )}
                 </div>
               </div>
@@ -407,33 +376,25 @@ export default function ResourceDetailPage() {
                     <FileText className="h-4 w-4" />
                     Format
                   </span>
-                  <span className="font-medium text-gray-900">
-                    {resource.fileType}
-                  </span>
+                  <span className="font-medium text-gray-900">{resource.fileType}</span>
                 </div>
               )}
               {resource.fileSize && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Size</span>
-                  <span className="font-medium text-gray-900">
-                    {resource.fileSize}
-                  </span>
+                  <span className="font-medium text-gray-900">{resource.fileSize}</span>
                 </div>
               )}
               {resource.pages && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Pages</span>
-                  <span className="font-medium text-gray-900">
-                    {resource.pages}
-                  </span>
+                  <span className="font-medium text-gray-900">{resource.pages}</span>
                 </div>
               )}
               {resource.duration && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Duration</span>
-                  <span className="font-medium text-gray-900">
-                    {resource.duration}
-                  </span>
+                  <span className="font-medium text-gray-900">{resource.duration}</span>
                 </div>
               )}
               {resource.estimatedTime && (
@@ -442,9 +403,7 @@ export default function ResourceDetailPage() {
                     <Clock className="h-4 w-4" />
                     Est. Time
                   </span>
-                  <span className="font-medium text-gray-900">
-                    {resource.estimatedTime}
-                  </span>
+                  <span className="font-medium text-gray-900">{resource.estimatedTime}</span>
                 </div>
               )}
               <div className="flex items-center justify-between text-sm pt-3 border-t">

@@ -1,5 +1,5 @@
-import { ReactNode, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ReactNode, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface SettingsSectionProps {
   title: string;
@@ -37,16 +37,12 @@ export function SettingsSection({
           )}
           <ChevronDown
             size={20}
-            className={`text-gray-400 transition ${isOpen ? 'rotate-180' : ''}`}
+            className={`text-gray-400 transition ${isOpen ? "rotate-180" : ""}`}
           />
         </div>
       </button>
 
-      {isOpen && (
-        <div className="border-t border-gray-200 p-6 bg-gray-50">
-          {children}
-        </div>
-      )}
+      {isOpen && <div className="border-t border-gray-200 p-6 bg-gray-50">{children}</div>}
     </div>
   );
 }

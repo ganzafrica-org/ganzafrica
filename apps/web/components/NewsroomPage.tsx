@@ -15,7 +15,7 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import HeaderBelt from "@/components/layout/headerBelt";
-import axios from 'axios';
+import axios from "axios";
 import { useParams } from "next/navigation";
 import { TranslatableText } from "@/components/translate/TranslatableText";
 import { trackPageView, trackEvent } from "@/components/analytics/google-analytics";
@@ -51,7 +51,7 @@ axiosInstance.interceptors.response.use(undefined, async (err) => {
       const delay = Math.pow(2, config.retryCount) * 1000;
       console.log(`Retrying request (${config.retryCount}/${maxRetries}) after ${delay}ms...`);
 
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
 
       return axiosInstance(config);
     }
@@ -68,7 +68,7 @@ axiosInstance.interceptors.request.use(async (config) => {
 
   if (now - lastRequestTime < minRequestInterval) {
     const delayMs = minRequestInterval - (now - lastRequestTime);
-    await new Promise(resolve => setTimeout(resolve, delayMs));
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
 
   window.lastAxiosRequestTime = Date.now();
@@ -97,62 +97,61 @@ const throttledAxios: ThrottledAxios = {
       return pendingRequests[key];
     }
 
-    const request = axiosInstance.get(url, config)
-        .finally(() => {
-          delete pendingRequests[key];
-        });
+    const request = axiosInstance.get(url, config).finally(() => {
+      delete pendingRequests[key];
+    });
 
     pendingRequests[key] = request;
     return request;
   },
   delete: (url, config = {}) => {
     return axiosInstance.delete(url, config);
-  }
+  },
 };
 
 // Helper function to generate a slug
 const generateSlug = (title: string) => {
-  if (!title) return '';
+  if (!title) return "";
   return title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim();
 };
 
 const NavigationItem = ({
-                          label,
-                          isActive,
-                          onClick,
-                          count,
-                        }: {
+  label,
+  isActive,
+  onClick,
+  count,
+}: {
   label: any;
   isActive: boolean;
   onClick: () => void;
   count?: number;
 }) => (
-    <button
-        onClick={onClick}
-        className={`relative group flex items-center gap-2 px-4 py-2 font-bold text-lg transition-colors duration-300 whitespace-nowrap ${
-            isActive ? "text-[#FFB800]" : "text-gray-600 hover:text-black"
+  <button
+    onClick={onClick}
+    className={`relative group flex items-center gap-2 px-4 py-2 font-bold text-lg transition-colors duration-300 whitespace-nowrap ${
+      isActive ? "text-[#FFB800]" : "text-gray-600 hover:text-black"
+    }`}
+  >
+    {label}
+    {count !== undefined && (
+      <span
+        className={`ml-1 px-2 py-0.5 text-xs font-medium rounded-full ${
+          isActive ? "bg-[#FFB800] text-white" : "bg-gray-200 text-gray-600"
         }`}
-    >
-      {label}
-      {count !== undefined && (
-          <span className={`ml-1 px-2 py-0.5 text-xs font-medium rounded-full ${
-              isActive ? "bg-[#FFB800] text-white" : "bg-gray-200 text-gray-600"
-          }`}>
+      >
         {count}
       </span>
-      )}
-      {isActive && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#FFB800] rounded-full" />
-      )}
-      {!isActive && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#FFB800] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-      )}
-    </button>
+    )}
+    {isActive && <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#FFB800] rounded-full" />}
+    {!isActive && (
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#FFB800] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+    )}
+  </button>
 );
 
 interface NewsItem {
@@ -172,17 +171,17 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
 
   // Format date - using publish_date field
   interface FormatDateOptions {
-    month: 'short' | 'long' | 'numeric' | '2-digit';
-    day: 'numeric' | '2-digit';
-    year: 'numeric' | '2-digit';
+    month: "short" | "long" | "numeric" | "2-digit";
+    day: "numeric" | "2-digit";
+    year: "numeric" | "2-digit";
   }
 
   const formatDate = (dateString: string | undefined): string => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
 
     const date = new Date(dateString);
-    const options: FormatDateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
+    const options: FormatDateOptions = { month: "short", day: "numeric", year: "numeric" };
+    return date.toLocaleDateString("en-US", options);
   };
 
   const getFirstTag = (tags: string | any[] | undefined) => {
@@ -199,8 +198,8 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
       }
 
       // Find the cover image (the one with cover: true)
-      const coverImage = item.media.items.find(mediaItem =>
-          mediaItem.cover === true && mediaItem.type === 'image'
+      const coverImage = item.media.items.find(
+        (mediaItem) => mediaItem.cover === true && mediaItem.type === "image",
       );
 
       // Return the cover image URL if found
@@ -209,9 +208,7 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
       }
 
       // If no cover image is found, try to get the first image
-      const firstImage = item.media.items.find(mediaItem =>
-          mediaItem.type === 'image'
-      );
+      const firstImage = item.media.items.find((mediaItem) => mediaItem.type === "image");
 
       if (firstImage && firstImage.url) {
         return firstImage.url;
@@ -219,7 +216,7 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
 
       return null;
     } catch (error) {
-      console.error('Error getting cover image:', error);
+      console.error("Error getting cover image:", error);
       return null;
     }
   };
@@ -228,50 +225,57 @@ const NewsCard = ({ item }: { item: NewsItem }) => {
   const imageUrl = getCoverImage();
 
   return (
-      <Link href={`/newsroom/${slug}`} className="block group">
-        <div className="relative bg-white rounded-md overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl border border-gray-200">
-          <div className="relative aspect-[16/10]">
-            {/* Image Container - Modified to push images down for better face visibility */}
-            <div className="w-full h-full overflow-hidden">
-              {imageUrl ? (
-                  <div className="w-full h-full relative" style={{ transform: 'translateY(-15%)' }}>
-                    <img
-                        src={imageUrl}
-                        alt={item.title}
-                        className="w-full h-[130%] object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
-                    />
-                  </div>
-              ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-400"><TranslatableText>No image</TranslatableText></span>
-                  </div>
-              )}
-            </div>
-
-            {/* Green overlay with reduced opacity to ensure image is visible */}
-            <div className="absolute inset-0 bg-[#005C3D] opacity-30"></div>
-
-            {/* Date Badge - White background with green text */}
-            <div className="absolute top-4 left-4 px-4 py-1 bg-white text-primary-green rounded-full text-sm font-medium z-10">
-              {formatDate(item.publish_date)}
-            </div>
-
-            {/* Category Label - Transparent background with yellow border and text */}
-            <div className="absolute top-[52px] left-4 px-4 py-1 bg-transparent text-secondary-yellow border border-secondary-yellow rounded-full text-sm font-medium z-10">
-              {getFirstTag(item.tags)}
-            </div>
-
+    <Link href={`/newsroom/${slug}`} className="block group">
+      <div className="relative bg-white rounded-md overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-2xl border border-gray-200">
+        <div className="relative aspect-[16/10]">
+          {/* Image Container - Modified to push images down for better face visibility */}
+          <div className="w-full h-full overflow-hidden">
+            {imageUrl ? (
+              <div className="w-full h-full relative" style={{ transform: "translateY(-15%)" }}>
+                <img
+                  src={imageUrl}
+                  alt={item.title}
+                  className="w-full h-[130%] object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
+                />
+              </div>
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <span className="text-gray-400">
+                  <TranslatableText>No image</TranslatableText>
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Content */}
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
-                <TranslatableText>{item.title}</TranslatableText>
-            </h3>
-            <p className="text-gray-600 line-clamp-2"><TranslatableText>{item.content?.substring(0, 150) || item.description || "Read more about this news article."}</TranslatableText></p>
+          {/* Green overlay with reduced opacity to ensure image is visible */}
+          <div className="absolute inset-0 bg-[#005C3D] opacity-30"></div>
+
+          {/* Date Badge - White background with green text */}
+          <div className="absolute top-4 left-4 px-4 py-1 bg-white text-primary-green rounded-full text-sm font-medium z-10">
+            {formatDate(item.publish_date)}
+          </div>
+
+          {/* Category Label - Transparent background with yellow border and text */}
+          <div className="absolute top-[52px] left-4 px-4 py-1 bg-transparent text-secondary-yellow border border-secondary-yellow rounded-full text-sm font-medium z-10">
+            {getFirstTag(item.tags)}
           </div>
         </div>
-      </Link>
+
+        {/* Content */}
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+            <TranslatableText>{item.title}</TranslatableText>
+          </h3>
+          <p className="text-gray-600 line-clamp-2">
+            <TranslatableText>
+              {item.content?.substring(0, 150) ||
+                item.description ||
+                "Read more about this news article."}
+            </TranslatableText>
+          </p>
+        </div>
+      </div>
+    </Link>
   );
 };
 
@@ -293,24 +297,24 @@ const NewsroomPage = () => {
 
   // Track page view
   useEffect(() => {
-    trackPageView('/newsroom', 'Newsroom');
+    trackPageView("/newsroom", "Newsroom");
   }, []);
 
   // Fetch tags
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await apiClient.get('/news/tags');
+        const response = await apiClient.get("/news/tags");
         if (response.data && Array.isArray(response.data.tags)) {
           setTags(response.data.tags);
         } else if (Array.isArray(response.data)) {
           setTags(response.data);
         } else {
-          console.error('Unexpected tags response format:', response.data);
+          console.error("Unexpected tags response format:", response.data);
           setTags([]);
         }
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        console.error("Error fetching tags:", error);
         setError(true);
         setTags([]);
       }
@@ -328,16 +332,16 @@ const NewsroomPage = () => {
         const params = {
           page: 1,
           limit: 50, // Get a reasonable number of articles
-          sort_by: 'publish_date',
-          sort_order: 'desc',
-          status: 'published' // Only show published articles
+          sort_by: "publish_date",
+          sort_order: "desc",
+          status: "published", // Only show published articles
         };
 
-        console.log('Fetching all news with params:', params);
+        console.log("Fetching all news with params:", params);
 
-        const response = await apiClient.get('/news', { params });
+        const response = await apiClient.get("/news", { params });
 
-        console.log('API response:', response.data);
+        console.log("API response:", response.data);
 
         if (response.data && response.data.news) {
           const newsData = response.data.news || [];
@@ -346,9 +350,9 @@ const NewsroomPage = () => {
           // Calculate tag counts from the fetched data
           const counts: Record<string, number> = { all: newsData.length };
 
-          newsData.forEach((article: { tags: any[]; }) => {
+          newsData.forEach((article: { tags: any[] }) => {
             if (article.tags && Array.isArray(article.tags)) {
-              article.tags.forEach(tag => {
+              article.tags.forEach((tag) => {
                 counts[tag.id as string] = (counts[tag.id as string] || 0) + 1;
               });
             }
@@ -360,7 +364,7 @@ const NewsroomPage = () => {
           setAllNews([]);
         }
       } catch (error) {
-        console.error('Error fetching news:', error);
+        console.error("Error fetching news:", error);
         setError(true);
         setAllNews([]);
       } finally {
@@ -377,101 +381,113 @@ const NewsroomPage = () => {
       setFilteredNews(allNews);
     } else {
       const tagId = activeFilter;
-      const filtered = allNews.filter(article =>
+      const filtered = allNews.filter(
+        (article) =>
           article.tags &&
           Array.isArray(article.tags) &&
-          article.tags.some(tag => tag.id.toString() === tagId)
+          article.tags.some((tag) => tag.id.toString() === tagId),
       );
       setFilteredNews(filtered);
     }
   }, [activeFilter, allNews]);
 
   return (
-      <main className="min-h-screen">
-    {/* Hero Section */}
-<section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden z-0">
-  <div className="absolute inset-0">
-    <div className="relative w-full h-[130%]" style={{ transform: 'translateY(-18%)' }}>
-      <Image
-        src="/images/DSC_1430.JPG"
-        alt="Ganz Africa Newsroom"
-        fill
-        className="object-cover object-top"
-        priority
-      />
-    </div>
-  </div>
-
-  {/* Dark overlay */}
-  <div className="absolute inset-0 bg-black/70 z-10"></div>
-
-  {/* Content */}
-  <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
-  <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
-      <TranslatableText>NEWS &UPDATES</TranslatableText>
-    </h2>
-    <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
-    <TranslatableText>Sharing Our Progress And  Transformative Impact</TranslatableText>
-    </h1>
-
-  </div>
-</section>
-        <div className="w-full overflo-hidden z-10">
-          <div className="flex justify-center">
-            <HeaderBelt />
+    <main className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative w-full h-[400px] sm:h-[500px] overflow-hidden z-0">
+        <div className="absolute inset-0">
+          <div className="relative w-full h-[130%]" style={{ transform: "translateY(-18%)" }}>
+            <Image
+              src="/images/DSC_1430.JPG"
+              alt="Ganz Africa Newsroom"
+              fill
+              className="object-cover object-top"
+              priority
+            />
           </div>
         </div>
 
-        <Container className="py-12">
-          {/* Navigation */}
-          <nav className="mb-12 flex items-center sm:justify-center space-x-4 sm:space-x-12 overflow-x-auto pb-4 scrollbar-hide px-4 sm:px-0">
-            <NavigationItem
-                label={<TranslatableText>All</TranslatableText>}
-                isActive={activeFilter === "all"}
-                onClick={() => {
-                    setActiveFilter("all");
-                    trackEvent('newsroom_filter_change', { filter: 'all' });
-                }}
-                count={tagCounts.all}
-            />
-            {tags.map(tag => (
-                <NavigationItem
-                    key={tag.id}
-                    label={tag.name}
-                    isActive={activeFilter === tag.id.toString()}
-                    onClick={() => {
-                        setActiveFilter(tag.id.toString());
-                        trackEvent('newsroom_filter_change', { filter: tag.name });
-                    }}
-                    count={tagCounts[tag.id] || 0}
-                />
-            ))}
-          </nav>
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/70 z-10"></div>
 
-          {/* News Grid */}
-          {loading ? (
-              <div className="flex justify-center items-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FFB800]"></div>
-              </div>
-          ) : error ? (
-              <div className="text-center py-12">
-                <h3 className="text-2xl font-bold text-gray-800"><TranslatableText>Unable to load news</TranslatableText></h3>
-                <p className="text-gray-600 mt-2"><TranslatableText>We're experiencing technical difficulties. Please try again later.</TranslatableText></p>
-              </div>
-          ) : filteredNews.length === 0 ? (
-              <div className="text-center py-12">
-                <h3 className="text-2xl font-bold text-gray-800"><TranslatableText>No news articles found</TranslatableText></h3>
-                <p className="text-gray-600 mt-2"><TranslatableText>Please check back later for updates or try another category.</TranslatableText></p>
-              </div>
-          ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredNews.map((item) => (
-                    <NewsCard key={item.id} item={item} />
-                ))}
-              </div>
-          )}
-        </Container>
-      </main>
+        {/* Content */}
+        <div className="relative container mx-auto px-4 h-full flex flex-col justify-center items-center text-center z-20">
+          <h2 className="text-primary-orange text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-wider mt-6 mb-8">
+            <TranslatableText>NEWS &UPDATES</TranslatableText>
+          </h2>
+          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl mb-2 leading-tight">
+            <TranslatableText>Sharing Our Progress And Transformative Impact</TranslatableText>
+          </h1>
+        </div>
+      </section>
+      <div className="w-full overflo-hidden z-10">
+        <div className="flex justify-center">
+          <HeaderBelt />
+        </div>
+      </div>
+
+      <Container className="py-12">
+        {/* Navigation */}
+        <nav className="mb-12 flex items-center sm:justify-center space-x-4 sm:space-x-12 overflow-x-auto pb-4 scrollbar-hide px-4 sm:px-0">
+          <NavigationItem
+            label={<TranslatableText>All</TranslatableText>}
+            isActive={activeFilter === "all"}
+            onClick={() => {
+              setActiveFilter("all");
+              trackEvent("newsroom_filter_change", { filter: "all" });
+            }}
+            count={tagCounts.all}
+          />
+          {tags.map((tag) => (
+            <NavigationItem
+              key={tag.id}
+              label={tag.name}
+              isActive={activeFilter === tag.id.toString()}
+              onClick={() => {
+                setActiveFilter(tag.id.toString());
+                trackEvent("newsroom_filter_change", { filter: tag.name });
+              }}
+              count={tagCounts[tag.id] || 0}
+            />
+          ))}
+        </nav>
+
+        {/* News Grid */}
+        {loading ? (
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FFB800]"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-bold text-gray-800">
+              <TranslatableText>Unable to load news</TranslatableText>
+            </h3>
+            <p className="text-gray-600 mt-2">
+              <TranslatableText>
+                We're experiencing technical difficulties. Please try again later.
+              </TranslatableText>
+            </p>
+          </div>
+        ) : filteredNews.length === 0 ? (
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-bold text-gray-800">
+              <TranslatableText>No news articles found</TranslatableText>
+            </h3>
+            <p className="text-gray-600 mt-2">
+              <TranslatableText>
+                Please check back later for updates or try another category.
+              </TranslatableText>
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredNews.map((item) => (
+              <NewsCard key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+      </Container>
+    </main>
   );
 };
 

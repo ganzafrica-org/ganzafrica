@@ -28,8 +28,17 @@ weighted evaluation scoring — all on top of the existing `applications` table,
 
 ```ts
 // backend/src/db/schema/recruitment/pipeline.ts
-export const pipeline_stage = ["submitted","screening","shortlisted","interview",
-  "evaluation","offer","hired","rejected","withdrawn"] as const;
+export const pipeline_stage = [
+  "submitted",
+  "screening",
+  "shortlisted",
+  "interview",
+  "evaluation",
+  "offer",
+  "hired",
+  "rejected",
+  "withdrawn",
+] as const;
 
 // ALTER applications:
 //   ADD pipeline_stage text NOT NULL DEFAULT 'submitted' (CHECK in enum)
@@ -37,28 +46,34 @@ export const pipeline_stage = ["submitted","screening","shortlisted","interview"
 //   ADD flagged boolean NOT NULL DEFAULT false
 //   ADD flag_note text
 
-export const application_stage_events = pgTable("application_stage_events", {
-  id: serial("id").primaryKey(),
-  application_id: integer("application_id").notNull()
-    .references(() => applications.id, { onDelete: "cascade" }),
-  from_stage: text("from_stage"),
-  to_stage: text("to_stage").notNull(),
-  actor_user_id: integer("actor_user_id").references(() => users.id), // NULL = automation
-  note: text("note"),
-  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({ appIdx: index("stage_events_app_idx").on(t.application_id) }));
+export const application_stage_events = pgTable(
+  "application_stage_events",
+  {
+    id: serial("id").primaryKey(),
+    application_id: integer("application_id")
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    from_stage: text("from_stage"),
+    to_stage: text("to_stage").notNull(),
+    actor_user_id: integer("actor_user_id").references(() => users.id), // NULL = automation
+    note: text("note"),
+    created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({ appIdx: index("stage_events_app_idx").on(t.application_id) }),
+);
 
 export const screening_rules = pgTable("screening_rules", {
   // same shape/operators as eligibility_rules (REC-01) minus reject_message, plus:
   id: serial("id").primaryKey(),
-  opportunity_id: integer("opportunity_id").notNull()
+  opportunity_id: integer("opportunity_id")
+    .notNull()
     .references(() => opportunities.id, { onDelete: "cascade" }),
   field_key: text("field_key").notNull(),
   operator: text("operator").notNull(),
   value: jsonb("value"),
-  action: text("action").notNull(),            // 'auto_reject' | 'flag'
-  email_template: text("email_template"),      // template key for auto_reject (null = silent reject)
-  rejection_reason: text("rejection_reason"),  // stored on the application
+  action: text("action").notNull(), // 'auto_reject' | 'flag'
+  email_template: text("email_template"), // template key for auto_reject (null = silent reject)
+  rejection_reason: text("rejection_reason"), // stored on the application
   is_active: boolean("is_active").notNull().default(true),
   hit_count: integer("hit_count").notNull().default(0),
   ...timestampFields,
@@ -66,7 +81,8 @@ export const screening_rules = pgTable("screening_rules", {
 
 export const evaluation_criteria = pgTable("evaluation_criteria", {
   id: serial("id").primaryKey(),
-  opportunity_id: integer("opportunity_id").notNull()
+  opportunity_id: integer("opportunity_id")
+    .notNull()
     .references(() => opportunities.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   weight: numeric("weight", { precision: 5, scale: 2 }).notNull().default("1"),
@@ -75,25 +91,40 @@ export const evaluation_criteria = pgTable("evaluation_criteria", {
   ...timestampFields,
 });
 
-export const application_scores = pgTable("application_scores", {
-  id: serial("id").primaryKey(),
-  application_id: integer("application_id").notNull()
-    .references(() => applications.id, { onDelete: "cascade" }),
-  criterion_id: integer("criterion_id").notNull()
-    .references(() => evaluation_criteria.id, { onDelete: "cascade" }),
-  reviewer_user_id: integer("reviewer_user_id").notNull().references(() => users.id),
-  score: integer("score").notNull(),           // 0..criterion.max_score, service-validated
-  comment: text("comment"),
-  ...timestampFields,
-}, (t) => ({ uniq: uniqueIndex("app_score_uniq").on(t.application_id, t.criterion_id, t.reviewer_user_id) }));
+export const application_scores = pgTable(
+  "application_scores",
+  {
+    id: serial("id").primaryKey(),
+    application_id: integer("application_id")
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    criterion_id: integer("criterion_id")
+      .notNull()
+      .references(() => evaluation_criteria.id, { onDelete: "cascade" }),
+    reviewer_user_id: integer("reviewer_user_id")
+      .notNull()
+      .references(() => users.id),
+    score: integer("score").notNull(), // 0..criterion.max_score, service-validated
+    comment: text("comment"),
+    ...timestampFields,
+  },
+  (t) => ({
+    uniq: uniqueIndex("app_score_uniq").on(t.application_id, t.criterion_id, t.reviewer_user_id),
+  }),
+);
 
-export const recruitment_emails = pgTable("recruitment_emails", {
-  id: serial("id").primaryKey(),
-  application_id: integer("application_id").notNull()
-    .references(() => applications.id, { onDelete: "cascade" }),
-  email_type: text("email_type").notNull(),    // 'received'|'rejected'|'shortlisted'|'interview'|'offer'|'hired'
-  sent_at: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({ uniq: uniqueIndex("recruitment_email_once").on(t.application_id, t.email_type) }));
+export const recruitment_emails = pgTable(
+  "recruitment_emails",
+  {
+    id: serial("id").primaryKey(),
+    application_id: integer("application_id")
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    email_type: text("email_type").notNull(), // 'received'|'rejected'|'shortlisted'|'interview'|'offer'|'hired'
+    sent_at: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({ uniq: uniqueIndex("recruitment_email_once").on(t.application_id, t.email_type) }),
+);
 ```
 
 Legacy `status` sync mapping (service-level, on every stage change):
@@ -104,6 +135,7 @@ values first and encode the map as data with a test.
 ## 4. API & services
 
 `backend/src/services/recruitment/pipeline.service.ts`:
+
 - `ALLOWED_TRANSITIONS: Record<Stage, Stage[]>` — submitted→screening|rejected|withdrawn;
   screening→shortlisted|rejected|withdrawn; shortlisted→interview|rejected|withdrawn;
   interview→evaluation|rejected|withdrawn; evaluation→offer|rejected|withdrawn;
@@ -127,16 +159,16 @@ values first and encode the map as data with a test.
 Routes (`routes/hr/recruitment.routes.ts`, mounted under `/hr` — all `requirePermission("recruitment:manage")`
 unless noted):
 
-| Endpoint | Behavior |
-|---|---|
-| `GET /hr/recruitment/opportunities` | HR list: opportunities + counts per stage (one GROUP BY) — also readable by `recruitment:read` (director) |
-| `GET /hr/recruitment/applications?opportunity_id&stage&flagged&search&page` | paged list, joined essentials |
-| `GET /hr/recruitment/applications/:id` | full detail: answers, stage events, scores, emails sent |
-| `POST /hr/recruitment/applications/:id/transition` `{to_stage, note?, send_email?: boolean}` | `transition()`; 409 on illegal move with `{allowed:[...]}` |
-| `POST /hr/recruitment/applications/:id/rescreen` | re-run screening (rules changed) |
-| CRUD `/hr/recruitment/opportunities/:id/screening-rules` | like REC-01 rules endpoints |
-| CRUD `/hr/recruitment/opportunities/:id/criteria` | evaluation criteria; block delete when scores exist |
-| `PUT /hr/recruitment/applications/:id/scores` `{scores:[{criterion_id, score, comment}]}` | upsert own scores (`recruitment:manage` OR an assigned reviewer — reviewers get `recruitment:read` + row check); weighted total = Σ(score/max*weight)/Σweight, returned computed |
+| Endpoint                                                                                     | Behavior                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /hr/recruitment/opportunities`                                                          | HR list: opportunities + counts per stage (one GROUP BY) — also readable by `recruitment:read` (director)                                                                         |
+| `GET /hr/recruitment/applications?opportunity_id&stage&flagged&search&page`                  | paged list, joined essentials                                                                                                                                                     |
+| `GET /hr/recruitment/applications/:id`                                                       | full detail: answers, stage events, scores, emails sent                                                                                                                           |
+| `POST /hr/recruitment/applications/:id/transition` `{to_stage, note?, send_email?: boolean}` | `transition()`; 409 on illegal move with `{allowed:[...]}`                                                                                                                        |
+| `POST /hr/recruitment/applications/:id/rescreen`                                             | re-run screening (rules changed)                                                                                                                                                  |
+| CRUD `/hr/recruitment/opportunities/:id/screening-rules`                                     | like REC-01 rules endpoints                                                                                                                                                       |
+| CRUD `/hr/recruitment/opportunities/:id/criteria`                                            | evaluation criteria; block delete when scores exist                                                                                                                               |
+| `PUT /hr/recruitment/applications/:id/scores` `{scores:[{criterion_id, score, comment}]}`    | upsert own scores (`recruitment:manage` OR an assigned reviewer — reviewers get `recruitment:read` + row check); weighted total = Σ(score/max\*weight)/Σweight, returned computed |
 
 ## 5. Frontend
 

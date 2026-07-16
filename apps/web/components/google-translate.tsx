@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import Script from 'next/script';
-import { Globe } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import Script from "next/script";
+import { Globe } from "lucide-react";
 
 declare global {
   interface Window {
@@ -18,39 +18,44 @@ export default function GoogleTranslate() {
   useEffect(() => {
     // Define the callback function immediately
     window.googleTranslateElementInit = () => {
-      if (!initialized.current && window.google?.translate?.TranslateElement && elementRef.current) {
+      if (
+        !initialized.current &&
+        window.google?.translate?.TranslateElement &&
+        elementRef.current
+      ) {
         try {
           new window.google.translate.TranslateElement(
             {
-              pageLanguage: 'en',
-              includedLanguages: 'en,es,fr,de,pt,ar,zh-CN,hi,ru,ja',
+              pageLanguage: "en",
+              includedLanguages: "en,es,fr,de,pt,ar,zh-CN,hi,ru,ja",
               layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE,
               autoDisplay: false,
             },
-            'google_translate_element'
+            "google_translate_element",
           );
           initialized.current = true;
-          console.log('Google Translate initialized successfully');
+          console.log("Google Translate initialized successfully");
 
           // Add event listeners to close dropdown after language selection and toggle functionality
           setTimeout(() => {
-            const comboBox = document.querySelector('.goog-te-combo') as HTMLSelectElement;
-            const menuValue = document.querySelector('.goog-te-menu-value') as HTMLElement;
+            const comboBox = document.querySelector(".goog-te-combo") as HTMLSelectElement;
+            const menuValue = document.querySelector(".goog-te-menu-value") as HTMLElement;
 
             if (comboBox && menuValue) {
               // Toggle dropdown when clicking the button again
-              menuValue.addEventListener('click', (e) => {
+              menuValue.addEventListener("click", (e) => {
                 setTimeout(() => {
-                  const menuFrame = document.querySelector('.goog-te-menu-frame') as HTMLElement;
+                  const menuFrame = document.querySelector(".goog-te-menu-frame") as HTMLElement;
                   if (menuFrame) {
                     // Check if dropdown is already open
-                    const isOpen = menuFrame.style.display !== 'none' &&
-                                   menuFrame.offsetParent !== null &&
-                                   window.getComputedStyle(menuFrame).display !== 'none';
+                    const isOpen =
+                      menuFrame.style.display !== "none" &&
+                      menuFrame.offsetParent !== null &&
+                      window.getComputedStyle(menuFrame).display !== "none";
 
                     if (isOpen) {
                       // If open, close it
-                      menuFrame.style.display = 'none';
+                      menuFrame.style.display = "none";
                       e.stopPropagation();
                     }
                   }
@@ -58,11 +63,11 @@ export default function GoogleTranslate() {
               });
 
               // Close dropdown when language is selected
-              comboBox.addEventListener('change', () => {
+              comboBox.addEventListener("change", () => {
                 setTimeout(() => {
-                  const menuFrame = document.querySelector('.goog-te-menu-frame') as HTMLElement;
+                  const menuFrame = document.querySelector(".goog-te-menu-frame") as HTMLElement;
                   if (menuFrame) {
-                    menuFrame.style.display = 'none';
+                    menuFrame.style.display = "none";
                   }
                   comboBox.blur();
                 }, 200);
@@ -71,37 +76,45 @@ export default function GoogleTranslate() {
               // Close dropdown when clicking on language items
               const closeDropdown = () => {
                 setTimeout(() => {
-                  const menuFrame = document.querySelector('.goog-te-menu-frame') as HTMLElement;
+                  const menuFrame = document.querySelector(".goog-te-menu-frame") as HTMLElement;
                   if (menuFrame) {
-                    menuFrame.style.display = 'none';
+                    menuFrame.style.display = "none";
                   }
                 }, 100);
               };
 
               // Listen for clicks on language items
-              document.addEventListener('click', (e) => {
+              document.addEventListener("click", (e) => {
                 const target = e.target as HTMLElement;
-                if (target.closest('.goog-te-menu-frame') && (target.closest('a') || target.closest('td'))) {
+                if (
+                  target.closest(".goog-te-menu-frame") &&
+                  (target.closest("a") || target.closest("td"))
+                ) {
                   closeDropdown();
                 }
               });
 
               // Close dropdown when clicking outside
-              document.addEventListener('click', (e) => {
+              document.addEventListener("click", (e) => {
                 const target = e.target as HTMLElement;
-                const menuFrame = document.querySelector('.goog-te-menu-frame') as HTMLElement;
-                const translateElement = document.querySelector('#google_translate_element') as HTMLElement;
+                const menuFrame = document.querySelector(".goog-te-menu-frame") as HTMLElement;
+                const translateElement = document.querySelector(
+                  "#google_translate_element",
+                ) as HTMLElement;
 
-                if (menuFrame && menuFrame.style.display !== 'none') {
-                  if (!target.closest('.goog-te-menu-frame') && !target.closest('#google_translate_element')) {
-                    menuFrame.style.display = 'none';
+                if (menuFrame && menuFrame.style.display !== "none") {
+                  if (
+                    !target.closest(".goog-te-menu-frame") &&
+                    !target.closest("#google_translate_element")
+                  ) {
+                    menuFrame.style.display = "none";
                   }
                 }
               });
             }
           }, 1000);
         } catch (error) {
-          console.error('Error initializing Google Translate:', error);
+          console.error("Error initializing Google Translate:", error);
         }
       }
     };
@@ -123,14 +136,18 @@ export default function GoogleTranslate() {
         src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
         strategy="afterInteractive"
         onLoad={() => {
-          console.log('Google Translate script loaded');
+          console.log("Google Translate script loaded");
           // Try to initialize if script loaded but callback wasn't called
-          if (window.google?.translate?.TranslateElement && elementRef.current && !initialized.current) {
+          if (
+            window.google?.translate?.TranslateElement &&
+            elementRef.current &&
+            !initialized.current
+          ) {
             window.googleTranslateElementInit();
           }
         }}
         onError={(e) => {
-          console.error('Failed to load Google Translate script:', e);
+          console.error("Failed to load Google Translate script:", e);
         }}
       />
 
@@ -145,15 +162,15 @@ export default function GoogleTranslate() {
 
       <style jsx global>{`
         /* Essential for Single Page Apps: prevents the 'white bar' push down */
-        body { 
-          top: 0 !important; 
-          position: static !important; 
+        body {
+          top: 0 !important;
+          position: static !important;
         }
-        .skiptranslate { 
-          display: inline-block !important; 
+        .skiptranslate {
+          display: inline-block !important;
         }
-        .goog-te-banner-frame { 
-          display: none !important; 
+        .goog-te-banner-frame {
+          display: none !important;
         }
 
         /* Ensure dropdown appears above everything */
@@ -163,9 +180,9 @@ export default function GoogleTranslate() {
         }
 
         /* Cleanup the Google UI to look modern */
-        .goog-te-gadget { 
-          font-size: 0 !important; 
-          color: transparent !important; 
+        .goog-te-gadget {
+          font-size: 0 !important;
+          color: transparent !important;
         }
         .goog-te-gadget-simple {
           background-color: transparent !important;
@@ -187,8 +204,8 @@ export default function GoogleTranslate() {
           font-size: 14px !important;
           text-decoration: none !important;
         }
-        .goog-te-menu-value img, 
-        .goog-te-menu-value span:nth-child(3), 
+        .goog-te-menu-value img,
+        .goog-te-menu-value span:nth-child(3),
         .goog-te-gadget-icon {
           display: none !important;
         }

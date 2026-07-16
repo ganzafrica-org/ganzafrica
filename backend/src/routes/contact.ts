@@ -6,38 +6,34 @@ import { contactValidation } from "../validations/contact";
 const router: Router = Router();
 
 // Public routes
-router.post(
-  "/",
-  validate(contactValidation.createContactSchema),
-  contactController.createContact
-);
+router.post("/", validate(contactValidation.createContactSchema), contactController.createContact);
 
 // Protected routes
 router.get(
   "/",
   authenticate,
   validate(contactValidation.listContactsSchema),
-  contactController.listContacts
+  contactController.listContacts,
 );
 
 router.get(
   "/:id",
   authenticate,
   validate(contactValidation.getContactSchema),
-  contactController.getContactById
+  contactController.getContactById,
 );
 
 router.put(
   "/:id",
   validate(contactValidation.updateContactSchema),
-  contactController.updateContact
+  contactController.updateContact,
 );
 
 router.delete(
   "/:id",
   authenticate,
   validate(contactValidation.deleteContactSchema),
-  contactController.deleteContact
+  contactController.deleteContact,
 );
 
 export default router;

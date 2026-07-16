@@ -18,45 +18,41 @@ const listAllApplicationsSchema = z.object({
   query: z.object({
     status: z.string().optional(),
     page: z.string().optional(),
-    limit: z.string().optional()
-  })
+    limit: z.string().optional(),
+  }),
 });
 
 // General application routes
 router.post(
   "/",
   validate(opportunityValidation.generalApplicationSchema),
-  opportunityController.submitGeneralApplication
+  opportunityController.submitGeneralApplication,
 );
 
-router.get(
-  "/",
-  validate(listAllApplicationsSchema),
-  opportunityController.listAllApplications
-);
+router.get("/", validate(listAllApplicationsSchema), opportunityController.listAllApplications);
 
 router.get(
   "/:id",
   validate(opportunityValidation.getOpportunitySchema),
-  opportunityController.getApplicationById
+  opportunityController.getApplicationById,
 );
 
 router.put(
   "/:id/status",
   validate(opportunityValidation.updateApplicationStatusSchema),
-  opportunityController.updateApplicationStatus
+  opportunityController.updateApplicationStatus,
 );
 
 router.post(
   "/:id/review",
   validate(opportunityValidation.applicationReviewSchema),
-  opportunityController.submitApplicationReview
+  opportunityController.submitApplicationReview,
 );
 
 router.delete(
   "/:id",
   validate(opportunityValidation.getOpportunitySchema),
-  opportunityController.deleteApplication
+  opportunityController.deleteApplication,
 );
 
 export default router;

@@ -8,7 +8,7 @@ import {
   markAsDeliverable,
   getProjectDeliverables,
   downloadFile,
-  getReportAnalytics
+  getReportAnalytics,
 } from "../controllers/reports.controller";
 import upload from "../middlewares/upload";
 import { authenticate } from "../middlewares/auth.middleware";
@@ -34,7 +34,7 @@ router.get("/projects/:projectId/files", getProjectFiles);
 router.get("/projects/:projectId/deliverables", getProjectDeliverables);
 
 // Upload file to a project
-router.post("/projects/:projectId/upload", upload.single('file'), uploadProjectFile);
+router.post("/projects/:projectId/upload", upload.single("file"), uploadProjectFile);
 
 // Mark file as final deliverable
 router.post("/files/:fileId/deliverable", markAsDeliverable);

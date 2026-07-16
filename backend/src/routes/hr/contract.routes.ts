@@ -13,36 +13,35 @@ router.post(
   "/",
   requireRole("HR"),
   validate(contractValidation.createContractSchema),
-  contractController.createContract
+  contractController.createContract,
 );
 
 router.get(
   "/",
   requireRole("HR", "IT"),
   validate(contractValidation.listContractsSchema),
-  contractController.listContracts
+  contractController.listContracts,
 );
 
 router.get(
   "/:contractId",
   requireRole("HR", "IT"),
   validate(contractValidation.contractIdParamSchema),
-  contractController.getContract
-
+  contractController.getContract,
 );
 
 router.patch(
   "/:contractId",
   requireRole("HR"),
   validate(contractValidation.updateContractSchema),
-  contractController.updateContract
+  contractController.updateContract,
 );
 
 router.delete(
   "/:contractId",
   requireRole("HR"),
   validate(contractValidation.contractIdParamSchema),
-  contractController.deleteContract
+  contractController.deleteContract,
 );
 
 export default router;

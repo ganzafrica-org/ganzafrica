@@ -52,12 +52,12 @@ export const hr_event_rsvps = pgTable("hr_event_rsvps", {
 
 ## 4. API
 
-| Endpoint | Permission | Behavior |
-|---|---|---|
-| CRUD `/hr/events` | events:manage (hr) | create notifies the audience (notification fan-out through existing module; cap batch) |
-| `GET /hr/events?from&to` | events:read (everyone) | audience-filtered to the caller (department/type match or null-audience) |
-| `POST /hr/events/:id/rsvp` `{response}` | audience member | upsert |
-| `GET /hr/events/:id/rsvps` | events:manage | counts + list |
+| Endpoint                                | Permission             | Behavior                                                                               |
+| --------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------- |
+| CRUD `/hr/events`                       | events:manage (hr)     | create notifies the audience (notification fan-out through existing module; cap batch) |
+| `GET /hr/events?from&to`                | events:read (everyone) | audience-filtered to the caller (department/type match or null-audience)               |
+| `POST /hr/events/:id/rsvp` `{response}` | audience member        | upsert                                                                                 |
+| `GET /hr/events/:id/rsvps`              | events:manage          | counts + list                                                                          |
 
 ## 5. Frontend
 
@@ -75,7 +75,7 @@ export const hr_event_rsvps = pgTable("hr_event_rsvps", {
 3. Notification fan-out targets exactly the audience (mock asserts recipients).
 4. Calendar range query correctness (tz-aware boundaries).
 5. Frontend: calendar shows both leave + events sources; RSVP flow (MSW).
-E2E: HR creates training for fellows → fellow sees + RSVPs; staff doesn't see it.
+   E2E: HR creates training for fellows → fellow sees + RSVPs; staff doesn't see it.
 
 ## 7. Acceptance criteria
 

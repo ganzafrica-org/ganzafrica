@@ -18,9 +18,7 @@ export function isEmailAuthorized(user: UserRole | null): boolean {
   if (!user || !user.email) return false;
 
   const authorizedEmails =
-    process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(",").map((e) =>
-      e.trim(),
-    ) || [];
+    process.env.NEXT_PUBLIC_INTERNAL_AUTHORIZED_EMAILS?.split(",").map((e) => e.trim()) || [];
 
   return authorizedEmails.includes(user.email);
 }
@@ -53,8 +51,7 @@ export function getCurrentUserRole(): UserRole | null {
       return null;
     }
 
-    const userStr =
-      localStorage.getItem("internal_user") || localStorage.getItem("user");
+    const userStr = localStorage.getItem("internal_user") || localStorage.getItem("user");
     if (userStr) {
       const user = JSON.parse(userStr);
       return {

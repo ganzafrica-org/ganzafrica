@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 import { db } from "../db/client";
-import { 
-  report_files, 
-  project_deliverables, 
+import {
+  report_files,
+  project_deliverables,
   report_analytics,
   report_templates,
   report_categories,
   task_teams,
   task_team_projects,
   tasks,
-  users
+  users,
 } from "../db/schema";
 import { eq, and, gte, lte, desc, asc, sql, inArray } from "drizzle-orm";
 import upload from "../middlewares/upload";
@@ -22,30 +22,30 @@ const logger = new Logger("ReportsController");
 // Get reports with filtering by date range, team, and project
 export const getReports = async (req: Request, res: Response) => {
   try {
-    const { 
-      dateRange, 
-      teamId, 
-      projectId, 
-      fileType, 
-      page = 1, 
+    const {
+      dateRange,
+      teamId,
+      projectId,
+      fileType,
+      page = 1,
       limit = 20,
-      sortBy = 'created_at',
-      sortOrder = 'desc'
+      sortBy = "created_at",
+      sortOrder = "desc",
     } = req.query;
 
     const offset = (Number(page) - 1) * Number(limit);
 
     // Build where conditions
     const whereConditions = [];
-    
+
     if (teamId) {
       whereConditions.push(eq(report_files.team_id, Number(teamId)));
     }
-    
+
     if (projectId) {
       whereConditions.push(eq(report_files.project_id, Number(projectId)));
     }
-    
+
     if (fileType) {
       whereConditions.push(eq(report_files.file_type, String(fileType)));
     }
@@ -87,17 +87,14 @@ export const getReports = async (req: Request, res: Response) => {
           id: users.id,
           name: users.name,
           email: users.email,
-        }
+        },
       })
       .from(report_files)
       .leftJoin(task_teams, eq(report_files.team_id, task_teams.id))
       .leftJoin(task_team_projects, eq(report_files.project_id, task_team_projects.id))
       .leftJoin(users, eq(report_files.uploaded_by, users.id))
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-      .orderBy(
-        sortOrder === 'asc' ? asc(report_files.created_at) : 
-        desc(report_files.created_at)
-      )
+      .orderBy(sortOrder === "asc" ? asc(report_files.created_at) : desc(report_files.created_at))
       .limit(Number(limit))
       .offset(offset);
 
@@ -115,13 +112,13 @@ export const getReports = async (req: Request, res: Response) => {
           page: Number(page),
           limit: Number(limit),
           total: totalCount[0].count,
-          pages: Math.ceil(totalCount[0].count / Number(limit))
-        }
-      }
+          pages: Math.ceil(totalCount[0].count / Number(limit)),
+        },
+      },
     });
   } catch (error) {
-    logger.error('Error fetching reports:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch reports' });
+    logger.error("Error fetching reports:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch reports" });
   }
 };
 
@@ -131,7 +128,7 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
     const { dateRange } = req.query;
 
     const whereConditions = [];
-    
+
     // Handle date range filtering
     if (dateRange) {
       const { start, end } = JSON.parse(String(dateRange));
@@ -154,40 +151,50 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
         created_at: task_teams.created_at,
         project_count: sql<number>`count(distinct ${task_team_projects.id})`,
         file_count: sql<number>`count(distinct ${report_files.id})`,
-        total_file_size: sql<number>`coalesce(sum(${report_files.file_size}), 0)`
+        total_file_size: sql<number>`coalesce(sum(${report_files.file_size}), 0)`,
       })
       .from(task_teams)
       .leftJoin(task_team_projects, eq(task_teams.id, task_team_projects.team_id))
-      .leftJoin(report_files, and(
-        eq(report_files.team_id, task_teams.id),
-        whereConditions.length > 0 ? and(...whereConditions) : undefined
-      ))
-      .groupBy(task_teams.id, task_teams.name, task_teams.description, task_teams.color, task_teams.status, task_teams.created_at)
+      .leftJoin(
+        report_files,
+        and(
+          eq(report_files.team_id, task_teams.id),
+          whereConditions.length > 0 ? and(...whereConditions) : undefined,
+        ),
+      )
+      .groupBy(
+        task_teams.id,
+        task_teams.name,
+        task_teams.description,
+        task_teams.color,
+        task_teams.status,
+        task_teams.created_at,
+      )
       .orderBy(desc(task_teams.created_at));
 
     // Get task attachment counts for all teams
-    const teamIds = teams.map(t => t.id);
+    const teamIds = teams.map((t) => t.id);
     const teamProjectIds = await db
       .select({
         team_id: task_team_projects.team_id,
-        project_id: task_team_projects.id
+        project_id: task_team_projects.id,
       })
       .from(task_team_projects)
       .where(inArray(task_team_projects.team_id, teamIds));
 
-    const projectIds = teamProjectIds.map(p => p.project_id);
-    
+    const projectIds = teamProjectIds.map((p) => p.project_id);
+
     const taskAttachmentCounts = await db
       .select({
         project_id: tasks.project_id,
-        attachment_count: sql<number>`sum(jsonb_array_length(${tasks.attachments}))`
+        attachment_count: sql<number>`sum(jsonb_array_length(${tasks.attachments}))`,
       })
       .from(tasks)
       .where(
         and(
           inArray(tasks.project_id, projectIds),
-          sql`${tasks.attachments} IS NOT NULL AND jsonb_array_length(${tasks.attachments}) > 0`
-        )
+          sql`${tasks.attachments} IS NOT NULL AND jsonb_array_length(${tasks.attachments}) > 0`,
+        ),
       )
       .groupBy(tasks.project_id);
 
@@ -200,28 +207,28 @@ export const getTeamsWithProjects = async (req: Request, res: Response) => {
     }
 
     // Combine file counts from report_files and task attachments
-    const teamsWithTotalFiles = teams.map(team => {
+    const teamsWithTotalFiles = teams.map((team) => {
       // Get all projects for this team
-      const teamProjects = teamProjectIds.filter(p => p.team_id === team.id);
+      const teamProjects = teamProjectIds.filter((p) => p.team_id === team.id);
       // Sum up attachment counts for all projects in this team
       const taskAttachmentCount = teamProjects.reduce((sum, project) => {
         const projectId = project.project_id;
-        return sum + (projectId !== null ? (attachmentCountMap.get(projectId) || 0) : 0);
+        return sum + (projectId !== null ? attachmentCountMap.get(projectId) || 0 : 0);
       }, 0);
 
       return {
         ...team,
-        file_count: Number(team.file_count) + taskAttachmentCount
+        file_count: Number(team.file_count) + taskAttachmentCount,
       };
     });
 
     res.json({
       success: true,
-      data: teamsWithTotalFiles
+      data: teamsWithTotalFiles,
     });
   } catch (error) {
-    logger.error('Error fetching teams with projects:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch teams with projects' });
+    logger.error("Error fetching teams with projects:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch teams with projects" });
   }
 };
 
@@ -232,7 +239,7 @@ export const getTeamProjects = async (req: Request, res: Response) => {
     const { dateRange } = req.query;
 
     const whereConditions = [eq(task_team_projects.team_id, Number(teamId))];
-    
+
     // Handle date range filtering for files
     if (dateRange) {
       const { start, end } = JSON.parse(String(dateRange));
@@ -257,62 +264,65 @@ export const getTeamProjects = async (req: Request, res: Response) => {
         created_at: task_team_projects.created_at,
         file_count: sql<number>`count(distinct ${report_files.id})`,
         total_file_size: sql<number>`coalesce(sum(${report_files.file_size}), 0)`,
-        deliverable_count: sql<number>`count(distinct ${project_deliverables.id})`
+        deliverable_count: sql<number>`count(distinct ${project_deliverables.id})`,
       })
       .from(task_team_projects)
-      .leftJoin(report_files, and(
-        eq(report_files.project_id, task_team_projects.id),
-        whereConditions.length > 1 ? and(...whereConditions.slice(1)) : undefined
-      ))
+      .leftJoin(
+        report_files,
+        and(
+          eq(report_files.project_id, task_team_projects.id),
+          whereConditions.length > 1 ? and(...whereConditions.slice(1)) : undefined,
+        ),
+      )
       .leftJoin(project_deliverables, eq(project_deliverables.project_id, task_team_projects.id))
       .where(eq(task_team_projects.team_id, Number(teamId)))
       .groupBy(
-        task_team_projects.id, 
-        task_team_projects.name, 
+        task_team_projects.id,
+        task_team_projects.name,
         task_team_projects.description,
         task_team_projects.status,
         task_team_projects.start_date,
         task_team_projects.end_date,
         task_team_projects.color,
-        task_team_projects.created_at
+        task_team_projects.created_at,
       )
       .orderBy(desc(task_team_projects.created_at));
 
     // Get task attachment counts for each project
-    const projectIds = projects.map(p => p.id);
-    
+    const projectIds = projects.map((p) => p.id);
+
     const taskAttachmentCounts = await db
       .select({
         project_id: tasks.project_id,
-        attachment_count: sql<number>`sum(jsonb_array_length(${tasks.attachments}))`
+        attachment_count: sql<number>`sum(jsonb_array_length(${tasks.attachments}))`,
       })
       .from(tasks)
       .where(
         and(
           inArray(tasks.project_id, projectIds),
-          sql`${tasks.attachments} IS NOT NULL AND jsonb_array_length(${tasks.attachments}) > 0`
-        )
+          sql`${tasks.attachments} IS NOT NULL AND jsonb_array_length(${tasks.attachments}) > 0`,
+        ),
       )
       .groupBy(tasks.project_id);
 
     // Combine file counts from report_files and task attachments
-    const projectsWithTotalFiles = projects.map(project => {
-      const taskAttachments = taskAttachmentCounts.find(t => t.project_id === project.id);
+    const projectsWithTotalFiles = projects.map((project) => {
+      const taskAttachments = taskAttachmentCounts.find((t) => t.project_id === project.id);
       const taskAttachmentCount = taskAttachments ? taskAttachments.attachment_count : 0;
-      
+
       return {
         ...project,
-        file_count: project.file_count + taskAttachmentCount
+        file_count: project.file_count + taskAttachmentCount,
       };
     });
 
     res.json({
       success: true,
-      data: projectsWithTotalFiles
+      data: projectsWithTotalFiles,
     });
   } catch (error) {
-    logger.error('Error fetching team projects:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch team projects' });
+    logger.error("Error fetching team projects:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch team projects" });
   }
 };
 
@@ -324,7 +334,7 @@ export const getProjectFiles = async (req: Request, res: Response) => {
 
     const offset = (Number(page) - 1) * Number(limit);
     const whereConditions = [eq(report_files.project_id, Number(projectId))];
-    
+
     if (fileType) {
       whereConditions.push(eq(report_files.file_type, String(fileType)));
     }
@@ -355,13 +365,12 @@ export const getProjectFiles = async (req: Request, res: Response) => {
           id: users.id,
           name: users.name,
           email: users.email,
-        }
+        },
       })
       .from(report_files)
       .leftJoin(users, eq(report_files.uploaded_by, users.id))
       .where(and(...whereConditions))
       .orderBy(desc(report_files.created_at));
-
 
     // Get files from task attachments
     const taskFiles = await db
@@ -385,11 +394,14 @@ export const getProjectFiles = async (req: Request, res: Response) => {
         logger.info(`Task ${task.id} attachments:`, {
           type: typeof task.attachments,
           isArray: Array.isArray(task.attachments),
-          length: Array.isArray(task.attachments) ? task.attachments.length : 'N/A',
-          sample: Array.isArray(task.attachments) && task.attachments.length > 0 ? task.attachments[0] : null
+          length: Array.isArray(task.attachments) ? task.attachments.length : "N/A",
+          sample:
+            Array.isArray(task.attachments) && task.attachments.length > 0
+              ? task.attachments[0]
+              : null,
         });
       }
-      
+
       if (task.attachments && Array.isArray(task.attachments)) {
         for (const attachment of task.attachments) {
           if (attachment.uploaded_by) {
@@ -401,23 +413,23 @@ export const getProjectFiles = async (req: Request, res: Response) => {
         userIds.add(task.created_by);
       }
     }
-    
+
     logger.info(`Found ${userIds.size} unique user IDs for uploaders`);
-    
+
     // Fetch all users in one go
     const usersMap = new Map<number, { name: string; email: string }>();
     for (const uid of userIds) {
       try {
         const user = await userService.getUserById(uid);
         usersMap.set(uid, {
-          name: user.name || 'Unknown',
-          email: user.email || 'unknown@example.com'
+          name: user.name || "Unknown",
+          email: user.email || "unknown@example.com",
         });
       } catch (error) {
         // If user not found, use default
         usersMap.set(uid, {
-          name: 'Unknown',
-          email: 'unknown@example.com'
+          name: "Unknown",
+          email: "unknown@example.com",
         });
       }
     }
@@ -427,7 +439,7 @@ export const getProjectFiles = async (req: Request, res: Response) => {
     for (const task of taskFiles) {
       // Handle case where attachments might be a JSON string
       let attachments = task.attachments;
-      if (typeof attachments === 'string') {
+      if (typeof attachments === "string") {
         try {
           attachments = JSON.parse(attachments);
         } catch (e) {
@@ -435,30 +447,35 @@ export const getProjectFiles = async (req: Request, res: Response) => {
           attachments = null;
         }
       }
-      
+
       if (attachments && Array.isArray(attachments) && attachments.length > 0) {
         logger.info(`Processing ${attachments.length} attachments for task ${task.id}`);
         for (const attachment of attachments) {
           // Get uploader information
           const uploaderId = attachment.uploaded_by || task.created_by;
-          const uploader = usersMap.get(uploaderId) || { name: 'Unknown', email: 'unknown@example.com' };
-          
+          const uploader = usersMap.get(uploaderId) || {
+            name: "Unknown",
+            email: "unknown@example.com",
+          };
+
           // Extract file type from filename or type field
-          let fileType = 'unknown';
+          let fileType = "unknown";
           if ((attachment as any).type) {
-            fileType = (attachment as any).type.split('/')[1] || 'unknown';
+            fileType = (attachment as any).type.split("/")[1] || "unknown";
           }
-          if (fileType === 'unknown' && attachment.filename) {
+          if (fileType === "unknown" && attachment.filename) {
             const match = attachment.filename.match(/\.([^.]+)$/);
-            fileType = match ? match[1].toLowerCase() : 'unknown';
+            fileType = match ? match[1].toLowerCase() : "unknown";
           }
-          
+
           // Get file size
-          const fileSize = (attachment as any).sizeKB ? (attachment as any).sizeKB * 1024 : ((attachment as any).size || 0);
-          
+          const fileSize = (attachment as any).sizeKB
+            ? (attachment as any).sizeKB * 1024
+            : (attachment as any).size || 0;
+
           // Use uploaded_at if available, otherwise use task created_at
           const createdAt = attachment.uploaded_at || task.created_at;
-          
+
           allTaskFiles.push({
             id: `task-${task.id}-${attachment.id}`,
             filename: attachment.filename,
@@ -469,23 +486,25 @@ export const getProjectFiles = async (req: Request, res: Response) => {
             created_at: createdAt,
             metadata: {
               description: `Attachment from task: ${task.title}`,
-              tags: ['task-attachment'],
+              tags: ["task-attachment"],
               task_id: task.id,
               task_title: task.title,
-              uploaded_by: uploaderId
+              uploaded_by: uploaderId,
             },
-            uploader: uploader
+            uploader: uploader,
           });
         }
       }
     }
 
-
     // Combine and sort all files
-    const allFiles = [...reportFiles, ...allTaskFiles]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const allFiles = [...reportFiles, ...allTaskFiles].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
 
-    logger.info(`Total files found for project ${projectId}: ${allFiles.length} (${reportFiles.length} from report_files, ${allTaskFiles.length} from task attachments)`);
+    logger.info(
+      `Total files found for project ${projectId}: ${allFiles.length} (${reportFiles.length} from report_files, ${allTaskFiles.length} from task attachments)`,
+    );
 
     // Apply pagination
     const paginatedFiles = allFiles.slice(offset, offset + Number(limit));
@@ -498,13 +517,13 @@ export const getProjectFiles = async (req: Request, res: Response) => {
           page: Number(page),
           limit: Number(limit),
           total: allFiles.length,
-          pages: Math.ceil(allFiles.length / Number(limit))
-        }
-      }
+          pages: Math.ceil(allFiles.length / Number(limit)),
+        },
+      },
     });
   } catch (error) {
-    logger.error('Error fetching project files:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch project files' });
+    logger.error("Error fetching project files:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch project files" });
   }
 };
 
@@ -516,57 +535,60 @@ export const uploadProjectFile = async (req: Request, res: Response) => {
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
+      return res.status(400).json({ success: false, message: "No file uploaded" });
     }
 
     // Get file details - multer-s3 provides different properties
     const file = req.file as any; // multer-s3 extends the standard multer file object
     const { key, originalname, size, mimetype, location } = file;
-    
+
     // Get subdirectory based on file type
     const subdir = getFileSubdirectory(mimetype);
-    
+
     // Extract filename from the key (removes the uploads/subdir/ prefix)
-    const filename = key.split('/').pop();
-    
+    const filename = key.split("/").pop();
+
     // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
     const fileUrl = getFileUrl(location);
 
     // Create file record
-    const fileRecord = await db.insert(report_files).values({
-      team_id: teamId ? Number(teamId) : undefined,
-      project_id: Number(projectId),
-      task_id: taskId ? Number(taskId) : undefined,
-      filename: filename,
-      original_filename: originalname,
-      file_type: mimetype.split('/')[1] || 'unknown',
-      file_size: Number(size),
-      file_path: key, // S3 key acts as the path
-      file_url: fileUrl, // Use the S3 URL
-      mime_type: mimetype,
-      uploaded_by: Number(userId),
-      category_id: categoryId ? Number(categoryId) : undefined,
-      metadata: {
-        description,
-        tags: tags ? tags.split(',').map((tag: string) => tag.trim()) : [],
+    const fileRecord = await db
+      .insert(report_files)
+      .values({
+        team_id: teamId ? Number(teamId) : undefined,
+        project_id: Number(projectId),
+        task_id: taskId ? Number(taskId) : undefined,
+        filename: filename,
         original_filename: originalname,
-        checksum: filename, // You might want to calculate actual checksum
-        category: subdir
-      }
-    }).returning();
+        file_type: mimetype.split("/")[1] || "unknown",
+        file_size: Number(size),
+        file_path: key, // S3 key acts as the path
+        file_url: fileUrl, // Use the S3 URL
+        mime_type: mimetype,
+        uploaded_by: Number(userId),
+        category_id: categoryId ? Number(categoryId) : undefined,
+        metadata: {
+          description,
+          tags: tags ? tags.split(",").map((tag: string) => tag.trim()) : [],
+          original_filename: originalname,
+          checksum: filename, // You might want to calculate actual checksum
+          category: subdir,
+        },
+      })
+      .returning();
 
     res.json({
       success: true,
       data: fileRecord[0],
-      message: 'File uploaded successfully'
+      message: "File uploaded successfully",
     });
   } catch (error) {
-    logger.error('Error uploading file:', error);
-    res.status(500).json({ success: false, message: 'Failed to upload file' });
+    logger.error("Error uploading file:", error);
+    res.status(500).json({ success: false, message: "Failed to upload file" });
   }
 };
 
@@ -578,7 +600,7 @@ export const markAsDeliverable = async (req: Request, res: Response) => {
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
     // Get file details
@@ -589,32 +611,35 @@ export const markAsDeliverable = async (req: Request, res: Response) => {
       .limit(1);
 
     if (!file.length) {
-      return res.status(404).json({ success: false, message: 'File not found' });
+      return res.status(404).json({ success: false, message: "File not found" });
     }
 
     // Create deliverable record
-    const deliverable = await db.insert(project_deliverables).values({
-      project_id: Number(projectId),
-      title: title || file[0].original_filename,
-      description,
-      file_type: file[0].file_type,
-      file_size: Number(file[0].file_size),
-      file_path: file[0].file_path,
-      file_url: file[0].file_url,
-      version,
-      is_final: true,
-      uploaded_by: Number(userId),
-      metadata: file[0].metadata
-    }).returning();
+    const deliverable = await db
+      .insert(project_deliverables)
+      .values({
+        project_id: Number(projectId),
+        title: title || file[0].original_filename,
+        description,
+        file_type: file[0].file_type,
+        file_size: Number(file[0].file_size),
+        file_path: file[0].file_path,
+        file_url: file[0].file_url,
+        version,
+        is_final: true,
+        uploaded_by: Number(userId),
+        metadata: file[0].metadata,
+      })
+      .returning();
 
     res.json({
       success: true,
       data: deliverable[0],
-      message: 'File marked as final deliverable'
+      message: "File marked as final deliverable",
     });
   } catch (error) {
-    logger.error('Error marking as deliverable:', error);
-    res.status(500).json({ success: false, message: 'Failed to mark as deliverable' });
+    logger.error("Error marking as deliverable:", error);
+    res.status(500).json({ success: false, message: "Failed to mark as deliverable" });
   }
 };
 
@@ -638,7 +663,7 @@ export const getProjectDeliverables = async (req: Request, res: Response) => {
           id: users.id,
           name: users.name,
           email: users.email,
-        }
+        },
       })
       .from(project_deliverables)
       .leftJoin(users, eq(project_deliverables.uploaded_by, users.id))
@@ -647,11 +672,11 @@ export const getProjectDeliverables = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: deliverables
+      data: deliverables,
     });
   } catch (error) {
-    logger.error('Error fetching deliverables:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch deliverables' });
+    logger.error("Error fetching deliverables:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch deliverables" });
   }
 };
 
@@ -667,17 +692,17 @@ export const downloadFile = async (req: Request, res: Response) => {
       .limit(1);
 
     if (!file.length) {
-      return res.status(404).json({ success: false, message: 'File not found' });
+      return res.status(404).json({ success: false, message: "File not found" });
     }
 
     const filePath = file[0].file_path;
-    
+
     // For S3 files, we don't need to check if file exists on disk
     // The file URL should be used directly
     res.redirect(file[0].file_url || filePath);
   } catch (error) {
-    logger.error('Error downloading file:', error);
-    res.status(500).json({ success: false, message: 'Failed to download file' });
+    logger.error("Error downloading file:", error);
+    res.status(500).json({ success: false, message: "Failed to download file" });
   }
 };
 
@@ -687,11 +712,11 @@ export const getReportAnalytics = async (req: Request, res: Response) => {
     const { dateRange, teamId, projectId } = req.query;
 
     const whereConditions = [];
-    
+
     if (teamId) {
       whereConditions.push(eq(report_files.team_id, Number(teamId)));
     }
-    
+
     if (projectId) {
       whereConditions.push(eq(report_files.project_id, Number(projectId)));
     }
@@ -714,7 +739,7 @@ export const getReportAnalytics = async (req: Request, res: Response) => {
         total_size: sql<number>`sum(${report_files.file_size})`,
         file_types: sql<string>`array_agg(distinct ${report_files.file_type})`,
         uploads_by_month: sql<string>`to_char(${report_files.created_at}, 'YYYY-MM')`,
-        uploads_count: sql<number>`count(*)`
+        uploads_count: sql<number>`count(*)`,
       })
       .from(report_files)
       .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
@@ -722,11 +747,10 @@ export const getReportAnalytics = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      data: analytics
+      data: analytics,
     });
   } catch (error) {
-    logger.error('Error fetching analytics:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch analytics' });
+    logger.error("Error fetching analytics:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch analytics" });
   }
 };
-

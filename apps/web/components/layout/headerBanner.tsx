@@ -18,14 +18,9 @@ const HeaderBanner = ({
           <div className="container mx-auto px-4 h-full overflow-x-auto">
             <div className="flex justify-between items-center h-full min-w-max">
               {categories.map((category, index) => (
-                <div
-                  key={index}
-                  className="flex items-center py-1 px-2 whitespace-nowrap"
-                >
+                <div key={index} className="flex items-center py-1 px-2 whitespace-nowrap">
                   <div className="w-3 h-3 bg-black rounded-full mr-1 md:mr-3 flex-shrink-0"></div>
-                  <span className="text-sm md:text-xl font-bold">
-                    {category}
-                  </span>
+                  <span className="text-sm md:text-xl font-bold">{category}</span>
                 </div>
               ))}
             </div>

@@ -1,20 +1,20 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { TeamMember } from '@/lib/types';
-import { UserAvatar } from './user-avatar';
+import React, { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
+import { TeamMember } from "@/lib/types";
+import { UserAvatar } from "./user-avatar";
 
 interface MemberDropdownProps {
   members: TeamMember[];
   onSelect: (memberId: string) => void;
   selectedMembers?: string[];
   trigger?: React.ReactNode;
-  align?: 'left' | 'right';
+  align?: "left" | "right";
 }
 
 /**
  * Reusable Member Dropdown Component
- * 
+ *
  * @example
  * <MemberDropdown
  *   members={availableMembers}
@@ -28,7 +28,7 @@ export function MemberDropdown({
   onSelect,
   selectedMembers = [],
   trigger,
-  align = 'right',
+  align = "right",
 }: MemberDropdownProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -42,8 +42,8 @@ export function MemberDropdown({
     };
 
     if (isOpen) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [isOpen]);
 
@@ -59,21 +59,21 @@ export function MemberDropdown({
         {trigger || (
           <button
             className="flex items-center gap-1 text-sm font-medium transition px-2 py-1"
-            style={{ 
-              color: '#076297',
-              backgroundColor: isOpen ? '#f0f8fc' : 'transparent',
-              borderRadius: '7px'
+            style={{
+              color: "#076297",
+              backgroundColor: isOpen ? "#f0f8fc" : "transparent",
+              borderRadius: "7px",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = '#054a73';
+              e.currentTarget.style.color = "#054a73";
               if (!isOpen) {
-                e.currentTarget.style.backgroundColor = '#f9fafb';
+                e.currentTarget.style.backgroundColor = "#f9fafb";
               }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#076297';
+              e.currentTarget.style.color = "#076297";
               if (!isOpen) {
-                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.backgroundColor = "transparent";
               }
             }}
           >
@@ -85,9 +85,9 @@ export function MemberDropdown({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div 
-          className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} mt-2 bg-white rounded-lg shadow-xl z-50 min-w-[280px] max-h-[400px] overflow-y-auto`}
-          style={{ border: '1px solid #e5e7eb' }}
+        <div
+          className={`absolute ${align === "right" ? "right-0" : "left-0"} mt-2 bg-white rounded-lg shadow-xl z-50 min-w-[280px] max-h-[400px] overflow-y-auto`}
+          style={{ border: "1px solid #e5e7eb" }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-2">
@@ -98,29 +98,32 @@ export function MemberDropdown({
             ) : (
               members.map((member) => {
                 const isSelected = selectedMembers.includes(member.id);
-                
+
                 return (
                   <button
                     key={member.id}
                     onClick={() => handleSelect(member.id)}
                     className="w-full p-2 rounded-lg flex items-center gap-3 transition text-left"
                     style={{
-                      backgroundColor: isSelected ? '#f0f8fc' : 'transparent',
+                      backgroundColor: isSelected ? "#f0f8fc" : "transparent",
                     }}
                     onMouseEnter={(e) => {
                       if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = '#f9fafb';
+                        e.currentTarget.style.backgroundColor = "#f9fafb";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (!isSelected) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.backgroundColor = "transparent";
                       }
                     }}
                   >
-                    <div className="w-8 h-8 rounded-full overflow-hidden" style={{ backgroundColor: member.color }}>
-                      <UserAvatar 
-                        userId={parseInt(member.id)} 
+                    <div
+                      className="w-8 h-8 rounded-full overflow-hidden"
+                      style={{ backgroundColor: member.color }}
+                    >
+                      <UserAvatar
+                        userId={parseInt(member.id)}
                         size="md"
                         className="w-8 h-8"
                         fallbackColor={member.color}
@@ -131,7 +134,9 @@ export function MemberDropdown({
                       <div className="text-xs text-gray-500">{member.email}</div>
                     </div>
                     {isSelected && (
-                      <div style={{ color: '#076297' }} className="font-bold">✓</div>
+                      <div style={{ color: "#076297" }} className="font-bold">
+                        ✓
+                      </div>
                     )}
                   </button>
                 );
@@ -143,4 +148,3 @@ export function MemberDropdown({
     </div>
   );
 }
-

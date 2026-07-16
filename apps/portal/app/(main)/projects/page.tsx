@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Filter,
@@ -16,11 +16,11 @@ import {
   Edit,
   Trash,
   RefreshCw,
-  AlertCircle
-} from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import apiClient from '@/lib/api-client';
+  AlertCircle,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import apiClient from "@/lib/api-client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 // Define interfaces for our data structures
 interface Project {
@@ -80,7 +80,7 @@ interface ProjectParams {
 const ProjectsPage = () => {
   const router = useRouter();
   // State for the active tab
-  const [activeTab, setActiveTab] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>("all");
 
   // States for data and UI
   const [projects, setProjects] = useState<Project[]>([]);
@@ -93,16 +93,16 @@ const ProjectsPage = () => {
   const [limit, setLimit] = useState<number>(10);
   const [totalProjects, setTotalProjects] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('created_at');
-  const [sortOrder, setSortOrder] = useState<string>('desc');
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortOrder, setSortOrder] = useState<string>("desc");
 
   // States for tab counts
   const [tabCounts, setTabCounts] = useState<TabCounts>({
     all: 0,
-    'active': 0, // Maps to 'in-progress' in UI
-    'completed': 0,
-    'planned': 0  // Maps to 'pending' in UI
+    active: 0, // Maps to 'in-progress' in UI
+    completed: 0,
+    planned: 0, // Maps to 'pending' in UI
   });
 
   // Add state to track if tab counts are loaded
@@ -112,7 +112,7 @@ const ProjectsPage = () => {
 
   // State for dropdown menu
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  
+
   // State for delete confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<number | null>(null);
@@ -131,20 +131,20 @@ const ProjectsPage = () => {
   const handleAction = async (action: string, projectId: number) => {
     setOpenMenuId(null); // Close the menu
 
-    switch(action) {
-      case 'view':
+    switch (action) {
+      case "view":
         // Navigate to project details page
         router.push(`/projects/${projectId}`);
         break;
-      case 'delete':
+      case "delete":
         setProjectToDelete(projectId);
         setIsDeleteDialogOpen(true);
         break;
-      case 'update':
+      case "update":
         // Navigate to update page
         router.push(`/projects/edit-project/${projectId}`);
         break;
-      case 'status':
+      case "status":
         // Open status change modal/form
         break;
       default:
@@ -158,25 +158,25 @@ const ProjectsPage = () => {
 
     try {
       await apiClient.delete(`/projects/${projectToDelete}`);
-      
+
       // Close dialog and reset state
       setIsDeleteDialogOpen(false);
       setProjectToDelete(null);
-      
+
       // Show success toast
-      toast.success('Project deleted successfully');
-      
+      toast.success("Project deleted successfully");
+
       // Trigger refresh by updating refreshTrigger
       // This will cause the useEffect to refetch projects
-      setRefreshTrigger(prev => prev + 1);
-      
+      setRefreshTrigger((prev) => prev + 1);
+
       // Adjust page if needed (if we deleted the last item on the page)
       if (projects.length === 1 && page > 1) {
         setPage(page - 1);
       }
     } catch (error: any) {
-      console.error('Error deleting project:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete project. Please try again.');
+      console.error("Error deleting project:", error);
+      toast.error(error.response?.data?.message || "Failed to delete project. Please try again.");
       setIsDeleteDialogOpen(false);
       setProjectToDelete(null);
     }
@@ -189,27 +189,36 @@ const ProjectsPage = () => {
 
   // Calculate sequential row number based on pagination
   const getRowNumber = (index: number) => {
-    return ((page - 1) * limit) + index + 1;
+    return (page - 1) * limit + index + 1;
   };
 
   // Map API status to UI status
   const mapStatusToUI = (apiStatus: string) => {
-    switch(apiStatus) {
-      case 'active': return 'in-progress';
-      case 'planned': return 'pending';
-      case 'completed': return 'completed';
-      default: return apiStatus;
+    switch (apiStatus) {
+      case "active":
+        return "in-progress";
+      case "planned":
+        return "pending";
+      case "completed":
+        return "completed";
+      default:
+        return apiStatus;
     }
   };
 
   // Map UI status to API status
   const mapUIToAPIStatus = (uiStatus: string) => {
-    switch(uiStatus) {
-      case 'in-progress': return 'active';
-      case 'pending': return 'planned';
-      case 'completed': return 'completed';
-      case 'all': return '';
-      default: return uiStatus;
+    switch (uiStatus) {
+      case "in-progress":
+        return "active";
+      case "pending":
+        return "planned";
+      case "completed":
+        return "completed";
+      case "all":
+        return "";
+      default:
+        return uiStatus;
     }
   };
 
@@ -233,14 +242,18 @@ const ProjectsPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await apiClient.get('/categories');
+        const response = await apiClient.get("/categories");
 
         // Handle different response formats
         if (response.data) {
           let categoriesData = response.data;
 
           // If response is an object with categories property, use that
-          if (!Array.isArray(response.data) && response.data.categories && Array.isArray(response.data.categories)) {
+          if (
+            !Array.isArray(response.data) &&
+            response.data.categories &&
+            Array.isArray(response.data.categories)
+          ) {
             categoriesData = response.data.categories;
           }
 
@@ -249,7 +262,7 @@ const ProjectsPage = () => {
             categoriesData = [
               { id: 1, name: "Food System" },
               { id: 2, name: "Climate Adaptation" },
-              { id: 3, name: "Data & Evidence" }
+              { id: 3, name: "Data & Evidence" },
             ];
           }
 
@@ -266,31 +279,31 @@ const ProjectsPage = () => {
             });
             setCategories(categoriesObj);
           } else {
-            console.error('Unable to process categories data:', categoriesData);
+            console.error("Unable to process categories data:", categoriesData);
             // Use default categories
             setCategories({
               1: "Food System",
               2: "Climate Adaptation",
-              3: "Data & Evidence"
+              3: "Data & Evidence",
             });
           }
         } else {
-          console.error('Invalid or missing categories response');
+          console.error("Invalid or missing categories response");
           // Use default categories
           setCategories({
             1: "Food System",
             2: "Climate Adaptation",
-            3: "Data & Evidence"
+            3: "Data & Evidence",
           });
         }
         setCategoriesLoaded(true);
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
         // Use default categories in case of error
         setCategories({
           1: "Food System",
           2: "Climate Adaptation",
-          3: "Data & Evidence"
+          3: "Data & Evidence",
         });
         setCategoriesLoaded(true);
       }
@@ -300,10 +313,10 @@ const ProjectsPage = () => {
 
     // Set users (in a real app, you would fetch users from API as well)
     setUsers({
-      1: 'Mukamana Fransine',
-      2: 'John Doe',
-      3: 'Jane Smith',
-      4: 'Mukamana Fransine'
+      1: "Mukamana Fransine",
+      2: "John Doe",
+      3: "Jane Smith",
+      4: "Mukamana Fransine",
     });
   }, []);
 
@@ -311,8 +324,8 @@ const ProjectsPage = () => {
   const fetchTabCounts = async () => {
     try {
       // Fetch all projects with limit=0 just to get count
-      const response = await apiClient.get('/projects', {
-        params: { limit: 0 }
+      const response = await apiClient.get("/projects", {
+        params: { limit: 0 },
       });
 
       // Get the total count from the response
@@ -326,9 +339,9 @@ const ProjectsPage = () => {
 
       if (response.data.projects && Array.isArray(response.data.projects)) {
         response.data.projects.forEach((project: Project) => {
-          if (project.status === 'active') activeCount++;
-          else if (project.status === 'completed') completedCount++;
-          else if (project.status === 'planned') plannedCount++;
+          if (project.status === "active") activeCount++;
+          else if (project.status === "completed") completedCount++;
+          else if (project.status === "planned") plannedCount++;
         });
       }
 
@@ -336,18 +349,18 @@ const ProjectsPage = () => {
         all: allCount,
         active: activeCount,
         completed: completedCount,
-        planned: plannedCount
+        planned: plannedCount,
       });
 
       setTabCountsLoaded(true);
     } catch (error) {
-      console.error('Error fetching tab counts:', error);
+      console.error("Error fetching tab counts:", error);
       // Use default values in case of error
       setTabCounts({
         all: 0,
         active: 0,
         completed: 0,
-        planned: 0
+        planned: 0,
       });
       setTabCountsLoaded(true);
     }
@@ -393,7 +406,7 @@ const ProjectsPage = () => {
           page,
           limit,
           sort_by: sortBy,
-          sort_order: sortOrder
+          sort_order: sortOrder,
         };
 
         // Add optional filters if they exist
@@ -404,10 +417,9 @@ const ProjectsPage = () => {
         if (apiStatus) params.status = apiStatus;
 
         // Make API request
-        const response = await apiClient.get('/projects', { params });
+        const response = await apiClient.get("/projects", { params });
 
         if (response.data) {
-
           setProjects(response.data.projects || []);
 
           // Extract pagination info
@@ -421,7 +433,7 @@ const ProjectsPage = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        console.error("Error fetching projects:", error);
         setProjects([]);
       } finally {
         setLoading(false);
@@ -435,36 +447,36 @@ const ProjectsPage = () => {
   const getTeamLead = (project: Project) => {
     if (!project.members || project.members.length === 0) {
       // If no members, use created_by as fallback for lead
-      return users[project.created_by] || 'Mukamana Fransine';
+      return users[project.created_by] || "Mukamana Fransine";
     }
-    
-    const lead = project.members.find(member => member.role === 'lead');
+
+    const lead = project.members.find((member) => member.role === "lead");
     if (lead) {
       // Return user name from our users map if available
-      return users[lead.user_id] || 'Mukamana Fransine';
+      return users[lead.user_id] || "Mukamana Fransine";
     } else {
       // Fallback to created_by
-      return users[project.created_by] || 'Mukamana Fransine';
+      return users[project.created_by] || "Mukamana Fransine";
     }
   };
-  
+
   // Format date for display
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    if (!dateString) return "N/A";
+
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
-  
+
   // Get category name from category_id
   const getCategoryName = (categoryId: number | string) => {
-    if (!categoryId) return '';
-    
+    if (!categoryId) return "";
+
     // Try both the raw ID and the string version
-    return categories[categoryId] || categories[categoryId.toString()] || '';
+    return categories[categoryId] || categories[categoryId.toString()] || "";
   };
 
   // Handle tab change
@@ -486,7 +498,10 @@ const ProjectsPage = () => {
             <ArrowUp className="w-4 h-4 mr-2" />
             Import Projects
           </button>
-          <Link href="/projects/add-project" className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800">
+          <Link
+            href="/projects/add-project"
+            className="flex items-center px-4 py-2 bg-green-700 rounded text-sm font-medium text-white hover:bg-green-800"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Project
           </Link>
@@ -494,56 +509,68 @@ const ProjectsPage = () => {
       </div>
 
       {/*  Tabs - */}
-      <div className='bg-white'>
+      <div className="bg-white">
         <div className="flex border-b border-gray-200 mb-6 bg-white">
           <button
-            onClick={() => handleTabChange('all')}
+            onClick={() => handleTabChange("all")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'all'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "all"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             All
-            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.all}</span>
+            <span className="ml-2 bg-gray-200 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.all}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('in-progress')}
+            onClick={() => handleTabChange("in-progress")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'in-progress'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "in-progress"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             In progress
-            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.active}</span>
+            <span className="ml-2 bg-orange-100 text-orange-800 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.active}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('completed')}
+            onClick={() => handleTabChange("completed")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'completed'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "completed"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Completed
-            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.completed}</span>
+            <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.completed}
+            </span>
           </button>
           <button
-            onClick={() => handleTabChange('pending')}
+            onClick={() => handleTabChange("pending")}
             className={`py-3 px-4 text-sm font-medium relative ${
-              activeTab === 'pending'
-                ? 'border-b-2 border-green-700 text-green-700'
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "pending"
+                ? "border-b-2 border-green-700 text-green-700"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Pending
-            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">{tabCounts.planned}</span>
+            <span className="ml-2 bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-medium">
+              {tabCounts.planned}
+            </span>
           </button>
         </div>
 
         {/* Project list title */}
-        <h2 className="text-lg font-bold mb-4">List of {activeTab === 'all' ? '' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Projects</h2>
+        <h2 className="text-lg font-bold mb-4">
+          List of{" "}
+          {activeTab === "all" ? "" : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}{" "}
+          Projects
+        </h2>
 
         {/* Search and filter -  */}
         <div className="flex justify-end mb-4">
@@ -552,16 +579,16 @@ const ProjectsPage = () => {
               <Search className="w-4 h-4 text-gray-500" />
             </div>
             <form onSubmit={handleSearchSubmit}>
-              <input 
-                type="text" 
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5" 
+              <input
+                type="text"
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded block w-full pl-10 p-2.5"
                 placeholder="Search"
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
             </form>
           </div>
-          <button 
+          <button
             className="ml-2 p-2.5 bg-green-700 text-white rounded"
             onClick={() => {
               // Open a filter modal or expand filter options
@@ -582,19 +609,56 @@ const ProjectsPage = () => {
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project name</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created at</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    #
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Project name
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Category
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Location
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Created at
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {projects.map((project, index) => (
                   <tr key={project.id || index} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{getRowNumber(index)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {getRowNumber(index)}
+                    </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       {project.name}
                     </td>
@@ -602,38 +666,42 @@ const ProjectsPage = () => {
                       {getCategoryName(project.category_id)}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {typeof project.location === 'string' && project.location.length > 0
-                        ? project.location.split(',')[0].trim()
-                        : 'N/A'}
+                      {typeof project.location === "string" && project.location.length > 0
+                        ? project.location.split(",")[0].trim()
+                        : "N/A"}
                     </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(project.created_at)}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatDate(project.created_at)}
+                    </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      {mapStatusToUI(project.status) === 'completed' && (
+                      {mapStatusToUI(project.status) === "completed" && (
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                           • Completed
                         </span>
                       )}
-                      {mapStatusToUI(project.status) === 'pending' && (
+                      {mapStatusToUI(project.status) === "pending" && (
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
                           • Pending
                         </span>
                       )}
-                      {mapStatusToUI(project.status) === 'in-progress' && (
+                      {mapStatusToUI(project.status) === "in-progress" && (
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
                           • In Progress
                         </span>
                       )}
-                      {!['completed', 'pending', 'in-progress'].includes(mapStatusToUI(project.status)) && (
+                      {!["completed", "pending", "in-progress"].includes(
+                        mapStatusToUI(project.status),
+                      ) && (
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                          • {project.status || 'Unknown'}
+                          • {project.status || "Unknown"}
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 relative">
-                      <button 
+                      <button
                         className="text-gray-500 hover:text-gray-700"
                         onClick={() => {
-                          if (project && typeof project.id === 'number') {
+                          if (project && typeof project.id === "number") {
                             toggleMenu(project.id);
                           }
                         }}
@@ -641,33 +709,36 @@ const ProjectsPage = () => {
                       >
                         <MoreHorizontal className="w-5 h-5" />
                       </button>
-                      
+
                       {/* Dropdown menu */}
                       {openMenuId === project.id && (
-                        <div ref={menuRef} className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div
+                          ref={menuRef}
+                          className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        >
                           <button
-                            onClick={() => handleAction('view', project.id)}
+                            onClick={() => handleAction("view", project.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <Eye className="w-4 h-4 mr-2" />
                             View details
                           </button>
                           <button
-                            onClick={() => handleAction('update', project.id)}
+                            onClick={() => handleAction("update", project.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <Edit className="w-4 h-4 mr-2" />
                             Update
                           </button>
                           <button
-                            onClick={() => handleAction('status', project.id)}
+                            onClick={() => handleAction("status", project.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                           >
                             <RefreshCw className="w-4 h-4 mr-2" />
                             Change status
                           </button>
                           <button
-                            onClick={() => handleAction('delete', project.id)}
+                            onClick={() => handleAction("delete", project.id)}
                             className="flex items-center w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                           >
                             <Trash className="w-4 h-4 mr-2" />
@@ -686,10 +757,11 @@ const ProjectsPage = () => {
         {/* Pagination -  */}
         <div className="flex items-center justify-between py-3">
           <div className="text-sm text-gray-500">
-            Showing {projects.length > 0 ? ((page - 1) * limit) + 1 : 0} to {Math.min(page * limit, totalProjects)} out of {totalProjects} entries
+            Showing {projects.length > 0 ? (page - 1) * limit + 1 : 0} to{" "}
+            {Math.min(page * limit, totalProjects)} out of {totalProjects} entries
           </div>
           <div className="flex items-center space-x-1">
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(1)}
               disabled={page === 1}
@@ -697,7 +769,7 @@ const ProjectsPage = () => {
             >
               <ChevronsLeft className="w-4 h-4" />
             </button>
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(Math.max(1, page - 1))}
               disabled={page === 1}
@@ -705,19 +777,19 @@ const ProjectsPage = () => {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            
+
             {/* Display page numbers */}
             {[...Array(Math.min(totalPages, 3))].map((_, index) => {
               const pageNumber = page <= 2 ? index + 1 : page - 1 + index;
               if (pageNumber <= totalPages) {
                 return (
-                  <button 
+                  <button
                     key={pageNumber}
                     onClick={() => goToPage(pageNumber)}
                     className={`p-2 w-8 h-8 rounded-md ${
                       pageNumber === page
-                        ? 'bg-green-700 text-white'
-                        : 'hover:bg-gray-100 text-gray-700'
+                        ? "bg-green-700 text-white"
+                        : "hover:bg-gray-100 text-gray-700"
                     } flex items-center justify-center`}
                   >
                     {pageNumber}
@@ -726,8 +798,8 @@ const ProjectsPage = () => {
               }
               return null;
             })}
-            
-            <button 
+
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
@@ -735,7 +807,7 @@ const ProjectsPage = () => {
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button 
+            <button
               className="p-2 text-gray-500 rounded hover:bg-gray-100"
               onClick={() => goToPage(totalPages)}
               disabled={page === totalPages}
@@ -746,7 +818,7 @@ const ProjectsPage = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -756,21 +828,24 @@ const ProjectsPage = () => {
               Delete Project
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this project? This action cannot be undone and will permanently delete the project and all associated data.
+              Are you sure you want to delete this project? This action cannot be undone and will
+              permanently delete the project and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setIsDeleteDialogOpen(false);
-              setProjectToDelete(null);
-            }}>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setProjectToDelete(null);
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#b91c1c')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+              style={{ backgroundColor: "#dc2626", color: "#ffffff" }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#b91c1c")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
             >
               Delete Project
             </AlertDialogAction>

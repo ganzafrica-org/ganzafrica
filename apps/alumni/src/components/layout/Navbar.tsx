@@ -33,10 +33,7 @@ const Navbar = ({ onMenuClick, onMobileMenuClick }: NavbarProps) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
     };
@@ -81,9 +78,7 @@ const Navbar = ({ onMenuClick, onMobileMenuClick }: NavbarProps) => {
           <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
         </button>
 
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
-          Alumni Portal
-        </h1>
+        <h1 className="text-xl font-semibold text-gray-800 dark:text-white">Alumni Portal</h1>
       </div>
 
       {/* Right */}
@@ -131,12 +126,8 @@ const Navbar = ({ onMenuClick, onMobileMenuClick }: NavbarProps) => {
                     {getInitials()}
                   </div>
                   <div>
-                    <p className="text-gray-800 dark:text-white font-medium">
-                      {user.name}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {user.email}
-                    </p>
+                    <p className="text-gray-800 dark:text-white font-medium">{user.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                   </div>
                 </div>
 

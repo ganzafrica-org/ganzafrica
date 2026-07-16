@@ -1,5 +1,5 @@
-declare module 'react-africa-map' {
-  import { Component, ComponentProps } from 'react';
+declare module "react-africa-map" {
+  import { Component, ComponentProps } from "react";
 
   export interface AfricaMapProps {
     onSelectCountry?: (countryCode: string) => void;
@@ -11,4 +11,3 @@ declare module 'react-africa-map' {
   const AfricaMap: React.FC<AfricaMapProps>;
   export default AfricaMap;
 }
-

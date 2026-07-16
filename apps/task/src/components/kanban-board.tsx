@@ -6,9 +6,9 @@ import { TaskCard } from "@/components/task-card";
 import { TaskModal } from "@/components/task-modal";
 import { useToast, ToastContainer } from "@/components/toast";
 
-type Column = { 
-  id: Status; 
-  name: string; 
+type Column = {
+  id: Status;
+  name: string;
   color: string;
   bgColor?: string;
   textColor?: string;
@@ -31,7 +31,10 @@ export function KanbanBoard({
   columns: Column[];
   tasks: Task[];
   members: TeamMember[];
-  onTasksChange: (tasks: Task[], movedTask?: { id: string; oldStatus: string; newStatus: string }) => void;
+  onTasksChange: (
+    tasks: Task[],
+    movedTask?: { id: string; oldStatus: string; newStatus: string },
+  ) => void;
   registerOpenTask?: (open: (task: Task) => void) => void;
   onCreateTask?: (status: Status) => void;
   onUpdateTask?: (task: Task) => void;
@@ -48,11 +51,18 @@ export function KanbanBoard({
   const [expandedCols, setExpandedCols] = useState<Record<Status, boolean>>({});
 
   const toggleColumnExpand = (colId: Status) => {
-    setExpandedCols(prev => ({ ...prev, [colId]: !prev[colId] }));
+    setExpandedCols((prev) => ({ ...prev, [colId]: !prev[colId] }));
   };
 
   const grouped = useMemo(() => {
-    const m: Record<Status, Task[]> = { todo: [], inprogress: [], review: [], done: [], overdue: [], backlog: [] };
+    const m: Record<Status, Task[]> = {
+      todo: [],
+      inprogress: [],
+      review: [],
+      done: [],
+      overdue: [],
+      backlog: [],
+    };
     // Use a Set to track seen task IDs to prevent duplicates
     const seenIds = new Set<string>();
     for (const t of tasks) {
@@ -75,61 +85,61 @@ export function KanbanBoard({
   const handleDrop = (e: React.DragEvent, status: Status) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const id = e.dataTransfer.getData("text/task-id");
-    
+
     if (!id) {
       return;
     }
-    
+
     if (tasks.length === 0) {
       return;
     }
-    
+
     // Find the original task to get its old status - handle both string and number IDs
-    const originalTask = tasks.find(t => {
+    const originalTask = tasks.find((t) => {
       const taskId = String(t.id);
       const searchId = String(id);
       return taskId === searchId;
     });
-    
+
     if (!originalTask) {
       showError(
         "Task Not Found",
-        `Could not find task with ID ${id}. Please refresh the page and try again.`
+        `Could not find task with ID ${id}. Please refresh the page and try again.`,
       );
       return;
     }
-    
+
     // Prevent dragging tasks to "overdue" status
     if (status === "overdue") {
       showError(
         "Cannot Move to Overdue",
-        "Tasks cannot be manually moved to the Overdue status. Overdue status is automatically assigned to tasks that have passed their due date."
+        "Tasks cannot be manually moved to the Overdue status. Overdue status is automatically assigned to tasks that have passed their due date.",
       );
       return;
     }
-    
+
     // Update tasks - handle both string and number IDs
-    const updatedTasks = tasks.map(t => {
+    const updatedTasks = tasks.map((t) => {
       const taskId = String(t.id);
       const searchId = String(id);
       return taskId === searchId ? { ...t, status } : t;
     });
-    
-    const updatedTask = updatedTasks.find(t => {
+
+    const updatedTask = updatedTasks.find((t) => {
       const taskId = String(t.id);
       const searchId = String(id);
       return taskId === searchId;
     });
-    
+
     // Pass the moved task information
     const movedTask = {
       id,
       oldStatus: originalTask.status,
-      newStatus: status
+      newStatus: status,
     };
-    
+
     onTasksChange(updatedTasks, movedTask);
   };
 
@@ -144,7 +154,7 @@ export function KanbanBoard({
           setActiveTask(task);
         }
       } catch (error) {
-        console.error('Error loading task details:', error);
+        console.error("Error loading task details:", error);
         setActiveTask(task);
       } finally {
         setLoadingTask(false);
@@ -162,44 +172,53 @@ export function KanbanBoard({
 
   return (
     <>
-      <div className="overflow-x-auto -mx-3 sm:-mx-4 px-3 sm:px-4 pb-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div
+        className="overflow-x-auto -mx-3 sm:-mx-4 px-3 sm:px-4 pb-4"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         <div className="inline-flex md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 min-w-[600px] md:min-w-0">
-          {columns.map(col => (
-            <div 
+          {columns.map((col) => (
+            <div
               key={col.id}
               onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
                 e.preventDefault();
                 // Show different visual feedback for overdue column
                 if (col.id === "overdue") {
-                  e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.05)';
-                  e.currentTarget.style.borderColor = 'rgba(220, 38, 38, 0.2)';
+                  e.currentTarget.style.backgroundColor = "rgba(220, 38, 38, 0.05)";
+                  e.currentTarget.style.borderColor = "rgba(220, 38, 38, 0.2)";
                 } else {
-                  e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+                  e.currentTarget.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
                 }
               }}
               onDragLeave={(e: React.DragEvent<HTMLDivElement>) => {
-                e.currentTarget.style.backgroundColor = '';
-                e.currentTarget.style.borderColor = '';
+                e.currentTarget.style.backgroundColor = "";
+                e.currentTarget.style.borderColor = "";
               }}
               onDrop={(e: React.DragEvent<HTMLDivElement>) => {
-                e.currentTarget.style.backgroundColor = '';
-                e.currentTarget.style.borderColor = '';
+                e.currentTarget.style.backgroundColor = "";
+                e.currentTarget.style.borderColor = "";
                 handleDrop(e, col.id);
               }}
               className="flex flex-col transition-colors w-[260px] sm:w-[280px] md:w-[300px] lg:w-auto flex-shrink-0"
             >
-              <div 
-                className={`flex items-center justify-between p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-sm mb-2 ${col.color || ''}`}
-                style={col.bgColor ? {
-                  backgroundColor: col.bgColor,
-                  color: col.textColor,
-                  border: `1px solid ${col.borderColor}`
-                } : undefined}
+              <div
+                className={`flex items-center justify-between p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-sm mb-2 ${col.color || ""}`}
+                style={
+                  col.bgColor
+                    ? {
+                        backgroundColor: col.bgColor,
+                        color: col.textColor,
+                        border: `1px solid ${col.borderColor}`,
+                      }
+                    : undefined
+                }
               >
                 <div className="font-medium text-sm sm:text-base">{col.name}</div>
-                <div className="text-xs opacity-70 bg-white/50 rounded-full px-2 py-1">{grouped[col.id].length}</div>
+                <div className="text-xs opacity-70 bg-white/50 rounded-full px-2 py-1">
+                  {grouped[col.id].length}
+                </div>
               </div>
-              <div 
+              <div
                 className="rounded-xl sm:rounded-2xl border border-black/5 bg-white/60 backdrop-blur min-h-[50vh] sm:min-h-[60vh] p-2 sm:p-3 space-y-2 sm:space-y-3 flex flex-col"
                 onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
                   e.preventDefault();
@@ -221,7 +240,7 @@ export function KanbanBoard({
 
                       return (
                         <>
-                          {visible.map(t => (
+                          {visible.map((t) => (
                             <TaskCard
                               key={t.id}
                               task={t}
@@ -238,7 +257,7 @@ export function KanbanBoard({
                                 className="text-sm text-blue-600 hover:underline"
                                 onClick={() => toggleColumnExpand(col.id)}
                               >
-                                {isExpanded ? 'Show less' : `View more (${colTasks.length - 10})`}
+                                {isExpanded ? "Show less" : `View more (${colTasks.length - 10})`}
                               </button>
                             </div>
                           )}
@@ -256,11 +275,13 @@ export function KanbanBoard({
       {loadingTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-4 sm:p-6 rounded-lg max-w-sm w-full">
-            <p className="text-gray-700 text-sm sm:text-base text-center">Loading task details...</p>
+            <p className="text-gray-700 text-sm sm:text-base text-center">
+              Loading task details...
+            </p>
           </div>
         </div>
       )}
-      
+
       <TaskModal
         open={!!activeTask && !loadingTask}
         task={activeTask}
@@ -272,7 +293,7 @@ export function KanbanBoard({
           if (onUpdateTask) {
             onUpdateTask(updated);
           } else {
-            onTasksChange(tasks.map(t => (t.id === updated.id ? updated : t)));
+            onTasksChange(tasks.map((t) => (t.id === updated.id ? updated : t)));
           }
           setActiveTask(null);
         }}
@@ -280,14 +301,14 @@ export function KanbanBoard({
           if (onDeleteTask) {
             onDeleteTask(id);
           } else {
-            onTasksChange(tasks.filter(t => t.id !== id));
+            onTasksChange(tasks.filter((t) => t.id !== id));
           }
           setActiveTask(null);
         }}
         columns={columns}
         tasks={grouped}
       />
-      
+
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </>

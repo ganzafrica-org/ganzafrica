@@ -32,7 +32,7 @@ const logger = new Logger("PortalDataController");
 export const getTeamsByType = async (req: Request, res: Response) => {
   try {
     const teamTypeIds = req.query.team_type_ids as string;
-    
+
     if (!teamTypeIds) {
       return res.status(400).json({
         error: "Validation Error",
@@ -40,8 +40,11 @@ export const getTeamsByType = async (req: Request, res: Response) => {
       });
     }
 
-    const ids = teamTypeIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
-    
+    const ids = teamTypeIds
+      .split(",")
+      .map((id) => parseInt(id.trim()))
+      .filter((id) => !isNaN(id));
+
     if (ids.length === 0) {
       return res.status(400).json({
         error: "Validation Error",
@@ -50,9 +53,7 @@ export const getTeamsByType = async (req: Request, res: Response) => {
     }
 
     // Get teams for each team type
-    const allTeams = await Promise.all(
-      ids.map(id => teamService.listTeams(id))
-    );
+    const allTeams = await Promise.all(ids.map((id) => teamService.listTeams(id)));
 
     // Flatten the results
     const teams = allTeams.flat();
@@ -149,4 +150,3 @@ export const portalDataController = {
 };
 
 export default portalDataController;
-

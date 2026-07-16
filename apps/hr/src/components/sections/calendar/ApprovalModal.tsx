@@ -1,51 +1,50 @@
-'use client';
+"use client";
 
-import { useLeaveContext } from '@/components/sections/calendar/LeaveContext';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { formatDate } from "@/lib/date-utils"
+import { useLeaveContext } from "@/components/sections/calendar/LeaveContext";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { formatDate } from "@/lib/date-utils";
 
-export type LeaveType = 'Paid' | 'Sick' | 'Casual' | 'Emergency';
-export type LeaveStatus = 'Pending' | 'Approved' | 'Rejected';
-export type ViewMode = 'day' | 'week' | 'month';
+export type LeaveType = "Paid" | "Sick" | "Casual" | "Emergency";
+export type LeaveStatus = "Pending" | "Approved" | "Rejected";
+export type ViewMode = "day" | "week" | "month";
 
 export interface TeamMember {
-    id: string;
-    name: string;
-    department: string;
-    avatar: string;
+  id: string;
+  name: string;
+  department: string;
+  avatar: string;
 }
 
 export interface LeaveRequest {
-    id: string;
-    employeeId: string;
-    leaveType: LeaveType;
-    startDate: Date;
-    endDate: Date;
-    notes: string;
-    status: LeaveStatus;
-    requestedAt: Date;
+  id: string;
+  employeeId: string;
+  leaveType: LeaveType;
+  startDate: Date;
+  endDate: Date;
+  notes: string;
+  status: LeaveStatus;
+  requestedAt: Date;
 }
 
 export interface LeaveContextType {
-    teamMembers: TeamMember[];
-    leaveRequests: LeaveRequest[];
-    addLeaveRequest: (
-        employeeId: string,
-        leaveType: LeaveType,
-        startDate: Date,
-        endDate: Date,
-        notes: string
-    ) => void;
-    updateLeaveStatus: (id: string, status: LeaveStatus) => void;
-    getFilteredLeaves: (
-        selectedMemberId?: string,
-        selectedLeaveType?: LeaveType,
-        dateRange?: { start: Date; end: Date }
-    ) => LeaveRequest[];
-    getTeamMemberById: (id: string) => TeamMember | undefined;
+  teamMembers: TeamMember[];
+  leaveRequests: LeaveRequest[];
+  addLeaveRequest: (
+    employeeId: string,
+    leaveType: LeaveType,
+    startDate: Date,
+    endDate: Date,
+    notes: string,
+  ) => void;
+  updateLeaveStatus: (id: string, status: LeaveStatus) => void;
+  getFilteredLeaves: (
+    selectedMemberId?: string,
+    selectedLeaveType?: LeaveType,
+    dateRange?: { start: Date; end: Date },
+  ) => LeaveRequest[];
+  getTeamMemberById: (id: string) => TeamMember | undefined;
 }
-
 
 interface ApprovalModalProps {
   isOpen: boolean;
@@ -61,26 +60,26 @@ export function ApprovalModal({ isOpen, onClose, leave }: ApprovalModalProps) {
   const employee = getTeamMemberById(leave.employeeId);
 
   const handleApprove = () => {
-    updateLeaveStatus(leave.id, 'Approved');
+    updateLeaveStatus(leave.id, "Approved");
     onClose();
   };
 
   const handleReject = () => {
-    updateLeaveStatus(leave.id, 'Rejected');
+    updateLeaveStatus(leave.id, "Rejected");
     onClose();
   };
 
   const LEAVE_TYPE_COLORS: Record<string, string> = {
-    Paid: 'bg-green-100 text-green-800',
-    Sick: 'bg-red-100 text-red-800',
-    Casual: 'bg-purple-100 text-purple-800',
-    Emergency: 'bg-blue-100 text-blue-800',
+    Paid: "bg-green-100 text-green-800",
+    Sick: "bg-red-100 text-red-800",
+    Casual: "bg-purple-100 text-purple-800",
+    Emergency: "bg-blue-100 text-blue-800",
   };
 
   const STATUS_COLORS: Record<string, string> = {
-    Pending: 'bg-yellow-100 text-yellow-800',
-    Approved: 'bg-green-100 text-green-800',
-    Rejected: 'bg-red-100 text-red-800',
+    Pending: "bg-yellow-100 text-yellow-800",
+    Approved: "bg-green-100 text-green-800",
+    Rejected: "bg-red-100 text-red-800",
   };
 
   return (
@@ -97,14 +96,18 @@ export function ApprovalModal({ isOpen, onClose, leave }: ApprovalModalProps) {
 
           <div>
             <label className="text-sm font-medium text-gray-600">Leave Type</label>
-            <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${LEAVE_TYPE_COLORS[leave.leaveType]}`}>
+            <div
+              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${LEAVE_TYPE_COLORS[leave.leaveType]}`}
+            >
               {leave.leaveType} Leave
             </div>
           </div>
 
           <div>
             <label className="text-sm font-medium text-gray-600">Status</label>
-            <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[leave.status]}`}>
+            <div
+              className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[leave.status]}`}
+            >
               {leave.status}
             </div>
           </div>
@@ -133,18 +136,12 @@ export function ApprovalModal({ isOpen, onClose, leave }: ApprovalModalProps) {
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          {leave.status === 'Pending' && (
+          {leave.status === "Pending" && (
             <>
-              <Button
-                onClick={handleReject}
-                className="bg-red-600 hover:bg-red-700"
-              >
+              <Button onClick={handleReject} className="bg-red-600 hover:bg-red-700">
                 Reject
               </Button>
-              <Button
-                onClick={handleApprove}
-                className="bg-green-600 hover:bg-green-700"
-              >
+              <Button onClick={handleApprove} className="bg-green-600 hover:bg-green-700">
                 Approve
               </Button>
             </>

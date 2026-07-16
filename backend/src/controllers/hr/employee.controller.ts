@@ -85,7 +85,11 @@ import { HrRole } from "@/types/employee.types";
  *         $ref: '#/components/responses/NotFoundError'
  */
 
-export const createEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const createEmployee = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const employee = await employeesService.createEmployee(
       { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },
@@ -113,7 +117,11 @@ export const createEmployee = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const listEmployees = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const listEmployees = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const query = req.query as any;
     const page = Number(query.page) || 1;
@@ -147,7 +155,11 @@ export const listEmployees = async (req: Request, res: Response, next: NextFunct
   }
 };
 
-export const getEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getEmployee = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     const employee = await employeesService.getEmployeeById(
       { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },
@@ -164,7 +176,11 @@ export const getEmployee = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-export const updateEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const updateEmployee = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     // Ownership check: EMPLOYEE can only update their own profile
     if (req.user!.role === "EMPLOYEE" && req.params.id !== req.user!.id) {
@@ -187,7 +203,11 @@ export const updateEmployee = async (req: Request, res: Response, next: NextFunc
   }
 };
 
-export const deleteEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const deleteEmployee = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
   try {
     await employeesService.softDeleteEmployee(
       { id: req.user!.id, role: req.user!.role as HrRole, email: req.user!.email },

@@ -2,13 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,9 +107,7 @@ const StatsCards = ({ stats }: { stats: AchievementStats }) => (
   <div className="grid gap-4 md:grid-cols-3">
     <Card className="bg-gradient-to-br from-green-primary to-green-secondary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-emerald-100">
-          Total Achievements
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-emerald-100">Total Achievements</CardTitle>
         <Trophy className="h-5 w-5 text-emerald-200" />
       </CardHeader>
       <CardContent>
@@ -126,9 +118,7 @@ const StatsCards = ({ stats }: { stats: AchievementStats }) => (
 
     <Card className="bg-gradient-to-br from-blue-secondary to-blue-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-blue-100">
-          Your Achievements
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-blue-100">Your Achievements</CardTitle>
         <Award className="h-5 w-5 text-blue-200" />
       </CardHeader>
       <CardContent>
@@ -139,9 +129,7 @@ const StatsCards = ({ stats }: { stats: AchievementStats }) => (
 
     <Card className="bg-gradient-to-br from-orange-primary to-orange-500 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-amber-100">
-          Categories
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-amber-100">Categories</CardTitle>
         <Globe className="h-5 w-5 text-amber-200" />
       </CardHeader>
       <CardContent>
@@ -165,10 +153,7 @@ const AchievementCard = ({
       <div className="flex items-start gap-4">
         <Avatar className="w-12 h-12 flex-shrink-0">
           {achievement.achiever.avatar ? (
-            <AvatarImage
-              src={achievement.achiever.avatar}
-              alt={achievement.achiever.name}
-            />
+            <AvatarImage src={achievement.achiever.avatar} alt={achievement.achiever.name} />
           ) : (
             <AvatarFallback
               className={`bg-gradient-to-br ${getDepartmentColor(achievement.category)} text-white font-semibold`}
@@ -190,9 +175,7 @@ const AchievementCard = ({
                 </h3>
               </Link>
               <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                <span className="font-medium truncate">
-                  {achievement.achiever.name}
-                </span>
+                <span className="font-medium truncate">{achievement.achiever.name}</span>
               </div>
             </div>
 
@@ -214,9 +197,7 @@ const AchievementCard = ({
               {achievement.organization && (
                 <span className="flex items-center gap-1">
                   <Building className="h-4 w-4 text-orange-500" />
-                  <span className="truncate max-w-[120px]">
-                    {achievement.organization}
-                  </span>
+                  <span className="truncate max-w-[120px]">{achievement.organization}</span>
                 </span>
               )}
               {achievement.date && (
@@ -326,9 +307,7 @@ const SubmissionForm = ({
     try {
       await onSubmit({
         ...formData,
-        tags: formData.tags
-          ? formData.tags.split(",").map((t) => t.trim())
-          : [],
+        tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : [],
       });
     } finally {
       setIsSubmitting(false);
@@ -338,12 +317,10 @@ const SubmissionForm = ({
   return (
     <Card className="shadow-sm">
       <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-lg border-b">
-        <CardTitle className="text-xl text-slate-800">
-          Share Your Achievement
-        </CardTitle>
+        <CardTitle className="text-xl text-slate-800">Share Your Achievement</CardTitle>
         <CardDescription>
-          Let the community celebrate your success! Share your recent
-          achievement with fellow alumni.
+          Let the community celebrate your success! Share your recent achievement with fellow
+          alumni.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
@@ -356,9 +333,7 @@ const SubmissionForm = ({
               placeholder="e.g., Promoted to Senior Engineer"
               className="border-slate-200"
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
           </div>
           <div className="space-y-2">
@@ -390,9 +365,7 @@ const SubmissionForm = ({
             rows={4}
             className="border-slate-200"
             value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
         </div>
 
@@ -403,9 +376,7 @@ const SubmissionForm = ({
               placeholder="Company or organization name"
               className="border-slate-200"
               value={formData.organization}
-              onChange={(e) =>
-                setFormData({ ...formData, organization: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
             />
           </div>
           <div className="space-y-2">
@@ -414,9 +385,7 @@ const SubmissionForm = ({
               type="date"
               className="border-slate-200"
               value={formData.date}
-              onChange={(e) =>
-                setFormData({ ...formData, date: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
             />
           </div>
         </div>
@@ -428,9 +397,7 @@ const SubmissionForm = ({
               placeholder="e.g., Award, Funding, Publication"
               className="border-slate-200"
               value={formData.type}
-              onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
             />
           </div>
           <div className="space-y-2">
@@ -439,9 +406,7 @@ const SubmissionForm = ({
               placeholder="Link to news article, press release, etc."
               className="border-slate-200"
               value={formData.link}
-              onChange={(e) =>
-                setFormData({ ...formData, link: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, link: e.target.value })}
             />
           </div>
         </div>
@@ -464,11 +429,7 @@ const SubmissionForm = ({
           >
             {isSubmitting ? "Submitting..." : "Submit Achievement"}
           </Button>
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            className="border-slate-200"
-          >
+          <Button variant="outline" onClick={onCancel} className="border-slate-200">
             Cancel
           </Button>
         </div>
@@ -615,10 +576,7 @@ export default function AlumniAchievements() {
   ]);
 
   // Reset to page 1 when filters change
-  const handleFilterChange = (
-    setter: (value: string) => void,
-    value: string,
-  ) => {
+  const handleFilterChange = (setter: (value: string) => void, value: string) => {
     setter(value);
     setCurrentPage(1);
   };
@@ -635,9 +593,7 @@ export default function AlumniAchievements() {
   const handleLike = async (id: number) => {
     try {
       const result = await achievementsApi.toggleLike(id);
-      setAchievements((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, likes: result.likes } : a)),
-      );
+      setAchievements((prev) => prev.map((a) => (a.id === id ? { ...a, likes: result.likes } : a)));
     } catch (error) {
       console.error("Failed to like achievement:", error);
     }
@@ -673,9 +629,7 @@ export default function AlumniAchievements() {
           <h1 className="text-2xl font-bold bg-blue-secondary bg-clip-text text-transparent">
             Alumni Achievements
           </h1>
-          <p className="text-gray-600">
-            Celebrate amazing accomplishments from our community
-          </p>
+          <p className="text-gray-600">Celebrate amazing accomplishments from our community</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -708,11 +662,7 @@ export default function AlumniAchievements() {
       )}
 
       {/* Stats Overview */}
-      {isLoadingStats ? (
-        <StatsSkeleton />
-      ) : (
-        stats && <StatsCards stats={stats} />
-      )}
+      {isLoadingStats ? <StatsSkeleton /> : stats && <StatsCards stats={stats} />}
 
       {/* Search and Filters */}
       <Card className="shadow-sm">
@@ -734,9 +684,7 @@ export default function AlumniAchievements() {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Select
                 value={selectedCategory}
-                onValueChange={(v) =>
-                  handleFilterChange(setSelectedCategory, v)
-                }
+                onValueChange={(v) => handleFilterChange(setSelectedCategory, v)}
               >
                 <SelectTrigger className="border-slate-200">
                   <SelectValue placeholder="Category" />
@@ -832,9 +780,7 @@ export default function AlumniAchievements() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-              }
+              onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
               disabled={!pagination.hasMore}
             >
               <ChevronRight className="h-4 w-4" />
@@ -849,20 +795,14 @@ export default function AlumniAchievements() {
       ) : achievements.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {achievements.map((achievement) => (
-            <AchievementCard
-              key={achievement.id}
-              achievement={achievement}
-              onLike={handleLike}
-            />
+            <AchievementCard key={achievement.id} achievement={achievement} onLike={handleLike} />
           ))}
         </div>
       ) : (
         <Card className="shadow-sm">
           <CardContent className="p-12 text-center">
             <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No achievements found
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No achievements found</h3>
             <p className="text-gray-600 mb-4">
               Try adjusting your search criteria or clearing filters
             </p>
@@ -890,9 +830,7 @@ export default function AlumniAchievements() {
           </Button>
           <Button
             variant="outline"
-            onClick={() =>
-              setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))
-            }
+            onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
             disabled={!pagination.hasMore}
           >
             Next

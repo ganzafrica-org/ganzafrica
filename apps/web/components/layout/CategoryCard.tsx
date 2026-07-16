@@ -52,8 +52,7 @@ const CategoryCard = ({
         <div>
           <h3 className="text-xl font-bold mb-2 text-gray-900">{title}</h3>{" "}
           {/* Title color updated */}
-          <p className="text-gray-700">{description}</p>{" "}
-          {/* Description text color adjusted */}
+          <p className="text-gray-700">{description}</p> {/* Description text color adjusted */}
         </div>
       </div>
     </div>

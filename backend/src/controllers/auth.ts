@@ -85,14 +85,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
           if (requestedRole && requestedRole.length > 0) {
             defaultRoleId = requestedRole[0].id;
-            logger.info(
-              `Using requested role '${role_type}' with ID: ${defaultRoleId}`,
-            );
+            logger.info(`Using requested role '${role_type}' with ID: ${defaultRoleId}`);
           } else {
             // If requested role not found, fall back to public
-            logger.warn(
-              `Requested role '${role_type}' not found, falling back to public`,
-            );
+            logger.warn(`Requested role '${role_type}' not found, falling back to public`);
             const publicRole = await db
               .select()
               .from(roles)
@@ -114,11 +110,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
           }
         } else {
           // First try to find a role with name "public"
-          const publicRole = await db
-            .select()
-            .from(roles)
-            .where(eq(roles.name, "public"))
-            .limit(1);
+          const publicRole = await db.select().from(roles).where(eq(roles.name, "public")).limit(1);
 
           if (publicRole && publicRole.length > 0) {
             defaultRoleId = publicRole[0].id;
@@ -135,9 +127,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             }
 
             defaultRoleId = anyRole[0].id;
-            logger.info(
-              `Public role not found. Using alternate role with ID: ${defaultRoleId}`,
-            );
+            logger.info(`Public role not found. Using alternate role with ID: ${defaultRoleId}`);
           }
         }
       } catch (roleError) {
@@ -265,10 +255,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Verify password
-    const passwordValid = await authService.verifyPassword(
-      password,
-      user.password_hash,
-    );
+    const passwordValid = await authService.verifyPassword(password, user.password_hash);
     if (!passwordValid) {
       // Optionally implement login attempt tracking
       // await userService.incrementLoginAttempts(user.id);
@@ -277,10 +264,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Check account status
     if (!user.is_active) {
-      throw new AppError(
-        constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || "Account is inactive",
-        401,
-      );
+      throw new AppError(constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || "Account is inactive", 401);
     }
 
     // Create session and tokens using JWT
@@ -346,14 +330,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
  *       500:
  *         description: Server error
  */
-export const refreshToken = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
   try {
     // Get refresh token from cookie or body
-    const refreshToken =
-      req.cookies?.[constants.REFRESH_COOKIE_NAME] || req.body.refresh_token;
+    const refreshToken = req.cookies?.[constants.REFRESH_COOKIE_NAME] || req.body.refresh_token;
 
     if (!refreshToken) {
       res.status(401).json({
@@ -394,31 +374,19 @@ export const refreshToken = async (
 
     // Verify account status
     if (!user.is_active) {
-      throw new AppError(
-        constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || "Account is inactive",
-        401,
-      );
+      throw new AppError(constants.ERROR_MESSAGES.ACCOUNT_INACTIVE || "Account is inactive", 401);
     }
 
     // Create new session and tokens
-    const { accessToken, refreshToken: newRefreshToken } =
-      await authService.createSession(
-        user.id,
-        req.ip || "unknown",
-        req.headers["user-agent"] || "unknown",
-      );
+    const { accessToken, refreshToken: newRefreshToken } = await authService.createSession(
+      user.id,
+      req.ip || "unknown",
+      req.headers["user-agent"] || "unknown",
+    );
 
     // Set cookies
-    res.cookie(
-      constants.AUTH_COOKIE_NAME,
-      accessToken,
-      constants.COOKIE_OPTIONS,
-    );
-    res.cookie(
-      constants.REFRESH_COOKIE_NAME,
-      newRefreshToken,
-      constants.COOKIE_OPTIONS,
-    );
+    res.cookie(constants.AUTH_COOKIE_NAME, accessToken, constants.COOKIE_OPTIONS);
+    res.cookie(constants.REFRESH_COOKIE_NAME, newRefreshToken, constants.COOKIE_OPTIONS);
 
     res.status(200).json({
       message: "Token refreshed successfully",
@@ -430,10 +398,7 @@ export const refreshToken = async (
   }
 };
 
-export const getCurrentUser = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
   try {
     // Check if user is authenticated - this is set by the authenticate middleware
     if (!req.user) {
@@ -498,10 +463,7 @@ export const getCurrentUser = async (
  *       500:
  *         description: Server error
  */
-export const forgotPassword = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
 
@@ -531,11 +493,7 @@ export const forgotPassword = async (
     }
 
     // Send password reset email
-    await authService.sendPasswordReset(
-      user.id,
-      user.email,
-      req.ip || "unknown",
-    );
+    await authService.sendPasswordReset(user.id, user.email, req.ip || "unknown");
 
     res.status(200).json({
       message: constants.SUCCESS_MESSAGES.PASSWORD_RESET_SENT,
@@ -580,10 +538,7 @@ export const forgotPassword = async (
  *       500:
  *         description: Server error
  */
-export const resetPassword = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token, password, confirm_password } = req.body;
 
@@ -693,10 +648,7 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
  *       500:
  *         description: Server error
  */
-export const verifyEmail = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token } = req.body;
 
@@ -730,11 +682,7 @@ export const verifyEmail = async (
  * @param {Response} res - Express response object
  * @param {string} errorType - Type of error for the response
  */
-function handleErrorResponse(
-  error: unknown,
-  res: Response,
-  errorType: string,
-): void {
+function handleErrorResponse(error: unknown, res: Response, errorType: string): void {
   if (error instanceof AppError) {
     res.status(error.statusCode).json({
       error: errorType,

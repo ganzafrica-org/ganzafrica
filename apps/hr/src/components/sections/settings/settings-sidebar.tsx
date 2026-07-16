@@ -1,39 +1,37 @@
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Building2, Lock, Users, Clock, FileText, Settings, ChevronRight } from 'lucide-react';
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Building2, Lock, Users, Clock, FileText, Settings, ChevronRight } from "lucide-react";
 
 const MENU_ITEMS = [
-  { id: 'main', label: 'Main settings', icon: Settings },
+  { id: "main", label: "Main settings", icon: Settings },
   {
-    id: 'org-security',
-    label: 'Organization & security',
+    id: "org-security",
+    label: "Organization & security",
     icon: Building2,
     children: [
-      { id: 'organization', label: 'Organization' },
-      { id: 'security', label: 'Security' },
+      { id: "organization", label: "Organization" },
+      { id: "security", label: "Security" },
     ],
   },
-  { id: 'payroll', label: 'Payroll', icon: FileText },
+  { id: "payroll", label: "Payroll", icon: FileText },
   {
-    id: 'hr',
-    label: 'Human Resources',
+    id: "hr",
+    label: "Human Resources",
     icon: Users,
     children: [
-      { id: 'roles', label: 'Roles and permissions' },
-      { id: 'timeoff', label: 'Time off' },
-      { id: 'policies', label: 'Policies' },
+      { id: "roles", label: "Roles and permissions" },
+      { id: "timeoff", label: "Time off" },
+      { id: "policies", label: "Policies" },
     ],
   },
 ];
 
 export function SettingsSidebar({ activeItem }: { activeItem: string }) {
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(['hr']);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(["hr"]);
 
   const toggleGroup = (groupId: string) => {
     setExpandedGroups((prev) =>
-      prev.includes(groupId)
-        ? prev.filter((id) => id !== groupId)
-        : [...prev, groupId]
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId],
     );
   };
 
@@ -41,10 +39,7 @@ export function SettingsSidebar({ activeItem }: { activeItem: string }) {
     <aside className="w-64 bg-white border-r border-gray-200 p-6">
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">All Settings</h2>
-        <Input
-          placeholder="Search settings"
-          className="h-10 bg-gray-50 border-gray-300"
-        />
+        <Input placeholder="Search settings" className="h-10 bg-gray-50 border-gray-300" />
       </div>
 
       <nav className="space-y-1">
@@ -58,8 +53,8 @@ export function SettingsSidebar({ activeItem }: { activeItem: string }) {
                 onClick={() => item.children && toggleGroup(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
                   activeItem === item.id
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <Icon size={18} />
@@ -67,7 +62,7 @@ export function SettingsSidebar({ activeItem }: { activeItem: string }) {
                 {item.children && (
                   <ChevronRight
                     size={16}
-                    className={`transition ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`transition ${isExpanded ? "rotate-90" : ""}`}
                   />
                 )}
               </button>
@@ -79,8 +74,8 @@ export function SettingsSidebar({ activeItem }: { activeItem: string }) {
                       key={child.id}
                       className={`w-full text-left px-4 py-2 text-sm rounded transition ${
                         activeItem === child.id
-                          ? 'text-blue-600 bg-blue-50 font-medium'
-                          : 'text-gray-600 hover:text-gray-900'
+                          ? "text-blue-600 bg-blue-50 font-medium"
+                          : "text-gray-600 hover:text-gray-900"
                       }`}
                     >
                       {child.label}

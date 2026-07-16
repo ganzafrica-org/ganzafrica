@@ -1,22 +1,8 @@
 import { Request, Response } from "express";
 import { db } from "../db/client";
-import {
-  alumni_achievements,
-  achievement_likes,
-  achievement_comments,
-} from "../db/schema";
+import { alumni_achievements, achievement_likes, achievement_comments } from "../db/schema";
 import { users } from "../db/schema";
-import {
-  eq,
-  and,
-  or,
-  ilike,
-  sql,
-  desc,
-  asc,
-  count,
-  countDistinct,
-} from "drizzle-orm";
+import { eq, and, or, ilike, sql, desc, asc, count, countDistinct } from "drizzle-orm";
 import { Logger } from "../config";
 
 const logger = new Logger("AchievementsController");
@@ -34,10 +20,7 @@ const ACHIEVEMENT_CATEGORIES = [
 /**
  * Get achievements statistics
  */
-export const getAchievementStats = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAchievementStats = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -47,9 +30,7 @@ export const getAchievementStats = async (
     const userId = parseInt(req.user.id, 10);
 
     // Total achievements
-    const totalResult = await db
-      .select({ count: count() })
-      .from(alumni_achievements);
+    const totalResult = await db.select({ count: count() }).from(alumni_achievements);
 
     // My achievements
     const myResult = await db
@@ -82,18 +63,12 @@ export const getAchievementStats = async (
 /**
  * Get all achievements with pagination and filters
  */
-export const getAllAchievements = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAllAchievements = async (req: Request, res: Response): Promise<void> => {
   try {
     const { page, limit, search, category, type, year, sort } = req.query;
 
     const pageNum = Math.max(1, parseInt(page as string, 10) || 1);
-    const limitNum = Math.min(
-      50,
-      Math.max(1, parseInt(limit as string, 10) || 15),
-    );
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10) || 15));
     const offset = (pageNum - 1) * limitNum;
 
     // Build conditions
@@ -238,12 +213,8 @@ export const getAllAchievements = async (
       })
       .from(alumni_achievements);
 
-    const categories = [
-      ...new Set(allAchievements.map((a) => a.category).filter(Boolean)),
-    ].sort();
-    const types = [
-      ...new Set(allAchievements.map((a) => a.type).filter(Boolean)),
-    ].sort();
+    const categories = [...new Set(allAchievements.map((a) => a.category).filter(Boolean))].sort();
+    const types = [...new Set(allAchievements.map((a) => a.type).filter(Boolean))].sort();
     const years = [
       ...new Set(
         allAchievements
@@ -300,10 +271,7 @@ export const getAllAchievements = async (
 /**
  * Get single achievement
  */
-export const getAchievement = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAchievement = async (req: Request, res: Response): Promise<void> => {
   try {
     const achievementId = parseInt(req.params.id, 10);
 
@@ -435,27 +403,15 @@ export const getAchievement = async (
 /**
  * Create/Share an achievement
  */
-export const createAchievement = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const createAchievement = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
 
-    const {
-      title,
-      description,
-      category,
-      type,
-      date,
-      organization,
-      location,
-      link,
-      tags,
-    } = req.body;
+    const { title, description, category, type, date, organization, location, link, tags } =
+      req.body;
 
     if (!title || !category) {
       res.status(400).json({ error: "Title and category are required" });
@@ -502,10 +458,7 @@ export const createAchievement = async (
 /**
  * Update an achievement (only owner)
  */
-export const updateAchievement = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const updateAchievement = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -533,23 +486,12 @@ export const updateAchievement = async (
     }
 
     if (existing[0].user_id !== userId) {
-      res
-        .status(403)
-        .json({ error: "You can only edit your own achievements" });
+      res.status(403).json({ error: "You can only edit your own achievements" });
       return;
     }
 
-    const {
-      title,
-      description,
-      category,
-      type,
-      date,
-      organization,
-      location,
-      link,
-      tags,
-    } = req.body;
+    const { title, description, category, type, date, organization, location, link, tags } =
+      req.body;
 
     const updateData: Record<string, any> = {};
     if (title !== undefined) updateData.title = title;
@@ -593,10 +535,7 @@ export const updateAchievement = async (
 /**
  * Delete an achievement (only owner)
  */
-export const deleteAchievement = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const deleteAchievement = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -624,15 +563,11 @@ export const deleteAchievement = async (
     }
 
     if (existing[0].user_id !== userId) {
-      res
-        .status(403)
-        .json({ error: "You can only delete your own achievements" });
+      res.status(403).json({ error: "You can only delete your own achievements" });
       return;
     }
 
-    await db
-      .delete(alumni_achievements)
-      .where(eq(alumni_achievements.id, achievementId));
+    await db.delete(alumni_achievements).where(eq(alumni_achievements.id, achievementId));
 
     res.status(200).json({ message: "Achievement deleted successfully" });
   } catch (error) {
@@ -647,10 +582,7 @@ export const deleteAchievement = async (
 /**
  * Like/Unlike an achievement
  */
-export const toggleLike = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const toggleLike = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -692,9 +624,7 @@ export const toggleLike = async (
     let liked: boolean;
     if (existingLike.length > 0) {
       // Unlike
-      await db
-        .delete(achievement_likes)
-        .where(eq(achievement_likes.id, existingLike[0].id));
+      await db.delete(achievement_likes).where(eq(achievement_likes.id, existingLike[0].id));
       liked = false;
     } else {
       // Like
@@ -727,10 +657,7 @@ export const toggleLike = async (
 /**
  * Add a comment to an achievement
  */
-export const addComment = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const addComment = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -807,10 +734,7 @@ export const addComment = async (
 /**
  * Delete a comment (only owner)
  */
-export const deleteComment = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const deleteComment = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
       res.status(401).json({ error: "Unauthorized" });
@@ -842,9 +766,7 @@ export const deleteComment = async (
       return;
     }
 
-    await db
-      .delete(achievement_comments)
-      .where(eq(achievement_comments.id, commentId));
+    await db.delete(achievement_comments).where(eq(achievement_comments.id, commentId));
 
     res.status(200).json({ message: "Comment deleted successfully" });
   } catch (error) {

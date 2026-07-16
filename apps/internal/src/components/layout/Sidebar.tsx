@@ -4,12 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import {
-  LayoutGrid,
-  DollarSign,
-  FileText,
-  LogOut,
-} from "lucide-react";
+import { LayoutGrid, DollarSign, FileText, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-provider";
 
 interface SidebarProps {
@@ -18,11 +13,7 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
-const Sidebar = ({
-  isCollapsed,
-  isMobile = false,
-  onMobileClose,
-}: SidebarProps) => {
+const Sidebar = ({ isCollapsed, isMobile = false, onMobileClose }: SidebarProps) => {
   const pathname = usePathname();
   const { logout } = useAuth();
 
@@ -36,9 +27,7 @@ const Sidebar = ({
     }
   };
 
-  const navItems = [
-    { href: "/payroll/payslips", label: "Payslips", icon: FileText },
-  ];
+  const navItems = [{ href: "/payroll/payslips", label: "Payslips", icon: FileText }];
 
   return (
     <div

@@ -1,9 +1,9 @@
-declare module '@react-jvectormap/world' {
+declare module "@react-jvectormap/world" {
   export const worldMill: any;
 }
 
-declare module '@react-jvectormap/core' {
-  import { Component } from 'react';
+declare module "@react-jvectormap/core" {
+  import { Component } from "react";
 
   export interface VectorMapProps {
     map: any;
@@ -56,4 +56,3 @@ declare module '@react-jvectormap/core' {
 
   export class VectorMap extends Component<VectorMapProps> {}
 }
-

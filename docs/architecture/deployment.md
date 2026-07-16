@@ -54,7 +54,7 @@ so image N−1 always runs against schema N. Never roll back the database.
 
 1. Upsize droplet to 4GB. 2. Install docker + compose plugin. 3. Create `/srv/ganzafrica/`
    with compose file, `.env`, `releases.log`. 4. `docker login ghcr.io` with read-only PAT.
-5. Configure Postgres for bridge access. 6. UFW: allow 22/80/443 only. 7. Point DNS
+2. Configure Postgres for bridge access. 6. UFW: allow 22/80/443 only. 7. Point DNS
    (all subdomains → droplet IP); Caddy provisions certs on first boot. 8. First deploy;
    verify PM2 apps and containers serve identical responses; stop PM2; `pm2 unstartup`.
 

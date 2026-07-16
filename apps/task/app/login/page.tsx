@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 
 export default function LoginPage(): React.JSX.Element {
   useEffect(() => {
     // Redirect to portal login page
     // After login, user will go to platform-selection and can choose task management
-    const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || 'http://localhost:3001';
+    const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:3001";
     window.location.href = `${portalUrl}/login`;
   }, []);
 
@@ -19,4 +19,3 @@ export default function LoginPage(): React.JSX.Element {
     </div>
   );
 }
-

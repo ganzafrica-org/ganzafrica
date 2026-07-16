@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import React from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal } from "lucide-react"
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal } from "lucide-react";
 
 export function CurrentProjectCard() {
   return (
@@ -25,7 +25,9 @@ export function CurrentProjectCard() {
         </div>
 
         <div className="space-y-2">
-          <div className="text-text-small uppercase tracking-wide text-slate-400">Project Manager</div>
+          <div className="text-text-small uppercase tracking-wide text-slate-400">
+            Project Manager
+          </div>
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9">
               <AvatarImage src="https://i.pravatar.cc/80?img=11" />
@@ -42,14 +44,17 @@ export function CurrentProjectCard() {
           <div className="space-y-2">
             <div className="text-[11px] uppercase tracking-wide text-slate-400">Team</div>
             <div className="flex -space-x-2">
-              {["https://i.pravatar.cc/80?img=32", "https://i.pravatar.cc/80?img=52", "https://i.pravatar.cc/80?img=15", "https://i.pravatar.cc/80?img=6"].map(
-                (src, idx) => (
-                  <Avatar key={idx} className="h-8 w-8 border-2 border-white">
-                    <AvatarImage src={src} />
-                    <AvatarFallback>TM</AvatarFallback>
-                  </Avatar>
-                )
-              )}
+              {[
+                "https://i.pravatar.cc/80?img=32",
+                "https://i.pravatar.cc/80?img=52",
+                "https://i.pravatar.cc/80?img=15",
+                "https://i.pravatar.cc/80?img=6",
+              ].map((src, idx) => (
+                <Avatar key={idx} className="h-8 w-8 border-2 border-white">
+                  <AvatarImage src={src} />
+                  <AvatarFallback>TM</AvatarFallback>
+                </Avatar>
+              ))}
             </div>
           </div>
           <div className="space-y-2">
@@ -60,6 +65,5 @@ export function CurrentProjectCard() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
-

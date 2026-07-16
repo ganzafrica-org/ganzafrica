@@ -61,6 +61,7 @@ Mostly exists — changes:
 ## 6. Tests to write FIRST
 
 Backend:
+
 1. `/hr/me/payslips` returns only own rows (two-employee fixture); employee without payroll
    rows → empty 200; user without employees row → empty 200 (not 500).
 2. In-app link endpoint: own payslip → presigned 200; someone else's id → 404.
@@ -68,12 +69,12 @@ Backend:
 4. Dry-run import: malformed rows reported, nothing inserted; commit inserts (per format
    fixture — 4 small CSV fixtures, anonymized, in backend/tests/fixtures/payroll/).
 5. Token stats join present in admin list response.
-Frontend:
+   Frontend:
 6. Import flow: dry-run errors render per-row; commit disabled until clean or override.
 7. Table chips reflect email_error; revoke action confirm.
 8. me/payslips renders periods; view opens URL from mutation.
-E2E: finance imports fixture CSV → sends batch → (FND-01 e2e link check) → employee logs in →
-sees payslip under /me → opens it.
+   E2E: finance imports fixture CSV → sends batch → (FND-01 e2e link check) → employee logs in →
+   sees payslip under /me → opens it.
 
 ## 7. Acceptance criteria
 

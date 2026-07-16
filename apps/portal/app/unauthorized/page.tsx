@@ -11,9 +11,12 @@ export default function UnauthorizedPage() {
 
   useEffect(() => {
     // Show error message when page loads
-    toast.error("You are not authenticated to access this platform. Only administrators and managers can access the portal.", {
-      duration: 5000,
-    });
+    toast.error(
+      "You are not authenticated to access this platform. Only administrators and managers can access the portal.",
+      {
+        duration: 5000,
+      },
+    );
   }, []);
 
   return (
@@ -28,7 +31,7 @@ export default function UnauthorizedPage() {
               width={400}
               height={250}
               className="w-auto h-auto object-contain"
-              style={{ maxWidth: '300px', maxHeight: '200px' }}
+              style={{ maxWidth: "300px", maxHeight: "200px" }}
               priority
               unoptimized
             />
@@ -36,18 +39,14 @@ export default function UnauthorizedPage() {
         </div>
 
         {/* Heading */}
-        <h1 className="text-3xl sm:text-4xl font-bold text-primary-green mb-2">
-          We are Sorry...
-        </h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-primary-green mb-2">We are Sorry...</h1>
 
         {/* Body Text */}
         <div className="space-y-1 mb-4 text-gray-700">
           <p className="text-base sm:text-lg">
             The page you&apos;re trying to access has restricted access.
           </p>
-          <p className="text-base sm:text-lg">
-            Please refer to your system administrator
-          </p>
+          <p className="text-base sm:text-lg">Please refer to your system administrator</p>
         </div>
 
         {/* Go Back Button */}
@@ -65,4 +64,3 @@ export default function UnauthorizedPage() {
     </div>
   );
 }
-

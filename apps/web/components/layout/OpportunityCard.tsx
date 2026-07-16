@@ -41,10 +41,10 @@ export function OpportunityCard({
 }: OpportunityCardProps): JSX.Element {
   // Format dates
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -100,7 +100,9 @@ export function OpportunityCard({
 
         <div className="flex items-center gap-2 mb-6 text-sm text-gray-600">
           <SafeCalendar className="w-5 h-5 text-[#045f3c]" />
-          <span>Application Period: {formatDate(startDate)} - {formatDate(endDate)}</span>
+          <span>
+            Application Period: {formatDate(startDate)} - {formatDate(endDate)}
+          </span>
         </div>
 
         <div className="space-y-2 mb-6">
@@ -122,17 +124,19 @@ export function OpportunityCard({
           disabled={status === "Closed"}
         >
           <span className="flex items-center justify-center gap-2">
-            {status === "Open"
-              ? <>
-                  {type === "fellowship" ? "Apply Now" : "Apply Now"}
-                  <SafeArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                </>
-              : type === "fellowship"
-                ? "Applications Closed"
-                : "Position Filled"}
+            {status === "Open" ? (
+              <>
+                {type === "fellowship" ? "Apply Now" : "Apply Now"}
+                <SafeArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+              </>
+            ) : type === "fellowship" ? (
+              "Applications Closed"
+            ) : (
+              "Position Filled"
+            )}
           </span>
         </Button>
       </div>
     </div>
   );
-} 
+}

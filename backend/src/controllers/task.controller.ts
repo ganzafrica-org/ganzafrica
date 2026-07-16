@@ -211,8 +211,7 @@ export const getTaskById = async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
     const userId = parseInt((req as any).user.id);
-    
-    
+
     const task = await taskService.getTaskById(taskId, userId);
 
     res.status(200).json({
@@ -259,7 +258,7 @@ export const getTaskById = async (req: Request, res: Response) => {
 export const getTaskByIdUnrestricted = async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
-    
+
     const task = await taskService.getTaskByIdUnrestricted(taskId);
 
     res.status(200).json({
@@ -308,7 +307,7 @@ export const listTasksByProject = async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const userId = parseInt((req as any).user.id);
-    
+
     const tasks = await taskService.listTasksByProject(projectId, userId);
 
     res.status(200).json({
@@ -348,7 +347,7 @@ export const listTasksByProject = async (req: Request, res: Response) => {
 export const getTasksByUser = async (req: Request, res: Response) => {
   try {
     const userId = parseInt((req as any).user.id);
-    
+
     const tasks = await taskService.getTasksByUser(userId);
 
     res.status(200).json({
@@ -486,7 +485,7 @@ export const updateTask = async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
     const userId = parseInt((req as any).user.id);
-    
+
     const task = await taskService.updateTask(taskId, req.body, userId);
 
     res.status(200).json({
@@ -558,7 +557,7 @@ export const updateTask = async (req: Request, res: Response) => {
 export const updateTaskUnrestricted = async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
-    
+
     const task = await taskService.updateTaskUnrestricted(taskId, req.body);
 
     res.status(200).json({
@@ -609,7 +608,7 @@ export const deleteTask = async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
     const userId = parseInt((req as any).user.id);
-    
+
     const result = await taskService.deleteTask(taskId, userId);
 
     res.status(200).json(result);
@@ -653,7 +652,7 @@ export const deleteTask = async (req: Request, res: Response) => {
 export const deleteTaskUnrestricted = async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
-    
+
     const result = await taskService.deleteTaskUnrestricted(taskId);
 
     res.status(200).json(result);
@@ -860,19 +859,20 @@ export const getProjectFilesWithRoleFilter = async (req: Request, res: Response)
   try {
     const projectId = parseInt(req.params.projectId);
     const userId = parseInt((req as any).user.id);
-    
+
     // Get current user's roles
     const userRoles = (req as any).user.roles || [];
-    const isManager = userRoles.some((role: string) => 
-      role.toLowerCase().includes('admin') || 
-      role.toLowerCase().includes('manager') || 
-      role.toLowerCase().includes('staff') || 
-      role.toLowerCase().includes('mentor')
+    const isManager = userRoles.some(
+      (role: string) =>
+        role.toLowerCase().includes("admin") ||
+        role.toLowerCase().includes("manager") ||
+        role.toLowerCase().includes("staff") ||
+        role.toLowerCase().includes("mentor"),
     );
-    
+
     // Get all tasks for the project
     const tasks = await taskService.listTasksByProject(projectId, userId);
-    
+
     // Collect all unique user IDs from attachments and task creators
     const userIds = new Set<number>();
     for (const task of tasks) {
@@ -887,25 +887,25 @@ export const getProjectFilesWithRoleFilter = async (req: Request, res: Response)
         userIds.add(task.created_by);
       }
     }
-    
+
     // Fetch all users in one go
     const usersMap = new Map<number, { name: string; email: string }>();
     for (const uid of userIds) {
       try {
         const user = await userService.getUserById(uid);
         usersMap.set(uid, {
-          name: user.name || 'Unknown',
-          email: user.email || 'unknown@example.com'
+          name: user.name || "Unknown",
+          email: user.email || "unknown@example.com",
         });
       } catch (error) {
         // If user not found, use default
         usersMap.set(uid, {
-          name: 'Unknown',
-          email: 'unknown@example.com'
+          name: "Unknown",
+          email: "unknown@example.com",
         });
       }
     }
-    
+
     // Extract all attachments from all tasks
     const allFiles = [];
     for (const task of tasks) {
@@ -913,7 +913,7 @@ export const getProjectFilesWithRoleFilter = async (req: Request, res: Response)
         for (const attachment of task.attachments) {
           // Check if this attachment should be visible to current user
           let shouldShow = true;
-          
+
           // If attachment has uploader info, check uploader's role
           if (attachment.uploaded_by && !isManager) {
             // For non-managers, check if the uploader was a manager
@@ -923,42 +923,47 @@ export const getProjectFilesWithRoleFilter = async (req: Request, res: Response)
               shouldShow = false; // Hide manager files from non-managers
             }
           }
-          
+
           if (shouldShow) {
             const uploaderId = attachment.uploaded_by || task.created_by;
-            const uploader = usersMap.get(uploaderId) || { name: 'Unknown', email: 'unknown@example.com' };
-            
+            const uploader = usersMap.get(uploaderId) || {
+              name: "Unknown",
+              email: "unknown@example.com",
+            };
+
             // Extract file type from filename if not available
-            let fileType = (attachment as any).type?.split('/')[1] || 'unknown';
-            if (fileType === 'unknown' && attachment.filename) {
+            let fileType = (attachment as any).type?.split("/")[1] || "unknown";
+            if (fileType === "unknown" && attachment.filename) {
               const match = attachment.filename.match(/\.([^.]+)$/);
               if (match) {
                 fileType = match[1].toLowerCase();
               }
             }
-            
+
             allFiles.push({
               id: `task-${task.id}-${attachment.id}`,
               filename: attachment.filename,
               original_filename: attachment.filename,
               file_type: fileType,
-              file_size: (attachment as any).sizeKB ? (attachment as any).sizeKB * 1024 : ((attachment as any).size || 0),
+              file_size: (attachment as any).sizeKB
+                ? (attachment as any).sizeKB * 1024
+                : (attachment as any).size || 0,
               file_url: attachment.url,
               created_at: attachment.uploaded_at || task.created_at,
               metadata: {
                 description: `Attachment from task: ${task.title}`,
-                tags: ['task-attachment'],
+                tags: ["task-attachment"],
                 task_id: task.id,
                 task_title: task.title,
-                uploaded_by: attachment.uploaded_by || task.created_by
+                uploaded_by: attachment.uploaded_by || task.created_by,
               },
-              uploader: uploader
+              uploader: uploader,
             });
           }
         }
       }
     }
-    
+
     res.status(200).json({
       message: "Files retrieved successfully",
       files: allFiles,
@@ -982,11 +987,11 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
     const userId = parseInt((req as any).user.id);
-    
+
     if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
       return res.status(400).json({
         error: "Upload Error",
-        message: "No files provided"
+        message: "No files provided",
       });
     }
 
@@ -994,15 +999,15 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
     const task = await taskService.getTaskById(taskId, userId);
 
     // Process uploaded files - multer-s3 provides different properties
-    const uploadedFiles = (req.files as any[]).map(file => {
+    const uploadedFiles = (req.files as any[]).map((file) => {
       const { key, originalname, size, mimetype, location } = file;
-      
+
       // Get subdirectory based on file type
       const subdir = getFileSubdirectory(mimetype);
-      
+
       // Extract filename from the key
-      const filename = key.split('/').pop();
-      
+      const filename = key.split("/").pop();
+
       // Get the public URL (uses CDN if configured, otherwise direct Spaces URL)
       const fileUrl = getFileUrl(location);
 
@@ -1015,7 +1020,7 @@ export const uploadTaskAttachments = async (req: Request, res: Response) => {
         type: mimetype,
         category: subdir,
         uploaded_by: userId, // Add uploader information
-        uploaded_at: new Date().toISOString()
+        uploaded_at: new Date().toISOString(),
       };
     });
 
@@ -1066,4 +1071,3 @@ export const taskController = {
 };
 
 export default taskController;
-
