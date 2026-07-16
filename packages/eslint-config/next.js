@@ -15,9 +15,9 @@ import { config as baseConfig } from "./base.js";
 export const nextJsConfig = [
   ...baseConfig,
   {
-    ...pluginReact.configs.recommended,
+    ...pluginReact.configs.flat.recommended,
     languageOptions: {
-      ...pluginReact.configs.recommended.languageOptions,
+      ...pluginReact.configs.flat.recommended.languageOptions,
       globals: {
         ...globals.serviceworker,
       },

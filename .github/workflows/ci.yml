@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request: {}
+  push:
+    branches: [dev, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ganzafrica_test
+          POSTGRES_PASSWORD: test
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Backend test harness uses this instead of spinning up its own docker Postgres.
+      DATABASE_URL_TEST: postgres://postgres:test@localhost:5432/ganzafrica_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for turbo --filter=...[origin/dev]
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Restore turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ github.sha }}
+          restore-keys: |
+            turbo-
+
+      - name: Prettier check
+        run: pnpm prettier --check .
+
+      # Determine the base for affected-only filtering. On PRs use the target branch; on
+      # push to dev/main compare against the previous commit.
+      - name: Compute affected filter
+        id: affected
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "filter=...[origin/${{ github.base_ref }}]" >> "$GITHUB_OUTPUT"
+          else
+            echo "filter=...[HEAD^1]" >> "$GITHUB_OUTPUT"
+          fi
+
+      # NOTE: typecheck is intentionally NOT in this list yet — several packages carry
+      # pre-existing React 18/19 @types skew that FND-09 resolves. Re-add `typecheck` here
+      # once FND-09 lands (tracked in docs/specs/foundations/FND-09).
+      - name: Lint, test, build (affected)
+        run: pnpm turbo run lint test build --filter="${{ steps.affected.outputs.filter }}"
