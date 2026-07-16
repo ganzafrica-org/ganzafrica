@@ -42,64 +42,32 @@ export function isAdminOrManager(user: UserRole | null): boolean {
   return !!isAdminOrManagerRole;
 }
 
-/**
- * Get user role information from localStorage
- */
-export function getCurrentUserRole(): UserRole | null {
-  try {
-    if (typeof window === "undefined") {
-      return null;
-    }
+// In-memory cache of the current user, populated by fetchUserProfile from /auth/me (cookie).
+let cachedUser: UserRole | null = null;
 
-    const userStr = localStorage.getItem("internal_user") || localStorage.getItem("user");
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      return {
-        role_name: user.role_name,
-        roleName: user.roleName,
-        role: user.role,
-        role_id: user.role_id,
-        roleId: user.roleId,
-        email: user.email,
-      };
-    }
-  } catch (error) {
-    console.error("Error getting current user role:", error);
-  }
-  return null;
+export function getCurrentUserRole(): UserRole | null {
+  return cachedUser;
 }
 
 /**
- * Fetch user profile from API
+ * Fetch the current user from /auth/me (cookie session) and cache it for sync callers.
  */
 export async function fetchUserProfile(): Promise<UserRole | null> {
+  if (typeof window === "undefined") return null;
   try {
-    if (typeof window === "undefined") {
-      return null;
-    }
-
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      return null;
-    }
-
     const { default: apiClient } = await import("./api-client");
-
-    const response = await apiClient.get("/users/profile/me");
-    const profile = response.data.profile;
-
-    if (profile) {
-      localStorage.setItem("internal_user", JSON.stringify(profile));
-      localStorage.setItem("user", JSON.stringify(profile));
-
-      return {
-        role_name: profile.role_name,
-        roleName: profile.role_name,
-        role: profile.role_name,
-        role_id: profile.role_id,
-        roleId: profile.role_id,
-        email: profile.email,
+    const response = await apiClient.get("/auth/me");
+    const user = response.data.user;
+    if (user) {
+      cachedUser = {
+        role_name: user.roles?.[0] ?? user.role_name,
+        roleName: user.roles?.[0] ?? user.role_name,
+        role: user.roles?.[0] ?? user.role_name,
+        role_id: user.role_id,
+        roleId: user.role_id,
+        email: user.email,
       };
+      return cachedUser;
     }
   } catch (error) {
     console.error("Error fetching user profile:", error);

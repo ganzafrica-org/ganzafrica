@@ -69,39 +69,14 @@ export function LoginForm({ userType }: LoginFormProps) {
         setTempToken(response.data.tempToken);
         // Two-factor authentication required - handled by UI state change
       } else {
-        // Store tokens from successful login
-        if (response.data.token) {
-          localStorage.setItem("accessToken", response.data.token);
-
-          // If a refresh token is included, store it too
-          if (response.data.refreshToken) {
-            localStorage.setItem("refreshToken", response.data.refreshToken);
-          }
-
-          // Store user data from backend response
-          if (response.data.user) {
-            localStorage.setItem("user", JSON.stringify(response.data.user));
-          }
-
-          // Refresh the user state based on the new token
-          await refreshUser();
-
-          // Login successful - clear error state
-          setLoginError(null);
-          showSuccessToast({ message: "Login successful" });
-
-          // Always redirect to platform-selection first
-          // Platform-selection will call /me endpoint to get complete user data including role_name
-          // Then user can select which platform to access (or auto-redirect for alumni)
-          if (userType === "alumni") {
-            router.push("/platform-selection?user=alumni");
-          } else {
-            router.push("/platform-selection");
-          }
+        // Login sets the session cookie server-side; no tokens are stored client-side.
+        await refreshUser();
+        setLoginError(null);
+        showSuccessToast({ message: "Login successful" });
+        if (userType === "alumni") {
+          router.push("/platform-selection?user=alumni");
         } else {
-          const errorMsg = "Login failed: No authentication token received";
-          setLoginError(errorMsg);
-          showErrorToast({ message: errorMsg });
+          router.push("/platform-selection");
         }
       }
     } catch (error: any) {
@@ -147,36 +122,13 @@ export function LoginForm({ userType }: LoginFormProps) {
         code: data.totpCode,
       });
 
-      // Store tokens from successful verification
-      if (response.data.token) {
-        localStorage.setItem("accessToken", response.data.token);
-
-        // If a refresh token is included, store it too
-        if (response.data.refreshToken) {
-          localStorage.setItem("refreshToken", response.data.refreshToken);
-        }
-
-        // Store user data from backend response
-        if (response.data.user) {
-          localStorage.setItem("user", JSON.stringify(response.data.user));
-        }
-
-        // Refresh the user state based on the new token
-        await refreshUser();
-
-        showSuccessToast({ message: "Authentication successful" });
-
-        // Always redirect to platform-selection first
-        // Platform-selection will call /me endpoint to get complete user data including role_name
-        if (userType === "alumni") {
-          router.push("/platform-selection?user=alumni");
-        } else {
-          router.push("/platform-selection");
-        }
+      // Verification sets the session cookie server-side; nothing is stored client-side.
+      await refreshUser();
+      showSuccessToast({ message: "Authentication successful" });
+      if (userType === "alumni") {
+        router.push("/platform-selection?user=alumni");
       } else {
-        showErrorToast({
-          message: "Verification failed: No authentication token received",
-        });
+        router.push("/platform-selection");
       }
     } catch (error: any) {
       showErrorToast({

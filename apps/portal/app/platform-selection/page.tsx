@@ -69,120 +69,38 @@ function PlatformSelectionContent(): React.JSX.Element {
   const userTypeParam = searchParams.get("user");
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      toast.error("Please log in first");
-      router.push("/login");
-      return;
-    }
-
-    // Fetch user profile from API to get complete role information
-    const fetchUserProfile = async () => {
-      // First, try to get user from localStorage for faster initial load
-      const cachedUser = localStorage.getItem("user");
-      if (cachedUser) {
-        try {
-          const parsedUser = JSON.parse(cachedUser);
-          setUser(parsedUser);
-          // Don't redirect yet - wait for fresh API data with role_name
-        } catch (error) {
-          console.error("Error parsing cached user:", error);
-        }
-      }
-
-      // Fetch fresh data from API - this has complete user data including role_name
+    const loadUser = async () => {
       try {
-        const response = await apiClient.get("/users/profile/me");
-        if (response.data && response.data.profile) {
-          const profile = response.data.profile;
-          const userData = {
-            id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            role_id: profile.role_id,
-            role_name: profile.role_name,
-            avatar_url: profile.avatar_url,
-            email_verified: profile.email_verified,
-          };
-          setUser(userData);
-          // Update localStorage with fresh data that includes role_name
-          localStorage.setItem("user", JSON.stringify(userData));
+        const response = await apiClient.get("/auth/me");
+        const me = response.data.user;
+        if (!me) {
+          router.push("/login");
+          return;
+        }
+        const userData = {
+          id: me.id,
+          name: me.name,
+          email: me.email,
+          role_id: me.role_id,
+          role_name: me.roles?.[0] ?? me.role_name,
+          roles: me.roles,
+          avatar_url: me.avatar_url,
+          email_verified: me.email_verified,
+        };
+        setUser(userData);
 
-          // NOW redirect if user=alumni param is present (after we have role_name)
-          if (userTypeParam === "alumni") {
-            redirectToAlumni(token, JSON.stringify(userData));
-            return;
-          }
-
-          setIsLoading(false);
+        if (userTypeParam === "alumni") {
+          redirectToAlumni("", "");
           return;
         }
       } catch (error) {
-        console.error("Error fetching user profile:", error);
-        // If API fails but we have cached data, keep using it
-        setIsLoading(false);
+        router.push("/login");
+        return;
       }
-
-      // Fallback: Get user data from localStorage (stored during login)
-      const userData = localStorage.getItem("user");
-      if (userData) {
-        try {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-        } catch (error) {
-          console.error("Error parsing user data:", error);
-          // If parsing fails, try to get user from token
-          try {
-            const { jwtDecode } = require("jwt-decode");
-            const decoded = jwtDecode(token);
-            setUser({
-              id: decoded.id,
-              name: decoded.name,
-              email: decoded.email,
-              role_id: decoded.role_id,
-              role_name: decoded.role_name,
-              avatar_url: decoded.avatar_url,
-              email_verified: decoded.email_verified,
-            });
-          } catch (tokenError) {
-            console.error("Error decoding token:", tokenError);
-            setUser({
-              name: "User",
-              email: "user@ganzafrica.org",
-              role: "user",
-            });
-          }
-        }
-      } else {
-        // If no user data in localStorage, try to get from token
-        try {
-          const { jwtDecode } = require("jwt-decode");
-          const decoded = jwtDecode(token);
-          setUser({
-            id: decoded.id,
-            name: decoded.name,
-            email: decoded.email,
-            role_id: decoded.role_id,
-            role_name: decoded.role_name,
-            avatar_url: decoded.avatar_url,
-            email_verified: decoded.email_verified,
-          });
-        } catch (error) {
-          console.error("Error decoding token:", error);
-          setUser({
-            name: "User",
-            email: "user@ganzafrica.org",
-            role: "user",
-          });
-        }
-      }
-
       setIsLoading(false);
     };
 
-    fetchUserProfile();
+    loadUser();
   }, [router, userTypeParam]);
 
   const redirectToAlumni = (_token: string, _userData: string) => {
@@ -191,10 +109,10 @@ function PlatformSelectionContent(): React.JSX.Element {
     redirectToApp("alumni", alumniAppUrl, "/");
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch {}
     toast.success("Logged out successfully");
     router.push("/login");
   };
