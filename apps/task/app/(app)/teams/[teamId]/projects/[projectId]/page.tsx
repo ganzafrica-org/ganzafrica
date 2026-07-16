@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import { getCurrentUserRole } from "@/lib/auth-utils";
 import { useRouter } from "next/navigation";
 import { PageLayout } from "@/components/page-layout";
 import { Tabs } from "@/components/tabs";
@@ -84,54 +85,25 @@ export default function ProjectDetailPage({
     message: "",
   });
 
-  // Get current user ID from localStorage
+  // Get current user ID from the cookie-session cache
   const getCurrentUserId = () => {
-    try {
-      // Check if we're in the browser environment
-      if (typeof window === "undefined") {
-        return 1; // fallback for SSR
-      }
-
-      const userStr = localStorage.getItem("task_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        return user.id || 1; // fallback to 1 if no id
-      }
-    } catch (error) {
-      console.error("Error getting current user:", error);
-    }
-    return 1; // fallback
+    const user = getCurrentUserRole();
+    return user?.id != null ? Number(user.id) : 1;
   };
 
   // Check if current user has manager role
   const isCurrentUserManager = () => {
-    try {
-      // Check if we're in the browser environment
-      if (typeof window === "undefined") {
-        return false;
-      }
-
-      const userStr = localStorage.getItem("task_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        const roleName = user.role_name || user.roleName;
-        const roleId = user.role_id || user.roleId;
-
-        // Consider admin, staff, and mentor roles as manager roles
-        const isManagerRole =
-          roleName &&
-          (roleName.toLowerCase().includes("admin") ||
-            roleName.toLowerCase().includes("staff") ||
-            roleName.toLowerCase().includes("mentor") ||
-            roleName.toLowerCase().includes("manager") ||
-            (roleId && roleId < 1000)); // Assuming manager roles have IDs < 1000
-
-        return isManagerRole;
-      }
-    } catch (error) {
-      console.error("Error checking user role:", error);
-    }
-    return false; // Default to non-manager
+    const user = getCurrentUserRole();
+    const roleName = user?.role_name || user?.roleName;
+    const roleId = user?.role_id || user?.roleId;
+    return !!(
+      roleName &&
+      (roleName.toLowerCase().includes("admin") ||
+        roleName.toLowerCase().includes("staff") ||
+        roleName.toLowerCase().includes("mentor") ||
+        roleName.toLowerCase().includes("manager") ||
+        (roleId && roleId < 1000))
+    );
   };
 
   // Check if current user is assigned to the team
@@ -391,8 +363,7 @@ export default function ProjectDetailPage({
         return;
       }
 
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
+      const user = getCurrentUserRole();
 
       if (!user || !user.id) {
         setErrorModal({
@@ -415,7 +386,7 @@ export default function ProjectDetailPage({
         labels: task.labels,
         attachments: [], // Don't send attachments - they'll be uploaded separately
         assignees: task.assignees.map((id) => parseInt(id)),
-        created_by: parseInt(user.id),
+        created_by: parseInt(String(user.id)),
       });
 
       // Note: Attachments should be uploaded AFTER task creation using the Upload button

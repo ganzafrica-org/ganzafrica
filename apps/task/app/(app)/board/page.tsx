@@ -63,23 +63,10 @@ export default function BoardPage(): React.JSX.Element {
   const { collapsed: sidebarCollapsed, toggleCollapsed } = useSidebar();
   const { showSuccess, showError, toasts, removeToast } = useToast();
 
-  // Get current user ID from localStorage
+  // Get current user ID from the cookie-session cache
   const getCurrentUserId = () => {
-    try {
-      // Check if we're in the browser environment
-      if (typeof window === "undefined") {
-        return 1; // fallback for SSR
-      }
-
-      const userStr = localStorage.getItem("task_user");
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        return user.id || 1; // fallback to 1 if no id
-      }
-    } catch (error) {
-      console.error("Error getting current user:", error);
-    }
-    return 1; // fallback
+    const user = getCurrentUserRole();
+    return user?.id != null ? Number(user.id) : 1;
   };
 
   // Check if current user has admin or manager role (both can access everything)
