@@ -12,6 +12,9 @@ coverage
 # Raw payroll data (real salary data — never commit; see apps/internal/README.md)
 apps/internal/*.csv
 
+# Backend upload scratch (runtime artifacts; production serves from DigitalOcean Spaces)
+backend/uploads/
+
 # next.js
 .next/
 out/
