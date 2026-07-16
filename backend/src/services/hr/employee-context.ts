@@ -60,11 +60,10 @@ export async function getHrRequester(
     .where(eq(user_roles.user_id, userId));
   const roleNames = roleRows.map((r) => r.name);
 
-  const role: "HR" | "IT" | "EMPLOYEE" = roleNames.includes("admin")
-    ? "IT"
-    : roleNames.includes("hr")
-      ? "HR"
-      : "EMPLOYEE";
+  // admin and hr both get full HR-level access in the (transitional) HR services. The legacy
+  // "IT" enum was more restricted than "HR" in those services, so admin must NOT map to it.
+  const role: "HR" | "IT" | "EMPLOYEE" =
+    roleNames.includes("admin") || roleNames.includes("hr") ? "HR" : "EMPLOYEE";
 
   const [emp] = await db
     .select({ id: employees.id })
