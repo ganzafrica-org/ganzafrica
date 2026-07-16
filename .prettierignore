@@ -13,3 +13,6 @@ backend/swagger/*.json
 
 # Archived demo code — not maintained
 apps/_archived
+
+# Local upload artifacts (binaries; should not be in the repo — cleanup tracked separately)
+backend/uploads
