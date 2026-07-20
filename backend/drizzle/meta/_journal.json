@@ -29,6 +29,20 @@
       "when": 1784145320097,
       "tag": "0003_auth_handoff_and_refresh_grace",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784589344082,
+      "tag": "0004_cynical_vivisector",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784589695323,
+      "tag": "0005_clever_shocker",
+      "breakpoints": true
     }
   ]
 }

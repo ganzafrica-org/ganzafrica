@@ -36,5 +36,25 @@ export const hr_assets = pgTable("hr_assets", {
   ...timestampFields,
 });
 
+export const hr_asset_assignments = pgTable("hr_asset_assignments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  asset_id: uuid("asset_id")
+    .notNull()
+    .references(() => hr_assets.id, { onDelete: "cascade" }),
+  employee_id: uuid("employee_id")
+    .notNull()
+    .references(() => hr_users.id),
+  assigned_by: uuid("assigned_by")
+    .notNull()
+    .references(() => hr_users.id),
+  assigned_at: timestamp("assigned_at", { withTimezone: true }).notNull().defaultNow(),
+  returned_at: timestamp("returned_at", { withTimezone: true }),
+  return_condition: text("return_condition"),
+  notes: text("notes"),
+  ...timestampFields,
+});
+
 export type Asset = typeof hr_assets.$inferSelect;
 export type NewAsset = typeof hr_assets.$inferInsert;
+export type AssetAssignment = typeof hr_asset_assignments.$inferSelect;
+export type NewAssetAssignment = typeof hr_asset_assignments.$inferInsert;
