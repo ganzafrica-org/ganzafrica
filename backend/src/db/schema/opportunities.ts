@@ -175,6 +175,14 @@ export const applications = pgTable(
     // Custom answers to opportunity-specific questions
     custom_answers: jsonb("custom_answers").$type<Record<string, any>>(),
 
+    // REC-01: form the application was submitted against (null for pre-spec rows) + new
+    // standard fields the versioned form always collects. Nullable so legacy rows are untouched.
+    form_version: integer("form_version"),
+    date_of_birth: date("date_of_birth"),
+    country_of_residence: text("country_of_residence"),
+    country_of_work: text("country_of_work"),
+    has_work_permit: boolean("has_work_permit"),
+
     // Application status and tracking
     status: applicationStatusEnum("status").notNull().default("submitted"),
     submission_date: timestamp("submission_date", { withTimezone: true }).notNull().defaultNow(),

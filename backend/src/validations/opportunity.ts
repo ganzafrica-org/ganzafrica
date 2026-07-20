@@ -213,11 +213,11 @@ export const generalApplicationSchema = z.object({
 export const applicationSubmissionSchema = z.object({
   params: idParamsSchema,
   body: z.object({
-    // Standard required fields
-    full_name: z
-      .string()
-      .min(2, "Full name must be at least 2 characters long")
-      .max(200, "Full name must be at most 200 characters long"),
+    // The applications table is keyed on first_name/last_name (both NOT NULL); the service reads
+    // those. full_name is accepted for older clients but is not the enforced contract.
+    full_name: z.string().min(2).max(200).optional(),
+    first_name: z.string().min(1).optional(),
+    last_name: z.string().min(1).optional(),
     email: z.string().email("Invalid email format"),
     phone: z.string().optional(),
     gender: z.enum(["male", "female", "non_binary", "prefer_not_to_say", "other"]).optional(),
@@ -242,6 +242,12 @@ export const applicationSubmissionSchema = z.object({
 
     // Custom answers - schema will be validated dynamically based on opportunity questions
     custom_answers: z.record(z.string(), z.any()).optional(),
+
+    // REC-01 versioned-form standard fields (optional — legacy submissions omit them).
+    date_of_birth: z.string().optional(),
+    country_of_residence: z.string().optional(),
+    country_of_work: z.string().optional(),
+    has_work_permit: z.boolean().optional(),
   }),
 });
 
