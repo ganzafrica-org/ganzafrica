@@ -20,7 +20,7 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import { default as HeaderBelt } from "@/components/layout/headerBelt";
 import apiClient from "@/lib/api-client";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { TranslatableText } from "@/components/translate/TranslatableText";
 import ImpactAreaSection from "@/components/sections/food-system/impact-areas-section";
 
@@ -28,7 +28,7 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,

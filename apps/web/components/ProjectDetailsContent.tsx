@@ -24,6 +24,7 @@ import {
 import { useParams } from "next/navigation";
 import apiClient from "@/lib/api-client";
 import { Metadata } from "next";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 // Normalize Next.js Link typing across React versions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SafeLink = Link as unknown as React.ComponentType<any>;

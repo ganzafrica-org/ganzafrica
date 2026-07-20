@@ -394,7 +394,7 @@ const OpportunityDetailsPage = () => {
                 </div>
                 <div className="overflow-x-auto">
                   <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10 hover:bg-white/20 transition-all duration-300">
-                    <TranslatableText>{getStatusBadge(opportunity.status)}</TranslatableText>
+                    {getStatusBadge(opportunity.status)}
                   </div>
                 </div>
               </div>

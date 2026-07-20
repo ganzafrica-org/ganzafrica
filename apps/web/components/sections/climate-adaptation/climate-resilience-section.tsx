@@ -1,14 +1,14 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
 const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
 import { DecoratedHeading } from "@/components/layout/headertext";
 
 // Animation variants
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -20,7 +20,7 @@ const fadeIn = {
   },
 };
 
-const imageVariant = {
+const imageVariant: Variants = {
   hidden: { opacity: 0, scale: 0.9 },
   visible: {
     opacity: 1,

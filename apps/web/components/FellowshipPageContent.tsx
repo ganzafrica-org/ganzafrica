@@ -632,10 +632,10 @@ export default function FellowshipPageContent() {
               </div>
               <div className="p-6">
                 <h3 className="text-lg font-bold mb-2">
-                  <TranslatableText>{benefits[2]?.title}</TranslatableText>
+                  <TranslatableText>{benefits[2]?.title ?? ""}</TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                  <TranslatableText>{benefits[2]?.description}</TranslatableText>
+                  <TranslatableText>{benefits[2]?.description ?? ""}</TranslatableText>
                 </p>
               </div>
             </motion.div>
@@ -724,9 +724,10 @@ export default function FellowshipPageContent() {
         <Container>
           <div className="text-center mb-6 md:mb-8">
             <h2 className="text-3xl md:text-4xl font-bold mb-2 text-[#00A15D]">
-              <TranslatableText>
-                Checkout What <span className="text-[#00A15D]">Fellows Say About</span>
-              </TranslatableText>
+              <TranslatableText>Checkout What </TranslatableText>
+              <span className="text-[#00A15D]">
+                <TranslatableText>Fellows Say About</TranslatableText>
+              </span>
             </h2>
             <h3 className="text-2xl md:text-3xl font-bold text-[#FDB022] mb-6 md:mb-8">
               <TranslatableText> Our Fellowship</TranslatableText>
@@ -804,7 +805,8 @@ export default function FellowshipPageContent() {
                       <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
                         <TranslatableText>
                           {testimonials[currentTestimonial]?.description ||
-                            testimonials[0]?.description}
+                            testimonials[0]?.description ||
+                            ""}
                         </TranslatableText>
                       </p>
                     </motion.div>
@@ -820,12 +822,15 @@ export default function FellowshipPageContent() {
                       <h4 className="text-lg md:text-xl font-bold mb-1 md:mb-2 text-[#045F3C]">
                         <TranslatableText>
                           {testimonials[currentTestimonial]?.author_name ||
-                            testimonials[0]?.author_name}
+                            testimonials[0]?.author_name ||
+                            ""}
                         </TranslatableText>
                       </h4>
                       <p className="text-gray-600 text-xs md:text-sm">
                         <TranslatableText>
-                          {testimonials[currentTestimonial]?.position || testimonials[0]?.position}
+                          {testimonials[currentTestimonial]?.position ||
+                            testimonials[0]?.position ||
+                            ""}
                         </TranslatableText>
                       </p>
                     </motion.div>

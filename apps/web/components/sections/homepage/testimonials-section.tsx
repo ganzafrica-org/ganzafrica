@@ -186,9 +186,10 @@ export default function TestimonialsSection({}) {
             <TranslatableText>What People</TranslatableText>
           </h2>
           <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8">
-            <TranslatableText>
-              <span className="text-[#00A15D]">Say About</span> Us
-            </TranslatableText>
+            <span className="text-[#00A15D]">
+              <TranslatableText>Say About</TranslatableText>
+            </span>{" "}
+            <TranslatableText>Us</TranslatableText>
           </h3>
         </div>
 
@@ -254,7 +255,7 @@ export default function TestimonialsSection({}) {
                 >
                   <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl mx-auto text-white">
                     <TranslatableText>
-                      {testimonials[currentTestimonial]?.description}
+                      {testimonials[currentTestimonial]?.description ?? ""}
                     </TranslatableText>
                   </p>
                 </motion.div>
