@@ -9,7 +9,16 @@ const keys = {
     ["recruitment", "applications", params] as const,
   application: (id: number) => ["recruitment", "application", id] as const,
   criteria: (id: number) => ["recruitment", "criteria", id] as const,
+  funnel: (id: number) => ["recruitment", "funnel", id] as const,
 };
+
+export function useFunnel(opportunityId: number | null) {
+  return useQuery({
+    queryKey: keys.funnel(opportunityId ?? -1),
+    queryFn: () => recruitmentService.getFunnel(opportunityId as number),
+    enabled: opportunityId != null,
+  });
+}
 
 export function useRecruitmentOpportunities() {
   return useQuery({

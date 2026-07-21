@@ -8,9 +8,10 @@
  *
  * The conditional `has_work_permit` field appears only when residence != work country.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { evaluate, type EligibilityRule, type FailedRule } from "@/lib/recruitment/eligibility";
 import type { FormDefinition, FormField } from "@/lib/recruitment/form-types";
+import { trackFunnel } from "@/lib/funnel";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
 
@@ -59,6 +60,12 @@ export function DynamicApplicationForm({
   const [submitting, setSubmitting] = useState(false);
   const [reference, setReference] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const formStartedRef = useRef(false);
+
+  // Fire the anonymous "view" once per mount (before any form interaction).
+  useEffect(() => {
+    trackFunnel(opportunityId, "view");
+  }, [opportunityId]);
 
   useEffect(() => {
     if (isDeadlinePassed(applicationDeadline)) {
@@ -105,6 +112,11 @@ export function DynamicApplicationForm({
   }, [orderedFields]);
 
   function setAnswer(key: string, value: unknown) {
+    // form_start fires once, on the first field interaction of this mount.
+    if (!formStartedRef.current) {
+      formStartedRef.current = true;
+      trackFunnel(opportunityId, "form_start");
+    }
     setAnswers((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -148,6 +160,7 @@ export function DynamicApplicationForm({
         return;
       }
       const body = await apply.json();
+      trackFunnel(opportunityId, "form_submit");
       setReference(body.application?.id ?? null);
       setPhase("submitted");
     } catch {

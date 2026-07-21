@@ -91,6 +91,19 @@ export interface Criterion {
   sort_order: number;
 }
 
+export interface Funnel {
+  views: number;
+  form_starts: number;
+  submissions: number;
+  eligibility_blocks: {
+    rule_id: number;
+    field_key: string;
+    reject_message: string;
+    hits: number;
+  }[];
+  conversion: { view_to_start: number; start_to_submit: number };
+}
+
 export const recruitmentService = {
   async listOpportunities() {
     const res = await httpClient.get<{ opportunities: OpportunityStageCounts[] }>(
@@ -210,6 +223,13 @@ export const recruitmentService = {
 
   async publishOpportunity(id: number) {
     const res = await httpClient.post(`/opportunities/${id}/publish`);
+    return res.data;
+  },
+
+  async getFunnel(opportunityId: number) {
+    const res = await httpClient.get<Funnel>(
+      `/hr/recruitment/opportunities/${opportunityId}/funnel`,
+    );
     return res.data;
   },
 };

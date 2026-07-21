@@ -16,6 +16,15 @@ const eligibilityLimiter = rateLimit({
   message: "Too many requests, please try again shortly.",
 });
 
+// Anonymous funnel events are public; rate-limit per IP (spec: 60/min/IP).
+const funnelLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests, please try again shortly.",
+});
+
 /**
  * @swagger
  * tags:
@@ -93,6 +102,14 @@ router.post(
   eligibilityLimiter,
   validate(opportunityValidation.getOpportunitySchema),
   recruitmentController.eligibilityCheck,
+);
+
+// REC-04 public: anonymous funnel event ingest. Always 204 (fire-and-forget).
+router.post(
+  "/:id/events",
+  funnelLimiter,
+  validate(opportunityValidation.getOpportunitySchema),
+  recruitmentController.recordFunnelEvent,
 );
 
 // Application routes related to specific opportunities

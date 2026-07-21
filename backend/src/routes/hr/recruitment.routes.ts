@@ -84,6 +84,13 @@ router.get(
   pipelineController.getApplication,
 );
 
+router.get(
+  "/recruitment/opportunities/:id/funnel",
+  ...readGuard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.getFunnel,
+);
+
 router.post(
   "/recruitment/applications/:id/transition",
   ...guard,
