@@ -312,7 +312,59 @@ export const recruitmentService = {
     );
     return res.data;
   },
+
+  // REC-07 CV ranking
+  async listRankingCriteria(opportunityId: number) {
+    const res = await httpClient.get<{ criteria: RankingCriterion[] }>(
+      `/hr/recruitment/opportunities/${opportunityId}/ranking-criteria`,
+    );
+    return res.data.criteria;
+  },
+  async createRankingCriterion(
+    opportunityId: number,
+    payload: { keyword: string; weight?: number; category?: string },
+  ) {
+    const res = await httpClient.post(
+      `/hr/recruitment/opportunities/${opportunityId}/ranking-criteria`,
+      payload,
+    );
+    return res.data;
+  },
+  async deleteRankingCriterion(opportunityId: number, criterionId: number) {
+    const res = await httpClient.delete(
+      `/hr/recruitment/opportunities/${opportunityId}/ranking-criteria/${criterionId}`,
+    );
+    return res.data;
+  },
+  async rescore(opportunityId: number) {
+    const res = await httpClient.post<{ scored: number }>(
+      `/hr/recruitment/opportunities/${opportunityId}/rescore`,
+    );
+    return res.data;
+  },
+  async listRanked(opportunityId: number) {
+    const res = await httpClient.get<{ applications: RankedApplication[] }>(
+      `/hr/recruitment/opportunities/${opportunityId}/ranked`,
+    );
+    return res.data.applications;
+  },
 };
+
+export interface RankingCriterion {
+  id: number;
+  keyword: string;
+  weight: string;
+  category: string | null;
+  is_active: boolean;
+}
+
+export interface RankedApplication {
+  application_id: number;
+  first_name: string;
+  last_name: string;
+  pipeline_stage: string;
+  cv_score: string | null;
+}
 
 export interface Reviewer {
   id: number;

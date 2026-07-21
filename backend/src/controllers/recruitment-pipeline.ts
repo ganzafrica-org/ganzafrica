@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import * as pipeline from "../services/recruitment/pipeline.service";
 import * as funnel from "../services/recruitment/funnel.service";
 import * as review from "../services/recruitment/review.service";
+import * as ranking from "../services/recruitment/cv-ranking.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -221,6 +222,54 @@ export const closeOutRemaining = async (req: Request, res: Response) => {
     return res.json(result);
   } catch (error) {
     return handleError(res, error, "Close-out Error");
+  }
+};
+
+// --- REC-07 CV ranking ---
+export const listRankingCriteria = async (req: Request, res: Response) => {
+  try {
+    return res.json({ criteria: await ranking.listCriteria(Number(req.params.id)) });
+  } catch (error) {
+    return handleError(res, error, "List Ranking Criteria Error");
+  }
+};
+export const createRankingCriterion = async (req: Request, res: Response) => {
+  try {
+    return res
+      .status(201)
+      .json({ criterion: await ranking.createCriterion(Number(req.params.id), req.body) });
+  } catch (error) {
+    return handleError(res, error, "Create Ranking Criterion Error");
+  }
+};
+export const patchRankingCriterion = async (req: Request, res: Response) => {
+  try {
+    return res.json({
+      criterion: await ranking.updateCriterion(Number(req.params.criterionId), req.body),
+    });
+  } catch (error) {
+    return handleError(res, error, "Update Ranking Criterion Error");
+  }
+};
+export const deleteRankingCriterion = async (req: Request, res: Response) => {
+  try {
+    return res.json(await ranking.deleteCriterion(Number(req.params.criterionId)));
+  } catch (error) {
+    return handleError(res, error, "Delete Ranking Criterion Error");
+  }
+};
+export const rescoreOpportunity = async (req: Request, res: Response) => {
+  try {
+    return res.json(await ranking.rescoreOpportunity(Number(req.params.id)));
+  } catch (error) {
+    return handleError(res, error, "Rescore Error");
+  }
+};
+export const rankedApplications = async (req: Request, res: Response) => {
+  try {
+    return res.json({ applications: await ranking.rankedApplications(Number(req.params.id)) });
+  } catch (error) {
+    return handleError(res, error, "Ranked Applications Error");
   }
 };
 

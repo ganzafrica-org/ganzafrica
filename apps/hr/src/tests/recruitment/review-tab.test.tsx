@@ -10,10 +10,10 @@ afterEach(cleanup);
 
 describe("ReviewTab", () => {
   it("lists reviewers and notes, assigns a reviewer, and adds a note", async () => {
-    let reviewers = [
+    let reviewers: Record<string, unknown>[] = [
       { id: 1, reviewer_user_id: 9, role: "Data expert", name: "Ada", email: "a@e.com" },
     ];
-    let notes = [
+    let notes: Record<string, unknown>[] = [
       {
         id: 1,
         author_user_id: 2,

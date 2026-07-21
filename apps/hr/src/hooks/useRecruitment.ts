@@ -20,6 +20,36 @@ export function useFunnel(opportunityId: number | null) {
   });
 }
 
+export function useRankingCriteria(opportunityId: number | null) {
+  return useQuery({
+    queryKey: ["recruitment", "ranking-criteria", opportunityId ?? -1],
+    queryFn: () => recruitmentService.listRankingCriteria(opportunityId as number),
+    enabled: opportunityId != null,
+  });
+}
+
+export function useRankingMutations(opportunityId: number) {
+  const qc = useQueryClient();
+  const invalidate = () =>
+    qc.invalidateQueries({ queryKey: ["recruitment", "ranking-criteria", opportunityId] });
+  return {
+    create: useMutation({
+      mutationFn: (payload: { keyword: string; weight?: number; category?: string }) =>
+        recruitmentService.createRankingCriterion(opportunityId, payload),
+      onSuccess: invalidate,
+    }),
+    remove: useMutation({
+      mutationFn: (criterionId: number) =>
+        recruitmentService.deleteRankingCriterion(opportunityId, criterionId),
+      onSuccess: invalidate,
+    }),
+    rescore: useMutation({
+      mutationFn: () => recruitmentService.rescore(opportunityId),
+      onSuccess: () => qc.invalidateQueries({ queryKey: ["recruitment", "applications"] }),
+    }),
+  };
+}
+
 export function useReviewers(applicationId: number | null) {
   return useQuery({
     queryKey: ["recruitment", "reviewers", applicationId ?? -1],

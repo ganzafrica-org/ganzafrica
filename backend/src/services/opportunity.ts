@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from "uuid";
 import { evaluate, recordHits } from "./recruitment/eligibility.service";
 import { getActiveRules, getPublishedForm } from "./recruitment/forms.service";
 import { runScreening, sendApplicantEmail } from "./recruitment/pipeline.service";
+import { scoreApplicationCv } from "./recruitment/cv-ranking.service";
 
 const logger = new Logger("OpportunityService");
 
@@ -734,6 +735,11 @@ export async function submitApplication(applicationData: ApplicationInput): Prom
           logger.error("received email failed (non-fatal)", err),
         );
       }
+      // REC-07: score the CV against ranking criteria out-of-band. Fire-and-forget — extraction
+      // must never block or fail the submission.
+      void scoreApplicationCv(createdApplication.id).catch((err) =>
+        logger.error("CV scoring failed (non-fatal)", err),
+      );
     }
 
     return createdApplication;

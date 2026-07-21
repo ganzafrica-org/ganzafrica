@@ -114,3 +114,28 @@ export const closeOutSchema = z.object({
   params: z.object({ id: idParam }),
   body: z.object({ rejection_reason: z.string().optional() }).optional(),
 });
+
+// --- REC-07 CV ranking ---
+export const createRankingCriterionSchema = z.object({
+  params: z.object({ id: idParam }),
+  body: z.object({
+    keyword: z.string().min(1),
+    weight: z.union([z.number(), z.string()]).optional(),
+    category: z.string().nullable().optional(),
+    is_active: z.boolean().optional(),
+  }),
+});
+
+export const patchRankingCriterionSchema = z.object({
+  params: z.object({ id: idParam, criterionId: idParam }),
+  body: z.object({
+    keyword: z.string().min(1).optional(),
+    weight: z.union([z.number(), z.string()]).optional(),
+    category: z.string().nullable().optional(),
+    is_active: z.boolean().optional(),
+  }),
+});
+
+export const rankingCriterionIdSchema = z.object({
+  params: z.object({ id: idParam, criterionId: idParam }),
+});
