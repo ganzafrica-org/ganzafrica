@@ -1,7 +1,5 @@
 import OpportunitiesPage from "@/components/OpportunitiesContent";
 import { Metadata } from "next";
-
-import { Metadata } from "next";
 import apiClient from "@/lib/api-client";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://web.ganzafrica.org";

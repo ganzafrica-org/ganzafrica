@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
 import { Leaf, Plus, Minus } from "lucide-react";
 import apiClient from "@/lib/api-client";
@@ -18,7 +18,7 @@ const MinusIcon = Minus as unknown as SvgIconComponent;
 const SafeImage = Image as unknown as React.ComponentType<any>;
 
 // Animation variants
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,

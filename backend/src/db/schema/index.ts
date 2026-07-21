@@ -16,4 +16,6 @@ export * from "./reports";
 export * from "./alumni";
 export * from "./payroll";
 export * from "./payslip-tokens";
+export * from "./opportunities";
 export * from "./hr/index";
+export * from "./recruitment/forms";

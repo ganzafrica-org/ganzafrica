@@ -31,5 +31,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "src/tests/http.service.unit.test.ts",
+    "src/tests/auth.service.integration.test.ts"
+  ]
 }

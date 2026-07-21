@@ -267,7 +267,7 @@ export default function Footer({}: {}) {
         <div className="flex flex-col md:flex-row justify-between items-center text-sm">
           <div className="mb-0.5 md:mb-0">
             <p>
-              <TranslatableText>© {year} All Rights Reserved GanzAfrica</TranslatableText>
+              <TranslatableText>{`© ${year ?? ""} All Rights Reserved GanzAfrica`}</TranslatableText>
             </p>
           </div>
           <div className="flex flex-col md:flex-row items-center space-y-0 md:space-y-0 md:space-x-6 mb-0.5 md:mb-0">
