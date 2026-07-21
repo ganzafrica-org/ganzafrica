@@ -172,6 +172,36 @@ describe("evaluate — operator table", () => {
     expect(evaluate([r], { x: "anything" }).eligible).toBe(true);
   });
 
+  it("covers non-matching and non-coercible branches", () => {
+    // neq that does NOT reject (values equal)
+    expect(
+      evaluate([rule({ field_key: "d", operator: "neq", value: "x" })], { d: "x" }).eligible,
+    ).toBe(true);
+    // numeric comparison where the operand can't be coerced → no reject
+    expect(
+      evaluate([rule({ field_key: "n", operator: "gt", value: "abc" })], { n: 5 }).eligible,
+    ).toBe(true);
+    // gte/lte non-matching
+    expect(
+      evaluate([rule({ field_key: "n", operator: "gte", value: 10 })], { n: 5 }).eligible,
+    ).toBe(true);
+    expect(evaluate([rule({ field_key: "n", operator: "lte", value: 3 })], { n: 5 }).eligible).toBe(
+      true,
+    );
+    // contains against a non-string, non-array value → no reject
+    expect(
+      evaluate([rule({ field_key: "k", operator: "contains", value: "z" })], { k: 42 }).eligible,
+    ).toBe(true);
+    // in / not_in with a non-array operand → no reject / reject-guard
+    expect(
+      evaluate([rule({ field_key: "k", operator: "in", value: "notarray" })], { k: "a" }).eligible,
+    ).toBe(true);
+    expect(
+      evaluate([rule({ field_key: "k", operator: "not_in", value: "notarray" })], { k: "a" })
+        .eligible,
+    ).toBe(true);
+  });
+
   it("multiple failing rules accumulate", () => {
     const r1 = rule({ field_key: "age", operator: "gt", value: 30, reject_message: "Too old" });
     const r2 = rule({

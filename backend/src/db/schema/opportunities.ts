@@ -183,6 +183,13 @@ export const applications = pgTable(
     country_of_work: text("country_of_work"),
     has_work_permit: boolean("has_work_permit"),
 
+    // REC-02: pipeline_stage is the recruitment pipeline's truth; legacy `status` below is kept
+    // coherent by a service-level sync map. Nullable/defaulted so existing rows are untouched.
+    pipeline_stage: text("pipeline_stage").notNull().default("submitted"),
+    rejection_reason: text("rejection_reason"),
+    flagged: boolean("flagged").notNull().default(false),
+    flag_note: text("flag_note"),
+
     // Application status and tracking
     status: applicationStatusEnum("status").notNull().default("submitted"),
     submission_date: timestamp("submission_date", { withTimezone: true }).notNull().defaultNow(),
