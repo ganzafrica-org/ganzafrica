@@ -71,8 +71,11 @@ jobs:
       - name: Lint, test, build (affected)
         run: pnpm turbo run lint test build --filter="${{ steps.affected.outputs.filter }}"
 
-      # Coverage gate: recruitment code (src/services/recruitment/**) must stay ≥90% (statements,
-      # branches, functions, lines) or this fails. Scoped on purpose — the rest of the backend is
-      # not yet gated. Widen the include/thresholds in backend/vitest.config.ts as suites grow.
+      # Coverage gates: actively-built recruitment code is held to ≥90% (statements/functions/lines;
+      # UI branches ≥85). Scoped on purpose — the rest of each package is not yet gated. Widen the
+      # include/thresholds in each package's vitest.config.ts as suites grow (never lower a floor).
       - name: Recruitment coverage gate (backend ≥90%)
         run: pnpm --filter ganzafrica-backend test:coverage
+
+      - name: Recruitment coverage gate (hr UI ≥90%)
+        run: pnpm --filter hr test:coverage

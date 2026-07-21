@@ -96,4 +96,128 @@ describe("FormBuilder", () => {
     fireEvent.click(screen.getByRole("button", { name: "Publish" }));
     expect(h.onPublish).toHaveBeenCalledTimes(1);
   });
+
+  it("save draft button reports the current definition", () => {
+    const h = setup();
+    fireEvent.click(screen.getByRole("button", { name: "Save draft" }));
+    expect(h.onSaveDraft).toHaveBeenCalled();
+  });
+});
+
+const withCustom: FormDefinition = {
+  standard: definition.standard,
+  custom: [
+    { key: "degree", label: "Degree", type: "text", required: false, order: 1, section: "Extra" },
+    {
+      key: "portfolio",
+      label: "Portfolio",
+      type: "text",
+      required: false,
+      order: 2,
+      section: "Extra",
+    },
+  ],
+};
+
+function setupCustom(rules: RuleDraft[] = []) {
+  const h = {
+    onSaveDraft: vi.fn(),
+    onPublish: vi.fn(),
+    onCreateRule: vi.fn(),
+    onUpdateRule: vi.fn(),
+    onDeleteRule: vi.fn(),
+  };
+  render(<FormBuilder definition={withCustom} rules={rules} {...h} />);
+  return h;
+}
+
+describe("FormBuilder — custom fields & rule editing", () => {
+  it("editing a custom field label saves the draft", () => {
+    const h = setupCustom();
+    fireEvent.change(screen.getByLabelText("Label", { selector: "#label-degree" }), {
+      target: { value: "Highest degree" },
+    });
+    expect(h.onSaveDraft).toHaveBeenCalled();
+    const def = h.onSaveDraft.mock.calls.at(-1)![0] as FormDefinition;
+    expect(def.custom[0].label).toBe("Highest degree");
+  });
+
+  it("toggling required saves the draft", () => {
+    const h = setupCustom();
+    // Each custom field row has a required Switch (radix switch = role="switch").
+    fireEvent.click(screen.getAllByRole("switch")[0]);
+    expect(h.onSaveDraft).toHaveBeenCalled();
+  });
+
+  it("moving a field down reorders and renumbers", () => {
+    const h = setupCustom();
+    const downButtons = screen.getAllByLabelText("Move down");
+    fireEvent.click(downButtons[0]);
+    const def = h.onSaveDraft.mock.calls.at(-1)![0] as FormDefinition;
+    expect(def.custom[0].key).toBe("portfolio");
+    expect(def.custom[0].order).toBe(1);
+  });
+
+  it("deletes a custom field not referenced by a rule", () => {
+    const h = setupCustom();
+    const del = screen.getAllByLabelText("Delete field")[0];
+    fireEvent.click(del);
+    const def = h.onSaveDraft.mock.calls.at(-1)![0] as FormDefinition;
+    expect(def.custom).toHaveLength(1);
+  });
+
+  it("a field referenced by an active rule cannot be deleted", () => {
+    setupCustom([
+      { field_key: "degree", operator: "eq", value: "none", reject_message: "x", is_active: true },
+    ]);
+    const del = screen.getAllByLabelText("Delete field")[0] as HTMLButtonElement;
+    expect(del.disabled).toBe(true);
+  });
+
+  it("editing a rule's value calls onUpdateRule", () => {
+    const h = setupCustom([
+      { field_key: "age", operator: "gt", value: "", reject_message: "x", is_active: true },
+    ]);
+    fireEvent.change(screen.getByLabelText("Value for rule 1"), { target: { value: "40" } });
+    expect(h.onUpdateRule).toHaveBeenCalled();
+    expect(h.onUpdateRule.mock.calls.at(-1)![1].value).toBe("40");
+  });
+
+  it("value input is disabled for is_false operator", () => {
+    setupCustom([
+      {
+        field_key: "has_work_permit",
+        operator: "is_false",
+        value: null,
+        reject_message: "x",
+        is_active: true,
+      },
+    ]);
+    const valueInput = screen.getByLabelText("Value for rule 1") as HTMLInputElement;
+    expect(valueInput.disabled).toBe(true);
+  });
+
+  it("toggling a rule active calls onUpdateRule", () => {
+    const h = setupCustom([
+      { field_key: "age", operator: "gt", value: "30", reject_message: "x", is_active: true },
+    ]);
+    fireEvent.click(screen.getByLabelText("Toggle rule 1"));
+    expect(h.onUpdateRule).toHaveBeenCalled();
+  });
+
+  it("deleting a rule with no hits calls onDeleteRule", () => {
+    const h = setupCustom([
+      { field_key: "age", operator: "gt", value: "30", reject_message: "x", is_active: true },
+    ]);
+    fireEvent.click(screen.getByLabelText("Delete rule 1"));
+    expect(h.onDeleteRule).toHaveBeenCalledWith(0);
+  });
+
+  it("moving the first field up is a no-op (bounds guard)", () => {
+    const h = setupCustom();
+    fireEvent.click(screen.getAllByLabelText("Move up")[0]);
+    // order unchanged: degree still first
+    const def = h.onSaveDraft.mock.calls.at(-1)![0] as FormDefinition;
+    expect(def.custom[0].key).toBe("degree");
+  });
 });
