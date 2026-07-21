@@ -232,4 +232,65 @@ export const recruitmentService = {
     );
     return res.data;
   },
+
+  // REC-05 offers
+  async getOfferForApplication(applicationId: number) {
+    const res = await httpClient.get<{ offer: Offer | null }>(
+      `/hr/recruitment/applications/${applicationId}/offer`,
+    );
+    return res.data.offer;
+  },
+  async createOffer(applicationId: number, payload: CreateOfferPayload) {
+    const res = await httpClient.post<{ offer: Offer }>(
+      `/hr/recruitment/applications/${applicationId}/offer`,
+      payload,
+    );
+    return res.data.offer;
+  },
+  async updateOffer(offerId: number, payload: Partial<CreateOfferPayload>) {
+    const res = await httpClient.patch<{ offer: Offer }>(`/hr/offers/${offerId}`, payload);
+    return res.data.offer;
+  },
+  async setOfferLetter(offerId: number, letter_file_key: string) {
+    const res = await httpClient.post<{ offer: Offer }>(`/hr/offers/${offerId}/letter`, {
+      letter_file_key,
+    });
+    return res.data.offer;
+  },
+  async sendOffer(offerId: number) {
+    const res = await httpClient.post<{ offer: Offer }>(`/hr/offers/${offerId}/send`);
+    return res.data.offer;
+  },
+  async withdrawOffer(offerId: number) {
+    const res = await httpClient.post<{ offer: Offer }>(`/hr/offers/${offerId}/withdraw`);
+    return res.data.offer;
+  },
 };
+
+export interface Offer {
+  id: number;
+  application_id: number;
+  position_title: string;
+  employment_type: string;
+  department: string | null;
+  start_date: string | null;
+  gross_salary: string | null;
+  currency: string;
+  additional_terms: string | null;
+  letter_file_key: string | null;
+  status: "draft" | "sent" | "accepted" | "declined" | "expired" | "withdrawn";
+  expires_at: string | null;
+  sent_at: string | null;
+  responded_at: string | null;
+  decline_reason: string | null;
+}
+
+export interface CreateOfferPayload {
+  position_title: string;
+  employment_type: "fellow" | "analyst" | "staff" | "contractor" | "intern";
+  department?: string | null;
+  start_date?: string | null;
+  gross_salary?: string | number | null;
+  currency?: string;
+  additional_terms?: string | null;
+}

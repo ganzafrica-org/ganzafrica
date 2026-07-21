@@ -398,7 +398,7 @@ export async function scheduleContractExpiryCheck(): Promise<void> {
         triggeredBy: 0,
         relatedEntity: {
           contractId: contract.id,
-          employeeId: contract.employee_id,
+          employeeId: contract.employee_id ?? contract.employee_ref_id ?? undefined,
         },
         title: "Contract expiring soon",
         message: `A contract is set to expire on ${endDateLabel}. Review and renew if needed.`,

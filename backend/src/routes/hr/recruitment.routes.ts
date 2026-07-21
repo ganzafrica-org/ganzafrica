@@ -5,6 +5,8 @@ import * as recruitmentController from "@/controllers/recruitment";
 import * as recruitmentValidation from "@/validations/recruitment";
 import * as pipelineController from "@/controllers/recruitment-pipeline";
 import * as pipelineValidation from "@/validations/recruitment-pipeline";
+import * as offersController from "@/controllers/offers";
+import * as offerValidation from "@/validations/offers";
 
 const router: Router = Router();
 
@@ -162,6 +164,44 @@ router.put(
   ...readGuard,
   validate(pipelineValidation.putScoresSchema),
   pipelineController.putScores,
+);
+
+// --- REC-05 offers (recruitment:manage) ---
+router.get(
+  "/recruitment/applications/:id/offer",
+  ...readGuard,
+  validate(offerValidation.applicationIdSchema),
+  offersController.getOfferForApplication,
+);
+router.post(
+  "/recruitment/applications/:id/offer",
+  ...guard,
+  validate(offerValidation.createOfferSchema),
+  offersController.createOffer,
+);
+router.patch(
+  "/offers/:offerId",
+  ...guard,
+  validate(offerValidation.updateOfferSchema),
+  offersController.updateOffer,
+);
+router.post(
+  "/offers/:offerId/letter",
+  ...guard,
+  validate(offerValidation.setLetterSchema),
+  offersController.setLetter,
+);
+router.post(
+  "/offers/:offerId/send",
+  ...guard,
+  validate(offerValidation.offerIdSchema),
+  offersController.sendOffer,
+);
+router.post(
+  "/offers/:offerId/withdraw",
+  ...guard,
+  validate(offerValidation.offerIdSchema),
+  offersController.withdrawOffer,
 );
 
 export default router;

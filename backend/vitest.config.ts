@@ -23,8 +23,10 @@ export default defineConfig({
       // glob as other areas grow real suites.
       include: [
         "src/services/recruitment/**",
+        "src/services/secure-links.service.ts",
         "src/controllers/recruitment.ts",
         "src/controllers/recruitment-pipeline.ts",
+        "src/controllers/offers.ts",
         "src/db/schema/recruitment/**",
       ],
       reporter: ["text-summary"],

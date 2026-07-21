@@ -8,11 +8,10 @@ export const hr_contracts = pgTable("hr_contracts", {
   id: uuid("id").primaryKey().defaultRandom(),
 
   // ── Link to employee ───────────────────────
-  employee_id: uuid("employee_id")
-    .notNull()
-    .references(() => hr_users.id, { onDelete: "cascade" }),
-  // FND-05 expand: FK to the new employees table (existing employee_id points at hr_users and
-  // is dropped in FND-07). Backfilled by the merge script via legacy_hr_user_id.
+  // Legacy hr_users FK — now NULLABLE (REC-05): new contracts (offer-accept draft) link via
+  // employee_ref_id to the current employees table; hr_users is retired (FND-07) and this column
+  // is dropped in a later contract-phase migration.
+  employee_id: uuid("employee_id").references(() => hr_users.id, { onDelete: "cascade" }),
   employee_ref_id: uuid("employee_ref_id").references(() => employees.id, { onDelete: "cascade" }),
 
   // ── Job Details (Step 2) ───────────────────
