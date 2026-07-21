@@ -59,5 +59,9 @@ Each spec lists tests to write FIRST. The implementing agent:
 - PR: prettier check, eslint, typecheck, unit + integration tests, build — all via
   `turbo run` with `--filter=...[origin/dev]` (affected only).
 - dev/main merge: everything + Playwright e2e.
-- Coverage: no hard global threshold initially; each spec's acceptance criteria are the bar.
-  Revisit once the suite exists.
+- Coverage: **no global threshold** (most of the repo predates test discipline — we don't
+  backfill on unrelated work). Instead a **scoped ratchet**: code under active TDD is gated at
+  **90%** (statements, branches, functions, lines) and CI fails below it. Currently enforced on
+  the backend's `src/services/recruitment/**` (REC-\*). Widen the glob + thresholds in
+  `backend/vitest.config.ts` as other areas grow real suites — never lower an existing floor.
+  Run locally with `pnpm --filter ganzafrica-backend test:coverage`.

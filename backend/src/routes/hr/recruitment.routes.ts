@@ -3,6 +3,8 @@ import { authenticate, requirePermission } from "@/middlewares/auth.middleware";
 import { validate } from "@/middlewares/validation.middleware";
 import * as recruitmentController from "@/controllers/recruitment";
 import * as recruitmentValidation from "@/validations/recruitment";
+import * as pipelineController from "@/controllers/recruitment-pipeline";
+import * as pipelineValidation from "@/validations/recruitment-pipeline";
 
 const router: Router = Router();
 
@@ -16,6 +18,8 @@ const router: Router = Router();
 // authenticate is applied per-route (not router-wide) so this router only claims its own paths
 // and never intercepts sibling /hr/* routes mounted alongside it.
 const guard = [authenticate, requirePermission("recruitment:manage")];
+// Read-level guard (HR + director). Lists are readable; mutations stay manage-only.
+const readGuard = [authenticate, requirePermission("recruitment:read", "recruitment:manage")];
 
 // Form builder (draft read/write + publish).
 router.get(
@@ -66,6 +70,91 @@ router.delete(
   ...guard,
   validate(recruitmentValidation.deleteRuleSchema),
   recruitmentController.deleteRule,
+);
+
+// --- REC-02 pipeline ---
+
+// Lists readable by director (recruitment:read); everything else is manage-only.
+router.get("/recruitment/opportunities", ...readGuard, pipelineController.listOpportunities);
+router.get("/recruitment/applications", ...readGuard, pipelineController.listApplications);
+router.get(
+  "/recruitment/applications/:id",
+  ...readGuard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.getApplication,
+);
+
+router.post(
+  "/recruitment/applications/:id/transition",
+  ...guard,
+  validate(pipelineValidation.transitionSchema),
+  pipelineController.transition,
+);
+router.post(
+  "/recruitment/applications/:id/rescreen",
+  ...guard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.rescreen,
+);
+
+// Screening rules CRUD.
+router.get(
+  "/recruitment/opportunities/:id/screening-rules",
+  ...guard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.listScreeningRules,
+);
+router.post(
+  "/recruitment/opportunities/:id/screening-rules",
+  ...guard,
+  validate(pipelineValidation.createScreeningRuleSchema),
+  pipelineController.createScreeningRule,
+);
+router.patch(
+  "/recruitment/opportunities/:id/screening-rules/:ruleId",
+  ...guard,
+  validate(pipelineValidation.patchScreeningRuleSchema),
+  pipelineController.patchScreeningRule,
+);
+router.delete(
+  "/recruitment/opportunities/:id/screening-rules/:ruleId",
+  ...guard,
+  validate(pipelineValidation.screeningRuleIdSchema),
+  pipelineController.deleteScreeningRule,
+);
+
+// Evaluation criteria CRUD.
+router.get(
+  "/recruitment/opportunities/:id/criteria",
+  ...guard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.listCriteria,
+);
+router.post(
+  "/recruitment/opportunities/:id/criteria",
+  ...guard,
+  validate(pipelineValidation.createCriterionSchema),
+  pipelineController.createCriterion,
+);
+router.patch(
+  "/recruitment/opportunities/:id/criteria/:criterionId",
+  ...guard,
+  validate(pipelineValidation.patchCriterionSchema),
+  pipelineController.patchCriterion,
+);
+router.delete(
+  "/recruitment/opportunities/:id/criteria/:criterionId",
+  ...guard,
+  validate(pipelineValidation.criterionIdSchema),
+  pipelineController.deleteCriterion,
+);
+
+// Reviewers (recruitment:read) upsert their OWN scores; the service keys on reviewer id.
+router.put(
+  "/recruitment/applications/:id/scores",
+  ...readGuard,
+  validate(pipelineValidation.putScoresSchema),
+  pipelineController.putScores,
 );
 
 export default router;

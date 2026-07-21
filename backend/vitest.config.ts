@@ -16,5 +16,27 @@ export default defineConfig({
     exclude: ["node_modules/**", "dist/**", "src/__tests__/**"],
     testTimeout: 20000,
     hookTimeout: 60000,
+    coverage: {
+      provider: "v8",
+      // Gate only the code we're actively building under test discipline (recruitment). The rest
+      // of the backend is intentionally ungated for now — no forced backfill. Widen the include
+      // glob as other areas grow real suites.
+      include: [
+        "src/services/recruitment/**",
+        "src/controllers/recruitment.ts",
+        "src/controllers/recruitment-pipeline.ts",
+        "src/db/schema/recruitment/**",
+      ],
+      reporter: ["text-summary"],
+      thresholds: {
+        // Per-glob 90% floor for recruitment code; CI fails the run if any drops below.
+        "src/services/recruitment/**": {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+      },
+    },
   },
 });

@@ -11,6 +11,9 @@ import {
   opportunities,
   opportunity_forms,
   eligibility_rules,
+  applications,
+  screening_rules,
+  evaluation_criteria,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -183,6 +186,92 @@ export async function makeRule(opts: {
       is_active: opts.is_active ?? true,
       sort_order: opts.sort_order ?? 0,
       hit_count: opts.hit_count ?? 0,
+    })
+    .returning();
+  return row;
+}
+
+/** Insert an application row (REC-02 pipeline tests). Fills every NOT NULL column. */
+export async function makeApplication(opts: {
+  opportunityId?: number | null;
+  pipeline_stage?: string;
+  userId?: number | null;
+  overrides?: Record<string, unknown>;
+}) {
+  const [row] = await db
+    .insert(applications)
+    .values({
+      opportunity_id: opts.opportunityId ?? null,
+      first_name: "Jane",
+      last_name: "Doe",
+      email: `applicant_${uniq()}@test.local`,
+      phone: "+250700000000",
+      national_id: `ID${uniq()}`,
+      city: "Kigali",
+      country: "Rwanda",
+      education_level: "bachelors_degree",
+      field_of_study: "Computer Science",
+      career_experience: "3 years",
+      cv_url: "https://files.example.com/cv.pdf",
+      motivation: "Motivated.",
+      five_year_vision: "Vision.",
+      desired_impact: "Impact.",
+      community_role: "Mentor.",
+      national_strategy: "Aligned.",
+      how_ganzafrica_can_help: "Growth.",
+      contribution_to_ganzafrica: "Skills.",
+      data_processing_consent: true,
+      pipeline_stage: opts.pipeline_stage ?? "submitted",
+      user_id: opts.userId ?? null,
+      ...(opts.overrides ?? {}),
+    } as any)
+    .returning();
+  return row;
+}
+
+export async function makeScreeningRule(opts: {
+  opportunityId: number;
+  field_key: string;
+  operator: string;
+  value?: unknown;
+  action: "auto_reject" | "flag";
+  email_template?: string | null;
+  rejection_reason?: string | null;
+  is_active?: boolean;
+  hit_count?: number;
+}) {
+  const [row] = await db
+    .insert(screening_rules)
+    .values({
+      opportunity_id: opts.opportunityId,
+      field_key: opts.field_key,
+      operator: opts.operator,
+      value: (opts.value ?? null) as any,
+      action: opts.action,
+      email_template: opts.email_template ?? null,
+      rejection_reason: opts.rejection_reason ?? null,
+      is_active: opts.is_active ?? true,
+      hit_count: opts.hit_count ?? 0,
+    })
+    .returning();
+  return row;
+}
+
+export async function makeCriterion(opts: {
+  opportunityId: number;
+  name?: string;
+  weight?: string | number;
+  max_score?: number;
+  sort_order?: number;
+}) {
+  const [row] = await db
+    .insert(evaluation_criteria)
+    .values({
+      opportunity_id: opts.opportunityId,
+      name: opts.name ?? `Criterion ${uniq()}`,
+      weight: opts.weight != null ? String(opts.weight) : "1",
+      max_score: opts.max_score ?? 5,
+      sort_order: opts.sort_order ?? 0,
     })
     .returning();
   return row;

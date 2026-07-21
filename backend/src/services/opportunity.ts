@@ -12,6 +12,7 @@ import { Logger } from "../config";
 import { v4 as uuidv4 } from "uuid";
 import { evaluate, recordHits } from "./recruitment/eligibility.service";
 import { getActiveRules, getPublishedForm } from "./recruitment/forms.service";
+import { runScreening, sendApplicantEmail } from "./recruitment/pipeline.service";
 
 const logger = new Logger("OpportunityService");
 
@@ -717,6 +718,23 @@ export async function submitApplication(applicationData: ApplicationInput): Prom
         updated_at: new Date(),
       })
       .returning();
+
+    // REC-02: post-insert screening (auto-reject/flag) then the acknowledgment email. Screening is
+    // non-fatal (it can never fail the submission). Skip "received" if screening auto-rejected —
+    // the rejection email already went out.
+    if (createdApplication?.id) {
+      await runScreening(createdApplication.id);
+      const [screened] = await db
+        .select({ stage: applications.pipeline_stage })
+        .from(applications)
+        .where(eq(applications.id, createdApplication.id))
+        .limit(1);
+      if (screened?.stage !== "rejected") {
+        await sendApplicantEmail(createdApplication.id, "received").catch((err) =>
+          logger.error("received email failed (non-fatal)", err),
+        );
+      }
+    }
 
     return createdApplication;
   } catch (error) {
