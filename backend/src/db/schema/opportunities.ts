@@ -43,6 +43,10 @@ export const opportunities = pgTable(
       other_requirements?: string[];
     }>(),
 
+    // REC-06: how many hires this posting needs. Bulk close-out (notify remaining candidates) is
+    // HR-gated on accepted offers >= target_hires; until then the pool stays live for more rounds.
+    target_hires: integer("target_hires").notNull().default(1),
+
     // Custom questions/fields for this opportunity
     custom_questions: jsonb("custom_questions").$type<
       Array<{

@@ -20,6 +20,7 @@ import { ALLOWED_TRANSITIONS, BOARD_STAGES } from "@/lib/recruitment/stages";
 import { RejectDialog } from "@/components/recruitment/reject-dialog";
 import { ApplicationDetailPanel } from "@/components/recruitment/application-detail-panel";
 import { FunnelWidget } from "@/components/recruitment/funnel-widget";
+import { CloseOutButton } from "@/components/recruitment/close-out-button";
 
 export default function PipelineBoardPage() {
   const params = useParams<{ id: string }>();
@@ -71,8 +72,11 @@ export default function PipelineBoardPage() {
 
   return (
     <div className="space-y-4 p-6">
-      <div className="rounded-lg border bg-white p-4">
-        <FunnelWidget opportunityId={opportunityId} variant="full" />
+      <div className="flex items-start justify-between gap-4 rounded-lg border bg-white p-4">
+        <div className="flex-1">
+          <FunnelWidget opportunityId={opportunityId} variant="full" />
+        </div>
+        <CloseOutButton opportunityId={opportunityId} />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

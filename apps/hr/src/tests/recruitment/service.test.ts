@@ -162,4 +162,39 @@ describe("recruitmentService", () => {
     expect((await recruitmentService.sendOffer(1)).status).toBe("sent");
     expect((await recruitmentService.withdrawOffer(1)).status).toBe("withdrawn");
   });
+
+  it("review methods (reviewers, notes, close-out) hit the right endpoints", async () => {
+    server.use(
+      http.get(`${API}/hr/recruitment/applications/3/reviewers`, () =>
+        HttpResponse.json({
+          reviewers: [{ id: 1, reviewer_user_id: 9, role: null, name: "A", email: "a@e" }],
+        }),
+      ),
+      http.post(`${API}/hr/recruitment/applications/3/reviewers`, () =>
+        HttpResponse.json({ reviewer: { id: 1 } }, { status: 201 }),
+      ),
+      http.delete(`${API}/hr/recruitment/applications/3/reviewers/9`, () =>
+        HttpResponse.json({ removed: true }),
+      ),
+      http.get(`${API}/hr/recruitment/applications/3/notes`, () =>
+        HttpResponse.json({ notes: [] }),
+      ),
+      http.post(`${API}/hr/recruitment/applications/3/notes`, () =>
+        HttpResponse.json({ note: { id: 1 } }, { status: 201 }),
+      ),
+      http.get(`${API}/hr/recruitment/opportunities/1/close-out`, () =>
+        HttpResponse.json({ target_hires: 1, accepted_offers: 1, target_met: true, remaining: 2 }),
+      ),
+      http.post(`${API}/hr/recruitment/opportunities/1/close-out`, () =>
+        HttpResponse.json({ closed: 2 }),
+      ),
+    );
+    expect(await recruitmentService.listReviewers(3)).toHaveLength(1);
+    await recruitmentService.assignReviewer(3, 9, "Expert");
+    await recruitmentService.removeReviewer(3, 9);
+    expect(await recruitmentService.listNotes(3)).toEqual([]);
+    await recruitmentService.addNote(3, { stage: "interview", note: "x", rating: 4 });
+    expect((await recruitmentService.closeOutPreview(1)).target_met).toBe(true);
+    expect((await recruitmentService.closeOut(1, "Filled")).closed).toBe(2);
+  });
 });

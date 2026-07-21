@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as pipeline from "../services/recruitment/pipeline.service";
 import * as funnel from "../services/recruitment/funnel.service";
+import * as review from "../services/recruitment/review.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -149,6 +150,77 @@ export const getFunnel = async (req: Request, res: Response) => {
     return res.json(result);
   } catch (error) {
     return handleError(res, error, "Funnel Error");
+  }
+};
+
+// --- REC-06 reviewers ---
+export const listReviewers = async (req: Request, res: Response) => {
+  try {
+    return res.json({ reviewers: await review.listReviewers(Number(req.params.id)) });
+  } catch (error) {
+    return handleError(res, error, "List Reviewers Error");
+  }
+};
+export const assignReviewer = async (req: Request, res: Response) => {
+  try {
+    const row = await review.assignReviewer(
+      Number(req.params.id),
+      req.body.reviewer_user_id,
+      Number(req.user!.id),
+      req.body.role,
+    );
+    return res.status(201).json({ reviewer: row });
+  } catch (error) {
+    return handleError(res, error, "Assign Reviewer Error");
+  }
+};
+export const removeReviewer = async (req: Request, res: Response) => {
+  try {
+    return res.json(
+      await review.removeReviewer(Number(req.params.id), Number(req.params.reviewerId)),
+    );
+  } catch (error) {
+    return handleError(res, error, "Remove Reviewer Error");
+  }
+};
+
+// --- REC-06 interview notes ---
+export const listNotes = async (req: Request, res: Response) => {
+  try {
+    return res.json({ notes: await review.listNotes(Number(req.params.id)) });
+  } catch (error) {
+    return handleError(res, error, "List Notes Error");
+  }
+};
+export const addNote = async (req: Request, res: Response) => {
+  try {
+    // Route guard already admits recruitment:read (HR, director, and cross-dept reviewers granted
+    // read). The note records its author, so any admitted reviewer can document their assessment.
+    const note = await review.addNote(Number(req.params.id), Number(req.user!.id), req.body);
+    return res.status(201).json({ note });
+  } catch (error) {
+    return handleError(res, error, "Add Note Error");
+  }
+};
+
+// --- REC-06 bulk close-out ---
+export const closeOutPreview = async (req: Request, res: Response) => {
+  try {
+    return res.json(await review.closeOutPreview(Number(req.params.id)));
+  } catch (error) {
+    return handleError(res, error, "Close-out Preview Error");
+  }
+};
+export const closeOutRemaining = async (req: Request, res: Response) => {
+  try {
+    const result = await review.closeOutRemaining(
+      Number(req.params.id),
+      Number(req.user!.id),
+      req.body?.rejection_reason,
+    );
+    return res.json(result);
+  } catch (error) {
+    return handleError(res, error, "Close-out Error");
   }
 };
 

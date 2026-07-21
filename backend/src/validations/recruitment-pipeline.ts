@@ -87,3 +87,30 @@ export const putScoresSchema = z.object({
     ),
   }),
 });
+
+// --- REC-06 ---
+export const assignReviewerSchema = z.object({
+  params: z.object({ id: idParam }),
+  body: z.object({
+    reviewer_user_id: z.number().int(),
+    role: z.string().optional(),
+  }),
+});
+
+export const reviewerIdSchema = z.object({
+  params: z.object({ id: idParam, reviewerId: idParam }),
+});
+
+export const addNoteSchema = z.object({
+  params: z.object({ id: idParam }),
+  body: z.object({
+    stage: z.string().min(1),
+    note: z.string().min(1),
+    rating: z.number().int().min(1).max(5).optional(),
+  }),
+});
+
+export const closeOutSchema = z.object({
+  params: z.object({ id: idParam }),
+  body: z.object({ rejection_reason: z.string().optional() }).optional(),
+});

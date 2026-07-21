@@ -166,6 +166,50 @@ router.put(
   pipelineController.putScores,
 );
 
+// --- REC-06 reviewers + interview notes + close-out ---
+router.get(
+  "/recruitment/applications/:id/reviewers",
+  ...readGuard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.listReviewers,
+);
+router.post(
+  "/recruitment/applications/:id/reviewers",
+  ...guard,
+  validate(pipelineValidation.assignReviewerSchema),
+  pipelineController.assignReviewer,
+);
+router.delete(
+  "/recruitment/applications/:id/reviewers/:reviewerId",
+  ...guard,
+  validate(pipelineValidation.reviewerIdSchema),
+  pipelineController.removeReviewer,
+);
+router.get(
+  "/recruitment/applications/:id/notes",
+  ...readGuard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.listNotes,
+);
+router.post(
+  "/recruitment/applications/:id/notes",
+  ...readGuard,
+  validate(pipelineValidation.addNoteSchema),
+  pipelineController.addNote,
+);
+router.get(
+  "/recruitment/opportunities/:id/close-out",
+  ...guard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.closeOutPreview,
+);
+router.post(
+  "/recruitment/opportunities/:id/close-out",
+  ...guard,
+  validate(pipelineValidation.closeOutSchema),
+  pipelineController.closeOutRemaining,
+);
+
 // --- REC-05 offers (recruitment:manage) ---
 router.get(
   "/recruitment/applications/:id/offer",

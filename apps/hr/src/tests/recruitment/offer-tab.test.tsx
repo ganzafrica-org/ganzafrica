@@ -139,6 +139,26 @@ describe("OfferTab", () => {
     await waitFor(() => expect(withdrawn).toBe(true));
   });
 
+  it("create failure surfaces an error toast (no crash)", async () => {
+    server.use(
+      http.get(`${API}/hr/recruitment/applications/11/offer`, () =>
+        HttpResponse.json({ offer: null }),
+      ),
+      http.post(`${API}/hr/recruitment/applications/11/offer`, () =>
+        HttpResponse.json({ error: "x" }, { status: 500 }),
+      ),
+    );
+    renderWithClient(<OfferTab applicationId={11} />);
+    fireEvent.change(await screen.findByLabelText("Position title"), {
+      target: { value: "Analyst" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create draft offer" }));
+    // no throw; the button remains (mutation errored, handled by onError toast)
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Create draft offer" })).toBeInTheDocument(),
+    );
+  });
+
   it("declined offer shows the reason", async () => {
     server.use(
       http.get(`${API}/hr/recruitment/applications/9/offer`, () =>
