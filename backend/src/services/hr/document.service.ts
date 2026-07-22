@@ -1,12 +1,16 @@
 ﻿import fs from "fs";
 import path from "path";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, or } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
 import { hr_users } from "@/db/schema/hr/employee";
 import { hr_contracts } from "@/db/schema/hr/contract";
 import { hr_documents } from "@/db/schema/hr/document";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
+import { extractText } from "@/services/text-extraction.service";
+import { Logger } from "@/config";
+
+const logger = new Logger("DocumentService");
 
 export type DocumentCategory =
   | "Contract Templates"
@@ -88,7 +92,10 @@ function safeFileName(original: string): string {
   return `${stamp}-${base}`;
 }
 
-function saveBase64File(fileName: string, base64: string): { filePath: string; fileSize: string } {
+function saveBase64File(
+  fileName: string,
+  base64: string,
+): { filePath: string; fileSize: string; buffer: Buffer } {
   const dir = uploadsDir();
   fs.mkdirSync(dir, { recursive: true });
 
@@ -100,7 +107,21 @@ function saveBase64File(fileName: string, base64: string): { filePath: string; f
   fs.writeFileSync(absolutePath, buf);
 
   const rel = path.join("uploads", "documents", finalName).replace(/\\/g, "/");
-  return { filePath: rel, fileSize: bytesToHuman(buf.length) };
+  return { filePath: rel, fileSize: bytesToHuman(buf.length), buffer: buf };
+}
+
+/**
+ * Index a document's file text for search-in-file (DOC-plus). Best-effort and non-blocking:
+ * extraction failures (unsupported type, scanned image with no OCR wired) leave the document
+ * searchable by name/description only and never fail the upload.
+ */
+async function indexDocumentText(documentId: string, buffer: Buffer, fileName: string) {
+  const contentType = fileName.toLowerCase().endsWith(".pdf") ? "application/pdf" : undefined;
+  const result = await extractText(buffer, contentType);
+  await db
+    .update(hr_documents)
+    .set({ extracted_text: result.ok ? result.text : null, indexed_at: new Date() })
+    .where(eq(hr_documents.id, documentId));
 }
 
 async function assertUserExists(userId: string): Promise<void> {
@@ -122,10 +143,11 @@ async function assertContractExists(contractId: string): Promise<void> {
 }
 
 export async function listDocuments(query: ListDocumentsQuery) {
-  const conditions = [];
+  // Archived documents (past retention) are hidden from the normal list.
+  const conditions = [isNull(hr_documents.archived_at)];
   if (query.category) conditions.push(eq(hr_documents.category, query.category));
   if (query.status) conditions.push(eq(hr_documents.status, query.status));
-  const whereClause = conditions.length ? and(...conditions) : undefined;
+  const whereClause = and(...conditions);
 
   const countRows = await db.select().from(hr_documents).where(whereClause);
   const total = countRows.length;
@@ -180,6 +202,68 @@ export async function listDocuments(query: ListDocumentsQuery) {
   }));
 
   return { data, total };
+}
+
+export interface SearchDocumentsQuery {
+  q: string;
+  page: number;
+  limit: number;
+}
+
+/**
+ * Search-in-file (DOC-plus): matches the query against a document's name, description, and the
+ * text extracted from its file. Case-insensitive; archived documents are excluded. Returns a short
+ * snippet around the first in-file hit so the UI can show why a result matched.
+ */
+export async function searchDocuments(query: SearchDocumentsQuery) {
+  const q = query.q.trim();
+  if (!q) return { data: [], total: 0 };
+  const like = `%${q}%`;
+
+  const match = or(
+    ilike(hr_documents.document_name, like),
+    ilike(hr_documents.description, like),
+    ilike(hr_documents.extracted_text, like),
+  );
+  const whereClause = and(isNull(hr_documents.archived_at), match);
+
+  const countRows = await db.select({ id: hr_documents.id }).from(hr_documents).where(whereClause);
+  const total = countRows.length;
+
+  const rows = await db
+    .select()
+    .from(hr_documents)
+    .where(whereClause)
+    .orderBy(desc(hr_documents.updated_at))
+    .limit(query.limit)
+    .offset((query.page - 1) * query.limit);
+
+  const data = rows.map((p) => ({
+    id: p.id,
+    document_name: p.document_name,
+    category: p.category,
+    version: p.version,
+    description: p.description,
+    department: p.department,
+    fileSize: p.file_size,
+    status: p.status,
+    contract_id: p.contract_id,
+    modifiedAt: p.updated_at,
+    // A snippet of surrounding text when the hit was inside the file (not just name/description).
+    snippet: snippetAround(p.extracted_text, q),
+  }));
+
+  return { data, total };
+}
+
+/** ~120-char window around the first case-insensitive occurrence of `q` in `text`, or null. */
+function snippetAround(text: string | null, q: string): string | null {
+  if (!text) return null;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return null;
+  const start = Math.max(0, idx - 50);
+  const end = Math.min(text.length, idx + q.length + 50);
+  return `${start > 0 ? "…" : ""}${text.slice(start, end)}${end < text.length ? "…" : ""}`;
 }
 
 export async function getDocument(id: string) {
@@ -253,6 +337,12 @@ export async function createDocument(input: CreateDocumentInput) {
     .returning();
 
   if (!inserted.length) throw new AppError("Failed to create document", 400);
+
+  // Index the file text out-of-band so a slow/large extraction never blocks the upload response.
+  void indexDocumentText(inserted[0].id, saved.buffer, input.fileName).catch((err) =>
+    logger.warn("Document text indexing failed (non-fatal)", err as Error),
+  );
+
   return inserted[0];
 }
 
@@ -265,9 +355,11 @@ export async function updateDocument(id: string, input: UpdateDocumentInput) {
   }
 
   let filePatch: Partial<{ file_path: string; file_size: string }> = {};
+  let replacedFile: { buffer: Buffer; fileName: string } | null = null;
   if (input.fileName && input.fileContentBase64) {
     const saved = saveBase64File(input.fileName, input.fileContentBase64);
     filePatch = { file_path: saved.filePath, file_size: saved.fileSize };
+    replacedFile = { buffer: saved.buffer, fileName: input.fileName };
   } else if (input.fileName || input.fileContentBase64) {
     throw new AppError("Both fileName and fileContentBase64 are required to replace file", 400);
   }
@@ -298,6 +390,13 @@ export async function updateDocument(id: string, input: UpdateDocumentInput) {
     .returning();
 
   if (!updated.length) throw new AppError("Document not found", 404);
+
+  // Re-index when the underlying file was replaced (out-of-band, non-blocking).
+  if (replacedFile) {
+    void indexDocumentText(updated[0].id, replacedFile.buffer, replacedFile.fileName).catch((err) =>
+      logger.warn("Document re-indexing failed (non-fatal)", err as Error),
+    );
+  }
 
   const wasPublished = rows[0].status === "PUBLISHED";
   const isNowPublished = updated[0].status === "PUBLISHED";

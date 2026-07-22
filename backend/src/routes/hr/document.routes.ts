@@ -10,10 +10,31 @@ router.use(authenticate);
 
 router.get("/", validate(documentValidation.listDocumentsSchema), documentController.listDocuments);
 
+// Search-in-file. Declared before "/:id" so "search" is not captured as a document id.
+router.get(
+  "/search",
+  validate(documentValidation.searchDocumentsSchema),
+  documentController.searchDocuments,
+);
+
+// Retention preview (documents due for auto-archiving). Before "/:id" for the same reason.
+router.get(
+  "/retention/preview",
+  requirePermission("documents:manage"),
+  documentController.previewRetention,
+);
+
 router.get(
   "/:id",
   validate(documentValidation.documentIdParamSchema),
   documentController.getDocument,
+);
+
+router.patch(
+  "/:id/retention",
+  requirePermission("documents:manage"),
+  validate(documentValidation.setRetentionSchema),
+  documentController.setRetention,
 );
 
 router.get(

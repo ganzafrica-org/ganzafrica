@@ -16,6 +16,8 @@ import {
   evaluation_criteria,
   opportunity_funnel_events,
   offers,
+  hr_users,
+  hr_documents,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -97,6 +99,55 @@ export async function makePayroll(opts: MakePayrollOptions) {
       net_salary: "1000.00",
       payslip_file_key: opts.payslipFileKey ?? "hr/Jane_Doe/01-26/payslip.pdf",
       uploaded_by: opts.uploadedBy,
+    })
+    .returning();
+  return row;
+}
+
+/** Insert an hr_users row (documents' created_by_id FK target). */
+export async function makeHrUser(opts: { role?: "HR" | "IT" | "EMPLOYEE" } = {}) {
+  const [row] = await db
+    .insert(hr_users)
+    .values({
+      first_name: "Test",
+      last_name: "HR",
+      personal_email: `hr_${uniq()}@test.local`,
+      password_hash: "x",
+      role: opts.role ?? "HR",
+      avatar_initials: "TH",
+    })
+    .returning();
+  return row;
+}
+
+export interface MakeDocumentOptions {
+  createdById: string; // hr_users.id (required FK)
+  name?: string;
+  category?: string;
+  extractedText?: string | null;
+  retainUntil?: Date | null;
+  archivedAt?: Date | null;
+}
+
+/** Insert an hr_documents row (DOC-plus search/retention tests). */
+export async function makeDocument(opts: MakeDocumentOptions) {
+  const [row] = await db
+    .insert(hr_documents)
+    .values({
+      document_name: opts.name ?? `Doc ${uniq()}`,
+      category: (opts.category ?? "Policies & Procedures") as never,
+      version: "1.0",
+      description: "A test document",
+      department: "Operations",
+      file_path: `uploads/documents/${uniq()}.pdf`,
+      file_size: "12 KB",
+      status: "PUBLISHED",
+      access: { type: "department", target: "Operations", permission: "see" },
+      extracted_text: opts.extractedText ?? null,
+      indexed_at: opts.extractedText !== undefined ? new Date() : null,
+      retain_until: opts.retainUntil ?? null,
+      archived_at: opts.archivedAt ?? null,
+      created_by_id: opts.createdById,
     })
     .returning();
   return row;

@@ -41,6 +41,30 @@ export const listDocumentsSchema = z.object({
   }),
 });
 
+export const searchDocumentsSchema = z.object({
+  query: z.object({
+    q: z.string().min(1, "A search query is required"),
+    page: z
+      .string()
+      .optional()
+      .transform((v) => (v ? parseInt(v, 10) : 1)),
+    limit: z
+      .string()
+      .optional()
+      .transform((v) => (v ? parseInt(v, 10) : 10)),
+  }),
+});
+
+export const setRetentionSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid document ID format"),
+  }),
+  body: z.object({
+    // ISO date string to schedule auto-archiving, null to clear, or omitted to use the category default.
+    retain_until: z.string().datetime({ offset: true }).nullable().optional(),
+  }),
+});
+
 // Create Document Body Schema with Conditional Context Logic
 export const createDocumentSchema = z.object({
   body: z

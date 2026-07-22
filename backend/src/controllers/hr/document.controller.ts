@@ -1,6 +1,7 @@
 ﻿import { Request, Response, NextFunction } from "express";
 import { sendResponse } from "@/utils/sendResponse";
 import * as documentService from "../../services/hr/document.service";
+import * as retentionService from "../../services/hr/document-retention.service";
 import { AppError } from "@/middlewares";
 
 // Helper to assert user context contains IT or HR clearance roles
@@ -36,6 +37,74 @@ export const listDocuments = async (
       message: "Documents fetched successfully",
       data,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const searchDocuments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const q = req.query as unknown as Record<string, string | undefined>;
+    const page = q.page ? parseInt(q.page, 10) : 1;
+    const limit = q.limit ? parseInt(q.limit, 10) : 10;
+
+    const { data, total } = await documentService.searchDocuments({
+      q: q.q ?? "",
+      page,
+      limit,
+    });
+
+    sendResponse(res, {
+      success: true,
+      message: "Document search completed",
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const previewRetention = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    assertAdminControlRole(req);
+    const { due, count } = await retentionService.previewRetention();
+    sendResponse(res, {
+      success: true,
+      message: "Retention preview generated",
+      data: due,
+      meta: { total: count, page: 1, limit: count, totalPages: 1 },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const setRetention = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    assertAdminControlRole(req);
+    const { id } = req.params;
+    const raw = (req.body as { retain_until?: string | null }).retain_until;
+    // undefined → derive from category default; null → clear; string → explicit date.
+    const retainUntil = raw === undefined ? undefined : raw === null ? null : new Date(raw);
+    const result = await retentionService.setRetention(id, retainUntil);
+    sendResponse(res, {
+      success: true,
+      message: "Retention updated",
+      data: result,
     });
   } catch (err) {
     next(err);
