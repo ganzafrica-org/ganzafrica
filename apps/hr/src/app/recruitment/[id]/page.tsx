@@ -21,6 +21,7 @@ import { RejectDialog } from "@/components/recruitment/reject-dialog";
 import { ApplicationDetailPanel } from "@/components/recruitment/application-detail-panel";
 import { FunnelWidget } from "@/components/recruitment/funnel-widget";
 import { CloseOutButton } from "@/components/recruitment/close-out-button";
+import { RankingCriteriaEditor } from "@/components/recruitment/ranking-criteria-editor";
 
 export default function PipelineBoardPage() {
   const params = useParams<{ id: string }>();
@@ -76,7 +77,10 @@ export default function PipelineBoardPage() {
         <div className="flex-1">
           <FunnelWidget opportunityId={opportunityId} variant="full" />
         </div>
-        <CloseOutButton opportunityId={opportunityId} />
+        <div className="flex flex-col items-end gap-2">
+          <RankingCriteriaEditor opportunityId={opportunityId} />
+          <CloseOutButton opportunityId={opportunityId} />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

@@ -24,6 +24,7 @@ export default defineConfig({
       include: [
         "src/services/recruitment/**",
         "src/services/secure-links.service.ts",
+        "src/services/text-extraction.service.ts",
         "src/controllers/recruitment.ts",
         "src/controllers/recruitment-pipeline.ts",
         "src/controllers/offers.ts",

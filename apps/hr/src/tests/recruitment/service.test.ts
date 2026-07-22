@@ -197,4 +197,41 @@ describe("recruitmentService", () => {
     expect((await recruitmentService.closeOutPreview(1)).target_met).toBe(true);
     expect((await recruitmentService.closeOut(1, "Filled")).closed).toBe(2);
   });
+
+  it("ranking methods hit the right endpoints", async () => {
+    server.use(
+      http.get(`${API}/hr/recruitment/opportunities/1/ranking-criteria`, () =>
+        HttpResponse.json({
+          criteria: [{ id: 1, keyword: "Python", weight: "2", category: null, is_active: true }],
+        }),
+      ),
+      http.post(`${API}/hr/recruitment/opportunities/1/ranking-criteria`, () =>
+        HttpResponse.json({ criterion: { id: 1 } }, { status: 201 }),
+      ),
+      http.delete(`${API}/hr/recruitment/opportunities/1/ranking-criteria/1`, () =>
+        HttpResponse.json({ deleted: true }),
+      ),
+      http.post(`${API}/hr/recruitment/opportunities/1/rescore`, () =>
+        HttpResponse.json({ scored: 2 }),
+      ),
+      http.get(`${API}/hr/recruitment/opportunities/1/ranked`, () =>
+        HttpResponse.json({
+          applications: [
+            {
+              application_id: 1,
+              first_name: "A",
+              last_name: "B",
+              pipeline_stage: "submitted",
+              cv_score: "80",
+            },
+          ],
+        }),
+      ),
+    );
+    expect(await recruitmentService.listRankingCriteria(1)).toHaveLength(1);
+    await recruitmentService.createRankingCriterion(1, { keyword: "Python", weight: 2 });
+    await recruitmentService.deleteRankingCriterion(1, 1);
+    expect((await recruitmentService.rescore(1)).scored).toBe(2);
+    expect((await recruitmentService.listRanked(1))[0].cv_score).toBe("80");
+  });
 });

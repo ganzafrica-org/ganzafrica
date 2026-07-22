@@ -166,6 +166,44 @@ router.put(
   pipelineController.putScores,
 );
 
+// --- REC-07 CV ranking ---
+router.get(
+  "/recruitment/opportunities/:id/ranking-criteria",
+  ...guard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.listRankingCriteria,
+);
+router.post(
+  "/recruitment/opportunities/:id/ranking-criteria",
+  ...guard,
+  validate(pipelineValidation.createRankingCriterionSchema),
+  pipelineController.createRankingCriterion,
+);
+router.patch(
+  "/recruitment/opportunities/:id/ranking-criteria/:criterionId",
+  ...guard,
+  validate(pipelineValidation.patchRankingCriterionSchema),
+  pipelineController.patchRankingCriterion,
+);
+router.delete(
+  "/recruitment/opportunities/:id/ranking-criteria/:criterionId",
+  ...guard,
+  validate(pipelineValidation.rankingCriterionIdSchema),
+  pipelineController.deleteRankingCriterion,
+);
+router.post(
+  "/recruitment/opportunities/:id/rescore",
+  ...guard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.rescoreOpportunity,
+);
+router.get(
+  "/recruitment/opportunities/:id/ranked",
+  ...readGuard,
+  validate(pipelineValidation.idParamSchema),
+  pipelineController.rankedApplications,
+);
+
 // --- REC-06 reviewers + interview notes + close-out ---
 router.get(
   "/recruitment/applications/:id/reviewers",
