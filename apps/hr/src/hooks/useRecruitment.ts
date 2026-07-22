@@ -20,6 +20,43 @@ export function useFunnel(opportunityId: number | null) {
   });
 }
 
+export function useApplicationOffer(applicationId: number | null) {
+  return useQuery({
+    queryKey: ["recruitment", "offer", applicationId ?? -1],
+    queryFn: () => recruitmentService.getOfferForApplication(applicationId as number),
+    enabled: applicationId != null,
+  });
+}
+
+export function useOfferMutations(applicationId: number) {
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["recruitment", "offer", applicationId] });
+    qc.invalidateQueries({ queryKey: keys.application(applicationId) });
+    qc.invalidateQueries({ queryKey: ["recruitment", "applications"] });
+  };
+  return {
+    create: useMutation({
+      mutationFn: (payload: Parameters<typeof recruitmentService.createOffer>[1]) =>
+        recruitmentService.createOffer(applicationId, payload),
+      onSuccess: invalidate,
+    }),
+    setLetter: useMutation({
+      mutationFn: (args: { offerId: number; key: string }) =>
+        recruitmentService.setOfferLetter(args.offerId, args.key),
+      onSuccess: invalidate,
+    }),
+    send: useMutation({
+      mutationFn: (offerId: number) => recruitmentService.sendOffer(offerId),
+      onSuccess: invalidate,
+    }),
+    withdraw: useMutation({
+      mutationFn: (offerId: number) => recruitmentService.withdrawOffer(offerId),
+      onSuccess: invalidate,
+    }),
+  };
+}
+
 export function useRecruitmentOpportunities() {
   return useQuery({
     queryKey: keys.opportunities,

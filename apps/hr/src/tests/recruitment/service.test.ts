@@ -135,4 +135,31 @@ describe("recruitmentService", () => {
     expect(f.views).toBe(4);
     expect(f.submissions).toBe(1);
   });
+
+  it("offer methods hit the right endpoints", async () => {
+    const offer = { id: 1, application_id: 3, status: "draft" };
+    server.use(
+      http.get(`${API}/hr/recruitment/applications/3/offer`, () => HttpResponse.json({ offer })),
+      http.post(`${API}/hr/recruitment/applications/3/offer`, () =>
+        HttpResponse.json({ offer }, { status: 201 }),
+      ),
+      http.patch(`${API}/hr/offers/1`, () => HttpResponse.json({ offer })),
+      http.post(`${API}/hr/offers/1/letter`, () => HttpResponse.json({ offer })),
+      http.post(`${API}/hr/offers/1/send`, () =>
+        HttpResponse.json({ offer: { ...offer, status: "sent" } }),
+      ),
+      http.post(`${API}/hr/offers/1/withdraw`, () =>
+        HttpResponse.json({ offer: { ...offer, status: "withdrawn" } }),
+      ),
+    );
+    expect((await recruitmentService.getOfferForApplication(3))?.id).toBe(1);
+    expect(
+      (await recruitmentService.createOffer(3, { position_title: "A", employment_type: "analyst" }))
+        .id,
+    ).toBe(1);
+    await recruitmentService.updateOffer(1, { department: "X" });
+    await recruitmentService.setOfferLetter(1, "l.pdf");
+    expect((await recruitmentService.sendOffer(1)).status).toBe("sent");
+    expect((await recruitmentService.withdrawOffer(1)).status).toBe("withdrawn");
+  });
 });

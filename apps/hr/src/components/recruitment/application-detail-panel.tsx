@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Flag } from "lucide-react";
 import { useApplicationDetail, useCriteria, usePutScores } from "@/hooks/useRecruitment";
+import { OfferTab } from "@/components/recruitment/offer-tab";
 import { useMe } from "@/hooks/useEmployees";
 import type { ApplicationDetail } from "@/services/recruitment.service";
 
@@ -86,6 +87,7 @@ function DetailBody({ data }: { data: ApplicationDetail }) {
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="answers">Answers</TabsTrigger>
           <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
+          <TabsTrigger value="offer">Offer</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
           <TabsTrigger value="emails">Emails</TabsTrigger>
         </TabsList>
@@ -98,6 +100,9 @@ function DetailBody({ data }: { data: ApplicationDetail }) {
         </TabsContent>
         <TabsContent value="evaluation">
           <EvaluationTab data={data} />
+        </TabsContent>
+        <TabsContent value="offer">
+          <OfferTab applicationId={app.id} />
         </TabsContent>
         <TabsContent value="history">
           <HistoryTab data={data} />

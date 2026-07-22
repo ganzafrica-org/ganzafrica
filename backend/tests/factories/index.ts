@@ -15,6 +15,7 @@ import {
   screening_rules,
   evaluation_criteria,
   opportunity_funnel_events,
+  offers,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -291,6 +292,35 @@ export async function makeFunnelEvent(opts: {
       session_key: opts.sessionKey,
     })
     .onConflictDoNothing()
+    .returning();
+  return row;
+}
+
+export async function makeOffer(opts: {
+  applicationId: number;
+  createdBy: number;
+  status?: string;
+  employment_type?: string;
+  letter_file_key?: string | null;
+  start_date?: string | null;
+  expires_at?: Date | null;
+  gross_salary?: string | null;
+}) {
+  const [row] = await db
+    .insert(offers)
+    .values({
+      application_id: opts.applicationId,
+      position_title: "Data Analyst",
+      employment_type: opts.employment_type ?? "analyst",
+      department: "Programs",
+      start_date: opts.start_date ?? "2099-01-01",
+      gross_salary: opts.gross_salary ?? "12000000",
+      currency: "RWF",
+      letter_file_key: opts.letter_file_key ?? null,
+      status: (opts.status ?? "draft") as any,
+      expires_at: opts.expires_at ?? null,
+      created_by: opts.createdBy,
+    })
     .returning();
   return row;
 }
