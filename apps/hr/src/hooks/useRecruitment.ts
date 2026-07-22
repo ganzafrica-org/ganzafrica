@@ -20,6 +20,45 @@ export function useFunnel(opportunityId: number | null) {
   });
 }
 
+export function useReviewers(applicationId: number | null) {
+  return useQuery({
+    queryKey: ["recruitment", "reviewers", applicationId ?? -1],
+    queryFn: () => recruitmentService.listReviewers(applicationId as number),
+    enabled: applicationId != null,
+  });
+}
+
+export function useNotes(applicationId: number | null) {
+  return useQuery({
+    queryKey: ["recruitment", "notes", applicationId ?? -1],
+    queryFn: () => recruitmentService.listNotes(applicationId as number),
+    enabled: applicationId != null,
+  });
+}
+
+export function useReviewMutations(applicationId: number) {
+  const qc = useQueryClient();
+  return {
+    assignReviewer: useMutation({
+      mutationFn: (args: { reviewer_user_id: number; role?: string }) =>
+        recruitmentService.assignReviewer(applicationId, args.reviewer_user_id, args.role),
+      onSuccess: () =>
+        qc.invalidateQueries({ queryKey: ["recruitment", "reviewers", applicationId] }),
+    }),
+    removeReviewer: useMutation({
+      mutationFn: (reviewerUserId: number) =>
+        recruitmentService.removeReviewer(applicationId, reviewerUserId),
+      onSuccess: () =>
+        qc.invalidateQueries({ queryKey: ["recruitment", "reviewers", applicationId] }),
+    }),
+    addNote: useMutation({
+      mutationFn: (payload: { stage: string; note: string; rating?: number }) =>
+        recruitmentService.addNote(applicationId, payload),
+      onSuccess: () => qc.invalidateQueries({ queryKey: ["recruitment", "notes", applicationId] }),
+    }),
+  };
+}
+
 export function useApplicationOffer(applicationId: number | null) {
   return useQuery({
     queryKey: ["recruitment", "offer", applicationId ?? -1],

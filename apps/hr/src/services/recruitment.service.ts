@@ -265,7 +265,79 @@ export const recruitmentService = {
     const res = await httpClient.post<{ offer: Offer }>(`/hr/offers/${offerId}/withdraw`);
     return res.data.offer;
   },
+
+  // REC-06 reviewers + notes + close-out
+  async listReviewers(applicationId: number) {
+    const res = await httpClient.get<{ reviewers: Reviewer[] }>(
+      `/hr/recruitment/applications/${applicationId}/reviewers`,
+    );
+    return res.data.reviewers;
+  },
+  async assignReviewer(applicationId: number, reviewer_user_id: number, role?: string) {
+    const res = await httpClient.post(`/hr/recruitment/applications/${applicationId}/reviewers`, {
+      reviewer_user_id,
+      role,
+    });
+    return res.data;
+  },
+  async removeReviewer(applicationId: number, reviewerUserId: number) {
+    const res = await httpClient.delete(
+      `/hr/recruitment/applications/${applicationId}/reviewers/${reviewerUserId}`,
+    );
+    return res.data;
+  },
+  async listNotes(applicationId: number) {
+    const res = await httpClient.get<{ notes: InterviewNote[] }>(
+      `/hr/recruitment/applications/${applicationId}/notes`,
+    );
+    return res.data.notes;
+  },
+  async addNote(applicationId: number, payload: { stage: string; note: string; rating?: number }) {
+    const res = await httpClient.post(
+      `/hr/recruitment/applications/${applicationId}/notes`,
+      payload,
+    );
+    return res.data;
+  },
+  async closeOutPreview(opportunityId: number) {
+    const res = await httpClient.get<CloseOutPreview>(
+      `/hr/recruitment/opportunities/${opportunityId}/close-out`,
+    );
+    return res.data;
+  },
+  async closeOut(opportunityId: number, rejection_reason?: string) {
+    const res = await httpClient.post<{ closed: number }>(
+      `/hr/recruitment/opportunities/${opportunityId}/close-out`,
+      { rejection_reason },
+    );
+    return res.data;
+  },
 };
+
+export interface Reviewer {
+  id: number;
+  reviewer_user_id: number;
+  role: string | null;
+  name: string;
+  email: string;
+}
+
+export interface InterviewNote {
+  id: number;
+  author_user_id: number;
+  author_name: string;
+  stage: string;
+  rating: number | null;
+  note: string;
+  created_at: string;
+}
+
+export interface CloseOutPreview {
+  target_hires: number;
+  accepted_offers: number;
+  target_met: boolean;
+  remaining: number;
+}
 
 export interface Offer {
   id: number;
