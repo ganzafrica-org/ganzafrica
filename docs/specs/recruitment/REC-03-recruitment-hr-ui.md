@@ -4,7 +4,7 @@
 > **Track:** A
 > **Depends on:** REC-02 (API + seed data)
 > **Blocks:** — (REC-05 adds the offer tab into the detail panel)
-> **Branch:** `feat/rec-03-recruitment-ui`
+> **Branch:** `feat/rec-03-recruitment-hr-ui`
 
 ## 1. Goal
 
