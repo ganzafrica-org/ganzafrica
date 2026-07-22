@@ -24,7 +24,7 @@ export default async function () {
   process.env.NODE_ENV = "test";
 
   // Apply the migration baseline (idempotent) against the test DB.
-  const migrate = spawnSync("npx drizzle-kit migrate", {
+  const migrate = spawnSync("./node_modules/.bin/drizzle-kit migrate", {
     shell: true,
     stdio: "inherit",
     cwd: path.resolve(__dirname, ".."),

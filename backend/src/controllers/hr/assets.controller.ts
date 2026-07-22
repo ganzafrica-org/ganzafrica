@@ -1,5 +1,6 @@
 ﻿import { Request, Response } from "express";
 import * as assetsService from "../../services/hr/assets.service";
+import { getHrRequester } from "../../utils/hr-requester";
 
 export const listAssets = async (req: Request, res: Response) => {
   const assets = await assetsService.listAssets(req.query);
@@ -56,6 +57,45 @@ export const deleteAssetImage = async (req: Request, res: Response) => {
   res.json({ success: true, data: deleted });
 };
 
+export const assignAsset = async (req: Request, res: Response) => {
+  const requester = await getHrRequester(req);
+  const asset = await assetsService.assignAsset(
+    req.params.id,
+    req.body.employee_id,
+    requester.id,
+    req.body.notes,
+  );
+  res.json({ success: true, data: asset });
+};
+
+export const returnAsset = async (req: Request, res: Response) => {
+  const asset = await assetsService.returnAsset(
+    req.params.id,
+    req.body.condition,
+    req.body.notes ?? "",
+    Boolean(req.body.has_issue),
+  );
+  res.json({ success: true, data: asset });
+};
+
+export const getAssetHistory = async (req: Request, res: Response) => {
+  const history = await assetsService.getAssetHistory(req.params.id);
+  res.json({ success: true, data: history });
+};
+
+export const getMyAssets = async (req: Request, res: Response) => {
+  const requester = await getHrRequester(req);
+  const assets = await assetsService.getEmployeeAssets(requester.id, { open: true });
+  res.json({ success: true, data: assets });
+};
+
+export const getEmployeeAssets = async (req: Request, res: Response) => {
+  const assets = await assetsService.getEmployeeAssets(req.params.id, {
+    open: req.query.open === "true",
+  });
+  res.json({ success: true, data: assets });
+};
+
 // Maintenance controllers
 
 export const listMaintenance = async (req: Request, res: Response) => {
@@ -65,12 +105,18 @@ export const listMaintenance = async (req: Request, res: Response) => {
 };
 
 export const createMaintenance = async (req: Request, res: Response) => {
-  const record = await assetsService.createAssetMaintenance(req.body);
+  const record = await assetsService.createAssetMaintenance({
+    ...req.body,
+    maintenanceDate: req.body.maintenanceDate ? new Date(req.body.maintenanceDate) : undefined,
+  });
   res.status(201).json({ success: true, data: record });
 };
 
 export const updateMaintenance = async (req: Request, res: Response) => {
-  const record = await assetsService.updateAssetMaintenance(req.params.id, req.body);
+  const record = await assetsService.updateAssetMaintenance(req.params.id, {
+    ...req.body,
+    maintenanceDate: req.body.maintenanceDate ? new Date(req.body.maintenanceDate) : undefined,
+  });
   res.json({ success: true, data: record });
 };
 

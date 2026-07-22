@@ -100,6 +100,10 @@ export const deleteAssetImageSchema = z.object({
   }),
 });
 
+const dateLikeString = z.string().refine((value) => !Number.isNaN(Date.parse(value)), {
+  message: "Invalid date",
+});
+
 export const createMaintenanceSchema = z.object({
   body: z.object({
     assetId: z.string().uuid("Invalid asset id"),
@@ -109,7 +113,7 @@ export const createMaintenanceSchema = z.object({
     status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
     rejectionReason: z.string().optional(),
     price: z.string().optional().nullable(),
-    maintenanceDate: z.string().datetime().optional(),
+    maintenanceDate: dateLikeString.optional(),
   }),
 });
 
@@ -123,12 +127,42 @@ export const updateMaintenanceSchema = z.object({
     status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
     rejectionReason: z.string().optional(),
     price: z.string().optional().nullable(),
-    maintenanceDate: z.string().datetime().optional(),
+    maintenanceDate: dateLikeString.optional(),
   }),
 });
 
 export const maintenanceIdParamSchema = z.object({
   params: z.object({
     id: z.string().uuid("Invalid maintenance id"),
+  }),
+});
+
+export const assignAssetSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid asset id"),
+  }),
+  body: z.object({
+    employee_id: z.string().uuid("Invalid employee id"),
+    notes: z.string().optional(),
+  }),
+});
+
+export const returnAssetSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid asset id"),
+  }),
+  body: z.object({
+    condition: z.string().min(1, "Condition is required"),
+    notes: z.string().optional(),
+    has_issue: z.boolean().optional(),
+  }),
+});
+
+export const employeeAssetsQuerySchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid employee id"),
+  }),
+  query: z.object({
+    open: z.enum(["true", "false"]).optional(),
   }),
 });

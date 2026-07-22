@@ -47,30 +47,15 @@ router.post(
   assetsController.createAsset,
 );
 router.get("/", read, validate(assetsValidation.listAssetsSchema), assetsController.listAssets);
-router.get("/:id", read, validate(assetsValidation.assetIdParamSchema), assetsController.getAsset);
-router.patch(
-  "/:id",
-  manage,
-  upload.array("images", 10),
-  validate(assetsValidation.updateAssetSchema),
-  assetsController.updateAsset,
-);
-router.delete(
-  "/:id",
-  manage,
+router.get("/me/assets", read, assetsController.getMyAssets);
+router.get(
+  "/:id/history",
+  read,
   validate(assetsValidation.assetIdParamSchema),
-  assetsController.deleteAsset,
+  assetsController.getAssetHistory,
 );
 
-// Image management
-router.delete(
-  "/:id/images/:imageId",
-  manage,
-  validate(assetsValidation.deleteAssetImageSchema),
-  assetsController.deleteAssetImage,
-);
-
-// Maintenance routes
+// Maintenance routes need to sit before /:id because /maintenance is a single segment.
 router.get("/maintenance", read, assetsController.listMaintenance);
 router.post(
   "/maintenance",
@@ -89,6 +74,41 @@ router.delete(
   manage,
   validate(assetsValidation.maintenanceIdParamSchema),
   assetsController.deleteMaintenance,
+);
+
+router.get("/:id", read, validate(assetsValidation.assetIdParamSchema), assetsController.getAsset);
+router.patch(
+  "/:id",
+  manage,
+  upload.array("images", 10),
+  validate(assetsValidation.updateAssetSchema),
+  assetsController.updateAsset,
+);
+router.post(
+  "/:id/assign",
+  manage,
+  validate(assetsValidation.assignAssetSchema),
+  assetsController.assignAsset,
+);
+router.post(
+  "/:id/return",
+  manage,
+  validate(assetsValidation.returnAssetSchema),
+  assetsController.returnAsset,
+);
+router.delete(
+  "/:id",
+  manage,
+  validate(assetsValidation.assetIdParamSchema),
+  assetsController.deleteAsset,
+);
+
+// Image management
+router.delete(
+  "/:id/images/:imageId",
+  manage,
+  validate(assetsValidation.deleteAssetImageSchema),
+  assetsController.deleteAssetImage,
 );
 
 export default router;

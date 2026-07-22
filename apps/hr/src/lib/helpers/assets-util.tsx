@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Laptop, Monitor, Smartphone, Package } from "lucide-react";
-import { AssetStatus } from "@/data/assets-data";
+import type { AssetIssue } from "@/types/api";
 
-export const getStatusBadge = (status: AssetStatus) => {
-  return status === "yes" ? (
+export const getStatusBadge = (status: AssetIssue) => {
+  return status === "YES" ? (
     <Badge className="rounded-full bg-emerald-100 px-3 py-1 text-emerald-700 hover:bg-emerald-100">
       Yes
     </Badge>
@@ -53,13 +53,13 @@ export const toDateInputValue = (value: string) => {
   return "";
 };
 
-export const getAntivirusExpiryValue = (hasAntivirus: AssetStatus, antivirusExpiry: string) => {
-  if (hasAntivirus === "no") return "N/A";
+export const getAntivirusExpiryValue = (hasAntivirus: AssetIssue, antivirusExpiry: string) => {
+  if (hasAntivirus === "NO") return "N/A";
   return antivirusExpiry ? antivirusExpiry : "N/A";
 };
 
-export const getOfficeExpiryValue = (hasMicrosoftOffice: AssetStatus, officeExpiry: string) => {
-  if (hasMicrosoftOffice === "no") return "N/A";
+export const getOfficeExpiryValue = (hasMicrosoftOffice: AssetIssue, officeExpiry: string) => {
+  if (hasMicrosoftOffice === "NO") return "N/A";
   return officeExpiry ? officeExpiry : "No expiry";
 };
 

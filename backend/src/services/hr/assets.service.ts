@@ -1,4 +1,4 @@
-﻿import { and, asc, eq } from "drizzle-orm";
+﻿import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
   hr_assets,
@@ -7,6 +7,7 @@ import {
   hr_asset_specs,
   hr_asset_images,
   hr_asset_maintenance,
+  hr_asset_assignments,
 } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
@@ -95,6 +96,21 @@ function mapAsset(row: typeof hr_assets.$inferSelect): AssetRecord {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+export function validateStatusTransition(from: AssetStatus, to: AssetStatus) {
+  if (from === "DISPOSED") throw new AppError("Asset is disposed and cannot change status", 409);
+
+  const allowed: Record<AssetStatus, AssetStatus[]> = {
+    AVAILABLE: ["ASSIGNED", "UNDER_MAINTENANCE", "DISPOSED"],
+    ASSIGNED: ["AVAILABLE", "UNDER_MAINTENANCE"],
+    UNDER_MAINTENANCE: ["AVAILABLE", "DISPOSED"],
+    DISPOSED: [],
+  };
+
+  if (from === to || !allowed[from].includes(to)) {
+    throw new AppError(`Illegal status transition from ${from} to ${to}`, 409);
+  }
 }
 
 async function assertUserExists(userId: string): Promise<void> {
@@ -270,7 +286,10 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
   if (input.purchasePrice !== undefined) patch.purchase_price = input.purchasePrice;
   if (input.hasIssue !== undefined) patch.has_issue = input.hasIssue;
   if (input.isFlagged !== undefined) patch.is_flagged = input.isFlagged;
-  if (input.status !== undefined) patch.status = input.status;
+  if (input.status !== undefined) {
+    validateStatusTransition(rows[0].status, input.status);
+    patch.status = input.status;
+  }
 
   if (input.assignedToId !== undefined) {
     patch.assigned_to_id = input.assignedToId;
@@ -545,4 +564,227 @@ export async function deleteAssetMaintenance(id: string) {
     .where(eq(hr_asset_maintenance.id, id))
     .returning();
   if (!deleted.length) throw new AppError("Maintenance record not found", 404);
+}
+
+export async function assignAsset(
+  assetId: string,
+  employeeId: string,
+  assignedBy: string,
+  notes?: string,
+): Promise<AssetRecord> {
+  await assertUserExists(employeeId);
+  await assertUserExists(assignedBy);
+
+  return await db.transaction(async (tx) => {
+    const [asset] = await tx
+      .select()
+      .from(hr_assets)
+      .where(eq(hr_assets.id, assetId))
+      .limit(1)
+      .for("update");
+
+    if (!asset) throw new AppError("Asset not found", 404);
+    validateStatusTransition(asset.status, "ASSIGNED");
+
+    // Create assignment record
+    await tx.insert(hr_asset_assignments).values({
+      asset_id: assetId,
+      employee_id: employeeId,
+      assigned_by: assignedBy,
+      notes: notes ?? null,
+    });
+
+    // Update asset
+    const [updated] = await tx
+      .update(hr_assets)
+      .set({
+        status: "ASSIGNED",
+        assigned_to_id: employeeId,
+        assigned_at: new Date(),
+        returned_at: null,
+        updated_at: new Date(),
+      })
+      .where(eq(hr_assets.id, assetId))
+      .returning();
+
+    return {
+      ...mapAsset(updated),
+    };
+  });
+}
+
+export async function returnAsset(
+  assetId: string,
+  condition: string,
+  notes: string,
+  hasIssue: boolean,
+): Promise<AssetRecord> {
+  return await db.transaction(async (tx) => {
+    const [asset] = await tx
+      .select()
+      .from(hr_assets)
+      .where(eq(hr_assets.id, assetId))
+      .limit(1)
+      .for("update");
+
+    if (!asset) throw new AppError("Asset not found", 404);
+    const newStatus = hasIssue ? "UNDER_MAINTENANCE" : "AVAILABLE";
+    validateStatusTransition(asset.status, newStatus);
+
+    // Close the open assignment
+    const [assignment] = await tx
+      .update(hr_asset_assignments)
+      .set({
+        returned_at: new Date(),
+        return_condition: condition,
+        notes: notes,
+      })
+      .where(
+        and(eq(hr_asset_assignments.asset_id, assetId), isNull(hr_asset_assignments.returned_at)),
+      )
+      .returning();
+
+    if (!assignment) throw new AppError("No open assignment found for this asset", 409);
+
+    // Update asset
+    const [updated] = await tx
+      .update(hr_assets)
+      .set({
+        status: newStatus,
+        assigned_to_id: null,
+        returned_at: new Date(),
+        has_issue: hasIssue ? "YES" : "NO",
+        updated_at: new Date(),
+      })
+      .where(eq(hr_assets.id, assetId))
+      .returning();
+
+    return {
+      ...mapAsset(updated),
+    };
+  });
+}
+
+export async function getEmployeeAssets(employeeId: string, filters: { open?: boolean } = {}) {
+  const conditions = [eq(hr_assets.assigned_to_id, employeeId)];
+  if (filters.open) {
+    conditions.push(eq(hr_assets.status, "ASSIGNED"));
+  }
+
+  const rows = await db
+    .select()
+    .from(hr_assets)
+    .where(and(...conditions));
+  return rows.map(mapAsset);
+}
+
+export type AssetHistoryEntry = {
+  type: "ASSIGNMENT" | "RETURN" | "MAINTENANCE";
+  occurredAt: Date;
+  title: string;
+  description?: string | null;
+  employeeId?: string | null;
+  employeeName?: string | null;
+  notes?: string | null;
+  condition?: string | null;
+  status?: string | null;
+};
+
+export async function getAssetHistory(assetId: string): Promise<AssetHistoryEntry[]> {
+  const [asset] = await db
+    .select({ id: hr_assets.id })
+    .from(hr_assets)
+    .where(eq(hr_assets.id, assetId))
+    .limit(1);
+  if (!asset) throw new AppError("Asset not found", 404);
+
+  const [assignmentRows, maintenanceRows] = await Promise.all([
+    db
+      .select({
+        id: hr_asset_assignments.id,
+        employee_id: hr_asset_assignments.employee_id,
+        assigned_by: hr_asset_assignments.assigned_by,
+        assigned_at: hr_asset_assignments.assigned_at,
+        returned_at: hr_asset_assignments.returned_at,
+        return_condition: hr_asset_assignments.return_condition,
+        notes: hr_asset_assignments.notes,
+      })
+      .from(hr_asset_assignments)
+      .where(eq(hr_asset_assignments.asset_id, assetId)),
+    db
+      .select({
+        id: hr_asset_maintenance.id,
+        title: hr_asset_maintenance.title,
+        description: hr_asset_maintenance.description,
+        status: hr_asset_maintenance.status,
+        rejection_reason: hr_asset_maintenance.rejection_reason,
+        maintenance_date: hr_asset_maintenance.maintenance_date,
+      })
+      .from(hr_asset_maintenance)
+      .where(eq(hr_asset_maintenance.asset_id, assetId)),
+  ]);
+
+  const userIds = Array.from(
+    new Set(
+      assignmentRows.flatMap(
+        (row) => [row.employee_id, row.assigned_by].filter(Boolean) as string[],
+      ),
+    ),
+  );
+
+  const userMap = new Map<string, string>();
+  if (userIds.length > 0) {
+    const users = await db
+      .select({
+        id: hr_users.id,
+        first_name: hr_users.first_name,
+        last_name: hr_users.last_name,
+      })
+      .from(hr_users)
+      .where(inArray(hr_users.id, userIds));
+
+    users.forEach((user) => {
+      userMap.set(user.id, `${user.first_name} ${user.last_name}`.trim());
+    });
+  }
+
+  const events: AssetHistoryEntry[] = [];
+
+  for (const row of assignmentRows) {
+    events.push({
+      type: "ASSIGNMENT",
+      occurredAt: row.assigned_at,
+      title: "Asset assigned",
+      description: `Assigned by ${userMap.get(row.assigned_by) ?? row.assigned_by}`,
+      employeeId: row.employee_id,
+      employeeName: userMap.get(row.employee_id) ?? row.employee_id,
+      notes: row.notes,
+    });
+
+    if (row.returned_at) {
+      events.push({
+        type: "RETURN",
+        occurredAt: row.returned_at,
+        title: "Asset returned",
+        description: `Returned from ${userMap.get(row.employee_id) ?? row.employee_id}`,
+        employeeId: row.employee_id,
+        employeeName: userMap.get(row.employee_id) ?? row.employee_id,
+        condition: row.return_condition,
+        notes: row.notes,
+      });
+    }
+  }
+
+  for (const row of maintenanceRows) {
+    events.push({
+      type: "MAINTENANCE",
+      occurredAt: row.maintenance_date ?? new Date(),
+      title: row.title,
+      description: row.description,
+      status: row.status,
+      notes: row.rejection_reason,
+    });
+  }
+
+  return events.sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime());
 }

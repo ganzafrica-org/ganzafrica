@@ -50,3 +50,5 @@ wrangler.toml
 *.xml
 *.iml
 CLAUDE.md
+.codex
+.junie

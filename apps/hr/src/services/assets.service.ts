@@ -2,13 +2,15 @@ import { httpClient } from "@/services/http.service";
 import type {
   Asset,
   AssetCategory,
-  AssetStats,
   CreateAssetRequest,
   CreateCategoryRequest,
   UpdateAssetRequest,
   UpdateCategoryRequest,
   AssetMaintenance,
+  AssetHistoryEntry,
+  AssignAssetRequest,
   CreateMaintenanceRequest,
+  ReturnAssetRequest,
   UpdateMaintenanceRequest,
 } from "@/types/api";
 
@@ -169,5 +171,33 @@ export const assetsService = {
 
   async deleteMaintenance(id: string): Promise<void> {
     await httpClient.delete(`${BASE}/maintenance/${id}`);
+  },
+
+  async assignAsset(id: string, payload: AssignAssetRequest): Promise<void> {
+    await httpClient.post(`${BASE}/${id}/assign`, payload);
+  },
+
+  async returnAsset(id: string, payload: ReturnAssetRequest): Promise<void> {
+    await httpClient.post(`${BASE}/${id}/return`, payload);
+  },
+
+  async getAssetHistory(id: string): Promise<AssetHistoryEntry[]> {
+    const result = await httpClient.get<{ success: boolean; data: AssetHistoryEntry[] }>(
+      `${BASE}/${id}/history`,
+    );
+    return result.data.data;
+  },
+
+  async getMyAssets(): Promise<Asset[]> {
+    const result = await httpClient.get<{ success: boolean; data: Asset[] }>(`${BASE}/me/assets`);
+    return result.data.data;
+  },
+
+  async getEmployeeAssets(id: string, open?: boolean): Promise<Asset[]> {
+    const result = await httpClient.get<{ success: boolean; data: Asset[] }>(
+      `/hr/employees/${id}/assets`,
+      { params: open === undefined ? undefined : { open } },
+    );
+    return result.data.data;
   },
 };

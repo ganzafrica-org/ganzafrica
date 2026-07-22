@@ -2,6 +2,7 @@
 import { authenticate, requirePermission } from "@/middlewares/auth.middleware";
 import { validate } from "@/middlewares/validation.middleware";
 import * as employeesController from "@/controllers/hr/employee.controller";
+import * as assetsController from "@/controllers/hr/assets.controller";
 import * as employeesValidation from "@/validations/hr/employee.validation";
 
 const router: Router = Router();
@@ -40,6 +41,13 @@ router.get(
   requirePermission("employees:manage"),
   validate(employeesValidation.employeeIdParamSchema),
   employeesController.getEmployee,
+);
+
+router.get(
+  "/:id/assets",
+  requirePermission("assets:read", "assets:manage"),
+  validate(employeesValidation.employeeIdParamSchema),
+  assetsController.getEmployeeAssets,
 );
 
 router.patch(

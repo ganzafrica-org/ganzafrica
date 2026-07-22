@@ -176,6 +176,18 @@ export interface AssetImage {
   sortOrder: number;
 }
 
+export interface AssetHistoryEntry {
+  type: "ASSIGNMENT" | "RETURN" | "MAINTENANCE";
+  occurredAt: string;
+  title: string;
+  description?: string | null;
+  employeeId?: string | null;
+  employeeName?: string | null;
+  notes?: string | null;
+  condition?: string | null;
+  status?: string | null;
+}
+
 // ─── Asset ────────────────────────────────────────────────────────────────────
 
 export type AssetStatus = "AVAILABLE" | "ASSIGNED" | "UNDER_MAINTENANCE" | "DISPOSED";
@@ -217,6 +229,17 @@ export interface CreateAssetRequest {
 }
 
 export interface UpdateAssetRequest extends Partial<CreateAssetRequest> {}
+
+export interface AssignAssetRequest {
+  employee_id: string;
+  notes?: string;
+}
+
+export interface ReturnAssetRequest {
+  condition: string;
+  notes?: string;
+  has_issue?: boolean;
+}
 
 export interface AssetStats {
   total: number;

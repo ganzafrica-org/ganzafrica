@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,9 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Package,
-  Laptop,
-  Smartphone,
-  Monitor,
   Search,
   Eye,
   Edit,
@@ -26,15 +24,12 @@ import {
   Plus,
   AlertTriangle,
   CheckCircle,
-  Clock,
-  MapPin,
   User,
-  DollarSign,
   TrendingUp,
   Settings,
-  Building,
   Wrench,
   Loader2,
+  History as HistoryIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -61,21 +56,25 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { StatsHeader } from "@/components/sections/header";
 import {
-  assetRequests,
-  assetCategoryData,
-  assetConditionData,
-  monthlyAssetData,
-} from "@/data/assets-data";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { StatsHeader } from "@/components/sections/header";
 import { formatCurrency, getCategoryIcon } from "@/lib/helpers/assets-util";
 import { AssetSheet } from "@/components/sections/sheets/asset-sheet";
 import { MaintenanceFormSheet } from "@/components/sections/sheets/maintenance-form-sheet";
 import { DataTable, ColumnDef } from "@/components/sections/table-component";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { useAssets, useAssetCategories } from "@/hooks/useAssets";
+import { useEmployees } from "@/hooks/useEmployees";
 import { assetsService } from "@/services/assets.service";
-import type { Asset, AssetStats, AssetMaintenance } from "@/types/api";
+import type { Asset, AssetMaintenance, AssetHistoryEntry } from "@/types/api";
 import { toast } from "sonner";
 
 const chartConfig = {
@@ -113,17 +112,28 @@ export default function AssetsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [selectedHistoryAssetId, setSelectedHistoryAssetId] = useState<string | null>(null);
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [editMaintenance, setEditMaintenance] = useState<AssetMaintenance | null>(null);
   const [showAddMaintenance, setShowAddMaintenance] = useState(false);
   const [maintenanceRecords, setMaintenanceRecords] = useState<AssetMaintenance[]>([]);
   const [loadingMaintenance, setLoadingMaintenance] = useState(false);
+  const [historyRecords, setHistoryRecords] = useState<AssetHistoryEntry[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [assignDialogAsset, setAssignDialogAsset] = useState<Asset | null>(null);
+  const [returnDialogAsset, setReturnDialogAsset] = useState<Asset | null>(null);
+  const [assignEmployeeId, setAssignEmployeeId] = useState("");
+  const [returnCondition, setReturnCondition] = useState("");
+  const [returnNotes, setReturnNotes] = useState("");
+  const [returnHasIssue, setReturnHasIssue] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [stats, setStats] = useState<AssetStats | null>(null);
 
   const { data: assets, isLoading: loading, refetch } = useAssets();
   const { categories } = useAssetCategories();
+  const { data: employeesData } = useEmployees({ limit: 200 });
+  const assetList = Array.isArray(assets) ? assets : [];
+  const employees = employeesData?.data ?? [];
 
   useEffect(() => {
     const mainEl = document.querySelector("main.overflow-auto") as HTMLElement | null;
@@ -164,6 +174,20 @@ export default function AssetsPage() {
     fetchMaintenance();
   }, []);
 
+  useEffect(() => {
+    if (!selectedHistoryAssetId) {
+      setHistoryRecords([]);
+      return;
+    }
+
+    setLoadingHistory(true);
+    assetsService
+      .getAssetHistory(selectedHistoryAssetId)
+      .then(setHistoryRecords)
+      .catch(() => toast.error("Failed to load asset history"))
+      .finally(() => setLoadingHistory(false));
+  }, [selectedHistoryAssetId]);
+
   const handleDeleteMaintenance = async (id: string) => {
     if (!confirm("Are you sure you want to delete this record?")) return;
     try {
@@ -189,14 +213,82 @@ export default function AssetsPage() {
     }
   };
 
+  const handleAssignAsset = async () => {
+    if (!assignDialogAsset || !assignEmployeeId) {
+      toast.error("Select an employee");
+      return;
+    }
+
+    try {
+      await assetsService.assignAsset(assignDialogAsset.id, {
+        employee_id: assignEmployeeId,
+      });
+      toast.success("Asset assigned successfully");
+      setAssignDialogAsset(null);
+      setAssignEmployeeId("");
+      refetch();
+      if (selectedHistoryAssetId === assignDialogAsset.id) {
+        setSelectedHistoryAssetId(assignDialogAsset.id);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to assign asset");
+    }
+  };
+
+  const handleReturnAsset = async () => {
+    if (!returnDialogAsset || !returnCondition.trim()) {
+      toast.error("Condition is required");
+      return;
+    }
+
+    try {
+      await assetsService.returnAsset(returnDialogAsset.id, {
+        condition: returnCondition,
+        notes: returnNotes || undefined,
+        has_issue: returnHasIssue,
+      });
+      toast.success("Asset returned successfully");
+      setReturnDialogAsset(null);
+      setReturnCondition("");
+      setReturnNotes("");
+      setReturnHasIssue(false);
+      refetch();
+      if (selectedHistoryAssetId === returnDialogAsset.id) {
+        setSelectedHistoryAssetId(returnDialogAsset.id);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to return asset");
+    }
+  };
+
+  const handleReportIssue = async (asset: Asset) => {
+    try {
+      await assetsService.updateAsset(asset.id, {
+        hasIssue: "YES",
+      });
+      // TODO(MOD-08): create a helpdesk ticket once the issue workflow is connected.
+      toast.success("Issue flagged on asset");
+      refetch();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to flag issue");
+    }
+  };
+
   const headerStats = useMemo(() => {
+    const total = assetList.length;
+    const available = assetList.filter((asset) => asset.status === "AVAILABLE").length;
+    const assigned = assetList.filter((asset) => asset.status === "ASSIGNED").length;
+    const underMaintenance = assetList.filter(
+      (asset) => asset.status === "UNDER_MAINTENANCE",
+    ).length;
+
     return [
-      { label: "Total Assets", value: String(stats?.total ?? 0), icon: Package },
-      { label: "Available", value: String(stats?.available ?? 0), icon: CheckCircle },
-      { label: "Assigned", value: String(stats?.assigned ?? 0), icon: User },
-      { label: "Maintenance", value: String(stats?.underMaintenance ?? 0), icon: Wrench },
+      { label: "Total Assets", value: String(total), icon: Package },
+      { label: "Available", value: String(available), icon: CheckCircle },
+      { label: "Assigned", value: String(assigned), icon: User },
+      { label: "Maintenance", value: String(underMaintenance), icon: Wrench },
     ];
-  }, [stats]);
+  }, [assetList]);
   const assetColumns: ColumnDef<Asset>[] = [
     {
       key: "deviceName", // ← was device_name
@@ -276,20 +368,41 @@ export default function AssetsPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setSelectedAssetId(asset.id)}>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedAssetId(asset.id);
+                setSelectedHistoryAssetId(asset.id);
+              }}
+            >
               <Eye className="mr-2 h-4 w-4" />
               View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setSelectedHistoryAssetId(asset.id);
+                setSelectedAssetId(asset.id);
+              }}
+            >
+              <HistoryIcon className="mr-2 h-4 w-4" />
+              View History
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setEditAsset(asset)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit Asset
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              Assign/Unassign
-            </DropdownMenuItem>
+            {asset.status === "ASSIGNED" ? (
+              <DropdownMenuItem onClick={() => setReturnDialogAsset(asset)}>
+                <User className="mr-2 h-4 w-4" />
+                Return Asset
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => setAssignDialogAsset(asset)}>
+                <User className="mr-2 h-4 w-4" />
+                Assign Asset
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-red-600" onClick={() => handleReportIssue(asset)}>
               <AlertTriangle className="mr-2 h-4 w-4" />
               Report Issue
             </DropdownMenuItem>
@@ -299,113 +412,37 @@ export default function AssetsPage() {
     },
   ];
 
-  const requestColumns: ColumnDef<any>[] = [
+  const historyColumns: ColumnDef<AssetHistoryEntry>[] = [
+    {
+      key: "occurredAt",
+      header: "Date",
+      sortable: true,
+      render: (date) => <span>{new Date(date as string).toLocaleString()}</span>,
+    },
+    {
+      key: "type",
+      header: "Type",
+      sortable: true,
+      render: (type) => <Badge variant="outline">{String(type).toLowerCase()}</Badge>,
+    },
+    {
+      key: "title",
+      header: "Event",
+      sortable: true,
+    },
     {
       key: "employeeName",
       header: "Employee",
       sortable: true,
-      render: (name, request) => (
-        <div className="flex items-center space-x-3">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-              {name
-                .split(" ")
-                .map((n: string) => n[0])
-                .join("")}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <div className="font-medium">{name}</div>
-            <div className="text-sm text-muted-foreground">{request.department}</div>
-          </div>
-        </div>
-      ),
+      render: (employeeName) => <span>{(employeeName as string) ?? "—"}</span>,
     },
     {
-      key: "requestType",
-      header: "Request Type",
-      sortable: true,
-      render: (type) => (
-        <Badge variant="outline" className="capitalize">
-          {type}
-        </Badge>
-      ),
-    },
-    {
-      key: "assetCategory",
-      header: "Asset Category",
-      sortable: true,
-      render: (category) => (
-        <div className="flex items-center gap-2">
-          {getCategoryIcon(category)}
-          <span className="capitalize">{category}</span>
-        </div>
-      ),
-    },
-    {
-      key: "urgency",
-      header: "Urgency",
-      sortable: true,
-      render: (urgency) => (
-        <Badge
-          className={
-            urgency === "high" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
-          }
-        >
-          {urgency as string}
-        </Badge>
-      ),
-    },
-    {
-      key: "budget",
-      header: "Budget",
-      sortable: true,
-      render: (budget) => <span className="font-medium">{formatCurrency(budget as number)}</span>,
-    },
-    {
-      key: "status",
-      header: "Status",
-      sortable: true,
-      render: (status) => (
-        <Badge
-          className={
-            status === "approved" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-          }
-        >
-          {status as string}
-        </Badge>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (_, request) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>
-              <Eye className="mr-2 h-4 w-4" />
-              View Request
-            </DropdownMenuItem>
-            {request.status === "pending" && (
-              <>
-                <DropdownMenuItem className="text-green-600">
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Approve
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  Reject
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+      key: "notes",
+      header: "Notes",
+      render: (notes, record) => (
+        <span>
+          {notes ? String(notes) : record.condition ? `Condition: ${record.condition}` : "—"}
+        </span>
       ),
     },
   ];
@@ -507,8 +544,7 @@ export default function AssetsPage() {
   ];
 
   const filteredAssets = useMemo(() => {
-    const safeAssets = Array.isArray(assets) ? assets : [];
-    return safeAssets.filter((asset) => {
+    return assetList.filter((asset) => {
       const matchesSearch =
         (asset.deviceName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
         (asset.serialNumber?.toLowerCase() || "").includes(searchTerm.toLowerCase());
@@ -516,7 +552,48 @@ export default function AssetsPage() {
       const matchesCategory = categoryFilter === "all" || asset.categoryId === categoryFilter;
       return matchesSearch && matchesStatus && matchesCategory;
     });
-  }, [assets, searchTerm, statusFilter, categoryFilter]);
+  }, [assetList, searchTerm, statusFilter, categoryFilter]);
+
+  const assetCategoryData = useMemo(() => {
+    const counts = new Map<string, number>();
+    assetList.forEach((asset) => {
+      const key = asset.category?.name || "Uncategorized";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+
+    const palette = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#64748b"];
+    return Array.from(counts.entries()).map(([category, count], index) => ({
+      category,
+      count,
+      fill: palette[index % palette.length],
+    }));
+  }, [assetList]);
+
+  const monthlyAssetData = useMemo(() => {
+    const counts = new Map<string, { purchased: number; retired: number; maintenance: number }>();
+    maintenanceRecords.forEach((record) => {
+      const month = new Date(record.maintenanceDate).toLocaleString("en-US", {
+        month: "short",
+        year: "numeric",
+      });
+      const current = counts.get(month) ?? { purchased: 0, retired: 0, maintenance: 0 };
+      current.maintenance += 1;
+      counts.set(month, current);
+    });
+
+    filteredAssets.forEach((asset) => {
+      const month = new Date(asset.createdAt).toLocaleString("en-US", {
+        month: "short",
+        year: "numeric",
+      });
+      const current = counts.get(month) ?? { purchased: 0, retired: 0, maintenance: 0 };
+      current.purchased += 1;
+      if (asset.status === "DISPOSED") current.retired += 1;
+      counts.set(month, current);
+    });
+
+    return Array.from(counts.entries()).map(([month, values]) => ({ month, ...values }));
+  }, [filteredAssets, maintenanceRecords]);
   // Inside your component
   return (
     <div className="min-h-screen flex flex-col w-full bg-[#f6f8fb] dark:bg-slate-950 text-slate-900 dark:text-white">
@@ -526,7 +603,7 @@ export default function AssetsPage() {
           subtitle="Current condition of all assets"
           scrolled={scrolled}
           stats={headerStats}
-          isLoading={!stats}
+          isLoading={loading}
           ClassName="w-full"
         />
         <Tabs defaultValue="assets" className="w-full flex flex-col">
@@ -539,11 +616,11 @@ export default function AssetsPage() {
               Assets Inventory
             </TabsTrigger>
             <TabsTrigger
-              value="requests"
+              value="history"
               className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
             >
-              <User className="h-4 w-4 mr-2" />
-              Asset Requests
+              <HistoryIcon className="h-4 w-4 mr-2" />
+              History
             </TabsTrigger>
             <TabsTrigger
               value="maintenance"
@@ -626,19 +703,29 @@ export default function AssetsPage() {
               <DataTable
                 columns={assetColumns}
                 data={filteredAssets}
-                onRowClick={(asset) => setSelectedAssetId(asset.id)}
+                onRowClick={(asset) => {
+                  setSelectedAssetId(asset.id);
+                  setSelectedHistoryAssetId(asset.id);
+                }}
                 searchable={false}
               />
             )}
           </TabsContent>
 
-          <TabsContent value="requests" className="space-y-4">
-            <DataTable
-              columns={requestColumns}
-              data={assetRequests}
-              searchable={true}
-              searchPlaceholder="Search requests..."
-            />
+          <TabsContent value="history" className="space-y-4">
+            {!selectedHistoryAssetId ? (
+              <Card className="rounded-lg">
+                <CardContent className="p-6 text-center text-muted-foreground">
+                  Select an asset to view its assignment and maintenance timeline.
+                </CardContent>
+              </Card>
+            ) : loadingHistory ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : (
+              <DataTable columns={historyColumns} data={historyRecords} searchable={false} />
+            )}
           </TabsContent>
 
           <TabsContent value="maintenance" className="space-y-4">
@@ -776,6 +863,112 @@ export default function AssetsPage() {
           onOpenChange={setShowAddMaintenance}
           onSuccess={fetchMaintenance}
         />
+
+        <Dialog
+          open={!!assignDialogAsset}
+          onOpenChange={(open) => {
+            if (!open) {
+              setAssignDialogAsset(null);
+              setAssignEmployeeId("");
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Assign Asset</DialogTitle>
+              <DialogDescription>
+                Assign {assignDialogAsset?.deviceName ?? "this asset"} to an employee.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <Select value={assignEmployeeId} onValueChange={setAssignEmployeeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select employee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.firstName} {employee.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAssignDialogAsset(null)}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-brand-accent hover:bg-brand-accent/90"
+                onClick={handleAssignAsset}
+              >
+                Assign
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={!!returnDialogAsset}
+          onOpenChange={(open) => {
+            if (!open) {
+              setReturnDialogAsset(null);
+              setReturnCondition("");
+              setReturnNotes("");
+              setReturnHasIssue(false);
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Return Asset</DialogTitle>
+              <DialogDescription>
+                Capture the return condition for {returnDialogAsset?.deviceName ?? "this asset"}.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label>Condition</Label>
+                <Input
+                  value={returnCondition}
+                  onChange={(e) => setReturnCondition(e.target.value)}
+                  placeholder="e.g. Good, damaged screen"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Notes</Label>
+                <Textarea
+                  value={returnNotes}
+                  onChange={(e) => setReturnNotes(e.target.value)}
+                  placeholder="Optional return notes"
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={returnHasIssue}
+                  onChange={(e) => setReturnHasIssue(e.target.checked)}
+                />
+                Asset has an issue
+              </label>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setReturnDialogAsset(null)}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-brand-accent hover:bg-brand-accent/90"
+                onClick={handleReturnAsset}
+              >
+                Return
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <MaintenanceFormSheet
           open={!!editMaintenance}

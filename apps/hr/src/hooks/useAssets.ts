@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { assetsService } from "@/services/assets.service";
 import type {
-  Asset,
   AssetCategory,
   CreateAssetRequest,
   UpdateAssetRequest,
@@ -29,6 +28,29 @@ export function useAsset(id: string | null) {
     queryKey: ["asset", id],
     queryFn: () => assetsService.getAssetById(id!),
     enabled: !!id,
+  });
+}
+
+export function useAssetHistory(id: string | null) {
+  return useQuery({
+    queryKey: ["assetHistory", id],
+    queryFn: () => assetsService.getAssetHistory(id!),
+    enabled: !!id,
+  });
+}
+
+export function useMyAssets() {
+  return useQuery({
+    queryKey: ["myAssets"],
+    queryFn: () => assetsService.getMyAssets(),
+  });
+}
+
+export function useEmployeeAssets(employeeId: string | null, open?: boolean) {
+  return useQuery({
+    queryKey: ["employeeAssets", employeeId, open],
+    queryFn: () => assetsService.getEmployeeAssets(employeeId!, open),
+    enabled: !!employeeId,
   });
 }
 
@@ -59,6 +81,9 @@ export function useUpdateAsset() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["assets"] });
       queryClient.invalidateQueries({ queryKey: ["asset", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["assetHistory", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["myAssets"] });
+      queryClient.invalidateQueries({ queryKey: ["employeeAssets"] });
       queryClient.invalidateQueries({ queryKey: ["assetStats"] });
     },
   });
@@ -82,6 +107,44 @@ export function useDeleteAssetImage() {
       assetsService.deleteAssetImage(assetId, imageId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["asset", variables.assetId] });
+    },
+  });
+}
+
+export function useAssignAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: { employee_id: string; notes?: string };
+    }) => assetsService.assignAsset(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+      queryClient.invalidateQueries({ queryKey: ["assetHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["myAssets"] });
+      queryClient.invalidateQueries({ queryKey: ["employeeAssets"] });
+    },
+  });
+}
+
+export function useReturnAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: { condition: string; notes?: string; has_issue?: boolean };
+    }) => assetsService.returnAsset(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assets"] });
+      queryClient.invalidateQueries({ queryKey: ["assetHistory"] });
+      queryClient.invalidateQueries({ queryKey: ["myAssets"] });
+      queryClient.invalidateQueries({ queryKey: ["employeeAssets"] });
     },
   });
 }
