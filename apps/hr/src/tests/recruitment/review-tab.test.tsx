@@ -4,16 +4,17 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/tests/mocks/server";
 import { renderWithClient } from "./test-utils";
 import { ReviewTab } from "@/components/recruitment/review-tab";
+import type { Reviewer, InterviewNote } from "@/services/recruitment.service";
 
 const API = "http://localhost:3002/api";
 afterEach(cleanup);
 
 describe("ReviewTab", () => {
   it("lists reviewers and notes, assigns a reviewer, and adds a note", async () => {
-    let reviewers: Record<string, unknown>[] = [
+    let reviewers: Reviewer[] = [
       { id: 1, reviewer_user_id: 9, role: "Data expert", name: "Ada", email: "a@e.com" },
     ];
-    let notes: Record<string, unknown>[] = [
+    let notes: InterviewNote[] = [
       {
         id: 1,
         author_user_id: 2,
@@ -71,7 +72,9 @@ describe("ReviewTab", () => {
   });
 
   it("removes a reviewer", async () => {
-    let reviewers = [{ id: 1, reviewer_user_id: 9, role: null, name: "Ada", email: "a@e.com" }];
+    let reviewers: Reviewer[] = [
+      { id: 1, reviewer_user_id: 9, role: null, name: "Ada", email: "a@e.com" },
+    ];
     server.use(
       http.get(`${API}/hr/recruitment/applications/7/reviewers`, () =>
         HttpResponse.json({ reviewers }),
