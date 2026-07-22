@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { opportunityService } from "../services/opportunity";
+import { opportunityService, EligibilityRejectedError } from "../services/opportunity";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -445,6 +445,9 @@ export const submitApplication = async (req: Request, res: Response) => {
     });
   } catch (error) {
     logger.error(`Submit application error: ${req.params.id}`, error);
+    if (error instanceof EligibilityRejectedError) {
+      return res.status(422).json({ eligible: false, failed: error.failed });
+    }
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
         error: "Application Submission Error",

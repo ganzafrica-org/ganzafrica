@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
 import Container from "@/components/layout/container";
 import Link from "next/link";
@@ -11,7 +11,7 @@ const SafeImage = Image as unknown as React.ComponentType<any>;
 const SafeLink = Link as unknown as React.ComponentType<any>;
 
 // Animation variants
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -23,7 +23,7 @@ const fadeIn = {
   },
 };
 
-const imageVariantLeft = {
+const imageVariantLeft: Variants = {
   hidden: { opacity: 0, x: -30 },
   visible: {
     opacity: 1,
@@ -35,7 +35,7 @@ const imageVariantLeft = {
   },
 };
 
-const imageVariantRight = {
+const imageVariantRight: Variants = {
   hidden: { opacity: 0, x: 30 },
   visible: {
     opacity: 1,

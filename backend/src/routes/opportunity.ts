@@ -1,9 +1,29 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { opportunityController } from "../controllers/opportunity";
+import * as recruitmentController from "../controllers/recruitment";
 import { validate } from "../middlewares";
 import { opportunityValidation } from "../validations/opportunity";
 
 const router: Router = Router();
+
+// Pre-submission eligibility probe is public; rate-limit per IP (spec: 20/min/IP).
+const eligibilityLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests, please try again shortly.",
+});
+
+// Anonymous funnel events are public; rate-limit per IP (spec: 60/min/IP).
+const funnelLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests, please try again shortly.",
+});
 
 /**
  * @swagger
@@ -67,6 +87,29 @@ router.post(
   "/:id/close",
   validate(opportunityValidation.getOpportunitySchema),
   opportunityController.closeOpportunity,
+);
+
+// REC-01 public: form definition + active rules for the client renderer/pre-check.
+router.get(
+  "/:id/form",
+  validate(opportunityValidation.getOpportunitySchema),
+  recruitmentController.getPublicForm,
+);
+
+// REC-01 public: server-authoritative eligibility probe. Never creates an application row.
+router.post(
+  "/:id/eligibility-check",
+  eligibilityLimiter,
+  validate(opportunityValidation.getOpportunitySchema),
+  recruitmentController.eligibilityCheck,
+);
+
+// REC-04 public: anonymous funnel event ingest. Always 204 (fire-and-forget).
+router.post(
+  "/:id/events",
+  funnelLimiter,
+  validate(opportunityValidation.getOpportunitySchema),
+  recruitmentController.recordFunnelEvent,
 );
 
 // Application routes related to specific opportunities

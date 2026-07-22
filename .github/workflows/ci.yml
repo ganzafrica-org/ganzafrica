@@ -70,3 +70,12 @@ jobs:
       # once FND-09 lands (tracked in docs/specs/foundations/FND-09).
       - name: Lint, test, build (affected)
         run: pnpm turbo run lint test build --filter="${{ steps.affected.outputs.filter }}"
+
+      # Coverage gates: actively-built recruitment code is held to ≥90% (statements/functions/lines;
+      # UI branches ≥85). Scoped on purpose — the rest of each package is not yet gated. Widen the
+      # include/thresholds in each package's vitest.config.ts as suites grow (never lower a floor).
+      - name: Recruitment coverage gate (backend ≥90%)
+        run: pnpm --filter ganzafrica-backend test:coverage
+
+      - name: Recruitment coverage gate (hr UI ≥90%)
+        run: pnpm --filter hr test:coverage

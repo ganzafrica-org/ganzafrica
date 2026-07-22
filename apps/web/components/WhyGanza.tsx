@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { TranslatableText } from "@/components/translate/TranslatableText";
@@ -34,7 +34,7 @@ export function WhyGanza() {
     },
   ];
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -45,7 +45,7 @@ export function WhyGanza() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
@@ -54,7 +54,7 @@ export function WhyGanza() {
     },
   };
 
-  const imageVariants = {
+  const imageVariants: Variants = {
     hidden: { opacity: 0, scale: 0.95 },
     visible: {
       opacity: 1,
@@ -164,15 +164,15 @@ export function WhyGanza() {
                   <div className="flex text-primary-orange items-center gap-4 mb-2">
                     <div
                       className="relative w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: bulletPoints[3].color }}
+                      style={{ backgroundColor: bulletPoints[3]?.color }}
                     >
                       <span className="text-white font-bold text-sm">04</span>
                     </div>
-                    <TranslatableText>{bulletPoints[3].title}</TranslatableText>
+                    <TranslatableText>{bulletPoints[3]?.title ?? ""}</TranslatableText>
                   </div>
                 </h3>
                 <p className="text-gray-600 leading-tight">
-                  <TranslatableText>{bulletPoints[3].description}</TranslatableText>
+                  <TranslatableText>{bulletPoints[3]?.description ?? ""}</TranslatableText>
                 </p>
               </motion.div>
             </div>

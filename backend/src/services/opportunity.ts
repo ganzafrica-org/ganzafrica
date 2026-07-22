@@ -10,6 +10,9 @@ import { eq, and, inArray, sql } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
 import { v4 as uuidv4 } from "uuid";
+import { evaluate, recordHits } from "./recruitment/eligibility.service";
+import { getActiveRules, getPublishedForm } from "./recruitment/forms.service";
+import { runScreening, sendApplicantEmail } from "./recruitment/pipeline.service";
 
 const logger = new Logger("OpportunityService");
 
@@ -88,7 +91,24 @@ export type ApplicationInput = {
   opportunity_id?: number;
   custom_answers?: Record<string, any>;
   user_id?: number;
+
+  // REC-01: versioned-form standard fields (nullable — legacy submissions omit them).
+  date_of_birth?: string | null;
+  country_of_residence?: string | null;
+  country_of_work?: string | null;
+  has_work_permit?: boolean | null;
 };
+
+/**
+ * REC-01: raised on a server-side eligibility failure at apply time so the controller can map it
+ * to a 422 with the failed-rule payload (defense in depth — the UI already stopped the applicant).
+ */
+export class EligibilityRejectedError extends Error {
+  constructor(public readonly failed: { field_key: string; reject_message: string }[]) {
+    super("Applicant is not eligible");
+    this.name = "EligibilityRejectedError";
+  }
+}
 
 export type ReviewInput = {
   application_id: number;
@@ -620,6 +640,29 @@ export async function submitApplication(applicationData: ApplicationInput): Prom
       }
     }
 
+    // REC-01: server-authoritative pre-insert eligibility gate. Inert for opportunities with no
+    // active rules (old postings) — no form/rules means byte-identical legacy behavior.
+    let formVersion: number | null = null;
+    if (applicationData.opportunity_id) {
+      const activeRules = await getActiveRules(applicationData.opportunity_id);
+      if (activeRules.length > 0) {
+        const answers: Record<string, unknown> = {
+          ...(applicationData.custom_answers || {}),
+          date_of_birth: applicationData.date_of_birth,
+          country_of_residence: applicationData.country_of_residence,
+          country_of_work: applicationData.country_of_work,
+          has_work_permit: applicationData.has_work_permit,
+        };
+        const result = evaluate(activeRules, answers);
+        if (!result.eligible) {
+          await recordHits(result.failedRuleIds);
+          throw new EligibilityRejectedError(result.failed);
+        }
+      }
+      const publishedForm = await getPublishedForm(applicationData.opportunity_id);
+      formVersion = publishedForm?.version ?? null;
+    }
+
     // Insert application record with GanzAfrica specific fields
     const [createdApplication] = await db
       .insert(applications)
@@ -658,6 +701,13 @@ export async function submitApplication(applicationData: ApplicationInput): Prom
         opportunity_id: applicationData.opportunity_id,
         custom_answers: applicationData.custom_answers || {},
 
+        // REC-01: versioned-form fields (null for legacy submissions).
+        form_version: formVersion,
+        date_of_birth: applicationData.date_of_birth ?? null,
+        country_of_residence: applicationData.country_of_residence ?? null,
+        country_of_work: applicationData.country_of_work ?? null,
+        has_work_permit: applicationData.has_work_permit ?? null,
+
         // Status and tracking
         status: "submitted",
         submission_date: new Date(),
@@ -669,10 +719,27 @@ export async function submitApplication(applicationData: ApplicationInput): Prom
       })
       .returning();
 
+    // REC-02: post-insert screening (auto-reject/flag) then the acknowledgment email. Screening is
+    // non-fatal (it can never fail the submission). Skip "received" if screening auto-rejected —
+    // the rejection email already went out.
+    if (createdApplication?.id) {
+      await runScreening(createdApplication.id);
+      const [screened] = await db
+        .select({ stage: applications.pipeline_stage })
+        .from(applications)
+        .where(eq(applications.id, createdApplication.id))
+        .limit(1);
+      if (screened?.stage !== "rejected") {
+        await sendApplicantEmail(createdApplication.id, "received").catch((err) =>
+          logger.error("received email failed (non-fatal)", err),
+        );
+      }
+    }
+
     return createdApplication;
   } catch (error) {
     logger.error("Error submitting application", error);
-    if (error instanceof AppError) {
+    if (error instanceof AppError || error instanceof EligibilityRejectedError) {
       throw error;
     }
     throw new AppError("Failed to submit application", 500);

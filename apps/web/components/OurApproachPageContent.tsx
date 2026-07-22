@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
 import HeaderBelt from "@/components/layout/headerBelt";
 import WhereWeWorkSection from "@/components/sections/food-system/where-we-work-section";
@@ -12,7 +12,7 @@ import { TranslatableText } from "@/components/translate/TranslatableText";
 import ImpactAreaSection from "@/components/sections/food-system/impact-areas-section";
 
 // Animation variants
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,

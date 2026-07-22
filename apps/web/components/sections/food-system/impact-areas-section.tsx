@@ -1,12 +1,27 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type * as L from "leaflet";
 import Container from "@/components/layout/container";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { TranslatableText } from "@/components/translate/TranslatableText";
 
+// Leaflet is loaded from a CDN at runtime and read off window.L (see the loader effect).
+declare global {
+  interface Window {
+    L: typeof import("leaflet");
+  }
+}
+
+type PointData = (typeof DATA_POINTS)[number];
+type CircleEntry = {
+  circle: L.Circle;
+  data: PointData;
+  radiusRef: { current: number };
+};
+
 // Animation variants
-const fadeIn = {
+const fadeIn: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -198,13 +213,16 @@ const GlobeIcon = () => (
 );
 
 export default function ImpactAreaSection() {
-  const mapContainerRef = useRef(null);
-  const mapRef = useRef(null);
-  const circlesRef = useRef([]);
-  const layersRef = useRef({ light: null, dark: null });
-  const animFramesRef = useRef([]);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const circlesRef = useRef<CircleEntry[]>([]);
+  const layersRef = useRef<{ light: L.TileLayer | null; dark: L.TileLayer | null }>({
+    light: null,
+    dark: null,
+  });
+  const animFramesRef = useRef<number[]>([]);
   const [isDark, setIsDark] = useState(false);
-  const [selectedPoint, setSelectedPoint] = useState(null);
+  const [selectedPoint, setSelectedPoint] = useState<PointData | null>(null);
   const [leafletLoaded, setLeafletLoaded] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState("Rwanda");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -215,12 +233,12 @@ export default function ImpactAreaSection() {
     Other: { center: [3, 22], zoom: 4 },
   };
 
-  const handleCountrySelect = (country) => {
+  const handleCountrySelect = (country: keyof typeof COUNTRY_VIEWS) => {
     setSelectedCountry(country);
     setDropdownOpen(false);
     if (mapRef.current) {
       const { center, zoom } = COUNTRY_VIEWS[country];
-      mapRef.current.flyTo(center, zoom, { animate: true, duration: 1.2 });
+      mapRef.current.flyTo(center as L.LatLngExpression, zoom, { animate: true, duration: 1.2 });
     }
   };
 
@@ -287,7 +305,7 @@ export default function ImpactAreaSection() {
       const initialRadius = (point.percentage / 100) * baseMaxRadius * scaleFactor;
       const animDuration = 6000;
       const delay = index * 800;
-      let startTime = null;
+      let startTime: number | null = null;
 
       // Mutable box so the animation loop always reads the latest zoom-adjusted radius
       const radiusRef = { current: initialRadius };
@@ -301,7 +319,7 @@ export default function ImpactAreaSection() {
         opacity: 0.2,
       }).addTo(map);
 
-      const animatePulse = (timestamp) => {
+      const animatePulse = (timestamp: number) => {
         if (!startTime) startTime = timestamp;
         const elapsed = (timestamp - startTime + delay) % animDuration;
         const progress = elapsed / animDuration;
@@ -342,9 +360,9 @@ export default function ImpactAreaSection() {
 
   // Theme switching
   useEffect(() => {
-    if (!mapRef.current || !layersRef.current.light) return;
-    const map = mapRef.current;
     const { light, dark } = layersRef.current;
+    if (!mapRef.current || !light || !dark) return;
+    const map = mapRef.current;
     const fillColor = isDark ? "#38bdf8" : "#6366f1";
     if (isDark) {
       map.removeLayer(light);
@@ -487,7 +505,7 @@ export default function ImpactAreaSection() {
                     boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                   }}
                 >
-                  {["Rwanda", "Burkina Faso", "Other"].map((country) => (
+                  {(["Rwanda", "Burkina Faso", "Other"] as const).map((country) => (
                     <div
                       key={country}
                       onClick={() => handleCountrySelect(country)}

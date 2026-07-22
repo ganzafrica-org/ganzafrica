@@ -33,15 +33,43 @@
     {
       "idx": 4,
       "version": "7",
-      "when": 1784589344082,
-      "tag": "0004_cynical_vivisector",
+      "when": 1784541622734,
+      "tag": "0004_recruitment_forms_and_eligibility",
       "breakpoints": true
     },
     {
       "idx": 5,
       "version": "7",
-      "when": 1784589695323,
-      "tag": "0005_clever_shocker",
+      "when": 1784632007220,
+      "tag": "0005_recruitment_pipeline",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784653631304,
+      "tag": "0006_recruitment_funnel_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784668758008,
+      "tag": "0007_offers_and_secure_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784669729459,
+      "tag": "0008_contract_status_draft",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784673972682,
+      "tag": "0009_reviewers_and_interview_notes",
       "breakpoints": true
     }
   ]

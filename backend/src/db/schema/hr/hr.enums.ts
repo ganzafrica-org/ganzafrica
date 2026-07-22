@@ -17,7 +17,12 @@ export const contractTypeEnum = pgEnum("contract_type", [
   "INTERNSHIP",
 ]);
 
-export const contractStatusEnum = pgEnum("contract_status", ["ACTIVE", "EXPIRED", "TERMINATED"]);
+export const contractStatusEnum = pgEnum("contract_status", [
+  "DRAFT",
+  "ACTIVE",
+  "EXPIRED",
+  "TERMINATED",
+]);
 
 export const leaveTypeEnum = pgEnum("leave_type", [
   "ANNUAL",

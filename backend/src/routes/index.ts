@@ -28,6 +28,7 @@ import eventsRoutes from "./events.routes";
 import googleCalendarRoutes from "./google-calendar.routes";
 import payrollRoutes from "./payroll";
 import payslipViewRoutes from "./payslip-view";
+import offersRoutes from "./offers";
 import hrRoutes from "./hr";
 
 const router: Router = Router();
@@ -63,5 +64,6 @@ router.use("/events", eventsRoutes);
 router.use("/google-calendar", googleCalendarRoutes);
 router.use("/payroll", payrollRoutes);
 router.use("/payslips", payslipViewRoutes);
+router.use("/offers", offersRoutes);
 
 export default router;

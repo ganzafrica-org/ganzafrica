@@ -43,6 +43,10 @@ export const opportunities = pgTable(
       other_requirements?: string[];
     }>(),
 
+    // REC-06: how many hires this posting needs. Bulk close-out (notify remaining candidates) is
+    // HR-gated on accepted offers >= target_hires; until then the pool stays live for more rounds.
+    target_hires: integer("target_hires").notNull().default(1),
+
     // Custom questions/fields for this opportunity
     custom_questions: jsonb("custom_questions").$type<
       Array<{
@@ -174,6 +178,21 @@ export const applications = pgTable(
 
     // Custom answers to opportunity-specific questions
     custom_answers: jsonb("custom_answers").$type<Record<string, any>>(),
+
+    // REC-01: form the application was submitted against (null for pre-spec rows) + new
+    // standard fields the versioned form always collects. Nullable so legacy rows are untouched.
+    form_version: integer("form_version"),
+    date_of_birth: date("date_of_birth"),
+    country_of_residence: text("country_of_residence"),
+    country_of_work: text("country_of_work"),
+    has_work_permit: boolean("has_work_permit"),
+
+    // REC-02: pipeline_stage is the recruitment pipeline's truth; legacy `status` below is kept
+    // coherent by a service-level sync map. Nullable/defaulted so existing rows are untouched.
+    pipeline_stage: text("pipeline_stage").notNull().default("submitted"),
+    rejection_reason: text("rejection_reason"),
+    flagged: boolean("flagged").notNull().default(false),
+    flag_note: text("flag_note"),
 
     // Application status and tracking
     status: applicationStatusEnum("status").notNull().default("submitted"),

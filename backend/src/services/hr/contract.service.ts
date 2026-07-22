@@ -22,7 +22,8 @@ import type { HrRequester } from "@/types/employee.types";
 function mapContract(row: typeof hr_contracts.$inferSelect): ContractRecord {
   return {
     id: row.id,
-    employeeId: row.employee_id,
+    // employee_id (legacy hr_users) is now nullable; new contracts link via employee_ref_id.
+    employeeId: row.employee_id ?? row.employee_ref_id ?? "",
     jobTitle: row.job_title,
     department: row.department,
     workLocation: row.work_location,
