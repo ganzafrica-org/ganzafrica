@@ -48,7 +48,14 @@ export function KanbanBoard({
   const { toasts, removeToast, showError } = useToast();
 
   // Track which columns are expanded (show all cards) vs collapsed (show first 10)
-  const [expandedCols, setExpandedCols] = useState<Record<Status, boolean>>({});
+  const [expandedCols, setExpandedCols] = useState<Record<Status, boolean>>({
+    overdue: false,
+    todo: false,
+    inprogress: false,
+    review: false,
+    done: false,
+    backlog: false,
+  });
 
   const toggleColumnExpand = (colId: Status) => {
     setExpandedCols((prev) => ({ ...prev, [colId]: !prev[colId] }));
