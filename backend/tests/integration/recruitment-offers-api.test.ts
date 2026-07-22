@@ -52,13 +52,11 @@ describe("REC-05 offer API — HR side", () => {
     const appRow = await makeApplication({ opportunityId: oppId, pipeline_stage: "evaluation" });
     const { agent } = await loginAs("hr");
 
-    const created = await agent
-      .post(`/api/hr/recruitment/applications/${appRow.id}/offer`)
-      .send({
-        position_title: "Data Analyst",
-        employment_type: "analyst",
-        start_date: "2099-01-01",
-      });
+    const created = await agent.post(`/api/hr/recruitment/applications/${appRow.id}/offer`).send({
+      position_title: "Data Analyst",
+      employment_type: "analyst",
+      start_date: "2099-01-01",
+    });
     expect(created.status).toBe(201);
     const offerId = created.body.offer.id;
 
