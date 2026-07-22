@@ -7,6 +7,7 @@ import documentRoutes from "./document.routes";
 import helpdeskRoutes from "./helpdesk.routes";
 import policyRoutes from "./policy.routes";
 import recruitmentRoutes from "./recruitment.routes";
+import signingRoutes from "./signing.routes";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router.use("/leaves", leaveRoutes);
 router.use("/documents", documentRoutes);
 router.use("/helpdesk", helpdeskRoutes);
 router.use("/policies", policyRoutes);
+router.use("/signing", signingRoutes);
 router.use("/", recruitmentRoutes);
 
 // One-release redirect aliases for the renamed singular paths.

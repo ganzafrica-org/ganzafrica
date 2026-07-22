@@ -1,3 +1,7 @@
+// Resolve the "@/*" path alias in the compiled output. tsc emits the aliases
+// verbatim, so without this the built server crashes on the first "@/..." require.
+// Dev (tsx) resolves them natively; this line is what makes `node dist/server.js` work.
+import "module-alias/register";
 import app from "./app";
 import { env, Logger } from "./config";
 import cron from "node-cron";

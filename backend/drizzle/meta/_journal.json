@@ -78,6 +78,13 @@
       "when": 1784676306228,
       "tag": "0010_cv_ranking",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784678540511,
+      "tag": "0011_document_signing",
+      "breakpoints": true
     }
   ]
 }

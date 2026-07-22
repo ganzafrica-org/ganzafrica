@@ -90,6 +90,7 @@ export function Navbar() {
         { id: "employees", label: "Employees", href: "/employees" },
         { id: "recruitment", label: "Recruitment", href: "/recruitment" },
         { id: "document", label: "Documents", href: "/documents" },
+        { id: "signing", label: "Sign", href: "/signing" },
         { id: "assets", label: "Assets", href: "/asset" },
         { id: "help-desk", label: "Help Desk", href: "/help-desk" },
       ];
@@ -101,6 +102,7 @@ export function Navbar() {
         { id: "employees", label: "Employees", href: "/employees" },
         { id: "recruitment", label: "Recruitment", href: "/recruitment" },
         { id: "document", label: "Documents", href: "/documents" },
+        { id: "signing", label: "Sign", href: "/signing" },
         { id: "assets", label: "Assets", href: "/asset" },
         { id: "help-desk", label: "Help Desk", href: "/help-desk" },
       ];
@@ -111,6 +113,7 @@ export function Navbar() {
         { id: "home", label: "Home", href: "/" },
         { id: "time-offs", label: "Time Offs", href: "/leave" },
         { id: "documents", label: "Documents", href: "/documents" },
+        { id: "signing", label: "Sign", href: "/signing" },
         { id: "help-desk", label: "Help Desk", href: "/help-desk" },
       ];
     }
