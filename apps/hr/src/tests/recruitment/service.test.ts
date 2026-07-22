@@ -1,0 +1,121 @@
+import { afterEach, describe, it, expect } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/tests/mocks/server";
+import { recruitmentService } from "@/services/recruitment.service";
+
+const API = "http://localhost:3002/api";
+
+afterEach(() => server.resetHandlers());
+
+describe("recruitmentService", () => {
+  it("listOpportunities → opportunities array", async () => {
+    server.use(
+      http.get(`${API}/hr/recruitment/opportunities`, () =>
+        HttpResponse.json({
+          opportunities: [
+            { opportunity_id: 1, title: "X", status: "published", stages: {}, total: 0 },
+          ],
+        }),
+      ),
+    );
+    const res = await recruitmentService.listOpportunities();
+    expect(res).toHaveLength(1);
+    expect(res[0].title).toBe("X");
+  });
+
+  it("listApplications passes params and returns paged data", async () => {
+    server.use(
+      http.get(`${API}/hr/recruitment/applications`, ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("stage")).toBe("screening");
+        return HttpResponse.json({ data: [], page: 1, pageSize: 20, total: 0 });
+      }),
+    );
+    const res = await recruitmentService.listApplications({
+      opportunity_id: 1,
+      stage: "screening",
+    });
+    expect(res.page).toBe(1);
+  });
+
+  it("getApplication → detail", async () => {
+    server.use(
+      http.get(`${API}/hr/recruitment/applications/5`, () =>
+        HttpResponse.json({ application: { id: 5 }, stage_events: [], scores: [], emails: [] }),
+      ),
+    );
+    const res = await recruitmentService.getApplication(5);
+    expect(res.application.id).toBe(5);
+  });
+
+  it("transition posts to_stage + opts", async () => {
+    server.use(
+      http.post(`${API}/hr/recruitment/applications/5/transition`, async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        expect(body).toMatchObject({ to_stage: "rejected", note: "no", send_email: true });
+        return HttpResponse.json({ application: { id: 5, pipeline_stage: "rejected" } });
+      }),
+    );
+    await recruitmentService.transition(5, "rejected", { note: "no", send_email: true });
+  });
+
+  it("rescreen posts", async () => {
+    server.use(
+      http.post(`${API}/hr/recruitment/applications/5/rescreen`, () =>
+        HttpResponse.json({ ok: true }),
+      ),
+    );
+    await recruitmentService.rescreen(5);
+  });
+
+  it("screening rule + criteria + scores + form endpoints", async () => {
+    server.use(
+      http.get(`${API}/hr/recruitment/opportunities/1/screening-rules`, () =>
+        HttpResponse.json({ rules: [] }),
+      ),
+      http.post(`${API}/hr/recruitment/opportunities/1/screening-rules`, () =>
+        HttpResponse.json({ rule: { id: 1 } }, { status: 201 }),
+      ),
+      http.get(`${API}/hr/recruitment/opportunities/1/criteria`, () =>
+        HttpResponse.json({
+          criteria: [{ id: 1, name: "M", weight: "1", max_score: 5, sort_order: 0 }],
+        }),
+      ),
+      http.put(`${API}/hr/recruitment/applications/5/scores`, () =>
+        HttpResponse.json({ weighted_total: 0.5 }),
+      ),
+      http.get(`${API}/hr/opportunities/1/form`, () =>
+        HttpResponse.json({ draft: null, published: null }),
+      ),
+      http.put(`${API}/hr/opportunities/1/form`, () => HttpResponse.json({ form: {} })),
+      http.put(`${API}/hr/opportunities/1/form/publish`, () => HttpResponse.json({ form: {} })),
+      http.get(`${API}/hr/opportunities/1/rules`, () => HttpResponse.json({ rules: [] })),
+      http.post(`${API}/opportunities`, () => HttpResponse.json({ opportunity: { id: 9 } })),
+      http.post(`${API}/opportunities/9/publish`, () => HttpResponse.json({ ok: true })),
+    );
+
+    expect(await recruitmentService.listScreeningRules(1)).toEqual([]);
+    await recruitmentService.createScreeningRule(1, {
+      field_key: "age",
+      operator: "gt",
+      action: "flag",
+    });
+    expect(await recruitmentService.listCriteria(1)).toHaveLength(1);
+    expect(
+      (await recruitmentService.putScores(5, [{ criterion_id: 1, score: 3 }])).weighted_total,
+    ).toBe(0.5);
+    await recruitmentService.getForm(1);
+    await recruitmentService.saveForm(1, { standard: [], custom: [] });
+    await recruitmentService.publishForm(1);
+    expect(await recruitmentService.listEligibilityRules(1)).toEqual([]);
+    const created = await recruitmentService.createOpportunity({
+      title: "New role",
+      description: "desc",
+      type: "employment",
+      application_deadline: "2099-12-31",
+      employment_details: { employment_type: "full-time" },
+    });
+    expect(created.opportunity.id).toBe(9);
+    await recruitmentService.publishOpportunity(9);
+  });
+});
