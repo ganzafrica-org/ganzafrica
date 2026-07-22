@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Briefcase, Plus, Users, ChevronRight } from "lucide-react";
 import { useRecruitmentOpportunities } from "@/hooks/useRecruitment";
 import type { OpportunityStageCounts } from "@/services/recruitment.service";
+import { FunnelWidget } from "@/components/recruitment/funnel-widget";
 
 const ACTIVE_STAGES = [
   "submitted",
@@ -102,6 +103,7 @@ function PostingCard({ opp, onOpen }: { opp: OpportunityStageCounts; onOpen: () 
             </span>
           ))}
         </div>
+        <FunnelWidget opportunityId={opp.opportunity_id} variant="compact" />
         <div className="flex items-center justify-end text-sm font-medium text-blue-600">
           View pipeline <ChevronRight className="h-4 w-4" />
         </div>

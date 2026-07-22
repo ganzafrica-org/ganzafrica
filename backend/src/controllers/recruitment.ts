@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as formsService from "../services/recruitment/forms.service";
 import * as eligibilityService from "../services/recruitment/eligibility.service";
+import * as funnelService from "../services/recruitment/funnel.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -66,6 +67,19 @@ export const eligibilityCheck = async (req: Request, res: Response) => {
   } catch (error) {
     return handleError(res, error, "Eligibility Check Error");
   }
+};
+
+/**
+ * Public, rate-limited funnel event ingest. Fire-and-forget — always 204, never blocks the page.
+ * Validation failures are logged inside the service and still return 204 to keep the client dumb.
+ */
+export const recordFunnelEvent = async (req: Request, res: Response) => {
+  try {
+    await funnelService.recordEvent(Number(req.params.id), req.body?.event, req.body?.session_key);
+  } catch (error) {
+    logger.error("Funnel event error (swallowed)", error as Error);
+  }
+  return res.status(204).end();
 };
 
 // --- HR (recruitment:manage) ---

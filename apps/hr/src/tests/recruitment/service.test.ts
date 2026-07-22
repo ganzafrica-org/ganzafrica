@@ -118,4 +118,21 @@ describe("recruitmentService", () => {
     expect(created.opportunity.id).toBe(9);
     await recruitmentService.publishOpportunity(9);
   });
+
+  it("getFunnel → funnel numbers", async () => {
+    server.use(
+      http.get(`${API}/hr/recruitment/opportunities/1/funnel`, () =>
+        HttpResponse.json({
+          views: 4,
+          form_starts: 2,
+          submissions: 1,
+          eligibility_blocks: [],
+          conversion: { view_to_start: 0.5, start_to_submit: 0.5 },
+        }),
+      ),
+    );
+    const f = await recruitmentService.getFunnel(1);
+    expect(f.views).toBe(4);
+    expect(f.submissions).toBe(1);
+  });
 });

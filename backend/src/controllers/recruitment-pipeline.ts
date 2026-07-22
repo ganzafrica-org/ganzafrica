@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as pipeline from "../services/recruitment/pipeline.service";
+import * as funnel from "../services/recruitment/funnel.service";
 import { AppError } from "../middlewares";
 import { constants, Logger } from "../config";
 
@@ -139,6 +140,15 @@ export const deleteCriterion = async (req: Request, res: Response) => {
     return res.json(await pipeline.deleteCriterion(Number(req.params.criterionId)));
   } catch (error) {
     return handleError(res, error, "Delete Criterion Error");
+  }
+};
+
+export const getFunnel = async (req: Request, res: Response) => {
+  try {
+    const result = await funnel.getFunnel(Number(req.params.id));
+    return res.json(result);
+  } catch (error) {
+    return handleError(res, error, "Funnel Error");
   }
 };
 

@@ -19,6 +19,7 @@ import type { ApplicationListItem, PipelineStage } from "@/services/recruitment.
 import { ALLOWED_TRANSITIONS, BOARD_STAGES } from "@/lib/recruitment/stages";
 import { RejectDialog } from "@/components/recruitment/reject-dialog";
 import { ApplicationDetailPanel } from "@/components/recruitment/application-detail-panel";
+import { FunnelWidget } from "@/components/recruitment/funnel-widget";
 
 export default function PipelineBoardPage() {
   const params = useParams<{ id: string }>();
@@ -70,6 +71,10 @@ export default function PipelineBoardPage() {
 
   return (
     <div className="space-y-4 p-6">
+      <div className="rounded-lg border bg-white p-4">
+        <FunnelWidget opportunityId={opportunityId} variant="full" />
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />

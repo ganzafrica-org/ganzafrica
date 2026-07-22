@@ -14,6 +14,7 @@ import {
   applications,
   screening_rules,
   evaluation_criteria,
+  opportunity_funnel_events,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -273,6 +274,23 @@ export async function makeCriterion(opts: {
       max_score: opts.max_score ?? 5,
       sort_order: opts.sort_order ?? 0,
     })
+    .returning();
+  return row;
+}
+
+export async function makeFunnelEvent(opts: {
+  opportunityId: number;
+  event: "view" | "form_start" | "form_submit";
+  sessionKey: string;
+}) {
+  const [row] = await db
+    .insert(opportunity_funnel_events)
+    .values({
+      opportunity_id: opts.opportunityId,
+      event: opts.event,
+      session_key: opts.sessionKey,
+    })
+    .onConflictDoNothing()
     .returning();
   return row;
 }
