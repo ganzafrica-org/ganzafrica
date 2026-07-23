@@ -1,7 +1,12 @@
+// Resolve the "@/*" path alias in the compiled output. tsc emits the aliases
+// verbatim, so without this the built server crashes on the first "@/..." require.
+// Dev (tsx) resolves them natively; this line is what makes `node dist/server.js` work.
+import "module-alias/register";
 import app from "./app";
 import { env, Logger } from "./config";
 import cron from "node-cron";
 import { runWeeklyJobTask } from "./services/job-scraper.service";
+import { runRetentionSweep } from "./services/hr/document-retention.service";
 
 const logger = new Logger("Server");
 const PORT = env.API_PORT || 3002;
@@ -23,6 +28,18 @@ const server = app.listen(PORT, () => {
     await runWeeklyJobTask();
   });
   logger.info("Job scraping cron scheduled: every Sunday at 2:00 AM");
+
+  // Document retention sweep - runs daily at 3:00 AM. Soft-archives documents past retention
+  // (never hard-deletes; legal-hold categories are excluded).
+  cron.schedule("0 3 * * *", async () => {
+    try {
+      const { archived } = await runRetentionSweep();
+      logger.info(`Retention sweep complete: ${archived} document(s) archived`);
+    } catch (err) {
+      logger.error("Retention sweep failed", err as Error);
+    }
+  });
+  logger.info("Document retention sweep cron scheduled: daily at 3:00 AM");
 });
 
 // Handle unhandled promise rejections

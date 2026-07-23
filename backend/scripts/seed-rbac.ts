@@ -56,6 +56,7 @@ const CATALOG: { resource: string; action: string; roles: string[] }[] = [
   { resource: "assets", action: "manage", roles: ["hr", "admin"] },
   { resource: "documents", action: "read", roles: ["employee"] }, // per-doc ACL in service
   { resource: "documents", action: "manage", roles: ["hr"] },
+  { resource: "signing", action: "manage", roles: ["hr", "admin"] },
   { resource: "policies", action: "read", roles: ["employee"] },
   { resource: "policies", action: "manage", roles: ["hr"] },
   { resource: "recruitment", action: "read", roles: ["hr", "director"] },

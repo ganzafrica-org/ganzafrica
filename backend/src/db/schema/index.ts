@@ -24,3 +24,4 @@ export * from "./recruitment/funnel";
 export * from "./recruitment/offers";
 export * from "./recruitment/review";
 export * from "./recruitment/ranking";
+export * from "./signing";
