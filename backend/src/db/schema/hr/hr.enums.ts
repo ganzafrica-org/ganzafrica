@@ -105,6 +105,9 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "ASSET_RETURNED",
   "ASSET_STATUS_CHANGED",
   "DOCUMENT_PUBLISHED",
+  "PROCESS_TASK_ASSIGNED",
+  "PROCESS_TASK_OVERDUE",
+  "PROCESS_COMPLETED",
 ]);
 
 export const notificationStatusEnum = pgEnum("notification_status", ["UNREAD", "READ", "ARCHIVED"]);

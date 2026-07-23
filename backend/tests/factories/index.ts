@@ -23,6 +23,8 @@ import {
   hr_leave_balances,
   hr_org_holidays,
   hr_leaves,
+  process_templates,
+  process_template_tasks,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -269,6 +271,59 @@ export async function makeLeave(opts: {
     })
     .returning();
   return row;
+}
+
+export interface MakeTemplateTaskSpec {
+  title?: string;
+  sort_order?: number;
+  default_assignee?: "hr" | "it" | "manager" | "finance" | "employee";
+  visibility?: "all" | "staff_only";
+  due_offset_days?: number | null;
+  is_blocking?: boolean;
+  kind?: string;
+}
+
+/** Insert a process template plus its task rows (LCM-01/02 tests). */
+export async function makeProcessTemplate(opts: {
+  createdBy: number;
+  type?: "onboarding" | "offboarding";
+  name?: string;
+  employmentTypes?: string[] | null;
+  isActive?: boolean;
+  tasks?: MakeTemplateTaskSpec[];
+}) {
+  const [template] = await db
+    .insert(process_templates)
+    .values({
+      type: opts.type ?? "onboarding",
+      name: opts.name ?? `Template ${uniq()}`,
+      employment_types: opts.employmentTypes ?? null,
+      is_active: opts.isActive ?? true,
+      created_by: opts.createdBy,
+    })
+    .returning();
+
+  const specs = opts.tasks ?? [
+    { title: "Sign contract", default_assignee: "employee" as const, is_blocking: true },
+  ];
+
+  const tasks = await db
+    .insert(process_template_tasks)
+    .values(
+      specs.map((spec, index) => ({
+        template_id: template.id,
+        title: spec.title ?? `Task ${index + 1}`,
+        sort_order: spec.sort_order ?? index,
+        default_assignee: spec.default_assignee ?? "hr",
+        visibility: spec.visibility ?? "all",
+        due_offset_days: spec.due_offset_days ?? null,
+        is_blocking: spec.is_blocking ?? false,
+        kind: spec.kind ?? "checklist",
+      })),
+    )
+    .returning();
+
+  return { template, tasks };
 }
 
 export interface MakeOpportunityOptions {

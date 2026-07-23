@@ -41,6 +41,12 @@ const NOTIFICATION_ROUTING: Record<NotificationType, RoutingTarget> = {
   ASSET_RETURNED: { it: true, hr: true, employee: false },
   ASSET_STATUS_CHANGED: { it: true, hr: true, employee: false },
   DOCUMENT_PUBLISHED: { it: true, hr: true, employee: "all" },
+  // Lifecycle tasks address a specific assignee, resolved by the caller (LCM-01/02).
+  // All three address specific people the caller resolves on the employees model; the role fan-out
+  // here still reads legacy hr_users, so it would silently drop these.
+  PROCESS_TASK_ASSIGNED: { it: false, hr: false, employee: false },
+  PROCESS_TASK_OVERDUE: { it: false, hr: false, employee: false },
+  PROCESS_COMPLETED: { it: false, hr: false, employee: false },
 };
 
 const LEAVE_TYPES: NotificationType[] = [
