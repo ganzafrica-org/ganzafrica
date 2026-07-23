@@ -18,6 +18,11 @@ import {
   offers,
   hr_users,
   hr_documents,
+  employees,
+  hr_leave_policies,
+  hr_leave_balances,
+  hr_org_holidays,
+  hr_leaves,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -148,6 +153,119 @@ export async function makeDocument(opts: MakeDocumentOptions) {
       retain_until: opts.retainUntil ?? null,
       archived_at: opts.archivedAt ?? null,
       created_by_id: opts.createdById,
+    })
+    .returning();
+  return row;
+}
+
+export interface MakeEmployeeOptions {
+  userId: number; // users.id (required FK, unique per employee)
+  employmentType?: string; // fellow|analyst|staff|contractor|intern
+  status?: string; // onboarding|active|on_leave|offboarding|exited
+  managerId?: string | null; // employees.id
+  firstName?: string;
+  lastName?: string;
+  department?: string | null;
+}
+
+/** Insert an employees row (MOD-06 / LCM-01 tests). */
+export async function makeEmployee(opts: MakeEmployeeOptions) {
+  const [row] = await db
+    .insert(employees)
+    .values({
+      user_id: opts.userId,
+      first_name: opts.firstName ?? "Test",
+      last_name: opts.lastName ?? "Employee",
+      personal_email: `emp_${uniq()}@test.local`,
+      employment_type: opts.employmentType ?? "staff",
+      status: opts.status ?? "active",
+      manager_id: opts.managerId ?? null,
+      department: opts.department ?? "Programs",
+    })
+    .returning();
+  return row;
+}
+
+/** Create a user + employee pair in one call — the common shape for leave tests. */
+export async function makeEmployeeUser(
+  opts: MakeUserOptions & Omit<MakeEmployeeOptions, "userId"> = {},
+) {
+  const user = await makeUser({ role: opts.role ?? "employee", ...opts });
+  const employee = await makeEmployee({ ...opts, userId: user.id });
+  return { user, employee };
+}
+
+export async function makeLeavePolicy(opts: {
+  employmentType?: string;
+  type?: "ANNUAL" | "SICK" | "MATERNITY" | "PATERNITY" | "UNPAID" | "OTHER";
+  annualDays?: string | number;
+  maxCarryOver?: string | number;
+}) {
+  const [row] = await db
+    .insert(hr_leave_policies)
+    .values({
+      employment_type: opts.employmentType ?? "staff",
+      type: opts.type ?? "ANNUAL",
+      annual_days: String(opts.annualDays ?? 20),
+      max_carry_over: String(opts.maxCarryOver ?? 5),
+    })
+    .onConflictDoNothing()
+    .returning();
+  return row;
+}
+
+export async function makeLeaveBalance(opts: {
+  employeeId: string;
+  year?: number;
+  type?: "ANNUAL" | "SICK" | "MATERNITY" | "PATERNITY" | "UNPAID" | "OTHER";
+  entitledDays?: string | number;
+  carriedOverDays?: string | number;
+  usedDays?: string | number;
+}) {
+  const [row] = await db
+    .insert(hr_leave_balances)
+    .values({
+      employee_id: opts.employeeId,
+      year: opts.year ?? new Date().getUTCFullYear(),
+      type: opts.type ?? "ANNUAL",
+      entitled_days: String(opts.entitledDays ?? 20),
+      carried_over_days: String(opts.carriedOverDays ?? 0),
+      used_days: String(opts.usedDays ?? 0),
+    })
+    .returning();
+  return row;
+}
+
+export async function makeHoliday(opts: { date: string; name?: string }) {
+  const [row] = await db
+    .insert(hr_org_holidays)
+    .values({ date: opts.date, name: opts.name ?? "Test Holiday" })
+    .onConflictDoNothing()
+    .returning();
+  return row;
+}
+
+export async function makeLeave(opts: {
+  employeeId: string;
+  hrUserId: string; // legacy user_id FK is still NOT NULL until FND-07 drops it
+  type?: "ANNUAL" | "SICK" | "MATERNITY" | "PATERNITY" | "UNPAID" | "OTHER";
+  startDate: Date;
+  endDate: Date;
+  status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+  days?: string | number;
+  reason?: string;
+}) {
+  const [row] = await db
+    .insert(hr_leaves)
+    .values({
+      user_id: opts.hrUserId,
+      employee_id: opts.employeeId,
+      type: opts.type ?? "ANNUAL",
+      start_date: opts.startDate,
+      end_date: opts.endDate,
+      status: opts.status ?? "PENDING",
+      days: opts.days != null ? String(opts.days) : null,
+      reason: opts.reason ?? "Test leave",
     })
     .returning();
   return row;

@@ -15,10 +15,29 @@ import type {
   UpdateLeaveInput,
 } from "@/types/leave.types";
 
+// MOD-06 engine (employees model). The legacy hr_users-shaped CRUD below stays until FND-07's
+// contract phase drops hr_leaves.user_id.
+export {
+  ensureBalances,
+  requestLeave,
+  decideLeave,
+  cancelLeaveRequest,
+  computeWorkingDays,
+  remainingDays,
+  listPendingApprovals,
+  getLeaveCalendar,
+  getMyLeave,
+  adjustBalance,
+  applyCarryOver,
+  backfillBalances,
+} from "./leave-core.service";
+export type { LeaveTypeName, LeaveDecision, LeaveRequestInput } from "./leave-core.service";
+
 function mapLeave(row: typeof hr_leaves.$inferSelect): LeaveRecord {
   return {
     id: row.id,
-    employeeId: row.user_id,
+    // MOD-06 rows carry only employee_id; legacy rows only user_id.
+    employeeId: row.employee_id ?? row.user_id ?? "",
     type: row.type,
     startDate: row.start_date,
     endDate: row.end_date,
@@ -163,7 +182,7 @@ export async function updateLeave(
   const endDate = input.endDate ?? leave.end_date;
   validateLeaveDates(startDate, endDate);
 
-  if (input.startDate !== undefined || input.endDate !== undefined) {
+  if ((input.startDate !== undefined || input.endDate !== undefined) && leave.user_id) {
     await assertNoOverlappingLeave(leave.user_id, startDate, endDate, leaveId);
   }
 
@@ -208,7 +227,7 @@ export async function cancelLeave(requester: HrRequester, leaveId: string): Prom
     await sendNotification({
       type: "LEAVE_CANCELLED",
       triggeredBy: await resolveTriggeredByFromHrUser(requester.id),
-      relatedEntity: { leaveId: updated.id, employeeId: leave.user_id },
+      relatedEntity: { leaveId: updated.id, employeeId: leave.user_id ?? undefined },
       title: "Leave cancelled",
       message: "A leave request has been cancelled.",
       priority: "LOW",

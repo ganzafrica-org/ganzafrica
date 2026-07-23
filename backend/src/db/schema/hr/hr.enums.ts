@@ -94,6 +94,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "CONTRACT_UPDATED",
   "CONTRACT_EXPIRING",
   "LEAVE_REQUESTED",
+  "LEAVE_PENDING_APPROVAL",
   "LEAVE_APPROVED",
   "LEAVE_REJECTED",
   "LEAVE_CANCELLED",

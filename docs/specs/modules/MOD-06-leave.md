@@ -1,8 +1,8 @@
 # MOD-06: Leave (balances, manager approvals, calendar — Deel parity)
 
-> **Status:** Ready
+> **Status:** Implemented (backend + HR UI) — see §11 for what shipped
 > **Track:** B default (may switch to A — first-free rule)
-> **Depends on:** MOD-02 (`isManagerOf`), MOD-01
+> **Depends on:** MOD-02 (`isManagerOf` — implemented here, not the full org-chart module), MOD-01
 > **Blocks:** LCM-01 leave_setup kind, MOD-03 leave card, MOD-11
 > **Branch:** `feat/mod-06-leave`
 
@@ -135,3 +135,40 @@ Half-days/hours, accrual-per-month schedules (annual grant v1), external calenda
 
 Backfill: `ensureBalances` for all active employees for the current year (script), HR
 reviews entitlements before announcing. Run Deel in parallel one cycle; compare.
+
+## 11. What shipped
+
+Backend:
+
+- Schema `backend/src/db/schema/hr/leave.ts`: `hr_leave_policies`, `hr_leave_balances`,
+  `hr_org_holidays`; `hr_leaves.days` + `.approver_note`. Migrations `0013`, `0014`.
+- `hr_leaves.user_id` (legacy hr_users FK) made **nullable** — MOD-06 writes `employee_id`
+  only. The column drop itself stays in FND-07's contract phase.
+- `leave-days.ts` (pure working-day math) + `leave-core.service.ts` (balances, requests,
+  decisions, calendar, policies/holidays, carry-over, backfill). Re-exported from
+  `leave.service.ts`, whose legacy hr_users CRUD is untouched.
+- `isManagerOf` / `getManagerUserId` in `employee-context.ts` — walks the full manager chain
+  (skip-level managers approve), cycle-safe.
+- Routes `routes/hr/leave-core.routes.ts`, mounted **before** the `/leave` → `/leaves` 308
+  alias in `routes/hr/index.ts`, which would otherwise swallow them.
+- Carry-over cron (Jan 1) in the notifications module; `pnpm db:seed:leave` seeds default
+  policies + backfills balances.
+
+Frontend (`apps/hr`): balance cards + request dialog with live working-day preview and
+insufficient-balance blocking on `app/leave`, approvals queue at `app/leave/approvals`,
+policy/holiday settings at `app/settings/leave`.
+
+Tests: 50 backend (unit working-day math, balances, request guards, approval-authority matrix,
+calendar scoping, carry-over, and the HTTP surface incl. the alias-collision guard) and 16
+frontend. `leave-core.service.ts` and `leave-days.ts` are under the 90% coverage gate.
+
+Deviations from the spec above:
+
+- Approval endpoints gate on `authenticate` alone, not `requirePermission("leave:approve")`:
+  authority is a _relationship_ (the requester's manager) that the permission middleware cannot
+  express, so the service enforces manager-or-HR and returns 403. A manager who holds no
+  `leave:*` permission can still approve their reports — covered by a test.
+- Leave settings live at `app/settings/leave`, not `app/settings/timeoff` — the latter already
+  renders HR policy _documents_, a different concept.
+- Year-boundary splitting (§8) is **not** implemented: a Dec→Jan request draws entirely on the
+  start year's balance. Carry-over is implemented and tested.

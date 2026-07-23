@@ -29,6 +29,11 @@ export interface SendNotificationPayload {
   title: string;
   message: string;
   priority?: NotificationPriority;
+  /**
+   * Platform user ids to notify directly, bypassing role fan-out. Used where the recipient is a
+   * specific person resolved by the caller (MOD-06 routes approvals to the requester's manager).
+   */
+  recipientUserIds?: number[];
 }
 
 export interface NotificationFilters {
