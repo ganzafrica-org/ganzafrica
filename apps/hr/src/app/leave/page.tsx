@@ -18,7 +18,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaveProvider } from "@/components/sections/calendar/LeaveContext";
 import { LeaveCalendar } from "@/components/sections/calendar/LeaveCalendar";
-import { Calendar, ClipboardList, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, CircleUser, ClipboardList, Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { BalanceCards } from "@/components/sections/leave/balance-cards";
+import { RequestLeaveDialog } from "@/components/sections/leave/request-leave-dialog";
+import { useMyLeave } from "@/hooks/useLeaveBalances";
 import { TimeOffStats } from "@/data/Header-data";
 import { StatsHeader } from "@/components/sections/header";
 import { LeaveRequestsTable } from "@/components/sections/leave/leave-requests-table";
@@ -80,8 +85,10 @@ const Page = () => {
   const [selectedRequest, setSelectedRequest] = useState<EmployeeLeaveRequest | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
 
   const { data: leavesResponse, isLoading, isError } = useLeaves();
+  const { data: myLeave } = useMyLeave();
 
   const leaveList = Array.isArray(leavesResponse) ? leavesResponse : [];
 
@@ -145,22 +152,44 @@ const Page = () => {
         />
         {/* Tab I want */}
         <Tabs defaultValue="requests" className="w-full flex flex-col">
-          <TabsList className="h-auto w-fit gap-1 rounded-xl bg-slate-200 p-1.5">
-            <TabsTrigger
-              value="requests"
-              className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
-            >
-              <ClipboardList className="size-4 shrink-0" />
-              Leave Requests
-            </TabsTrigger>
-            <TabsTrigger
-              value="calendar"
-              className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
-            >
-              <Calendar className="size-4 shrink-0" />
-              Leave Calendar
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <TabsList className="h-auto w-fit gap-1 rounded-xl bg-slate-200 p-1.5">
+              <TabsTrigger
+                value="mine"
+                className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
+              >
+                <CircleUser className="size-4 shrink-0" />
+                My Time Off
+              </TabsTrigger>
+              <TabsTrigger
+                value="requests"
+                className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
+              >
+                <ClipboardList className="size-4 shrink-0" />
+                Leave Requests
+              </TabsTrigger>
+              <TabsTrigger
+                value="calendar"
+                className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
+              >
+                <Calendar className="size-4 shrink-0" />
+                Leave Calendar
+              </TabsTrigger>
+            </TabsList>
+            <div className="flex gap-2">
+              <Button variant="outline" asChild>
+                <Link href="/leave/approvals">Approvals</Link>
+              </Button>
+              <Button onClick={() => setRequestOpen(true)}>
+                <Plus className="mr-1.5 size-4" /> Request time off
+              </Button>
+            </div>
+          </div>
+
+          <TabsContent value="mine" className="space-y-6">
+            <BalanceCards balances={myLeave?.balances ?? []} />
+          </TabsContent>
+
           <TabsContent value="requests" className="space-y-6">
             <Card className="shadow-sm">
               <CardContent className="p-6">
@@ -239,6 +268,8 @@ const Page = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <RequestLeaveDialog open={requestOpen} onOpenChange={setRequestOpen} />
 
       {selectedRequest && (
         <LeaveDetailSheet

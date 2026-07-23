@@ -1,23 +1,8 @@
 ﻿import { z } from "zod";
+import { notificationTypeEnum } from "@/db/schema/hr/hr.enums";
 
-const notificationType = z.enum([
-  "EMPLOYEE_CREATED",
-  "EMPLOYEE_STATUS_CHANGED",
-  "CONTRACT_CREATED",
-  "CONTRACT_UPDATED",
-  "CONTRACT_EXPIRING",
-  "LEAVE_REQUESTED",
-  "LEAVE_APPROVED",
-  "LEAVE_REJECTED",
-  "LEAVE_CANCELLED",
-  "TICKET_CREATED",
-  "TICKET_STATUS_CHANGED",
-  "TICKET_ASSIGNED",
-  "ASSET_ASSIGNED",
-  "ASSET_RETURNED",
-  "ASSET_STATUS_CHANGED",
-  "POLICY_PUBLISHED",
-]);
+// Derived from the DB enum so the two cannot drift (a hand-copied list here had gone stale).
+const notificationType = z.enum(notificationTypeEnum.enumValues);
 
 const notificationStatus = z.enum(["UNREAD", "READ", "ARCHIVED"]);
 

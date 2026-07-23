@@ -27,6 +27,8 @@ export default defineConfig({
         "src/services/text-extraction.service.ts",
         "src/services/signing.service.ts",
         "src/services/hr/document-retention.service.ts",
+        "src/services/hr/leave-core.service.ts",
+        "src/services/hr/leave-days.ts",
         "src/controllers/signing.ts",
         "src/controllers/recruitment.ts",
         "src/controllers/recruitment-pipeline.ts",
@@ -37,6 +39,19 @@ export default defineConfig({
       thresholds: {
         // Per-glob 90% floor for recruitment code; CI fails the run if any drops below.
         "src/services/recruitment/**": {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+        // MOD-06 leave engine — same discipline.
+        "src/services/hr/leave-core.service.ts": {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+        "src/services/hr/leave-days.ts": {
           statements: 90,
           branches: 90,
           functions: 90,

@@ -28,6 +28,9 @@ const NOTIFICATION_ROUTING: Record<NotificationType, RoutingTarget> = {
   CONTRACT_UPDATED: { it: true, hr: true, employee: true },
   CONTRACT_EXPIRING: { it: true, hr: true, employee: true },
   LEAVE_REQUESTED: { it: true, hr: true, employee: false },
+  // Targets the approver directly (manager, or HR when the requester has no manager); the explicit
+  // recipient is set by the caller rather than fanned out by role.
+  LEAVE_PENDING_APPROVAL: { it: false, hr: false, employee: false },
   LEAVE_APPROVED: { it: true, hr: false, employee: true },
   LEAVE_REJECTED: { it: true, hr: false, employee: true },
   LEAVE_CANCELLED: { it: true, hr: true, employee: false },
@@ -42,6 +45,7 @@ const NOTIFICATION_ROUTING: Record<NotificationType, RoutingTarget> = {
 
 const LEAVE_TYPES: NotificationType[] = [
   "LEAVE_REQUESTED",
+  "LEAVE_PENDING_APPROVAL",
   "LEAVE_APPROVED",
   "LEAVE_REJECTED",
   "LEAVE_CANCELLED",
@@ -154,9 +158,10 @@ async function resolveEmployeeIdFromEntity(
 export async function resolveRecipients(
   type: NotificationType,
   relatedEntity: RelatedEntityIds,
+  explicitRecipientIds: number[] = [],
 ): Promise<number[]> {
   const routing = NOTIFICATION_ROUTING[type];
-  const recipientSet = new Set<number>();
+  const recipientSet = new Set<number>(explicitRecipientIds);
 
   if (routing.it) {
     for (const id of await platformUserIdsByHrRole("IT")) {
@@ -196,7 +201,11 @@ export async function resolveRecipients(
 }
 
 export async function sendNotification(payload: SendNotificationPayload): Promise<void> {
-  const recipients = await resolveRecipients(payload.type, payload.relatedEntity);
+  const recipients = await resolveRecipients(
+    payload.type,
+    payload.relatedEntity,
+    payload.recipientUserIds ?? [],
+  );
   if (!recipients.length) return;
 
   const priority: NotificationPriority = payload.priority ?? "NORMAL";

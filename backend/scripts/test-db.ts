@@ -14,7 +14,8 @@
 import { spawnSync } from "child_process";
 
 const NAME = "ganzafrica_test_pg";
-const PORT = 55432;
+// Overridable because 55432 is a popular choice — another project's container may already hold it.
+const PORT = Number(process.env.TEST_DB_PORT ?? 55432);
 export const TEST_DATABASE_URL = `postgres://postgres:test@localhost:${PORT}/ganzafrica_test`;
 
 function sh(cmd: string, opts: { silent?: boolean } = {}) {
@@ -39,13 +40,17 @@ export function up(): string {
       `-p ${PORT}:5432 --health-cmd "pg_isready -U postgres" --health-interval 2s postgres:16`,
     { silent: true },
   );
-  // Wait for readiness (max ~40s).
+  // Wait for readiness (max ~40s). `docker exec` on a container that is still booting exits
+  // non-zero, which doubles as the sleep — `timeout`/`sleep` are unreliable with piped stdin.
   for (let i = 0; i < 40; i++) {
     const r = sh(`docker exec ${NAME} pg_isready -U postgres`, { silent: true });
     if (r.status === 0) return TEST_DATABASE_URL;
-    spawnSync(process.platform === "win32" ? "timeout" : "sleep", ["1"], { shell: true });
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000);
   }
-  throw new Error("test-db: Postgres did not become ready in time");
+  throw new Error(
+    `test-db: Postgres did not become ready in time. Is port ${PORT} free? ` +
+      `Set TEST_DB_PORT to use another one.`,
+  );
 }
 
 export function down() {

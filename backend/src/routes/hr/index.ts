@@ -8,6 +8,7 @@ import helpdeskRoutes from "./helpdesk.routes";
 import policyRoutes from "./policy.routes";
 import recruitmentRoutes from "./recruitment.routes";
 import signingRoutes from "./signing.routes";
+import leaveCoreRoutes from "./leave-core.routes";
 
 const router = Router();
 
@@ -20,6 +21,8 @@ router.use("/helpdesk", helpdeskRoutes);
 router.use("/policies", policyRoutes);
 router.use("/signing", signingRoutes);
 router.use("/", recruitmentRoutes);
+// Must precede the /leave alias below, which would otherwise redirect MOD-06's own /leave/* paths.
+router.use("/", leaveCoreRoutes);
 
 // One-release redirect aliases for the renamed singular paths.
 router.use("/leave", (req, res) =>

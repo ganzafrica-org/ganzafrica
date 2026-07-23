@@ -43,6 +43,64 @@ export function isHrManager(roleNames: string[]): boolean {
   return roleNames.includes("hr") || roleNames.includes("admin");
 }
 
+// Bounds the manager-chain walk so a cycle in manager_id can never hang a request.
+const MAX_MANAGER_DEPTH = 20;
+
+/**
+ * True when `actorEmployeeId` is the subject's direct manager or anywhere above them in the
+ * `employees.manager_id` chain — skip-level managers approve too. Used for leave approval routing
+ * (MOD-06) and process-task assignment (LCM-01).
+ */
+export async function isManagerOf(
+  actorEmployeeId: string,
+  subjectEmployeeId: string,
+): Promise<boolean> {
+  if (actorEmployeeId === subjectEmployeeId) return false;
+
+  let currentId: string = subjectEmployeeId;
+  const seen = new Set<string>([subjectEmployeeId]);
+
+  for (let depth = 0; depth < MAX_MANAGER_DEPTH; depth++) {
+    const rows = await db
+      .select({ managerId: employees.manager_id })
+      .from(employees)
+      .where(eq(employees.id, currentId))
+      .limit(1);
+
+    const managerId: string | null = rows[0]?.managerId ?? null;
+    if (!managerId) return false;
+    if (managerId === actorEmployeeId) return true;
+    if (seen.has(managerId)) return false;
+
+    seen.add(managerId);
+    currentId = managerId;
+  }
+
+  return false;
+}
+
+/**
+ * Who decides an employee's leave: their manager's user account, or null when they sit at the top
+ * of the tree (callers fall back to the HR queue).
+ */
+export async function getManagerUserId(employeeId: string): Promise<number | null> {
+  const [subject] = await db
+    .select({ managerId: employees.manager_id })
+    .from(employees)
+    .where(eq(employees.id, employeeId))
+    .limit(1);
+
+  if (!subject?.managerId) return null;
+
+  const [manager] = await db
+    .select({ userId: employees.user_id })
+    .from(employees)
+    .where(eq(employees.id, subject.managerId))
+    .limit(1);
+
+  return manager?.userId ?? null;
+}
+
 /**
  * Legacy-shape "requester" the HR services still expect ({id, role, email}). Bridges the new
  * platform identity to the old hr enum during the transition (HR services get retired onto the
