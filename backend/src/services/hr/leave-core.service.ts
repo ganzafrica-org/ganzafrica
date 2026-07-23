@@ -19,7 +19,7 @@ import {
 } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
-import { countWorkingDays, toIsoDate, yearsSpanned } from "./leave-days";
+import { countWorkingDays, toIsoDate } from "./leave-days";
 import { getManagerUserId, isManagerOf } from "./employee-context";
 
 /** Types whose usage draws down a balance. UNPAID/OTHER are tracked but never blocked. */
@@ -675,5 +675,3 @@ export async function adjustBalance(
   if (!row) throw new AppError("Balance not found", 404, "BALANCE_NOT_FOUND");
   return row;
 }
-
-export { yearsSpanned };

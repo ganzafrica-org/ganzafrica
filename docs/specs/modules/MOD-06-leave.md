@@ -158,9 +158,10 @@ Frontend (`apps/hr`): balance cards + request dialog with live working-day previ
 insufficient-balance blocking on `app/leave`, approvals queue at `app/leave/approvals`,
 policy/holiday settings at `app/settings/leave`.
 
-Tests: 50 backend (unit working-day math, balances, request guards, approval-authority matrix,
-calendar scoping, carry-over, and the HTTP surface incl. the alias-collision guard) and 16
-frontend. `leave-core.service.ts` and `leave-days.ts` are under the 90% coverage gate.
+Tests: 64 backend (unit working-day math, balances, request guards, approval-authority matrix,
+calendar scoping, carry-over, settings CRUD, cancellation rules, and the HTTP surface incl. the
+alias-collision guard) and 16 frontend. `leave-core.service.ts` and `leave-days.ts` are under
+the 90% coverage gate and sit at 98.9% statements / 94.7% branches / 100% functions.
 
 Deviations from the spec above:
 

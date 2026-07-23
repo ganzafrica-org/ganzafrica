@@ -33,11 +33,3 @@ export function countWorkingDays(start: Date, end: Date, holidays: ReadonlySet<s
   }
   return days;
 }
-
-/** Calendar years a range touches — a Dec→Jan request draws on two balance years. */
-export function yearsSpanned(start: Date, end: Date): number[] {
-  const first = start.getUTCFullYear();
-  const last = end.getUTCFullYear();
-  if (last < first) return [];
-  return Array.from({ length: last - first + 1 }, (_, i) => first + i);
-}
