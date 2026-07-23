@@ -617,11 +617,16 @@ export async function listProcesses(filters: ListFilters = {}) {
 
 export async function reassignTask(
   taskId: number,
-  patch: { assignee_user_id?: number | null; due_date?: string | null },
+  patch: {
+    assignee_user_id?: number | null;
+    due_date?: string | null;
+    link_ref?: Record<string, unknown>;
+  },
 ) {
   const set: Record<string, unknown> = { updated_at: new Date() };
   if (patch.assignee_user_id !== undefined) set.assignee_user_id = patch.assignee_user_id;
   if (patch.due_date !== undefined) set.due_date = patch.due_date;
+  if (patch.link_ref !== undefined) set.link_ref = patch.link_ref;
 
   const [row] = await db
     .update(process_tasks)

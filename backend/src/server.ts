@@ -7,9 +7,15 @@ import { env, Logger } from "./config";
 import cron from "node-cron";
 import { runWeeklyJobTask } from "./services/job-scraper.service";
 import { runRetentionSweep } from "./services/hr/document-retention.service";
+import { startNotificationCron } from "./modules/hr/notifications/notification.cron";
+import { registerOnboardingHooks } from "./services/hr/process.hooks";
+import { notifyOverdueTasks } from "./services/hr/process.service";
 
 const logger = new Logger("Server");
 const PORT = env.API_PORT || 3002;
+
+// REC-05 hands hires to LCM-01 through this seam; wire it before the first request lands.
+registerOnboardingHooks();
 
 // Start the server
 const server = app.listen(PORT, () => {
@@ -40,6 +46,20 @@ const server = app.listen(PORT, () => {
     }
   });
   logger.info("Document retention sweep cron scheduled: daily at 3:00 AM");
+
+  // HR notifications: contract expiry (daily) + MOD-06 leave carry-over (Jan 1).
+  startNotificationCron();
+
+  // Overdue lifecycle tasks - daily at 7:00 AM, before the workday starts.
+  cron.schedule("0 7 * * *", async () => {
+    try {
+      const { notified } = await notifyOverdueTasks();
+      if (notified) logger.info(`Overdue task sweep: notified ${notified} assignee(s)`);
+    } catch (err) {
+      logger.error("Overdue task sweep failed", err as Error);
+    }
+  });
+  logger.info("Overdue lifecycle task cron scheduled: daily at 7:00 AM");
 });
 
 // Handle unhandled promise rejections

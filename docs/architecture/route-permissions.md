@@ -26,6 +26,10 @@ FND-05 wires the non-HR admin/payroll routes to `requirePermission`; HR routes k
 | `/hr/leave/pending-approvals`, `/hr/leave/:id/{approve,reject,cancel}`                 | authenticate              | none — manager-chain or `leave:manage`, checked in service | **done (MOD-06)**    |
 | `/hr/leave/calendar`                                                                   | authenticate              | none — scoped to own team, org-wide for `leave:manage`     | **done (MOD-06)**    |
 | `/hr/leave-policies`, `/hr/holidays`, `/hr/leave-balances/:id`                         | authenticate              | `leave:manage` (holidays readable by any employee)         | **done (MOD-06)**    |
+| `/hr/me/process`, `/hr/me/tasks`                                                       | authenticate              | none — scoped to the caller's own employee row             | **done (LCM-01)**    |
+| `/hr/processes/:id`                                                                    | authenticate              | none — subject/assignee/manager/HR, filtered in service    | **done (LCM-01)**    |
+| `/hr/process-tasks/:id/{complete,skip}`                                                | authenticate              | none — assignee or HR, checked in service                  | **done (LCM-01)**    |
+| `/hr/processes`, `/hr/employees/:id/processes`, `/hr/process-templates`                | authenticate              | `processes:manage`                                         | **done (LCM-01)**    |
 | `/hr/documents` (308 alias `/hr/document`)                                             | authenticate              | `documents:manage`                                         | **done (FND-07)**    |
 | `/hr/policies`                                                                         | authenticate              | `policies:read` / `policies:manage`                        | **done (FND-07)**    |
 | `/hr/helpdesk`                                                                         | authenticate              | `helpdesk:create` / `helpdesk:manage`                      | **done (FND-07)**    |
