@@ -46,7 +46,9 @@ const instance = {
   completed_at: null,
 };
 
-function mockProcess(body: unknown, myTasks: unknown[] = []) {
+type Json = Parameters<typeof HttpResponse.json>[0];
+
+function mockProcess(body: Json, myTasks: Json[] = []) {
   server.use(
     http.get(`${API}/hr/me/process`, () => HttpResponse.json(body)),
     http.get(`${API}/hr/me/tasks`, () => HttpResponse.json({ tasks: myTasks })),
