@@ -48,8 +48,8 @@ import { Button } from "@workspace/ui/components/button";
 
 const AddProjectPage = () => {
   const router = useRouter();
-  const fileInputRef = useRef(null);
-  const documentFileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const documentFileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -57,8 +57,8 @@ const AddProjectPage = () => {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [createdProjectId, setCreatedProjectId] = useState<number | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
   const [partners, setPartners] = useState<any[]>([]);
   const [openTeamPopover, setOpenTeamPopover] = useState(false);
@@ -75,10 +75,10 @@ const AddProjectPage = () => {
   }
 
   const [filteredTeamMembers, setFilteredTeamMembers] = useState<TeamMember[]>([]);
-  const [roles, setRoles] = useState([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
   const [mediaSourceType, setMediaSourceType] = useState("file");
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -88,7 +88,7 @@ const AddProjectPage = () => {
   const [partnerSearchValue, setPartnerSearchValue] = useState("");
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<any>({
     name: "",
     description: "",
     status: "active", // Automatically set to 'active' when creating
@@ -110,17 +110,21 @@ const AddProjectPage = () => {
   });
 
   // Temporary state
-  const [newGoal, setNewGoal] = useState({ title: "", description: "", completed: false });
-  const [newOutcome, setNewOutcome] = useState({ title: "", description: "", status: "pending" });
-  const [newMember, setNewMember] = useState({ team_id: "", role: "" });
-  const [newPartner, setNewPartner] = useState({ partner_id: "" });
-  const [newDocument, setNewDocument] = useState({
+  const [newGoal, setNewGoal] = useState<any>({ title: "", description: "", completed: false });
+  const [newOutcome, setNewOutcome] = useState<any>({
+    title: "",
+    description: "",
+    status: "pending",
+  });
+  const [newMember, setNewMember] = useState<any>({ team_id: "", role: "" });
+  const [newPartner, setNewPartner] = useState<any>({ partner_id: "" });
+  const [newDocument, setNewDocument] = useState<any>({
     name: "",
     file: null,
     file_url: "",
     file_size: 0,
   });
-  const [newMedia, setNewMedia] = useState({
+  const [newMedia, setNewMedia] = useState<any>({
     file: null,
     type: "image",
     title: "",
@@ -143,7 +147,7 @@ const AddProjectPage = () => {
       }
 
       // Revoke all media blob URLs
-      formData.media.items.forEach((media) => {
+      formData.media.items.forEach((media: any) => {
         if (media.url && media.url.startsWith("blob:")) {
           URL.revokeObjectURL(media.url);
         }
@@ -153,10 +157,18 @@ const AddProjectPage = () => {
       });
 
       // Revoke any media preview URLs
-      if (newMedia.previewUrl && newMedia.previewUrl.startsWith("blob:")) {
+      if (
+        newMedia.previewUrl &&
+        typeof newMedia.previewUrl === "string" &&
+        newMedia.previewUrl.startsWith("blob:")
+      ) {
         URL.revokeObjectURL(newMedia.previewUrl);
       }
-      if (newMedia.thumbnailUrl && newMedia.thumbnailUrl.startsWith("blob:")) {
+      if (
+        newMedia.thumbnailUrl &&
+        typeof newMedia.thumbnailUrl === "string" &&
+        newMedia.thumbnailUrl.startsWith("blob:")
+      ) {
         URL.revokeObjectURL(newMedia.thumbnailUrl);
       }
     };
@@ -301,55 +313,64 @@ const AddProjectPage = () => {
   }, []);
 
   // Handle input change
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prev: any) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   // Handle goal input
-  const handleGoalChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewGoal((prev) => ({
+  const handleGoalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setNewGoal((prev: any) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   // Handle outcome input
-  const handleOutcomeChange = (e) => {
+  const handleOutcomeChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
-    setNewOutcome((prev) => ({
+    setNewOutcome((prev: any) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   // Handle member input
-  const handleMemberChange = (e) => {
+  const handleMemberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setNewMember((prev) => ({
+    setNewMember((prev: any) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   // Handle media input
-  const handleMediaChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewMedia((prev) => ({
+  const handleMediaChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+    setNewMedia((prev: any) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
   // Handle document file selection
-  const handleDocumentFileChange = (e) => {
+  const handleDocumentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setNewDocument((prev) => ({
+      setNewDocument((prev: any) => ({
         ...prev,
         file: file,
         name: prev.name || file.name,
@@ -359,9 +380,9 @@ const AddProjectPage = () => {
   };
 
   // Handle document input change
-  const handleDocumentChange = (e) => {
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setNewDocument((prev) => ({
+    setNewDocument((prev: any) => ({
       ...prev,
       [name]: value,
     }));
@@ -387,8 +408,10 @@ const AddProjectPage = () => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onUploadProgress: (progressEvent: any) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / (progressEvent.total || progressEvent.loaded),
+          );
           setUploadProgress(percentCompleted);
         },
       });
@@ -402,7 +425,7 @@ const AddProjectPage = () => {
           file_size: newDocument.file.size,
         };
 
-        setFormData((prev) => ({
+        setFormData((prev: any) => ({
           ...prev,
           documents: [...prev.documents, documentToAdd],
         }));
@@ -418,7 +441,7 @@ const AddProjectPage = () => {
       } else {
         throw new Error("Upload failed: Server returned unsuccessful response");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding document:", error);
       setError("Failed to add document. Please try again.");
     } finally {
@@ -428,15 +451,15 @@ const AddProjectPage = () => {
   };
 
   // Remove document
-  const removeDocument = (index) => {
-    setFormData((prev) => ({
+  const removeDocument = (index: number) => {
+    setFormData((prev: any) => ({
       ...prev,
-      documents: prev.documents.filter((_, i) => i !== index),
+      documents: prev.documents.filter((_: any, i: number) => i !== index),
     }));
   };
 
   // Handle selecting a team member
-  const handleTeamMemberSelect = (teamId) => {
+  const handleTeamMemberSelect = (teamId: any) => {
     // Check if the role is selected
     if (!selectedRole) {
       alert("Please select a role first");
@@ -444,7 +467,7 @@ const AddProjectPage = () => {
     }
 
     // Check if team member is already a member
-    const alreadyMember = formData.members.some((member) => member.team_id === teamId);
+    const alreadyMember = formData.members.some((member: any) => member.team_id === teamId);
 
     if (!alreadyMember) {
       const memberToAdd = {
@@ -452,7 +475,7 @@ const AddProjectPage = () => {
         role: selectedRole, // This will now be one of: 'lead', 'member', 'supervisor', 'contributor'
       };
 
-      setFormData((prev) => ({
+      setFormData((prev: any) => ({
         ...prev,
         members: [...prev.members, memberToAdd],
       }));
@@ -462,7 +485,7 @@ const AddProjectPage = () => {
   };
 
   // Get role name for display
-  const getRoleNameById = (roleId) => {
+  const getRoleNameById = (roleId: any) => {
     // For the fixed role values, return the formatted display name
     if (roleId === "lead") return "Lead";
     if (roleId === "member") return "Member";
@@ -474,16 +497,16 @@ const AddProjectPage = () => {
   };
 
   // Handle selecting a partner
-  const handlePartnerSelect = (partnerId) => {
+  const handlePartnerSelect = (partnerId: any) => {
     // Check if partner is already added
-    const alreadyAdded = formData.partners.some((partner) => partner.partner_id === partnerId);
+    const alreadyAdded = formData.partners.some((partner: any) => partner.partner_id === partnerId);
 
     if (!alreadyAdded) {
       const partnerToAdd = {
         partner_id: partnerId,
       };
 
-      setFormData((prev) => ({
+      setFormData((prev: any) => ({
         ...prev,
         partners: [...prev.partners, partnerToAdd],
       }));
@@ -493,7 +516,7 @@ const AddProjectPage = () => {
   };
 
   // Upload file to the backend server
-  const uploadFile = async (file) => {
+  const uploadFile = async (file: File) => {
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -507,8 +530,10 @@ const AddProjectPage = () => {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onUploadProgress: (progressEvent: any) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / (progressEvent.total || progressEvent.loaded),
+          );
           setUploadProgress(percentCompleted);
         },
       });
@@ -521,7 +546,7 @@ const AddProjectPage = () => {
       } else {
         throw new Error("Upload failed: Server returned unsuccessful response");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading file to server:", error);
       setIsUploading(false);
       throw error; // Re-throw to handle in the calling function
@@ -531,7 +556,7 @@ const AddProjectPage = () => {
   };
 
   // Handle file selection
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const fileType = file.type.startsWith("image/") ? "image" : "video";
@@ -564,7 +589,9 @@ const AddProjectPage = () => {
                 canvas.width = videoElement.videoWidth;
                 canvas.height = videoElement.videoHeight;
                 const ctx = canvas.getContext("2d");
-                ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                if (ctx) {
+                  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                }
 
                 // Get thumbnail as data URL
                 const thumbnailUrl = canvas.toDataURL("image/jpeg", 0.7);
@@ -717,7 +744,7 @@ const AddProjectPage = () => {
   };
 
   // Validate URL and determine type
-  const validateUrl = (url) => {
+  const validateUrl = (url: string) => {
     try {
       // Simple check if string is not empty
       if (!url || url.trim() === "") {
@@ -765,7 +792,7 @@ const AddProjectPage = () => {
       }
 
       return { valid: true, type, message: "URL valid" };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error validating URL:", error);
       // Return valid true with default type to prevent crashes
       return { valid: true, type: "image", message: "URL format uncertain, treating as image" };
@@ -773,7 +800,7 @@ const AddProjectPage = () => {
   };
 
   // Handle URL input
-  const handleUrlChange = (e) => {
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const url = e.target.value;
 
@@ -791,7 +818,7 @@ const AddProjectPage = () => {
           }));
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error handling URL change:", error);
       // Don't throw error, just update the URL in state
       setNewMedia((prev) => ({ ...prev, url: e.target.value }));
@@ -946,7 +973,7 @@ const AddProjectPage = () => {
       // Show success feedback
       setFormSuccess("Media added successfully");
       setTimeout(() => setFormSuccess(""), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding media:", error);
       setError("Failed to add media. Please try again.");
     }
@@ -970,44 +997,45 @@ const AddProjectPage = () => {
   };
 
   // Select media for editing
-  const selectMedia = (mediaId) => {
+  const selectMedia = (mediaId: any) => {
     if (selectedMedia && selectedMedia.id === mediaId) {
       setSelectedMedia(null);
     } else {
-      const media = formData.media.items.find((item) => item.id === mediaId);
+      const media = formData.media.items.find((item: any) => item.id === mediaId);
       setSelectedMedia(media);
     }
   };
 
   // Update media tag
-  const updateMediaTag = (mediaId, tag) => {
-    setFormData((prev) => ({
+  const updateMediaTag = (mediaId: any, tag: any) => {
+    setFormData((prev: any) => ({
       ...prev,
       media: {
-        items: prev.media.items.map((item) => (item.id === mediaId ? { ...item, tag } : item)),
+        items: prev.media.items.map((item: any) => (item.id === mediaId ? { ...item, tag } : item)),
       },
     }));
 
     // Update selectedMedia if it's the one being updated
     if (selectedMedia && selectedMedia.id === mediaId) {
-      setSelectedMedia((prev) => ({ ...prev, tag }));
+      setSelectedMedia((prev: any) => ({ ...prev, tag }));
     }
   };
 
   // Toggle media as cover
-  const toggleMediaCover = (mediaId) => {
-    setFormData((prev) => ({
+  const toggleMediaCover = (mediaId: any) => {
+    setFormData((prev: any) => ({
       ...prev,
       media: {
         items: prev.media.items.map(
-          (item) => (item.id === mediaId ? { ...item, cover: true } : { ...item, cover: false }), // Ensure only one cover image
+          (item: any) =>
+            item.id === mediaId ? { ...item, cover: true } : { ...item, cover: false }, // Ensure only one cover image
         ),
       },
     }));
 
     // Update selectedMedia if it's the one being updated
     if (selectedMedia && selectedMedia.id === mediaId) {
-      setSelectedMedia((prev) => ({ ...prev, cover: true }));
+      setSelectedMedia((prev: any) => ({ ...prev, cover: true }));
     }
   };
 
@@ -1024,7 +1052,7 @@ const AddProjectPage = () => {
       order: formData.goals.items.length + 1,
     };
 
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       goals: {
         items: [...prev.goals.items, goalToAdd],
@@ -1045,10 +1073,9 @@ const AddProjectPage = () => {
       title: newOutcome.title,
       description: newOutcome.description,
       status: newOutcome.status,
-      order: formData.outcomes.items.length + 1,
     };
 
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       outcomes: {
         items: [...prev.outcomes.items, outcomeToAdd],
@@ -1069,14 +1096,16 @@ const AddProjectPage = () => {
     };
 
     // Check if user is already a member
-    const alreadyMember = formData.members.some((member) => member.team_id === memberToAdd.team_id);
+    const alreadyMember = formData.members.some(
+      (member: any) => member.team_id === memberToAdd.team_id,
+    );
 
     if (alreadyMember) {
       alert("This team member is already a project member");
       return;
     }
 
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       members: [...prev.members, memberToAdd],
     }));
@@ -1095,14 +1124,14 @@ const AddProjectPage = () => {
 
     // Check if partner is already added
     const alreadyAdded = formData.partners.some(
-      (partner) => partner.partner_id === partnerToAdd.partner_id,
+      (partner: any) => partner.partner_id === partnerToAdd.partner_id,
     );
 
     if (alreadyAdded) {
       alert("This partner is already added to the project");
       return;
     }
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       partners: [...prev.partners, partnerToAdd],
     }));
@@ -1112,29 +1141,29 @@ const AddProjectPage = () => {
   };
 
   // Remove goal from list
-  const removeGoal = (goalId) => {
-    setFormData((prev) => ({
+  const removeGoal = (goalId: number | string) => {
+    setFormData((prev: any) => ({
       ...prev,
       goals: {
-        items: prev.goals.items.filter((goal) => goal.id !== goalId),
+        items: prev.goals.items.filter((goal: any) => goal.id !== goalId),
       },
     }));
   };
 
   // Remove outcome from list
-  const removeOutcome = (outcomeId) => {
-    setFormData((prev) => ({
+  const removeOutcome = (outcomeId: number | string) => {
+    setFormData((prev: any) => ({
       ...prev,
       outcomes: {
-        items: prev.outcomes.items.filter((outcome) => outcome.id !== outcomeId),
+        items: prev.outcomes.items.filter((outcome: any) => outcome.id !== outcomeId),
       },
     }));
   };
 
   // Remove media from list
-  const removeMedia = (mediaId) => {
+  const removeMedia = (mediaId: number | string) => {
     // Revoke the object URL to prevent memory leaks
-    const mediaToRemove = formData.media.items.find((media) => media.id === mediaId);
+    const mediaToRemove = formData.media.items.find((media: any) => media.id === mediaId);
     if (mediaToRemove) {
       if (mediaToRemove.url && mediaToRemove.url.startsWith("blob:")) {
         URL.revokeObjectURL(mediaToRemove.url);
@@ -1144,10 +1173,10 @@ const AddProjectPage = () => {
       }
     }
 
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       media: {
-        items: prev.media.items.filter((media) => media.id !== mediaId),
+        items: prev.media.items.filter((media: any) => media.id !== mediaId),
       },
     }));
 
@@ -1157,23 +1186,23 @@ const AddProjectPage = () => {
   };
 
   // Remove member from list
-  const removeMember = (teamId) => {
-    setFormData((prev) => ({
+  const removeMember = (teamId: number | string) => {
+    setFormData((prev: any) => ({
       ...prev,
-      members: prev.members.filter((member) => member.team_id !== teamId),
+      members: prev.members.filter((member: any) => member.team_id !== teamId),
     }));
   };
 
   // Remove partner from list
-  const removePartner = (partnerId) => {
-    setFormData((prev) => ({
+  const removePartner = (partnerId: number | string) => {
+    setFormData((prev: any) => ({
       ...prev,
-      partners: prev.partners.filter((partner) => partner.partner_id !== partnerId),
+      partners: prev.partners.filter((partner: any) => partner.partner_id !== partnerId),
     }));
   };
 
   // Media preview component
-  const MediaPreview = ({ media }) => {
+  const MediaPreview = ({ media }: { media: any }) => {
     if (media.type === "image") {
       return (
         <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
