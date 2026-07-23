@@ -101,6 +101,7 @@ export function Navbar() {
         { id: "home", label: "Home", href: "/" },
         { id: "employees", label: "Employees", href: "/employees" },
         { id: "recruitment", label: "Recruitment", href: "/recruitment" },
+        { id: "onboarding", label: "Onboarding", href: "/onboarding" },
         { id: "document", label: "Documents", href: "/documents" },
         { id: "signing", label: "Sign", href: "/signing" },
         { id: "assets", label: "Assets", href: "/asset" },
@@ -111,6 +112,7 @@ export function Navbar() {
     if (role === "EMPLOYEE") {
       return [
         { id: "home", label: "Home", href: "/" },
+        { id: "my-onboarding", label: "My Onboarding", href: "/onboarding/me" },
         { id: "time-offs", label: "Time Offs", href: "/leave" },
         { id: "documents", label: "Documents", href: "/documents" },
         { id: "signing", label: "Sign", href: "/signing" },

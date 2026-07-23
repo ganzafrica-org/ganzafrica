@@ -307,21 +307,24 @@ export async function makeProcessTemplate(opts: {
     { title: "Sign contract", default_assignee: "employee" as const, is_blocking: true },
   ];
 
-  const tasks = await db
-    .insert(process_template_tasks)
-    .values(
-      specs.map((spec, index) => ({
-        template_id: template.id,
-        title: spec.title ?? `Task ${index + 1}`,
-        sort_order: spec.sort_order ?? index,
-        default_assignee: spec.default_assignee ?? "hr",
-        visibility: spec.visibility ?? "all",
-        due_offset_days: spec.due_offset_days ?? null,
-        is_blocking: spec.is_blocking ?? false,
-        kind: spec.kind ?? "checklist",
-      })),
-    )
-    .returning();
+  // `tasks: []` is a legitimate starting state for a template being built up step by step.
+  const tasks = specs.length
+    ? await db
+        .insert(process_template_tasks)
+        .values(
+          specs.map((spec, index) => ({
+            template_id: template.id,
+            title: spec.title ?? `Task ${index + 1}`,
+            sort_order: spec.sort_order ?? index,
+            default_assignee: spec.default_assignee ?? "hr",
+            visibility: spec.visibility ?? "all",
+            due_offset_days: spec.due_offset_days ?? null,
+            is_blocking: spec.is_blocking ?? false,
+            kind: spec.kind ?? "checklist",
+          })),
+        )
+        .returning()
+    : [];
 
   return { template, tasks };
 }

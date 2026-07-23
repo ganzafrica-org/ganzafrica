@@ -7,7 +7,7 @@
  *  - Reads are filtered by viewer in the service, not the client. The subject employee must never
  *    receive `staff_only` rows, and their progress is computed over what they can actually see.
  */
-import { and, asc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db, withDbTransaction, type DbTransaction } from "@/db/client";
 import {
   employees,
