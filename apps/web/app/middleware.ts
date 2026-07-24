@@ -32,19 +32,14 @@ export function middleware(request: NextRequest) {
 
   // Check if pathname is missing a locale
   const pathnameHasLocale = supportedLocales.some(
-    (locale) =>
-      pathname.startsWith(`/${locale}/`) ||
-      pathname === `/${locale}` ||
-      pathname === `/${locale}/`,
+    (locale) => pathname.startsWith("/") || pathname === "/" || pathname === "/",
   );
 
   // If it doesn't have a locale, add one based on the user's preference
   if (!pathnameHasLocale) {
     const locale = getLocale(request);
     // Add a trailing slash for consistency
-    const newPath = pathname.endsWith("/")
-      ? `/${locale}${pathname}`
-      : `/${locale}${pathname}/`;
+    const newPath = pathname.endsWith("/") ? `/${pathname}` : `/${pathname}/`;
     const newUrl = new URL(newPath, request.url);
 
     // Preserve the search params
@@ -53,8 +48,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl);
   }
 
-  // Handle `/en` without trailing slash by redirecting to `/en/`
-  if (supportedLocales.some((locale) => pathname === `/${locale}`)) {
+  // Handle `/en` without a trailing slash by redirecting to `/en/`
+  if (supportedLocales.some((locale) => pathname === "/")) {
     const newUrl = new URL(`${pathname}/`, request.url);
     return NextResponse.redirect(newUrl);
   }

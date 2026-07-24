@@ -1,29 +1,31 @@
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import * as crypto from "crypto";
-import {db, withDbTransaction} from "@/db/client";
-import {password_reset_tokens, sessions, users, verification_tokens,} from "@/db/schema";
-import {and, eq} from "drizzle-orm";
-import {constants, env, Logger} from "../config";
-import {sendPasswordResetEmail, } from "@/services/email.service";
-import {AppError} from "@/middlewares";
+import { db, withDbTransaction } from "../db/client";
+import { password_reset_tokens, sessions, users, verification_tokens, roles } from "../db/schema";
+import { and, eq } from "drizzle-orm";
+import { constants, env, Logger } from "../config";
+import { sendPasswordResetEmail } from "./email.service";
+import { AppError } from "../middlewares";
 
 const logger = new Logger("AuthService");
 
 // Configure bcrypt options for password hashing
 const SALT_ROUNDS = 10;
 
+const REFRESH_GRACE_MS = 60_000;
+
+function sha256(value: string) {
+  return crypto.createHash("sha256").update(value).digest("hex");
+}
+
 // Set secret key for JWT
-const JWT_SECRET =
-  env.JWT_SECRET || "your-default-jwt-secret-key-should-be-updated";
+const JWT_SECRET = env.JWT_SECRET || "your-default-jwt-secret-key-should-be-updated";
 const JWT_REFRESH_SECRET =
-  env.JWT_REFRESH_SECRET ||
-  "your-default-jwt-refresh-secret-key-should-be-updated";
+  env.JWT_REFRESH_SECRET || "your-default-jwt-refresh-secret-key-should-be-updated";
 
 if (JWT_SECRET === "your-default-jwt-secret-key-should-be-updated") {
-  logger.warn(
-    "Using default JWT secret key. This is insecure for production environments.",
-  );
+  logger.warn("Using default JWT secret key. This is insecure for production environments.");
 }
 
 // Define interfaces for token payloads and session data
@@ -58,15 +60,8 @@ export async function hashPassword(password: string): Promise<string> {
  * @param {string} password - Plain text password to verify
  * @param {string} hash - Stored hash to verify against
  * @returns {Promise<boolean>} - True if password matches hash
- * Verify a password against its hash
- * @param {string} password - Plain text password to verify
- * @param {string} hash - Stored hash to verify against
- * @returns {Promise<boolean>} - True if password matches hash
  */
-export async function verifyPassword(
-  password: string,
-  hash: string,
-): Promise<boolean> {
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   try {
     return await bcrypt.compare(password, hash);
   } catch (error) {
@@ -76,11 +71,6 @@ export async function verifyPassword(
 }
 
 /**
- * Create a JWT token
- * @param {TokenPayload} payload - Data to include in the token
- * @param {string} expiresIn - Token expiration time
- * @param {boolean} isRefresh - Whether this is a refresh token
- * @returns {Promise<string>} - Signed JWT token
  * Create a JWT token
  * @param {TokenPayload} payload - Data to include in the token
  * @param {string} expiresIn - Token expiration time
@@ -97,14 +87,14 @@ export async function createToken(
     const secret = isRefresh ? JWT_REFRESH_SECRET : JWT_SECRET;
 
     return jwt.sign(
-        {
-          ...payload,
-          jti: crypto.randomUUID(),
-        },
-        secret,
-        {
-          expiresIn: Math.floor(expiresInMs / 1000), // JWT uses seconds for expiration
-        },
+      {
+        ...payload,
+        jti: crypto.randomUUID(),
+      },
+      secret,
+      {
+        expiresIn: Math.floor(expiresInMs / 1000), // JWT uses seconds for expiration
+      },
     );
   } catch (error) {
     logger.error("Token creation error", error);
@@ -113,10 +103,72 @@ export async function createToken(
 }
 
 /**
- * Verify a JWT token
- * @param {string} token - Token to verify
+ * Create a JWT token with complete user information
+ * @param {number} userId - User ID
+ * @param {string} tokenType - Token type (access or refresh)
+ * @param {string} expiresIn - Token expiration time
  * @param {boolean} isRefresh - Whether this is a refresh token
- * @returns {Promise<TokenPayload>} - Decoded token payload
+ * @returns {Promise<string>} - Signed JWT token
+ */
+export async function createUserToken(
+  userId: number,
+  tokenType: string,
+  expiresIn: string = env.ACCESS_TOKEN_EXPIRY,
+  isRefresh: boolean = false,
+): Promise<string> {
+  try {
+    // Get complete user information from database using a simple query
+    const userResult = await db.select().from(users).where(eq(users.id, userId));
+
+    if (!userResult || userResult.length === 0) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+
+    // Use the first user from the array with explicit type casting
+    const userData = userResult[0];
+
+    if (!userData) {
+      throw new Error(`User with ID ${userId} not found or has no data`);
+    }
+
+    // Optional: Get role information if you have a roles table
+    let roleName: string | undefined = undefined;
+    try {
+      if (userData.role_id) {
+        // Using Drizzle ORM query instead of raw SQL to avoid parameter issues
+        const roleResult = await db.select().from(roles).where(eq(roles.id, userData.role_id));
+
+        if (roleResult && roleResult.length > 0) {
+          roleName = roleResult[0].name;
+        }
+      }
+    } catch (error) {
+      logger.warn("Could not fetch role information for token", error);
+      // Continue without role name
+    }
+
+    // Create payload with complete user information
+    const payload = {
+      id: userData.id.toString(),
+      email: userData.email,
+      name: userData.name,
+      role_id: userData.role_id,
+      role_name: roleName,
+      email_verified: userData.email_verified,
+      avatar_url: userData.avatar_url || null,
+      is_active: userData.is_active,
+      type: tokenType,
+    };
+
+    // Use the existing createToken function for the actual signing
+    return createToken(payload, expiresIn, isRefresh);
+  } catch (error) {
+    logger.error("User token creation error", error);
+    throw new AppError("Failed to create user authentication token", 500);
+  }
+}
+
+/**
  * Verify a JWT token
  * @param {string} token - Token to verify
  * @param {boolean} isRefresh - Whether this is a refresh token
@@ -146,11 +198,6 @@ export async function verifyToken(
  * @param {string} ipAddress - User's IP address
  * @param {string} userAgent - User's browser/device information
  * @returns {Promise<SessionData>} - Session details with tokens
- * Create a new session for a user
- * @param {number} userId - User ID
- * @param {string} ipAddress - User's IP address
- * @param {string} userAgent - User's browser/device information
- * @returns {Promise<SessionData>} - Session details with tokens
  */
 export async function createSession(
   userId: number,
@@ -158,31 +205,27 @@ export async function createSession(
   userAgent: string,
 ): Promise<SessionData> {
   try {
-    // Generate new tokens
-    const accessToken = await createToken(
-      {
-        id: userId.toString(),
-        type: constants.TOKEN_TYPES.ACCESS,
-      },
+    // Generate new tokens with complete user information
+    const accessToken = await createUserToken(
+      userId,
+      constants.TOKEN_TYPES.ACCESS,
       env.ACCESS_TOKEN_EXPIRY,
+      false,
     );
 
-    const refreshToken = await createToken(
-      {
-        id: userId.toString(),
-        type: constants.TOKEN_TYPES.REFRESH,
-      },
+    const refreshToken = await createUserToken(
+      userId,
+      constants.TOKEN_TYPES.REFRESH,
       env.REFRESH_TOKEN_EXPIRY,
       true,
     );
 
-    // Hash tokens for secure storage
-    const refreshTokenHash = await bcrypt.hash(refreshToken, SALT_ROUNDS);
+    // Access hash stays bcrypt (not used for lookup); refresh hash is sha256 so rotation can
+    // match a presented refresh token by equality (see rotateSession).
+    const refreshTokenHash = sha256(refreshToken);
     const accessTokenHash = await bcrypt.hash(accessToken, SALT_ROUNDS);
 
-    const expiresAt = new Date(
-      Date.now() + parseTimeToMs(env.REFRESH_TOKEN_EXPIRY || "7d"),
-    );
+    const expiresAt = new Date(Date.now() + parseTimeToMs(env.REFRESH_TOKEN_EXPIRY || "7d"));
 
     // Option to limit number of active sessions per user
     const maxSessions = 5; // Configurable value
@@ -195,9 +238,7 @@ export async function createSession(
     if (activeSessions.length >= maxSessions) {
       // Sort by last activity
       const sortedSessions = [...activeSessions].sort(
-        (a, b) =>
-          new Date(a.last_activity).getTime() -
-          new Date(b.last_activity).getTime(),
+        (a, b) => new Date(a.last_activity).getTime() - new Date(b.last_activity).getTime(),
       );
 
       // Invalidate oldest sessions to stay under limit
@@ -241,10 +282,74 @@ export async function createSession(
 }
 
 /**
+ * Rotate a session's refresh token with a grace window. Accepts the current refresh hash, or the
+ * previous one if rotated within REFRESH_GRACE_MS (kills the multi-tab race). Reuse of a refresh
+ * token outside the grace window is treated as theft: the session is revoked and null returned.
+ */
+export async function rotateSession(
+  userId: number,
+  presentedRefreshToken: string,
+): Promise<SessionData | null> {
+  const presentedHash = sha256(presentedRefreshToken);
+  const userSessions = await db
+    .select()
+    .from(sessions)
+    .where(and(eq(sessions.user_id, userId), eq(sessions.is_valid, true)));
+
+  const session = userSessions.find((s) => {
+    if (s.refresh_token_hash === presentedHash) return true;
+    if (
+      s.previous_refresh_hash === presentedHash &&
+      s.refresh_rotated_at &&
+      Date.now() - new Date(s.refresh_rotated_at).getTime() < REFRESH_GRACE_MS
+    )
+      return true;
+    return false;
+  });
+
+  if (!session) {
+    // Presented a refresh token that matches no live session (or an expired-grace previous one).
+    const stale = userSessions.find((s) => s.previous_refresh_hash === presentedHash);
+    if (stale) {
+      await db
+        .update(sessions)
+        .set({ is_valid: false, updated_at: new Date() })
+        .where(eq(sessions.id, stale.id));
+    }
+    return null;
+  }
+
+  const accessToken = await createUserToken(
+    userId,
+    constants.TOKEN_TYPES.ACCESS,
+    env.ACCESS_TOKEN_EXPIRY,
+    false,
+  );
+  const refreshToken = await createUserToken(
+    userId,
+    constants.TOKEN_TYPES.REFRESH,
+    env.REFRESH_TOKEN_EXPIRY,
+    true,
+  );
+
+  await db
+    .update(sessions)
+    .set({
+      token_hash: await bcrypt.hash(accessToken, SALT_ROUNDS),
+      previous_refresh_hash: session.refresh_token_hash,
+      refresh_token_hash: sha256(refreshToken),
+      refresh_rotated_at: new Date(),
+      last_activity: new Date(),
+      expires_at: new Date(Date.now() + parseTimeToMs(env.REFRESH_TOKEN_EXPIRY || "7d")),
+      updated_at: new Date(),
+    })
+    .where(eq(sessions.id, session.id));
+
+  return { accessToken, refreshToken, sessionId: session.id.toString() };
+}
+
+/**
  * Invalidate a user session
- * @param {string} tokenOrSessionId - Token or session ID to invalidate
- * @param {boolean} isToken - Whether the provided value is a token or session ID
- * @returns {Promise<boolean>} - Result of invalidation operation
  * @param {string} tokenOrSessionId - Token or session ID to invalidate
  * @param {boolean} isToken - Whether the provided value is a token or session ID
  * @returns {Promise<boolean>} - Result of invalidation operation
@@ -285,9 +390,7 @@ export async function invalidateSession(
 
         // If no specific session found, invalidate all (fallback behavior)
         if (!foundSession && userSessions.length > 0) {
-          logger.warn(
-            "Could not find specific session, invalidating all for user",
-          );
+          logger.warn("Could not find specific session, invalidating all for user");
           for (const session of userSessions) {
             await db
               .update(sessions)
@@ -296,10 +399,7 @@ export async function invalidateSession(
           }
         }
       } catch (error) {
-        logger.error(
-          "Error during token verification for session invalidation",
-          error,
-        );
+        logger.error("Error during token verification for session invalidation", error);
         return false;
       }
     } else {
@@ -333,13 +433,8 @@ export async function invalidateSession(
  * Update session activity timestamp
  * @param {string} sessionId - Session ID to update
  * @returns {Promise<boolean>} - Result of update operation
- * Update session activity timestamp
- * @param {string} sessionId - Session ID to update
- * @returns {Promise<boolean>} - Result of update operation
  */
-export async function updateSessionActivity(
-  sessionId: string,
-): Promise<boolean> {
+export async function updateSessionActivity(sessionId: string): Promise<boolean> {
   try {
     // Ensure sessionId is a valid number
     const sessionIdNum = parseInt(sessionId, 10);
@@ -361,12 +456,8 @@ export async function updateSessionActivity(
     return false;
   }
 }
+
 /**
- * Send password reset email
- * @param {number} userId - User ID
- * @param {string} email - User's email address
- * @param {string} ipAddress - User's IP address
- * @returns {Promise<boolean>} - Result of operation
  * Send password reset email
  * @param {number} userId - User ID
  * @param {string} email - User's email address
@@ -387,12 +478,7 @@ export async function sendPasswordReset(
     await db
       .update(password_reset_tokens)
       .set({ used: true })
-      .where(
-        and(
-          eq(password_reset_tokens.user_id, userId),
-          eq(password_reset_tokens.used, false),
-        ),
-      );
+      .where(and(eq(password_reset_tokens.user_id, userId), eq(password_reset_tokens.used, false)));
 
     // Create new password reset token
     await db.insert(password_reset_tokens).values({
@@ -422,15 +508,8 @@ export async function sendPasswordReset(
  * @param {string} token - Token to verify
  * @param {number} userId - User ID
  * @returns {Promise<boolean>} - Result of verification
- * Verify email verification token
- * @param {string} token - Token to verify
- * @param {number} userId - User ID
- * @returns {Promise<boolean>} - Result of verification
  */
-export async function verifyEmailToken(
-  token: string,
-  userId: number,
-): Promise<boolean> {
+export async function verifyEmailToken(token: string, userId: number): Promise<boolean> {
   return await withDbTransaction(async (txDb) => {
     const tokens = await txDb
       .select()
@@ -481,12 +560,8 @@ export async function verifyEmailToken(
     return true;
   });
 }
+
 /**
- * Reset user password
- * @param {string} token - Password reset token
- * @param {number} userId - User ID
- * @param {string} newPassword - New password
- * @returns {Promise<boolean>} - Result of operation
  * Reset user password
  * @param {string} token - Password reset token
  * @param {number} userId - User ID
@@ -504,12 +579,7 @@ export async function resetPassword(
     const tokens = await txDb
       .select()
       .from(password_reset_tokens)
-      .where(
-        and(
-          eq(password_reset_tokens.user_id, userId),
-          eq(password_reset_tokens.used, false),
-        ),
-      );
+      .where(and(eq(password_reset_tokens.user_id, userId), eq(password_reset_tokens.used, false)));
 
     for (const dbToken of tokens) {
       try {
@@ -518,10 +588,7 @@ export async function resetPassword(
           break;
         }
       } catch (error) {
-        logger.warn(
-          "Error verifying reset token hash during password reset",
-          error,
-        );
+        logger.warn("Error verifying reset token hash during password reset", error);
         // Continue to next token
       }
     }
@@ -567,16 +634,11 @@ export async function resetPassword(
  * Parse time string to milliseconds
  * @param {string} timeStr - Time string format (e.g., "30s", "15m", "24h", "7d")
  * @returns {number} - Time in milliseconds
- * Parse time string to milliseconds
- * @param {string} timeStr - Time string format (e.g., "30s", "15m", "24h", "7d")
- * @returns {number} - Time in milliseconds
  */
 function parseTimeToMs(timeStr: string): number {
   const match = timeStr.match(/^(\d+)([smhd])$/);
   if (!match) {
-    throw new Error(
-      `Invalid time format: ${timeStr}. Expected format: 30s, 15m, 24h, 7d`,
-    );
+    throw new Error(`Invalid time format: ${timeStr}. Expected format: 30s, 15m, 24h, 7d`);
   }
 
   const [, value, unit] = match;

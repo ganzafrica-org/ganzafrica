@@ -3,6 +3,8 @@
 import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
+import { TranslatableText } from "@/components/translate";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 
 interface SectionProps {
   number: string;
@@ -15,6 +17,8 @@ interface SectionProps {
   textColor: string;
   imageFirst: boolean;
   contentClass: string;
+  videoRef?: React.RefObject<HTMLVideoElement>;
+  isVideoSection?: boolean;
 }
 
 export default function SectionWithScrollAnimation({
@@ -28,7 +32,9 @@ export default function SectionWithScrollAnimation({
   textColor,
   imageFirst,
   contentClass,
-}: SectionProps) {
+  videoRef,
+  isVideoSection = false,
+}: SectionProps): JSX.Element {
   const sectionRef = useRef<HTMLDivElement>(null);
 
   // Create faster, more responsive scroll-based animation
@@ -46,12 +52,9 @@ export default function SectionWithScrollAnimation({
   const imageInitialX = !imageFirst ? 100 : -100;
 
   return (
-    <div
-      ref={sectionRef}
-      className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden"
-    >
+    <div ref={sectionRef} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 overflow-hidden">
       <motion.div
-        className={`p-10 ${bgColor}  min-h-full lg:h-[510px] w-full rounded-sm ${contentOrder}`}
+        className={`p-10 ${bgColor} min-h-full lg:h-[520px] w-full rounded-sm ${contentOrder}`}
         initial={{ opacity: 0, x: contentInitialX }}
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
@@ -68,17 +71,17 @@ export default function SectionWithScrollAnimation({
             {number}
           </motion.div>
           <motion.h2
-            className={`${textColor} sm: font-h5  md:font-h4 mb-2`}
+            className={`${textColor} sm: font-h5 md:font-h4 mb-2`}
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.25, delay: 0.2 }}
             viewport={{ once: false }}
           >
-            {title}
+            <TranslatableText>{title}</TranslatableText>
           </motion.h2>
           <div className={contentClass}>
             <p className="text-black font-regular-small text-sm text-justify">
-              {text}
+              <TranslatableText>{text}</TranslatableText>
             </p>
           </div>
         </div>
@@ -91,12 +94,28 @@ export default function SectionWithScrollAnimation({
         viewport={{ once: false, margin: "-10% 0px -10% 0px" }}
       >
         <div className="w-full h-full relative hidden md:block">
-          <Image
-            src={imageUrl}
-            alt={imageAlt}
-            fill
-            className="object-cover rounded-sm"
-          />
+          {isVideoSection && videoRef ? (
+            <video
+              ref={videoRef}
+              src={imageUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="object-cover rounded-sm w-full h-full"
+            />
+          ) : imageUrl.endsWith(".mp4") ? (
+            <video
+              src={imageUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="object-cover rounded-sm w-full h-full"
+            />
+          ) : (
+            <SafeImage src={imageUrl} alt={imageAlt} fill className="object-cover rounded-sm" />
+          )}
         </div>
       </motion.div>
     </div>

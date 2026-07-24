@@ -1,44 +1,39 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { env, Logger } from "../config";
-import { AppError } from "@/middlewares";
+import { AppError } from "../middlewares";
 
 const logger = new Logger("EmailService");
 
-// Create a nodemailer transporter
-const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_PORT === 465, // true for 465, false for other ports
-  auth: {
-    user: env.EMAIL_FROM,
-    pass: env.EMAIL_PASSWORD,
-  },
-});
+const FROM_ADDRESS = "no-reply@ganzafrica.org";
 
-// Verify SMTP connection on application startup
-async function verifyEmailConnection() {
-  try {
-    await transporter.verify();
-    logger.info("SMTP connection verified successfully");
-    return true;
-  } catch (error) {
-    logger.error("SMTP connection failed", error);
-    return false;
-  }
-}
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+
+const isEmailConfigured = () => !!resend;
 
 // Generic function to send emails
-async function sendEmail(to: string, subject: string, html: string) {
+export async function sendEmail(to: string, subject: string, html: string) {
+  if (!resend) {
+    logger.warn(
+      `Resend not configured (missing RESEND_API_KEY). Skipping email to ${to} with subject: ${subject}`,
+    );
+    return null;
+  }
+
   try {
-    const info = await transporter.sendMail({
-      from: `"Ganzafrica" <${env.EMAIL_FROM}>`,
+    const { data, error } = await resend.emails.send({
+      from: `GanzAfrica <${FROM_ADDRESS}>`,
       to,
       subject,
       html,
     });
 
-    logger.info(`Email sent: ${info.messageId}`);
-    return info;
+    if (error) {
+      logger.error("Resend error:", error);
+      throw new AppError(`Failed to send email: ${error.message}`, 500);
+    }
+
+    logger.info(`Email sent via Resend: ${data?.id}`);
+    return data;
   } catch (error) {
     logger.error("Failed to send email", error);
     throw new AppError("Failed to send email", 500);
@@ -46,10 +41,7 @@ async function sendEmail(to: string, subject: string, html: string) {
 }
 
 // Send email verification email
-export async function sendVerificationEmail(
-  to: string,
-  data: { token: string; expiresAt: Date },
-) {
+export async function sendVerificationEmail(to: string, data: { token: string; expiresAt: Date }) {
   const verificationUrl = `${env.WEBSITE_URL}/verify-email?token=${data.token}`;
 
   const html = `
@@ -72,10 +64,7 @@ export async function sendVerificationEmail(
 }
 
 // Send password reset email
-export async function sendPasswordResetEmail(
-  to: string,
-  data: { token: string; expiresAt: Date },
-) {
+export async function sendPasswordResetEmail(to: string, data: { token: string; expiresAt: Date }) {
   const resetUrl = `${env.WEBSITE_URL}/reset-password?token=${data.token}`;
 
   const html = `
@@ -120,4 +109,12 @@ export async function sendWelcomeEmail(to: string, name: string) {
   return sendEmail(to, "Welcome to Ganzafrica", html);
 }
 
-export { verifyEmailConnection };
+// Kept for compatibility — no-op with Resend (connection is stateless)
+export async function verifyEmailConnection() {
+  if (!resend) {
+    logger.warn("Resend not configured. Email functionality will be disabled.");
+    return false;
+  }
+  logger.info("Resend email client initialized");
+  return true;
+}

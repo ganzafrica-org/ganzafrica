@@ -13,33 +13,14 @@ const router: Router = Router();
  */
 
 // FAQs routes
-router.post(
-  "/",
-  authenticate,
-  validate(faqValidation.createFaqSchema),
-  faqController.createFaq,
-);
+router.post("/", validate(faqValidation.createFaqSchema), faqController.createFaq);
 
 router.get("/", faqController.listFaqs);
 
-router.get(
-  "/:id",
-  validate(faqValidation.getFaqSchema),
-  faqController.getFaqById,
-);
+router.get("/:id", validate(faqValidation.getFaqSchema), faqController.getFaqById);
 
-router.put(
-  "/:id",
-  authenticate,
-  validate(faqValidation.updateFaqSchema),
-  faqController.updateFaq,
-);
+router.put("/:id", validate(faqValidation.updateFaqSchema), faqController.updateFaq);
 
-router.delete(
-  "/:id",
-  authenticate,
-  validate(faqValidation.deleteFaqSchema),
-  faqController.deleteFaq,
-);
+router.delete("/:id", validate(faqValidation.deleteFaqSchema), faqController.deleteFaq);
 
 export default router;

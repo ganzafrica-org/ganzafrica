@@ -1,12 +1,4 @@
-import {
-  pgTable,
-  text,
-  serial,
-  boolean,
-  jsonb,
-  timestamp,
-  integer,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, jsonb, timestamp, integer } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 import { users } from "./users";
 import { verificationTypeEnum } from "./enums";
@@ -42,6 +34,8 @@ export const sessions = pgTable("sessions", {
     .references(() => users.id),
   token_hash: text("token_hash").notNull(),
   refresh_token_hash: text("refresh_token_hash"),
+  previous_refresh_hash: text("previous_refresh_hash"),
+  refresh_rotated_at: timestamp("refresh_rotated_at"),
   expires_at: timestamp("expires_at").notNull(),
   last_activity: timestamp("last_activity").notNull(),
   ip_address: text("ip_address").notNull(),

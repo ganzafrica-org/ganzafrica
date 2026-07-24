@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 interface FAQAccordionItemProps {
   question: string;
   answer: string;
 }
 
-export const FAQAccordionItem = ({ question, answer }: FAQAccordionItemProps) => {
+export const FAQAccordionItem = ({ question, answer }: FAQAccordionItemProps): JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -18,7 +18,12 @@ export const FAQAccordionItem = ({ question, answer }: FAQAccordionItemProps) =>
         <span className="ml-6 flex-shrink-0">
           {isOpen ? (
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           ) : (
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,4 +39,4 @@ export const FAQAccordionItem = ({ question, answer }: FAQAccordionItemProps) =>
       )}
     </div>
   );
-}; 
+};

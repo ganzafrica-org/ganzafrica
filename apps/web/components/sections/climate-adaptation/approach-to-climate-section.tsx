@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import Container from "@/components/layout/container";
 
 // Animation variants
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -16,7 +16,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -43,14 +43,14 @@ const ApproachToClimateSection = () => {
       title: "Community-Centered Adaptation",
       description:
         "Through local consultation and traditional knowledge integration, we incorporate indigenous farming practices into climate policies while ensuring that farmers, cooperatives, and local leaders are actively engaged in decision-making.",
-      color: "bg-yellow-400",
+      color: "text-primary-orange",
     },
     {
       number: "03",
       title: "Practical Learning & Innovation",
       description:
         "GanzAfrica promotes environmental sustainability by training youth in climate resilience, sustainable land and water management, and ecosystem restoration to build a greener, more resilient Africa.",
-      color: "bg-yellow-400",
+      color: "text-primary-orange",
     },
     {
       number: "04",
@@ -79,13 +79,11 @@ const ApproachToClimateSection = () => {
             </h2>
 
             <p className="text-gray-700 leading-relaxed">
-              At GanzAfrica, we are committed to shaping a sustainable and
-              prosperous Africa by empowering youth through training,
-              mentorship, and work placement programs in the fields of land
-              management, environmental sustainability, and agriculture. Our
-              holistic approach integrates knowledge, innovation, and policy
-              engagement to build future leaders who can drive meaningful change
-              in Africa's food systems.
+              At GanzAfrica, we are committed to shaping a sustainable and prosperous Africa by
+              empowering youth through training, mentorship, and work placement programs in the
+              fields of land management, environmental sustainability, and agriculture. Our holistic
+              approach integrates knowledge, innovation, and policy engagement to build future
+              leaders who can drive meaningful change in Africa's food systems.
             </p>
           </motion.div>
 

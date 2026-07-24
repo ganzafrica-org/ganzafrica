@@ -65,16 +65,12 @@ export const news = pgTable(
       }>;
     }>(),
 
-    created_by: integer("created_by")
-      .notNull()
-      .references(() => users.id),
     ...timestampFields,
   },
   (table) => {
     return {
       statusIdx: index("news_status_idx").on(table.status),
       categoryIdx: index("news_category_idx").on(table.category),
-      createdByIdx: index("news_created_by_idx").on(table.created_by),
       publishDateIdx: index("news_publish_date_idx").on(table.publish_date),
     };
   },

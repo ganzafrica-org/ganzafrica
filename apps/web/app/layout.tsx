@@ -1,9 +1,11 @@
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Rubik } from "next/font/google";
-import { getDictionary } from "@/lib/get-dictionary";
-import { CloudflareAnalytics } from "@/components/analytics/cloudflare-analytics";
 import ClientLayout from "@/components/layout/client-layout";
-
+import { GoogleAnalyticsComponent } from "@/components/analytics/google-analytics";
+import Script from "next/script";
+import React, { Suspense } from "react";
 import "@workspace/ui/globals.css";
+import { Metadata } from "next";
 
 // Font optimization - Using Rubik
 const fontRubik = Rubik({
@@ -13,72 +15,93 @@ const fontRubik = Rubik({
 });
 
 // Metadata generation
-export async function generateMetadata(
-  props: {
-    params: Promise<{ locale: string }>;
-  }
-) {
-  const params = await props.params;
-  // Ensure locale is one of the supported ones, fallback to 'en'
-  const locale =
-    params.locale && ["en", "fr"].includes(params.locale)
-      ? params.locale
-      : "en";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://web.ganzafrica.org";
 
-  // Load dictionary based on locale
-  const dict = await getDictionary(locale);
+export const metadata: Metadata = {
+  // Title optimized for SEO (60 chars max)
+  title: {
+    default: "GanzAfrica | Empowering Africa's Food System Leaders",
+    template: "%s | GanzAfrica",
+  },
 
-  return {
+  // Meta description (155 chars max, action-oriented)
+  description:
+    "GanzAfrica empowers African youth through agriculture training, sustainable land management, and data-driven leadership programs.",
+
+  // Base URL for all relative paths
+  metadataBase: new URL(baseUrl),
+
+  // Core SEO fields
+  keywords: [
+    "GanzAfrica",
+    "African agriculture",
+    "youth training",
+    "sustainable farming",
+    "food systems",
+    "mentorship",
+  ],
+  authors: [{ name: "GanzAfrica Team" }],
+  creator: "@GanzAfrica",
+
+  // Critical link tags
+  alternates: {
+    canonical: "/",
+  },
+
+  // Open Graph (Social Media Cards)
+  openGraph: {
+    type: "website",
+    siteName: "GanzAfrica",
     title: {
-      default: dict.site.name,
-      template: `%s | ${dict.site.name}`,
+      default: "GanzAfrica | Empowering Africa's Food System Leaders",
+      template: "%s | GanzAfrica",
     },
-    description: dict.site.description,
-    metadataBase: new URL(
-      process.env.NEXT_PUBLIC_APP_URL || "https://ganzafrica.org",
-    ),
-    alternates: {
-      canonical: "/",
-      languages: {
-        en: "/en",
-        fr: "/fr",
+    description:
+      "Transforming Africa's food systems through youth empowerment, sustainable agriculture, and data-driven innovation.",
+    url: baseUrl,
+    images: [
+      {
+        url: `${baseUrl}/images/alumni_program.jpg`,
+        width: 1200,
+        height: 630,
+        alt: "GanzAfrica - Empowering Africa",
       },
+    ],
+  },
+
+  // Twitter Cards
+  twitter: {
+    card: "summary_large_image",
+    title: {
+      default: "GanzAfrica | Empowering Africa's Food System Leaders",
+      template: "%s | GanzAfrica",
     },
-  };
-}
+    description:
+      "Transforming Africa's food systems through youth empowerment, sustainable agriculture, and data-driven innovation.",
+    creator: "@GanzAfrica",
+    images: [`${baseUrl}/images/alumni_program.jpg`],
+  },
+};
 
-export default async function RootLayout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ locale: string }>;
-  }
-) {
-  const params = await props.params;
-
-  const {
-    children
-  } = props;
-
-  // Ensure locale is one of the supported ones, fallback to 'en'
-  const locale =
-    params.locale && ["en", "fr"].includes(params.locale)
-      ? params.locale
-      : "en";
-  const dict = await getDictionary(locale);
+export default async function RootLayout(props: { children: React.ReactNode }) {
+  const { children } = props;
 
   return (
-    <html
-      lang={locale}
-      className={`${fontRubik.variable} light`}
-      suppressHydrationWarning
-    >
+    <html className={`${fontRubik.variable} light`} suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://www.google-analytics.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className="min-h-screen font-sans antialiased">
-        <ClientLayout locale={locale} dict={dict}>
-          {children}
-        </ClientLayout>
-        <CloudflareAnalytics
-          token={process.env.NEXT_PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN}
-        />
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <Suspense fallback={null}>
+            <GoogleAnalyticsComponent gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          </Suspense>
+        )}
+        <ClientLayout>{children}</ClientLayout>
+        <GoogleAnalytics gaId="G-F2YBDRRV32" />
       </body>
     </html>
   );

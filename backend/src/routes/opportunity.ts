@@ -1,10 +1,29 @@
-import { Router } from 'express';
-import { opportunityController } from '../controllers/opportunity';
-import { validate, authenticate, authorize } from '../middlewares';
-import { opportunityValidation } from '../validations/opportunity';
-import { z } from 'zod';
+import { Router } from "express";
+import rateLimit from "express-rate-limit";
+import { opportunityController } from "../controllers/opportunity";
+import * as recruitmentController from "../controllers/recruitment";
+import { validate } from "../middlewares";
+import { opportunityValidation } from "../validations/opportunity";
 
 const router: Router = Router();
+
+// Pre-submission eligibility probe is public; rate-limit per IP (spec: 20/min/IP).
+const eligibilityLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests, please try again shortly.",
+});
+
+// Anonymous funnel events are public; rate-limit per IP (spec: 60/min/IP).
+const funnelLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests, please try again shortly.",
+});
 
 /**
  * @swagger
@@ -13,131 +32,97 @@ const router: Router = Router();
  *   description: Opportunity management endpoints for fellowships and employment positions
  */
 
-/**
- * @swagger
- * tags:
- *   name: Applications
- *   description: Application management for opportunities
- */
-
-// All routes except application submission require authentication
-router.use(['/applications/:id', '/:id/applications'], authenticate);
-
-const listAllApplicationsSchema = z.object({
-  query: z.object({
-    status: z.string().optional(),
-    page: z.string().optional(),
-    limit: z.string().optional()
-  })
-});
-
-// =====================================================
-// IMPORTANT: Order matters in Express routing!
-// More specific routes must come before generic ones
-// =====================================================
-
-// 1. First, define routes with fixed paths (no params)
-router.get(
-    '/',
-    opportunityController.listOpportunities
-);
+// Routes with no parameters
+router.get("/", opportunityController.listOpportunities);
 
 router.post(
-    '/',
-    authenticate,
-    (req, res, next) => {
-        // Dynamically choose validation schema based on opportunity type
-        const validationSchema = req.body.type === 'fellowship' 
-            ? opportunityValidation.createFellowshipSchema 
-            : opportunityValidation.createEmploymentSchema;
-        
-        validate(validationSchema)(req, res, next);
-    },
-    opportunityController.createOpportunity
+  "/",
+  (req, res, next) => {
+    // Dynamically choose validation schema based on opportunity type
+    const validationSchema =
+      req.body.type === "fellowship"
+        ? opportunityValidation.createFellowshipSchema
+        : opportunityValidation.createEmploymentSchema;
+
+    validate(validationSchema)(req, res, next);
+  },
+  opportunityController.createOpportunity,
 );
 
-// 2. Define all /applications routes (before /:id routes)
+// Opportunity routes with ID parameter
 router.get(
-    '/applications',
-    authenticate,
-    opportunityController.listAllApplications
-);
-
-router.get(
-    '/applications/:id',
-    authenticate,
-    validate(opportunityValidation.getOpportunitySchema),
-    opportunityController.getApplicationById
+  "/:id",
+  validate(opportunityValidation.getOpportunitySchema),
+  opportunityController.getOpportunityById,
 );
 
 router.put(
-    '/applications/:id/status',
-    authenticate,
-    validate(opportunityValidation.updateApplicationStatusSchema),
-    opportunityController.updateApplicationStatus
-);
+  "/:id",
+  (req, res, next) => {
+    // Get the opportunity type from the request or fetch it
+    const validationSchema =
+      req.body.type === "fellowship"
+        ? opportunityValidation.updateFellowshipSchema
+        : opportunityValidation.updateEmploymentSchema;
 
-router.post(
-    '/applications/:id/review',
-    authenticate,
-    validate(opportunityValidation.applicationReviewSchema),
-    opportunityController.submitApplicationReview
-);
-
-// 3. Then define all /:id routes
-router.get(
-    '/:id',
-    validate(opportunityValidation.getOpportunitySchema),
-    opportunityController.getOpportunityById
-);
-
-router.put(
-    '/:id',
-    authenticate,
-    (req, res, next) => {
-        // Get the opportunity type from the request or fetch it
-        const validationSchema = req.body.type === 'fellowship' 
-            ? opportunityValidation.updateFellowshipSchema 
-            : opportunityValidation.updateEmploymentSchema;
-        
-        validate(validationSchema)(req, res, next);
-    },
-    opportunityController.updateOpportunity
+    validate(validationSchema)(req, res, next);
+  },
+  opportunityController.updateOpportunity,
 );
 
 router.delete(
-    '/:id',
-    authenticate,
-    validate(opportunityValidation.getOpportunitySchema),
-    opportunityController.deleteOpportunity
+  "/:id",
+  validate(opportunityValidation.getOpportunitySchema),
+  opportunityController.deleteOpportunity,
 );
 
-// 4. Finally define nested routes with /:id/something
+// Opportunity status management routes
 router.post(
-    '/:id/publish',
-    authenticate,
-    validate(opportunityValidation.getOpportunitySchema),
-    opportunityController.publishOpportunity
-);
-
-router.post(
-    '/:id/close',
-    authenticate,
-    validate(opportunityValidation.getOpportunitySchema),
-    opportunityController.closeOpportunity
+  "/:id/publish",
+  validate(opportunityValidation.getOpportunitySchema),
+  opportunityController.publishOpportunity,
 );
 
 router.post(
-    '/:id/apply',
-    validate(opportunityValidation.applicationSubmissionSchema),
-    opportunityController.submitApplication
+  "/:id/close",
+  validate(opportunityValidation.getOpportunitySchema),
+  opportunityController.closeOpportunity,
+);
+
+// REC-01 public: form definition + active rules for the client renderer/pre-check.
+router.get(
+  "/:id/form",
+  validate(opportunityValidation.getOpportunitySchema),
+  recruitmentController.getPublicForm,
+);
+
+// REC-01 public: server-authoritative eligibility probe. Never creates an application row.
+router.post(
+  "/:id/eligibility-check",
+  eligibilityLimiter,
+  validate(opportunityValidation.getOpportunitySchema),
+  recruitmentController.eligibilityCheck,
+);
+
+// REC-04 public: anonymous funnel event ingest. Always 204 (fire-and-forget).
+router.post(
+  "/:id/events",
+  funnelLimiter,
+  validate(opportunityValidation.getOpportunitySchema),
+  recruitmentController.recordFunnelEvent,
+);
+
+// Application routes related to specific opportunities
+router.post(
+  "/:id/apply",
+  validate(opportunityValidation.applicationSubmissionSchema),
+  opportunityController.submitApplication,
 );
 
 router.get(
-    '/:id/applications',
-    authenticate,
-    validate(opportunityValidation.getOpportunitySchema),
-    opportunityController.listApplications
+  "/:id/applications",
+  validate(opportunityValidation.getOpportunitySchema),
+  opportunityController.listApplications,
 );
 
 export default router;

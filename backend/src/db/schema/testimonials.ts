@@ -1,12 +1,4 @@
-import {
-  integer,
-  pgTable,
-  text,
-  varchar,
-  serial,
-  timestamp,
-  index,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, varchar, serial, timestamp, index } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 
 // Testimonials Table
@@ -26,9 +18,7 @@ export const testimonials = pgTable(
   },
   (table) => {
     return {
-      authorNameIdx: index("testimonials_author_name_idx").on(
-        table.author_name,
-      ),
+      authorNameIdx: index("testimonials_author_name_idx").on(table.author_name),
       companyIdx: index("testimonials_company_idx").on(table.company),
       ratingIdx: index("testimonials_rating_idx").on(table.rating),
     };

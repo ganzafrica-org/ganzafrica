@@ -12,35 +12,16 @@ const router: Router = Router();
  *   description: Role management endpoints
  */
 
-// All routes require authentication
-router.use(authenticate);
-
 // Role routes
-router.post(
-  "/",
-  validate(roleValidation.createRoleSchema),
-  roleController.createRole,
-);
+router.post("/", validate(roleValidation.createRoleSchema), roleController.createRole);
 
 router.get("/", roleController.listRoles);
 
-router.get(
-  "/:id",
-  validate(roleValidation.getRoleSchema),
-  roleController.getRoleById,
-);
+router.get("/:id", validate(roleValidation.getRoleSchema), roleController.getRoleById);
 
-router.put(
-  "/:id",
-  validate(roleValidation.updateRoleSchema),
-  roleController.updateRole,
-);
+router.put("/:id", validate(roleValidation.updateRoleSchema), roleController.updateRole);
 
-router.delete(
-  "/:id",
-  validate(roleValidation.deleteRoleSchema),
-  roleController.deleteRole,
-);
+router.delete("/:id", validate(roleValidation.deleteRoleSchema), roleController.deleteRole);
 
 // User role management routes
 router.get(

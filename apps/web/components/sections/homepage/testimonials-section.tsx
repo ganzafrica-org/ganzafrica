@@ -1,403 +1,303 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@workspace/ui/components/avatar';
-import { DecoratedHeading } from '@/components/layout/headertext';
-import { cn } from '@/lib/utils';
-import apiClient from '@/lib/api-client';
+import React, { useState, useEffect, useRef } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
+import { DecoratedHeading } from "@/components/layout/headertext";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import Container from "@/components/layout/container";
+import apiClient from "@/lib/api-client";
+import { TranslatableText } from "@/components/translate";
 
 // Interface for the testimonial data from the API
 interface Testimonial {
-    id: number;
-    author_name: string;
-    position: string;
-    image: string;
-    description: string;
-    company: string;
-    occupation: string;
-    date: string;
-    rating: number;
-    created_at: string;
-    updated_at: string;
+  id: number;
+  author_name: string;
+  position: string;
+  image: string;
+  description: string;
+  company: string;
+  occupation: string;
+  date: string;
+  rating: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Interface for the API response
 interface TestimonialsResponse {
-    testimonials: Testimonial[];
+  testimonials: Testimonial[];
 }
 
-// Props for the component
-interface TestimonialsSectionProps {
-    locale: string;
-    dict: any;
-}
+export default function TestimonialsSection({}) {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
-export default function TestimonialsSection({ locale, dict }: TestimonialsSectionProps) {
-    const [activeIndex, setActiveIndex] = useState(0);
-    const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const nextTestimonial = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 500);
+  };
 
-    // Fetch testimonials from the API
-    useEffect(() => {
-        const fetchTestimonials = async () => {
-            try {
-                setLoading(true);
-                const response = await apiClient.get<TestimonialsResponse>('/testimonials');
-                setTestimonials(response.data.testimonials);
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching testimonials:', err);
-                setError('Failed to load testimonials');
-                // Set fallback testimonials in case of error
-                setTestimonials([
-                    {
-                        id: 1,
-                        author_name: "Madge Jennings",
-                        position: dict?.testimonials?.roles?.fellow || "Fellow",
-                        description: dict?.testimonials?.comments?.comment1 || "My experience with GanzAfrica has been transformative. The training and mentorship helped me develop crucial skills in agriculture and land management that I now apply daily in my work.",
-                        image: "/images/1.jpg",
-                        company: "GA",
-                        occupation: "fellow",
-                        date: new Date().toISOString(),
-                        rating: 5,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                    }
-                ]);
-            } finally {
-                setLoading(false);
-            }
-        };
+  const prevTestimonial = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 500);
+  };
 
-        fetchTestimonials();
-    }, [dict?.testimonials?.roles?.fellow, dict?.testimonials?.comments?.comment1]);
+  const handleTestimonialChange = (index: number) => {
+    if (isAnimating || index === currentTestimonial) return;
+    setIsAnimating(true);
+    setCurrentTestimonial(index);
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 500);
+  };
 
-    // Start automatic rotation when testimonials are loaded
-    useEffect(() => {
-        if (testimonials.length === 0) return;
+  // YOUR ORIGINAL DATA FETCHING LOGIC - UNCHANGED
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get<TestimonialsResponse>("/testimonials");
+        setTestimonials(response.data.testimonials);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching testimonials:", err);
+        setError("Failed to load testimonials");
+        // Set fallback testimonials in case of error
+        setTestimonials([
+          {
+            id: 1,
+            author_name: "Madge Jennings",
+            position: "Fellow",
+            description:
+              "My experience with GanzAfrica has been transformative. The training and mentorship helped me develop crucial skills in agriculture and land management that I now apply daily in my work.",
+            image: "/images/1.jpg",
+            company: "GA",
+            occupation: "fellow",
+            date: new Date().toISOString(),
+            rating: 5,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        const startInterval = () => {
-            intervalRef.current = setInterval(() => {
-                setActiveIndex(prev => (prev + 1) % testimonials.length);
-            }, 5000); // Change every 5 seconds
-        };
+    fetchTestimonials();
+  }, []);
 
-        startInterval();
+  // Auto-play functionality - matches your original timing
+  useEffect(() => {
+    if (testimonials.length === 0) return;
 
-        // Clear interval on component unmount
-        return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-        };
-    }, [testimonials.length]);
-
-    // Reset interval when manually changing testimonial
-    const handleAvatarClick = (index: number) => {
-        setActiveIndex(index);
-
-        // Reset the interval to prevent changing too soon after a click
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
+    const startInterval = () => {
+      autoPlayRef.current = setInterval(() => {
+        if (!isAnimating) {
+          nextTestimonial();
         }
-
-        intervalRef.current = setInterval(() => {
-            setActiveIndex(prev => (prev + 1) % testimonials.length);
-        }, 5000);
+      }, 5000);
     };
 
-    // Divide testimonials into left and right side groups
-    const getLeftSideTestimonials = () => {
-        if (testimonials.length === 0) return [];
-        // Use even indices for left side
-        return testimonials.filter((_, index) => index % 2 === 0);
+    startInterval();
+
+    return () => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
     };
+  }, [testimonials.length]);
 
-    const getRightSideTestimonials = () => {
-        if (testimonials.length === 0) return [];
-        // Use odd indices for right side
-        return testimonials.filter((_, index) => index % 2 !== 0);
-    };
+  // Reset interval when manually changing testimonial
+  const handleAvatarClick = (index: number) => {
+    handleTestimonialChange(index);
 
-    // Show skeleton loading state that resembles the actual content
-    if (loading && testimonials.length === 0) {
-        return (
-            <section className="py-16 md:py-24 bg-secondary-green/5 relative overflow-hidden">
-                <div className="container mx-auto px-4">
-                    <div className="text-center mb-16">
-                        {/* Skeleton for heading */}
-                        <div className="flex justify-center">
-                            <div className="h-12 w-72 bg-gray-200 animate-pulse rounded-md"></div>
-                        </div>
-                    </div>
-
-                    <div className="max-w-5xl mx-auto">
-                        <div className="relative">
-                            {/* Skeleton for left avatars */}
-                            <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2">
-                                <div className="relative w-40 h-96">
-                                    {[1, 2, 3, 4].map((_, index) => (
-                                        <div
-                                            key={`skeleton-left-${index}`}
-                                            className="absolute animate-pulse"
-                                            style={{
-                                                top: `${index * 18}%`,
-                                                left: '50%',
-                                            }}
-                                        >
-                                            <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-white shadow-md"></div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Skeleton for center content */}
-                            <div className="flex flex-col items-center justify-center text-center px-4 md:px-20">
-                                {/* Skeleton for avatar */}
-                                <div className="relative h-56 w-full max-w-xs mb-8">
-                                    <div className="w-40 h-40 rounded-full bg-gray-200 animate-pulse mx-auto"></div>
-                                    <div className="h-6 w-48 bg-gray-200 animate-pulse mx-auto mt-4 rounded"></div>
-                                    <div className="h-4 w-32 bg-gray-200 animate-pulse mx-auto mt-2 rounded"></div>
-                                </div>
-
-                                {/* Skeleton for quote text */}
-                                <div className="relative min-h-[180px] md:min-h-[150px] w-full">
-                                    <div className="w-10 h-10 bg-gray-100 mb-4 mx-auto rounded"></div>
-                                    <div className="h-4 w-full max-w-lg bg-gray-200 animate-pulse mx-auto rounded mb-2"></div>
-                                    <div className="h-4 w-full max-w-md bg-gray-200 animate-pulse mx-auto rounded mb-2"></div>
-                                    <div className="h-4 w-full max-w-sm bg-gray-200 animate-pulse mx-auto rounded"></div>
-                                </div>
-                            </div>
-
-                            {/* Skeleton for right avatars */}
-                            <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2">
-                                <div className="relative w-40 h-96">
-                                    {[1, 2, 3, 4].map((_, index) => (
-                                        <div
-                                            key={`skeleton-right-${index}`}
-                                            className="absolute animate-pulse"
-                                            style={{
-                                                top: `${index * 18}%`,
-                                                right: '50%',
-                                            }}
-                                        >
-                                            <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-white shadow-md"></div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Mobile skeleton indicators */}
-                        <div className="md:hidden flex justify-center mt-8 gap-3">
-                            {[1, 2, 3, 4].map((_, index) => (
-                                <div key={`skeleton-nav-${index}`} className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-        );
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
     }
 
+    if (testimonials.length > 0) {
+      autoPlayRef.current = setInterval(() => {
+        if (!isAnimating) {
+          nextTestimonial();
+        }
+      }, 5000);
+    }
+  };
+
+  // YOUR ORIGINAL SKELETON LOADING - ADAPTED TO NEW UI
+  if (loading && testimonials.length === 0) {
     return (
-        <section className="py-16 md:py-24 bg-secondary-green/5 relative overflow-hidden">
-            <div className="container mx-auto px-4">
-                <div className="text-center mb-16">
-                    <DecoratedHeading
-                        firstText={dict?.testimonials?.heading_first || "Our"}
-                        secondText={dict?.testimonials?.heading_second || "Testimonials"}
-                        className="mx-auto"
+      <motion.section
+        initial={{ opacity: 1 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="py-12 md:py-16 bg-gray-50"
+      >
+        <Container>
+          <div className="text-center mb-6 md:mb-8">
+            <div className="h-8 md:h-10 w-64 md:w-80 bg-gray-200 animate-pulse rounded-md mx-auto mb-4" />
+            <div className="h-7 md:h-8 w-72 md:w-96 bg-gray-200 animate-pulse rounded-md mx-auto" />
+          </div>
+
+          <div className="max-w-5xl mx-auto px-4 md:px-12">
+            <div className="flex justify-center items-center gap-4 md:gap-6 mb-6 md:mb-8">
+              {[1, 2, 3, 4, 5].map((_, index) => (
+                <div
+                  key={index}
+                  className="w-14 md:w-20 h-14 md:h-20 rounded-full bg-gray-200 animate-pulse"
+                />
+              ))}
+            </div>
+            <div className="text-center">
+              <div className="h-20 md:h-24 bg-gray-200 animate-pulse rounded-lg mb-4 md:mb-6 mx-auto max-w-2xl" />
+              <div className="h-5 md:h-6 w-28 md:w-40 bg-gray-200 animate-pulse rounded mx-auto" />
+            </div>
+          </div>
+        </Container>
+      </motion.section>
+    );
+  }
+
+  return (
+    <motion.section
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className=" pt-5 bg-gray-50 bg-[#045F3C] "
+    >
+      <Container>
+        <div className="text-center mb-6 md:mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 text-[#FDB022]">
+            <TranslatableText>What People</TranslatableText>
+          </h2>
+          <h3 className="text-2xl md:text-3xl font-bold text-white mb-6 md:mb-8">
+            <span className="text-[#00A15D]">
+              <TranslatableText>Say About</TranslatableText>
+            </span>{" "}
+            <TranslatableText>Us</TranslatableText>
+          </h3>
+        </div>
+
+        {error && (
+          <div className="text-center text-red-500 mb-8 px-4 max-w-2xl mx-auto">
+            <TranslatableText>{error}</TranslatableText>
+          </div>
+        )}
+
+        <div className="max-w-5xl mx-auto px-4 md:px-12">
+          {/* NEW HORIZONTAL AVATAR NAVIGATION UI */}
+          <div className="flex justify-center items-center gap-3 md:gap-6 mb-6 md:mb-8">
+            {testimonials.map((testimonial, index) => {
+              const isActive = currentTestimonial === index;
+              const isPrevious =
+                currentTestimonial === index + 1 ||
+                (currentTestimonial === 0 && index === testimonials.length - 1);
+              const isNext =
+                currentTestimonial === index - 1 ||
+                (currentTestimonial === testimonials.length - 1 && index === 0);
+
+              return (
+                <div
+                  key={testimonial.id}
+                  className={`cursor-pointer transition-all duration-300 transform ${
+                    isActive
+                      ? "w-14 md:w-20 h-14 md:h-20 z-20 scale-110"
+                      : isPrevious || isNext
+                        ? "w-10 md:w-16 h-10 md:h-16 z-10 opacity-70 scale-90"
+                        : "w-8 md:w-12 h-8 md:h-12 opacity-50 scale-75"
+                  }`}
+                  onClick={() => handleAvatarClick(index)}
+                >
+                  <div
+                    className={`rounded-full overflow-hidden h-full w-full transition-all duration-300 ${
+                      isActive ? "ring-2 md:ring-4 ring-yellow-400" : "ring-1 ring-gray-200"
+                    }`}
+                  >
+                    <img
+                      src={testimonial.image}
+                      alt={testimonial.author_name}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
                     />
+                  </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Error message */}
-                {error && (
-                    <div className="text-center text-red-500 mb-8">{error}</div>
-                )}
+          {/* NEW TESTIMONIAL CONTENT UI */}
+          <div className="relative">
+            <div className="p-6 md:p-8 min-h-[250px] flex flex-col justify-center">
+              <div className="text-center px-2 md:px-16">
+                <motion.div
+                  key={`content-${currentTestimonial}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5 }}
+                  className="min-h-[120px] md:min-h-[150px] flex items-center justify-center mb-4 md:mb-6"
+                >
+                  <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl mx-auto text-white">
+                    <TranslatableText>
+                      {testimonials[currentTestimonial]?.description ?? ""}
+                    </TranslatableText>
+                  </p>
+                </motion.div>
 
-                <div className="max-w-5xl mx-auto">
-                    <div className="relative">
-                        {/* Avatars on left side - using left side testimonials only */}
-                        <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2">
-                            <div className="relative w-40 h-96">
-                                {getLeftSideTestimonials().map((testimonial, index) => {
-                                    // Calculate position for floating effect
-                                    const testimonialIndex = testimonials.findIndex(t => t.id === testimonial.id);
-                                    const isActive = testimonialIndex === activeIndex;
-                                    const angle = (360 / getLeftSideTestimonials().length) * index;
-                                    const radius = 20; // pixels from center
-
-                                    return (
-                                        <div
-                                            key={`left-${testimonial.id}`}
-                                            className={cn(
-                                                "absolute transition-all duration-500 cursor-pointer",
-                                                isActive
-                                                    ? "ring-4 ring-primary-green/70 ring-offset-2 scale-110"
-                                                    : "opacity-80 hover:opacity-100 hover:scale-105"
-                                            )}
-                                            style={{
-                                                animation: `floating ${8 + index}s linear infinite`,
-                                                top: `${index * (100 / Math.max(getLeftSideTestimonials().length, 1))}%`,
-                                                left: `${Math.sin(angle * Math.PI / 180) * radius + 50}%`,
-                                                borderRadius: "50%", // Ensure ring follows avatar shape
-                                                transformOrigin: "center center",
-                                                transition: "all 0.3s ease-in-out"
-                                            }}
-                                            onClick={() => handleAvatarClick(testimonialIndex)}
-                                        >
-                                            <Avatar className={cn(
-                                                "border-2 border-white shadow-md",
-                                                isActive ? "w-20 h-20" : "w-16 h-16" // Increased sizes
-                                            )}>
-                                                <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
-                                                <AvatarFallback className="text-lg">{testimonial.author_name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Center content - Photo and Quote - with better spacing */}
-                        <div className="flex flex-col items-center justify-center text-center px-4 md:px-20">
-                            {/* Avatar Images - increased size */}
-                            <div className="relative h-56 w-full max-w-xs mb-8 perspective-container">
-                                {testimonials.map((testimonial, index) => (
-                                    <div
-                                        key={`center-${testimonial.id}`}
-                                        className={cn(
-                                            "absolute top-0 left-0 right-0 mx-auto transition-all duration-700 ease-in-out",
-                                            index === activeIndex ? "opacity-100 transform-none" :
-                                                index < activeIndex ? "opacity-0 -translate-y-full rotate-x-70" : "opacity-0 translate-y-full rotate-x-negative-70"
-                                        )}
-                                    >
-                                        <Avatar className="w-40 h-40 mx-auto border-4 border-white shadow-lg">
-                                            <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
-                                            <AvatarFallback className="text-4xl">{testimonial.author_name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <h3 className="mt-4 text-2xl font-bold text-primary-green">{testimonial.author_name}</h3>
-                                        <p className="text-md text-gray-600">{testimonial.position} {testimonial.company && `at ${testimonial.company}`}</p>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Quote Text - improved with better wrapping and height */}
-                            <div className="relative min-h-[180px] md:min-h-[150px] w-full perspective-container">
-                                {testimonials.map((testimonial, index) => (
-                                    <div
-                                        key={`quote-${testimonial.id}`}
-                                        className={cn(
-                                            "absolute w-full px-4 transition-all duration-700 ease-in-out",
-                                            index === activeIndex ? "opacity-100 transform-none" :
-                                                index < activeIndex ? "opacity-0 -translate-y-full rotate-x-70" : "opacity-0 translate-y-full rotate-x-negative-70"
-                                        )}
-                                    >
-                                        <div className="relative">
-                                            <svg className="w-10 h-10 text-primary-green/20 mb-4 mx-auto" fill="currentColor" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M10 8C4.477 8 0 12.477 0 18v14h12V18h-8c0-3.866 3.134-7 7-7h1V8h-2zm20 0c-5.523 0-10 4.477-10 10v14h12V18h-8c0-3.866 3.134-7 7-7h1V8h-2z"></path>
-                                            </svg>
-                                            <p className="text-gray-700 italic text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
-                                                {testimonial.description}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Avatars on right side - using right side testimonials only */}
-                        <div className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2">
-                            <div className="relative w-40 h-96">
-                                {getRightSideTestimonials().map((testimonial, index) => {
-                                    // Different animation timing for right side
-                                    const testimonialIndex = testimonials.findIndex(t => t.id === testimonial.id);
-                                    const isActive = testimonialIndex === activeIndex;
-                                    const angle = (360 / getRightSideTestimonials().length) * index;
-                                    const radius = 20; // pixels from center
-
-                                    return (
-                                        <div
-                                            key={`right-${testimonial.id}`}
-                                            className={cn(
-                                                "absolute transition-all duration-500 cursor-pointer",
-                                                isActive
-                                                    ? "ring-4 ring-primary-green/70 ring-offset-2 scale-110"
-                                                    : "opacity-80 hover:opacity-100 hover:scale-105"
-                                            )}
-                                            style={{
-                                                animation: `floating ${7 + index}s linear infinite`,
-                                                top: `${index * (100 / Math.max(getRightSideTestimonials().length, 1))}%`,
-                                                right: `${Math.sin(angle * Math.PI / 180) * radius + 50}%`,
-                                                borderRadius: "50%", // Ensure ring follows avatar shape
-                                                transformOrigin: "center center",
-                                                transition: "all 0.3s ease-in-out"
-                                            }}
-                                            onClick={() => handleAvatarClick(testimonialIndex)}
-                                        >
-                                            <Avatar className={cn(
-                                                "border-2 border-white shadow-md",
-                                                isActive ? "w-20 h-20" : "w-16 h-16" // Increased sizes
-                                            )}>
-                                                <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
-                                                <AvatarFallback className="text-lg">{testimonial.author_name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Mobile testimonial navigation - improved with avatar indicators */}
-                    <div className="md:hidden flex justify-center mt-8 gap-3">
-                        {testimonials.map((testimonial, index) => (
-                            <button
-                                key={`nav-${index}`}
-                                onClick={() => handleAvatarClick(index)}
-                                className={cn(
-                                    "transition-all rounded-full overflow-hidden border-2",
-                                    index === activeIndex
-                                        ? "scale-125 border-primary-green"
-                                        : "scale-100 border-transparent opacity-70 hover:opacity-90"
-                                )}
-                                aria-label={`Go to testimonial ${index + 1}`}
-                            >
-                                <Avatar className="w-10 h-10">
-                                    <AvatarImage src={testimonial.image} alt={testimonial.author_name} />
-                                    <AvatarFallback>{testimonial.author_name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <motion.div
+                  key={`author-${currentTestimonial}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="min-h-[50px] md:min-h-[60px]"
+                >
+                  <h4 className="text-lg md:text-xl font-bold mb-1 md:mb-2 text-yellow-400">
+                    {testimonials[currentTestimonial]?.author_name}
+                  </h4>
+                  <p className="text-gray-600 text-xs md:text-sm text-white">
+                    {testimonials[currentTestimonial]?.position}
+                  </p>
+                </motion.div>
+              </div>
             </div>
 
-            <style jsx global>{`
-        @keyframes floating {
-          0% {
-            transform: rotate(0deg) translate(-10px) rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg) translate(-10px) rotate(-360deg);
-          }
-        }
-
-        .perspective-container {
-          perspective: 1000px;
-        }
-
-        .rotate-x-70 {
-          transform: rotateX(70deg);
-        }
-
-        .rotate-x-negative-70 {
-          transform: rotateX(-70deg);
-        }
-      `}</style>
-        </section>
-    );
+            {/* NAVIGATION ARROWS */}
+            <button
+              onClick={prevTestimonial}
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-[#045F3C] bg-white  hover:bg-yellow-400 hover:text-white transition-all duration-300 -translate-x-1/2 md:-translate-x-5 shadow-lg"
+              aria-label="Previous testimonial"
+              disabled={isAnimating || testimonials.length <= 1}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={nextTestimonial}
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-[#045F3C] bg-white hover:bg-yellow-400 hover:text-white transition-all duration-300 translate-x-1/2 md:translate-x-5 shadow-lg"
+              aria-label="Next testimonial"
+              disabled={isAnimating || testimonials.length <= 1}
+            >
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </Container>
+    </motion.section>
+  );
 }

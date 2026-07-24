@@ -1,65 +1,68 @@
-import axios from 'axios';
+import axios from "axios";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002/api";
 
 const apiClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api',
-    withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+  baseURL: API_URL,
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+  timeout: 30000,
 });
 
-// Request interceptor for adding tokens or other common headers
-apiClient.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+function readCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
+  return match && match[1] ? decodeURIComponent(match[1]) : null;
+}
 
-// Response interceptor for handling common response scenarios
+apiClient.interceptors.request.use((config) => {
+  const method = (config.method || "get").toUpperCase();
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const csrf = readCookie("ganzafrica_csrf");
+    if (csrf) config.headers["X-CSRF-Token"] = csrf;
+  }
+  return config;
+});
+
+let refreshPromise: Promise<boolean> | null = null;
+
 apiClient.interceptors.response.use(
-    (response) => {
-        // If login successful, store tokens
-        if (response.config.url?.endsWith('/login') && response.data.data?.tokens) {
-            const { accessToken, refreshToken } = response.data.data.tokens;
-            localStorage.setItem('accessToken', accessToken);
-            localStorage.setItem('refreshToken', refreshToken);
-        }
-        return response;
-    },
-    async (error) => {
-        const originalRequest = error.config;
-
-        // Handle token refresh
-        if (error.response?.status === 401 && !originalRequest._retry) {
-            originalRequest._retry = true;
-            try {
-                const refreshToken = localStorage.getItem('refreshToken');
-                const response = await apiClient.post('/refresh-token', { refreshToken });
-
-                const { accessToken, refreshToken: newRefreshToken } = response.data.data.tokens;
-
-                localStorage.setItem('accessToken', accessToken);
-                localStorage.setItem('refreshToken', newRefreshToken);
-
-                // Retry the original request with new token
-                originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
-                return apiClient(originalRequest);
-            } catch (refreshError) {
-                // Refresh failed, logout user
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
-            }
-        }
-
-        return Promise.reject(error);
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const isAuthEntry =
+      originalRequest?.url?.endsWith("/login") || originalRequest?.url?.endsWith("/refresh-token");
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEntry) {
+      originalRequest._retry = true;
+      if (!refreshPromise) {
+        refreshPromise = axios
+          .post(`${API_URL}/auth/refresh-token`, {}, { withCredentials: true })
+          .then(() => true)
+          .catch(() => false)
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+      if (await refreshPromise) return apiClient(originalRequest);
+      if (typeof window !== "undefined") window.location.href = "/login";
     }
+    return Promise.reject(error);
+  },
 );
+
+// Profile API functions
+export const profileApi = {
+  // Get current user's profile
+  getCurrentProfile: async () => {
+    const response = await apiClient.get("/users/profile/me");
+    return response.data;
+  },
+
+  // Update current user's profile
+  updateProfile: async (profileData: any) => {
+    const response = await apiClient.put("/users/profile/me", profileData);
+    return response.data;
+  },
+};
 
 export default apiClient;

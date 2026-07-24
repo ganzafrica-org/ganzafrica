@@ -158,3 +158,15 @@ pnpm run build
 ```
 
 The built application will be available in the `dist` directory, which can be deployed to a Node.js hosting service.
+
+### File uploads on production
+
+If you see **"Invalid file type. Only images, videos, PDF, DOC, and DOCX files are allowed"** on the hosted app, the server is running an old build. Rebuild and redeploy:
+
+```bash
+cd backend
+pnpm run build
+# Restart the backend process (pm2, systemd, or your host’s method)
+```
+
+The current middleware allows more types (XLS, XLSX, archives, etc.) and falls back to file extension when the `Content-Type` is generic; the deployed `dist/` must match the latest `src/middlewares/upload.ts`.

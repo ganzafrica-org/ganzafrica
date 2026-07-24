@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import Link from 'next/link';
-import { 
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import {
   ArrowLeft,
   Calendar,
   Clock,
@@ -13,10 +12,11 @@ import {
   AlertCircle,
   Edit,
   Share2,
-  ImageIcon,
-  FileVideo
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
+  Image as ImageIcon,
+  FileVideo,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import apiClient from "@/lib/api-client";
 
 // Define interface for news data
 interface MediaItem {
@@ -61,7 +61,7 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authors, setAuthors] = useState<Record<number, string>>({});
-  const [activeTab, setActiveTab] = useState('article');
+  const [activeTab, setActiveTab] = useState("article");
   const [showSidebar, setShowSidebar] = useState(true);
 
   // Fetch the news data
@@ -69,12 +69,12 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
     const fetchNewsData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch news article details
         try {
-          const response = await axios.get(`http://localhost:3002/api/news/${params.id}`);
+          const response = await apiClient.get(`/news/${params.id}`);
           console.log("API Response:", response.data);
-          
+
           // Check if the response has a nested news object
           if (response.data && response.data.news) {
             setNews(response.data.news);
@@ -85,20 +85,19 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
             throw new Error("Invalid news data structure");
           }
         } catch (apiError) {
-          console.error('Error fetching news from API:', apiError);
-          setError('Failed to fetch news details. Please try again later.');
+          console.error("Error fetching news from API:", apiError);
+          setError("Failed to fetch news details. Please try again later.");
         }
 
         // Set default authors
         setAuthors({
-          1: 'Mukamana Fransine',
-          2: 'John Doe',
-          3: 'Jane Smith'
+          1: "Mukamana Fransine",
+          2: "John Doe",
+          3: "Jane Smith",
         });
-
       } catch (error) {
-        console.error('Error in overall news data fetching:', error);
-        setError('Failed to fetch news details. Please try again later.');
+        console.error("Error in overall news data fetching:", error);
+        setError("Failed to fetch news details. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -110,55 +109,74 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
     const handleResize = () => {
       setShowSidebar(window.innerWidth >= 768);
     };
-    
+
     handleResize(); // Set initial state
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [params.id]);
 
   // Format date for display
   const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   // Get author name from author_id
   const getAuthorName = (authorId: number | undefined) => {
-    if (!authorId) return 'Unknown';
-    return authors[authorId] || 'Unknown Author';
+    if (!authorId) return "Unknown";
+    return authors[authorId] || "Unknown Author";
   };
 
   // Get status badge
   const getStatusBadge = (status: string | undefined) => {
     if (!status) return null;
-    
-    switch(status.toLowerCase()) {
-      case 'published':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">• Published</span>;
-      case 'draft':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">• Draft</span>;
-      case 'archived':
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• Archived</span>;
+
+    switch (status.toLowerCase()) {
+      case "published":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            • Published
+          </span>
+        );
+      case "draft":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+            • Draft
+          </span>
+        );
+      case "archived":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+            • Archived
+          </span>
+        );
       default:
-        return <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">• {status}</span>;
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+            • {status}
+          </span>
+        );
     }
   };
 
   // Get key lessons as array
   const getKeyLessons = (keyLessons: string | undefined) => {
     if (!keyLessons) return [];
-    return keyLessons.split(';').map(lesson => lesson.trim()).filter(Boolean);
+    return keyLessons
+      .split(";")
+      .map((lesson) => lesson.trim())
+      .filter(Boolean);
   };
 
   // Format file size
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' bytes';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (bytes < 1024) return bytes + " bytes";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
   // Handle share
@@ -166,17 +184,17 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: news?.title || 'News Article',
-          text: news?.summary || 'Check out this news article',
-          url: window.location.href
+          title: news?.title || "News Article",
+          text: news?.summary || "Check out this news article",
+          url: window.location.href,
         });
       } catch (error) {
-        console.error('Error sharing:', error);
+        console.error("Error sharing:", error);
       }
     } else {
       // Fallback - copy to clipboard
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      alert("Link copied to clipboard!");
     }
   };
 
@@ -185,14 +203,42 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
     if (!news || !news.media || !news.media.items || news.media.items.length === 0) {
       return null;
     }
-    
-    const coverImage = news.media.items.find(item => item.cover && item.type === 'image');
+
+    const coverImage = news.media.items.find((item) => item.cover && item.type === "image");
     return coverImage ? coverImage.url : null;
   };
 
   // Toggle sidebar on mobile
   const toggleSidebar = () => {
     setShowSidebar(!showSidebar);
+  };
+
+  // Image error handling function - Using the same approach as partners page
+  const handleImageError = (e: any, fallbackText: string | undefined) => {
+    console.error(`Failed to load image: ${e.target.src}`);
+    // Create a canvas element for the fallback
+    const canvas = document.createElement("canvas");
+    canvas.width = 40;
+    canvas.height = 40;
+    const ctx = canvas.getContext("2d");
+
+    if (ctx) {
+      // Add null check for TypeScript
+      // Fill background
+      ctx.fillStyle = "#f3f4f6";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Add text
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "bold 16px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(fallbackText || "N", canvas.width / 2, canvas.height / 2);
+    }
+
+    // Replace image with canvas data
+    e.target.onerror = null; // Prevent infinite error loop
+    e.target.src = canvas.toDataURL("image/png");
   };
 
   if (loading) {
@@ -209,13 +255,19 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
   if (error) {
     return (
       <div className="p-4 md:p-6 max-w-full mx-auto container">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <div
+          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
           <div className="flex">
             <AlertCircle className="h-5 w-5 mr-2" />
             <span>{error}</span>
           </div>
           <div className="mt-4">
-            <Link href="/news" className="text-red-700 font-medium hover:underline flex items-center">
+            <Link
+              href="/news"
+              className="text-red-700 font-medium hover:underline flex items-center"
+            >
               <ArrowLeft className="w-4 h-4 mr-1" /> Back to News
             </Link>
           </div>
@@ -227,13 +279,19 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
   if (!news) {
     return (
       <div className="p-4 md:p-6 max-w-full mx-auto container">
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative" role="alert">
+        <div
+          className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
           <div className="flex">
             <AlertCircle className="h-5 w-5 mr-2" />
             <span>News article not found</span>
           </div>
           <div className="mt-4">
-            <Link href="/news" className="text-yellow-700 font-medium hover:underline flex items-center">
+            <Link
+              href="/news"
+              className="text-yellow-700 font-medium hover:underline flex items-center"
+            >
               <ArrowLeft className="w-4 h-4 mr-1" /> Back to News
             </Link>
           </div>
@@ -252,9 +310,7 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold truncate">{news.title}</h1>
-            <div className="sm:ml-4">
-              {getStatusBadge(news.status)}
-            </div>
+            <div className="sm:ml-4">{getStatusBadge(news.status)}</div>
           </div>
           <p className="text-gray-500 text-sm">News / Article</p>
         </div>
@@ -266,8 +322,8 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
           >
             <Share2 className="w-5 h-5 text-gray-700" />
           </button>
-          <Link 
-            href={`/news/edit/${news.id}`} 
+          <Link
+            href={`/news/edit/${news.id}`}
             className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
             title="Edit"
           >
@@ -279,21 +335,21 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
       {/* Mobile Tabs Navigation */}
       <div className="md:hidden mb-4 border-b border-gray-200">
         <div className="flex space-x-4 overflow-x-auto pb-2">
-          <button 
-            onClick={() => setActiveTab('article')}
-            className={`px-3 py-2 whitespace-nowrap ${activeTab === 'article' ? 'text-green-700 border-b-2 border-green-700' : 'text-gray-600'}`}
+          <button
+            onClick={() => setActiveTab("article")}
+            className={`px-3 py-2 whitespace-nowrap ${activeTab === "article" ? "text-green-700 border-b-2 border-green-700" : "text-gray-600"}`}
           >
             Article
           </button>
-          <button 
-            onClick={() => setActiveTab('info')}
-            className={`px-3 py-2 whitespace-nowrap ${activeTab === 'info' ? 'text-green-700 border-b-2 border-green-700' : 'text-gray-600'}`}
+          <button
+            onClick={() => setActiveTab("info")}
+            className={`px-3 py-2 whitespace-nowrap ${activeTab === "info" ? "text-green-700 border-b-2 border-green-700" : "text-gray-600"}`}
           >
             Information
           </button>
-          <button 
-            onClick={() => setActiveTab('media')}
-            className={`px-3 py-2 whitespace-nowrap ${activeTab === 'media' ? 'text-green-700 border-b-2 border-green-700' : 'text-gray-600'}`}
+          <button
+            onClick={() => setActiveTab("media")}
+            className={`px-3 py-2 whitespace-nowrap ${activeTab === "media" ? "text-green-700 border-b-2 border-green-700" : "text-gray-600"}`}
           >
             Media
           </button>
@@ -303,15 +359,19 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
       {/* News content with sidebar */}
       <div className="flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Sidebar navigation - only visible on medium screens and above */}
-        <div className={`hidden md:block w-full md:w-1/4 bg-white p-4 rounded border border-gray-200 h-fit sticky top-4`}>
+        <div
+          className={`hidden md:block w-full md:w-1/4 bg-white p-4 rounded border border-gray-200 h-fit sticky top-4`}
+        >
           <ul>
             <li className="mb-6">
-              <button 
-                onClick={() => setActiveTab('article')}
-                className={`w-full text-left flex items-start ${activeTab === 'article' ? 'text-green-700' : 'text-gray-700'}`}
+              <button
+                onClick={() => setActiveTab("article")}
+                className={`w-full text-left flex items-start ${activeTab === "article" ? "text-green-700" : "text-gray-700"}`}
               >
                 <div className="flex-shrink-0 mt-1">
-                  <div className={`w-3 h-3 rounded-full ${activeTab === 'article' ? 'bg-green-700' : 'bg-gray-300'}`}></div>
+                  <div
+                    className={`w-3 h-3 rounded-full ${activeTab === "article" ? "bg-green-700" : "bg-gray-300"}`}
+                  ></div>
                 </div>
                 <div className="ml-4">
                   <p className="font-semibold">Article Content</p>
@@ -320,12 +380,14 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
               </button>
             </li>
             <li className="mb-6">
-              <button 
-                onClick={() => setActiveTab('info')}
-                className={`w-full text-left flex items-start ${activeTab === 'info' ? 'text-green-700' : 'text-gray-700'}`}
+              <button
+                onClick={() => setActiveTab("info")}
+                className={`w-full text-left flex items-start ${activeTab === "info" ? "text-green-700" : "text-gray-700"}`}
               >
                 <div className="flex-shrink-0 mt-1">
-                  <div className={`w-3 h-3 rounded-full ${activeTab === 'info' ? 'bg-green-700' : 'bg-gray-300'}`}></div>
+                  <div
+                    className={`w-3 h-3 rounded-full ${activeTab === "info" ? "bg-green-700" : "bg-gray-300"}`}
+                  ></div>
                 </div>
                 <div className="ml-4">
                   <p className="font-semibold">Meta Information</p>
@@ -334,12 +396,14 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
               </button>
             </li>
             <li className="mb-6">
-              <button 
-                onClick={() => setActiveTab('media')}
-                className={`w-full text-left flex items-start ${activeTab === 'media' ? 'text-green-700' : 'text-gray-700'}`}
+              <button
+                onClick={() => setActiveTab("media")}
+                className={`w-full text-left flex items-start ${activeTab === "media" ? "text-green-700" : "text-gray-700"}`}
               >
                 <div className="flex-shrink-0 mt-1">
-                  <div className={`w-3 h-3 rounded-full ${activeTab === 'media' ? 'bg-green-700' : 'bg-gray-300'}`}></div>
+                  <div
+                    className={`w-3 h-3 rounded-full ${activeTab === "media" ? "bg-green-700" : "bg-gray-300"}`}
+                  ></div>
                 </div>
                 <div className="ml-4">
                   <p className="font-semibold">Media</p>
@@ -353,19 +417,30 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
         {/* Main content area */}
         <div className="w-full md:w-3/4">
           {/* Article tab */}
-          {activeTab === 'article' && (
+          {activeTab === "article" && (
             <div className="bg-white p-4 md:p-6 rounded-lg border border-gray-200 overflow-hidden">
               {/* Cover image */}
               {getCoverImage() && (
                 <div className="mb-6">
-                  <img 
-                    src={getCoverImage() || ''} 
+                  <img
+                    src={getCoverImage() || ""}
                     alt={news.title}
                     className="w-full h-48 md:h-64 object-cover rounded-lg"
+                    onLoad={() =>
+                      console.log(`Successfully loaded cover image: ${getCoverImage()}`)
+                    }
+                    onError={(e) => {
+                      console.error(`Failed to load cover image: ${getCoverImage()}`);
+                      e.target.onerror = null; // Prevent infinite error loops
+
+                      // Create fallback with initial letter
+                      const fallbackText = news.title?.charAt(0)?.toUpperCase() || "N";
+                      handleImageError(e, fallbackText);
+                    }}
                   />
                 </div>
               )}
-              
+
               {/* Article metadata */}
               <div className="mb-6 flex flex-wrap gap-4 text-sm text-gray-600">
                 <div className="flex items-center">
@@ -389,13 +464,13 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                   </div>
                 )}
               </div>
-              
+
               {/* Tags */}
               {news.tags && news.tags.length > 0 && (
                 <div className="mb-6 overflow-x-auto">
                   <div className="flex flex-wrap gap-2">
-                    {news.tags.map(tag => (
-                      <div 
+                    {news.tags.map((tag) => (
+                      <div
                         key={tag.id}
                         className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm flex items-center whitespace-nowrap"
                       >
@@ -406,7 +481,7 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                   </div>
                 </div>
               )}
-              
+
               {/* Summary */}
               {news.summary && (
                 <div className="mb-6">
@@ -415,21 +490,22 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                   </div>
                 </div>
               )}
-              
+
               {/* Main content */}
               <div className="prose max-w-none mb-6 overflow-hidden">
-                <div className="whitespace-pre-line break-words">
-                  {news.content}
-                </div>
+                <div className="whitespace-pre-line break-words">{news.content}</div>
               </div>
-              
+
               {/* Key lessons */}
               {news.key_lessons && (
                 <div className="mb-6">
                   <h2 className="text-xl font-bold mb-4">Key Takeaways</h2>
                   <div className="space-y-2">
                     {getKeyLessons(news.key_lessons).map((lesson, index) => (
-                      <div key={index} className="p-3 bg-gray-50 rounded-md border-l-4 border-green-700 break-words">
+                      <div
+                        key={index}
+                        className="p-3 bg-gray-50 rounded-md border-l-4 border-green-700 break-words"
+                      >
                         <p>{lesson}</p>
                       </div>
                     ))}
@@ -440,48 +516,48 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
           )}
 
           {/* Info tab */}
-          {activeTab === 'info' && (
+          {activeTab === "info" && (
             <div className="bg-white p-4 md:p-6 rounded-lg border border-gray-200">
               <h2 className="text-xl font-bold mb-6">Article Information</h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="p-4 bg-gray-50 rounded-lg overflow-hidden">
                   <div className="text-sm text-gray-500 mb-1">Title</div>
                   <div className="font-medium break-words">{news.title}</div>
                 </div>
-                
+
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="text-sm text-gray-500 mb-1">Status</div>
                   <div className="font-medium capitalize">{news.status}</div>
                 </div>
-                
+
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="text-sm text-gray-500 mb-1">Category</div>
                   <div className="font-medium capitalize">{news.category}</div>
                 </div>
-                
+
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="text-sm text-gray-500 mb-1">Author</div>
                   <div className="font-medium">{getAuthorName(news.author_id)}</div>
                 </div>
-                
+
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="text-sm text-gray-500 mb-1">Created At</div>
                   <div className="font-medium">{formatDate(news.created_at)}</div>
                 </div>
-                
+
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="text-sm text-gray-500 mb-1">Last Updated</div>
                   <div className="font-medium">{formatDate(news.updated_at)}</div>
                 </div>
-                
+
                 {news.publish_date && (
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="text-sm text-gray-500 mb-1">Published Date</div>
                     <div className="font-medium">{formatDate(news.publish_date)}</div>
                   </div>
                 )}
-                
+
                 {news.views !== undefined && (
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="text-sm text-gray-500 mb-1">Views</div>
@@ -489,13 +565,13 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                   </div>
                 )}
               </div>
-              
+
               <h3 className="text-lg font-bold mb-3">Tags</h3>
               <div className="mb-6 p-4 bg-gray-50 rounded-lg overflow-x-auto">
                 {news.tags && news.tags.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {news.tags.map(tag => (
-                      <div 
+                    {news.tags.map((tag) => (
+                      <div
                         key={tag.id}
                         className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm flex items-center whitespace-nowrap"
                       >
@@ -508,7 +584,7 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                   <p className="text-gray-500 text-sm">No tags assigned</p>
                 )}
               </div>
-              
+
               {news.key_lessons && (
                 <>
                   <h3 className="text-lg font-bold mb-3">Key Lessons</h3>
@@ -525,30 +601,54 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
           )}
 
           {/* Media tab */}
-          {activeTab === 'media' && (
+          {activeTab === "media" && (
             <div className="bg-white p-4 md:p-6 rounded-lg border border-gray-200">
               <h2 className="text-xl font-bold mb-6">Media Files</h2>
-              
+
               {news.media && news.media.items && news.media.items.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {news.media.items.map((media) => (
                     <div key={media.id} className="border rounded-lg overflow-hidden">
-                      {media.type === 'image' ? (
+                      {media.type === "image" ? (
                         <div className="h-48 bg-gray-100">
-                          <img 
-                            src={media.url} 
-                            alt={media.title || 'Image'} 
+                          <img
+                            src={media.url}
+                            alt={media.title || "Image"}
                             className="w-full h-full object-cover"
+                            onLoad={() => console.log(`Successfully loaded image: ${media.url}`)}
+                            onError={(e) => {
+                              console.error(`Failed to load image: ${media.url}`);
+                              e.target.onerror = null; // Prevent infinite error loops
+
+                              // Create fallback with initial letter
+                              const fallbackText = media.title?.charAt(0)?.toUpperCase() || "I";
+                              handleImageError(e, fallbackText);
+                            }}
                           />
                         </div>
-                      ) : media.type === 'video' ? (
+                      ) : media.type === "video" ? (
                         <div className="h-48 bg-gray-100 relative">
                           <div className="absolute inset-0 flex items-center justify-center">
                             {media.thumbnailUrl ? (
-                              <img 
-                                src={media.thumbnailUrl} 
-                                alt={media.title || 'Video thumbnail'} 
+                              <img
+                                src={media.thumbnailUrl}
+                                alt={media.title || "Video thumbnail"}
                                 className="w-full h-full object-cover absolute inset-0"
+                                onLoad={() =>
+                                  console.log(
+                                    `Successfully loaded video thumbnail: ${media.thumbnailUrl}`,
+                                  )
+                                }
+                                onError={(e) => {
+                                  console.error(
+                                    `Failed to load video thumbnail: ${media.thumbnailUrl}`,
+                                  );
+                                  e.target.onerror = null; // Prevent infinite error loops
+
+                                  // Create fallback with initial letter
+                                  const fallbackText = media.title?.charAt(0)?.toUpperCase() || "V";
+                                  handleImageError(e, fallbackText);
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full bg-gray-800 flex items-center justify-center text-white">
@@ -565,25 +665,32 @@ const NewsDetailsPage = ({ params }: { params: { id: string } }) => {
                           <div className="text-gray-400">File Preview</div>
                         </div>
                       )}
-                      
+
                       <div className="p-4 overflow-hidden">
-                        <h3 className="font-medium mb-1 truncate">{media.title || 'Untitled'}</h3>
+                        <h3 className="font-medium mb-1 truncate">{media.title || "Untitled"}</h3>
                         <div className="text-sm text-gray-600 flex flex-wrap gap-2">
                           <div>Type: {media.type}</div>
                           <div>Size: {formatFileSize(media.size)}</div>
-                          {media.duration && <div>Duration: {Math.floor(media.duration / 60)}:{(media.duration % 60).toString().padStart(2, '0')}</div>}
+                          {media.duration && (
+                            <div>
+                              Duration: {Math.floor(media.duration / 60)}:
+                              {(media.duration % 60).toString().padStart(2, "0")}
+                            </div>
+                          )}
                         </div>
-                        
+
                         {media.cover && (
                           <div className="mt-2">
-                            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Cover image</span>
+                            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                              Cover image
+                            </span>
                           </div>
                         )}
-                        
+
                         <div className="mt-3">
-                          <a 
-                            href={media.url} 
-                            target="_blank" 
+                          <a
+                            href={media.url}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="text-green-700 hover:underline text-sm"
                           >

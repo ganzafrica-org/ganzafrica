@@ -1,10 +1,6 @@
 import React from "react";
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative h-screen w-full overflow-hidden bg-[#f0f4f3]">
       <div
@@ -18,9 +14,7 @@ export default function AuthLayout({
 
       <div className="absolute bottom-0 left-0 h-80 w-80 translate-y-20 -translate-x-20 transform rounded-full bg-primary-orange " />
       {/* Content container */}
-      <div className="relative z-10 flex h-screen items-center justify-center px-4">
-        {children}
-      </div>
+      <div className="relative z-10 flex h-screen items-center justify-center px-4">{children}</div>
     </div>
   );
 }

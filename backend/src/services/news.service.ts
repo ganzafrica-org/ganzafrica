@@ -1,167 +1,60 @@
+import { eq, and, or, sql, desc, asc, like, ilike, inArray } from "drizzle-orm";
 import { db } from "../db/client";
 import { news, news_tags, news_to_tags } from "../db/schema/news";
-import { eq, inArray, and, desc, asc, sql, or, ilike } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
+import { SQL } from "drizzle-orm/sql";
+import { PgColumn } from "drizzle-orm/pg-core";
 
 const logger = new Logger("NewsService");
 
-// News types for service input/output
-export type CreateNewsInput = {
-  title: string;
-  content: string;
-  status: "published" | "not_published";
-  publish_date?: Date;
-  category: "all" | "news" | "blogs" | "reports" | "publications";
-  key_lessons?: string;
-  media?: {
-    items: Array<{
-      id: string;
-      type: "image" | "video";
-      url: string;
-      cover: boolean;
-      size?: number;
-      duration?: number;
-      thumbnailUrl?: string;
-      order?: number;
-    }>;
-  };
-  tags?: number[]; // Array of tag IDs
-  created_by: number; // User ID of the creator
-};
-
-export type UpdateNewsInput = {
-  title?: string;
-  content?: string;
-  status?: "published" | "not_published";
-  publish_date?: Date | null;
-  category?: "all" | "news" | "blogs" | "reports" | "publications";
-  key_lessons?: string | null;
-  media?: {
-    items: Array<{
-      id: string;
-      type: "image" | "video";
-      url: string;
-      cover: boolean;
-      size?: number;
-      duration?: number;
-      thumbnailUrl?: string;
-      order?: number;
-    }>;
-  } | null;
-  tags?: number[]; // Array of tag IDs
-};
-
-export type NewsFilter = {
-  category?: "all" | "news" | "blogs" | "reports" | "publications";
-  status?: "published" | "not_published";
-  search?: string;
-  tags?: number[];
-  limit?: number;
-  offset?: number;
-  sortBy?: string;
-  sortDir?: "asc" | "desc";
-};
-
-export type NewsOutput = {
-  id: number;
-  title: string;
-  content: string;
-  status: string;
-  publish_date: Date | null;
-  category: string;
-  key_lessons: string | null;
-  media: {
-    items: Array<{
-      id: string;
-      type: string;
-      url: string;
-      cover: boolean;
-      size?: number;
-      duration?: number;
-      thumbnailUrl?: string;
-      order?: number;
-    }>;
-  } | null;
-  created_by: number;
-  created_at: Date;
-  updated_at: Date;
-  tags: Array<{ id: number; name: string }>;
-};
-
-// Create a new news item
-export async function createNews(
-  newsData: CreateNewsInput,
-): Promise<NewsOutput> {
+/**
+ * Create a new news item
+ */
+export const createNews = async (newsData: any) => {
   try {
-    // Start transaction
-    return await db.transaction(async (tx) => {
-      // Insert the news item
-      const result = await tx
+    let result: { id: number } | undefined;
+
+    await db.transaction(async (tx) => {
+      // Insert news
+      const insertedNews = await tx
         .insert(news)
         .values({
           title: newsData.title,
           content: newsData.content,
           status: newsData.status,
-          publish_date:
-            newsData.status === "published"
-              ? newsData.publish_date || new Date()
-              : null,
+          publish_date: newsData.publish_date,
           category: newsData.category,
-          key_lessons: newsData.key_lessons || null,
-          media: newsData.media || null,
-          created_by: newsData.created_by,
-          created_at: new Date(),
-          updated_at: new Date(),
+          key_lessons: newsData.key_lessons,
+          media: newsData.media,
         })
         .returning();
 
-      if (!result.length) {
+      if (!insertedNews || insertedNews.length === 0) {
         throw new AppError("Failed to create news item", 500);
       }
 
-      const createdNews = result[0];
+      const createdNews = insertedNews[0];
 
-      // Log the created news ID to help with debugging
-      console.log(`Created news with ID: ${createdNews.id}`);
-
-      // Associate tags if provided
-      if (newsData.tags && newsData.tags.length > 0) {
-        // Verify all tags exist
-        const existingTags = await tx
-          .select({ id: news_tags.id })
-          .from(news_tags)
-          .where(inArray(news_tags.id, newsData.tags));
-
-        if (existingTags.length !== newsData.tags.length) {
-          throw new AppError("One or more tags do not exist", 400);
-        }
-
-        // Create tag associations
-        const tagAssociations = newsData.tags.map((tagId) => ({
+      // Add tags if provided
+      if (newsData.tags && Array.isArray(newsData.tags) && newsData.tags.length > 0) {
+        const tagRelations = newsData.tags.map((tagId: number) => ({
           news_id: createdNews.id,
           tag_id: tagId,
         }));
 
-        await tx.insert(news_to_tags).values(tagAssociations);
+        await tx.insert(news_to_tags).values(tagRelations);
       }
 
-      // Get the tags for the created news
-      const tagResults = await tx
-        .select({
-          id: news_tags.id,
-          name: news_tags.name,
-        })
-        .from(news_to_tags)
-        .innerJoin(news_tags, eq(news_to_tags.tag_id, news_tags.id))
-        .where(eq(news_to_tags.news_id, createdNews.id));
-
-      // Return the news with its tags directly instead of calling getNewsById
-      return {
-        ...createdNews,
-        tags: tagResults,
-      };
+      result = createdNews;
     });
+
+    // Get full news item with tags after transaction
+    if (result && result.id !== undefined) {
+      return await getNewsById(result.id);
+    }
+
+    throw new AppError("Failed to create news item", 500);
   } catch (error) {
     logger.error("Error creating news", error);
     if (error instanceof AppError) {
@@ -169,153 +62,12 @@ export async function createNews(
     }
     throw new AppError("Failed to create news item", 500);
   }
-}
+};
 
-// Get news by ID
-export async function getNewsById(id: number): Promise<NewsOutput> {
-  try {
-    // Get the news item
-    const result = await db.select().from(news).where(eq(news.id, id)).limit(1);
-
-    if (!result.length) {
-      throw new AppError("News item not found", 404);
-    }
-
-    const newsItem = result[0];
-
-    // Get associated tags
-    const tagResults = await db
-      .select({
-        id: news_tags.id,
-        name: news_tags.name,
-      })
-      .from(news_to_tags)
-      .innerJoin(news_tags, eq(news_to_tags.tag_id, news_tags.id))
-      .where(eq(news_to_tags.news_id, id));
-
-    return {
-      ...newsItem,
-      tags: tagResults,
-    };
-  } catch (error) {
-    logger.error(`Error getting news by ID: ${id}`, error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to get news item", 500);
-  }
-}
-
-// Update news
-export async function updateNews(
-  id: number,
-  newsData: UpdateNewsInput,
-): Promise<NewsOutput> {
-  try {
-    return await db.transaction(async (tx) => {
-      // Check if news exists
-      const existingNews = await tx
-        .select()
-        .from(news)
-        .where(eq(news.id, id))
-        .limit(1);
-
-      if (!existingNews.length) {
-        throw new AppError("News item not found", 404);
-      }
-
-      // If changing status to published, ensure publish_date
-      let publishDate = newsData.publish_date;
-      if (newsData.status === "published" && !existingNews[0].publish_date) {
-        publishDate = new Date();
-      }
-
-      // Update news item
-      await tx
-        .update(news)
-        .set({
-          ...newsData,
-          publish_date: publishDate,
-          updated_at: new Date(),
-        })
-        .where(eq(news.id, id));
-
-      // Update tags if provided
-      if (newsData.tags !== undefined) {
-        // Delete existing associations
-        await tx.delete(news_to_tags).where(eq(news_to_tags.news_id, id));
-
-        // If there are new tags, add them
-        if (newsData.tags.length > 0) {
-          // Verify all tags exist
-          const existingTags = await tx
-            .select({ id: news_tags.id })
-            .from(news_tags)
-            .where(inArray(news_tags.id, newsData.tags));
-
-          if (existingTags.length !== newsData.tags.length) {
-            throw new AppError("One or more tags do not exist", 400);
-          }
-
-          // Create new tag associations
-          const tagAssociations = newsData.tags.map((tagId) => ({
-            news_id: id,
-            tag_id: tagId,
-          }));
-
-          await tx.insert(news_to_tags).values(tagAssociations);
-        }
-      }
-
-      // Get updated news with tags
-      return await getNewsById(id);
-    });
-  } catch (error) {
-    logger.error(`Error updating news: ${id}`, error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to update news item", 500);
-  }
-}
-
-// Delete news
-export async function deleteNews(id: number): Promise<boolean> {
-  try {
-    // Start transaction
-    return await db.transaction(async (tx) => {
-      // Check if news exists
-      const existingNews = await tx
-        .select()
-        .from(news)
-        .where(eq(news.id, id))
-        .limit(1);
-
-      if (!existingNews.length) {
-        throw new AppError("News item not found", 404);
-      }
-
-      // Delete tag associations first (should cascade, but being explicit)
-      await tx.delete(news_to_tags).where(eq(news_to_tags.news_id, id));
-
-      // Delete the news item
-      await tx.delete(news).where(eq(news.id, id));
-
-      return true;
-    });
-  } catch (error) {
-    logger.error(`Error deleting news: ${id}`, error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to delete news item", 500);
-  }
-}
-
-// List news with filtering and pagination
-export async function listNews(
-  filter: NewsFilter = {},
-): Promise<{ news: NewsOutput[]; total: number }> {
+/**
+ * List news items with filtering options
+ */
+export const listNews = async (filter: any = {}) => {
   try {
     const {
       category,
@@ -328,91 +80,108 @@ export async function listNews(
       sortDir = "desc",
     } = filter;
 
-    // Build the where clause
-    let whereClause = and();
+    // Build WHERE conditions
+    const whereConditions = [];
 
-    if (category && category !== "all") {
-      whereClause = and(whereClause, eq(news.category, category));
+    if (category) {
+      whereConditions.push(eq(news.category, category));
     }
 
     if (status) {
-      whereClause = and(whereClause, eq(news.status, status));
+      whereConditions.push(eq(news.status, status));
     }
 
     if (search) {
-      whereClause = and(
-        whereClause,
-        or(
-          ilike(news.title, `%${search}%`),
-          ilike(news.content, `%${search}%`),
-          ilike(news.key_lessons || "", `%${search}%`),
-        ),
+      whereConditions.push(
+        or(ilike(news.title, `%${search}%`), ilike(news.content, `%${search}%`)),
       );
     }
 
-    // Count total results
-    const countResults = await db
-        .select({ count: sql`count(*)::int` })
-        .from(news)
-        .where(whereClause);
+    // Build the query parts separately
+    const baseSelection = {
+      id: news.id,
+      title: news.title,
+      content: news.content,
+      status: news.status,
+      publish_date: news.publish_date,
+      category: news.category,
+      key_lessons: news.key_lessons,
+      media: news.media,
+      created_at: news.created_at,
+      updated_at: news.updated_at,
+    };
 
-    const total = Number(countResults[0]?.count || 0);
+    // Determine tag filtering if needed
+    let newsIdsForTagFilter: number[] = [];
+    let useTagFilter = false;
 
-    // Sort direction
-    const sortFn = sortDir === "asc" ? asc : desc;
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      // Get news IDs that have all the specified tags
+      const newsWithTags = await db
+        .select({ news_id: news_to_tags.news_id })
+        .from(news_to_tags)
+        .where(inArray(news_to_tags.tag_id, tags))
+        .groupBy(news_to_tags.news_id)
+        .having(sql`count(${news_to_tags.tag_id}) = ${tags.length}`);
 
-    // Get paginated results
-    const validSortColumns = ['id', 'title', 'created_at', 'updated_at', 'publish_date', 'status', 'category'] as const;
-    type ValidSortColumn = typeof validSortColumns[number];
+      newsIdsForTagFilter = newsWithTags.map((item) => item.news_id);
+      useTagFilter = true;
 
-// Ensure sortBy is a valid column
-    const safeSort = validSortColumns.includes(sortBy as any)
-        ? sortBy as ValidSortColumn
-        : 'created_at';
+      if (newsIdsForTagFilter.length === 0) {
+        return { news: [], total: 0 }; // No news items match the tag filter
+      }
+    }
 
-    const newsResults = await db
-        .select()
-        .from(news)
-        .where(whereClause)
-        .orderBy(sortFn(news[safeSort]))
-        .limit(limit)
-        .offset(offset);
+    // Build the WHERE condition combining all filters
+    const allConditions = [...whereConditions];
+    if (useTagFilter) {
+      allConditions.push(inArray(news.id, newsIdsForTagFilter));
+    }
 
-    // For each news item, get its tags
+    // Count total matching records
+    const countQuery = db.select({ count: sql<number>`count(*)` }).from(news);
+    if (allConditions.length > 0) {
+      countQuery.where(and(...allConditions));
+    }
+    const countResult = await countQuery;
+    const total = countResult[0]?.count || 0;
+
+    // Determine the sort column and direction
+    let sortColumnToUse = news.created_at;
+    let sortFunction = desc;
+
+    if (sortBy && sortBy in news) {
+      sortColumnToUse = news[sortBy as keyof typeof news] as PgColumn<any>;
+      sortFunction = sortDir === "asc" ? asc : desc;
+    }
+
+    // Execute the final query with all conditions in one go
+    const result = await db
+      .select(baseSelection)
+      .from(news)
+      .where(allConditions.length > 0 ? and(...allConditions) : undefined)
+      .orderBy(sortFunction(sortColumnToUse))
+      .limit(limit)
+      .offset(offset);
+
+    // Get tags for each news item
     const newsWithTags = await Promise.all(
-      newsResults.map(async (newsItem) => {
-        const tagResults = await db
+      result.map(async (newsItem) => {
+        const tags = await db
           .select({
             id: news_tags.id,
             name: news_tags.name,
           })
-          .from(news_to_tags)
-          .innerJoin(news_tags, eq(news_to_tags.tag_id, news_tags.id))
+          .from(news_tags)
+          .innerJoin(news_to_tags, eq(news_tags.id, news_to_tags.tag_id))
           .where(eq(news_to_tags.news_id, newsItem.id));
 
         return {
           ...newsItem,
-          tags: tagResults,
+          tags,
         };
       }),
     );
-
-    // If tag filtering is needed
-    if (tags && tags.length > 0) {
-      const filteredNews: NewsOutput[] = newsWithTags.filter(
-        (newsItem: NewsOutput) =>
-          tags.every((tagId: number) =>
-            newsItem.tags.some(
-              (tag: { id: number; name: string }) => tag.id === tagId,
-            ),
-          ),
-      );
-
-      return {
-        news: filteredNews,
-        total: filteredNews.length, // Note: This is not accurate for pagination
-      };
-    }
 
     return {
       news: newsWithTags,
@@ -422,84 +191,170 @@ export async function listNews(
     logger.error("Error listing news", error);
     throw new AppError("Failed to list news items", 500);
   }
-}
+};
 
-// Create a new tag
-export async function createTag(
-  name: string,
-): Promise<{ id: number; name: string }> {
+/**
+ * Get a news item by ID
+ */
+export const getNewsById = async (id: number) => {
   try {
-    // Check if tag already exists
-    const existingTag = await db
-      .select()
-      .from(news_tags)
-      .where(eq(news_tags.name, name))
-      .limit(1);
+    const result = await db.select().from(news).where(eq(news.id, id)).limit(1);
 
-    if (existingTag.length > 0) {
-      return existingTag[0];
+    if (result.length === 0) {
+      throw new AppError("News item not found", 404);
     }
 
-    // Insert the tag
-    const result = await db
-      .insert(news_tags)
-      .values({
-        name,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .returning();
+    const newsItem = result[0];
 
-    if (!result.length) {
-      throw new AppError("Failed to create tag", 500);
-    }
-
-    return {
-      id: result[0].id,
-      name: result[0].name,
-    };
-  } catch (error) {
-    logger.error("Error creating tag", error);
-    if (error instanceof AppError) {
-      throw error;
-    }
-    throw new AppError("Failed to create tag", 500);
-  }
-}
-
-// List all tags
-export async function listTags(): Promise<Array<{ id: number; name: string }>> {
-  try {
-    const result = await db
+    // Get tags for this news item
+    const tags = await db
       .select({
         id: news_tags.id,
         name: news_tags.name,
       })
-      .from(news_tags);
+      .from(news_tags)
+      .innerJoin(news_to_tags, eq(news_tags.id, news_to_tags.tag_id))
+      .where(eq(news_to_tags.news_id, id));
 
-    return result;
+    return {
+      ...newsItem,
+      tags,
+    };
+  } catch (error) {
+    logger.error(`Error getting news by id: ${id}`, error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Failed to get news item", 500);
+  }
+};
+
+/**
+ * Update a news item
+ */
+export const updateNews = async (id: number, newsData: any) => {
+  try {
+    let result;
+
+    await db.transaction(async (tx) => {
+      // Update news
+      const updatedNews = await tx
+        .update(news)
+        .set({
+          ...(newsData.title && { title: newsData.title }),
+          ...(newsData.content && { content: newsData.content }),
+          ...(newsData.status && { status: newsData.status }),
+          ...(typeof newsData.publish_date !== "undefined" && {
+            publish_date: newsData.publish_date,
+          }),
+          ...(newsData.category && { category: newsData.category }),
+          ...(typeof newsData.key_lessons !== "undefined" && {
+            key_lessons: newsData.key_lessons,
+          }),
+          ...(typeof newsData.media !== "undefined" && { media: newsData.media }),
+        })
+        .where(eq(news.id, id))
+        .returning();
+
+      if (!updatedNews || updatedNews.length === 0) {
+        throw new AppError("News item not found", 404);
+      }
+
+      // Update tags if provided
+      if (Array.isArray(newsData.tags)) {
+        // Delete existing tag relations
+        await tx.delete(news_to_tags).where(eq(news_to_tags.news_id, id));
+
+        // Add new tag relations
+        if (newsData.tags.length > 0) {
+          const tagRelations = newsData.tags.map((tagId: number) => ({
+            news_id: id,
+            tag_id: tagId,
+          }));
+
+          await tx.insert(news_to_tags).values(tagRelations);
+        }
+      }
+
+      result = updatedNews[0];
+    });
+
+    // Get full news item with tags after transaction
+    return await getNewsById(id);
+  } catch (error) {
+    logger.error(`Error updating news: ${id}`, error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Failed to update news item", 500);
+  }
+};
+
+/**
+ * Delete a news item
+ */
+export const deleteNews = async (id: number) => {
+  try {
+    const result = await db.delete(news).where(eq(news.id, id)).returning();
+
+    if (result.length === 0) {
+      throw new AppError("News item not found", 404);
+    }
+
+    return true;
+  } catch (error) {
+    logger.error(`Error deleting news: ${id}`, error);
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError("Failed to delete news item", 500);
+  }
+};
+
+/**
+ * List all tags
+ */
+export const listTags = async () => {
+  try {
+    return await db.select().from(news_tags).orderBy(asc(news_tags.name));
   } catch (error) {
     logger.error("Error listing tags", error);
     throw new AppError("Failed to list tags", 500);
   }
-}
+};
 
-// Delete a tag
-export async function deleteTag(id: number): Promise<boolean> {
+/**
+ * Create a new tag
+ */
+export const createTag = async (name: string) => {
   try {
-    // Check if tag exists
-    const existingTag = await db
-      .select()
-      .from(news_tags)
-      .where(eq(news_tags.id, id))
-      .limit(1);
+    const result = await db.insert(news_tags).values({ name }).returning();
 
-    if (!existingTag.length) {
-      throw new AppError("Tag not found", 404);
+    if (!result || result.length === 0) {
+      throw new AppError("Failed to create tag", 500);
     }
 
-    // Delete the tag (will cascade delete associations)
-    await db.delete(news_tags).where(eq(news_tags.id, id));
+    return result[0];
+  } catch (error) {
+    logger.error("Error creating tag", error);
+    // Check for unique constraint violation
+    if ((error as any)?.code === "23505") {
+      throw new AppError(`Tag with name "${name}" already exists`, 400);
+    }
+    throw new AppError("Failed to create tag", 500);
+  }
+};
+
+/**
+ * Delete a tag
+ */
+export const deleteTag = async (id: number) => {
+  try {
+    const result = await db.delete(news_tags).where(eq(news_tags.id, id)).returning();
+
+    if (result.length === 0) {
+      throw new AppError("Tag not found", 404);
+    }
 
     return true;
   } catch (error) {
@@ -509,17 +364,17 @@ export async function deleteTag(id: number): Promise<boolean> {
     }
     throw new AppError("Failed to delete tag", 500);
   }
-}
+};
 
-// Export the service functions
+// Create a service object to export
 export const newsService = {
   createNews,
+  listNews,
   getNewsById,
   updateNews,
   deleteNews,
-  listNews,
-  createTag,
   listTags,
+  createTag,
   deleteTag,
 };
 

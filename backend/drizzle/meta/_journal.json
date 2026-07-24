@@ -1,6 +1,118 @@
 {
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1784127237275,
+      "tag": "0000_baseline",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784131766792,
+      "tag": "0001_payslip_access_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784143279075,
+      "tag": "0002_employees_and_rbac",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784145320097,
+      "tag": "0003_auth_handoff_and_refresh_grace",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784541622734,
+      "tag": "0004_recruitment_forms_and_eligibility",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784632007220,
+      "tag": "0005_recruitment_pipeline",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784653631304,
+      "tag": "0006_recruitment_funnel_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784668758008,
+      "tag": "0007_offers_and_secure_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784669729459,
+      "tag": "0008_contract_status_draft",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784673972682,
+      "tag": "0009_reviewers_and_interview_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784676306228,
+      "tag": "0010_cv_ranking",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784678540511,
+      "tag": "0011_document_signing",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1784733785032,
+      "tag": "0012_document_retention_search",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1784809372579,
+      "tag": "0013_naive_gressill",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1784810104979,
+      "tag": "0014_dazzling_richard_fisk",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1784816730697,
+      "tag": "0015_tidy_shape",
+      "breakpoints": true
+    }
   ]
 }

@@ -17,7 +17,8 @@
     "next.config.mjs",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
-, "app/(main)/users/add-users"  ],
+    ".next/types/**/*.ts",
+    "app/(main)/users/add-users"
+  ],
   "exclude": ["node_modules"]
 }

@@ -1,6 +1,7 @@
 import { db } from "../db/client";
 import { teams, team_types } from "../db/schema/teams";
-import { eq } from "drizzle-orm";
+import { project_members, project_updates } from "../db/schema/projects";
+import { eq, asc, desc } from "drizzle-orm";
 import { AppError } from "../middlewares";
 import { Logger } from "../config";
 
@@ -15,6 +16,7 @@ export type CreateTeamInput = {
   email?: string;
   profile_link?: string;
   skills?: string[];
+  sort_order?: number;
   team_type_id: number;
 };
 
@@ -26,6 +28,7 @@ export type UpdateTeamInput = {
   email?: string;
   profile_link?: string;
   skills?: string[];
+  sort_order?: number;
   team_type_id?: number;
 };
 
@@ -48,9 +51,7 @@ export type TeamOutput = {
 };
 
 // Create a new team member
-export async function createTeam(
-  teamData: CreateTeamInput,
-): Promise<TeamOutput> {
+export async function createTeam(teamData: CreateTeamInput): Promise<TeamOutput> {
   try {
     // Check if the team type exists
     const teamType = await db
@@ -60,10 +61,7 @@ export async function createTeam(
       .limit(1);
 
     if (!teamType.length) {
-      throw new AppError(
-        `Team type with ID ${teamData.team_type_id} does not exist`,
-        400,
-      );
+      throw new AppError(`Team type with ID ${teamData.team_type_id} does not exist`, 400);
     }
 
     // Check if a team member with the same name already exists
@@ -74,10 +72,7 @@ export async function createTeam(
       .limit(1);
 
     if (existingTeam.length > 0) {
-      throw new AppError(
-        `Team member with name '${teamData.name}' already exists`,
-        409,
-      );
+      throw new AppError(`Team member with name '${teamData.name}' already exists`, 409);
     }
 
     // Insert the team and get the ID
@@ -91,6 +86,7 @@ export async function createTeam(
         email: teamData.email || null,
         profile_link: teamData.profile_link || null,
         skills: teamData.skills || null,
+        sort_order: teamData.sort_order ?? null,
         team_type_id: teamData.team_type_id,
         created_at: new Date(),
         updated_at: new Date(),
@@ -100,11 +96,7 @@ export async function createTeam(
     const newId = insertResult[0].id;
 
     // Get the created team with the correct ID
-    const createdTeam = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.id, newId))
-      .limit(1);
+    const createdTeam = await db.select().from(teams).where(eq(teams.id, newId)).limit(1);
 
     if (!createdTeam.length) {
       throw new AppError("Failed to create team member", 500);
@@ -123,11 +115,7 @@ export async function createTeam(
 // Get team by ID
 export async function getTeamById(id: number): Promise<TeamOutput> {
   try {
-    const result = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.id, id))
-      .limit(1);
+    const result = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
 
     if (!result.length) {
       throw new AppError("Team member not found", 404);
@@ -151,17 +139,10 @@ export async function getTeamById(id: number): Promise<TeamOutput> {
 }
 
 // Update team
-export async function updateTeam(
-  id: number,
-  teamData: UpdateTeamInput,
-): Promise<TeamOutput> {
+export async function updateTeam(id: number, teamData: UpdateTeamInput): Promise<TeamOutput> {
   try {
     // Check if team exists
-    const existingTeam = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.id, id))
-      .limit(1);
+    const existingTeam = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
 
     if (!existingTeam.length) {
       throw new AppError("Team member not found", 404);
@@ -176,10 +157,7 @@ export async function updateTeam(
         .limit(1);
 
       if (nameExists.length > 0) {
-        throw new AppError(
-          `Team member with name '${teamData.name}' already exists`,
-          409,
-        );
+        throw new AppError(`Team member with name '${teamData.name}' already exists`, 409);
       }
     }
 
@@ -193,10 +171,7 @@ export async function updateTeam(
         .limit(1);
 
       if (!teamType.length) {
-        throw new AppError(
-          `Team type with ID ${teamData.team_type_id} does not exist`,
-          400,
-        );
+        throw new AppError(`Team type with ID ${teamData.team_type_id} does not exist`, 400);
       }
     } else {
       teamType = await db
@@ -211,36 +186,25 @@ export async function updateTeam(
       .update(teams)
       .set({
         name: teamData.name || existingTeam[0].name,
-        position:
-          teamData.position !== undefined
-            ? teamData.position
-            : existingTeam[0].position,
+        position: teamData.position !== undefined ? teamData.position : existingTeam[0].position,
         photo_url:
-          teamData.photo_url !== undefined
-            ? teamData.photo_url
-            : existingTeam[0].photo_url,
+          teamData.photo_url !== undefined ? teamData.photo_url : existingTeam[0].photo_url,
         bio: teamData.bio !== undefined ? teamData.bio : existingTeam[0].bio,
-        email:
-          teamData.email !== undefined ? teamData.email : existingTeam[0].email,
+        email: teamData.email !== undefined ? teamData.email : existingTeam[0].email,
         profile_link:
           teamData.profile_link !== undefined
             ? teamData.profile_link
             : existingTeam[0].profile_link,
-        skills:
-          teamData.skills !== undefined
-            ? teamData.skills
-            : existingTeam[0].skills,
+        skills: teamData.skills !== undefined ? teamData.skills : existingTeam[0].skills,
+        sort_order:
+          teamData.sort_order !== undefined ? teamData.sort_order : existingTeam[0].sort_order,
         team_type_id: teamData.team_type_id || existingTeam[0].team_type_id,
         updated_at: new Date(),
       })
       .where(eq(teams.id, id));
 
     // Get updated team
-    const updatedTeam = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.id, id))
-      .limit(1);
+    const updatedTeam = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
 
     return mapToTeamOutput(updatedTeam[0], teamType[0]);
   } catch (error) {
@@ -256,15 +220,17 @@ export async function updateTeam(
 export async function deleteTeam(id: number): Promise<boolean> {
   try {
     // Check if team exists
-    const existingTeam = await db
-      .select()
-      .from(teams)
-      .where(eq(teams.id, id))
-      .limit(1);
+    const existingTeam = await db.select().from(teams).where(eq(teams.id, id)).limit(1);
 
     if (!existingTeam.length) {
       throw new AppError("Team member not found", 404);
     }
+
+    // Remove project memberships referencing this team to avoid FK violations
+    await db.delete(project_members).where(eq(project_members.team_id, id));
+
+    // Remove project updates authored by this team member (if any)
+    await db.delete(project_updates).where(eq(project_updates.author_id, id));
 
     // Delete the team
     await db.delete(teams).where(eq(teams.id, id));
@@ -280,34 +246,112 @@ export async function deleteTeam(id: number): Promise<boolean> {
 }
 
 // List all teams
-export async function listTeams(teamTypeId?: number): Promise<TeamOutput[]> {
+// List all teams
+export async function listTeams(
+  teamTypeId?: number,
+  sortBy: string = "created_at",
+  sortOrder: string = "desc",
+): Promise<TeamOutput[]> {
   try {
-    // Create different query paths instead of reassigning
-    const teamsResult = teamTypeId
-        ? await db.select().from(teams).where(eq(teams.team_type_id, teamTypeId))
-        : await db.select().from(teams);
+    // Define query parameters
+    const whereConditions = teamTypeId ? [eq(teams.team_type_id, teamTypeId)] : [];
+
+    // Define order by based on sort parameters
+    let orderByConditions: any[] = [];
+
+    // Handle sorting based on the column
+    switch (sortBy) {
+      case "sort_order":
+        orderByConditions =
+          sortOrder.toLowerCase() === "asc"
+            ? [asc(teams.sort_order), desc(teams.created_at)]
+            : [desc(teams.sort_order), desc(teams.created_at)];
+        break;
+      case "name":
+        orderByConditions =
+          sortOrder.toLowerCase() === "asc"
+            ? [asc(teams.name), desc(teams.created_at)]
+            : [desc(teams.name), desc(teams.created_at)];
+        break;
+      case "team_type_id":
+        orderByConditions =
+          sortOrder.toLowerCase() === "asc"
+            ? [asc(teams.team_type_id), desc(teams.created_at)]
+            : [desc(teams.team_type_id), desc(teams.created_at)];
+        break;
+      case "updated_at":
+        orderByConditions =
+          sortOrder.toLowerCase() === "asc"
+            ? [asc(teams.updated_at), desc(teams.created_at)]
+            : [desc(teams.updated_at), desc(teams.created_at)];
+        break;
+      case "created_at":
+      default:
+        orderByConditions =
+          sortOrder.toLowerCase() === "asc" ? [asc(teams.created_at)] : [desc(teams.created_at)];
+        break;
+    }
+
+    // Execute the query; if sort_order column is missing (migration not applied yet),
+    // gracefully fall back to created_at ordering to avoid 500s.
+    let teamsResult: any[] = [];
+    try {
+      teamsResult = await db
+        .select()
+        .from(teams)
+        .where(whereConditions.length > 0 ? whereConditions[0] : undefined)
+        .orderBy(...orderByConditions);
+    } catch (err: any) {
+      const isMissingColumn = err?.code === "42703" || /sort_order/i.test(String(err?.message));
+      if (isMissingColumn) {
+        const fallbackOrder =
+          sortOrder.toLowerCase() === "asc" ? [asc(teams.created_at)] : [desc(teams.created_at)];
+        teamsResult = await db
+          .select()
+          .from(teams)
+          .where(whereConditions.length > 0 ? whereConditions[0] : undefined)
+          .orderBy(...fallbackOrder);
+      } else {
+        throw err;
+      }
+    }
 
     // Get all team types
     const teamTypesResult = await db.select().from(team_types);
 
     // Create a map of team types by ID for quick lookup
     const teamTypesMap = teamTypesResult.reduce(
-        (map, type) => {
-          map[type.id] = type;
-          return map;
-        },
-        {} as { [key: number]: any },
+      (map, type) => {
+        map[type.id] = type;
+        return map;
+      },
+      {} as { [key: number]: any },
     );
 
-    return teamsResult.map((team) =>
-        mapToTeamOutput(team, teamTypesMap[team.team_type_id]),
-    );
+    return teamsResult.map((team) => mapToTeamOutput(team, teamTypesMap[team.team_type_id]));
   } catch (error) {
     logger.error("Error listing teams", error);
     throw new AppError("Failed to list team members", 500);
   }
 }
 
+// Bulk reorder teams by updating sort_order for given ids
+export async function bulkReorder(
+  orders: Array<{ id: number; sort_order: number }>,
+): Promise<void> {
+  try {
+    for (const item of orders) {
+      if (typeof item?.id !== "number" || typeof item?.sort_order !== "number") continue;
+      await db
+        .update(teams)
+        .set({ sort_order: item.sort_order, updated_at: new Date() })
+        .where(eq(teams.id, item.id));
+    }
+  } catch (error) {
+    logger.error("Error bulk reordering teams", error);
+    throw new AppError("Failed to reorder teams", 500);
+  }
+}
 // Helper function to map database team to TeamOutput type
 function mapToTeamOutput(team: any, teamType?: any): TeamOutput {
   return {
@@ -338,6 +382,7 @@ export const teamService = {
   updateTeam,
   deleteTeam,
   listTeams,
+  bulkReorder,
 };
 
 // Default export for the service object

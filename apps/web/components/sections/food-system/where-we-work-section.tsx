@@ -1,12 +1,14 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
+import { TranslatableText } from "@/components/translate";
 
 // Animation variants
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -17,7 +19,7 @@ const containerVariants = {
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -40,14 +42,11 @@ const WhereWeWorkSection = () => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.7 }}
         >
-          {/* <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                        <span>Where does our </span>
-                        <span className="text-primary-green">work reside?</span>
-                    </h2> */}
-          <p className="text-gray-600 max-w-3xl mx-auto">
-            Our holistic approach addresses challenges and leverages
-            opportunities in 3 main sectors.
-          </p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 max-w-5xl mx-auto mb-4 leading-tight">
+            <TranslatableText>
+              Our Holistic Approach Addresses Challenges And Leverages Opportunities.
+            </TranslatableText>
+          </h1>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
@@ -56,14 +55,15 @@ const WhereWeWorkSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.7 }}
-            className="relative h-full rounded-[20px] overflow-hidden"
+            className="relative h-full rounded-md overflow-hidden"
           >
             <Image
-              src="/images/food-system-1.png"
+              src="/images/Fellows7.jpg"
               alt="Hands holding wheat grains"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
+              unoptimized
             />
           </motion.div>
 
@@ -84,16 +84,17 @@ const WhereWeWorkSection = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-primary-green mb-3">
-                  Land Management
+                  <TranslatableText>Land Management</TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-justify">
-                  Sustainable land use is vital for food security, environmental
-                  resilience, and economic growth. GanzAfrica advocates for
-                  equitable land policies to empower youth, farmers, and
-                  marginalized communities, promotes responsible land management
-                  to prevent degradation and enhance productivity, and equips
-                  young leaders with data literacy and analytical skills to
-                  influence land governance policies.
+                  <TranslatableText>
+                    Sustainable land use is vital for food security, environmental resilience, and
+                    economic growth. GanzAfrica advocates for equitable land policies to empower
+                    youth, farmers, and marginalized communities, promotes responsible land
+                    management to prevent degradation and enhance productivity, and equips young
+                    leaders with data literacy and analytical skills to influence land governance
+                    policies.
+                  </TranslatableText>
                 </p>
               </div>
             </motion.div>
@@ -108,16 +109,17 @@ const WhereWeWorkSection = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-primary-green mb-3">
-                  Agriculture
+                  <TranslatableText>Agriculture</TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-justify">
-                  Agriculture is the largest employer in Africa, and GanzAfrica
-                  is leading efforts to make it more productive, innovative, and
-                  inclusive. We provide hands-on training in modern,
-                  technology-driven farming techniques, support value chain
-                  development to improve market access and food production
-                  efficiency, and introduce smart farming technologies to
-                  optimize production while minimizing environmental impact.
+                  <TranslatableText>
+                    Agriculture is the largest employer in Africa, and GanzAfrica is leading efforts
+                    to make it more productive, innovative, and inclusive. We provide hands-on
+                    training in modern, technology-driven farming techniques, support value chain
+                    development to improve market access and food production efficiency, and
+                    introduce smart farming technologies to optimize production while minimizing
+                    environmental impact.
+                  </TranslatableText>
                 </p>
               </div>
             </motion.div>
@@ -125,19 +127,23 @@ const WhereWeWorkSection = () => {
             {/* Environment */}
             <motion.div variants={itemVariants} className="flex">
               <div className="mr-6">
-                <div className="relative w-12 h-12 rounded-full bg-primary-green flex items-center justify-center">
+                <div
+                  className="relative w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: "#073392" }}
+                >
                   <span className="text-white font-bold">03</span>
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-bold text-primary-green mb-3">
-                  Environment
+                <h3 className="text-xl font-bold mb-3" style={{ color: " #005c3d" }}>
+                  <TranslatableText>Environment</TranslatableText>
                 </h3>
                 <p className="text-gray-600 text-justify">
-                  GanzAfrica promotes environmental sustainability by training
-                  youth in climate resilience, sustainable land and water
-                  management, and ecosystem restoration to build a greener, more
-                  resilient Africa.
+                  <TranslatableText>
+                    GanzAfrica promotes environmental sustainability by training youth in climate
+                    resilience, sustainable land and water management, and ecosystem restoration to
+                    build a greener, more resilient Africa.
+                  </TranslatableText>
                 </p>
               </div>
             </motion.div>

@@ -41,9 +41,7 @@ if (!swaggerSpec) {
     },
     servers: [
       {
-        url: env.NODE_ENV === "production"
-            ? `https://backend-cbx8.onrender.com/api`
-            : `${env.API_BASE_URL}:${env.API_PORT}/api`,
+        url: env.NODE_ENV === "production" ? `/api` : `/api`, // Changed to use relative path
         description: env.NODE_ENV === "production" ? "Production server" : "Development server",
       },
     ],
@@ -63,14 +61,7 @@ if (!swaggerSpec) {
       schemas: {
         User: {
           type: "object",
-          required: [
-            "id",
-            "email",
-            "name",
-            "base_role",
-            "created_at",
-            "updated_at",
-          ],
+          required: ["id", "email", "name", "base_role", "created_at", "updated_at"],
           properties: {
             id: {
               type: "string",
@@ -245,6 +236,8 @@ if (!swaggerSpec) {
     apis: [
       path.resolve(__dirname, "../routes/*.ts"),
       path.resolve(__dirname, "../controllers/*.ts"),
+      path.resolve(__dirname, "../controllers/hr/*.ts"),
+      path.resolve(__dirname, "../swagger/hr.schemas.ts"),
     ],
   };
 

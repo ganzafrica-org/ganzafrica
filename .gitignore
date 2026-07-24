@@ -6,14 +6,23 @@ node_modules
 # testing
 coverage
 
+# TypeScript build info
+*.tsbuildinfo
+
+# Raw payroll data (real salary data — never commit; see apps/internal/README.md)
+apps/internal/*.csv
+
+# Backend upload scratch (runtime artifacts; production serves from DigitalOcean Spaces)
+backend/uploads/
+
 # next.js
 .next/
 out/
 build
 dist
-.idea/
+*.idea/
 .vscode/
-.idea
+*.idea
 # misc
 .DS_Store
 *.pem
@@ -37,4 +46,7 @@ yarn-error.log*
 .wrangler
 wrangler.toml
 .qodo
-drizzle/
+
+*.xml
+*.iml
+CLAUDE.md

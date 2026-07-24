@@ -1,1 +1,1 @@
-export * from "@workspace/ui/tailwind.config";
+export { config as default } from "@workspace/ui/tailwind.config";

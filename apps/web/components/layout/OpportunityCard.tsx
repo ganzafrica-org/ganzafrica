@@ -1,7 +1,7 @@
 import { Button } from "@ui/button";
 import { Badge } from "@ui/badge";
 import { CheckCircle2, Clock, MapPin, Briefcase, ArrowUpRight, Calendar } from "lucide-react";
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 
 interface OpportunityCardProps {
   title: string;
@@ -18,6 +18,13 @@ interface OpportunityCardProps {
   endDate: string;
 }
 
+const SafeCheckCircle2 = CheckCircle2 as unknown as React.ComponentType<any>;
+const SafeClock = Clock as unknown as React.ComponentType<any>;
+const SafeMapPin = MapPin as unknown as React.ComponentType<any>;
+const SafeBriefcase = Briefcase as unknown as React.ComponentType<any>;
+const SafeArrowUpRight = ArrowUpRight as unknown as React.ComponentType<any>;
+const SafeCalendar = Calendar as unknown as React.ComponentType<any>;
+
 export function OpportunityCard({
   title,
   status,
@@ -31,13 +38,13 @@ export function OpportunityCard({
   employmentType,
   startDate,
   endDate,
-}: OpportunityCardProps) {
+}: OpportunityCardProps): JSX.Element {
   // Format dates
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -69,22 +76,22 @@ export function OpportunityCard({
           {type === "fellowship" ? (
             <>
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-[#045f3c]" />
+                <SafeClock className="w-5 h-5 text-[#045f3c]" />
                 <span className="text-sm">{duration}</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-[#045f3c]" />
+                <SafeMapPin className="w-5 h-5 text-[#045f3c]" />
                 <span className="text-sm">{location}</span>
               </div>
             </>
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-[#045f3c]" />
+                <SafeBriefcase className="w-5 h-5 text-[#045f3c]" />
                 <span className="text-sm">{employmentType}</span>
               </div>
               <div className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-[#045f3c]" />
+                <SafeMapPin className="w-5 h-5 text-[#045f3c]" />
                 <span className="text-sm">{location}</span>
               </div>
             </>
@@ -92,15 +99,17 @@ export function OpportunityCard({
         </div>
 
         <div className="flex items-center gap-2 mb-6 text-sm text-gray-600">
-          <Calendar className="w-5 h-5 text-[#045f3c]" />
-          <span>Application Period: {formatDate(startDate)} - {formatDate(endDate)}</span>
+          <SafeCalendar className="w-5 h-5 text-[#045f3c]" />
+          <span>
+            Application Period: {formatDate(startDate)} - {formatDate(endDate)}
+          </span>
         </div>
 
         <div className="space-y-2 mb-6">
           <h4 className="font-semibold text-[#045f3c]">Requirements:</h4>
           {requirements.map((req, index) => (
             <div key={index} className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#F8B712]" />
+              <SafeCheckCircle2 className="w-4 h-4 text-[#F8B712]" />
               <span className="text-sm">{req}</span>
             </div>
           ))}
@@ -115,17 +124,19 @@ export function OpportunityCard({
           disabled={status === "Closed"}
         >
           <span className="flex items-center justify-center gap-2">
-            {status === "Open"
-              ? <>
-                  {type === "fellowship" ? "Apply Now" : "Apply Now"}
-                  <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-                </>
-              : type === "fellowship"
-                ? "Applications Closed"
-                : "Position Filled"}
+            {status === "Open" ? (
+              <>
+                {type === "fellowship" ? "Apply Now" : "Apply Now"}
+                <SafeArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+              </>
+            ) : type === "fellowship" ? (
+              "Applications Closed"
+            ) : (
+              "Position Filled"
+            )}
           </span>
         </Button>
       </div>
     </div>
   );
-} 
+}

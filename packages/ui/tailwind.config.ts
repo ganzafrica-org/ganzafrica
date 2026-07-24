@@ -16,7 +16,6 @@ const config = {
         sans: ["var(--font-rubik)", ...defaultTheme.fontFamily.sans],
       },
       colors: {
-        // GanzAfrica color palette
         "primary-green": "#005C30",
         "secondary-green": "#009758",
         "lighter-green-100": "#80DFC8",
@@ -38,8 +37,6 @@ const config = {
         red: "#D42B1D",
         "red-darker": "#9C2018",
         "red-lighter": "#FFEE4E2",
-
-        // Standard UI colors
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -90,9 +87,29 @@ const config = {
         sm: "calc(var(--radius) - 4px)",
       },
       backgroundImage: {
-        // Adding the orange gradient as requested
-        "orange-gradient":
-          "linear-gradient(to bottom, #FEF597 4%, #F8B712 100%)",
+        "orange-gradient": "linear-gradient(to bottom, #FEF597 4%, #F8B712 100%)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
+        },
+        "accordion-up": {
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
@@ -196,4 +213,5 @@ const config = {
   ],
 } satisfies Config;
 
+export { config };
 export default config;

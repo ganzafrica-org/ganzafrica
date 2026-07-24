@@ -23,10 +23,15 @@ connectionPool.on("error", (err) => {
 // Initialize Drizzle with our schema
 export const db = drizzle(connectionPool, { schema });
 
+/**
+ * A drizzle handle bound to a single connection inside a transaction — either the pool-client
+ * wrapper `withDbTransaction` builds or drizzle's own `db.transaction()` handle. Callers get the
+ * same query surface as `db`, so services can accept `db | DbTransaction` and work either way.
+ */
+export type DbTransaction = Omit<ReturnType<typeof drizzle<typeof schema>>, "$client">;
+
 // Extend the pool with middleware functionality
-export async function withDbTransaction<T>(
-  callback: (txDb: any) => Promise<T>,
-): Promise<T> {
+export async function withDbTransaction<T>(callback: (txDb: any) => Promise<T>): Promise<T> {
   const client = await connectionPool.connect();
   try {
     await client.query("BEGIN");
@@ -43,10 +48,7 @@ export async function withDbTransaction<T>(
 }
 
 // Setup context for audit logging
-export async function setDbContext(
-  userId: number | string | null,
-  ipAddress: string | null,
-) {
+export async function setDbContext(userId: number | string | null, ipAddress: string | null) {
   const client = await connectionPool.connect();
   try {
     if (userId) {

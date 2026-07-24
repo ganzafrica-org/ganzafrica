@@ -1,4 +1,8 @@
-export const LinkedInIcon = () => (
+interface LinkedInIconProps {
+  className?: string;
+}
+
+export const LinkedInIcon = ({ className }: LinkedInIconProps): JSX.Element => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -9,7 +13,11 @@ export const LinkedInIcon = () => (
   </svg>
 );
 
-export const TwitterIcon = () => (
+interface TwitterIconProps {
+  className?: string;
+}
+
+export const TwitterIcon = ({ className }: TwitterIconProps): JSX.Element => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -20,7 +28,7 @@ export const TwitterIcon = () => (
   </svg>
 );
 
-export const PersonIcon = ({ className = "h-5 w-5 text-primary-green" }) => (
+export const PersonIcon = ({ className = "h-5 w-5 text-primary-green" }): JSX.Element => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 60 60"
@@ -37,22 +45,14 @@ export const PersonIcon = ({ className = "h-5 w-5 text-primary-green" }) => (
   </svg>
 );
 
-export const BikeIcon = ({ className = "w-12 h-12", color = "white" }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill={color}
-    className={className}
-  >
+export const BikeIcon = ({ className = "w-12 h-12", color = "white" }): JSX.Element => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={color} className={className}>
     <path d="M4 4.5a.5.5 0 0 1 .5-.5H6a.5.5 0 0 1 0 1v.5h4.14l.386-1.158A.5.5 0 0 1 11 4h1a.5.5 0 0 1 0 1h-.64l-.311.935.807 1.29a3.5 3.5 0 1 1-.848.53l-.508-.812-2.076 3.322A.5.5 0 0 1 8 10.5H5.959a3.5 3.5 0 1 1-.5 0H4.5v.5h-2a.5.5 0 0 1 0-1h2v-.5H4.5a.5.5 0 0 1-.5-.5zM8.5 9a.5.5 0 0 1 .5.5v.5h1.05l-.212.636a.5.5 0 0 1-.171-.136l-.805-1.288a3.5 3.5 0 1 1 .779-.49l.226.361L10.413 8H9.5a.5.5 0 0 1-.5-.5V7h-1c-.003 0-.006 0-.007-.001A.498.498 0 0 1 8 7c0 .271.132.512.335.656.203.144.469.196.729.196h.341a3.5 3.5 0 0 1-.573-1H8.5zm2.5 3.5a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0zm1.5-3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm-7 1a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z" />
   </svg>
 );
 
 // Land Governance Icon (Palm Tree)
-export const LandGovernanceIcon = ({
-  className = "w-12 h-12",
-  color = "white",
-}) => (
+export const LandGovernanceIcon = ({ className = "w-12 h-12", color = "white" }): JSX.Element => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -74,7 +74,7 @@ export const LandGovernanceIcon = ({
 export const SustainableAgricultureIcon = ({
   className = "w-12 h-12",
   color = "white",
-}) => (
+}): JSX.Element => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -95,13 +95,8 @@ export const SustainableAgricultureIcon = ({
 export const ClimateAdaptationIcon = ({
   className = "w-12 h-12",
   color = "white",
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill={color}
-    className={className}
-  >
+}): JSX.Element => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill={color} className={className}>
     <path d="M20 14h2v2h-2c-1.38 0-2.74-.35-4-1c-2.5 1.3-5.5 1.3-8 0c-1.26.65-2.63 1-4 1H2v-2h2c1.39 0 2.78-.47 4-1.33c2.44 1.71 5.56 1.71 8 0c1.22.86 2.61 1.33 4 1.33m0 6h2v2h-2c-1.38 0-2.74-.35-4-1c-2.5 1.3-5.5 1.3-8 0c-1.26.65-2.63 1-4 1H2v-2h2c1.39 0 2.78-.47 4-1.33c2.44 1.71 5.56 1.71 8 0c1.22.86 2.61 1.33 4 1.33M7 2L3 6h3v5h2V6h3m6-4l-4 4h3v5h2V6h3" />
   </svg>
 );
@@ -109,19 +104,9 @@ export const ClimateAdaptationIcon = ({
 export const TechnologyIcon = ({
   className = "w-12 h-12",
   color = "currentColor",
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    className={className}
-  >
-    <g
-      fill="none"
-      stroke={color}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.5"
-    >
+}): JSX.Element => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className={className}>
+    <g fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
       <path d="m5 16l5-3m4-2l5-3m-7-3v5m0 4v5M5 8l5 3m4 2l5 3m1.5-7v5.5m-7 6l5.5-3m-14.5 0l6 3m-7-5.5V9m1-2.5l6-3m9 3l-6-3" />
       <circle cx="12" cy="3.5" r="1.5" />
       <circle cx="12" cy="20.5" r="1.5" />
@@ -131,5 +116,63 @@ export const TechnologyIcon = ({
       <circle cx="3.5" cy="16.5" r="1.5" />
       <path d="m12 9.75l2 1.125v2.25l-2 1.125l-2-1.125v-2.25z" />
     </g>
+  </svg>
+);
+
+// Audio Controls Icons
+export const AudioUnmutedIcon = ({ className = "h-5 w-5" }): JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+    />
+  </svg>
+);
+
+export const AudioMutedIcon = ({ className = "h-5 w-5" }): JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+    />
+  </svg>
+);
+
+export const FullscreenIcon = ({ className = "h-5 w-5" }): JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+    />
   </svg>
 );

@@ -8,35 +8,22 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { DecoratedHeading } from "@/components/layout/headertext";
 import { CircleCheck } from "lucide-react";
+import { TranslatableText } from "@/components/translate/TranslatableText";
 
 // Custom CheckCircle component with color fill
-const ColoredCheckCircle = ({
-  color,
-  className,
-}: {
-  color: string;
-  className?: string;
-}) => {
+const ColoredCheckCircle = ({ color, className }: { color: string; className?: string }) => {
   return (
     <div className={`relative ${className}`}>
       <div
-        className={`absolute inset-0 rounded-full ${color}`}
-        style={{ zIndex: 1 }}
+        className="absolute inset-0 rounded-full"
+        style={{ backgroundColor: color, zIndex: 1 }}
       ></div>
-      <CircleCheck className="relative z-10 text-white" />
+      <CircleCheck className="relative z-10 text-white w-full h-full" />
     </div>
   );
 };
 
-interface WhyGanzAfricaSectionProps {
-  locale: string;
-  dict: any;
-}
-
-export default function WhyGanzAfricaSection({
-  locale,
-  dict,
-}: WhyGanzAfricaSectionProps) {
+export default function WhyGanzAfricaSection({}) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const bulletPointsRef = useRef<Array<HTMLDivElement | null>>([]);
 
@@ -80,169 +67,196 @@ export default function WhyGanzAfricaSection({
   return (
     <section
       ref={sectionRef}
-      className="py-16 md:py-24 bg-white relative overflow-hidden"
+      className="py-20 md:py-28 bg-gradient-to-br from-gray-50 to-white relative overflow-hidden"
     >
-      <div className="container mx-auto px-4">
-        <div className="relative flex flex-col lg:flex-row items-stretch gap-12">
-          {/* Image section with speech bubble */}
-          <div className="relative flex-1 w-full max-w-lg mx-auto lg:mx-0 lg:self-stretch flex">
-            <div className="relative rounded-2xl overflow-hidden shadow-xl w-full h-full flex-1">
-              <Image
-                src="/images/2-fellows.jpg"
-                alt={
-                  dict.about?.fellows_photo_alt ||
-                  "GanzAfrica fellows collaborating"
-                }
-                fill
-                priority
-                className="object-cover"
-              />
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary-green/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary-orange/5 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
 
-              {/* Agriculture Professional Leader speech bubble */}
-              <div className="absolute top-10 left-10 w-32">
-                {/* Speech bubble with tail pointing to bottom right */}
-                <div className="relative bg-secondary-yellow p-4 rotate-[-2deg] shadow-md rounded-md">
-                  <p
-                    className="text-dark font-bold text-sm leading-tight"
-                    style={{ fontFamily: "'Covered By Your Grace', cursive" }}
-                  >
-                    {dict.home?.why_section?.sticky_note_line1 || "Agriculture"}
-                    <br />
-                    {dict.home?.why_section?.sticky_note_line2 ||
-                      "Professional"}
-                    <br />
-                    {dict.home?.why_section?.sticky_note_line3 || "Leader"}
-                  </p>
-                  {/* Speech bubble tail pointing to bottom right */}
-                  <div className="absolute bottom-0 right-4 w-4 h-4 bg-secondary-yellow transform rotate-45 translate-y-2"></div>
+      <div className="container mx-auto px-5 md:px-35.5 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          {/* Left side - Enhanced Content Card */}
+          <div className="w-full lg:w-1/2 lg:-mr-12 relative z-20 ">
+            <div className="bg-white/95 backdrop-blur-sm rounded-md p-3 sm:p-4 md:p-5 lg:p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 h-auto sm:h-[450px] lg:h-[550px] flex flex-col">
+              {/* Enhanced Heading */}
+              <div className="mb-2 sm:mb-3 lg:mb-4">
+                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-1 sm:mb-2 mr-1">
+                  {/*<spa className="text-gray-900">*/}
+                  <TranslatableText>Why </TranslatableText>
+                  {/*</spa>*/}
+                  <span className="bg-gradient-to-r from-primary-green to-secondary-green bg-clip-text text-transparent">
+                    <TranslatableText> GanzAfrica?</TranslatableText>
+                  </span>
+                </h2>
+                {/* <div className="w-10 sm:w-12 h-0.5 sm:h-1 bg-gradient-to-r from-primary-green to-primary-orange rounded-full"></div> */}
+              </div>
+
+              {/* Enhanced Bullet Points */}
+              <div className="flex-1 space-y-1.5 sm:space-y-2 lg:space-y-3 overflow-hidden">
+                {/* Bullet Point 1 */}
+                <div
+                  ref={(el) => {
+                    bulletPointsRef.current[0] = el;
+                    return undefined;
+                  }}
+                  className="group flex items-start gap-1.5 sm:gap-2 lg:gap-3 p-0.5 sm:p-1 lg:p-2 rounded-lg hover:bg-gray-50/50 transition-all duration-300"
+                >
+                  <div className="mt-0.5 relative flex-shrink-0">
+                    <div
+                      className="absolute -inset-0.5 sm:-inset-1 md:-inset-1.5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: "rgba(255, 140, 0, 0.2)" }}
+                    ></div>
+                    <ColoredCheckCircle
+                      color="#f8b712"
+                      className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4
+                      className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 transition-colors duration-300 leading-tight"
+                      style={{ color: "gray-900" }}
+                      onMouseEnter={(e) => (e.target.style.color = "  #f8b712")}
+                      onMouseLeave={(e) => (e.target.style.color = "#111827")}
+                    >
+                      <TranslatableText>We train and inspire future leaders</TranslatableText>
+                    </h4>
+                    <p className="text-sm text-gray-600 leading-tight">
+                      <TranslatableText>
+                        Create, connect, and develop a pool of committed and value-driven young
+                        Africans who can adapt new and emerging technologies in land, agriculture,
+                        and environment sub-sectors.
+                      </TranslatableText>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bullet Point 2 */}
+                <div
+                  ref={(el) => {
+                    bulletPointsRef.current[1] = el;
+                    return undefined;
+                  }}
+                  className="group flex items-start gap-1.5 sm:gap-2 lg:gap-3 p-0.5 sm:p-1 lg:p-2 rounded-lg hover:bg-gray-50/50 transition-all duration-300"
+                >
+                  <div className="mt-0.5 relative flex-shrink-0">
+                    <div
+                      className="absolute -inset-0.5 sm:-inset-1 md:-inset-1.5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: "rgba(7, 51, 146, 0.2)" }}
+                    ></div>
+                    <ColoredCheckCircle
+                      color="#073392"
+                      className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4
+                      className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 transition-colors duration-300 leading-tight"
+                      style={{ color: "gray-900" }}
+                      onMouseEnter={(e) => (e.target.style.color = "#073392")}
+                      onMouseLeave={(e) => (e.target.style.color = "#111827")}
+                    >
+                      <TranslatableText>We drive continental collaboration</TranslatableText>
+                    </h4>
+                    <p className="text-sm text-gray-600 leading-tight">
+                      <TranslatableText>
+                        Build a continental coalition of informed and empowered young experts who
+                        can innovate, co-create and scale solutions in land, agriculture, and
+                        environment sub-sectors.
+                      </TranslatableText>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bullet Point 3 */}
+                <div
+                  ref={(el) => {
+                    bulletPointsRef.current[2] = el;
+                    return undefined;
+                  }}
+                  className="group flex items-start gap-1.5 sm:gap-2 lg:gap-3 p-0.5 sm:p-1 lg:p-2 rounded-lg hover:bg-gray-50/50 transition-all duration-300"
+                >
+                  <div className="mt-0.5 relative flex-shrink-0">
+                    <div
+                      className="absolute -inset-0.5 sm:-inset-1 md:-inset-1.5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: "rgba(255, 215, 0, 0.3)" }}
+                    ></div>
+                    <ColoredCheckCircle
+                      color="#FFD700"
+                      className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4
+                      className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 transition-colors duration-300 leading-tight"
+                      style={{ color: "gray-900" }}
+                      onMouseEnter={(e) => (e.target.style.color = "#FFD700")}
+                      onMouseLeave={(e) => (e.target.style.color = "#111827")}
+                    >
+                      <TranslatableText>We create intergenerational links</TranslatableText>
+                    </h4>
+                    <p className="text-sm text-gray-600 leading-tight">
+                      <TranslatableText>
+                        Enhance cross-generational linkages between experienced and retired
+                        professionals and young practitioners, enhancing the co-creation of blended
+                        solutions combining novel and traditional ideals.
+                      </TranslatableText>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bullet Point 4 */}
+                <div
+                  ref={(el) => {
+                    bulletPointsRef.current[3] = el;
+                    return undefined;
+                  }}
+                  className="group flex items-start gap-1.5 sm:gap-2 lg:gap-3 p-0.5 sm:p-1 lg:p-2 rounded-lg hover:bg-gray-50/50 transition-all duration-300"
+                >
+                  <div className="mt-0.5 relative flex-shrink-0">
+                    <div
+                      className="absolute -inset-0.5 sm:-inset-1 md:-inset-1.5 rounded-full blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: "rgba(7, 51, 146, 0.2)" }}
+                    ></div>
+                    <ColoredCheckCircle
+                      color="#073392"
+                      className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 lg:h-6 lg:w-6 xl:h-7 xl:w-7 relative z-10 transform group-hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4
+                      className="text-sm sm:text-base lg:text-base font-bold text-gray-900 mb-0.5 transition-colors duration-300 leading-tight"
+                      style={{ color: "gray-900" }}
+                      onMouseEnter={(e) => (e.target.style.color = "#073392")}
+                      onMouseLeave={(e) => (e.target.style.color = "#111827")}
+                    >
+                      <TranslatableText>We promote innovative solutions</TranslatableText>
+                    </h4>
+                    <p className="text-sm text-gray-600 leading-tight">
+                      <TranslatableText>
+                        Support the development of innovative, scalable solutions that address
+                        critical challenges in food systems, climate resilience, and sustainable
+                        agricultural practices across the continent.
+                      </TranslatableText>
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Content section */}
-          <div className="flex-1 lg:pl-8 flex flex-col">
-            <div className="mb-8">
-              <DecoratedHeading
-                firstText={dict.home?.why_section?.heading_first || "Why"}
-                secondText={
-                  dict.home?.why_section?.heading_second || "GanzAfrica?"
-                }
-                firstTextColor="text-primary-green"
-                secondTextColor="text-primary-orange"
-                borderColor="border-primary-green"
-                cornerColor="bg-primary-orange"
-              />
-            </div>
-
-            <p className="text-gray-600 mb-8 font-regular-paragraph">
-              {dict.home?.why_section?.description ||
-                "There are many variations of passages of available but the majority have suffered alteration in some form by injected humor or random word which don't look even."}
-            </p>
-
-            <div className="space-y-6">
-              {/* Bullet Point 1 */}
-              <div
-                ref={(el) => {
-                  bulletPointsRef.current[0] = el;
-                  return undefined;
-                }}
-                className="flex items-start gap-4"
-              >
-                <div className="mt-1">
-                  <ColoredCheckCircle
-                    color="bg-primary-green"
-                    className="h-6 w-6"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-bold-paragraph text-dark mb-1">
-                    {dict.home?.why_section?.point1_title ||
-                      "We train and inspire future leaders"}
-                  </h4>
-                  <p className="text-gray-600 font-regular-paragraph">
-                    {dict.home?.why_section?.point1_desc ||
-                      "Create, connect, and develop a pool of committed and value-driven young Africans who can adapt new and emerging technologies in land, agriculture, and environment sub-sectors."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Bullet Point 2 */}
-              <div
-                ref={(el) => {
-                  bulletPointsRef.current[1] = el;
-                  return undefined;
-                }}
-                className="flex items-start gap-4"
-              >
-                <div className="mt-1">
-                  <ColoredCheckCircle
-                    color="bg-secondary-green"
-                    className="h-6 w-6"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-bold-paragraph text-dark mb-1">
-                    {dict.home?.why_section?.point2_title ||
-                      "We drive continental collaboration"}
-                  </h4>
-                  <p className="text-gray-600 font-regular-paragraph">
-                    {dict.home?.why_section?.point2_desc ||
-                      "Build a continental coalition of informed and empowered young experts who can innovate, co-create and scale solutions in land, agriculture, and environment sub-sectors."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Bullet Point 3 */}
-              <div
-                ref={(el) => {
-                  bulletPointsRef.current[2] = el;
-                  return undefined;
-                }}
-                className="flex items-start gap-4"
-              >
-                <div className="mt-1">
-                  <ColoredCheckCircle
-                    color="bg-lighter-green-100"
-                    className="h-6 w-6"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-bold-paragraph text-dark mb-1">
-                    {dict.home?.why_section?.point3_title ||
-                      "We create intergenerational links"}
-                  </h4>
-                  <p className="text-gray-600 font-regular-paragraph">
-                    {dict.home?.why_section?.point3_desc ||
-                      "Enhance cross-generational linkages between experienced and retired professionals and young practitioners, enhancing the co-creation of blended solutions combining novel and traditional ideals."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Bullet Point 4 */}
-              <div
-                ref={(el) => {
-                  bulletPointsRef.current[3] = el;
-                  return undefined;
-                }}
-                className="flex items-start gap-4"
-              >
-                <div className="mt-1">
-                  <ColoredCheckCircle
-                    color="bg-primary-orange"
-                    className="h-6 w-6"
-                  />
-                </div>
-                <div>
-                  <h4 className="font-bold-paragraph text-dark mb-1">
-                    {dict.home?.why_section?.point4_title ||
-                      "We promote innovative solutions"}
-                  </h4>
-                  <p className="text-gray-600 font-regular-paragraph">
-                    {dict.home?.why_section?.point4_desc ||
-                      "Support the development of innovative, scalable solutions that address critical challenges in food systems, climate resilience, and sustainable agricultural practices across the continent."}
-                  </p>
-                </div>
+          {/* Right side - Enhanced Image */}
+          <div className="w-full lg:w-1/2 mb-8 lg:mb-0">
+            <div className="relative group">
+              <div className="absolute -inset-4 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative rounded-md overflow-hidden shadow-2xl h-[350px] sm:h-[450px] lg:h-[550px] transform transition-transform duration-500 group-hover:scale-[1.02]">
+                <Image
+                  src="/images/2-fellows.jpg"
+                  alt="GanzAfrica fellows collaborating"
+                  fill
+                  priority
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
               </div>
             </div>
           </div>

@@ -5,7 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown, Globe } from "lucide-react";
+import { TranslatableText } from "@/components/translate/TranslatableText";
+
+import LanguageSwitcher from "./language-switcher";
 
 import {
   NavigationMenu,
@@ -16,62 +19,52 @@ import {
   NavigationMenuTrigger,
 } from "@workspace/ui/components/navigation-menu";
 import { Button } from "@workspace/ui/components/button";
-import LanguageSwitcher from "@/components/layout/language-switcher";
+
+const SafeLink = Link as unknown as React.ComponentType<any>;
+const SafeImage = Image as unknown as React.ComponentType<any>;
+const SafeIconMenu = Menu as unknown as React.ComponentType<any>;
+const SafeIconX = X as unknown as React.ComponentType<any>;
+const SafeIconChevronDown = ChevronDown as unknown as React.ComponentType<any>;
 
 // Define types for menu items
 interface MenuItem {
   title: string;
   href: string;
-  description: string;
-}
-
-// Define props for ListItem component
-interface ListItemProps {
-  className?: string;
-  title: string;
-  children: React.ReactNode;
-  href: string;
-}
-
-// Define dictionary type
-interface DictionaryType {
-  navigation?: {
-    about?: string;
-    our_approach?:string;
-    programs?: string;
-    projects?: string;
-    opportunities?: string;
-  };
-  about?: {
-    who_we_are?: string;
-    our_story?: string;
-    [key: string]: string | undefined;
-  };
-  cta?: {
-    sign_in?: string;
-  };
+  description?: string;
+  hasSubmenu?: boolean;
 }
 
 // Define Navigation props
 interface NavigationProps {
-  locale: string;
-  dict: DictionaryType;
   isHomePage?: boolean;
 }
+
+const resolveHref = (path: string) => {
+  if (!path) return "/";
+  // Keep absolute URLs as-is
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  // Avoid protocol-relative URLs like //about
+  if (path.startsWith("//")) return `/${path.replace(/^\/+/, "")}`;
+  // Ensure a single leading slash for internal routes
+  return path.startsWith("/") ? path : `/${path}`;
+};
 
 // Menu items with descriptions for rich dropdowns
 const aboutItems: MenuItem[] = [
   {
     title: "Who We Are",
     href: "/about/who-we-are",
-    description:
-      "Learn about our mission, vision, and the values that drive us.",
+    description: "Learn about our mission, vision, and the values that drive us.",
   },
   {
     title: "Our Story",
     href: "/about/our-story",
-    description:
-      "The journey of how we started and what inspires our work every day.",
+    description: "The journey of how we started and what inspires our work every day.",
+  },
+  {
+    title: "Our Approach",
+    href: "/about/our-approach",
+    description: "How we work, the processes we follow, and our commitment to excellence.",
   },
   {
     title: "Team",
@@ -81,93 +74,49 @@ const aboutItems: MenuItem[] = [
   },
 ];
 
-const ourApproachItems: MenuItem[] = [
-  {
-    title: "Food Systems",
-    href: "/our-approach",
-    description: "Developing sustainable food systems for communities across Africa.",
-  },
-];
-
+// @ts-ignore
 const programsItems: MenuItem[] = [
   {
-    title: "Fellowship",
-    href: "/programs/fellowship",
-    description:
-      "Our flagship program empowering the next generation of African change-makers.",
+    title: "Program",
+    href: "/programs",
+    hasSubmenu: true, // Optional flag for future logic
   },
-  {
-    title: "Alumni",
-    href: "/programs/alumni",
-    description:
-      "A network of graduates continuing to make an impact across the continent.",
-  },
-];
-
-const projectItems: MenuItem[] = [
   {
     title: "Projects",
     href: "/projects",
-    description: "Discover our projects and their impact.",
+  },
+];
+
+const programSubItems: MenuItem[] = [
+  {
+    title: "Fellowship Program",
+    href: "/programs/fellowship",
+    description: "Our flagship program empowering the next generation of African change-makers.",
+  },
+  {
+    title: "Alumni Network",
+    href: "/programs/alumni",
+    description: "A network of graduates continuing to make an impact across the continent.",
   },
 ];
 
 const newsItems: MenuItem[] = [
   {
-    title: "News",
+    title: "Social Media Updates",
     href: "/newsroom",
-    description:
-      "Stay updated with our latest initiatives, successes, and announcements.",
+    description: "Stay informed about our recent activities, projects, and success stories.",
   },
   {
     title: "Opportunities",
     href: "/opportunities",
     description: "Explore current openings and ways to grow with us.",
   },
-  {
-    title: "Contact Us",
-    href: "/contact",
-    description:
-      "Get in touch with our team for inquiries, partnerships, or support.",
-  },
 ];
 
-const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
->(({ className, title, children, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className,
-          )}
-          {...props}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>
-  );
-});
-ListItem.displayName = "ListItem";
-
-export default function Navigation({
-  locale,
-  dict,
-  isHomePage = false,
-}: NavigationProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] =
-    React.useState<boolean>(false);
-  const [activeDropdown, setActiveDropdown] = React.useState<string | null>(
-    null,
-  );
+export default function Navigation({ isHomePage = false }: NavigationProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState<boolean>(false);
+  const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);
+  const [desktopDropdown, setDesktopDropdown] = React.useState<string | null>(null);
   const [isScrolled, setIsScrolled] = React.useState<boolean>(false);
   const pathname = usePathname();
   const navRef = React.useRef<HTMLDivElement>(null);
@@ -185,6 +134,15 @@ export default function Navigation({
   // Toggle dropdown for mobile menu
   const toggleDropdown = (dropdownName: string) => {
     setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
+  };
+
+  // Handle desktop dropdown hover
+  const handleDesktopDropdownEnter = (dropdownName: string) => {
+    setDesktopDropdown(dropdownName);
+  };
+
+  const handleDesktopDropdownLeave = () => {
+    setDesktopDropdown(null);
   };
 
   // Determine header background class - always use white background for non-home pages
@@ -217,185 +175,174 @@ export default function Navigation({
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-40 bg-white pt-20 md:hidden overflow-y-auto">
-        <div className="absolute right-4 top-6">
+      <div className="fixed inset-0 z-[60] bg-white w-screen h-screen overflow-y-auto md:hidden">
+        <div className="flex justify-between items-center px-4 py-4 border-b">
+          <SafeLink
+            href="/"
+            className="relative z-50 flex items-center"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <div className="relative h-14 w-24">
+              <SafeImage
+                src="/images/logo.png"
+                alt="GanzAfrica"
+                fill
+                sizes="(max-width: 768px) 300px, 200px"
+                className="object-contain"
+                priority
+              />
+            </div>
+          </SafeLink>
           <Button
             variant="ghost"
             size="icon"
-            className="text-black hover:bg-gray-100"
+            className="text-black hover:bg-[#F5F5F5] transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Close menu"
           >
-            <X className="h-6 w-6" />
+            <SafeIconX className="h-6 w-6" />
           </Button>
         </div>
-        <nav className="container mx-auto px-4 py-6 flex flex-col space-y-4">
+        <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
           {/* Mobile About with submenu */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-about")}
             >
-              {dict?.navigation?.about || "About"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              <TranslatableText>About</TranslatableText>
+              <SafeIconChevronDown
+                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
+              />
             </button>
             {activeDropdown === "mobile-about" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {aboutItems.map((item) => (
-                  <Link
+                  <SafeLink
                     key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    href={resolveHref(item.href)}
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
-                    {dict?.about?.[
-                      item.title.toLowerCase().replace(/ /g, "_")
-                    ] || item.title}
-                  </Link>
+                    <TranslatableText>{item.title}</TranslatableText>
+                  </SafeLink>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Our Approach */}
-          <div className="flex flex-col">
+          {/* what we do */}
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-our-approach")}
-            >
-              {dict?.navigation?.our_approach || "Our Approach"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-our-approach" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
-            </button>
-            {activeDropdown === "mobile-our-approach" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {ourApproachItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Programs */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-programs")}
             >
-              {dict?.navigation?.programs || "Programs"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              <TranslatableText>What We Do</TranslatableText>
+              <SafeIconChevronDown
+                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
+              />
             </button>
-            {activeDropdown === "mobile-programs" && (
+            {(activeDropdown === "mobile-programs" ||
+              activeDropdown === "mobile-program-submenu") && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {programsItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
+                {programsItems.map((item) => {
+                  const isSubmenuOpen = activeDropdown === "mobile-program-submenu";
+                  return (
+                    <div key={item.href} className="flex flex-col w-full">
+                      {item.hasSubmenu ? (
+                        <>
+                          <button
+                            className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700 text-left flex items-center justify-between"
+                            onClick={() => toggleDropdown("mobile-program-submenu")}
+                          >
+                            <TranslatableText>{item.title}</TranslatableText>
+                            <SafeIconChevronDown
+                              className={`h-4 w-4 transform transition-transform ${isSubmenuOpen ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                          {isSubmenuOpen && (
+                            <div className="ml-4 mt-2 flex flex-col space-y-2">
+                              {programSubItems.map((subItem) => (
+                                <SafeLink
+                                  key={subItem.href}
+                                  href={resolveHref(subItem.href)}
+                                  className="p-2 text-sm font-medium hover:bg-[#F5F5F5] rounded-md text-gray-600"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  prefetch={true}
+                                >
+                                  <TranslatableText>{subItem.title}</TranslatableText>
+                                </SafeLink>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <SafeLink
+                          href={resolveHref(item.href)}
+                          className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          prefetch={true}
+                        >
+                          <TranslatableText>{item.title}</TranslatableText>
+                        </SafeLink>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
-          </div>
-
-          {/* Projects */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-projects")}
-            >
-              {dict?.navigation?.projects || "Projects"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-projects" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
-            </button>
-            {activeDropdown === "mobile-projects" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {projectItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Opportunities */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-opportunities")}
-            >
-              {dict?.navigation?.opportunities || "Opportunities"}
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-projects" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
-            </button>
           </div>
 
           {/* News & Updates */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-news")}
             >
-              News & Updates
-              <span
-                className={`transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
+              <TranslatableText>News & Updates</TranslatableText>
+              <SafeIconChevronDown
+                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
+              />
             </button>
             {activeDropdown === "mobile-news" && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
                 {newsItems.map((item) => (
-                  <Link
+                  <SafeLink
                     key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    href={resolveHref(item.href)}
+                    className="p-2 text-md text-gray-900 font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
-                    {item.title}
-                  </Link>
+                    <TranslatableText>{item.title}</TranslatableText>
+                  </SafeLink>
                 ))}
               </div>
             )}
           </div>
+
+          {/* Contact - Direct Link */}
+          <SafeLink
+            href={resolveHref("/contact")}
+            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            <TranslatableText>Contact</TranslatableText>
+          </SafeLink>
+
+          {/* Add sign in button at the bottom */}
+          {/*<div className="mt-auto pt-6 border-t">*/}
+          {/*  <SafeLink href="/login" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>*/}
+          {/*    <Button*/}
+          {/*      size="lg"*/}
+          {/*      className="w-full bg-[#073392] hover:bg-primary-green/90 text-white"*/}
+          {/*    >*/}
+          {/*      "Sign In"*/}
+          {/*    </Button>*/}
+          {/*  </SafeLink>*/}
+          {/*</div>*/}
         </nav>
       </div>
     );
@@ -407,13 +354,9 @@ export default function Navigation({
         <div className="flex h-20 items-stretch justify-between relative">
           {/* Logo */}
           <div className="min-h-full w-32 md:w-52 flex items-center p-8">
-            <Link
-              href={`/${locale}`}
-              className="relative z-50 flex items-center gap-2"
-              prefetch={true}
-            >
+            <SafeLink href="/" className="relative z-50 flex items-center gap-2" prefetch={true}>
               <div className="relative h-14 w-24">
-                <Image
+                <SafeImage
                   src="/images/logo.png"
                   alt="GanzAfrica"
                   fill
@@ -422,228 +365,214 @@ export default function Navigation({
                   priority
                 />
               </div>
-            </Link>
+            </SafeLink>
           </div>
 
-          {/* Desktop Navigation using shadcn NavigationMenu */}
+          {/* Desktop Navigation - Simple Dropdown */}
           <div className="hidden md:flex justify-center items-center space-x-1 flex-1 mx-4">
-            <NavigationMenu>
-              <NavigationMenuList>
-                {/* About Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
-                    {dict?.navigation?.about || "About"}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/about`}
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              About Us
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Dedicated to creating a sustainable future for
-                              Africa through empowering youth and communities.
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
+            <nav className="flex items-center space-x-1">
+              {/* About Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => handleDesktopDropdownEnter("about")}
+                onMouseLeave={handleDesktopDropdownLeave}
+              >
+                <button
+                  className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+                >
+                  <TranslatableText>About</TranslatableText>
+                  <SafeIconChevronDown
+                    className={`h-4 w-4 transition-transform ${desktopDropdown === "about" ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {desktopDropdown === "about" && (
+                  <div className="absolute left-0 top-full -mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                    <ul className="p-2">
                       {aboutItems.map((item) => (
-                        <ListItem
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          title={
-                            dict?.about?.[
-                              item.title.toLowerCase().replace(/ /g, "_")
-                            ] || item.title
-                          }
-                        >
-                          {item.description}
-                        </ListItem>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                
-                {/* Our Approach Dropdown */} 
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
-                    {dict?.navigation?.our_approach || "Our Approach"}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/our-approach`}
+                        <li key={item.href}>
+                          <SafeLink
+                            href={resolveHref(item.href)}
+                            className="block p-3 rounded-md hover:bg-accent transition-colors"
+                            prefetch={true}
                           >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Approach to Food Systems
+                            <div className="text-sm font-medium leading-none">
+                              <TranslatableText>{item.title}</TranslatableText>
                             </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Explore our approach focused on sustainable
-                              development, climate resilience, and food security
-                              across Africa.
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                              {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
                             </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
-                      {ourApproachItems.map((item) => (
-                        <ListItem
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          title={item.title}
-                        >
-                          {item.description}
-                        </ListItem>
+                          </SafeLink>
+                        </li>
                       ))}
                     </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+                  </div>
+                )}
+              </div>
 
-                {/* Programs Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
-                    {dict?.navigation?.programs || "Programs"}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/programs/fellowship`}
+              {/* What we do Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => handleDesktopDropdownEnter("what-we-do")}
+                onMouseLeave={handleDesktopDropdownLeave}
+              >
+                <button
+                  className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+                >
+                  <TranslatableText>What We Do</TranslatableText>
+                  <SafeIconChevronDown
+                    className={`h-4 w-4 transition-transform ${desktopDropdown === "what-we-do" ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {(desktopDropdown === "what-we-do" || desktopDropdown === "program-submenu") && (
+                  <div className="absolute left-0 top-full =mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                    <ul className="p-2">
+                      {programsItems.map((item) => {
+                        const isSubmenuOpen = desktopDropdown === "program-submenu";
+                        return (
+                          <li
+                            key={item.href}
+                            className="relative"
+                            onMouseEnter={() =>
+                              item.hasSubmenu && handleDesktopDropdownEnter("program-submenu")
+                            }
                           >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Programs
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Transformative programs designed to build capacity
-                              and develop leadership in sustainable agriculture.
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
-                      {programsItems.map((item) => (
-                        <ListItem
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          title={item.title}
-                        >
-                          {item.description}
-                        </ListItem>
-                      ))}
+                            {item.hasSubmenu ? (
+                              <div className="block p-3 rounded-md hover:bg-accent transition-colors">
+                                <div className="text-sm font-medium leading-none flex items-center justify-between">
+                                  <TranslatableText>{item.title}</TranslatableText>
+                                  <SafeIconChevronDown
+                                    className={`h-3 w-3 transition-transform ${isSubmenuOpen ? "rotate-180" : ""}`}
+                                  />
+                                </div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                  {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
+                                </p>
+                                {isSubmenuOpen && (
+                                  <div
+                                    className="absolute left-full top-0 ml-1 w-[280px] bg-white rounded-md border shadow-lg z-50"
+                                    onMouseEnter={() =>
+                                      handleDesktopDropdownEnter("program-submenu")
+                                    }
+                                    onMouseLeave={() => handleDesktopDropdownEnter("what-we-do")}
+                                  >
+                                    <ul className="p-2">
+                                      {programSubItems.map((subItem) => (
+                                        <li key={subItem.href}>
+                                          <SafeLink
+                                            href={resolveHref(subItem.href)}
+                                            className="block p-3 rounded-md hover:bg-accent transition-colors"
+                                            prefetch={true}
+                                          >
+                                            <div className="text-sm font-medium leading-none">
+                                              <TranslatableText>{subItem.title}</TranslatableText>
+                                            </div>
+                                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                              {/*<TranslatableText>{subItem.description || ""}</TranslatableText>*/}
+                                            </p>
+                                          </SafeLink>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <SafeLink
+                                href={resolveHref(item.href)}
+                                className="block p-3 rounded-md hover:bg-accent transition-colors"
+                                prefetch={true}
+                              >
+                                <div className="text-sm font-medium leading-none">
+                                  <TranslatableText>{item.title}</TranslatableText>
+                                </div>
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                  {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
+                                </p>
+                              </SafeLink>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+                  </div>
+                )}
+              </div>
 
-                {/* Projects Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
-                    {dict?.navigation?.projects || "Projects"}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/projects`}
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Projects
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Discover our innovative projects and their impact
-                              on communities across Africa.
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
-                      {projectItems.map((item) => (
-                        <ListItem
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          title={item.title}
-                        >
-                          {item.description}
-                        </ListItem>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-          
-
-                {/* News & Updates Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className={getNavItemColor()}>
-                    News & Updates
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a
-                            className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                            href={`/${locale}/newsroom`}
-                          >
-                            <div className="mb-2 mt-4 text-lg font-medium">
-                              Latest Updates
-                            </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Stay informed about our recent activities,
-                              projects, and success stories.
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
+              {/* News & Updates Dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => handleDesktopDropdownEnter("news")}
+                onMouseLeave={handleDesktopDropdownLeave}
+              >
+                <button
+                  className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+                >
+                  <TranslatableText>News & Updates</TranslatableText>
+                  <SafeIconChevronDown
+                    className={`h-4 w-4 transition-transform ${desktopDropdown === "news" ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {desktopDropdown === "news" && (
+                  <div className="absolute left-0 top-full -mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                    <ul className="p-2">
                       {newsItems.map((item) => (
-                        <ListItem
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          title={item.title}
-                        >
-                          {item.description}
-                        </ListItem>
+                        <li key={item.href}>
+                          <SafeLink
+                            href={resolveHref(item.href)}
+                            className="block p-3 rounded-md hover:bg-accent transition-colors"
+                            prefetch={true}
+                          >
+                            <div className="text-sm font-medium leading-none">
+                              <TranslatableText>{item.title}</TranslatableText>
+                            </div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                              {/*<TranslatableText>{item.description || ""}</TranslatableText>*/}
+                            </p>
+                          </SafeLink>
+                        </li>
                       ))}
                     </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+                  </div>
+                )}
+              </div>
+
+              {/* Contact - Direct Link */}
+              <SafeLink
+                href={resolveHref("/contact")}
+                className={`${getNavItemColor()} text-base md:text-sm lg:text-base font-medium px-4 py-2 hover:bg-accent/50 rounded-md transition-colors`}
+                prefetch={true}
+              >
+                <TranslatableText>Contact</TranslatableText>
+              </SafeLink>
+            </nav>
           </div>
 
-          {/* Right side items with inverted top-left corner */}
-          <div className="min-h-full p-4 w-56 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="mr-2">
+          {/* Right side items */}
+          <div className="min-h-full p-4 w-auto flex items-center">
+            <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 border-3">
                 <LanguageSwitcher />
               </div>
-              <Link href={`/${locale}/login`}>
-                <Button
-                  size="sm"
-                  className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
-                >
-                  {dict?.cta?.sign_in || "Sign In"}
-                </Button>
-              </Link>
+              {/*<SafeLink href="/login" className="hidden md:block">*/}
+              {/*  <Button*/}
+              {/*    size="sm"*/}
+              {/*    className="bg-primary-green hover:bg-primary-green/90 text-white px-6"*/}
+              {/*  >*/}
+              {/*    "Sign In"*/}
+              {/*  </Button>*/}
+              {/*</SafeLink>*/}
               <div className="md:hidden">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-black hover:bg-gray-100"
+                  className="text-black hover:bg-[#F5F5F5] transition-colors"
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                 >
                   {isMobileMenuOpen ? (
-                    <X className="h-6 w-6" />
+                    <SafeIconX className="h-6 w-6" />
                   ) : (
-                    <Menu className="h-6 w-6" />
+                    <SafeIconMenu className="h-6 w-6" />
                   )}
                 </Button>
               </div>

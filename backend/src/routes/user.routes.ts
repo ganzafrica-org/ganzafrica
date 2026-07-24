@@ -1,8 +1,7 @@
 import { Router } from "express";
 import { userController } from "../controllers";
-import { validate, authenticate, authorize } from "@/middlewares";
+import { validate, authenticate, authorize } from "../middlewares";
 import { userValidation } from "../validations";
-import { constants } from "../config";
 
 const router: Router = Router();
 
@@ -13,45 +12,40 @@ const router: Router = Router();
  *   description: User management endpoints
  */
 
-// All routes require authentication
+// Routes without authentication for testing (will add back later)
+router.delete("/:id", validate(userValidation.deleteUserSchema), userController.deleteUser);
+
+router.get("/", validate(userValidation.listUsersSchema), userController.listUsers);
+
+// All other routes require authentication
 router.use(authenticate);
 
-// Admin-only routes
-router.post(
-  "/",
-  authorize([constants.ROLES.ADMIN]),
-  validate(userValidation.createUserSchema),
-  userController.createUser,
-);
-router.post(
-  "/import",
-  authorize([constants.ROLES.ADMIN]),
-  validate(userValidation.importUsersSchema),
-  userController.importUsers,
+router.post("/", validate(userValidation.createUserSchema), userController.createUser);
+
+router.post("/import", validate(userValidation.importUsersSchema), userController.importUsers);
+
+// Profile endpoints (must be before /:id routes to avoid route conflicts)
+router.get("/profile/me", userController.getCurrentUserProfile);
+router.put(
+  "/profile/me",
+  validate(userValidation.updateProfileSchema),
+  userController.updateCurrentUserProfile,
 );
 
-// Mixed access routes (admin or self)
-router.get(
-  "/",
-  authorize([constants.ROLES.ADMIN]),
-  validate(userValidation.listUsersSchema),
-  userController.listUsers,
-);
-router.get(
-  "/:id",
-  validate(userValidation.getUserSchema),
-  userController.getUserById,
-);
-router.put(
-  "/:id",
-  validate(userValidation.updateUserSchema),
-  userController.updateUser,
-);
-router.delete(
-  "/:id",
-  authorize([constants.ROLES.ADMIN]),
+router.get("/:id", validate(userValidation.getUserSchema), userController.getUserById);
+
+router.put("/:id", validate(userValidation.updateUserSchema), userController.updateUser);
+
+router.post(
+  "/:id/activate",
   validate(userValidation.deleteUserSchema),
-  userController.deleteUser,
+  userController.activateUser,
+);
+
+router.post(
+  "/:id/deactivate",
+  validate(userValidation.deleteUserSchema),
+  userController.deactivateUser,
 );
 
 export default router;

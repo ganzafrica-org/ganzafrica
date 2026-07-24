@@ -1,12 +1,13 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
+const SafeImage = Image as unknown as React.ComponentType<any>;
 import Container from "@/components/layout/container";
 
 // Animation variants
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -17,7 +18,7 @@ const containerVariants = {
   },
 };
 
-const logoVariants = {
+const logoVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
@@ -29,7 +30,7 @@ const logoVariants = {
   },
 };
 
-const textVariants = {
+const textVariants: Variants = {
   hidden: { opacity: 0, x: -30 },
   visible: {
     opacity: 1,
@@ -65,7 +66,7 @@ const partnerLogos = [
   },
 ];
 
-const PartnersSection = () => {
+const PartnersSection = (): JSX.Element => {
   return (
     <section className="py-16 bg-white">
       <Container>
@@ -82,9 +83,9 @@ const PartnersSection = () => {
               <span className="text-primary-green">Climate action</span>
             </h2>
             <p className="text-gray-600 mb-6">
-              We extend our sincere gratitude to all our partners who support
-              our work in food systems. Your commitment to building sustainable,
-              equitable food networks has been instrumental to our success.
+              We extend our sincere gratitude to all our partners who support our work in food
+              systems. Your commitment to building sustainable, equitable food networks has been
+              instrumental to our success.
             </p>
           </motion.div>
 
@@ -104,7 +105,7 @@ const PartnersSection = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Image
+                <SafeImage
                   src={logo.src}
                   alt={logo.name}
                   width={150}

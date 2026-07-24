@@ -1,11 +1,4 @@
-import {
-  integer,
-  pgTable,
-  text,
-  serial,
-  varchar,
-  uniqueIndex,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, serial, varchar, uniqueIndex } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 import { users } from "./users";
 
@@ -32,29 +25,38 @@ export const user_roles = pgTable(
   },
   (table) => {
     return {
-      userRoleIdx: uniqueIndex("user_role_idx").on(
-        table.user_id,
-        table.role_id,
-      ),
+      userRoleIdx: uniqueIndex("user_role_idx").on(table.user_id, table.role_id),
     };
   },
 );
 
-export const permissions = pgTable("permissions", {
-  id: integer("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  resource: text("resource").notNull(),
-  action: text("action").notNull(),
-  ...timestampFields,
-});
+export const permissions = pgTable(
+  "permissions",
+  {
+    id: integer("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    resource: text("resource").notNull(),
+    action: text("action").notNull(),
+    ...timestampFields,
+  },
+  (t) => ({
+    resourceActionIdx: uniqueIndex("permissions_resource_action_idx").on(t.resource, t.action),
+  }),
+);
 
-export const role_permissions = pgTable("role_permissions", {
-  id: integer("id").primaryKey(),
-  role_id: integer("role_id")
-    .notNull()
-    .references(() => roles.id),
-  permission_id: integer("permission_id")
-    .notNull()
-    .references(() => permissions.id),
-});
+export const role_permissions = pgTable(
+  "role_permissions",
+  {
+    id: integer("id").primaryKey(),
+    role_id: integer("role_id")
+      .notNull()
+      .references(() => roles.id, { onDelete: "cascade" }),
+    permission_id: integer("permission_id")
+      .notNull()
+      .references(() => permissions.id, { onDelete: "cascade" }),
+  },
+  (t) => ({
+    rolePermIdx: uniqueIndex("role_permissions_role_perm_idx").on(t.role_id, t.permission_id),
+  }),
+);

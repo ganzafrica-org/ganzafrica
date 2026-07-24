@@ -1,12 +1,4 @@
-import {
-  integer,
-  pgTable,
-  text,
-  timestamp,
-  serial,
-  boolean,
-  index,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, timestamp, serial, boolean, index } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 import { users } from "./users";
 

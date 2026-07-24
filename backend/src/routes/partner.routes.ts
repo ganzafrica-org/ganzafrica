@@ -13,22 +13,14 @@ const router: Router = Router();
  */
 
 // All routes require authentication
-router.use(authenticate);
+// router.use(authenticate);
 
 // Partner routes
-router.post(
-  "/",
-  validate(partnerValidation.createPartnerSchema),
-  partnerController.createPartner,
-);
+router.post("/", validate(partnerValidation.createPartnerSchema), partnerController.createPartner);
 
 router.get("/", partnerController.listPartners);
 
-router.get(
-  "/:id",
-  validate(partnerValidation.getPartnerSchema),
-  partnerController.getPartnerById,
-);
+router.get("/:id", validate(partnerValidation.getPartnerSchema), partnerController.getPartnerById);
 
 router.put(
   "/:id",

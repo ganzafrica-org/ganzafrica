@@ -209,11 +209,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
     // If user is updating their own profile but not an admin,
     // prevent them from changing their role
-    if (
-      req.user?.id === id &&
-      currentUser.role_id !== adminRole.id &&
-      userData.role_id
-    ) {
+    if (req.user?.id === id && currentUser.role_id !== adminRole.id && userData.role_id) {
       delete userData.role_id; // Remove role_id from update data
     }
 
@@ -240,9 +236,111 @@ export const updateUser = async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /users/{id}/activate:
+ *   post:
+ *     summary: Activate user (sets is_active to true)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User activated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+export const activateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await userService.activateUser(id);
+
+    res.status(200).json({
+      message: "User activated successfully",
+    });
+  } catch (error) {
+    logger.error(`Activate user error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "User Activation Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "User Activation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /users/{id}/deactivate:
+ *   post:
+ *     summary: Deactivate user (soft delete)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deactivated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
+ */
+export const deactivateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await userService.deactivateUser(id);
+
+    res.status(200).json({
+      message: "User deactivated successfully",
+    });
+  } catch (error) {
+    logger.error(`Deactivate user error: ${req.params.id}`, error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "User Deactivation Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "User Deactivation Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
  * /users/{id}:
  *   delete:
- *     summary: Delete user (soft delete)
+ *     summary: Delete user (hard delete - permanently removes from database)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -269,13 +367,19 @@ export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    await userService.deleteUser(id);
+    if (!id) {
+      return res.status(400).json({
+        error: "User Deletion Error",
+        message: "User ID is required",
+      });
+    }
 
+    await userService.deleteUser(id);
     res.status(200).json({
       message: constants.SUCCESS_MESSAGES.USER_DELETED,
     });
   } catch (error) {
-    logger.error(`Delete user error: ${req.params.id}`, error);
+    logger.error(`Delete user error for ID ${req.params.id}:`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
         error: "User Deletion Error",
@@ -352,14 +456,14 @@ export const listUsers = async (req: Request, res: Response) => {
       search: req.query.search as string,
       sort_by: req.query.sort_by as string,
       sort_order: req.query.sort_order as "asc" | "desc",
-      role_id: req.query.role_id
-        ? parseInt(req.query.role_id as string, 10)
-        : undefined,
-      is_active:
-        req.query.is_active === undefined
-          ? undefined
-          : req.query.is_active === "true",
+      role_id: req.query.role_id ? parseInt(req.query.role_id as string, 10) : undefined,
+      is_active: req.query.is_active === undefined ? undefined : req.query.is_active === "true",
     };
+
+    // Add cache control headers to prevent caching
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     const { users, total } = await userService.listUsers(params);
 
@@ -459,6 +563,115 @@ export const importUsers = async (req: Request, res: Response) => {
     }
     res.status(500).json({
       error: "User Import Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /users/profile/me:
+ *   get:
+ *     summary: Get current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+export const getCurrentUserProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    const profile = await userService.getUserProfile(userId);
+
+    res.status(200).json({
+      message: "Profile retrieved successfully",
+      profile,
+    });
+  } catch (error) {
+    logger.error("Get current user profile error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Profile Retrieval Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Profile Retrieval Error",
+      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /users/profile/me:
+ *   put:
+ *     summary: Update current user's profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               phone_number:
+ *                 type: string
+ *               avatar_url:
+ *                 type: string
+ *                 format: uri
+ *               bio:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               social_links:
+ *                 type: object
+ *               preferences:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+export const updateCurrentUserProfile = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const profileData = req.body;
+
+    const updatedProfile = await userService.updateUserProfile(userId, profileData);
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      profile: updatedProfile,
+    });
+  } catch (error) {
+    logger.error("Update current user profile error", error);
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        error: "Profile Update Error",
+        message: error.message,
+      });
+    }
+    res.status(500).json({
+      error: "Profile Update Error",
       message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     });
   }

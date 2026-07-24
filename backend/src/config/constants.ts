@@ -7,8 +7,9 @@ export const CSRF_COOKIE_NAME = "ganzafrica_csrf";
 export const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "strict" as const,
+  sameSite: "lax" as const,
   path: "/",
+  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {}),
 };
 
 export const ROLES = {
@@ -83,8 +84,8 @@ export const TOKEN_TYPES = {
 };
 
 export const TOKEN_EXPIRY = {
-  ACCESS: "15m",
-  REFRESH: "7d",
+  ACCESS: "24h", // Increased for development
+  REFRESH: "30d",
   VERIFICATION: "24h",
   PASSWORD_RESET: "1h",
   TWO_FACTOR: "10m",

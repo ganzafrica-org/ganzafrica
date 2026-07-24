@@ -395,22 +395,21 @@ export const assignRoleToUser = async (req: Request, res: Response) => {
 
     // Get updated user to confirm role_id has changed
     const updatedUser = await userService.getUserById(userId);
-    
-    logger.info(`Successfully assigned role ${roleId} to user ${userId}. User role_id is now ${updatedUser.role_id}`);
+
+    logger.info(
+      `Successfully assigned role ${roleId} to user ${userId}. User role_id is now ${updatedUser.role_id}`,
+    );
 
     res.status(201).json({
       message: "Role assigned to user successfully",
       userRole,
       user: {
         id: updatedUser.id,
-        role_id: updatedUser.role_id
-      }
+        role_id: updatedUser.role_id,
+      },
     });
   } catch (error) {
-    logger.error(
-      `Assign role error: User ${req.params.userId}, Role ${req.params.roleId}`,
-      error,
-    );
+    logger.error(`Assign role error: User ${req.params.userId}, Role ${req.params.roleId}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
         error: "Role Assignment Error",
@@ -466,9 +465,7 @@ export const replaceUserRole = async (req: Request, res: Response) => {
       });
     }
 
-    logger.info(
-      `Attempting to replace all roles for user ${userId} with role ${roleId}`,
-    );
+    logger.info(`Attempting to replace all roles for user ${userId} with role ${roleId}`);
 
     const userRole = await roleService.replaceUserRole(userId, roleId);
 
@@ -484,14 +481,11 @@ export const replaceUserRole = async (req: Request, res: Response) => {
       userRole,
       user: {
         id: updatedUser.id,
-        role_id: updatedUser.role_id
-      }
+        role_id: updatedUser.role_id,
+      },
     });
   } catch (error) {
-    logger.error(
-      `Replace role error: User ${req.params.userId}, Role ${req.params.roleId}`,
-      error,
-    );
+    logger.error(`Replace role error: User ${req.params.userId}, Role ${req.params.roleId}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
         error: "Role Replacement Error",
@@ -554,20 +548,19 @@ export const removeRoleFromUser = async (req: Request, res: Response) => {
     // Get updated user to confirm role_id has been updated if applicable
     const updatedUser = await userService.getUserById(userId);
 
-    logger.info(`Successfully removed role ${roleId} from user ${userId}. User role_id is now ${updatedUser.role_id}`);
+    logger.info(
+      `Successfully removed role ${roleId} from user ${userId}. User role_id is now ${updatedUser.role_id}`,
+    );
 
     res.status(200).json({
       message: "Role removed from user successfully",
       user: {
         id: updatedUser.id,
-        role_id: updatedUser.role_id
-      }
+        role_id: updatedUser.role_id,
+      },
     });
   } catch (error) {
-    logger.error(
-      `Remove role error: User ${req.params.userId}, Role ${req.params.roleId}`,
-      error,
-    );
+    logger.error(`Remove role error: User ${req.params.userId}, Role ${req.params.roleId}`, error);
     if (error instanceof AppError) {
       return res.status(error.statusCode).json({
         error: "Role Removal Error",

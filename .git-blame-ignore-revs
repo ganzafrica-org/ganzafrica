@@ -1,0 +1,5 @@
+# Commits to ignore in `git blame` (bulk formatting, no logic changes).
+# Enable locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# FND-03: whole-repo prettier format
+302fddf85df04d068b27b71f79d5970ffc2d93c7

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import axios from 'axios';
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   ArrowLeft,
   Calendar,
@@ -19,148 +18,155 @@ import {
   Mail,
   Phone,
   Flag,
-  MapPin
-} from 'lucide-react';
+  MapPin,
+} from "lucide-react";
+import apiClient from "@/lib/api-client";
 
-const ApplyToOpportunityPage = ({ params }) => {
+// Force dynamic rendering to prevent build-time prerendering errors
+export const dynamic = "force-dynamic";
+
+const ApplyToOpportunityPageContent = () => {
   const router = useRouter();
-  const opportunityId = params?.id;
-  
+  const searchParams = useSearchParams();
+  const opportunityId = searchParams?.get("id") || null;
+
   // State for opportunity details
   const [opportunity, setOpportunity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // State for application form
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    phone: '',
-    gender: '',
-    nationality: '',
-    country: '',
-    education_level: '',
-    institution: '',
-    field_of_study: '',
-    graduation_year: '',
+    full_name: "",
+    email: "",
+    phone: "",
+    gender: "",
+    nationality: "",
+    country: "",
+    education_level: "",
+    institution: "",
+    field_of_study: "",
+    graduation_year: "",
     certifications: [],
-    resume_url: '',
-    custom_answers: {}
+    resume_url: "",
+    custom_answers: {},
   });
-  
+
   // State for form validation and submission
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  
+
   // Fetch opportunity details
   useEffect(() => {
     const fetchOpportunity = async () => {
       if (!opportunityId) {
-        setError('Opportunity ID is required');
+        setError("Opportunity ID is required");
         setLoading(false);
         return;
       }
-      
+
       try {
         setLoading(true);
-        const response = await axios.get(`/api/opportunities/${opportunityId}`);
-        
+        const response = await apiClient.get(`/opportunities/${opportunityId}`);
+
         if (response.data && response.data.opportunity) {
           setOpportunity(response.data.opportunity);
-          
+
           // Initialize custom answers object based on custom questions
-          if (response.data.opportunity.custom_questions && 
-              Array.isArray(response.data.opportunity.custom_questions)) {
+          if (
+            response.data.opportunity.custom_questions &&
+            Array.isArray(response.data.opportunity.custom_questions)
+          ) {
             const customAnswers = {};
-            response.data.opportunity.custom_questions.forEach(question => {
+            response.data.opportunity.custom_questions.forEach((question) => {
               if (question.id) {
                 // Initialize each answer based on field type
                 switch (question.field_type) {
-                  case 'checkbox':
-                  case 'multiselect':
+                  case "checkbox":
+                  case "multiselect":
                     customAnswers[question.id] = [];
                     break;
-                  case 'select':
-                  case 'radio':
-                    customAnswers[question.id] = '';
+                  case "select":
+                  case "radio":
+                    customAnswers[question.id] = "";
                     break;
-                  case 'text':
-                  case 'textarea':
-                    customAnswers[question.id] = '';
+                  case "text":
+                  case "textarea":
+                    customAnswers[question.id] = "";
                     break;
-                  case 'file':
+                  case "file":
                     customAnswers[question.id] = null;
                     break;
                   default:
-                    customAnswers[question.id] = '';
+                    customAnswers[question.id] = "";
                 }
               }
             });
-            
-            setFormData(prev => ({
+
+            setFormData((prev) => ({
               ...prev,
-              custom_answers: customAnswers
+              custom_answers: customAnswers,
             }));
           }
         } else {
-          setError('Failed to load opportunity details');
+          setError("Failed to load opportunity details");
         }
       } catch (err) {
-        console.error('Error fetching opportunity:', err);
-        setError('Failed to load opportunity. Please try again later.');
+        console.error("Error fetching opportunity:", err);
+        setError("Failed to load opportunity. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchOpportunity();
   }, [opportunityId]);
-  
+
   // Handle form input change
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
-    if (name.startsWith('custom_')) {
+
+    if (name.startsWith("custom_")) {
       // Handle custom question fields
-      const questionId = name.replace('custom_', '');
-      
-      setFormData(prevData => ({
+      const questionId = name.replace("custom_", "");
+
+      setFormData((prevData) => ({
         ...prevData,
         custom_answers: {
           ...prevData.custom_answers,
-          [questionId]: value
-        }
+          [questionId]: value,
+        },
       }));
-    } else if (type === 'checkbox') {
+    } else if (type === "checkbox") {
       // Handle checkbox inputs
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        [name]: checked
+        [name]: checked,
       }));
     } else {
       // Handle standard inputs
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        [name]: value
+        [name]: value,
       }));
     }
-    
+
     // Clear error for this field when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: null
+        [name]: null,
       }));
     }
   };
-  
+
   // Handle checkbox or multiselect custom questions
   const handleMultiSelectChange = (questionId, value, isChecked) => {
-    setFormData(prevData => {
+    setFormData((prevData) => {
       const currentValues = [...(prevData.custom_answers[questionId] || [])];
-      
+
       if (isChecked) {
         // Add value if it doesn't exist
         if (!currentValues.includes(value)) {
@@ -173,142 +179,141 @@ const ApplyToOpportunityPage = ({ params }) => {
           currentValues.splice(index, 1);
         }
       }
-      
+
       return {
         ...prevData,
         custom_answers: {
           ...prevData.custom_answers,
-          [questionId]: currentValues
-        }
+          [questionId]: currentValues,
+        },
       };
     });
   };
-  
+
   // Handle adding/removing certification fields
   const handleAddCertification = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      certifications: [...prev.certifications, '']
+      certifications: [...prev.certifications, ""],
     }));
   };
-  
+
   const handleRemoveCertification = (index) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newCertifications = [...prev.certifications];
       newCertifications.splice(index, 1);
       return {
         ...prev,
-        certifications: newCertifications
+        certifications: newCertifications,
       };
     });
   };
-  
+
   const handleCertificationChange = (index, value) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newCertifications = [...prev.certifications];
       newCertifications[index] = value;
       return {
         ...prev,
-        certifications: newCertifications
+        certifications: newCertifications,
       };
     });
   };
-  
+
   // Validate form
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Validate required fields
     if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
+      newErrors.full_name = "Full name is required";
     }
-    
+
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = "Invalid email format";
     }
-    
+
     // Validate custom questions
     if (opportunity && opportunity.custom_questions) {
-      opportunity.custom_questions.forEach(question => {
+      opportunity.custom_questions.forEach((question) => {
         if (question.is_required) {
           const answer = formData.custom_answers[question.id];
           const fieldName = `custom_${question.id}`;
-          
-          if (question.field_type === 'checkbox' || question.field_type === 'multiselect') {
+
+          if (question.field_type === "checkbox" || question.field_type === "multiselect") {
             if (!answer || answer.length === 0) {
-              newErrors[fieldName] = 'This field is required';
+              newErrors[fieldName] = "This field is required";
             }
-          } else if (question.field_type === 'file') {
+          } else if (question.field_type === "file") {
             if (!answer) {
-              newErrors[fieldName] = 'Please upload a file';
+              newErrors[fieldName] = "Please upload a file";
             }
           } else {
             if (!answer || !answer.toString().trim()) {
-              newErrors[fieldName] = 'This field is required';
+              newErrors[fieldName] = "This field is required";
             }
           }
         }
       });
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!validateForm()) {
       // Scroll to the first error
       const firstErrorField = Object.keys(errors)[0];
       const element = document.getElementsByName(firstErrorField)[0];
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
       }
       return;
     }
-    
+
     setSubmitting(true);
     setSubmitError(null);
-    
+
     try {
       // Submit application
-      const response = await axios.post(`/api/opportunities/${opportunityId}/apply`, formData);
-      
+      const response = await apiClient.post(`/opportunities/${opportunityId}/apply`, formData);
+
       if (response.data) {
         setSubmitSuccess(true);
         // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (err) {
-      console.error('Error submitting application:', err);
+      console.error("Error submitting application:", err);
       setSubmitError(
-        err.response?.data?.message || 
-        'Failed to submit application. Please try again later.'
+        err.response?.data?.message || "Failed to submit application. Please try again later.",
       );
-      
+
       // Scroll to error message
-      const errorElement = document.getElementById('submit-error');
+      const errorElement = document.getElementById("submit-error");
       if (errorElement) {
-        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     } finally {
       setSubmitting(false);
     }
   };
-  
+
   // Render custom question based on field type
   const renderCustomQuestion = (question) => {
     const { id, question: text, field_type, options, is_required, max_length } = question;
     const fieldName = `custom_${id}`;
     const error = errors[fieldName];
-    
+
     switch (field_type) {
-      case 'text':
+      case "text":
         return (
           <div className="mb-4" key={id}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -317,17 +322,17 @@ const ApplyToOpportunityPage = ({ params }) => {
             <input
               type="text"
               name={fieldName}
-              value={formData.custom_answers[id] || ''}
+              value={formData.custom_answers[id] || ""}
               onChange={handleInputChange}
               maxLength={max_length}
-              className={`w-full p-2 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
+              className={`w-full p-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
               required={is_required}
             />
             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
         );
-        
-      case 'textarea':
+
+      case "textarea":
         return (
           <div className="mb-4" key={id}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -335,23 +340,23 @@ const ApplyToOpportunityPage = ({ params }) => {
             </label>
             <textarea
               name={fieldName}
-              value={formData.custom_answers[id] || ''}
+              value={formData.custom_answers[id] || ""}
               onChange={handleInputChange}
               maxLength={max_length}
               rows={4}
-              className={`w-full p-2 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
+              className={`w-full p-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
               required={is_required}
             ></textarea>
             {max_length && (
               <p className="mt-1 text-xs text-gray-500">
-                {(formData.custom_answers[id] || '').length}/{max_length} characters
+                {(formData.custom_answers[id] || "").length}/{max_length} characters
               </p>
             )}
             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
         );
-        
-      case 'select':
+
+      case "select":
         return (
           <div className="mb-4" key={id}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -359,111 +364,126 @@ const ApplyToOpportunityPage = ({ params }) => {
             </label>
             <select
               name={fieldName}
-              value={formData.custom_answers[id] || ''}
+              value={formData.custom_answers[id] || ""}
               onChange={handleInputChange}
-              className={`w-full p-2 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
+              className={`w-full p-2 border ${error ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
               required={is_required}
             >
               <option value="">Select an option</option>
-              {options && options.map((option, idx) => (
-                <option key={idx} value={option}>{option}</option>
-              ))}
+              {options &&
+                options.map((option, idx) => (
+                  <option key={idx} value={option}>
+                    {option}
+                  </option>
+                ))}
             </select>
             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
         );
-        
-      case 'multiselect':
+
+      case "multiselect":
         return (
           <div className="mb-4" key={id}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {text} {is_required && <span className="text-red-500">*</span>}
             </label>
             <div className="space-y-2 mt-1">
-              {options && options.map((option, idx) => (
-                <div key={idx} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`${fieldName}_${idx}`}
-                    checked={(formData.custom_answers[id] || []).includes(option)}
-                    onChange={(e) => handleMultiSelectChange(id, option, e.target.checked)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor={`${fieldName}_${idx}`} className="ml-2 block text-sm text-gray-700">
-                    {option}
-                  </label>
-                </div>
-              ))}
+              {options &&
+                options.map((option, idx) => (
+                  <div key={idx} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`${fieldName}_${idx}`}
+                      checked={(formData.custom_answers[id] || []).includes(option)}
+                      onChange={(e) => handleMultiSelectChange(id, option, e.target.checked)}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor={`${fieldName}_${idx}`}
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      {option}
+                    </label>
+                  </div>
+                ))}
             </div>
             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
         );
-        
-      case 'checkbox':
+
+      case "checkbox":
         return (
           <div className="mb-4" key={id}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {text} {is_required && <span className="text-red-500">*</span>}
             </label>
             <div className="space-y-2 mt-1">
-              {options && options.map((option, idx) => (
-                <div key={idx} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`${fieldName}_${idx}`}
-                    checked={(formData.custom_answers[id] || []).includes(option)}
-                    onChange={(e) => handleMultiSelectChange(id, option, e.target.checked)}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor={`${fieldName}_${idx}`} className="ml-2 block text-sm text-gray-700">
-                    {option}
-                  </label>
-                </div>
-              ))}
+              {options &&
+                options.map((option, idx) => (
+                  <div key={idx} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`${fieldName}_${idx}`}
+                      checked={(formData.custom_answers[id] || []).includes(option)}
+                      onChange={(e) => handleMultiSelectChange(id, option, e.target.checked)}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor={`${fieldName}_${idx}`}
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      {option}
+                    </label>
+                  </div>
+                ))}
             </div>
             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
         );
-        
-      case 'radio':
+
+      case "radio":
         return (
           <div className="mb-4" key={id}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {text} {is_required && <span className="text-red-500">*</span>}
             </label>
             <div className="space-y-2 mt-1">
-              {options && options.map((option, idx) => (
-                <div key={idx} className="flex items-center">
-                  <input
-                    type="radio"
-                    id={`${fieldName}_${idx}`}
-                    name={fieldName}
-                    value={option}
-                    checked={formData.custom_answers[id] === option}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData(prev => ({
-                          ...prev,
-                          custom_answers: {
-                            ...prev.custom_answers,
-                            [id]: option
-                          }
-                        }));
-                      }
-                    }}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                  />
-                  <label htmlFor={`${fieldName}_${idx}`} className="ml-2 block text-sm text-gray-700">
-                    {option}
-                  </label>
-                </div>
-              ))}
+              {options &&
+                options.map((option, idx) => (
+                  <div key={idx} className="flex items-center">
+                    <input
+                      type="radio"
+                      id={`${fieldName}_${idx}`}
+                      name={fieldName}
+                      value={option}
+                      checked={formData.custom_answers[id] === option}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            custom_answers: {
+                              ...prev.custom_answers,
+                              [id]: option,
+                            },
+                          }));
+                        }
+                      }}
+                      className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
+                    />
+                    <label
+                      htmlFor={`${fieldName}_${idx}`}
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      {option}
+                    </label>
+                  </div>
+                ))}
             </div>
             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
         );
-        
-      case 'file':
+
+      case "file":
         return (
           <div className="mb-4" key={id}>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -473,7 +493,7 @@ const ApplyToOpportunityPage = ({ params }) => {
               <label
                 htmlFor={fieldName}
                 className={`flex flex-col items-center justify-center w-full h-32 border-2 ${
-                  error ? 'border-red-500' : 'border-gray-300'
+                  error ? "border-red-500" : "border-gray-300"
                 } border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100`}
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -483,19 +503,19 @@ const ApplyToOpportunityPage = ({ params }) => {
                   </p>
                   <p className="text-xs text-gray-500">PDF, DOC, DOCX, TXT, JPG, PNG</p>
                 </div>
-                <input 
+                <input
                   id={fieldName}
                   name={fieldName}
-                  type="file" 
-                  className="hidden" 
+                  type="file"
+                  className="hidden"
                   onChange={(e) => {
                     if (e.target.files && e.target.files[0]) {
-                      setFormData(prev => ({
+                      setFormData((prev) => ({
                         ...prev,
                         custom_answers: {
                           ...prev.custom_answers,
-                          [id]: e.target.files[0]
-                        }
+                          [id]: e.target.files[0],
+                        },
                       }));
                     }
                   }}
@@ -510,12 +530,12 @@ const ApplyToOpportunityPage = ({ params }) => {
             {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
           </div>
         );
-        
+
       default:
         return null;
     }
   };
-  
+
   // If application submitted successfully, show success message
   if (submitSuccess) {
     return (
@@ -529,13 +549,13 @@ const ApplyToOpportunityPage = ({ params }) => {
             Thank you for submitting your application. We will review it and get back to you soon.
           </p>
           <div className="flex justify-center space-x-4">
-            <Link 
+            <Link
               href={`/opportunities/${opportunityId}`}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition"
             >
               View Opportunity
             </Link>
-            <Link 
+            <Link
               href="/opportunities"
               className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
             >
@@ -546,7 +566,7 @@ const ApplyToOpportunityPage = ({ params }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       {loading ? (
@@ -560,8 +580,8 @@ const ApplyToOpportunityPage = ({ params }) => {
             <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
             <p className="text-red-700">{error}</p>
           </div>
-          <Link 
-            href="/opportunities" 
+          <Link
+            href="/opportunities"
             className="mt-4 inline-flex items-center text-green-600 hover:text-green-800"
           >
             <ArrowLeft className="mr-1 h-4 w-4" /> Back to opportunities
@@ -571,20 +591,18 @@ const ApplyToOpportunityPage = ({ params }) => {
         <>
           {/* Header */}
           <div className="mb-6">
-            <Link 
-              href={`/opportunities/${opportunityId}`} 
+            <Link
+              href={`/opportunities/${opportunityId}`}
               className="inline-flex items-center text-green-600 hover:text-green-800 mb-2"
             >
               <ArrowLeft className="mr-1 h-4 w-4" /> Back to opportunity
             </Link>
-            <h1 className="text-2xl font-bold">
-              Apply to: {opportunity?.title}
-            </h1>
+            <h1 className="text-2xl font-bold">Apply to: {opportunity?.title}</h1>
             <p className="text-gray-600 mt-1">
               Complete the form below to submit your application.
             </p>
           </div>
-          
+
           {/* Opportunity info */}
           <div className="bg-green-50 p-4 rounded-lg mb-6">
             <h2 className="font-semibold mb-2 flex items-center">
@@ -592,20 +610,23 @@ const ApplyToOpportunityPage = ({ params }) => {
               Opportunity Details
             </h2>
             <p className="text-sm text-gray-700 mb-1">
-              <span className="font-medium">Type:</span> {opportunity?.type === 'fellowship' ? 'Fellowship' : 'Employment'}
+              <span className="font-medium">Type:</span>{" "}
+              {opportunity?.type === "fellowship" ? "Fellowship" : "Employment"}
             </p>
             <p className="text-sm text-gray-700 mb-1">
-              <span className="font-medium">Location:</span> {opportunity?.location_type} {opportunity?.location ? `- ${opportunity.location}` : ''}
+              <span className="font-medium">Location:</span> {opportunity?.location_type}{" "}
+              {opportunity?.location ? `- ${opportunity.location}` : ""}
             </p>
             <p className="text-sm text-gray-700">
-              <span className="font-medium">Application Deadline:</span> {new Date(opportunity?.application_deadline).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+              <span className="font-medium">Application Deadline:</span>{" "}
+              {new Date(opportunity?.application_deadline).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </p>
           </div>
-          
+
           {/* Submit error */}
           {submitError && (
             <div id="submit-error" className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
@@ -615,11 +636,11 @@ const ApplyToOpportunityPage = ({ params }) => {
               </div>
             </div>
           )}
-          
+
           {/* Application form */}
           <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-6 pb-2 border-b">Personal Information</h2>
-            
+
             {/* Full Name */}
             <div className="mb-4">
               <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -635,14 +656,14 @@ const ApplyToOpportunityPage = ({ params }) => {
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleInputChange}
-                  className={`pl-10 w-full p-2 border ${errors.full_name ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
+                  className={`pl-10 w-full p-2 border ${errors.full_name ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
                   placeholder="Enter your full name"
                   required
                 />
               </div>
               {errors.full_name && <p className="mt-1 text-sm text-red-500">{errors.full_name}</p>}
             </div>
-            
+
             {/* Email */}
             <div className="mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -658,14 +679,14 @@ const ApplyToOpportunityPage = ({ params }) => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`pl-10 w-full p-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
+                  className={`pl-10 w-full p-2 border ${errors.email ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-green-600`}
                   placeholder="Enter your email address"
                   required
                 />
               </div>
               {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
             </div>
-            
+
             {/* Phone */}
             <div className="mb-4">
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
@@ -686,12 +707,10 @@ const ApplyToOpportunityPage = ({ params }) => {
                 />
               </div>
             </div>
-            
+
             {/* Gender */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Gender
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
               <select
                 name="gender"
                 value={formData.gender}
@@ -706,11 +725,14 @@ const ApplyToOpportunityPage = ({ params }) => {
                 <option value="other">Other</option>
               </select>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {/* Nationality */}
               <div>
-                <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="nationality"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Nationality
                 </label>
                 <div className="relative">
@@ -728,7 +750,7 @@ const ApplyToOpportunityPage = ({ params }) => {
                   />
                 </div>
               </div>
-              
+
               {/* Country */}
               <div>
                 <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
@@ -750,12 +772,17 @@ const ApplyToOpportunityPage = ({ params }) => {
                 </div>
               </div>
             </div>
-            
-            <h2 className="text-xl font-semibold mb-6 mt-8 pb-2 border-b">Education & Experience</h2>
-            
+
+            <h2 className="text-xl font-semibold mb-6 mt-8 pb-2 border-b">
+              Education & Experience
+            </h2>
+
             {/* Education Level */}
             <div className="mb-4">
-              <label htmlFor="education_level" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="education_level"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Highest Education Level
               </label>
               <div className="relative">
@@ -767,7 +794,8 @@ const ApplyToOpportunityPage = ({ params }) => {
                   name="education_level"
                   value={formData.education_level}
                   onChange={handleInputChange}
-                  className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600">
+                  className="pl-10 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600"
+                >
                   <option value="">Select education level</option>
                   <option value="high_school">High School</option>
                   <option value="associate_degree">Associate Degree</option>
@@ -779,11 +807,14 @@ const ApplyToOpportunityPage = ({ params }) => {
                 </select>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               {/* Institution */}
               <div>
-                <label htmlFor="institution" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="institution"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Institution
                 </label>
                 <input
@@ -796,10 +827,13 @@ const ApplyToOpportunityPage = ({ params }) => {
                   placeholder="Name of your institution"
                 />
               </div>
-              
+
               {/* Field of Study */}
               <div>
-                <label htmlFor="field_of_study" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="field_of_study"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Field of Study
                 </label>
                 <input
@@ -813,10 +847,13 @@ const ApplyToOpportunityPage = ({ params }) => {
                 />
               </div>
             </div>
-            
+
             {/* Graduation Year */}
             <div className="mb-6">
-              <label htmlFor="graduation_year" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="graduation_year"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Graduation Year
               </label>
               <div className="relative">
@@ -836,7 +873,7 @@ const ApplyToOpportunityPage = ({ params }) => {
                 />
               </div>
             </div>
-            
+
             {/* Certifications */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-1">
@@ -851,7 +888,7 @@ const ApplyToOpportunityPage = ({ params }) => {
                   <PlusCircle className="h-4 w-4 mr-1" /> Add
                 </button>
               </div>
-              
+
               {formData.certifications.length === 0 ? (
                 <p className="text-sm text-gray-500 italic mb-2">No certifications added yet</p>
               ) : (
@@ -877,7 +914,7 @@ const ApplyToOpportunityPage = ({ params }) => {
                 </div>
               )}
             </div>
-            
+
             {/* Resume URL */}
             <div className="mb-6">
               <label htmlFor="resume_url" className="block text-sm font-medium text-gray-700 mb-1">
@@ -896,25 +933,27 @@ const ApplyToOpportunityPage = ({ params }) => {
                 You can provide a link to your resume if you have it hosted online
               </p>
             </div>
-            
+
             {/* Custom Questions */}
-            {opportunity && opportunity.custom_questions && opportunity.custom_questions.length > 0 && (
-              <>
-                <h2 className="text-xl font-semibold mb-6 mt-8 pb-2 border-b">
-                  Additional Questions
-                </h2>
-                
-                {opportunity.custom_questions.map(question => renderCustomQuestion(question))}
-              </>
-            )}
-            
+            {opportunity &&
+              opportunity.custom_questions &&
+              opportunity.custom_questions.length > 0 && (
+                <>
+                  <h2 className="text-xl font-semibold mb-6 mt-8 pb-2 border-b">
+                    Additional Questions
+                  </h2>
+
+                  {opportunity.custom_questions.map((question) => renderCustomQuestion(question))}
+                </>
+              )}
+
             {/* Submit button */}
             <div className="mt-8 pt-4 border-t">
               <button
                 type="submit"
                 disabled={submitting}
                 className={`w-full py-3 px-4 rounded-md font-medium text-white ${
-                  submitting ? 'bg-green-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+                  submitting ? "bg-green-500 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
                 }`}
               >
                 {submitting ? (
@@ -923,7 +962,7 @@ const ApplyToOpportunityPage = ({ params }) => {
                     Submitting Application...
                   </span>
                 ) : (
-                  'Submit Application'
+                  "Submit Application"
                 )}
               </button>
             </div>
@@ -931,6 +970,23 @@ const ApplyToOpportunityPage = ({ params }) => {
         </>
       )}
     </div>
+  );
+};
+
+const ApplyToOpportunityPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="bg-white shadow rounded-lg p-8 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-green-600 mx-auto mb-4" />
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <ApplyToOpportunityPageContent />
+    </Suspense>
   );
 };
 

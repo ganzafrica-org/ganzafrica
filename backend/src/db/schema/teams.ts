@@ -1,12 +1,4 @@
-import {
-  integer,
-  pgTable,
-  text,
-  serial,
-  varchar,
-  index,
-  jsonb,
-} from "drizzle-orm/pg-core";
+import { integer, pgTable, text, serial, varchar, index, jsonb } from "drizzle-orm/pg-core";
 import { timestampFields } from "./common";
 
 // Team Types Table
@@ -29,6 +21,8 @@ export const teams = pgTable(
     email: varchar("email", { length: 255 }),
     profile_link: varchar("profile_link", { length: 255 }),
     skills: jsonb("skills").$type<string[]>(),
+    // Optional custom sort order for UI ordering
+    sort_order: integer("sort_order"),
     team_type_id: integer("team_type_id")
       .references(() => team_types.id)
       .notNull(),
@@ -38,6 +32,7 @@ export const teams = pgTable(
     return {
       teamTypeIdx: index("teams_team_type_id_idx").on(table.team_type_id),
       emailIdx: index("teams_email_idx").on(table.email),
+      sortIdx: index("teams_sort_order_idx").on(table.sort_order),
     };
   },
 );

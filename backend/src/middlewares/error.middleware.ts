@@ -8,11 +8,13 @@ const logger = new Logger("ErrorMiddleware");
 export class AppError extends Error {
   statusCode: number;
   isOperational: boolean;
+  code?: string;
 
-  constructor(message: string, statusCode: number) {
+  constructor(message: string, statusCode: number, code?: string) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = true; // Indicates this is a known operational error
+    this.code = code;
 
     Error.captureStackTrace(this, this.constructor);
   }
@@ -20,9 +22,7 @@ export class AppError extends Error {
 
 // Handle validation errors from Zod
 export const handleZodError = (err: ZodError) => {
-  const message = err.errors
-    .map((e) => `${e.path.join(".")}: ${e.message}`)
-    .join(", ");
+  const message = err.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ");
   return new AppError(message, 400);
 };
 
@@ -46,12 +46,7 @@ export const handleDatabaseError = (err: any) => {
 };
 
 // Global error handling middleware
-export const errorHandler = (
-  err: any,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   let error = { ...err };
   error.message = err.message;
 
@@ -64,17 +59,13 @@ export const errorHandler = (
   // Handle specific error types
   if (err instanceof ZodError) {
     error = handleZodError(err);
-  } else if (
-    err.code &&
-    (err.code.startsWith("22") || err.code.startsWith("23"))
-  ) {
+  } else if (err.code && (err.code.startsWith("22") || err.code.startsWith("23"))) {
     error = handleDatabaseError(err);
   }
 
   // Send response
   const statusCode = error.statusCode || 500;
-  const message =
-    error.message || constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR;
+  const message = error.message || constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR;
 
   res.status(statusCode).json({
     error: statusCode >= 500 ? "Internal Server Error" : "Request Error",
@@ -82,7 +73,7 @@ export const errorHandler = (
       statusCode >= 500 && env.NODE_ENV === "production"
         ? constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR
         : message,
-    // Include stack trace in development mode
+    ...(error.code && { code: error.code }),
     ...(env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };

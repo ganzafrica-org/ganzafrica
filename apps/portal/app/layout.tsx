@@ -1,28 +1,34 @@
 "use client";
 
 import { Toaster } from "@workspace/ui/components/sonner";
-import { Rubik } from "next/font/google";
 import "@workspace/ui/globals.css";
 import { Providers } from "@/components/providers";
 import { AuthProvider } from "@/components/auth/auth-provider";
 
-const rubik = Rubik({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: '--font-rubik',
-});
+// Use system fonts as fallback to avoid build-time network dependency
+// Rubik font can be loaded via CSS if needed, but won't block builds
+const fontVariable = "--font-rubik";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-      <html lang="en" className="light">
-      <body className={`${rubik.variable} font-sans antialiased bg-gray-50`}>
-      <AuthProvider>
-        <Providers>
-          {children}
-        </Providers>
-      </AuthProvider>
-      <Toaster position="top-right" />
+    <html lang="en" className="light" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body
+        className={`font-rubik font-sans antialiased bg-gray-50`}
+        style={{ fontFamily: "Rubik, system-ui, -apple-system, sans-serif" }}
+      >
+        <AuthProvider>
+          <Providers>{children}</Providers>
+        </AuthProvider>
+        <Toaster position="top-right" />
       </body>
-      </html>
+    </html>
   );
 }

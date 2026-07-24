@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authController } from "../controllers";
-import { validate, authenticate } from "@/middlewares";
+import { validate, authenticate } from "../middlewares";
 import { authValidation } from "../validations";
 
 const router: Router = Router();
@@ -13,16 +13,8 @@ const router: Router = Router();
  */
 
 // Public routes
-router.post(
-  "/register",
-  validate(authValidation.registerSchema),
-  authController.register,
-);
-router.post(
-  "/login",
-  validate(authValidation.loginSchema),
-  authController.login,
-);
+router.post("/register", validate(authValidation.registerSchema), authController.register);
+router.post("/login", validate(authValidation.loginSchema), authController.login);
 router.post(
   "/verify-email",
   validate(authValidation.verifyEmailSchema),
@@ -47,5 +39,9 @@ router.post(
 // Protected routes
 router.post("/logout", authenticate, authController.logout);
 router.get("/me", authenticate, authController.getCurrentUser);
+
+// SSO handoff (FND-06): portal mints a one-time code; the target app exchanges it for a session.
+router.post("/handoff", authenticate, authController.createHandoff);
+router.post("/handoff/exchange", authController.exchangeHandoff);
 
 export default router;

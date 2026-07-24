@@ -1,14 +1,18 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { gsap } from "gsap";
+import dynamic from "next/dynamic";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
-import LanguageSwitcher from "@/components/layout/language-switcher";
+// import GoogleTranslate from "@/components/google-translate";
+import { TranslatableText } from "@/components/translate/TranslatableText";
+
+// Dynamically import GSAP to reduce initial bundle size
+const loadGSAP = () => import("gsap");
 
 // Import shadcn Navigation Menu components
 import {
@@ -19,12 +23,14 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@workspace/ui/components/navigation-menu";
+import LanguageSwitcher from "@/components/layout/language-switcher";
 
 // Define types for menu items
 interface MenuItem {
   title: string;
   href: string;
-  description: string;
+  description?: string;
+  hasSubmenu?: boolean;
 }
 
 // Define props for ListItem component
@@ -33,87 +39,30 @@ interface ListItemProps {
   title: string;
   children: React.ReactNode;
   href: string;
-  locale: string;
   onClick?: () => void;
-}
-
-// Define dictionary type
-interface DictionaryType {
-  navigation?: {
-    about?: string;
-    our_approach?: string;
-    programs?: string;
-    projects?: string;
-    opportunities?: string;
-  };
-  about?: {
-    who_we_are?: string;
-    our_story?: string;
-    team?: string;
-    [key: string]: string | undefined;
-  };
-  
-  home?: {
-    hero?: {
-      title?: string;
-      subtitle?: string;
-      title_after?: {
-        line1?: string;
-        line2?: string;
-        line3?: string;
-        line4?: string;
-      };
-    };
-  };
-  cta?: {
-    sign_in?: string;
-    discover_more?: string;
-  };
 }
 
 // Define HomeHero props
 interface HomeHeroProps {
-  locale: string;
-  dict: DictionaryType;
   backgroundImage?: string;
 }
 
-// Navigation menu item component
-const ListItem = ({
-  className,
-  title,
-  children,
-  href,
-  locale,
-  onClick,
-}: ListItemProps) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <Link
-          href={`/${locale}${href}`}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className,
-          )}
-          onClick={onClick}
-          prefetch={true}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </Link>
-      </NavigationMenuLink>
-    </li>
-  );
-};
+const resolveHref = (path: string) => (path.startsWith("/") ? path : `/${path}`);
 
-export default function HomeHero({
-  locale,
-  dict,
-  backgroundImage = "/images/hero-test.jpg",
-}: HomeHeroProps) {
+// Polyfill for requestIdleCallback
+const requestIdleCallback =
+  (typeof window !== "undefined" && window.requestIdleCallback) ||
+  ((cb: IdleRequestCallback) => {
+    const start = Date.now();
+    return setTimeout(() => {
+      cb({
+        didTimeout: false,
+        timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+      });
+    }, 1);
+  });
+
+export default function HomeHero({ backgroundImage = "/images/hero-test.jpg" }: HomeHeroProps) {
   // Refs with proper types
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -128,126 +77,168 @@ export default function HomeHero({
   const [animationStarted, setAnimationStarted] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [desktopDropdown, setDesktopDropdown] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
 
   const pathname = usePathname();
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Navigation items for shadcn navigation
-  const aboutItems: MenuItem[] = [
-    {
-      title: dict.about?.who_we_are || "Who We Are",
-      href: "/about/who-we-are",
-      description:
-        "Learn about our mission, vision, and the values that drive us.",
-    },
-    {
-      title: dict.about?.our_story || "Our Story",
-      href: "/about/our-story",
-      description:
-        "The journey of how we started and what inspires our work every day.",
-    },
-    {
-      title: dict.about?.team|| "Team",
-      href: "/about/team",
-      description:
-        "Meet the talented individuals behind our mission. Learn about our team members, their expertise, and their contributions to our success.",
-    },
-  ];
+  // Memoize navigation items to prevent re-creation on every render
+  const aboutItems: MenuItem[] = useMemo(
+    () => [
+      {
+        title: "Who We Are",
+        href: "/about/who-we-are",
+        description: "The journey of how we started and what inspires our work every day.",
+      },
+      {
+        title: "Our Story",
+        href: "/about/our-story",
+        description: "The journey of how we started and what inspires our work every day.",
+      },
+      {
+        title: "Our Approach",
+        href: "/about/our-approach",
+        description: "The journey of how we started and what inspires our work every day.",
+      },
+      {
+        title: "Team",
+        href: "/about/team",
+        description:
+          "Meet the talented individuals behind our mission. Learn about our team members, their expertise, and their contributions to our success.",
+      },
+    ],
+    [],
+  );
 
-  const ourApproachItems: MenuItem[] = [
-    {
-      title: "Food Systems",
-      href: "/our-approach",
-      description: "Developing sustainable food systems for communities across Africa.",
-    },
-  ];
+  const programsItems: MenuItem[] = useMemo(
+    () => [
+      {
+        title: "Program",
+        href: "/programs",
+        hasSubmenu: true, // Optional flag for future logic
+      },
+      {
+        title: "Projects",
+        href: "/projects",
+      },
+    ],
+    [],
+  );
 
-  const programsItems: MenuItem[] = [
-    {
-      title: "Fellowship",
-      href: "/programs/fellowship",
-      description:
-        "Our flagship program empowering the next generation of African change-makers.",
-    },
-    {
-      title: "Alumni",
-      href: "/programs/alumni",
-      description:
-        "A network of graduates continuing to make an impact across the continent.",
-    },
-  ];
+  const programSubItems: MenuItem[] = useMemo(
+    () => [
+      {
+        title: "Fellowship Program",
+        href: "/programs/fellowship",
+        description:
+          "Our flagship program empowering the next generation of African change-makers.",
+      },
+      {
+        title: "Alumni Network",
+        href: "/programs/alumni",
+        description: "A network of graduates continuing to make an impact across the continent.",
+      },
+    ],
+    [],
+  );
 
-  const projectItems: MenuItem[] = [
-    {
-      title: "Projects",
-      href: "/projects",
-      description: "Discover our projects and their impact.",
-    },
-  ];
-  
-  const newsItems: MenuItem[] = [
-    {
-      title: "News",
-      href: "/newsroom",
-      description:
-        "Stay updated with our latest initiatives, successes, and announcements.",
-    },
-    {
-      title: "Opportunities",
-      href: "/opportunities",
-      description: "Explore current openings and ways to grow with us.",
-    },
-    {
-      title: "Contact Us",
-      href: "/contact",
-      description:
-        "Get in touch with our team for inquiries, partnerships, or support.",
-    },
-  ];
+  const newsItems: MenuItem[] = useMemo(
+    () => [
+      {
+        title: "Social Media Updates",
+        href: "/newsroom",
+        description: "Stay informed about our recent activities, projects, and success stories.",
+      },
+      {
+        title: "Opportunities",
+        href: "/opportunities",
+        description: "Explore current openings and ways to grow with us.",
+      },
+    ],
+    [],
+  );
 
-  // Add scroll detection for header styling
+  // Optimized scroll detection with throttling
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 50);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle video loading
+  // Optimized video loading - defer and lazy load
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    // Use intersection observer to only load video when visible
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Only load video source when in viewport
+            if (!video.src) {
+              const source = video.querySelector("source");
+              if (source && !source.src) {
+                source.src = "/videos/hero-video.mp4";
+                video.load();
+              }
+            }
+          }
+        });
+      },
+      { rootMargin: "50px" },
+    );
+
+    observer.observe(video);
+
     const handleCanPlay = () => {
       setVideoLoaded(true);
+      // Defer animation start to avoid blocking
       if (!animationStarted) {
-        startTransition();
+        requestIdleCallback(
+          () => {
+            startTransition();
+          },
+          { timeout: 2000 },
+        );
       }
     };
 
-    if (video.readyState >= 3) {
-      handleCanPlay();
-    } else {
-      video.addEventListener("canplay", handleCanPlay);
-    }
+    // Use loadeddata instead of canplay for faster detection
+    video.addEventListener("loadeddata", handleCanPlay, { once: true });
 
+    // Fallback timeout with longer delay to reduce blocking
     const timeoutId = setTimeout(() => {
       if (!animationStarted) {
-        startTransition();
+        requestIdleCallback(
+          () => {
+            startTransition();
+          },
+          { timeout: 2000 },
+        );
       }
-    }, 5000);
+    }, 3000);
 
     return () => {
-      video.removeEventListener("canplay", handleCanPlay);
+      observer.disconnect();
+      video.removeEventListener("loadeddata", handleCanPlay);
       clearTimeout(timeoutId);
     };
   }, [animationStarted]);
 
-  // Function to start the transition
-  const startTransition = () => {
+  // Optimized transition function with lazy GSAP loading
+  const startTransition = useCallback(async () => {
     if (animationStarted) return;
     setAnimationStarted(true);
 
@@ -260,6 +251,12 @@ export default function HomeHero({
       !navRef.current
     )
       return;
+
+    // Check if we're on a small screen (mobile/tablet)
+    const isSmallScreen = window.innerWidth < 768;
+
+    // Lazy load GSAP only when needed
+    const { gsap } = await loadGSAP();
 
     // Set initial states
     gsap.set(whiteOverlayRef.current, {
@@ -275,20 +272,35 @@ export default function HomeHero({
       bottom: 0,
     });
 
-    // Create animation timeline
-    const tl = gsap.timeline();
+    // On small screens, we want the video to stay as a full background
+    // and skip the curved clipPath animation. Just fade in the final content.
+    if (isSmallScreen) {
+      navRef.current.setAttribute("data-overlay-passed", "true");
+      gsap.set(finalContentRef.current, { opacity: 1 });
+      return;
+    }
+
+    // Create animation timeline with reduced duration for better performance
+    const tl = gsap.timeline({ defaults: { ease: "power2.inOut" } });
 
     // Set nav color to black right before the animation starts
     navRef.current.setAttribute("data-overlay-passed", "true");
 
+    // Use will-change for better performance
+    if (whiteOverlayRef.current) {
+      whiteOverlayRef.current.style.willChange = "transform, clip-path";
+    }
+    if (videoContainerRef.current) {
+      videoContainerRef.current.style.willChange = "clip-path, height";
+    }
+
     tl.to(initialContentRef.current, {
       opacity: 0,
-      duration: 2.5,
+      duration: 1.5, // Reduced from 2.5
     })
       .to(whiteOverlayRef.current, {
         y: "0%",
-        duration: 1.2,
-        ease: "power2.inOut",
+        duration: 0.8, // Reduced from 1.2
         clipPath: "url(#hero-clip)",
       })
       .to(
@@ -297,16 +309,24 @@ export default function HomeHero({
           clipPath: "url(#hero-clip-inverted)",
           height: "35%",
           bottom: 0,
-          duration: 1.2,
-          ease: "power2.inOut",
+          duration: 0.8, // Reduced from 1.2
         },
         "<",
       )
       .to(finalContentRef.current, {
         opacity: 1,
-        duration: 0.8,
+        duration: 0.5, // Reduced from 0.8
+        onComplete: () => {
+          // Remove will-change after animation
+          if (whiteOverlayRef.current) {
+            whiteOverlayRef.current.style.willChange = "auto";
+          }
+          if (videoContainerRef.current) {
+            videoContainerRef.current.style.willChange = "auto";
+          }
+        },
       });
-  };
+  }, [animationStarted]);
 
   // Dropdown handling functions for mobile
   const handleDropdownOpen = (dropdownName: string) => {
@@ -334,250 +354,264 @@ export default function HomeHero({
     setActiveDropdown(activeDropdown === dropdownName ? null : dropdownName);
   };
 
+  // Handle desktop dropdown hover
+  const handleDesktopDropdownEnter = (dropdownName: string) => {
+    setDesktopDropdown(dropdownName);
+  };
+
+  const handleDesktopDropdownLeave = () => {
+    setDesktopDropdown(null);
+  };
+
   // Determine header background class based on scroll and animation state
   const getHeaderBgClass = () => {
     return cn(
       "fixed top-0 z-50 min-w-full transition-all duration-500",
       isScrolled && !animationStarted ? "bg-black/30 backdrop-blur-sm" : "",
-      isScrolled && animationStarted
-        ? "bg-white shadow-sm backdrop-blur-sm"
-        : "",
+      isScrolled && animationStarted ? "bg-white shadow-sm backdrop-blur-sm" : "",
       !isScrolled ? "bg-transparent" : "",
     );
   };
 
   // Get text color for navigation items
   const getNavItemColor = () => {
-    if (
-      animationStarted &&
-      navRef.current?.getAttribute("data-overlay-passed") === "true"
-    ) {
+    if (animationStarted && navRef.current?.getAttribute("data-overlay-passed") === "true") {
       return "text-black bg-transparent";
     }
     return "text-white bg-transparent";
   };
 
-  // Render the shadcn NavigationMenu for desktop
+  // Render simple dropdown navigation for desktop
   const renderDesktopNavigation = () => {
     const textColor = getNavItemColor();
 
     return (
-      <div className="hidden md:flex justify-center items-center space-x-1 flex-1 mx-4">
-        <NavigationMenu>
-          <NavigationMenuList>
-            {/* About */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.about || "About"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/about`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                          About Us
-                        </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
-                          Dedicated to creating a sustainable future for Africa
-                          through empowering youth and communities.
-                        </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
+      <div className="hidden lg:flex justify-center items-center space-x-1 flex-1 mx-4">
+        <nav className="flex items-center space-x-1">
+          {/* About Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => handleDesktopDropdownEnter("about")}
+            onMouseLeave={handleDesktopDropdownLeave}
+          >
+            <button
+              className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+            >
+              <TranslatableText>About</TranslatableText>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${desktopDropdown === "about" ? "rotate-180" : ""}`}
+              />
+            </button>
+            {desktopDropdown === "about" && (
+              <div className="absolute left-0 top-full -mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                <ul className="p-2">
                   {aboutItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
+                    <li key={item.href}>
+                      <Link
+                        href={resolveHref(item.href)}
+                        className="block p-3 rounded-md hover:bg-accent transition-colors"
+                        prefetch={true}
+                      >
+                        <div className="text-sm font-medium leading-none">
+                          <TranslatableText>{item.title}</TranslatableText>
+                        </div>
+                        {item.description && (
+                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                            {/*<TranslatableText>{item.description}</TranslatableText>*/}
+                          </p>
+                        )}
+                      </Link>
+                    </li>
                   ))}
                 </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
+              </div>
+            )}
+          </div>
 
-            {/* Our Approach Dropdown */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.our_approach || "Our Approach"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/our-approach`}
+          {/* What we do Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => handleDesktopDropdownEnter("what-we-do")}
+            onMouseLeave={handleDesktopDropdownLeave}
+          >
+            <button
+              className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+            >
+              <TranslatableText>What we do</TranslatableText>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${desktopDropdown === "what-we-do" ? "rotate-180" : ""}`}
+              />
+            </button>
+            {(desktopDropdown === "what-we-do" || desktopDropdown === "program-submenu") && (
+              <div className="absolute left-0 top-full -mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                <ul className="p-2">
+                  {programsItems.map((item) => {
+                    const isSubmenuOpen = desktopDropdown === "program-submenu";
+                    return (
+                      <li
+                        key={item.href}
+                        className="relative"
+                        onMouseEnter={() =>
+                          item.hasSubmenu && handleDesktopDropdownEnter("program-submenu")
+                        }
                       >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Approach to Food Systems
+                        {item.hasSubmenu ? (
+                          <div className="block p-3 rounded-md hover:bg-accent transition-colors">
+                            <div className="text-sm font-medium leading-none flex items-center justify-between">
+                              {item.title}
+                              <ChevronDown
+                                className={`h-3 w-3 transition-transform ${isSubmenuOpen ? "rotate-180" : ""}`}
+                              />
                             </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Explore our programs focused on sustainable
-                              development, climate resilience, and food security
-                              across Africa.
-                            </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {ourApproachItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            
-            {/* Programs */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.programs || "Programs"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/programs`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                          Our Programs
-                        </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
-                          Transformative programs designed to build capacity and
-                          develop leadership in sustainable agriculture.
-                        </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {programsItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            
-            {/* Projects */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                {dict.navigation?.projects || "Projects"}
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/projects`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                              Our Projects
+                            {item.description && (
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                {/*<TranslatableText>{item.description}</TranslatableText>*/}
+                              </p>
+                            )}
+                            {isSubmenuOpen && (
+                              <div
+                                className="absolute left-full top-0 ml-1 w-[280px] bg-white rounded-md border shadow-lg z-50"
+                                onMouseEnter={() => handleDesktopDropdownEnter("program-submenu")}
+                                onMouseLeave={() => handleDesktopDropdownEnter("what-we-do")}
+                              >
+                                <ul className="p-2">
+                                  {programSubItems.map((subItem) => (
+                                    <li key={subItem.href}>
+                                      <Link
+                                        href={resolveHref(subItem.href)}
+                                        className="block p-3 rounded-md hover:bg-accent transition-colors"
+                                        prefetch={true}
+                                      >
+                                        <div className="text-sm font-medium leading-none">
+                                          <TranslatableText>{subItem.title}</TranslatableText>
+                                        </div>
+                                        {subItem.description && (
+                                          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                            {/*<TranslatableText>{subItem.description}</TranslatableText>*/}
+                                          </p>
+                                        )}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <Link
+                            href={resolveHref(item.href)}
+                            className="block p-3 rounded-md hover:bg-accent transition-colors"
+                            prefetch={true}
+                          >
+                            <div className="text-sm font-medium leading-none">
+                              <TranslatableText>{item.title}</TranslatableText>
                             </div>
-                            <p className="text-sm leading-tight text-muted-foreground">
-                              Discover our innovative projects and their impact
-                              on communities across Africa.
-                            </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                  {projectItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
-                  ))}
+                            {item.description && (
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                                <TranslatableText>{item.description}</TranslatableText>
+                              </p>
+                            )}
+                          </Link>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-            {/* News & Updates */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={textColor}>
-                News & Updates
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                  <li className="row-span-3">
-                    <NavigationMenuLink asChild>
-                      <Link
-                        className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href={`/${locale}/newsroom`}
-                      >
-                        <div className="mb-2 mt-4 text-lg font-medium">
-                          Latest Updates
-                        </div>
-                        <p className="text-sm leading-tight text-muted-foreground">
-                          Stay informed about our recent activities, projects,
-                          and success stories.
-                        </p>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
+              </div>
+            )}
+          </div>
+
+          {/* News & Updates Dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => handleDesktopDropdownEnter("news")}
+            onMouseLeave={handleDesktopDropdownLeave}
+          >
+            <button
+              className={`${textColor} text-base font-medium px-4 py-2 flex items-center gap-1 hover:bg-accent/50 rounded-md transition-colors`}
+            >
+              <TranslatableText>News & Updates</TranslatableText>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${desktopDropdown === "news" ? "rotate-180" : ""}`}
+              />
+            </button>
+            {desktopDropdown === "news" && (
+              <div className="absolute left-0 top-full -mt-1 w-[300px] bg-white rounded-md border shadow-lg z-50">
+                <ul className="p-2">
                   {newsItems.map((item) => (
-                    <ListItem
-                      key={item.href}
-                      title={item.title}
-                      href={item.href}
-                      locale={locale}
-                    >
-                      {item.description}
-                    </ListItem>
+                    <li key={item.href}>
+                      <Link
+                        href={resolveHref(item.href)}
+                        className="block p-3 rounded-md hover:bg-accent transition-colors"
+                        prefetch={true}
+                      >
+                        <div className="text-sm font-medium leading-none">
+                          <TranslatableText>{item.title}</TranslatableText>
+                        </div>
+                        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
+                          {/*<TranslatableText>{item.description}</TranslatableText>*/}
+                        </p>
+                      </Link>
+                    </li>
                   ))}
                 </ul>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+              </div>
+            )}
+          </div>
+
+          {/* Contact - Direct Link */}
+          <Link
+            href={resolveHref("/contact")}
+            className={`${textColor} text-base font-medium px-4 py-2 hover:bg-accent/50 rounded-md transition-colors`}
+            prefetch={true}
+          >
+            <TranslatableText>Contact</TranslatableText>
+          </Link>
+        </nav>
       </div>
     );
   };
-  
+
   // Mobile menu content
   const renderMobileMenu = () => {
     return (
-      <div className="fixed inset-0 z-40 bg-white pt-20 md:hidden overflow-y-auto">
-        <div className="absolute right-4 top-6">
+      <div className="fixed inset-0 z-50 bg-white w-screen h-screen overflow-y-auto lg:hidden">
+        <div className="flex justify-between items-center px-4 py-4 border-b">
+          <Link
+            href={`/`}
+            className="relative z-50 flex items-center"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <div className="relative h-14 w-24">
+              <Image
+                src="/images/logo.png"
+                alt="GanzAfrica"
+                fill
+                sizes="(max-width: 768px) 96px, 128px"
+                className="object-contain"
+                priority
+                quality={90}
+              />
+            </div>
+          </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="text-black hover:bg-gray-100"
+            className="text-black hover:bg-[#F5F5F5] transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Close menu"
           >
             <X className="h-6 w-6" />
           </Button>
         </div>
-        <nav className="container mx-auto px-4 py-6 flex flex-col space-y-4">
+        <nav className="flex flex-col space-y-4 px-4 pt-6 pb-8 h-full">
           {/* Mobile About with submenu */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-about")}
             >
-              {dict.navigation?.about || "About"}
+              <TranslatableText>About</TranslatableText>
               <ChevronDown
                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-about" ? "rotate-180" : ""}`}
               />
@@ -587,40 +621,12 @@ export default function HomeHero({
                 {aboutItems.map((item) => (
                   <Link
                     key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    href={resolveHref(item.href)}
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Our approach */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-what-we-do")}
-            >
-              {dict.navigation?.our_approach || "Our approach"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-what-we-do" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-what-we-do" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {ourApproachItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
+                    <TranslatableText>{item.title}</TranslatableText>
                   </Link>
                 ))}
               </div>
@@ -628,68 +634,74 @@ export default function HomeHero({
           </div>
 
           {/* Programs */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-programs")}
             >
-              {dict.navigation?.programs || "Programs"}
+              <TranslatableText>what we do</TranslatableText>
               <ChevronDown
                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-programs" ? "rotate-180" : ""}`}
               />
             </button>
-            {activeDropdown === "mobile-programs" && (
+            {(activeDropdown === "mobile-programs" ||
+              activeDropdown === "mobile-program-submenu") && (
               <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {programsItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Projects */}
-          <div className="flex flex-col">
-            <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
-              onClick={() => toggleDropdown("mobile-community")}
-            >
-              {dict.navigation?.projects || "Community Hub"}
-              <ChevronDown
-                className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-community" ? "rotate-180" : ""}`}
-              />
-            </button>
-            {activeDropdown === "mobile-community" && (
-              <div className="ml-4 mt-2 flex flex-col space-y-2">
-                {projectItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    prefetch={true}
-                  >
-                    {item.title}
-                  </Link>
-                ))}
+                {programsItems.map((item) => {
+                  const isSubmenuOpen = activeDropdown === "mobile-program-submenu";
+                  return (
+                    <div key={item.href} className="flex flex-col w-full">
+                      {item.hasSubmenu ? (
+                        <>
+                          <button
+                            className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700 text-left flex items-center justify-between"
+                            onClick={() => toggleDropdown("mobile-program-submenu")}
+                          >
+                            <TranslatableText>{item.title}</TranslatableText>
+                            <ChevronDown
+                              className={`h-4 w-4 transform transition-transform ${isSubmenuOpen ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                          {isSubmenuOpen && (
+                            <div className="ml-4 mt-2 flex flex-col space-y-2">
+                              {programSubItems.map((subItem) => (
+                                <Link
+                                  key={subItem.href}
+                                  href={resolveHref(subItem.href)}
+                                  className="p-2 text-sm font-medium hover:bg-[#F5F5F5] rounded-md text-gray-600"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  prefetch={true}
+                                >
+                                  <TranslatableText>{subItem.title}</TranslatableText>
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <Link
+                          href={resolveHref(item.href)}
+                          className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          prefetch={true}
+                        >
+                          <TranslatableText>{item.title}</TranslatableText>
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* News & Updates */}
-          <div className="flex flex-col">
+          <div className="flex flex-col w-full">
             <button
-              className="p-2 text-lg font-medium hover:bg-gray-100 rounded-md text-primary-green text-left flex items-center justify-between"
+              className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green text-left flex items-center justify-between"
               onClick={() => toggleDropdown("mobile-news")}
             >
-              News & Updates
+              <TranslatableText>News & Updates</TranslatableText>
               <ChevronDown
                 className={`h-5 w-5 transform transition-transform ${activeDropdown === "mobile-news" ? "rotate-180" : ""}`}
               />
@@ -699,8 +711,8 @@ export default function HomeHero({
                 {newsItems.map((item) => (
                   <Link
                     key={item.href}
-                    href={`/${locale}${item.href}`}
-                    className="p-2 text-md font-medium hover:bg-gray-100 rounded-md text-gray-700"
+                    href={resolveHref(item.href)}
+                    className="p-2 text-md font-medium hover:bg-[#F5F5F5] rounded-md text-gray-700"
                     onClick={() => setIsMobileMenuOpen(false)}
                     prefetch={true}
                   >
@@ -710,6 +722,29 @@ export default function HomeHero({
               </div>
             )}
           </div>
+
+          {/* Contact - Direct Link */}
+          <Link
+            href={`/contact`}
+            className="p-2 text-lg font-medium hover:bg-[#F5F5F5] rounded-md text-primary-green"
+            onClick={() => setIsMobileMenuOpen(false)}
+            prefetch={true}
+          >
+            <TranslatableText>Contact</TranslatableText>
+          </Link>
+
+          {/* Add sign in button at the bottom */}
+          {/* <div className="mt-auto pt-6 border-t">*/}
+          {/*  <Link href={`/login`} className="w-full" onClick={() => setIsMobileMenuOpen(false)}>*/}
+          {/*  <Button*/}
+          {/*    size="lg"*/}
+          {/*    className="w-full bg-primary-green hover:bg-primary-green/90 text-white"*/}
+          {/*  >*/}
+          {/*    "Sign In"*/}
+          {/*  </Button>*/}
+          {/*</Link>*/}
+          {/*   <LanguageSwitcher/>*/}
+          {/*</div>*/}
         </nav>
       </div>
     );
@@ -726,20 +761,17 @@ export default function HomeHero({
         <div className="container min-w-full py-0">
           <div className="flex h-20 items-stretch justify-between relative">
             {/* Logo */}
-            <div className="bg-white rounded-tr-none rounded-br-2xl shadow-sm min-h-full w-32 md:w-52 flex items-center p-8">
-              <Link
-                href={`/${locale}`}
-                className="relative z-50 flex items-center gap-2"
-                prefetch={true}
-              >
+            <div className="bg-white rounded-tr-none rounded-br-2xl  min-h-full w-32 md:w-52 flex justify-center items-center p-8">
+              <Link href={`/`} className="relative z-50 flex items-center gap-2" prefetch={true}>
                 <div className="relative h-14 w-24">
                   <Image
                     src="/images/logo.png"
                     alt="GanzAfrica"
                     fill
-                    sizes="(max-width: 768px) 300px, 200px"
+                    sizes="(max-width: 768px) 96px, 128px"
                     className="object-contain"
                     priority
+                    quality={90}
                   />
                 </div>
               </Link>
@@ -748,40 +780,25 @@ export default function HomeHero({
             {/* Desktop Navigation */}
             {renderDesktopNavigation()}
 
-            {/* Right side items with inverted top-left corner */}
-            <div className="bg-white rounded-tl-none rounded-bl-2xl min-h-full p-4 w-56 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="mr-2">
-                  <LanguageSwitcher />
-                </div>
-                <Link href={`/${locale}/login`}>
-                  <Button
-                    size="sm"
-                    className="bg-primary-green hover:bg-primary-green/90 text-white px-6"
-                  >
-                    {dict.cta?.sign_in || "Sign In"}
-                  </Button>
-                </Link>
-                <div className="md:hidden">
+            {/* Right side items */}
+            <div className="bg-white rounded-tl-none rounded-bl-2xl min-h-full p-4 w-auto flex items-center">
+              <div className="flex items-center gap-2">
+                <LanguageSwitcher />
+                <div className="lg:hidden">
                   <Button
                     variant="ghost"
                     size="icon"
                     className={cn(
-                      "hover:bg-white/20",
+                      "hover:bg-[#F5F5F5] transition-colors",
                       !animationStarted ||
-                        navRef.current?.getAttribute("data-overlay-passed") !==
-                          "true"
+                        navRef.current?.getAttribute("data-overlay-passed") !== "true"
                         ? "text-white"
                         : "text-black",
                     )}
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                   >
-                    {isMobileMenuOpen ? (
-                      <X className="h-6 w-6" />
-                    ) : (
-                      <Menu className="h-6 w-6" />
-                    )}
+                    {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                   </Button>
                 </div>
               </div>
@@ -796,7 +813,8 @@ export default function HomeHero({
       {/* Video background container */}
       <div
         ref={videoContainerRef}
-        className="absolute inset-x-0 z-10 overflow-hidden"
+        // ="absolute inset-0 z-0 md:z-10 overflow-hidden"
+        className="absolute inset-x-0 z-10 overflow-hidden hidden md:block"
         style={{
           height: "100%",
           bottom: 0,
@@ -812,17 +830,22 @@ export default function HomeHero({
             priority
             quality={75}
             className="object-cover"
+            sizes="100vw"
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+            fetchPriority="high"
           />
         </div>
 
         <video
           ref={videoRef}
           autoPlay
+          poster={backgroundImage}
           muted
           loop
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
-          preload="auto"
+          preload="metadata"
         >
           <source src="/videos/hero-video.mp4" type="video/mp4" />
         </video>
@@ -831,22 +854,22 @@ export default function HomeHero({
       {/* Initial content */}
       <div
         ref={initialContentRef}
-        className="absolute inset-0 flex items-center justify-center z-30"
+        className="absolute inset-0 flex items-center top-52 justify-center z-30 hidden md:block"
       >
-        <div className="text-center text-white mt-16">
+        <div className="text-center text-white mt-20">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 max-w-4xl mx-auto">
-            {dict?.home?.hero?.title ||
-              "Sustainable Solutions for Africa's Future"}
+            <TranslatableText>Sustainable Solutions for Africa's Future</TranslatableText>
           </h1>
           <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-            {dict?.home?.hero?.subtitle ||
-              "Empowering youth through sustainable land management"}
+            <TranslatableText>
+              Empowering youth to address agri-food systems challenges in Africa
+            </TranslatableText>
           </p>
         </div>
       </div>
 
       {/* SVG definitions */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 z-0 pointer-events-none bg-primary-green">
         <svg className="absolute inset-0 w-full h-full">
           <defs>
             <clipPath id="hero-clip" clipPathUnits="objectBoundingBox">
@@ -859,6 +882,7 @@ export default function HomeHero({
       {/* White overlay */}
       <div
         ref={whiteOverlayRef}
+        // className="absolute inset-0 bg-white z-30 hidden md:block"
         className="absolute inset-0 bg-white z-30"
         style={{
           transform: "translateY(-100%)",
@@ -869,59 +893,121 @@ export default function HomeHero({
       {/* Final content */}
       <div
         ref={finalContentRef}
-        className="absolute inset-0 z-40 opacity-0 pt-24"
+        className="absolute inset-0 z-40 opacity-0 pt-24 flex flex-col items-center md:items-start justify-center md:justify-start"
       >
-        <div className="container mx-auto px-4 text-center mt-20">
-          <h1 className="text-3xl md:text-4xl font-bold mb-6">
-            <span className="text-primary-green">
-              {dict?.home?.hero?.title_after?.line1 || "A PROSPEROUS AND"}{" "}
-              <br />
-              {dict?.home?.hero?.title_after?.line2 || "SUSTAINABLE"}
-            </span>{" "}
-            <span className="text-primary-orange">
-              {dict?.home?.hero?.title_after?.line3 || "FUTURE FOR"} <br />
-              {dict?.home?.hero?.title_after?.line4 || "AFRICA"}
-            </span>
+        <div className="container mx-auto px-4 text-center mt-10 sm:mt-20 md:mt-20 hidden md:block">
+          <h1 className="text-2xl lg:text-4xl font-bold mb-4 sm:mb-6">
+            <TranslatableText as="span" className="text-primary-green">
+              A PROSPEROUS AND
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-green">
+              SUSTAINABLE
+            </TranslatableText>{" "}
+            <TranslatableText as="span" className="text-primary-orange">
+              FUTURE FOR
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-orange">
+              AFRICA
+            </TranslatableText>
           </h1>
 
-          <p className="text-base max-w-3xl mx-auto mb-8 text-gray-800">
-            {dict?.home?.hero?.subtitle ||
-              "Empowering youth through sustainable land management, agriculture, and environmental initiatives"}
-          </p>
+          <TranslatableText
+            as="p"
+            className="text-base max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
+          >
+            Empowering youth through sustainable land management, agriculture, and environmental
+            initiatives
+          </TranslatableText>
 
-          <Link href={`/${locale}/about/who-we-are`} prefetch={true}>
+          <Link href={`/about/who-we-are`} prefetch={true}>
             <Button
               size="lg"
-              className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-6 py-3"
+              className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
             >
-              {dict?.cta?.discover_more || "Discover More"}
+              <TranslatableText>Discover More</TranslatableText>
+            </Button>
+          </Link>
+        </div>
+        {/* MOBILE */}
+        <div className="container mx-auto px-4 text-center block md:hidden">
+          <h1 className="text-5xl lg:text-4xl font-bold mb-4 sm:mb-6">
+            <TranslatableText as="span" className="text-primary-green">
+              A PROSPEROUS AND
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-green">
+              SUSTAINABLE
+            </TranslatableText>{" "}
+            <TranslatableText as="span" className="text-primary-orange">
+              FUTURE FOR
+            </TranslatableText>{" "}
+            <br />
+            <TranslatableText as="span" className="text-primary-orange">
+              AFRICA
+            </TranslatableText>
+          </h1>
+
+          <TranslatableText
+            as="p"
+            className="text-3xl max-w-3xl mx-auto mb-6 sm:mb-8 text-gray-800"
+          >
+            Empowering youth through sustainable land management, agriculture, and environmental
+            initiatives
+          </TranslatableText>
+
+          <Link href={`/about/who-we-are`} prefetch={true}>
+            <Button
+              size="lg"
+              className="bg-primary-green hover:bg-primary-green/90 text-white font-medium px-4 sm:px-6 py-2 sm:py-3 text-lg sm:text-base"
+            >
+              <TranslatableText>Discover More</TranslatableText>
             </Button>
           </Link>
         </div>
 
-        {/* Leaves */}
-        <div className="absolute -left-1 top-1/3 transform rotate-[31.83deg] -translate-x-1/4 z-50 md:w-[200px] w-[150px] aspect-square">
+        {/* Leaves - Lazy loaded for better performance */}
+        <div className="absolute -left-1 top-1/3 transform rotate-[31.83deg] -translate-x-1/4 z-50 w-0 sm:w-[100px] md:w-[150px] lg:w-[200px] hidden sm:block aspect-square">
           <Image
             src="/images/leaf.png"
             alt="Decorative leaf"
             fill
             className="object-contain"
-            priority
+            loading="lazy"
+            quality={75}
+            sizes="(max-width: 640px) 0px, (max-width: 768px) 100px, (max-width: 1024px) 150px, 200px"
           />
         </div>
 
-        <div className="absolute -right-1 top-1/4 rotate-[-60deg] transform translate-x-1/4 z-50 md:w-[200px] w-[150px] aspect-square overflow-hidden">
+        <div className="absolute -right-1 top-1/4 rotate-[-60deg] transform translate-x-1/4 z-50 w-0 sm:w-[100px] md:w-[150px] lg:w-[200px] hidden sm:block aspect-square overflow-hidden">
           <div className="relative w-full h-full">
             <Image
               src="/images/leaf.png"
               alt="Decorative leaf"
               fill
               className="object-contain rotate-180"
-              priority
+              loading="lazy"
+              quality={75}
+              sizes="(max-width: 640px) 0px, (max-width: 768px) 100px, (max-width: 1024px) 150px, 200px"
             />
           </div>
         </div>
       </div>
+
+      {/*/!* Overlay video above all content *!/*/}
+      {/*<div className="pointer-events-none absolute inset-0 z-60">*/}
+      {/*    <video*/}
+      {/*        autoPlay*/}
+      {/*        muted*/}
+      {/*        loop*/}
+      {/*        playsInline*/}
+      {/*        className="w-full h-full object-cover opacity-30"*/}
+      {/*        preload="auto"*/}
+      {/*    >*/}
+      {/*        <source src="/videos/hero-video.mp4" type="video/mp4" />*/}
+      {/*    </video>*/}
+      {/*</div>*/}
     </section>
   );
 }
