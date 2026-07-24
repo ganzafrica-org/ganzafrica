@@ -2,7 +2,7 @@
 import { db } from "@/db/client";
 import { hr_contracts } from "@/db/schema";
 import { AppError } from "@/middlewares";
-import { getActiveEmployee } from "../../services/hr/employee.service";
+import { requireEmployee } from "./employee-context";
 import type {
   CompensationType,
   ContractRecord,
@@ -13,17 +13,12 @@ import type {
   SalaryScale,
   UpdateContractInput,
 } from "@/types/contract.types";
-import {
-  sendNotification,
-  resolveTriggeredByFromHrUser,
-} from "@/modules/hr/notifications/notification.service";
-import type { HrRequester } from "@/types/employee.types";
+import { sendNotification } from "@/modules/hr/notifications/notification.service";
 
 function mapContract(row: typeof hr_contracts.$inferSelect): ContractRecord {
   return {
     id: row.id,
-    // employee_id (legacy hr_users) is now nullable; new contracts link via employee_ref_id.
-    employeeId: row.employee_id ?? row.employee_ref_id ?? "",
+    employeeId: row.employee_ref_id ?? "",
     jobTitle: row.job_title,
     department: row.department,
     workLocation: row.work_location,
@@ -53,35 +48,25 @@ function validateDateRange(startDate: Date, endDate?: Date | null): void {
   }
 }
 
-function assertContractAccess(requester: HrRequester): void {
-  if (requester.role !== "IT" && requester.role !== "HR") {
-    throw new AppError("Forbidden", 403);
-  }
-}
+export async function listContractsByEmployee(employeeId: string): Promise<ContractRecord[]> {
+  await requireEmployee(employeeId);
 
-export async function listContractsByEmployee(
-  requester: HrRequester,
-  employeeId: string,
-): Promise<ContractRecord[]> {
-  assertContractAccess(requester);
-  await getActiveEmployee(employeeId);
-
-  const rows = await db.select().from(hr_contracts).where(eq(hr_contracts.employee_id, employeeId));
+  const rows = await db
+    .select()
+    .from(hr_contracts)
+    .where(eq(hr_contracts.employee_ref_id, employeeId));
 
   return rows.map(mapContract);
 }
 
 export async function getContractById(
-  requester: HrRequester,
   employeeId: string,
   contractId: string,
 ): Promise<ContractRecord> {
-  assertContractAccess(requester);
-
   const rows = await db
     .select()
     .from(hr_contracts)
-    .where(and(eq(hr_contracts.id, contractId), eq(hr_contracts.employee_id, employeeId)))
+    .where(and(eq(hr_contracts.id, contractId), eq(hr_contracts.employee_ref_id, employeeId)))
     .limit(1);
 
   if (!rows.length) throw new AppError("Contract not found", 404);
@@ -89,19 +74,25 @@ export async function getContractById(
 }
 
 export async function createContract(
-  requester: HrRequester,
   employeeId: string,
   input: CreateContractInput,
 ): Promise<ContractRecord> {
-  if (requester.role !== "HR") throw new AppError("Forbidden", 403);
-
-  await getActiveEmployee(employeeId);
+  await requireEmployee(employeeId);
   validateDateRange(input.startDate, input.endDate);
+
+  // DRAFT → ACTIVE requires the signed agreement on file.
+  if ((input.status ?? "ACTIVE") === "ACTIVE" && !input.employmentAgreementUrl) {
+    throw new AppError(
+      "An active contract needs the signed employment agreement URL",
+      422,
+      "AGREEMENT_URL_REQUIRED",
+    );
+  }
 
   const [inserted] = await db
     .insert(hr_contracts)
     .values({
-      employee_id: employeeId,
+      employee_ref_id: employeeId,
       job_title: input.jobTitle,
       department: input.department ?? null,
       work_location: input.workLocation ?? null,
@@ -128,7 +119,7 @@ export async function createContract(
   try {
     await sendNotification({
       type: "CONTRACT_CREATED",
-      triggeredBy: await resolveTriggeredByFromHrUser(requester.id),
+      triggeredBy: 0,
       relatedEntity: { contractId: inserted.id, employeeId },
       title: "New contract created",
       message: `A new ${inserted.employment_type} contract has been created for employee ${employeeId}.`,
@@ -142,17 +133,14 @@ export async function createContract(
 }
 
 export async function updateContract(
-  requester: HrRequester,
   employeeId: string,
   contractId: string,
   input: UpdateContractInput,
 ): Promise<ContractRecord> {
-  if (requester.role !== "HR") throw new AppError("Forbidden", 403);
-
   const rows = await db
     .select()
     .from(hr_contracts)
-    .where(and(eq(hr_contracts.id, contractId), eq(hr_contracts.employee_id, employeeId)))
+    .where(and(eq(hr_contracts.id, contractId), eq(hr_contracts.employee_ref_id, employeeId)))
     .limit(1);
 
   if (!rows.length) throw new AppError("Contract not found", 404);
@@ -160,6 +148,20 @@ export async function updateContract(
   const startDate = input.startDate ?? rows[0].start_date;
   const endDate = input.endDate !== undefined ? input.endDate : rows[0].end_date;
   validateDateRange(startDate, endDate);
+
+  // Guard the DRAFT → ACTIVE transition: the signed agreement must be present.
+  const nextStatus = (input.status as ContractStatus | undefined) ?? rows[0].status;
+  const nextAgreement =
+    input.employmentAgreementUrl !== undefined
+      ? input.employmentAgreementUrl
+      : rows[0].employment_agreement_url;
+  if (nextStatus === "ACTIVE" && !nextAgreement) {
+    throw new AppError(
+      "An active contract needs the signed employment agreement URL",
+      422,
+      "AGREEMENT_URL_REQUIRED",
+    );
+  }
 
   const patch: Partial<typeof hr_contracts.$inferInsert> = { updated_at: new Date() };
 
@@ -194,16 +196,10 @@ export async function updateContract(
   return mapContract(updated);
 }
 
-export async function deleteContract(
-  requester: HrRequester,
-  employeeId: string,
-  contractId: string,
-): Promise<void> {
-  if (requester.role !== "HR") throw new AppError("Forbidden", 403);
-
+export async function deleteContract(employeeId: string, contractId: string): Promise<void> {
   const deleted = await db
     .delete(hr_contracts)
-    .where(and(eq(hr_contracts.id, contractId), eq(hr_contracts.employee_id, employeeId)))
+    .where(and(eq(hr_contracts.id, contractId), eq(hr_contracts.employee_ref_id, employeeId)))
     .returning({ id: hr_contracts.id });
 
   if (!deleted.length) throw new AppError("Contract not found", 404);

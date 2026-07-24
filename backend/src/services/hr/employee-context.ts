@@ -43,6 +43,17 @@ export function isHrManager(roleNames: string[]): boolean {
   return roleNames.includes("hr") || roleNames.includes("admin");
 }
 
+/**
+ * Fetch an employees row by id or 404. The employees-model replacement for the legacy
+ * `getActiveEmployee` (which read hr_users) — it does NOT assert active status, because contracts
+ * and documents are legitimately attached to onboarding and exited employees too.
+ */
+export async function requireEmployee(employeeId: string) {
+  const [row] = await db.select().from(employees).where(eq(employees.id, employeeId)).limit(1);
+  if (!row) throw new AppError("Employee not found", 404, "EMPLOYEE_NOT_FOUND");
+  return row;
+}
+
 // Bounds the manager-chain walk so a cycle in manager_id can never hang a request.
 const MAX_MANAGER_DEPTH = 20;
 
