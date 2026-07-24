@@ -1,59 +1,53 @@
-﻿import { Router } from "express";
+/**
+ * MOD-01 employees routes on the employees model. The legacy hr_users-backed controller is retired
+ * with this module.
+ *
+ * `/me` and `/me/profile` gate on `authenticate` and resolve the caller's own row in the service;
+ * everything else is HR-managed. Detail (`GET /:id`) also takes `employees_self:read` so an
+ * employee can open their own profile — the service enforces "own row only".
+ */
+import { Router } from "express";
 import { authenticate, requirePermission } from "@/middlewares/auth.middleware";
 import { validate } from "@/middlewares/validation.middleware";
-import * as employeesController from "@/controllers/hr/employee.controller";
-import * as employeesValidation from "@/validations/hr/employee.validation";
+import * as c from "@/controllers/hr/employees-core.controller";
+import * as v from "@/validations/hr/employees-core.validation";
 
 const router: Router = Router();
 
-/**
- * @swagger
- * tags:
- *   name: HR Employees
- *   description: HR portal employee management endpoints
- */
-
 router.use(authenticate);
 
+// Self-service — must precede /:id so "me" is not parsed as a uuid.
+router.get("/me", c.getMe);
+router.patch("/me/profile", validate(v.updateProfileSchema), c.updateMyProfile);
+
+router.get(
+  "/",
+  requirePermission("employees:read", "employees:manage"),
+  validate(v.listEmployeesSchema),
+  c.listEmployees,
+);
+router.get(
+  "/departments",
+  requirePermission("employees:read", "employees:manage"),
+  c.listDepartments,
+);
 router.post(
   "/",
   requirePermission("employees:manage"),
-  validate(employeesValidation.createEmployeeSchema),
-  employeesController.createEmployee,
+  validate(v.createEmployeeSchema),
+  c.createEmployee,
 );
-
-router.get(
-  "/",
-  requirePermission("employees:manage"),
-  validate(employeesValidation.listEmployeesSchema),
-  employeesController.listEmployees,
-);
-
-router.get(
-  "/me",
-  requirePermission("employees:manage", "employees_self:read"),
-  employeesController.getEmployee, // Handled by controller/service as self lookup
-);
-
 router.get(
   "/:id",
-  requirePermission("employees:manage"),
-  validate(employeesValidation.employeeIdParamSchema),
-  employeesController.getEmployee,
+  requirePermission("employees:read", "employees:manage", "employees_self:read"),
+  validate(v.employeeIdSchema),
+  c.getEmployee,
 );
-
 router.patch(
   "/:id",
-  requirePermission("employees:manage", "employees_self:read"), // Ownership check in controller
-  validate(employeesValidation.updateEmployeeSchema),
-  employeesController.updateEmployee,
-);
-
-router.delete(
-  "/:id",
-  requirePermission("employees:manage"), // Only HR can delete (matching original mission)
-  validate(employeesValidation.employeeIdParamSchema),
-  employeesController.deleteEmployee,
+  requirePermission("employees:manage"),
+  validate(v.updateEmployeeSchema),
+  c.updateEmployee,
 );
 
 export default router;
