@@ -12,4 +12,5 @@ export * from "./document";
 export * from "./policy";
 export * from "./helpdesk";
 export * from "./notification";
+export * from "./processes";
 export * from "./relations";

@@ -29,6 +29,7 @@ export default defineConfig({
         "src/services/hr/document-retention.service.ts",
         "src/services/hr/leave-core.service.ts",
         "src/services/hr/leave-days.ts",
+        "src/services/hr/process.service.ts",
         "src/controllers/signing.ts",
         "src/controllers/recruitment.ts",
         "src/controllers/recruitment-pipeline.ts",
@@ -52,6 +53,13 @@ export default defineConfig({
           lines: 90,
         },
         "src/services/hr/leave-days.ts": {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+        // LCM-01 lifecycle engine.
+        "src/services/hr/process.service.ts": {
           statements: 90,
           branches: 90,
           functions: 90,

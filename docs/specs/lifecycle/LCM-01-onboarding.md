@@ -1,6 +1,6 @@
 # LCM-01: Onboarding (templates, checklists, per-step assignees, role-scoped views)
 
-> **Status:** Ready
+> **Status:** Implemented (backend + HR UI) — see §11 for what shipped
 > **Track:** A
 > **Depends on:** REC-05 (hire trigger), FND-05 (employees/RBAC), FND-07 (hr routes on requirePermission)
 > **Blocks:** LCM-02 (same pattern)
@@ -197,3 +197,40 @@ Offboarding specifics (LCM-02); e-signature; document templates; probation revie
 
 Deploy with one seeded "Default onboarding" template (seed script) so REC-05 hires never hit
 a template-less state. Manual instantiation covers existing recent hires.
+
+## 11. What shipped
+
+Backend:
+
+- `db/schema/hr/processes.ts` — the four tables from §3, including the offboarding-only columns
+  (nullable) so LCM-02 extends rather than migrates. Migration `0015`.
+- `services/hr/process.service.ts` — type-agnostic engine: template selection, task snapshotting,
+  assignee resolution, kind hooks, viewer-filtered reads, overdue sweep, template CRUD.
+- `services/hr/process.hooks.ts` wires the REC-05 seam; `server.ts` registers it at startup and
+  schedules the overdue sweep plus `startNotificationCron` (which existed but was never called,
+  so MOD-06's carry-over had no scheduler either).
+- `pnpm db:seed:onboarding` seeds the default 9-step template and backfills stranded hires.
+
+Frontend (`apps/hr`): `app/onboarding` (instance table with progress + overdue), `[id]` detail
+(task cards, skip with mandatory note, kind hints), `onboarding/me` (progress ring, own actions
+split from "being handled for you"), and `settings/onboarding-templates` (builder). Shared
+components live in `components/processes/` — `task-row.tsx` and `instance-table.tsx` are already
+parameterized for LCM-02. Deleted the dead 1,835-line commented-out `on-boarding.tsx`.
+
+Tests: 60 backend, 10 frontend. `process.service.ts` is under the 90% coverage gate at 97.6%
+statements / 91.8% branches / 100% functions.
+
+Decisions worth noting:
+
+- **The REC-05 seam was fixed, not just wired.** `onHired` ran inside the accept transaction but
+  took no `tx`, so instantiation would have used a separate pooled connection — deadlocking on the
+  uncommitted `employees` row, and able to commit independently of a rolled-back hire.
+  `HiredContext` now carries the transaction; a test asserts the whole hire unwinds.
+- **`staff_only` hides steps from the subject, not from their owner.** A non-HR assignee of a
+  staff-only task still sees it — otherwise they could never do the work assigned to them.
+- **Approval-style routes gate on `authenticate`, not `requirePermission`.** Eligibility here is a
+  relationship (subject / assignee / manager) the middleware cannot express, so the service
+  resolves it and returns 403. Template and cross-employee routes do take `processes:manage`.
+- `contract_signing` currently gates on contract status `ACTIVE`. Wiring it to trigger a real
+  signature request through `signing.service.ts` (which landed in PR #230) is the natural next
+  step and is not done here.

@@ -392,6 +392,7 @@ export async function respondToOffer(
       applicationId: offer.application_id,
       employmentType: offer.employment_type,
       startDate: offer.start_date,
+      tx,
     });
     if (!instantiated) {
       await tx.update(offers).set({ onboarding_pending: true }).where(eq(offers.id, offerId));

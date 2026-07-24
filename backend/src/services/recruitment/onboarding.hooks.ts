@@ -4,6 +4,7 @@
  * LCM-01's migration can backfill. LCM-01 replaces this implementation with instantiateProcess().
  */
 import { Logger } from "../../config";
+import type { DbTransaction } from "../../db/client";
 
 const logger = new Logger("OnboardingHooks");
 
@@ -13,6 +14,12 @@ export interface HiredContext {
   applicationId: number;
   employmentType: string;
   startDate?: string | null;
+  /**
+   * The accept transaction's handle. Onboarding must be instantiated on THIS connection —
+   * writing through the pool would commit independently of a hire that later rolls back, and
+   * would deadlock against the uncommitted employees row it depends on.
+   */
+  tx: DbTransaction;
 }
 
 export interface OnboardingHooks {
