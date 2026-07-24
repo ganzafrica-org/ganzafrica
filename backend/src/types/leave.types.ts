@@ -1,6 +1,4 @@
-﻿import type { HrRequester } from "./employee.types";
-
-export type LeaveType = "ANNUAL" | "SICK" | "MATERNITY" | "PATERNITY" | "UNPAID" | "OTHER";
+﻿export type LeaveType = "ANNUAL" | "SICK" | "MATERNITY" | "PATERNITY" | "UNPAID" | "OTHER";
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 
 export interface LeaveRecord {
@@ -30,5 +28,3 @@ export interface UpdateLeaveInput {
   endDate?: Date;
   reason?: string | null;
 }
-
-export type { HrRequester };

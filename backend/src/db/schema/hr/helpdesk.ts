@@ -8,10 +8,8 @@ export const hr_helpdesk_tickets = pgTable("hr_helpdesk_tickets", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  submitted_by_id: uuid("submitted_by_id")
-    .notNull()
-    .references(() => hr_users.id, { onDelete: "cascade" }),
-  // FND-05 expand: new employees FKs, backfilled by the merge script.
+  // Legacy hr_users FK, nullable pending the FND-07 drop. MOD-01 writes the employee_id columns.
+  submitted_by_id: uuid("submitted_by_id").references(() => hr_users.id, { onDelete: "cascade" }),
   submitted_by_employee_id: uuid("submitted_by_employee_id").references(() => employees.id, {
     onDelete: "cascade",
   }),

@@ -10,10 +10,8 @@ export const hr_asset_maintenance = pgTable("hr_asset_maintenance", {
   asset_id: uuid("asset_id")
     .notNull()
     .references(() => hr_assets.id, { onDelete: "cascade" }),
-  requester_id: uuid("requester_id")
-    .notNull()
-    .references(() => hr_users.id),
-  // FND-05 expand: new employees FK, backfilled by the merge script.
+  // Legacy hr_users FK, nullable pending the FND-07 drop. MOD-01 writes requester_employee_id.
+  requester_id: uuid("requester_id").references(() => hr_users.id),
   requester_employee_id: uuid("requester_employee_id").references(() => employees.id),
   title: text("title").notNull(),
   description: text("description"),

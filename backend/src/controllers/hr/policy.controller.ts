@@ -124,6 +124,7 @@
  */
 import { sendResponse } from "@/utils/sendResponse";
 import * as policyService from "../../services/hr/policy.service";
+import { getEmployeeForUser } from "../../services/hr/employee-context";
 
 export const listPolicies = async (
   req: Request,
@@ -170,7 +171,9 @@ export const createPolicy = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const created = await policyService.createPolicy(req.body);
+    // The creator is the authenticated employee, not a client-supplied id.
+    const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
+    const created = await policyService.createPolicy({ ...req.body, createdById: employeeId });
     res.status(201);
     sendResponse(res, { success: true, message: "Policy created", data: created });
   } catch (err) {

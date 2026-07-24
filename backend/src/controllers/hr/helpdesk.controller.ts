@@ -127,6 +127,7 @@
 import { constants, Logger } from "../../config";
 import { AppError } from "../../middlewares";
 import * as helpdeskService from "../../services/hr/helpdesk.service";
+import { getEmployeeForUser } from "../../services/hr/employee-context";
 
 const logger = new Logger("HelpdeskController");
 
@@ -177,7 +178,8 @@ export const getTicket = async (req: Request, res: Response): Promise<void> => {
 
 export const createTicket = async (req: Request, res: Response): Promise<void> => {
   try {
-    const ticket = await helpdeskService.createTicket(req.body);
+    const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
+    const ticket = await helpdeskService.createTicket({ ...req.body, submittedById: employeeId });
     res.status(201).json(ticket);
   } catch (error) {
     logger.error("Create ticket error", error);

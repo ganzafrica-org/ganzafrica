@@ -2,9 +2,9 @@ import fs from "fs";
 import path from "path";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
-import { hr_users } from "@/db/schema/hr/employee";
 import { hr_policies } from "@/db/schema/hr/policy";
 import { AppError } from "@/middlewares";
+import { requireEmployee } from "./employee-context";
 
 export type PolicyCategory = "GENERAL" | "HR" | "IT" | "FINANCE" | "COMPLIANCE" | "OTHER";
 export type PolicyStatus = "PUBLISHED" | "DRAFT";
@@ -75,15 +75,6 @@ function saveBase64File(fileName: string, base64: string): { filePath: string; f
   return { filePath: rel, fileSize: bytesToHuman(buf.length) };
 }
 
-async function assertUserExists(userId: string): Promise<void> {
-  const rows = await db
-    .select({ id: hr_users.id })
-    .from(hr_users)
-    .where(eq(hr_users.id, userId))
-    .limit(1);
-  if (!rows.length) throw new AppError("Created by user not found", 404);
-}
-
 export async function listPolicies(query: ListPoliciesQuery) {
   const conditions = [];
   if (query.category) conditions.push(eq(hr_policies.category, query.category));
@@ -127,7 +118,7 @@ export async function listPolicies(query: ListPoliciesQuery) {
     downloads: p.downloads,
     isActive: p.is_active,
     status: p.status,
-    createdById: p.created_by_id,
+    createdById: p.created_by_employee_id,
     modifiedAt: p.updated_at,
     createdAt: p.created_at,
   }));
@@ -152,14 +143,14 @@ export async function getPolicy(id: string) {
     downloads: p.downloads,
     isActive: p.is_active,
     status: p.status,
-    createdById: p.created_by_id,
+    createdById: p.created_by_employee_id,
     modifiedAt: p.updated_at,
     createdAt: p.created_at,
   };
 }
 
 export async function createPolicy(input: CreatePolicyInput) {
-  await assertUserExists(input.createdById);
+  await requireEmployee(input.createdById);
 
   const saved = saveBase64File(input.fileName, input.fileContentBase64);
 
@@ -176,7 +167,7 @@ export async function createPolicy(input: CreatePolicyInput) {
       file_size: saved.fileSize,
       downloads: 0,
       is_active: true,
-      created_by_id: input.createdById,
+      created_by_employee_id: input.createdById,
     })
     .returning();
 

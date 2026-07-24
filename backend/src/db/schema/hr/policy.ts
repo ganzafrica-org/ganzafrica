@@ -16,10 +16,8 @@ export const hr_policies = pgTable("hr_policies", {
   downloads: integer("downloads").notNull().default(0),
   is_active: boolean("is_active").notNull().default(true),
   status: policyStatusEnum("status").notNull().default("PUBLISHED"),
-  created_by_id: uuid("created_by_id")
-    .notNull()
-    .references(() => hr_users.id, { onDelete: "restrict" }),
-  // FND-05 expand: new employees FK, backfilled by the merge script.
+  // Legacy hr_users FK, nullable pending the FND-07 drop. MOD-01 writes created_by_employee_id.
+  created_by_id: uuid("created_by_id").references(() => hr_users.id, { onDelete: "restrict" }),
   created_by_employee_id: uuid("created_by_employee_id").references(() => employees.id, {
     onDelete: "restrict",
   }),

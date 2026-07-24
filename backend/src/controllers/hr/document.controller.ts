@@ -1,5 +1,6 @@
 ﻿import { Request, Response, NextFunction } from "express";
 import { sendResponse } from "@/utils/sendResponse";
+import { getEmployeeForUser } from "@/services/hr/employee-context";
 import * as documentService from "../../services/hr/document.service";
 import * as retentionService from "../../services/hr/document-retention.service";
 import { AppError } from "@/middlewares";
@@ -131,11 +132,12 @@ export const createDocument = async (
 ): Promise<void> => {
   try {
     assertAdminControlRole(req);
-    const createdById = (req as any).user?.id || req.body.createdById; // Prioritize validated session identity
+    // The creator is the authenticated user's employee record, not the platform user id.
+    const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
 
     const created = await documentService.createDocument({
       ...req.body,
-      createdById,
+      createdById: employeeId,
     });
 
     res.status(201);

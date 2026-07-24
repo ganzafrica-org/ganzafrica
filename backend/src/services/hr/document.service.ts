@@ -1,8 +1,9 @@
 ﻿import fs from "fs";
 import path from "path";
-import { and, asc, desc, eq, ilike, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, or } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
-import { hr_users } from "@/db/schema/hr/employee";
+import { employees } from "@/db/schema/hr/employees";
+import { requireEmployee } from "./employee-context";
 import { hr_contracts } from "@/db/schema/hr/contract";
 import { hr_documents } from "@/db/schema/hr/document";
 import { AppError } from "@/middlewares";
@@ -124,15 +125,6 @@ async function indexDocumentText(documentId: string, buffer: Buffer, fileName: s
     .where(eq(hr_documents.id, documentId));
 }
 
-async function assertUserExists(userId: string): Promise<void> {
-  const rows = await db
-    .select({ id: hr_users.id })
-    .from(hr_users)
-    .where(eq(hr_users.id, userId))
-    .limit(1);
-  if (!rows.length) throw new AppError("Created by user not found", 404);
-}
-
 async function assertContractExists(contractId: string): Promise<void> {
   const rows = await db
     .select({ id: hr_contracts.id })
@@ -175,12 +167,14 @@ export async function listDocuments(query: ListDocumentsQuery) {
     .limit(query.limit)
     .offset((query.page - 1) * query.limit);
 
-  const creatorIds = [...new Set(rows.map((p) => p.created_by_id))];
+  const creatorIds = [
+    ...new Set(rows.map((p) => p.created_by_employee_id).filter((id): id is string => !!id)),
+  ];
   const creators = creatorIds.length
     ? await db
-        .select({ id: hr_users.id, first: hr_users.first_name, last: hr_users.last_name })
-        .from(hr_users)
-        .where(and(...creatorIds.map((id) => eq(hr_users.id, id))))
+        .select({ id: employees.id, first: employees.first_name, last: employees.last_name })
+        .from(employees)
+        .where(inArray(employees.id, creatorIds))
     : [];
 
   const creatorMap = new Map(creators.map((c) => [c.id, `${c.first} ${c.last}`]));
@@ -198,7 +192,10 @@ export async function listDocuments(query: ListDocumentsQuery) {
     access: p.access as DocumentAccessRule,
     contract_id: p.contract_id,
     modifiedAt: p.updated_at,
-    createdBy: { id: p.created_by_id, fullName: creatorMap.get(p.created_by_id) ?? "" },
+    createdBy: {
+      id: p.created_by_employee_id,
+      fullName: p.created_by_employee_id ? (creatorMap.get(p.created_by_employee_id) ?? "") : "",
+    },
   }));
 
   return { data, total };
@@ -271,11 +268,13 @@ export async function getDocument(id: string) {
   if (!rows.length) throw new AppError("Document not found", 404);
   const p = rows[0];
 
-  const creators = await db
-    .select({ id: hr_users.id, first: hr_users.first_name, last: hr_users.last_name })
-    .from(hr_users)
-    .where(eq(hr_users.id, p.created_by_id))
-    .limit(1);
+  const creators = p.created_by_employee_id
+    ? await db
+        .select({ id: employees.id, first: employees.first_name, last: employees.last_name })
+        .from(employees)
+        .where(eq(employees.id, p.created_by_employee_id))
+        .limit(1)
+    : [];
 
   const fullName = creators.length ? `${creators[0].first} ${creators[0].last}` : "";
 
@@ -293,13 +292,13 @@ export async function getDocument(id: string) {
     access: p.access as DocumentAccessRule,
     contract_id: p.contract_id,
     modifiedAt: p.updated_at,
-    createdBy: { id: p.created_by_id, fullName },
+    createdBy: { id: p.created_by_employee_id, fullName },
     createdAt: p.created_at,
   };
 }
 
 export async function createDocument(input: CreateDocumentInput) {
-  await assertUserExists(input.createdById);
+  await requireEmployee(input.createdById);
 
   if (!VALID_CATEGORIES.includes(input.category)) {
     throw new AppError(`Invalid category. Must be one of: ${VALID_CATEGORIES.join(", ")}`, 400);
@@ -330,7 +329,7 @@ export async function createDocument(input: CreateDocumentInput) {
       file_path: saved.filePath,
       file_size: saved.fileSize,
       downloads: 0,
-      created_by_id: input.createdById,
+      created_by_employee_id: input.createdById,
       access: input.access, // Handled as JSONB or Text inside DB Schema mapping
       contract_id: input.category === "Contract Templates" ? input.contractId : null,
     })

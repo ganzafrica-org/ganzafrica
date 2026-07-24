@@ -28,10 +28,8 @@ export const hr_documents = pgTable(
     // archived_at soft-archives a document past retention (hidden from normal lists, not deleted).
     retain_until: timestamp("retain_until", { withTimezone: true }),
     archived_at: timestamp("archived_at", { withTimezone: true }),
-    created_by_id: uuid("created_by_id")
-      .references(() => hr_users.id)
-      .notNull(),
-    // FND-05 expand: new employees FK, backfilled by the merge script.
+    // Legacy hr_users FK, nullable pending the FND-07 drop. MOD-01 writes created_by_employee_id.
+    created_by_id: uuid("created_by_id").references(() => hr_users.id),
     created_by_employee_id: uuid("created_by_employee_id").references(() => employees.id),
     ...timestampFields,
   },
