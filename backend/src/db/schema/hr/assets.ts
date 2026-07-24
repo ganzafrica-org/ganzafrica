@@ -2,7 +2,6 @@
 import { boolean, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { timestampFields } from "../common";
 import { assetIssueEnum, assetStatusEnum } from "./hr.enums";
-import { hr_users } from "./employee";
 import { employees } from "./employees";
 import { hr_asset_categories } from "./asset-categories";
 
@@ -19,10 +18,6 @@ export const hr_assets = pgTable("hr_assets", {
   purchase_price: numeric("purchase_price", { precision: 12, scale: 2 }),
   status: assetStatusEnum("status").notNull().default("AVAILABLE"),
 
-  assigned_to_id: uuid("assigned_to_id").references(() => hr_users.id, {
-    onDelete: "set null",
-  }),
-  // FND-05 expand: new employees FK, backfilled by the merge script.
   assigned_to_employee_id: uuid("assigned_to_employee_id").references(() => employees.id, {
     onDelete: "set null",
   }),

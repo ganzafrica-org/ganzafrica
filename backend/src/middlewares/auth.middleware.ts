@@ -3,7 +3,7 @@ import * as jwt from "jsonwebtoken";
 import { constants, Logger, env } from "../config";
 import { verifyToken } from "../services/auth.service";
 import { db } from "../db/client";
-import { users, roles, user_roles, hr_users, role_permissions, permissions } from "../db/schema";
+import { users, roles, user_roles, role_permissions, permissions } from "../db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 
 const logger = new Logger("AuthMiddleware");

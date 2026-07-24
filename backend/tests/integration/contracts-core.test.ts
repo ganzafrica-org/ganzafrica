@@ -41,7 +41,6 @@ describe("MOD-01 contracts", () => {
 
     const [row] = await db.select().from(hr_contracts).where(eq(hr_contracts.id, created.id));
     expect(row.employee_ref_id).toBe(employee.id);
-    expect(row.employee_id).toBeNull(); // legacy column untouched
 
     const list = await listContractsByEmployee(employee.id);
     expect(list).toHaveLength(1);

@@ -7,7 +7,9 @@ import {
   hr_leaves,
   hr_notification_preferences,
   hr_notifications,
-  hr_users,
+  employees,
+  roles,
+  user_roles,
 } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import type {
@@ -84,29 +86,33 @@ function isPreferenceEnabled(
   return true;
 }
 
+// The legacy "IT" hr role maps to the platform "admin" role; "HR" maps to "hr".
+const HR_ROLE_TO_PLATFORM: Record<"IT" | "HR", string> = { IT: "admin", HR: "hr" };
+
 async function platformUserIdsByHrRole(role: "IT" | "HR"): Promise<number[]> {
   const rows = await db
-    .select({ platformUserId: hr_users.platform_user_id })
-    .from(hr_users)
-    .where(eq(hr_users.role, role));
+    .select({ userId: user_roles.user_id })
+    .from(user_roles)
+    .innerJoin(roles, eq(user_roles.role_id, roles.id))
+    .where(eq(roles.name, HR_ROLE_TO_PLATFORM[role]));
 
-  return rows.map((r) => r.platformUserId).filter((id): id is number => id != null);
+  return rows.map((r) => r.userId);
 }
 
+/** Resolve an employees row's linked platform user id (recipient of employee-directed notices). */
 async function platformUserIdForHrEmployee(employeeId: string): Promise<number | null> {
   const rows = await db
-    .select({ platformUserId: hr_users.platform_user_id })
-    .from(hr_users)
-    .where(eq(hr_users.id, employeeId))
+    .select({ userId: employees.user_id })
+    .from(employees)
+    .where(eq(employees.id, employeeId))
     .limit(1);
 
-  return rows.length ? rows[0].platformUserId : null;
+  return rows.length ? rows[0].userId : null;
 }
 
 async function allEmployeePlatformUserIds(): Promise<number[]> {
-  const rows = await db.select({ platformUserId: hr_users.platform_user_id }).from(hr_users);
-
-  return rows.map((r) => r.platformUserId).filter((id): id is number => id != null);
+  const rows = await db.select({ userId: employees.user_id }).from(employees);
+  return rows.map((r) => r.userId);
 }
 
 async function resolveEmployeeIdFromEntity(
@@ -117,7 +123,7 @@ async function resolveEmployeeIdFromEntity(
 
   if (relatedEntity.contractId) {
     const rows = await db
-      .select({ employeeId: hr_contracts.employee_id })
+      .select({ employeeId: hr_contracts.employee_ref_id })
       .from(hr_contracts)
       .where(eq(hr_contracts.id, relatedEntity.contractId))
       .limit(1);
@@ -126,7 +132,7 @@ async function resolveEmployeeIdFromEntity(
 
   if (relatedEntity.leaveId) {
     const rows = await db
-      .select({ employeeId: hr_leaves.user_id })
+      .select({ employeeId: hr_leaves.employee_id })
       .from(hr_leaves)
       .where(eq(hr_leaves.id, relatedEntity.leaveId))
       .limit(1);
@@ -136,8 +142,8 @@ async function resolveEmployeeIdFromEntity(
   if (relatedEntity.ticketId) {
     const rows = await db
       .select({
-        submittedById: hr_helpdesk_tickets.submitted_by_id,
-        assignedToId: hr_helpdesk_tickets.assigned_to_id,
+        submittedById: hr_helpdesk_tickets.submitted_by_employee_id,
+        assignedToId: hr_helpdesk_tickets.assigned_to_employee_id,
       })
       .from(hr_helpdesk_tickets)
       .where(eq(hr_helpdesk_tickets.id, relatedEntity.ticketId))
@@ -151,7 +157,7 @@ async function resolveEmployeeIdFromEntity(
 
   if (relatedEntity.assetId) {
     const rows = await db
-      .select({ employeeId: hr_assets.assigned_to_id })
+      .select({ employeeId: hr_assets.assigned_to_employee_id })
       .from(hr_assets)
       .where(eq(hr_assets.id, relatedEntity.assetId))
       .limit(1);
@@ -413,7 +419,7 @@ export async function scheduleContractExpiryCheck(): Promise<void> {
         triggeredBy: 0,
         relatedEntity: {
           contractId: contract.id,
-          employeeId: contract.employee_id ?? contract.employee_ref_id ?? undefined,
+          employeeId: contract.employee_ref_id ?? undefined,
         },
         title: "Contract expiring soon",
         message: `A contract is set to expire on ${endDateLabel}. Review and renew if needed.`,

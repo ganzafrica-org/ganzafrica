@@ -1,17 +1,11 @@
 ﻿import { integer, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { timestampFields } from "../common";
 import { contractStatusEnum, contractTypeEnum } from "./hr.enums";
-import { hr_users } from "./employee";
 import { employees } from "./employees";
 
 export const hr_contracts = pgTable("hr_contracts", {
   id: uuid("id").primaryKey().defaultRandom(),
 
-  // ── Link to employee ───────────────────────
-  // Legacy hr_users FK — now NULLABLE (REC-05): new contracts (offer-accept draft) link via
-  // employee_ref_id to the current employees table; hr_users is retired (FND-07) and this column
-  // is dropped in a later contract-phase migration.
-  employee_id: uuid("employee_id").references(() => hr_users.id, { onDelete: "cascade" }),
   employee_ref_id: uuid("employee_ref_id").references(() => employees.id, { onDelete: "cascade" }),
 
   // ── Job Details (Step 2) ───────────────────

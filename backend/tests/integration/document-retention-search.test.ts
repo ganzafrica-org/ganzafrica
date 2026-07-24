@@ -3,7 +3,7 @@ import { db } from "../../src/db/client";
 import { hr_documents } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import { resetDb } from "../setup";
-import { makeHrUser, makeDocument } from "../factories";
+import { makeEmployeeUser, makeDocument, ensureRole } from "../factories";
 
 import * as docs from "../../src/services/hr/document.service";
 import * as retention from "../../src/services/hr/document-retention.service";
@@ -15,7 +15,8 @@ describe("DOC-plus search-in-file", () => {
   let hrId: string;
   beforeEach(async () => {
     await resetDb();
-    hrId = (await makeHrUser()).id;
+    await ensureRole("employee");
+    hrId = (await makeEmployeeUser()).employee.id;
   });
 
   it("matches on extracted file text and returns a snippet", async () => {
@@ -64,7 +65,8 @@ describe("DOC-plus retention", () => {
   let hrId: string;
   beforeEach(async () => {
     await resetDb();
-    hrId = (await makeHrUser()).id;
+    await ensureRole("employee");
+    hrId = (await makeEmployeeUser()).employee.id;
   });
 
   it("sets an explicit retention date", async () => {

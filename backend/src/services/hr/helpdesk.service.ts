@@ -154,7 +154,7 @@ export async function updateTicket(id: string, input: UpdateTicketInput): Promis
     if (
       input.assignedToId !== undefined &&
       input.assignedToId !== null &&
-      input.assignedToId !== previous.assigned_to_id
+      input.assignedToId !== previous.assigned_to_employee_id
     ) {
       await sendNotification({
         type: "TICKET_ASSIGNED",
