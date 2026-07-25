@@ -1,44 +1,43 @@
-﻿import { z } from "zod";
+import { z } from "zod";
+
+const category = z.enum(["IT", "HR", "FACILITIES", "OTHER"]);
+const status = z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED", "REOPENED"]);
+const priority = z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
 
 export const ticketIdParamSchema = z.object({
-  params: z.object({
-    id: z.string().uuid("Invalid ticket id"),
-  }),
+  params: z.object({ id: z.string().uuid("Invalid ticket id") }),
 });
 
 export const listTicketsSchema = z.object({
   query: z.object({
-    status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional(),
-    submittedBy: z.string().uuid("Invalid submittedBy id").optional(),
-    assignedTo: z.string().uuid("Invalid assignedTo id").optional(),
+    status: status.optional(),
+    category: category.optional(),
+    priority: priority.optional(),
+    assignee: z.coerce.number().int().positive().optional(),
   }),
 });
 
 export const createTicketSchema = z.object({
   body: z.object({
-    title: z.string().min(1, "Title is required"),
-    description: z.string().min(1, "Description is required"),
-    submittedById: z.string().uuid("Invalid submittedById"),
+    title: z.string().min(1, "Title is required").max(200),
+    description: z.string().min(1, "Description is required").max(5000),
+    category,
+    priority: priority.optional(),
+    asset_id: z.string().uuid().nullable().optional(),
   }),
 });
 
-export const updateTicketSchema = z.object({
-  params: z.object({
-    id: z.string().uuid("Invalid ticket id"),
-  }),
+export const transitionTicketSchema = z.object({
+  params: z.object({ id: z.string().uuid("Invalid ticket id") }),
   body: z.object({
-    title: z.string().min(1).optional(),
-    description: z.string().min(1).optional(),
-    status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional(),
-    assignedToId: z.string().uuid("Invalid assignedToId").optional().nullable(),
+    status: status.optional(),
+    priority: priority.optional(),
+    category: category.optional(),
+    assignee_user_id: z.number().int().positive().nullable().optional(),
   }),
 });
 
-export const answerTicketSchema = z.object({
-  params: z.object({
-    id: z.string().uuid("Invalid ticket id"),
-  }),
-  body: z.object({
-    answer: z.string().min(1, "Answer is required"),
-  }),
+export const addCommentSchema = z.object({
+  params: z.object({ id: z.string().uuid("Invalid ticket id") }),
+  body: z.object({ body: z.string().min(1, "Comment body is required").max(5000) }),
 });

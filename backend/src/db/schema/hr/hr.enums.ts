@@ -77,9 +77,14 @@ export const ticketStatusEnum = pgEnum("ticket_status", [
   "IN_PROGRESS",
   "RESOLVED",
   "CLOSED",
+  "REOPENED",
 ]);
 
 export const ticketPriorityEnum = pgEnum("ticket_priority", ["LOW", "MEDIUM", "HIGH", "CRITICAL"]);
+
+export const ticketCategoryEnum = pgEnum("ticket_category", ["IT", "HR", "FACILITIES", "OTHER"]);
+
+export const ticketSourceEnum = pgEnum("ticket_source", ["manual", "asset_issue"]);
 
 export const maintenanceStatusEnum = pgEnum("maintenance_status", [
   "PENDING",
@@ -101,6 +106,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "TICKET_CREATED",
   "TICKET_STATUS_CHANGED",
   "TICKET_ASSIGNED",
+  "TICKET_COMMENT",
   "ASSET_ASSIGNED",
   "ASSET_RETURNED",
   "ASSET_STATUS_CHANGED",

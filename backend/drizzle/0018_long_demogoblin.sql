@@ -1,0 +1,1 @@
+ALTER TYPE "public"."notification_type" ADD VALUE 'TICKET_COMMENT' BEFORE 'ASSET_ASSIGNED';

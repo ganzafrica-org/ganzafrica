@@ -24,6 +24,7 @@ import {
   hr_leaves,
   process_templates,
   process_template_tasks,
+  hr_helpdesk_tickets,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -249,6 +250,37 @@ export async function makeLeave(opts: {
       status: opts.status ?? "PENDING",
       days: opts.days != null ? String(opts.days) : null,
       reason: opts.reason ?? "Test leave",
+    })
+    .returning();
+  return row;
+}
+
+/** Insert a helpdesk ticket directly (MOD-08 setup). */
+export async function makeTicket(opts: {
+  submittedByEmployeeId: string;
+  title?: string;
+  description?: string;
+  category?: "IT" | "HR" | "FACILITIES" | "OTHER";
+  status?: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED" | "REOPENED";
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  assignedToEmployeeId?: string | null;
+  resolvedAt?: Date | null;
+  source?: "manual" | "asset_issue";
+  assetId?: string | null;
+}) {
+  const [row] = await db
+    .insert(hr_helpdesk_tickets)
+    .values({
+      title: opts.title ?? "Laptop won't boot",
+      description: opts.description ?? "It shows a black screen on startup.",
+      submitted_by_employee_id: opts.submittedByEmployeeId,
+      assigned_to_employee_id: opts.assignedToEmployeeId ?? null,
+      category: opts.category ?? "IT",
+      status: opts.status ?? "OPEN",
+      priority: opts.priority ?? "MEDIUM",
+      source: opts.source ?? "manual",
+      asset_id: opts.assetId ?? null,
+      resolved_at: opts.resolvedAt ?? null,
     })
     .returning();
   return row;

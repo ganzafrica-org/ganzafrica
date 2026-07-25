@@ -10,8 +10,14 @@ import recruitmentRoutes from "./recruitment.routes";
 import signingRoutes from "./signing.routes";
 import leaveCoreRoutes from "./leave-core.routes";
 import processesRoutes from "./processes.routes";
+import { authenticate } from "../../middlewares";
+import * as helpdeskController from "../../controllers/hr/helpdesk.controller";
 
 const router = Router();
+
+// Self-service helpdesk list (MOD-08). Kept here rather than under /helpdesk so the triage list at
+// GET /helpdesk can stay manage-only.
+router.get("/me/helpdesk", authenticate, helpdeskController.listMyTickets);
 
 router.use("/employees", employeeRoutes);
 router.use("/employees/:employeeId/contracts", contractRoutes);
