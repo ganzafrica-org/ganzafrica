@@ -1,44 +1,98 @@
 import { httpClient } from "@/services/http.service";
-import type { HelpdeskAnswerPayload, HelpdeskTicketPayload, PaginatedResponse } from "@/types/api";
+
+export type TicketStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED" | "REOPENED";
+export type TicketCategory = "IT" | "HR" | "FACILITIES" | "OTHER";
+export type TicketPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export interface Ticket {
+  id: string;
+  title: string;
+  description: string;
+  submittedById: string | null;
+  assignedToId: string | null;
+  category: TicketCategory;
+  status: TicketStatus;
+  priority: TicketPriority;
+  source: "manual" | "asset_issue";
+  assetId: string | null;
+  resolvedAt: string | null;
+  closedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketComment {
+  id: string;
+  ticket_id: string;
+  author_employee_id: string | null;
+  body: string;
+  created_at: string;
+}
+
+export interface TicketDetail {
+  ticket: Ticket & { asset_id: string | null };
+  comments: TicketComment[];
+  can_manage: boolean;
+}
+
+export interface CreateTicketInput {
+  title: string;
+  description: string;
+  category: TicketCategory;
+  priority?: TicketPriority;
+  asset_id?: string | null;
+}
+
+export interface TransitionInput {
+  status?: TicketStatus;
+  priority?: TicketPriority;
+  category?: TicketCategory;
+  assignee_user_id?: number | null;
+}
 
 export const helpdeskService = {
-  async createTicket(payload: HelpdeskTicketPayload) {
-    const response = await httpClient.post("/hr/helpdesk", payload);
-    return response.data;
+  async myTickets(): Promise<Ticket[]> {
+    const { data } = await httpClient.get<{ tickets: Ticket[] }>("/hr/me/helpdesk");
+    return data.tickets;
   },
-  async getTickets(params?: {
-    search?: string;
-    status?: string;
-    category?: string;
-    priority?: string;
-    page?: number;
-    limit?: number;
-  }) {
-    const response = await httpClient.get<PaginatedResponse<HelpdeskTicketPayload>>(
-      "/hr/helpdesk",
-      {
-        params,
-      },
-    );
 
-    return response.data;
+  async triageList(
+    params: {
+      status?: TicketStatus;
+      category?: TicketCategory;
+      priority?: TicketPriority;
+      assignee?: number;
+    } = {},
+  ): Promise<Ticket[]> {
+    const { data } = await httpClient.get<{ tickets: Ticket[] }>("/hr/helpdesk", { params });
+    return data.tickets;
   },
-  async getTicketById(ticketId: string) {
-    const response = await httpClient.get<HelpdeskTicketPayload>(`/hr/helpdesk/${ticketId}`);
-    return response.data;
+
+  async get(id: string): Promise<TicketDetail> {
+    const { data } = await httpClient.get<TicketDetail>(`/hr/helpdesk/${id}`);
+    return data;
   },
-  async answerTicket(ticketId: string, payload: HelpdeskAnswerPayload) {
-    const response = await httpClient.patch(`/hr/helpdesk/${ticketId}/answer`, payload);
-    return response.data;
+
+  async create(payload: CreateTicketInput): Promise<Ticket> {
+    const { data } = await httpClient.post<{ ticket: Ticket }>("/hr/helpdesk", payload);
+    return data.ticket;
   },
-  async deleteTicket(ticketId: string) {
-    await httpClient.delete(`/hr/helpdesk/${ticketId}`);
+
+  async transition(id: string, payload: TransitionInput): Promise<Ticket> {
+    const { data } = await httpClient.patch<{ ticket: Ticket }>(`/hr/helpdesk/${id}`, payload);
+    return data.ticket;
   },
-  async updateTicket(ticketId: string, payload: HelpdeskTicketPayload) {
-    const response = await httpClient.patch<HelpdeskTicketPayload>(
-      `/hr/helpdesk/${ticketId}`,
-      payload,
+
+  async reopen(id: string): Promise<Ticket> {
+    const { data } = await httpClient.post<{ ticket: Ticket }>(`/hr/helpdesk/${id}/reopen`, {});
+    return data.ticket;
+  },
+
+  async comment(id: string, body: string): Promise<TicketComment> {
+    const { data } = await httpClient.post<{ comment: TicketComment }>(
+      `/hr/helpdesk/${id}/comments`,
+      { body },
     );
-    return response.data;
+    return data.comment;
   },
 };
