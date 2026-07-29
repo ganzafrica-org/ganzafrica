@@ -1,8 +1,9 @@
 ﻿import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { hr_helpdesk_tickets, hr_users } from "@/db/schema";
+import { hr_helpdesk_tickets } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
+import { requireEmployee } from "./employee-context";
 
 export type TicketStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 
@@ -29,7 +30,7 @@ export interface TicketRecord {
   id: string;
   title: string;
   description: string;
-  submittedById: string;
+  submittedById: string | null;
   assignedToId: string | null;
   status: TicketStatus;
   answer: string | null;
@@ -43,8 +44,8 @@ function mapTicket(row: typeof hr_helpdesk_tickets.$inferSelect): TicketRecord {
     id: row.id,
     title: row.title,
     description: row.description,
-    submittedById: row.submitted_by_id,
-    assignedToId: row.assigned_to_id,
+    submittedById: row.submitted_by_employee_id,
+    assignedToId: row.assigned_to_employee_id,
     status: row.status,
     answer: row.answer,
     answeredAt: row.answered_at,
@@ -53,23 +54,14 @@ function mapTicket(row: typeof hr_helpdesk_tickets.$inferSelect): TicketRecord {
   };
 }
 
-async function assertUserExists(userId: string, label: string): Promise<void> {
-  const rows = await db
-    .select({ id: hr_users.id })
-    .from(hr_users)
-    .where(eq(hr_users.id, userId))
-    .limit(1);
-  if (!rows.length) throw new AppError(`${label} not found`, 404);
-}
-
 export async function listTickets(filters: ListTicketsFilters = {}): Promise<TicketRecord[]> {
   const conditions = [];
 
   if (filters.status) conditions.push(eq(hr_helpdesk_tickets.status, filters.status));
   if (filters.submittedBy)
-    conditions.push(eq(hr_helpdesk_tickets.submitted_by_id, filters.submittedBy));
+    conditions.push(eq(hr_helpdesk_tickets.submitted_by_employee_id, filters.submittedBy));
   if (filters.assignedTo)
-    conditions.push(eq(hr_helpdesk_tickets.assigned_to_id, filters.assignedTo));
+    conditions.push(eq(hr_helpdesk_tickets.assigned_to_employee_id, filters.assignedTo));
 
   const whereClause = conditions.length ? and(...conditions) : undefined;
   const rows = await db.select().from(hr_helpdesk_tickets).where(whereClause);
@@ -88,14 +80,14 @@ export async function getTicketById(id: string): Promise<TicketRecord> {
 }
 
 export async function createTicket(input: CreateTicketInput): Promise<TicketRecord> {
-  await assertUserExists(input.submittedById, "Submitted by user");
+  await requireEmployee(input.submittedById);
 
   const [inserted] = await db
     .insert(hr_helpdesk_tickets)
     .values({
       title: input.title,
       description: input.description,
-      submitted_by_id: input.submittedById,
+      submitted_by_employee_id: input.submittedById,
       status: "OPEN",
     })
     .returning();
@@ -128,7 +120,7 @@ export async function updateTicket(id: string, input: UpdateTicketInput): Promis
   const previous = rows[0];
 
   if (input.assignedToId) {
-    await assertUserExists(input.assignedToId, "Assigned user");
+    await requireEmployee(input.assignedToId);
   }
 
   const patch: Partial<typeof hr_helpdesk_tickets.$inferInsert> = {
@@ -138,7 +130,7 @@ export async function updateTicket(id: string, input: UpdateTicketInput): Promis
   if (input.title !== undefined) patch.title = input.title;
   if (input.description !== undefined) patch.description = input.description;
   if (input.status !== undefined) patch.status = input.status;
-  if (input.assignedToId !== undefined) patch.assigned_to_id = input.assignedToId;
+  if (input.assignedToId !== undefined) patch.assigned_to_employee_id = input.assignedToId;
 
   const [updated] = await db
     .update(hr_helpdesk_tickets)
@@ -162,7 +154,7 @@ export async function updateTicket(id: string, input: UpdateTicketInput): Promis
     if (
       input.assignedToId !== undefined &&
       input.assignedToId !== null &&
-      input.assignedToId !== previous.assigned_to_id
+      input.assignedToId !== previous.assigned_to_employee_id
     ) {
       await sendNotification({
         type: "TICKET_ASSIGNED",

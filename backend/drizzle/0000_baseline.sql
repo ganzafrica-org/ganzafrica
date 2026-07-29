@@ -1367,6 +1367,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1583,6 +1585,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1610,6 +1614,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1619,6 +1625,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1637,6 +1645,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1646,6 +1656,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1655,6 +1667,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1664,6 +1678,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1673,6 +1689,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1682,6 +1700,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -1691,6 +1711,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 DO $reconcile$
@@ -2562,6 +2584,8 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
   WHEN duplicate_table THEN NULL;
   WHEN duplicate_column THEN NULL;
+  WHEN undefined_table THEN NULL;
+  WHEN undefined_column THEN NULL;
 END
 $reconcile$;
 

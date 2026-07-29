@@ -2,7 +2,7 @@
  * MOD-06 leave engine — balances, working-day math, and manager-routed approvals on the
  * `employees` model.
  *
- * Separate from the legacy `leave.service.ts`, which still speaks the retiring hr_users/HrRequester
+ * The former hr_users-shaped CRUD in `leave.service.ts` is retired; that file now only re-exports
  * shape. New routes call this; the old CRUD keeps working until FND-07's contract phase drops
  * `hr_leaves.user_id`.
  */

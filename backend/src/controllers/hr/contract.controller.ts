@@ -10,7 +10,6 @@ import type {
   EmploymentType,
   SalaryScale,
 } from "@/types/contract.types";
-import { getHrRequester } from "../../utils/hr-requester";
 /**
  * @swagger
  * /hr/employees/{employeeId}/contracts:
@@ -178,10 +177,7 @@ function parseContractBody(body: Record<string, unknown>): CreateContractInput {
 
 export const listContracts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const contracts = await contractService.listContractsByEmployee(
-      await getHrRequester(req),
-      req.params.employeeId,
-    );
+    const contracts = await contractService.listContractsByEmployee(req.params.employeeId);
     res.status(200).json(contracts);
   } catch (error) {
     logger.error("List contracts error", error);
@@ -192,7 +188,6 @@ export const listContracts = async (req: Request, res: Response): Promise<void> 
 export const getContract = async (req: Request, res: Response): Promise<void> => {
   try {
     const contract = await contractService.getContractById(
-      await getHrRequester(req),
       req.params.employeeId,
       req.params.contractId,
     );
@@ -206,7 +201,6 @@ export const getContract = async (req: Request, res: Response): Promise<void> =>
 export const createContract = async (req: Request, res: Response): Promise<void> => {
   try {
     const contract = await contractService.createContract(
-      await getHrRequester(req),
       req.params.employeeId,
       parseContractBody(req.body),
     );
@@ -221,7 +215,6 @@ export const updateContract = async (req: Request, res: Response): Promise<void>
   try {
     const body = req.body;
     const contract = await contractService.updateContract(
-      await getHrRequester(req),
       req.params.employeeId,
       req.params.contractId,
       {
@@ -257,11 +250,7 @@ export const updateContract = async (req: Request, res: Response): Promise<void>
 
 export const deleteContract = async (req: Request, res: Response): Promise<void> => {
   try {
-    await contractService.deleteContract(
-      await getHrRequester(req),
-      req.params.employeeId,
-      req.params.contractId,
-    );
+    await contractService.deleteContract(req.params.employeeId, req.params.contractId);
     res.status(200).json({ message: "Contract deleted successfully" });
   } catch (error) {
     logger.error("Delete contract error", error);

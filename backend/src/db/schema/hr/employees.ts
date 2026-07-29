@@ -16,8 +16,6 @@ export const employees = pgTable(
       .notNull()
       .unique()
       .references(() => users.id),
-    // Audit trail of the hr_users → employees migration; dropped in a later contract-phase migration.
-    legacy_hr_user_id: uuid("legacy_hr_user_id").unique(),
 
     employee_number: text("employee_number").unique(),
     work_email: text("work_email").unique(),

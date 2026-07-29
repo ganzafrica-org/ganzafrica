@@ -16,7 +16,6 @@ import {
   evaluation_criteria,
   opportunity_funnel_events,
   offers,
-  hr_users,
   hr_documents,
   employees,
   hr_leave_policies,
@@ -111,24 +110,8 @@ export async function makePayroll(opts: MakePayrollOptions) {
   return row;
 }
 
-/** Insert an hr_users row (documents' created_by_id FK target). */
-export async function makeHrUser(opts: { role?: "HR" | "IT" | "EMPLOYEE" } = {}) {
-  const [row] = await db
-    .insert(hr_users)
-    .values({
-      first_name: "Test",
-      last_name: "HR",
-      personal_email: `hr_${uniq()}@test.local`,
-      password_hash: "x",
-      role: opts.role ?? "HR",
-      avatar_initials: "TH",
-    })
-    .returning();
-  return row;
-}
-
 export interface MakeDocumentOptions {
-  createdById: string; // hr_users.id (required FK)
+  createdById: string; // employees.id (created_by_employee_id FK)
   name?: string;
   category?: string;
   extractedText?: string | null;
@@ -154,7 +137,7 @@ export async function makeDocument(opts: MakeDocumentOptions) {
       indexed_at: opts.extractedText !== undefined ? new Date() : null,
       retain_until: opts.retainUntil ?? null,
       archived_at: opts.archivedAt ?? null,
-      created_by_id: opts.createdById,
+      created_by_employee_id: opts.createdById,
     })
     .returning();
   return row;
@@ -249,7 +232,6 @@ export async function makeHoliday(opts: { date: string; name?: string }) {
 
 export async function makeLeave(opts: {
   employeeId: string;
-  hrUserId: string; // legacy user_id FK is still NOT NULL until FND-07 drops it
   type?: "ANNUAL" | "SICK" | "MATERNITY" | "PATERNITY" | "UNPAID" | "OTHER";
   startDate: Date;
   endDate: Date;
@@ -260,7 +242,6 @@ export async function makeLeave(opts: {
   const [row] = await db
     .insert(hr_leaves)
     .values({
-      user_id: opts.hrUserId,
       employee_id: opts.employeeId,
       type: opts.type ?? "ANNUAL",
       start_date: opts.startDate,

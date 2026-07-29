@@ -1,5 +1,4 @@
 import { numeric, pgTable, text, uuid, timestamp } from "drizzle-orm/pg-core";
-import { hr_users } from "./employee";
 import { employees } from "./employees";
 import { hr_assets } from "./assets";
 import { maintenanceStatusEnum } from "./hr.enums";
@@ -10,10 +9,6 @@ export const hr_asset_maintenance = pgTable("hr_asset_maintenance", {
   asset_id: uuid("asset_id")
     .notNull()
     .references(() => hr_assets.id, { onDelete: "cascade" }),
-  requester_id: uuid("requester_id")
-    .notNull()
-    .references(() => hr_users.id),
-  // FND-05 expand: new employees FK, backfilled by the merge script.
   requester_employee_id: uuid("requester_employee_id").references(() => employees.id),
   title: text("title").notNull(),
   description: text("description"),

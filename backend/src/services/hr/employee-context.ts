@@ -43,6 +43,17 @@ export function isHrManager(roleNames: string[]): boolean {
   return roleNames.includes("hr") || roleNames.includes("admin");
 }
 
+/**
+ * Fetch an employees row by id or 404. The employees-model replacement for the legacy
+ * `getActiveEmployee` (which read hr_users) — it does NOT assert active status, because contracts
+ * and documents are legitimately attached to onboarding and exited employees too.
+ */
+export async function requireEmployee(employeeId: string) {
+  const [row] = await db.select().from(employees).where(eq(employees.id, employeeId)).limit(1);
+  if (!row) throw new AppError("Employee not found", 404, "EMPLOYEE_NOT_FOUND");
+  return row;
+}
+
 // Bounds the manager-chain walk so a cycle in manager_id can never hang a request.
 const MAX_MANAGER_DEPTH = 20;
 
@@ -99,35 +110,4 @@ export async function getManagerUserId(employeeId: string): Promise<number | nul
     .limit(1);
 
   return manager?.userId ?? null;
-}
-
-/**
- * Legacy-shape "requester" the HR services still expect ({id, role, email}). Bridges the new
- * platform identity to the old hr enum during the transition (HR services get retired onto the
- * employees table in MOD-01). `id` is the employee uuid when the user has a profile, else the
- * users.id as a string for HR-management accounts without their own profile.
- */
-export async function getHrRequester(
-  userId: number,
-  email: string,
-): Promise<{ id: string; role: "HR" | "IT" | "EMPLOYEE"; email: string }> {
-  const roleRows = await db
-    .select({ name: roles.name })
-    .from(user_roles)
-    .innerJoin(roles, eq(user_roles.role_id, roles.id))
-    .where(eq(user_roles.user_id, userId));
-  const roleNames = roleRows.map((r) => r.name);
-
-  // admin and hr both get full HR-level access in the (transitional) HR services. The legacy
-  // "IT" enum was more restricted than "HR" in those services, so admin must NOT map to it.
-  const role: "HR" | "IT" | "EMPLOYEE" =
-    roleNames.includes("admin") || roleNames.includes("hr") ? "HR" : "EMPLOYEE";
-
-  const [emp] = await db
-    .select({ id: employees.id })
-    .from(employees)
-    .where(eq(employees.user_id, userId))
-    .limit(1);
-
-  return { id: emp?.id ?? String(userId), role, email };
 }

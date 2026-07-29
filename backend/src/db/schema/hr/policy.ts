@@ -1,7 +1,6 @@
 ﻿import { boolean, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { timestampFields } from "../common";
 import { policyCategoryEnum, policyStatusEnum } from "./hr.enums";
-import { hr_users } from "./employee";
 import { employees } from "./employees";
 
 export const hr_policies = pgTable("hr_policies", {
@@ -16,10 +15,6 @@ export const hr_policies = pgTable("hr_policies", {
   downloads: integer("downloads").notNull().default(0),
   is_active: boolean("is_active").notNull().default(true),
   status: policyStatusEnum("status").notNull().default("PUBLISHED"),
-  created_by_id: uuid("created_by_id")
-    .notNull()
-    .references(() => hr_users.id, { onDelete: "restrict" }),
-  // FND-05 expand: new employees FK, backfilled by the merge script.
   created_by_employee_id: uuid("created_by_employee_id").references(() => employees.id, {
     onDelete: "restrict",
   }),

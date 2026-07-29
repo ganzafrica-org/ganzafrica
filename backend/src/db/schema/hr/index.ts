@@ -1,5 +1,4 @@
 ﻿export * from "./hr.enums";
-export * from "./employee";
 export * from "./employees";
 export * from "./contract";
 export * from "./assets";

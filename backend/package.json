@@ -16,7 +16,6 @@
     "db:seed:rbac": "tsx scripts/seed-rbac.ts",
     "db:seed:leave": "tsx scripts/seed-leave-defaults.ts",
     "db:seed:onboarding": "tsx scripts/seed-onboarding-template.ts",
-    "db:migrate:hr-users": "tsx scripts/migrate-hr-users.ts",
     "db:verify": "tsx scripts/verify-migrations.ts",
     "db:set-admin": "tsx scripts/set-admin-user.ts",
     "db:studio": "drizzle-kit studio",

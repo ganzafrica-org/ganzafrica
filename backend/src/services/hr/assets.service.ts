@@ -2,7 +2,6 @@
 import { db } from "@/db/client";
 import {
   hr_assets,
-  hr_users,
   hr_asset_categories,
   hr_asset_specs,
   hr_asset_images,
@@ -10,6 +9,7 @@ import {
 } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
+import { requireEmployee } from "./employee-context";
 
 export type AssetIssue = "YES" | "NO";
 export type AssetStatus = "AVAILABLE" | "ASSIGNED" | "UNDER_MAINTENANCE" | "DISPOSED";
@@ -85,7 +85,7 @@ function mapAsset(row: typeof hr_assets.$inferSelect): AssetRecord {
     serialNumber: row.serial_number,
     categoryId: row.category_id,
     purchasePrice: row.purchase_price ? String(row.purchase_price) : null,
-    assignedToId: row.assigned_to_id,
+    assignedToId: row.assigned_to_employee_id,
     assignedAt: row.assigned_at,
     returnedAt: row.returned_at,
     notes: row.notes,
@@ -95,15 +95,6 @@ function mapAsset(row: typeof hr_assets.$inferSelect): AssetRecord {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
-}
-
-async function assertUserExists(userId: string): Promise<void> {
-  const rows = await db
-    .select({ id: hr_users.id })
-    .from(hr_users)
-    .where(eq(hr_users.id, userId))
-    .limit(1);
-  if (!rows.length) throw new AppError("Assigned user not found", 404);
 }
 
 async function assertSerialAvailable(serialNumber: string, excludeId?: string): Promise<void> {
@@ -122,7 +113,7 @@ export async function listAssets(filters: ListAssetsFilters = {}): Promise<Asset
   const conditions = [];
 
   if (filters.assignedTo) {
-    conditions.push(eq(hr_assets.assigned_to_id, filters.assignedTo));
+    conditions.push(eq(hr_assets.assigned_to_employee_id, filters.assignedTo));
   }
   if (filters.hasIssue) {
     conditions.push(eq(hr_assets.has_issue, filters.hasIssue));
@@ -192,7 +183,7 @@ export async function createAsset(input: CreateAssetInput): Promise<AssetRecord>
   if (!category.length) throw new AppError("Category not found", 404);
 
   if (input.assignedToId) {
-    await assertUserExists(input.assignedToId);
+    await requireEmployee(input.assignedToId);
   }
 
   const [inserted] = await db
@@ -202,7 +193,7 @@ export async function createAsset(input: CreateAssetInput): Promise<AssetRecord>
       serial_number: input.serialNumber,
       category_id: input.categoryId,
       purchase_price: input.purchasePrice ?? null,
-      assigned_to_id: input.assignedToId ?? null,
+      assigned_to_employee_id: input.assignedToId ?? null,
       assigned_at: input.assignedToId ? new Date() : null,
       has_issue: input.hasIssue ?? "NO",
       is_flagged: input.isFlagged ?? false,
@@ -257,7 +248,7 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
   }
 
   if (input.assignedToId) {
-    await assertUserExists(input.assignedToId);
+    await requireEmployee(input.assignedToId);
   }
 
   const patch: Partial<typeof hr_assets.$inferInsert> = {
@@ -273,7 +264,7 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
   if (input.status !== undefined) patch.status = input.status;
 
   if (input.assignedToId !== undefined) {
-    patch.assigned_to_id = input.assignedToId;
+    patch.assigned_to_employee_id = input.assignedToId;
     patch.assigned_at = input.assignedToId ? new Date() : null;
     if (!input.assignedToId) {
       patch.returned_at = new Date();
@@ -314,7 +305,7 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
     if (
       input.assignedToId !== undefined &&
       input.assignedToId !== null &&
-      input.assignedToId !== rows[0].assigned_to_id
+      input.assignedToId !== rows[0].assigned_to_employee_id
     ) {
       await sendNotification({
         type: "ASSET_ASSIGNED",
@@ -328,12 +319,12 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
     if (
       input.assignedToId !== undefined &&
       input.assignedToId === null &&
-      rows[0].assigned_to_id !== null
+      rows[0].assigned_to_employee_id !== null
     ) {
       await sendNotification({
         type: "ASSET_RETURNED",
         triggeredBy: 0,
-        relatedEntity: { assetId: updated.id, employeeId: rows[0].assigned_to_id },
+        relatedEntity: { assetId: updated.id, employeeId: rows[0].assigned_to_employee_id },
         title: "Asset returned",
         message: `Asset "${updated.device_name}" has been returned.`,
         priority: "LOW",
@@ -343,7 +334,10 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
       await sendNotification({
         type: "ASSET_STATUS_CHANGED",
         triggeredBy: 0,
-        relatedEntity: { assetId: updated.id, employeeId: updated.assigned_to_id ?? undefined },
+        relatedEntity: {
+          assetId: updated.id,
+          employeeId: updated.assigned_to_employee_id ?? undefined,
+        },
         title: "Asset status updated",
         message: `Asset "${updated.device_name}" status is now ${updated.status}.`,
         priority: "LOW",
@@ -500,13 +494,13 @@ export async function createAssetMaintenance(input: CreateMaintenanceInput) {
   if (!asset.length) throw new AppError("Asset not found", 404);
 
   // Verify requester exists
-  await assertUserExists(input.requesterId);
+  await requireEmployee(input.requesterId);
 
   const [inserted] = await db
     .insert(hr_asset_maintenance)
     .values({
       asset_id: input.assetId,
-      requester_id: input.requesterId,
+      requester_employee_id: input.requesterId,
       title: input.title,
       description: input.description,
       status: input.status ?? "PENDING",
