@@ -39,6 +39,8 @@ const NOTIFICATION_ROUTING: Record<NotificationType, RoutingTarget> = {
   TICKET_CREATED: { it: true, hr: false, employee: false },
   TICKET_STATUS_CHANGED: { it: true, hr: false, employee: true },
   TICKET_ASSIGNED: { it: true, hr: false, employee: true },
+  // The comment notice targets the counterpart, resolved explicitly by the caller.
+  TICKET_COMMENT: { it: false, hr: false, employee: false },
   ASSET_ASSIGNED: { it: true, hr: true, employee: true },
   ASSET_RETURNED: { it: true, hr: true, employee: false },
   ASSET_STATUS_CHANGED: { it: true, hr: true, employee: false },
@@ -63,6 +65,7 @@ const TICKET_TYPES: NotificationType[] = [
   "TICKET_CREATED",
   "TICKET_STATUS_CHANGED",
   "TICKET_ASSIGNED",
+  "TICKET_COMMENT",
 ];
 
 const ASSET_TYPES: NotificationType[] = [

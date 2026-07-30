@@ -1,8 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { resolutionTimeData } from "@/data/help-desk-data";
 import { ShieldCheck, Settings, Cpu, Edit, User } from "lucide-react";
+
+const resolutionTimeData = [
+  { priority: "Low", avgHours: 48, target: 72 },
+  { priority: "Medium", avgHours: 24, target: 48 },
+  { priority: "High", avgHours: 8, target: 24 },
+  { priority: "Critical", avgHours: 2, target: 4 },
+];
 
 const categoryDistribution = [
   { category: "IT Support", count: 23, fill: "#10b981" },

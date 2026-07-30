@@ -1,218 +1,85 @@
-﻿import { Request, Response } from "express";
-/**
- * @swagger
- * /hr/helpdesk:
- *   get:
- *     summary: List helpdesk tickets
- *     tags: [HR Helpdesk]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *       - in: query
- *         name: submittedBy
- *         schema:
- *           type: string
- *           format: uuid
- *       - in: query
- *         name: assignedTo
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Tickets fetched
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/HrHelpdeskTicket'
- *   post:
- *     summary: Create helpdesk ticket
- *     tags: [HR Helpdesk]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/HrHelpdeskTicket'
- *     responses:
- *       201:
- *         description: Ticket created
- *
- * /hr/helpdesk/{id}:
- *   get:
- *     summary: Get ticket details
- *     tags: [HR Helpdesk]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Ticket fetched
- *   patch:
- *     summary: Update ticket
- *     tags: [HR Helpdesk]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/HrHelpdeskTicket'
- *     responses:
- *       200:
- *         description: Ticket updated
- *   delete:
- *     summary: Delete ticket
- *     tags: [HR Helpdesk]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     responses:
- *       200:
- *         description: Ticket deleted
- *
- * /hr/helpdesk/{id}/answer:
- *   post:
- *     summary: Answer helpdesk ticket
- *     tags: [HR Helpdesk]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               answer:
- *                 type: string
- *     responses:
- *       200:
- *         description: Ticket answered
- */
+import { Request, Response } from "express";
 import { constants, Logger } from "../../config";
 import { AppError } from "../../middlewares";
-import * as helpdeskService from "../../services/hr/helpdesk.service";
-import { getEmployeeForUser } from "../../services/hr/employee-context";
+import * as helpdesk from "../../services/hr/helpdesk.service";
 
 const logger = new Logger("HelpdeskController");
 
-function handleErrorResponse(error: unknown, res: Response, errorType: string): void {
+function handleError(res: Response, error: unknown, context: string) {
+  logger.error(context, error as Error);
   if (error instanceof AppError) {
-    res.status(error.statusCode).json({
-      error: errorType,
-      message: error.message,
-    });
-  } else {
-    res.status(500).json({
-      error: errorType,
-      message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
-    });
+    return res
+      .status(error.statusCode)
+      .json({ error: context, message: error.message, code: error.code });
   }
+  return res
+    .status(500)
+    .json({ error: context, message: constants.ERROR_MESSAGES.INTERNAL_SERVER_ERROR });
 }
 
-export const listTickets = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const query = req.query as {
-      status?: helpdeskService.TicketStatus;
-      submittedBy?: string;
-      assignedTo?: string;
-    };
+const actorId = (req: Request) => Number(req.user!.id);
 
-    const tickets = await helpdeskService.listTickets({
-      status: query.status,
-      submittedBy: query.submittedBy,
-      assignedTo: query.assignedTo,
+export const createTicket = async (req: Request, res: Response) => {
+  try {
+    const ticket = await helpdesk.createTicket(actorId(req), req.body);
+    return res.status(201).json({ ticket });
+  } catch (e) {
+    return handleError(res, e, "Create Ticket Error");
+  }
+};
+
+export const listMyTickets = async (req: Request, res: Response) => {
+  try {
+    return res.json({ tickets: await helpdesk.listMyTickets(actorId(req)) });
+  } catch (e) {
+    return handleError(res, e, "List My Tickets Error");
+  }
+};
+
+export const listTickets = async (req: Request, res: Response) => {
+  try {
+    const tickets = await helpdesk.listTickets({
+      status: req.query.status as helpdesk.TicketStatus | undefined,
+      category: req.query.category as helpdesk.TicketCategory | undefined,
+      priority: req.query.priority as helpdesk.TicketPriority | undefined,
+      assignee_user_id: req.query.assignee ? Number(req.query.assignee) : undefined,
     });
-
-    res.status(200).json(tickets);
-  } catch (error) {
-    logger.error("List tickets error", error);
-    handleErrorResponse(error, res, "List Tickets Error");
+    return res.json({ tickets });
+  } catch (e) {
+    return handleError(res, e, "List Tickets Error");
   }
 };
 
-export const getTicket = async (req: Request, res: Response): Promise<void> => {
+export const getTicket = async (req: Request, res: Response) => {
   try {
-    const ticket = await helpdeskService.getTicketById(req.params.id);
-    res.status(200).json(ticket);
-  } catch (error) {
-    logger.error("Get ticket error", error);
-    handleErrorResponse(error, res, "Get Ticket Error");
+    return res.json(await helpdesk.getTicketForViewer(actorId(req), req.params.id));
+  } catch (e) {
+    return handleError(res, e, "Get Ticket Error");
   }
 };
 
-export const createTicket = async (req: Request, res: Response): Promise<void> => {
+export const transitionTicket = async (req: Request, res: Response) => {
   try {
-    const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
-    const ticket = await helpdeskService.createTicket({ ...req.body, submittedById: employeeId });
-    res.status(201).json(ticket);
-  } catch (error) {
-    logger.error("Create ticket error", error);
-    handleErrorResponse(error, res, "Create Ticket Error");
+    const ticket = await helpdesk.transitionTicket(actorId(req), req.params.id, req.body);
+    return res.json({ ticket });
+  } catch (e) {
+    return handleError(res, e, "Update Ticket Error");
   }
 };
 
-export const updateTicket = async (req: Request, res: Response): Promise<void> => {
+export const reopenTicket = async (req: Request, res: Response) => {
   try {
-    const ticket = await helpdeskService.updateTicket(req.params.id, req.body);
-    res.status(200).json(ticket);
-  } catch (error) {
-    logger.error("Update ticket error", error);
-    handleErrorResponse(error, res, "Update Ticket Error");
+    return res.json({ ticket: await helpdesk.reopenTicket(actorId(req), req.params.id) });
+  } catch (e) {
+    return handleError(res, e, "Reopen Ticket Error");
   }
 };
 
-export const answerTicket = async (req: Request, res: Response): Promise<void> => {
+export const addComment = async (req: Request, res: Response) => {
   try {
-    const ticket = await helpdeskService.answerTicket(req.params.id, req.body.answer);
-    res.status(200).json(ticket);
-  } catch (error) {
-    logger.error("Answer ticket error", error);
-    handleErrorResponse(error, res, "Answer Ticket Error");
-  }
-};
-
-export const deleteTicket = async (req: Request, res: Response): Promise<void> => {
-  try {
-    await helpdeskService.deleteTicket(req.params.id);
-    res.status(200).json({ message: "Ticket deleted successfully" });
-  } catch (error) {
-    logger.error("Delete ticket error", error);
-    handleErrorResponse(error, res, "Delete Ticket Error");
+    const comment = await helpdesk.addComment(actorId(req), req.params.id, req.body.body);
+    return res.status(201).json({ comment });
+  } catch (e) {
+    return handleError(res, e, "Add Comment Error");
   }
 };

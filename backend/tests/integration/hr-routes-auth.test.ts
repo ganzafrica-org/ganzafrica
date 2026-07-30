@@ -12,7 +12,8 @@ const READ_ROUTES: { path: string; resource: string; action: string }[] = [
   { path: "/api/hr/assets", resource: "assets", action: "read" },
   { path: "/api/hr/leaves", resource: "leave", action: "manage" },
   { path: "/api/hr/policies", resource: "policies", action: "read" },
-  { path: "/api/hr/helpdesk", resource: "helpdesk", action: "create" },
+  // GET /hr/helpdesk is the triage list, so it opens on helpdesk:manage (create is for raising).
+  { path: "/api/hr/helpdesk", resource: "helpdesk", action: "manage" },
 ];
 
 describe("HR route auth matrix (FND-07)", () => {

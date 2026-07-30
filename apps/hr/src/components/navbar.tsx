@@ -92,7 +92,7 @@ export function Navbar() {
         { id: "document", label: "Documents", href: "/documents" },
         { id: "signing", label: "Sign", href: "/signing" },
         { id: "assets", label: "Assets", href: "/asset" },
-        { id: "help-desk", label: "Help Desk", href: "/help-desk" },
+        { id: "help-desk", label: "Help Desk", href: "/helpdesk" },
       ];
     }
 
@@ -105,7 +105,7 @@ export function Navbar() {
         { id: "document", label: "Documents", href: "/documents" },
         { id: "signing", label: "Sign", href: "/signing" },
         { id: "assets", label: "Assets", href: "/asset" },
-        { id: "help-desk", label: "Help Desk", href: "/help-desk" },
+        { id: "help-desk", label: "Help Desk", href: "/helpdesk" },
       ];
     }
 
@@ -116,7 +116,7 @@ export function Navbar() {
         { id: "time-offs", label: "Time Offs", href: "/leave" },
         { id: "documents", label: "Documents", href: "/documents" },
         { id: "signing", label: "Sign", href: "/signing" },
-        { id: "help-desk", label: "Help Desk", href: "/help-desk" },
+        { id: "help-desk", label: "Help Desk", href: "/helpdesk" },
       ];
     }
 

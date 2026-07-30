@@ -1,52 +1,75 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { helpdeskService } from "@/services/helpdesk.service";
-import type { HelpdeskAnswerPayload, HelpdeskTicketPayload } from "@/types/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  helpdeskService,
+  type CreateTicketInput,
+  type TicketCategory,
+  type TicketPriority,
+  type TicketStatus,
+  type TransitionInput,
+} from "@/services/helpdesk.service";
 
-export function useCreateHelpdeskTicket() {
-  return useMutation({
-    mutationFn: (payload: HelpdeskTicketPayload) => helpdeskService.createTicket(payload),
-  });
+const MY = "my-tickets";
+const TRIAGE = "triage-tickets";
+const ONE = "ticket";
+
+function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: [MY] });
+  qc.invalidateQueries({ queryKey: [TRIAGE] });
+  qc.invalidateQueries({ queryKey: [ONE] });
 }
 
-export function useAnswerHelpdeskTicket() {
-  return useMutation({
-    mutationFn: ({ ticketId, payload }: { ticketId: string; payload: HelpdeskAnswerPayload }) =>
-      helpdeskService.answerTicket(ticketId, payload),
-  });
+export function useMyTickets() {
+  return useQuery({ queryKey: [MY], queryFn: () => helpdeskService.myTickets() });
 }
 
-export function useGetHelpdeskTickets() {
+export function useTriageTickets(
+  filters: { status?: TicketStatus; category?: TicketCategory; priority?: TicketPriority } = {},
+) {
   return useQuery({
-    queryKey: ["helpdesk-tickets"],
-    queryFn: () => helpdeskService.getTickets(),
+    queryKey: [TRIAGE, filters],
+    queryFn: () => helpdeskService.triageList(filters),
   });
 }
 
-export function useGetHelpdeskTicketById(ticketId: string) {
+export function useTicket(id: string | null) {
   return useQuery({
-    queryKey: ["helpdesk-ticket", ticketId],
-    queryFn: () => helpdeskService.getTicketById(ticketId),
+    queryKey: [ONE, id],
+    queryFn: () => helpdeskService.get(id!),
+    enabled: Boolean(id),
   });
 }
 
-export function useDeleteHelpdeskTicket() {
+export function useCreateTicket() {
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: (ticketId: string) => helpdeskService.deleteTicket(ticketId),
+    mutationFn: (payload: CreateTicketInput) => helpdeskService.create(payload),
+    onSuccess: () => invalidateAll(qc),
   });
 }
 
-export function useUpdateHelpdeskTicket() {
+export function useTransitionTicket() {
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ ticketId, payload }: { ticketId: string; payload: HelpdeskTicketPayload }) =>
-      helpdeskService.updateTicket(ticketId, payload),
+    mutationFn: ({ id, ...payload }: { id: string } & TransitionInput) =>
+      helpdeskService.transition(id, payload),
+    onSuccess: () => invalidateAll(qc),
   });
 }
 
-export function useGetHelpdeskTicketStats() {
-  return useQuery({
-    queryKey: ["helpdesk-tickets-stats"],
-    queryFn: () => helpdeskService.getTickets(),
+export function useReopenTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => helpdeskService.reopen(id),
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
+export function useAddComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: string }) => helpdeskService.comment(id, body),
+    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: [ONE, vars.id] }),
   });
 }

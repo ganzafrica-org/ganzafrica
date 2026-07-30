@@ -1,50 +1,29 @@
-﻿import { Router } from "express";
-import { validate, authenticate, requirePermission } from "../../middlewares";
-import * as helpdeskController from "../../controllers/hr/helpdesk.controller";
-import * as helpdeskValidation from "../../validations/hr/helpdesk.validation";
+/**
+ * MOD-08 helpdesk routes, mounted at /hr/helpdesk.
+ *
+ * Reads and comments gate on `authenticate` only: eligibility is a relationship (requester,
+ * assignee, or triage) the middleware cannot express, so the service resolves it and 403s.
+ * Triage actions (list, transition) take helpdesk:manage.
+ */
+import { Router } from "express";
+import { authenticate, requirePermission } from "../../middlewares";
+import { validate } from "../../middlewares/validation.middleware";
+import * as c from "../../controllers/hr/helpdesk.controller";
+import * as v from "../../validations/hr/helpdesk.validation";
 
 const router: Router = Router();
+
+router.use(authenticate);
 
 const manage = requirePermission("helpdesk:manage");
 const createOrManage = requirePermission("helpdesk:create", "helpdesk:manage");
 
-router.use(authenticate);
+router.post("/", createOrManage, validate(v.createTicketSchema), c.createTicket);
+router.get("/", manage, validate(v.listTicketsSchema), c.listTickets);
 
-router.post(
-  "/",
-  createOrManage,
-  validate(helpdeskValidation.createTicketSchema),
-  helpdeskController.createTicket,
-);
-router.get(
-  "/",
-  createOrManage,
-  validate(helpdeskValidation.listTicketsSchema),
-  helpdeskController.listTickets,
-);
-router.get(
-  "/:id",
-  createOrManage,
-  validate(helpdeskValidation.ticketIdParamSchema),
-  helpdeskController.getTicket,
-);
-router.patch(
-  "/:id/answer",
-  manage,
-  validate(helpdeskValidation.answerTicketSchema),
-  helpdeskController.answerTicket,
-);
-router.patch(
-  "/:id",
-  manage,
-  validate(helpdeskValidation.updateTicketSchema),
-  helpdeskController.updateTicket,
-);
-router.delete(
-  "/:id",
-  manage,
-  validate(helpdeskValidation.ticketIdParamSchema),
-  helpdeskController.deleteTicket,
-);
+router.get("/:id", authenticate, validate(v.ticketIdParamSchema), c.getTicket);
+router.patch("/:id", manage, validate(v.transitionTicketSchema), c.transitionTicket);
+router.post("/:id/reopen", authenticate, validate(v.ticketIdParamSchema), c.reopenTicket);
+router.post("/:id/comments", authenticate, validate(v.addCommentSchema), c.addComment);
 
 export default router;
