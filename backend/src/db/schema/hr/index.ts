@@ -6,6 +6,7 @@ export * from "./asset-categories";
 export * from "./asset-specs";
 export * from "./asset-image";
 export * from "./asset-maintenance";
+export * from "./asset-assignments";
 export * from "./leave";
 export * from "./document";
 export * from "./policy";

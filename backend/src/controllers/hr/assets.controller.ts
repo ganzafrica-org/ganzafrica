@@ -1,5 +1,6 @@
 ﻿import { Request, Response } from "express";
 import * as assetsService from "../../services/hr/assets.service";
+import { getEmployeeForUser } from "../../services/hr/employee-context";
 
 export const listAssets = async (req: Request, res: Response) => {
   const assets = await assetsService.listAssets(req.query);
@@ -22,8 +23,13 @@ export const updateAsset = async (req: Request, res: Response) => {
 };
 
 export const deleteAsset = async (req: Request, res: Response) => {
-  await assetsService.deleteAsset(req.params.id);
-  res.json({ success: true, message: "Asset deleted successfully" });
+  const result = await assetsService.deleteAsset(req.params.id);
+  res.json({
+    success: true,
+    message: result.disposed
+      ? "Asset has assignment history — marked as disposed instead of deleted"
+      : "Asset deleted successfully",
+  });
 };
 
 export const listCategories = async (req: Request, res: Response) => {
@@ -77,4 +83,55 @@ export const updateMaintenance = async (req: Request, res: Response) => {
 export const deleteMaintenance = async (req: Request, res: Response) => {
   await assetsService.deleteAssetMaintenance(req.params.id);
   res.json({ success: true, message: "Maintenance record deleted successfully" });
+};
+
+// ── Assignment / return / flags / history (MOD-04) ──────────────────────────
+
+export const assignAsset = async (req: Request, res: Response) => {
+  const asset = await assetsService.assignAsset(req.params.id, {
+    employeeId: req.body.employeeId,
+    notes: req.body.notes,
+    assignedBy: Number(req.user!.id),
+  });
+  res.json({ success: true, data: asset });
+};
+
+export const returnAsset = async (req: Request, res: Response) => {
+  const asset = await assetsService.returnAsset(req.params.id, {
+    condition: req.body.condition,
+    notes: req.body.notes,
+    hasIssue: req.body.hasIssue,
+  });
+  res.json({ success: true, data: asset });
+};
+
+export const flagAsset = async (req: Request, res: Response) => {
+  const asset = await assetsService.flagAsset(req.params.id, req.body.note);
+  res.json({ success: true, data: asset });
+};
+
+export const unflagAsset = async (req: Request, res: Response) => {
+  const asset = await assetsService.unflagAsset(req.params.id);
+  res.json({ success: true, data: asset });
+};
+
+export const getAssetHistory = async (req: Request, res: Response) => {
+  const history = await assetsService.getAssetHistory(req.params.id);
+  res.json({ success: true, data: history });
+};
+
+// ── Self-service + LCM-02 gate ──────────────────────────────────────────────
+
+/** GET /hr/me/assets — authenticate-only, same self-service pattern as /hr/employees/me. */
+export const getMyAssets = async (req: Request, res: Response) => {
+  const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
+  const assets = await assetsService.listMyAssets(employeeId);
+  res.json({ success: true, data: assets });
+};
+
+/** GET /hr/employees/:id/assets?open=true — the LCM-02 offboarding gate. */
+export const getEmployeeAssets = async (req: Request, res: Response) => {
+  const openOnly = req.query.open === "true";
+  const rows = await assetsService.getAssetsForEmployee(req.params.id, openOnly);
+  res.json({ success: true, data: rows });
 };

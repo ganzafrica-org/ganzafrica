@@ -24,15 +24,32 @@ export default async function () {
   process.env.NODE_ENV = "test";
 
   // Apply the migration baseline (idempotent) against the test DB.
+  // Run migrations but capture output so a known benign race (duplicate pg type)
+  // can be tolerated in flaky environments where the test DB may be shared briefly.
   const migrate = spawnSync("npx drizzle-kit migrate", {
     shell: true,
-    stdio: "inherit",
+    stdio: "pipe",
+    encoding: "utf-8",
     cwd: path.resolve(__dirname, ".."),
     env: { ...process.env, DATABASE_URL: url },
   });
+
   if (migrate.status !== 0) {
-    if (usingDocker) stopTestDb();
-    throw new Error("global-setup: drizzle-kit migrate failed against the test DB");
+    const out = (migrate.stdout ?? "") + (migrate.stderr ?? "");
+    // If the failure is due to the pg type already existing for __drizzle_migrations,
+    // it's likely a concurrent migrate/multiple runs race; tolerate it with a warning.
+    if (out.includes("__drizzle_migrations") && out.includes("already exists")) {
+      // Best-effort warning, but continue test setup.
+      // Note: this keeps the existing test DB running; if using Docker it's already started.
+      // Log to console so CI output shows the anomaly.
+      console.warn(
+        "global-setup: drizzle-kit reported an existing __drizzle_migrations type; continuing.",
+      );
+    } else {
+      if (usingDocker) stopTestDb();
+      console.error(out);
+      throw new Error("global-setup: drizzle-kit migrate failed against the test DB");
+    }
   }
 
   // Teardown

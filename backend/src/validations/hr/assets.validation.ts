@@ -55,10 +55,49 @@ export const updateAssetSchema = z.object({
       )
       .optional(),
     purchasePrice: z.string().optional().nullable(),
-    assignedToId: z.string().uuid("Invalid assignedToId").optional().nullable(),
     hasIssue: z.enum(["YES", "NO"]).optional(),
     isFlagged: z.boolean().optional(),
-    status: z.enum(["AVAILABLE", "ASSIGNED", "UNDER_MAINTENANCE", "DISPOSED"]).optional(),
+  }),
+});
+
+export const assignAssetSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid asset id"),
+  }),
+  body: z.object({
+    employeeId: z.string().uuid("Invalid employee id"),
+    notes: z.string().optional(),
+  }),
+});
+
+export const returnAssetSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid asset id"),
+  }),
+  body: z.object({
+    condition: z.string().min(1, "Condition is required"),
+    notes: z.string().optional(),
+    hasIssue: z.boolean().optional(),
+  }),
+});
+
+export const flagAssetSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid asset id"),
+  }),
+  body: z.object({
+    note: z.string().optional(),
+  }),
+});
+
+// Used on GET /hr/employees/:id/assets — lives here since it's asset-domain logic even
+// though the route is mounted under employee.routes.ts.
+export const employeeAssetsSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid employee id"),
+  }),
+  query: z.object({
+    open: z.enum(["true", "false"]).optional(),
   }),
 });
 
@@ -124,6 +163,7 @@ export const updateMaintenanceSchema = z.object({
     rejectionReason: z.string().optional(),
     price: z.string().optional().nullable(),
     maintenanceDate: z.string().datetime().optional(),
+    completedAt: z.string().datetime().optional(),
   }),
 });
 

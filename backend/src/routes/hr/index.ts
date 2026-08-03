@@ -1,7 +1,9 @@
 ﻿import { Router } from "express";
+import { authenticate } from "@/middlewares/auth.middleware";
 import employeeRoutes from "./employee.routes";
 import contractRoutes from "./contract.routes";
 import assetsRoutes from "./assets.routes";
+// import meRoutes from "./me.routes";
 import leaveRoutes from "./leave.routes";
 import documentRoutes from "./document.routes";
 import helpdeskRoutes from "./helpdesk.routes";
@@ -15,7 +17,11 @@ const router = Router();
 
 router.use("/employees", employeeRoutes);
 router.use("/employees/:employeeId/contracts", contractRoutes);
+// Self-service: an authenticated employee reads their own assigned assets at /hr/me/assets
+import * as assetsController from "@/controllers/hr/assets.controller";
+router.get("/me/assets", authenticate, assetsController.getMyAssets);
 router.use("/assets", assetsRoutes);
+// router.use("/me", meRoutes);
 router.use("/leaves", leaveRoutes);
 router.use("/documents", documentRoutes);
 router.use("/helpdesk", helpdeskRoutes);
