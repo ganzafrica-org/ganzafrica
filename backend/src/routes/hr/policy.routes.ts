@@ -23,11 +23,29 @@ router.get(
   validate(policyValidation.policyIdParamSchema),
   policyController.downloadPolicy,
 );
+router.get(
+  "/:id/acknowledgements",
+  read,
+  validate(policyValidation.policyIdParamSchema),
+  policyController.getAcknowledgementReport,
+);
 router.post(
   "/",
   manage,
   validate(policyValidation.createPolicySchema),
   policyController.createPolicy,
+);
+router.post(
+  "/:id/publish",
+  manage,
+  validate(policyValidation.policyIdParamSchema),
+  policyController.publishPolicy,
+);
+router.post(
+  "/:id/acknowledge",
+  read,
+  validate(policyValidation.policyIdParamSchema),
+  policyController.acknowledgePolicy,
 );
 router.patch(
   "/:id",

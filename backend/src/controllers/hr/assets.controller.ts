@@ -129,6 +129,13 @@ export const getMyAssets = async (req: Request, res: Response) => {
   res.json({ success: true, data: assets });
 };
 
+/** POST /hr/me/assets/:id/report-issue — employee reports an issue on their own asset. */
+export const reportAssetIssue = async (req: Request, res: Response) => {
+  const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
+  const asset = await assetsService.reportAssetIssue(req.params.id, employeeId, req.body.note);
+  res.json({ success: true, data: asset });
+};
+
 /** GET /hr/employees/:id/assets?open=true — the LCM-02 offboarding gate. */
 export const getEmployeeAssets = async (req: Request, res: Response) => {
   const openOnly = req.query.open === "true";

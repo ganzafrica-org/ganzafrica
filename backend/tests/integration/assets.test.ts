@@ -445,4 +445,38 @@ describe("MOD-04 assets", () => {
       expect(res.status).toBe(401);
     });
   });
+
+  // ── Self-service report issue — POST /hr/me/assets/:id/report-issue. Added per GitHub
+  // issue #208 §5 ("Report issue sets has_issue") and auth-and-rbac.md §3 ("assets: read:
+  // employee (own assigned)"); same authenticate-only + service-layer-ownership pattern as
+  // GET /hr/me/assets above, not requirePermission("assets:*") — confirmed by the
+  // "no assets:* permission granted" case here mirroring the one above.
+  describe("self-service report issue (POST /hr/me/assets/:id/report-issue)", () => {
+    it("lets an employee flag has_issue on their own currently-assigned asset, with no assets:* permission granted", async () => {
+      const { agent, employee } = await loginAsEmployee();
+      const asset = await makeAsset({ status: "ASSIGNED", assignedToEmployeeId: employee.id });
+      await makeAssetAssignment({ assetId: asset.id, employeeId: employee.id });
+
+      const res = await agent
+        .post(`${API}/me/assets/${asset.id}/report-issue`)
+        .send({ note: "Screen is cracked" });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.hasIssue).toBe("YES");
+    });
+
+    it("403s an employee reporting an issue on an asset not currently assigned to them", async () => {
+      const { agent } = await loginAsEmployee();
+      const other = await makeAsset({ status: "AVAILABLE" });
+
+      const res = await agent.post(`${API}/me/assets/${other.id}/report-issue`).send({});
+      expect(res.status).toBe(403);
+    });
+
+    it("requires authentication", async () => {
+      const asset = await makeAsset({ status: "AVAILABLE" });
+      const res = await supertest(app).post(`${API}/me/assets/${asset.id}/report-issue`).send({});
+      expect(res.status).toBe(401);
+    });
+  });
 });

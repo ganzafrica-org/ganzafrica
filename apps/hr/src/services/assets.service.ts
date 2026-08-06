@@ -10,6 +10,11 @@ import type {
   AssetMaintenance,
   CreateMaintenanceRequest,
   UpdateMaintenanceRequest,
+  AssignAssetRequest,
+  ReturnAssetRequest,
+  FlagAssetRequest,
+  AssetHistory,
+  EmployeeAssetRow,
 } from "@/types/api";
 
 const BASE = "/hr/assets";
@@ -98,6 +103,62 @@ export const assetsService = {
 
   async deleteAssetImage(assetId: string, imageId: string): Promise<void> {
     await httpClient.delete(`${BASE}/${assetId}/images/${imageId}`);
+  },
+
+  // ── Assignment / return / flags / history (MOD-04) ──────────────────────────
+
+  async assignAsset(id: string, payload: AssignAssetRequest): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `${BASE}/${id}/assign`,
+      payload,
+    );
+    return result.data.data;
+  },
+
+  async returnAsset(id: string, payload: ReturnAssetRequest): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `${BASE}/${id}/return`,
+      payload,
+    );
+    return result.data.data;
+  },
+
+  async flagAsset(id: string, payload: FlagAssetRequest = {}): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `${BASE}/${id}/flag`,
+      payload,
+    );
+    return result.data.data;
+  },
+
+  async unflagAsset(id: string): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `${BASE}/${id}/unflag`,
+      {},
+    );
+    return result.data.data;
+  },
+
+  async getAssetHistory(id: string): Promise<AssetHistory> {
+    const result = await httpClient.get<{ success: boolean; data: AssetHistory }>(
+      `${BASE}/${id}/history`,
+    );
+    return result.data.data;
+  },
+
+  // ── Self-service + LCM-02 gate ──────────────────────────────────────────────
+
+  async getMyAssets(): Promise<Asset[]> {
+    const result = await httpClient.get<{ success: boolean; data: Asset[] }>("/hr/me/assets");
+    return result.data.data;
+  },
+
+  async getEmployeeAssets(employeeId: string, open?: boolean): Promise<EmployeeAssetRow[]> {
+    const result = await httpClient.get<{ success: boolean; data: EmployeeAssetRow[] }>(
+      `/hr/employees/${employeeId}/assets`,
+      { params: open !== undefined ? { open: String(open) } : undefined },
+    );
+    return result.data.data;
   },
 
   // ── Categories ────────────────────────────────────────────────────────────

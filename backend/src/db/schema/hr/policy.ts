@@ -1,4 +1,4 @@
-﻿import { boolean, integer, pgTable, text, uuid } from "drizzle-orm/pg-core";
+﻿import { boolean, integer, pgTable, text, timestamp, uuid, uniqueIndex } from "drizzle-orm/pg-core";
 import { timestampFields } from "../common";
 import { policyCategoryEnum, policyStatusEnum } from "./hr.enums";
 import { employees } from "./employees";
@@ -21,5 +21,29 @@ export const hr_policies = pgTable("hr_policies", {
   ...timestampFields,
 });
 
+export const hr_policy_acknowledgements = pgTable(
+  "hr_policy_acknowledgements",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    policy_id: uuid("policy_id")
+      .notNull()
+      .references(() => hr_policies.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    employee_id: uuid("employee_id")
+      .notNull()
+      .references(() => employees.id, { onDelete: "cascade" }),
+    acknowledged_at: timestamp("acknowledged_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqueAcknowledgement: uniqueIndex("hr_policy_acknowledgements_unique_idx").on(
+      t.policy_id,
+      t.version,
+      t.employee_id,
+    ),
+  }),
+);
+
 export type Policy = typeof hr_policies.$inferSelect;
 export type NewPolicy = typeof hr_policies.$inferInsert;
+export type PolicyAcknowledgement = typeof hr_policy_acknowledgements.$inferSelect;
+export type NewPolicyAcknowledgement = typeof hr_policy_acknowledgements.$inferInsert;

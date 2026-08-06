@@ -90,6 +90,11 @@ export const flagAssetSchema = z.object({
   }),
 });
 
+// Same shape as flagAssetSchema (id param + optional note) but kept as its own named export
+// for POST /hr/me/assets/:id/report-issue — an employee self-service action, not the
+// hr/admin-only flag endpoint above, even though the payload happens to match.
+export const reportAssetIssueSchema = flagAssetSchema;
+
 // Used on GET /hr/employees/:id/assets — lives here since it's asset-domain logic even
 // though the route is mounted under employee.routes.ts.
 export const employeeAssetsSchema = z.object({

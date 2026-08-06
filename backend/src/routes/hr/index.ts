@@ -17,9 +17,22 @@ const router = Router();
 
 router.use("/employees", employeeRoutes);
 router.use("/employees/:employeeId/contracts", contractRoutes);
-// Self-service: an authenticated employee reads their own assigned assets at /hr/me/assets
+// Self-service: an authenticated employee reads/acts on their own assigned assets at
+// /hr/me/assets — authenticate-only, same self-service pattern as /hr/employees/me. No
+// assets:* permission grant is required (confirmed by
+// tests/integration/assets.test.ts > permissions > "...with no assets:* permission granted");
+// ownership/row-scoping is enforced in the service layer (getEmployeeForUser + the employeeId
+// match in assetsService.reportAssetIssue), not via requirePermission.
 import * as assetsController from "@/controllers/hr/assets.controller";
+import * as assetsValidation from "@/validations/hr/assets.validation";
+import { validate } from "@/middlewares";
 router.get("/me/assets", authenticate, assetsController.getMyAssets);
+router.post(
+  "/me/assets/:id/report-issue",
+  authenticate,
+  validate(assetsValidation.reportAssetIssueSchema),
+  assetsController.reportAssetIssue,
+);
 router.use("/assets", assetsRoutes);
 // router.use("/me", meRoutes);
 router.use("/leaves", leaveRoutes);

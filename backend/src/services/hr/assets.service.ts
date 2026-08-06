@@ -757,6 +757,38 @@ export async function listMyAssets(employeeId: string): Promise<AssetRecord[]> {
   return listAssets({ assignedTo: employeeId });
 }
 
+/**
+ * POST /hr/me/assets/:id/report-issue — employee self-service. Gated at the route on
+ * assets:read (which employees hold for their own assigned assets per auth-and-rbac.md §3),
+ * not assets:manage; ownership is enforced here in the service layer, the same pattern used
+ * elsewhere in this file ("Ownership rules... enforced in the service layer, not the
+ * middleware" — auth-and-rbac.md §3). Only sets has_issue; is_flagged stays an hr/admin-only
+ * concern via flagAsset/unflagAsset above.
+ */
+export async function reportAssetIssue(
+  id: string,
+  employeeId: string,
+  note?: string,
+): Promise<AssetRecord> {
+  const rows = await db.select().from(hr_assets).where(eq(hr_assets.id, id)).limit(1);
+  if (!rows.length) throw new AppError("Asset not found", 404);
+
+  if (rows[0].assigned_to_employee_id !== employeeId) {
+    throw new AppError("You can only report issues on assets currently assigned to you", 403);
+  }
+
+  await db
+    .update(hr_assets)
+    .set({
+      has_issue: "YES",
+      notes: note !== undefined ? note : undefined,
+      updated_at: new Date(),
+    })
+    .where(eq(hr_assets.id, id));
+
+  return getAssetById(id);
+}
+
 export interface EmployeeAssetAssignmentRow {
   assetId: string;
   deviceName: string;

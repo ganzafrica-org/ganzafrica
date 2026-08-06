@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -44,6 +45,7 @@ export function MaintenanceFormSheet({
   const assets = data ?? [];
 
   const [submitting, setSubmitting] = useState(false);
+  const [closeEntry, setCloseEntry] = useState(false);
 
   const [formData, setFormData] = useState({
     assetId: maintenance?.assetId || "",
@@ -81,7 +83,10 @@ export function MaintenanceFormSheet({
         rejectionReason: "",
       });
     }
+    setCloseEntry(false);
   }, [maintenance, open]);
+
+  const canCloseEntry = isEdit && maintenance?.status === "APPROVED" && !maintenance?.completedAt;
 
   const handleSubmit = async () => {
     if (!formData.assetId || !formData.title || !user?.id) {
@@ -96,6 +101,7 @@ export function MaintenanceFormSheet({
         const payload: UpdateMaintenanceRequest = {
           ...formData,
           price: formData.price || undefined,
+          completedAt: closeEntry ? new Date().toISOString() : undefined,
         };
         await assetsService.updateMaintenance(maintenance.id, payload);
         toast.success("Maintenance record updated");
@@ -246,6 +252,20 @@ export function MaintenanceFormSheet({
                 setFormData((prev) => ({ ...prev, rejectionReason: e.target.value }))
               }
             />
+          </div>
+        )}
+
+        {canCloseEntry && (
+          <div className="flex items-center gap-2 p-3 rounded-lg border border-emerald-200 bg-emerald-50">
+            <Checkbox
+              id="closeEntry"
+              checked={closeEntry}
+              onCheckedChange={(v) => setCloseEntry(v === true)}
+            />
+            <Label htmlFor="closeEntry" className="text-sm text-emerald-900">
+              Close this maintenance entry (returns the asset to Available if this was the last open
+              entry)
+            </Label>
           </div>
         )}
       </div>

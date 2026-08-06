@@ -73,7 +73,12 @@ import { AssetSheet } from "@/components/sections/sheets/asset-sheet";
 import { MaintenanceFormSheet } from "@/components/sections/sheets/maintenance-form-sheet";
 import { DataTable, ColumnDef } from "@/components/sections/table-component";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
-import { useAssets, useAssetCategories } from "@/hooks/useAssets";
+import { AssignAssetDialog } from "@/components/assets/assign-asset-dialog";
+import { ReturnAssetDialog } from "@/components/assets/return-asset-dialog";
+import { CreateAssetDialog } from "@/components/assets/create-asset-dialog";
+import { CategoryAdminSheet } from "@/components/assets/category-admin-sheet";
+import { useAssets, useAssetCategories, useFlagAsset } from "@/hooks/useAssets";
+import { useEmployees } from "@/hooks/useEmployees";
 import { assetsService } from "@/services/assets.service";
 import type { Asset, AssetStats, AssetMaintenance } from "@/types/api";
 import { toast } from "sonner";
@@ -113,8 +118,10 @@ export default function AssetsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-  const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [showAddSheet, setShowAddSheet] = useState(false);
+  const [showCategoryAdmin, setShowCategoryAdmin] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<Asset | null>(null);
+  const [returnTarget, setReturnTarget] = useState<Asset | null>(null);
   const [editMaintenance, setEditMaintenance] = useState<AssetMaintenance | null>(null);
   const [showAddMaintenance, setShowAddMaintenance] = useState(false);
   const [maintenanceRecords, setMaintenanceRecords] = useState<AssetMaintenance[]>([]);
@@ -122,8 +129,31 @@ export default function AssetsPage() {
   const [scrolled, setScrolled] = useState(false);
   const [stats, setStats] = useState<AssetStats | null>(null);
 
-  const { data: assets, isLoading: loading, refetch } = useAssets();
+  const { data: assets, isLoading: loading, isError, refetch } = useAssets();
   const { categories } = useAssetCategories();
+  const { data: employeesData } = useEmployees({ limit: 200 });
+  const employees = employeesData?.data ?? [];
+  const flagAsset = useFlagAsset();
+
+  // Dialog (z-[150]) renders above ReusableSheet (z-[100]/z-[101]) — see components/ui/dialog.tsx
+  // — so these can open on top of an already-open asset detail sheet without closing it first.
+  const handleRequestAssign = (asset: Asset) => {
+    setAssignTarget(asset);
+  };
+
+  const handleRequestReturn = (asset: Asset) => {
+    setReturnTarget(asset);
+  };
+
+  const handleReportIssue = (asset: Asset) => {
+    flagAsset.mutate(
+      { id: asset.id },
+      {
+        onSuccess: () => toast.success("Asset flagged"),
+        onError: () => toast.error("Failed to flag asset"),
+      },
+    );
+  };
 
   useEffect(() => {
     const mainEl = document.querySelector("main.overflow-auto") as HTMLElement | null;
@@ -218,8 +248,12 @@ export default function AssetsPage() {
       key: "assignedToId", // ← was assigned_to_id
       header: "Assigned To",
       sortable: true,
-      render: (assignedToId) =>
-        assignedToId ? (
+      render: (assignedToId) => {
+        if (!assignedToId) {
+          return <span className="text-muted-foreground italic text-xs">Unassigned</span>;
+        }
+        const emp = employees.find((e) => e.id === assignedToId);
+        return (
           <div className="flex items-center space-x-2">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-green-100 text-green-600 text-xs uppercase">
@@ -228,13 +262,12 @@ export default function AssetsPage() {
             </Avatar>
             <div>
               <div className="text-sm font-medium truncate max-w-[120px]">
-                {assignedToId as string}
+                {emp ? `${emp.firstName} ${emp.lastName}` : (assignedToId as string)}
               </div>
             </div>
           </div>
-        ) : (
-          <span className="text-muted-foreground italic text-xs">Unassigned</span>
-        ),
+        );
+      },
     },
     {
       key: "status",
@@ -280,16 +313,20 @@ export default function AssetsPage() {
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setEditAsset(asset)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Asset
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              Assign/Unassign
-            </DropdownMenuItem>
+            {asset.status === "AVAILABLE" && (
+              <DropdownMenuItem onClick={() => handleRequestAssign(asset)}>
+                <User className="mr-2 h-4 w-4" />
+                Assign
+              </DropdownMenuItem>
+            )}
+            {asset.status === "ASSIGNED" && (
+              <DropdownMenuItem onClick={() => handleRequestReturn(asset)}>
+                <User className="mr-2 h-4 w-4" />
+                Return
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-red-600" onClick={() => handleReportIssue(asset)}>
               <AlertTriangle className="mr-2 h-4 w-4" />
               Report Issue
             </DropdownMenuItem>
@@ -603,7 +640,15 @@ export default function AssetsPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="ml-auto">
+                    <div className="ml-auto flex gap-2">
+                      <Button
+                        onClick={() => setShowCategoryAdmin(true)}
+                        variant="outline"
+                        className="border-slate-200 text-slate-600"
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        Categories
+                      </Button>
                       <Button
                         onClick={() => setShowAddSheet(true)}
                         variant="outline"
@@ -621,6 +666,14 @@ export default function AssetsPage() {
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              </div>
+            ) : isError ? (
+              <div className="flex flex-col items-center justify-center h-64 gap-3 text-red-500">
+                <AlertTriangle className="h-8 w-8" />
+                <p>Failed to load assets.</p>
+                <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  Retry
+                </Button>
               </div>
             ) : (
               <DataTable
@@ -800,8 +853,26 @@ export default function AssetsPage() {
             </Button>
           }
         >
-          <AssetSheet assetId={selectedAssetId} />
+          <AssetSheet
+            assetId={selectedAssetId}
+            onAssign={handleRequestAssign}
+            onReturn={handleRequestReturn}
+          />
         </ReusableSheet>
+
+        <CreateAssetDialog open={showAddSheet} onOpenChange={setShowAddSheet} />
+
+        <AssignAssetDialog
+          asset={assignTarget}
+          onOpenChange={(open) => !open && setAssignTarget(null)}
+        />
+
+        <ReturnAssetDialog
+          asset={returnTarget}
+          onOpenChange={(open) => !open && setReturnTarget(null)}
+        />
+
+        <CategoryAdminSheet open={showCategoryAdmin} onOpenChange={setShowCategoryAdmin} />
       </div>
     </div>
   );

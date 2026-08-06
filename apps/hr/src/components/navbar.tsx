@@ -116,6 +116,7 @@ export function Navbar() {
         { id: "time-offs", label: "Time Offs", href: "/leave" },
         { id: "documents", label: "Documents", href: "/documents" },
         { id: "signing", label: "Sign", href: "/signing" },
+        { id: "my-assets", label: "My Assets", href: "/asset/me" },
         { id: "help-desk", label: "Help Desk", href: "/help-desk" },
       ];
     }

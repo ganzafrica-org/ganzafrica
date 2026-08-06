@@ -9,6 +9,9 @@ import type {
   UpdateAssetRequest,
   CreateCategoryRequest,
   UpdateCategoryRequest,
+  AssignAssetRequest,
+  ReturnAssetRequest,
+  FlagAssetRequest,
 } from "@/types/api";
 
 // ── Assets ────────────────────────────────────────────────────────────────────
@@ -83,6 +86,76 @@ export function useDeleteAssetImage() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["asset", variables.assetId] });
     },
+  });
+}
+
+// ── Assignment / return / flags / history (MOD-04) ──────────────────────────
+
+function invalidateAfterAssetChange(queryClient: ReturnType<typeof useQueryClient>, id: string) {
+  queryClient.invalidateQueries({ queryKey: ["assets"] });
+  queryClient.invalidateQueries({ queryKey: ["asset", id] });
+  queryClient.invalidateQueries({ queryKey: ["assetHistory", id] });
+  queryClient.invalidateQueries({ queryKey: ["myAssets"] });
+  queryClient.invalidateQueries({ queryKey: ["employeeAssets"] });
+}
+
+export function useAssignAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: AssignAssetRequest }) =>
+      assetsService.assignAsset(id, payload),
+    onSuccess: (_, variables) => invalidateAfterAssetChange(queryClient, variables.id),
+  });
+}
+
+export function useReturnAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ReturnAssetRequest }) =>
+      assetsService.returnAsset(id, payload),
+    onSuccess: (_, variables) => invalidateAfterAssetChange(queryClient, variables.id),
+  });
+}
+
+export function useFlagAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload?: FlagAssetRequest }) =>
+      assetsService.flagAsset(id, payload),
+    onSuccess: (_, variables) => invalidateAfterAssetChange(queryClient, variables.id),
+  });
+}
+
+export function useUnflagAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => assetsService.unflagAsset(id),
+    onSuccess: (_, id) => invalidateAfterAssetChange(queryClient, id),
+  });
+}
+
+export function useAssetHistory(id: string | null) {
+  return useQuery({
+    queryKey: ["assetHistory", id],
+    queryFn: () => assetsService.getAssetHistory(id!),
+    enabled: !!id,
+  });
+}
+
+// ── Self-service + LCM-02 gate ──────────────────────────────────────────────
+
+export function useMyAssets() {
+  return useQuery({
+    queryKey: ["myAssets"],
+    queryFn: () => assetsService.getMyAssets(),
+  });
+}
+
+export function useEmployeeAssets(employeeId: string | null, open?: boolean) {
+  return useQuery({
+    queryKey: ["employeeAssets", employeeId, open],
+    queryFn: () => assetsService.getEmployeeAssets(employeeId!, open),
+    enabled: !!employeeId,
   });
 }
 

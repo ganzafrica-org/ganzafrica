@@ -1,7 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useAsset, useUpdateAsset, useAssetCategories } from "@/hooks/useAssets";
+import {
+  useAsset,
+  useUpdateAsset,
+  useAssetCategories,
+  useFlagAsset,
+  useUnflagAsset,
+} from "@/hooks/useAssets";
 import { useEmployees } from "@/hooks/useEmployees";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,13 +33,20 @@ import {
   Loader2,
   Upload,
   Trash2,
+  UserPlus,
+  Undo2,
+  Flag,
+  History,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import type { AssetStatus, AssetIssue, AssetImage } from "@/types/api";
+import { AssetHistoryTimeline } from "@/components/assets/asset-history-timeline";
+import type { AssetIssue, AssetImage, Asset } from "@/types/api";
 
 interface AssetSheetProps {
   assetId: string | null;
+  onAssign?: (asset: Asset) => void;
+  onReturn?: (asset: Asset) => void;
 }
 
 const formatCurrency = (value: string | null) => {
@@ -66,15 +79,18 @@ const formatDate = (dateStr: string | null) => {
   });
 };
 
-export const AssetSheet = ({ assetId }: AssetSheetProps) => {
+export const AssetSheet = ({ assetId, onAssign, onReturn }: AssetSheetProps) => {
   const { data: asset, isLoading: loading, error } = useAsset(assetId);
   const { mutateAsync: updateAsset, isPending: isSaving } = useUpdateAsset();
   const { categories } = useAssetCategories();
   const { data: employeesData } = useEmployees({ limit: 200 });
+  const flagAsset = useFlagAsset();
+  const unflagAsset = useUnflagAsset();
 
   const employees = employeesData?.data ?? [];
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [newImages, setNewImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,12 +99,9 @@ export const AssetSheet = ({ assetId }: AssetSheetProps) => {
     deviceName: "",
     serialNumber: "",
     purchasePrice: "",
-    status: "" as AssetStatus,
     hasIssue: "" as AssetIssue,
-    isFlagged: false,
     notes: "",
     categoryId: "",
-    assignedToId: "" as string | null,
   });
 
   useEffect(() => {
@@ -97,12 +110,9 @@ export const AssetSheet = ({ assetId }: AssetSheetProps) => {
         deviceName: asset.deviceName ?? "",
         serialNumber: asset.serialNumber ?? "",
         purchasePrice: asset.purchasePrice ?? "",
-        status: asset.status ?? "AVAILABLE",
         hasIssue: asset.hasIssue ?? "NO",
-        isFlagged: asset.isFlagged ?? false,
         notes: asset.notes ?? "",
         categoryId: asset.categoryId ?? "",
-        assignedToId: asset.assignedToId ?? null,
       });
       setNewImages([]);
       setImagePreviews([]);
@@ -133,16 +143,22 @@ export const AssetSheet = ({ assetId }: AssetSheetProps) => {
         deviceName: form.deviceName,
         serialNumber: form.serialNumber,
         purchasePrice: form.purchasePrice || null,
-        status: form.status,
         hasIssue: form.hasIssue,
-        isFlagged: form.isFlagged,
         notes: form.notes || undefined,
         categoryId: form.categoryId || undefined,
-        assignedToId: form.assignedToId || null,
       },
       images: newImages.length > 0 ? newImages : undefined,
     });
     setIsEditing(false);
+  };
+
+  const handleToggleFlag = () => {
+    if (!asset) return;
+    if (asset.isFlagged) {
+      unflagAsset.mutate(asset.id);
+    } else {
+      flagAsset.mutate({ id: asset.id });
+    }
   };
 
   const handleCancel = () => {
@@ -204,15 +220,71 @@ export const AssetSheet = ({ assetId }: AssetSheetProps) => {
             </Button>
           </>
         ) : (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="p-1.5 rounded-md hover:bg-slate-100 transition-colors"
-            title="Edit asset"
-          >
-            <Pencil className="h-4 w-4 text-brand-dark" />
-          </button>
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowHistory((v) => !v)}
+              className="gap-1.5 text-slate-600"
+            >
+              <History className="h-3.5 w-3.5" />
+              History
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleToggleFlag}
+              disabled={flagAsset.isPending || unflagAsset.isPending}
+              className={cn(
+                "gap-1.5",
+                asset.isFlagged ? "text-red-600 border-red-200" : "text-slate-600",
+              )}
+            >
+              <Flag className="h-3.5 w-3.5" />
+              {asset.isFlagged ? "Unflag" : "Flag"}
+            </Button>
+            {asset.status === "AVAILABLE" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onAssign?.(asset)}
+                className="gap-1.5 text-slate-600"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                Assign
+              </Button>
+            )}
+            {asset.status === "ASSIGNED" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onReturn?.(asset)}
+                className="gap-1.5 text-slate-600"
+              >
+                <Undo2 className="h-3.5 w-3.5" />
+                Return
+              </Button>
+            )}
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1.5 rounded-md hover:bg-slate-100 transition-colors"
+              title="Edit asset"
+            >
+              <Pencil className="h-4 w-4 text-brand-dark" />
+            </button>
+          </>
         )}
       </div>
+
+      {!isEditing && showHistory && (
+        <div className="p-4 bg-white rounded-lg border border-slate-200">
+          <h4 className="font-medium text-slate-800 mb-3 flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Asset History
+          </h4>
+          <AssetHistoryTimeline assetId={assetId} />
+        </div>
+      )}
 
       {isEditing ? (
         /* ── Edit Mode ──────────────────────────────────────────── */
@@ -270,24 +342,6 @@ export const AssetSheet = ({ assetId }: AssetSheetProps) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Status */}
-              <div className="space-y-1.5">
-                <Label className="text-xs text-slate-600">Status</Label>
-                <Select
-                  value={form.status}
-                  onValueChange={(v) => setForm((f) => ({ ...f, status: v as AssetStatus }))}
-                >
-                  <SelectTrigger className="h-8 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AVAILABLE">Available</SelectItem>
-                    <SelectItem value="ASSIGNED">Assigned</SelectItem>
-                    <SelectItem value="UNDER_MAINTENANCE">Under Maintenance</SelectItem>
-                    <SelectItem value="DISPOSED">Disposed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               {/* Has Issue */}
               <div className="space-y-1.5">
                 <Label className="text-xs text-slate-600">Has Issue</Label>
@@ -304,46 +358,6 @@ export const AssetSheet = ({ assetId }: AssetSheetProps) => {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            {/* Assign To Employee */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-slate-600">Assigned To</Label>
-              <Select
-                value={form.assignedToId ?? "unassigned"}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, assignedToId: v === "unassigned" ? null : v }))
-                }
-              >
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue placeholder="Select employee" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">
-                    <span className="text-slate-400 italic">Unassigned</span>
-                  </SelectItem>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {emp.firstName} {emp.lastName}
-                      <span className="ml-2 text-xs text-slate-400">{emp.position}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Is Flagged */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isFlagged"
-                checked={form.isFlagged}
-                onChange={(e) => setForm((f) => ({ ...f, isFlagged: e.target.checked }))}
-                className="h-4 w-4 rounded border-slate-300"
-              />
-              <Label htmlFor="isFlagged" className="text-xs text-slate-600">
-                Flag this asset
-              </Label>
             </div>
           </div>
 

@@ -151,12 +151,16 @@ export interface AssetCategory {
   updated_at: string;
 }
 
+// NOTE: unlike the rest of this API, the category endpoints' validation schema on the
+// backend was never converted to camelCase (createCategorySchema/updateCategorySchema
+// require parent_name/spec_schema/sort_order verbatim) — these request types match that,
+// intentionally inconsistent with CreateAssetRequest etc. above.
 export interface CreateCategoryRequest {
   name: string;
-  parentName?: string;
+  parent_name?: string;
   slug: string;
-  specSchema: SpecFieldDefinition[];
-  sortOrder?: number;
+  spec_schema: SpecFieldDefinition[];
+  sort_order?: number;
 }
 
 export interface UpdateCategoryRequest extends Partial<CreateCategoryRequest> {}
@@ -216,7 +220,61 @@ export interface CreateAssetRequest {
   // images are sent as FormData files, not JSON — handled separately
 }
 
-export interface UpdateAssetRequest extends Partial<CreateAssetRequest> {}
+// PATCH /hr/assets/:id no longer accepts status or assignedToId directly — those go
+// exclusively through assign/return/flag/unflag below, enforced server-side by the
+// asset status machine.
+export interface UpdateAssetRequest {
+  deviceName?: string;
+  serialNumber?: string;
+  categoryId?: string;
+  purchasePrice?: string | null;
+  hasIssue?: AssetIssue;
+  isFlagged?: boolean;
+  notes?: string;
+  specs?: { key: string; value: string }[];
+}
+
+export interface AssignAssetRequest {
+  employeeId: string;
+  notes?: string;
+}
+
+export interface ReturnAssetRequest {
+  condition: string;
+  notes?: string;
+  hasIssue?: boolean;
+}
+
+export interface FlagAssetRequest {
+  note?: string;
+}
+
+export interface AssetAssignment {
+  id: string;
+  assetId: string;
+  employeeId: string;
+  assignedBy: number | null;
+  assignedAt: string;
+  returnedAt: string | null;
+  returnCondition: string | null;
+  notes: string | null;
+}
+
+export interface AssetHistory {
+  assignments: AssetAssignment[];
+  maintenance: AssetMaintenance[];
+}
+
+// One row per assignment (not per asset) — GET /hr/employees/:id/assets?open=true, the
+// LCM-02 offboarding gate. Shape is frozen once LCM-02 consumes it.
+export interface EmployeeAssetRow {
+  assetId: string;
+  deviceName: string;
+  serialNumber: string;
+  assignedAt: string;
+  returnedAt: string | null;
+  notes: string | null;
+}
 
 export interface AssetStats {
   total: number;
@@ -273,6 +331,7 @@ export interface AssetMaintenance {
   rejectionReason: string | null;
   price: string | null;
   maintenanceDate: string;
+  completedAt: string | null;
   createdAt: string;
   updatedAt: string;
   asset?: Asset;
@@ -298,6 +357,7 @@ export interface UpdateMaintenanceRequest {
   rejectionReason?: string;
   price?: string;
   maintenanceDate?: string;
+  completedAt?: string;
 }
 
 // --- POLICY ---
