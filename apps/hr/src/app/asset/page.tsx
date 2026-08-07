@@ -35,6 +35,7 @@ import {
   Building,
   Wrench,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -63,23 +64,34 @@ import {
 } from "@/components/ui/chart";
 import { StatsHeader } from "@/components/sections/header";
 import {
-  assetRequests,
-  assetCategoryData,
+  // assetRequests,
   assetConditionData,
   monthlyAssetData,
 } from "@/data/assets-data";
-import { formatCurrency, getCategoryIcon } from "@/lib/helpers/assets-util";
+import {
+  formatCurrency,
+  getCategoryIcon,
+  computeCategoryDistribution,
+} from "@/lib/helpers/assets-util";
 import { AssetSheet } from "@/components/sections/sheets/asset-sheet";
 import { MaintenanceFormSheet } from "@/components/sections/sheets/maintenance-form-sheet";
 import { DataTable, ColumnDef } from "@/components/sections/table-component";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { AssignAssetDialog } from "@/components/assets/assign-asset-dialog";
 import { ReturnAssetDialog } from "@/components/assets/return-asset-dialog";
-import { CreateAssetDialog } from "@/components/assets/create-asset-dialog";
+import { CreateAssetSheet } from "@/components/assets/create-asset-sheet";
 import { CategoryAdminSheet } from "@/components/assets/category-admin-sheet";
-import { useAssets, useAssetCategories, useFlagAsset } from "@/hooks/useAssets";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  useAssets,
+  useAssetCategories,
+  useFlagAsset,
+  useDeleteAsset,
+  useMaintenance,
+  useDeleteMaintenance,
+  useUpdateMaintenance,
+} from "@/hooks/useAssets";
 import { useEmployees } from "@/hooks/useEmployees";
-import { assetsService } from "@/services/assets.service";
 import type { Asset, AssetStats, AssetMaintenance } from "@/types/api";
 import { toast } from "sonner";
 
@@ -124,16 +136,22 @@ export default function AssetsPage() {
   const [returnTarget, setReturnTarget] = useState<Asset | null>(null);
   const [editMaintenance, setEditMaintenance] = useState<AssetMaintenance | null>(null);
   const [showAddMaintenance, setShowAddMaintenance] = useState(false);
-  const [maintenanceRecords, setMaintenanceRecords] = useState<AssetMaintenance[]>([]);
-  const [loadingMaintenance, setLoadingMaintenance] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [stats, setStats] = useState<AssetStats | null>(null);
+  const [deleteAssetTarget, setDeleteAssetTarget] = useState<Asset | null>(null);
+  const [deleteMaintenanceTarget, setDeleteMaintenanceTarget] = useState<AssetMaintenance | null>(
+    null,
+  );
 
   const { data: assets, isLoading: loading, isError, refetch } = useAssets();
   const { categories } = useAssetCategories();
   const { data: employeesData } = useEmployees({ limit: 200 });
   const employees = employeesData?.data ?? [];
   const flagAsset = useFlagAsset();
+  const deleteAsset = useDeleteAsset();
+  const { data: maintenanceData, isLoading: loadingMaintenance } = useMaintenance();
+  const maintenanceRecords = maintenanceData ?? [];
+  const deleteMaintenance = useDeleteMaintenance();
+  const updateMaintenanceStatus = useUpdateMaintenance();
 
   // Dialog (z-[150]) renders above ReusableSheet (z-[100]/z-[101]) — see components/ui/dialog.tsx
   // — so these can open on top of an already-open asset detail sheet without closing it first.
@@ -177,29 +195,45 @@ export default function AssetsPage() {
     };
   }, []);
 
-  // useEffect(() => {
-  //     assetsService.getAssetStats().then(setStats).catch(() => {})
-  // }, [assets])
+  // No dedicated stats endpoint exists on the backend — derive counts from the
+  // already-fetched assets list (same useAssets() query the table uses) instead
+  // of introducing a second round trip.
+  const stats: AssetStats | null = useMemo(() => {
+    if (!Array.isArray(assets)) return null;
+    return {
+      total: assets.length,
+      available: assets.filter((a) => a.status === "AVAILABLE").length,
+      assigned: assets.filter((a) => a.status === "ASSIGNED").length,
+      underMaintenance: assets.filter((a) => a.status === "UNDER_MAINTENANCE").length,
+      disposed: assets.filter((a) => a.status === "DISPOSED").length,
+    };
+  }, [assets]);
 
-  const fetchMaintenance = () => {
-    setLoadingMaintenance(true);
-    assetsService
-      .listMaintenance()
-      .then(setMaintenanceRecords)
-      .catch(() => toast.error("Failed to load maintenance records"))
-      .finally(() => setLoadingMaintenance(false));
+  // Real per-category counts for the analytics tab's pie chart — no dedicated backend
+  // aggregate endpoint exists, so this is derived client-side from the same useAssets()/
+  // useAssetCategories() queries the rest of the page already uses.
+  const categoryDistribution = useMemo(() => {
+    if (!Array.isArray(assets) || !Array.isArray(categories)) return [];
+    return computeCategoryDistribution(assets, categories);
+  }, [assets, categories]);
+
+  const handleDeleteAsset = async () => {
+    if (!deleteAssetTarget) return;
+    try {
+      await deleteAsset.mutateAsync(deleteAssetTarget.id);
+      toast.success("Asset deleted");
+      setDeleteAssetTarget(null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to delete asset");
+    }
   };
 
-  useEffect(() => {
-    fetchMaintenance();
-  }, []);
-
-  const handleDeleteMaintenance = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this record?")) return;
+  const handleDeleteMaintenance = async () => {
+    if (!deleteMaintenanceTarget) return;
     try {
-      await assetsService.deleteMaintenance(id);
+      await deleteMaintenance.mutateAsync(deleteMaintenanceTarget.id);
       toast.success("Maintenance record deleted");
-      fetchMaintenance();
+      setDeleteMaintenanceTarget(null);
     } catch (error) {
       toast.error("Failed to delete record");
     }
@@ -211,9 +245,8 @@ export default function AssetsPage() {
     rejectionReason?: string,
   ) => {
     try {
-      await assetsService.updateMaintenance(id, { status, rejectionReason });
+      await updateMaintenanceStatus.mutateAsync({ id, payload: { status, rejectionReason } });
       toast.success(`Maintenance ${status.toLowerCase()} successfully`);
-      fetchMaintenance();
     } catch (error) {
       toast.error(`Failed to ${status.toLowerCase()} maintenance`);
     }
@@ -232,17 +265,28 @@ export default function AssetsPage() {
       key: "deviceName", // ← was device_name
       header: "Asset",
       sortable: true,
-      render: (_, asset) => (
-        <div className="flex items-center space-x-3">
-          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg shrink-0">
-            {getCategoryIcon(asset.category?.slug || "")}
+      render: (_, asset) => {
+        const thumbnail = asset.images?.find((img) => img.isPrimary) ?? asset.images?.[0] ?? null;
+        return (
+          <div className="flex items-center space-x-3">
+            {thumbnail ? (
+              <img
+                src={thumbnail.url}
+                alt={asset.deviceName}
+                className="w-10 h-10 rounded-lg object-cover shrink-0 border border-slate-200"
+              />
+            ) : (
+              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg shrink-0">
+                {getCategoryIcon(asset.category?.slug || "")}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="font-medium truncate">{asset.deviceName}</div>
+              <div className="text-sm text-muted-foreground truncate">{asset.serialNumber}</div>
+            </div>
           </div>
-          <div className="min-w-0">
-            <div className="font-medium truncate">{asset.deviceName}</div>
-            <div className="text-sm text-muted-foreground truncate">{asset.serialNumber}</div>
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: "assignedToId", // ← was assigned_to_id
@@ -329,6 +373,10 @@ export default function AssetsPage() {
             <DropdownMenuItem className="text-red-600" onClick={() => handleReportIssue(asset)}>
               <AlertTriangle className="mr-2 h-4 w-4" />
               Report Issue
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600" onClick={() => setDeleteAssetTarget(asset)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -532,7 +580,7 @@ export default function AssetsPage() {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-red-600"
-              onClick={() => handleDeleteMaintenance(record.id)}
+              onClick={() => setDeleteMaintenanceTarget(record)}
             >
               <AlertTriangle className="mr-2 h-4 w-4" />
               Delete
@@ -563,7 +611,7 @@ export default function AssetsPage() {
           subtitle="Current condition of all assets"
           scrolled={scrolled}
           stats={headerStats}
-          isLoading={!stats}
+          isLoading={loading}
           ClassName="w-full"
         />
         <Tabs defaultValue="assets" className="w-full flex flex-col">
@@ -575,13 +623,13 @@ export default function AssetsPage() {
               <Package className="h-4 w-4 mr-2" />
               Assets Inventory
             </TabsTrigger>
-            <TabsTrigger
-              value="requests"
-              className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
-            >
-              <User className="h-4 w-4 mr-2" />
-              Asset Requests
-            </TabsTrigger>
+            {/*<TabsTrigger*/}
+            {/*  value="requests"*/}
+            {/*  className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"*/}
+            {/*>*/}
+            {/*  <User className="h-4 w-4 mr-2" />*/}
+            {/*  Asset Requests*/}
+            {/*</TabsTrigger>*/}
             <TabsTrigger
               value="maintenance"
               className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
@@ -685,14 +733,14 @@ export default function AssetsPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="requests" className="space-y-4">
-            <DataTable
-              columns={requestColumns}
-              data={assetRequests}
-              searchable={true}
-              searchPlaceholder="Search requests..."
-            />
-          </TabsContent>
+          {/*<TabsContent value="requests" className="space-y-4">*/}
+          {/*  <DataTable*/}
+          {/*    columns={requestColumns}*/}
+          {/*    data={assetRequests}*/}
+          {/*    searchable={true}*/}
+          {/*    searchPlaceholder="Search requests..."*/}
+          {/*  />*/}
+          {/*</TabsContent>*/}
 
           <TabsContent value="maintenance" className="space-y-4">
             {loadingMaintenance ? (
@@ -756,27 +804,33 @@ export default function AssetsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <ChartContainer config={chartConfig} className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={assetCategoryData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ payload }) => `${payload.category}: ${payload.count}`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="count"
-                        >
-                          {assetCategoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          ))}
-                        </Pie>
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
+                  {categoryDistribution.length === 0 ? (
+                    <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+                      No assets yet.
+                    </div>
+                  ) : (
+                    <ChartContainer config={chartConfig} className="h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={categoryDistribution}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ payload }) => `${payload.category}: ${payload.count}`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="count"
+                          >
+                            {categoryDistribution.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.fill} />
+                            ))}
+                          </Pie>
+                          <ChartTooltip content={<ChartTooltipContent />} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  )}
                 </CardContent>
               </Card>
               <Card className="rounded-lg shadow-sm">
@@ -824,17 +878,12 @@ export default function AssetsPage() {
           </TabsContent>
         </Tabs>
 
-        <MaintenanceFormSheet
-          open={showAddMaintenance}
-          onOpenChange={setShowAddMaintenance}
-          onSuccess={fetchMaintenance}
-        />
+        <MaintenanceFormSheet open={showAddMaintenance} onOpenChange={setShowAddMaintenance} />
 
         <MaintenanceFormSheet
           open={!!editMaintenance}
           onOpenChange={(open) => !open && setEditMaintenance(null)}
           maintenance={editMaintenance}
-          onSuccess={fetchMaintenance}
         />
 
         <ReusableSheet
@@ -860,7 +909,7 @@ export default function AssetsPage() {
           />
         </ReusableSheet>
 
-        <CreateAssetDialog open={showAddSheet} onOpenChange={setShowAddSheet} />
+        <CreateAssetSheet open={showAddSheet} onOpenChange={setShowAddSheet} />
 
         <AssignAssetDialog
           asset={assignTarget}
@@ -873,6 +922,34 @@ export default function AssetsPage() {
         />
 
         <CategoryAdminSheet open={showCategoryAdmin} onOpenChange={setShowCategoryAdmin} />
+
+        <ConfirmDialog
+          open={!!deleteAssetTarget}
+          onOpenChange={(open) => !open && setDeleteAssetTarget(null)}
+          title="Delete Asset"
+          description={
+            deleteAssetTarget
+              ? `Are you sure you want to delete "${deleteAssetTarget.deviceName}"? This action cannot be undone.`
+              : ""
+          }
+          confirmLabel="Delete"
+          onConfirm={handleDeleteAsset}
+          isConfirming={deleteAsset.isPending}
+        />
+
+        <ConfirmDialog
+          open={!!deleteMaintenanceTarget}
+          onOpenChange={(open) => !open && setDeleteMaintenanceTarget(null)}
+          title="Delete Maintenance Record"
+          description={
+            deleteMaintenanceTarget
+              ? `Are you sure you want to delete "${deleteMaintenanceTarget.title}"? This action cannot be undone.`
+              : ""
+          }
+          confirmLabel="Delete"
+          onConfirm={handleDeleteMaintenance}
+          isConfirming={deleteMaintenance.isPending}
+        />
       </div>
     </div>
   );

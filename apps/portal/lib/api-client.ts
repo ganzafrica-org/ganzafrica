@@ -44,7 +44,9 @@ apiClient.interceptors.response.use(
           });
       }
       if (await refreshPromise) return apiClient(originalRequest);
-      if (typeof window !== "undefined") window.location.href = "/login";
+      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   },

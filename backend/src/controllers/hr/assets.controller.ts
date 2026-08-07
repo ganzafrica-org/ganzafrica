@@ -1,6 +1,19 @@
 ﻿import { Request, Response } from "express";
 import * as assetsService from "../../services/hr/assets.service";
 import { getEmployeeForUser } from "../../services/hr/employee-context";
+import { getFileUrl } from "../../middlewares/upload";
+
+// multer-s3 augments each file with `location`/`key` (not part of Express.Multer.File) —
+// same shape task.controller.ts's uploadTaskAttachments reads from req.files.
+function buildImageInputs(files: unknown, markFirstPrimary: boolean) {
+  if (!Array.isArray(files) || files.length === 0) return undefined;
+  return (files as any[]).map((file, index) => ({
+    url: getFileUrl(file.location),
+    storageKey: file.key,
+    isPrimary: markFirstPrimary && index === 0,
+    sortOrder: index,
+  }));
+}
 
 export const listAssets = async (req: Request, res: Response) => {
   const assets = await assetsService.listAssets(req.query);
@@ -13,12 +26,15 @@ export const getAsset = async (req: Request, res: Response) => {
 };
 
 export const createAsset = async (req: Request, res: Response) => {
-  const asset = await assetsService.createAsset(req.body);
+  const images = buildImageInputs(req.files, true);
+  const asset = await assetsService.createAsset({ ...req.body, images });
   res.status(201).json({ success: true, data: asset });
 };
 
 export const updateAsset = async (req: Request, res: Response) => {
-  const asset = await assetsService.updateAsset(req.params.id, req.body);
+  // Appended on update — never auto-marked primary, since the asset may already have one.
+  const images = buildImageInputs(req.files, false);
+  const asset = await assetsService.updateAsset(req.params.id, { ...req.body, images });
   res.json({ success: true, data: asset });
 };
 

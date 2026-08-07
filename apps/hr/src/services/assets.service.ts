@@ -55,9 +55,10 @@ export const assetsService = {
         }
       });
       imageFiles.forEach((file) => form.append("images", file));
-      const result = await httpClient.post<{ success: boolean; data: Asset }>(BASE, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // No explicit Content-Type here — the browser must set it itself so it can append
+      // the multipart boundary; a manually-set "multipart/form-data" header has no
+      // boundary param and the backend's multer/busboy parser can't split the parts.
+      const result = await httpClient.post<{ success: boolean; data: Asset }>(BASE, form);
       return result.data.data;
     }
     const result = await httpClient.post<{ success: boolean; data: Asset }>(BASE, payload);
@@ -81,12 +82,10 @@ export const assetsService = {
         }
       });
       imageFiles.forEach((file) => form.append("images", file));
+      // See createAsset above — no manual Content-Type for the same boundary reason.
       const response = await httpClient.patch<{ success: boolean; data: Asset }>(
         `${BASE}/${id}`,
         form,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
       );
       return response.data.data;
     }
@@ -150,6 +149,15 @@ export const assetsService = {
 
   async getMyAssets(): Promise<Asset[]> {
     const result = await httpClient.get<{ success: boolean; data: Asset[] }>("/hr/me/assets");
+    return result.data.data;
+  },
+
+  /** Employee self-service: report an issue on one of their own currently-assigned assets. */
+  async reportAssetIssue(id: string, note?: string): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `/hr/me/assets/${id}/report-issue`,
+      { note },
+    );
     return result.data.data;
   },
 

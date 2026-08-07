@@ -12,6 +12,8 @@ import type {
   AssignAssetRequest,
   ReturnAssetRequest,
   FlagAssetRequest,
+  CreateMaintenanceRequest,
+  UpdateMaintenanceRequest,
 } from "@/types/api";
 
 // ── Assets ────────────────────────────────────────────────────────────────────
@@ -151,6 +153,15 @@ export function useMyAssets() {
   });
 }
 
+export function useReportAssetIssue() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, note }: { id: string; note?: string }) =>
+      assetsService.reportAssetIssue(id, note),
+    onSuccess: (_, variables) => invalidateAfterAssetChange(queryClient, variables.id),
+  });
+}
+
 export function useEmployeeAssets(employeeId: string | null, open?: boolean) {
   return useQuery({
     queryKey: ["employeeAssets", employeeId, open],
@@ -218,5 +229,51 @@ export function useDeactivateAssetCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["assetCategories"] });
     },
+  });
+}
+
+// ── Maintenance ───────────────────────────────────────────────────────────────
+
+export function useMaintenance(assetId?: string) {
+  return useQuery({
+    queryKey: ["maintenance", assetId],
+    queryFn: () => assetsService.listMaintenance(assetId),
+  });
+}
+
+function invalidateAfterMaintenanceChange(
+  queryClient: ReturnType<typeof useQueryClient>,
+  assetId?: string,
+) {
+  queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+  // A maintenance record can drive the asset's status (see backend MOD-04 §4), so the
+  // asset(s) it touches need to be treated as stale too — same invalidation set as the
+  // assign/return/flag mutations above.
+  queryClient.invalidateQueries({ queryKey: ["assets"] });
+  if (assetId) queryClient.invalidateQueries({ queryKey: ["asset", assetId] });
+}
+
+export function useCreateMaintenance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateMaintenanceRequest) => assetsService.createMaintenance(payload),
+    onSuccess: (_, variables) => invalidateAfterMaintenanceChange(queryClient, variables.assetId),
+  });
+}
+
+export function useUpdateMaintenance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateMaintenanceRequest }) =>
+      assetsService.updateMaintenance(id, payload),
+    onSuccess: () => invalidateAfterMaintenanceChange(queryClient),
+  });
+}
+
+export function useDeleteMaintenance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => assetsService.deleteMaintenance(id),
+    onSuccess: () => invalidateAfterMaintenanceChange(queryClient),
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Progress } from "@workspace/ui/components/progress";
@@ -11,6 +11,13 @@ export default function EntryPage() {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [loadingStep, setLoadingStep] = useState("Initializing application");
+
+  // Read from refs inside the interval so the effect below doesn't need
+  // these values in its dependency array (which would recreate the
+  // interval on every tick / every auth-state change).
+  const progressRef = useRef(0);
+  const authRef = useRef({ isAuthenticated, isLoading });
+  authRef.current = { isAuthenticated, isLoading };
 
   useEffect(() => {
     // Detailed loading steps
@@ -24,16 +31,18 @@ export default function EntryPage() {
     // Progress simulation
     const timer = setInterval(() => {
       const currentStep = loadingSteps.find(
-        (step) => step.progress > progress && step.progress <= 100,
+        (step) => step.progress > progressRef.current && step.progress <= 100,
       );
 
       if (currentStep) {
+        progressRef.current = currentStep.progress;
         setProgress(currentStep.progress);
         setLoadingStep(currentStep.message);
       }
 
       // If we've reached the final step and authentication check is complete
-      if (progress === 100 && !isLoading) {
+      const { isAuthenticated, isLoading } = authRef.current;
+      if (progressRef.current === 100 && !isLoading) {
         clearInterval(timer);
         if (isAuthenticated) {
           router.push("/platform-selection");
@@ -44,7 +53,7 @@ export default function EntryPage() {
     }, 500);
 
     return () => clearInterval(timer);
-  }, [isAuthenticated, isLoading, progress, router]);
+  }, [router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">

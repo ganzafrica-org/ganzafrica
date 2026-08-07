@@ -1,4 +1,4 @@
-﻿import { and, asc, desc, eq, isNull } from "drizzle-orm";
+﻿import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db/client";
 import {
   hr_assets,
@@ -78,6 +78,22 @@ export interface AssetRecord {
   images?: any[];
 }
 
+function mapImage(row: {
+  id: string;
+  url: string;
+  storage_key: string;
+  is_primary: boolean;
+  sort_order: number;
+}) {
+  return {
+    id: row.id,
+    url: row.url,
+    storageKey: row.storage_key,
+    isPrimary: row.is_primary,
+    sortOrder: row.sort_order,
+  };
+}
+
 function mapAsset(row: typeof hr_assets.$inferSelect): AssetRecord {
   return {
     id: row.id,
@@ -124,8 +140,38 @@ export async function listAssets(filters: ListAssetsFilters = {}): Promise<Asset
 
   const whereClause = conditions.length ? and(...conditions) : undefined;
   const rows = await db.select().from(hr_assets).where(whereClause);
+  if (rows.length === 0) return [];
 
-  return rows.map(mapAsset);
+  // One batched query for thumbnails instead of an image lookup per asset row.
+  const imageRows = await db
+    .select({
+      id: hr_asset_images.id,
+      asset_id: hr_asset_images.asset_id,
+      url: hr_asset_images.url,
+      storage_key: hr_asset_images.storage_key,
+      is_primary: hr_asset_images.is_primary,
+      sort_order: hr_asset_images.sort_order,
+    })
+    .from(hr_asset_images)
+    .where(
+      inArray(
+        hr_asset_images.asset_id,
+        rows.map((r) => r.id),
+      ),
+    )
+    .orderBy(asc(hr_asset_images.sort_order));
+
+  const imagesByAsset = new Map<string, typeof imageRows>();
+  for (const image of imageRows) {
+    const list = imagesByAsset.get(image.asset_id) ?? [];
+    list.push(image);
+    imagesByAsset.set(image.asset_id, list);
+  }
+
+  return rows.map((row) => ({
+    ...mapAsset(row),
+    images: (imagesByAsset.get(row.id) ?? []).map(mapImage),
+  }));
 }
 
 export async function getAssetById(id: string): Promise<AssetRecord> {
@@ -167,7 +213,7 @@ export async function getAssetById(id: string): Promise<AssetRecord> {
     ...mapAsset(asset),
     category: categoryRows[0] || null,
     specs: specRows,
-    images: imageRows,
+    images: imageRows.map(mapImage),
   };
 }
 
@@ -333,22 +379,14 @@ export async function deleteAsset(id: string): Promise<{ disposed: boolean }> {
 }
 
 // List all active categories, grouped by parent_name
+// Flat, frontend groups by parent_name itself (useAssetCategories' `grouped`) — matches
+// the AssetCategory[] contract the client's Array.isArray guard expects.
 export async function listAssetCategories() {
-  const rows = await db
+  return db
     .select()
     .from(hr_asset_categories)
     .where(eq(hr_asset_categories.is_active, true))
     .orderBy(hr_asset_categories.parent_name, hr_asset_categories.sort_order);
-
-  // Grouping by parent_name
-  const grouped = rows.reduce((acc: any, category) => {
-    const parent = category.parent_name || "Uncategorized";
-    if (!acc[parent]) acc[parent] = [];
-    acc[parent].push(category);
-    return acc;
-  }, {});
-
-  return grouped;
 }
 
 // Get a single category with its spec_schema
@@ -445,6 +483,23 @@ export interface UpdateMaintenanceInput {
   completedAt?: Date;
 }
 
+function mapMaintenance(row: typeof hr_asset_maintenance.$inferSelect) {
+  return {
+    id: row.id,
+    assetId: row.asset_id,
+    requesterId: row.requester_employee_id,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    rejectionReason: row.rejection_reason,
+    price: row.price,
+    maintenanceDate: row.maintenance_date,
+    completedAt: row.completed_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function listAssetMaintenance(assetId?: string) {
   const conditions = [];
   if (assetId) {
@@ -452,11 +507,13 @@ export async function listAssetMaintenance(assetId?: string) {
   }
   const whereClause = conditions.length ? and(...conditions) : undefined;
 
-  return db
+  const rows = await db
     .select()
     .from(hr_asset_maintenance)
     .where(whereClause)
     .orderBy(asc(hr_asset_maintenance.maintenance_date));
+
+  return rows.map(mapMaintenance);
 }
 
 export async function createAssetMaintenance(input: CreateMaintenanceInput) {
@@ -468,6 +525,12 @@ export async function createAssetMaintenance(input: CreateMaintenanceInput) {
   // Verify requester exists
   await requireEmployee(input.requesterId);
 
+  // Coerce to Date — the validated body hands this in as an ISO string (z.string().datetime()
+  // has no .transform()), but the drizzle timestamp column's driver mapping requires a Date.
+  const maintenanceDateVal = input.maintenanceDate
+    ? new Date(input.maintenanceDate as any)
+    : new Date();
+
   const [inserted] = await db
     .insert(hr_asset_maintenance)
     .values({
@@ -478,7 +541,7 @@ export async function createAssetMaintenance(input: CreateMaintenanceInput) {
       status: input.status ?? "PENDING",
       rejection_reason: input.rejectionReason,
       price: input.price,
-      maintenance_date: input.maintenanceDate ?? new Date(),
+      maintenance_date: maintenanceDateVal,
     })
     .returning();
 
@@ -495,7 +558,7 @@ export async function createAssetMaintenance(input: CreateMaintenanceInput) {
       .where(eq(hr_assets.id, input.assetId));
   }
 
-  return inserted;
+  return mapMaintenance(inserted);
 }
 
 export async function updateAssetMaintenance(id: string, input: UpdateMaintenanceInput) {
@@ -506,8 +569,12 @@ export async function updateAssetMaintenance(id: string, input: UpdateMaintenanc
     .limit(1);
   if (!existing) throw new AppError("Maintenance record not found", 404);
 
-  // Coerce completedAt to Date if provided (tests send ISO strings)
+  // Coerce completedAt/maintenanceDate to Date if provided (tests + the validated body
+  // both hand these in as ISO strings)
   const completedAtVal = input.completedAt ? new Date(input.completedAt as any) : undefined;
+  const maintenanceDateVal = input.maintenanceDate
+    ? new Date(input.maintenanceDate as any)
+    : undefined;
 
   const [updated] = await db
     .update(hr_asset_maintenance)
@@ -517,7 +584,7 @@ export async function updateAssetMaintenance(id: string, input: UpdateMaintenanc
       status: input.status,
       rejection_reason: input.rejectionReason,
       price: input.price,
-      maintenance_date: input.maintenanceDate,
+      maintenance_date: maintenanceDateVal,
       completed_at: completedAtVal,
       updated_at: new Date(),
     })
@@ -560,7 +627,7 @@ export async function updateAssetMaintenance(id: string, input: UpdateMaintenanc
     }
   }
 
-  return updated;
+  return mapMaintenance(updated);
 }
 
 export async function deleteAssetMaintenance(id: string) {

@@ -136,8 +136,12 @@ describe("MOD-05 Documents & Policies ACL & Access Control", () => {
         userRoles: ["viewer", "employee"],
         userEmployeeId: "emp123",
         userDepartment: "Operations",
-        docACL: { roles: ["manager"], employee_ids: ["emp456"], departments: ["Finance"] },
-        expectedAccess: true, // matches role "viewer"? No. Let me reconsider this test.
+        docACL: {
+          roles: ["manager", "viewer"],
+          employee_ids: ["emp456"],
+          departments: ["Finance"],
+        },
+        expectedAccess: true,
       },
       {
         name: "ANY clause match (OR logic): user with matching employee_id can read",
@@ -160,23 +164,22 @@ describe("MOD-05 Documents & Policies ACL & Access Control", () => {
     testMatrix.forEach(
       ({ name, userRoles, userEmployeeId, userDepartment, docACL, expectedAccess }) => {
         it(name, async () => {
-          // Create a mock document with the specified ACL
-          const [doc] = await db
-            .insert(hr_documents)
-            .values({
-              document_name: "Test ACL Document",
-              category: "Policies & Procedures",
-              version: "1.0",
-              description: "Testing ACL",
-              department: "Operations",
-              file_path: "test.pdf",
-              file_size: "1 KB",
-              status: "PUBLISHED",
-              access: docACL as any,
-            })
-            .returning();
+          // canReadDocument is a pure function over a document-shaped object; it doesn't need a
+          // persisted row, which also sidesteps the NOT NULL constraint on `access` (null ACL is
+          // a valid input to the function, just not a valid stored row).
+          const doc = {
+            document_name: "Test ACL Document",
+            category: "Policies & Procedures",
+            version: "1.0",
+            description: "Testing ACL",
+            department: "Operations",
+            file_path: "test.pdf",
+            file_size: "1 KB",
+            status: "PUBLISHED",
+            access: docACL,
+            contract_id: null,
+          } as unknown as typeof hr_documents.$inferSelect;
 
-          // Test canReadDocument function
           const result = docService.canReadDocument(userRoles, userEmployeeId, userDepartment, doc);
           expect(result).toBe(expectedAccess);
         });
@@ -612,14 +615,14 @@ describe("MOD-05 Documents & Policies ACL & Access Control", () => {
       activeEmp1 = await makeEmployeeUser({ role: "employee", firstName: "Alice" });
       activeEmp2 = await makeEmployeeUser({ role: "employee", firstName: "Bob" });
 
-      // Create inactive employee
+      // Create an exited (no longer active) employee
       const inactiveUser = await makeUser({ role: "employee" });
       inactiveEmp = {
         user: inactiveUser,
         employee: await makeEmployee({
           userId: inactiveUser.id,
           firstName: "Charlie",
-          status: "inactive",
+          status: "exited",
         }),
       };
     });
@@ -676,8 +679,9 @@ describe("MOD-05 Documents & Policies ACL & Access Control", () => {
         }),
       );
 
-      // Should have 2 active employees: Alice (acknowledged) and Bob (missing)
-      expect(report.length).toBe(2);
+      // 3 active employees: creator, Alice (acknowledged), and Bob (missing). Charlie is exited
+      // so is excluded by the active-status filter.
+      expect(report.length).toBe(3);
       expect(report.some((r) => r.employee_name.includes("Alice") && r.acknowledged)).toBe(true);
       expect(report.some((r) => r.employee_name.includes("Bob") && !r.acknowledged)).toBe(true);
     });

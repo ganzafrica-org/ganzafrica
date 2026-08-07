@@ -25,10 +25,10 @@ export const validate = (schema: AnyZodObject) => {
         validationPayload.file = req.file;
       }
 
-      // Parse and validate request data with Zod schema
-      await schema.parseAsync(validationPayload);
-
-      // Handle JSON fields in multipart/form-data requests
+      // Handle JSON fields in multipart/form-data requests — must run BEFORE schema.parseAsync
+      // below, since these fields arrive as JSON-stringified strings over multipart and would
+      // otherwise fail shape validation (e.g. "expected array, received string") before ever
+      // reaching this parsing step.
       if (req.is("multipart/form-data") && req.body) {
         const jsonFields = [
           "goals",
@@ -37,6 +37,7 @@ export const validate = (schema: AnyZodObject) => {
           "other_information",
           "members",
           "partners",
+          "specs",
         ];
 
         for (const field of jsonFields) {
@@ -50,6 +51,9 @@ export const validate = (schema: AnyZodObject) => {
           }
         }
       }
+
+      // Parse and validate request data with Zod schema
+      await schema.parseAsync(validationPayload);
 
       return next();
     } catch (error) {

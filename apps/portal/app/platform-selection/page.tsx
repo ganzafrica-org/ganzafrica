@@ -158,9 +158,9 @@ function PlatformSelectionContent(): React.JSX.Element {
       toast.info("Redirecting to HR & Finance...", { duration: 2000 });
       redirectToApp("internal", internalAppUrl, "/payroll/payslips");
     } else if (platform === "hr") {
-      const hrAppUrl = process.env.NEXT_PUBLIC_HR_URL || "http://localhost:3005";
+      const hrAppUrl = process.env.NEXT_PUBLIC_HR_URL || "http://localhost:3006";
       toast.info("Redirecting to HR...", { duration: 2000 });
-      redirectToApp("hr", hrAppUrl, "/dashboard");
+      redirectToApp("hr", hrAppUrl, "/");
     }
   };
 
