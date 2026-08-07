@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
+import { MulterError } from "multer";
 import { env, Logger, constants } from "../config";
 
 const logger = new Logger("ErrorMiddleware");
@@ -45,6 +46,10 @@ export const handleDatabaseError = (err: any) => {
   return new AppError(message, statusCode);
 };
 
+// Handle multer upload errors (oversized file, unexpected field, etc.) as a clear 422 instead
+// of a generic 500 — the size/type problem is the client's to fix, not a server fault.
+export const handleMulterError = (err: MulterError) => new AppError(err.message, 422, err.code);
+
 // Global error handling middleware
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   let error = { ...err };
@@ -59,6 +64,8 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   // Handle specific error types
   if (err instanceof ZodError) {
     error = handleZodError(err);
+  } else if (err instanceof MulterError) {
+    error = handleMulterError(err);
   } else if (err.code && (err.code.startsWith("22") || err.code.startsWith("23"))) {
     error = handleDatabaseError(err);
   }

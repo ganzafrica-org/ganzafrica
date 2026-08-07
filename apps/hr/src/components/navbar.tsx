@@ -43,7 +43,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 
 export function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, roles, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -77,26 +77,19 @@ export function Navbar() {
     };
   }, [pathname]);
 
+  // RBAC role names come back lowercase from /auth/me (roles table: "hr", "admin", "director",
+  // "finance", "program_manager", "staff", "fellow", "analyst", "mentor", "alumni", "employee").
+  // There is no "IT" role in that system — the old three-way IT/HR/EMPLOYEE split was written
+  // against the retired hr_users model, whose /auth/me response never actually had a `role`
+  // field, so every user silently fell through to the Home-only default below.
+  const isHrManager = roles.includes("hr") || roles.includes("admin");
+
   const navItems = useMemo(() => {
     if (!isAuthenticated || !user) {
       return [{ id: "home", label: "Home", href: "/" }];
     }
 
-    const role = user.role;
-
-    if (role === "IT") {
-      return [
-        { id: "home", label: "Home", href: "/" },
-        { id: "employees", label: "Employees", href: "/employees" },
-        { id: "recruitment", label: "Recruitment", href: "/recruitment" },
-        { id: "document", label: "Documents", href: "/documents" },
-        { id: "signing", label: "Sign", href: "/signing" },
-        { id: "assets", label: "Assets", href: "/asset" },
-        { id: "help-desk", label: "Help Desk", href: "/help-desk" },
-      ];
-    }
-
-    if (role === "HR") {
+    if (isHrManager) {
       return [
         { id: "home", label: "Home", href: "/" },
         { id: "employees", label: "Employees", href: "/employees" },
@@ -105,25 +98,22 @@ export function Navbar() {
         { id: "document", label: "Documents", href: "/documents" },
         { id: "signing", label: "Sign", href: "/signing" },
         { id: "assets", label: "Assets", href: "/asset" },
-        { id: "help-desk", label: "Help Desk", href: "/help-desk" },
+        // { id: "help-desk", label: "Help Desk", href: "/help-desk" },
       ];
     }
 
-    if (role === "EMPLOYEE") {
-      return [
-        { id: "home", label: "Home", href: "/" },
-        { id: "my-onboarding", label: "My Onboarding", href: "/onboarding/me" },
-        { id: "time-offs", label: "Time Offs", href: "/leave" },
-        { id: "documents", label: "Documents", href: "/documents" },
-        { id: "signing", label: "Sign", href: "/signing" },
-        { id: "my-assets", label: "My Assets", href: "/asset/me" },
-        { id: "help-desk", label: "Help Desk", href: "/help-desk" },
-      ];
-    }
-
-    // Default or unknown role
-    return [{ id: "home", label: "Home", href: "/" }];
-  }, [isAuthenticated, user]);
+    // Every other authenticated role (employee, staff, fellow, analyst, mentor, alumni,
+    // director, program_manager, finance) gets the self-service nav.
+    return [
+      { id: "home", label: "Home", href: "/" },
+      { id: "my-onboarding", label: "My Onboarding", href: "/onboarding/me" },
+      { id: "time-offs", label: "Time Offs", href: "/leave" },
+      { id: "documents", label: "Documents", href: "/documents" },
+      { id: "signing", label: "Sign", href: "/signing" },
+      { id: "my-assets", label: "My Assets", href: "/asset/me" },
+      // { id: "help-desk", label: "Help Desk", href: "/help-desk" },
+    ];
+  }, [isAuthenticated, user, isHrManager]);
 
   const isActive = (href: string) => {
     if (href === "/" && pathname !== "/") return false;
@@ -144,6 +134,15 @@ export function Navbar() {
 
     return (first + last).toUpperCase();
   };
+
+  // "hr" / "program_manager" -> "Hr" / "Program Manager" for display.
+  const formatRole = (role: string) =>
+    role
+      .split("_")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
+  const roleLabel = roles.length ? roles.map(formatRole).join(", ") : null;
 
   if (!mounted) {
     return (
@@ -327,9 +326,11 @@ export function Navbar() {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    <Badge variant="outline" className="w-fit text-[10px] px-1 py-0 mt-1">
-                      {user.role}
-                    </Badge>
+                    {roleLabel && (
+                      <Badge variant="outline" className="w-fit text-[10px] px-1 py-0 mt-1">
+                        {roleLabel}
+                      </Badge>
+                    )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -515,9 +516,11 @@ export function Navbar() {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    <Badge variant="outline" className="w-fit text-[10px] px-1 py-0 mt-1">
-                      {user.role}
-                    </Badge>
+                    {roleLabel && (
+                      <Badge variant="outline" className="w-fit text-[10px] px-1 py-0 mt-1">
+                        {roleLabel}
+                      </Badge>
+                    )}
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

@@ -1,80 +1,112 @@
 /**
- * One-off script: List pre-existing public-ACL document keys for HR review (MOD-05 §8)
+ * One-off script: list hr_documents rows whose S3 object is still readable via a public URL
+ * (the pre-MOD-05 privacy bug — uploads defaulted to ACL: "public-read") for HR review
+ * (MOD-05 §8).
  *
- * Purpose: Identify documents in S3/DB that were uploaded with public ACL (the security bug)
- * so HR can review and manually migrate them to private storage if needed.
+ * This checks the actual object-storage ACL via S3's GetObjectAcl, NOT the app-level `access`
+ * jsonb column — those are unrelated. A document can have a permissive `access` (many roles can
+ * see it through our app) while still being S3-private (the only rule that matters for "can
+ * someone fetch the raw URL without going through our app at all"), and vice versa.
  *
  * Usage: pnpm --filter ganzafrica-backend tsx scripts/list-public-documents.ts
  *
- * CRITICAL: Do NOT execute against production without explicit HR approval.
- * This script only LISTS keys for review—it does NOT modify anything.
+ * CRITICAL: Do NOT run against production without explicit HR approval. This script only LISTS
+ * keys for review — it does NOT modify anything (no re-ACL, no re-link).
  */
-
 import { config } from "dotenv";
 import path from "path";
 
-// Load .env from backend directory
 config({ path: path.resolve(__dirname, "../.env") });
 
+import { S3Client, GetObjectAclCommand } from "@aws-sdk/client-s3";
 import { db } from "../src/db/client";
 import { hr_documents } from "../src/db/schema/hr/document";
+import env from "../src/config/env";
 import { Logger } from "../src/config";
 
 const logger = new Logger("ListPublicDocuments");
 
-async function main() {
-  logger.info("Scanning for documents with public ACL (security audit)...");
+const ALL_USERS_URI = "http://acs.amazonaws.com/groups/global/AllUsers";
+const AUTHENTICATED_USERS_URI = "http://acs.amazonaws.com/groups/global/AuthenticatedUsers";
 
+const s3Client = new S3Client({
+  endpoint: env.DO_SPACES_ENDPOINT,
+  region: env.DO_SPACES_REGION,
+  credentials: {
+    accessKeyId: env.DO_SPACES_ACCESS_KEY,
+    secretAccessKey: env.DO_SPACES_SECRET_KEY,
+  },
+  forcePathStyle: false,
+});
+
+async function isPubliclyReadable(key: string): Promise<boolean | "unknown"> {
   try {
-    // Query all documents and check their ACL
-    const docs = await db.select().from(hr_documents);
-
-    const publicDocs = docs.filter((doc) => {
-      const acl = doc.access;
-      // Check if ACL is explicitly public (either through old DocumentAccessRule or new DocumentACL)
-      // Public typically means: no ACL restrictions, or explicitly set to allow all
-      return acl === null || (typeof acl === "object" && Object.keys(acl).length === 0);
-    });
-
-    logger.info(`Found ${publicDocs.length} documents with public/no ACL:`);
-    logger.info("---");
-
-    publicDocs.forEach((doc, idx) => {
-      logger.info(`${idx + 1}. Document: ${doc.document_name}`);
-      logger.info(`   ID: ${doc.id}`);
-      logger.info(`   File Path: ${doc.file_path}`);
-      logger.info(`   S3 Key: ${doc.file_path.replace(/^uploads\//, "")}`);
-      logger.info(`   Category: ${doc.category}`);
-      logger.info(`   Department: ${doc.department}`);
-      logger.info(`   Status: ${doc.status}`);
-      logger.info(`   Created: ${doc.created_at}`);
-      logger.info("---");
-    });
-
-    logger.info(`\nSummary:`);
-    logger.info(`Total documents: ${docs.length}`);
-    logger.info(`Documents with public/no ACL: ${publicDocs.length}`);
-
-    if (publicDocs.length > 0) {
-      logger.warn("\nWARNING: These documents may be readable from S3 public URLs.");
-      logger.warn(
-        "Review the list above and coordinate with HR to migrate them to private storage if needed.",
-      );
-      if (publicDocs[0]) {
-        logger.warn(
-          "S3 key format for migration: " + publicDocs[0].file_path.replace(/^uploads\//, ""),
-        );
-      }
-    } else {
-      logger.info("\nGood news! No documents with public ACL found.");
-    }
-  } catch (error) {
-    logger.error("Error reading documents:", error);
-    process.exit(1);
+    const acl = await s3Client.send(
+      new GetObjectAclCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key }),
+    );
+    return (acl.Grants ?? []).some(
+      (g) =>
+        g.Permission &&
+        ["READ", "FULL_CONTROL"].includes(g.Permission) &&
+        (g.Grantee?.URI === ALL_USERS_URI || g.Grantee?.URI === AUTHENTICATED_USERS_URI),
+    );
+  } catch (err) {
+    // Missing object, wrong credentials, etc. — flag for manual follow-up rather than guessing.
+    logger.warn(`Could not read ACL for key "${key}": ${(err as Error).message}`);
+    return "unknown";
   }
 }
 
-main().then(() => {
-  logger.info("Audit complete.");
-  process.exit(0);
-});
+async function main() {
+  logger.info("Scanning hr_documents for S3 objects with a public-read ACL...");
+
+  const docs = await db
+    .select({
+      id: hr_documents.id,
+      document_name: hr_documents.document_name,
+      file_path: hr_documents.file_path,
+      category: hr_documents.category,
+      status: hr_documents.status,
+      created_at: hr_documents.created_at,
+    })
+    .from(hr_documents);
+
+  const flagged: { doc: (typeof docs)[number]; public: boolean | "unknown" }[] = [];
+
+  for (const doc of docs) {
+    const result = await isPubliclyReadable(doc.file_path);
+    if (result !== false) flagged.push({ doc, public: result });
+  }
+
+  logger.info("---");
+  for (const { doc, public: pub } of flagged) {
+    logger.info(
+      `${pub === "unknown" ? "[UNKNOWN]" : "[PUBLIC]  "} ${doc.document_name} (${doc.id})`,
+    );
+    logger.info(`   S3 key: ${doc.file_path}`);
+    logger.info(`   category: ${doc.category}, status: ${doc.status}, created: ${doc.created_at}`);
+    logger.info("---");
+  }
+
+  logger.info(
+    `Summary: ${docs.length} documents scanned, ${flagged.filter((f) => f.public === true).length} confirmed public, ${
+      flagged.filter((f) => f.public === "unknown").length
+    } unknown (ACL check failed — review manually).`,
+  );
+  if (flagged.length) {
+    logger.warn(
+      "Coordinate with HR before re-ACL'ing: flip each confirmed-public key to private and, if the " +
+        "document is still referenced elsewhere by its old public URL, re-link that reference to go " +
+        "through GET /hr/documents/:id/download instead.",
+    );
+  } else {
+    logger.info("No publicly-readable document objects found.");
+  }
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    logger.error("Audit failed:", err as Error);
+    process.exit(1);
+  });

@@ -26,6 +26,7 @@ router.use("/employees/:employeeId/contracts", contractRoutes);
 import * as assetsController from "@/controllers/hr/assets.controller";
 import * as assetsValidation from "@/validations/hr/assets.validation";
 import { validate } from "@/middlewares";
+import * as documentController from "@/controllers/hr/document.controller";
 router.get("/me/assets", authenticate, assetsController.getMyAssets);
 router.post(
   "/me/assets/:id/report-issue",
@@ -33,6 +34,10 @@ router.post(
   validate(assetsValidation.reportAssetIssueSchema),
   assetsController.reportAssetIssue,
 );
+// /hr/me/documents — same self-service pattern as /hr/me/assets above: authenticate-only,
+// ACL-admitted + own-contract docs scoped in the service layer (listMyDocuments), no
+// documents:* permission grant required.
+router.get("/me/documents", authenticate, documentController.listMyDocuments);
 router.use("/assets", assetsRoutes);
 // router.use("/me", meRoutes);
 router.use("/leaves", leaveRoutes);

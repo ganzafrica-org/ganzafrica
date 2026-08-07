@@ -134,6 +134,13 @@
       "when": 1785883130628,
       "tag": "0018_broad_sister_grimm",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1786098888909,
+      "tag": "0019_thick_karnak",
+      "breakpoints": true
     }
   ]
 }

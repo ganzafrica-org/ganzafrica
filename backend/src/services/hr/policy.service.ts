@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
 import { hr_policies, hr_policy_acknowledgements } from "@/db/schema/hr/policy";
 import { employees } from "@/db/schema/hr/employees";
@@ -15,6 +15,8 @@ export interface ListPoliciesQuery {
   limit: number;
   category?: string;
   status?: PolicyStatus;
+  /** Published + currently-active only — the employee-facing "policies to read" slice. */
+  active?: boolean;
   sortBy?: "title" | "version" | "updatedAt" | "downloads";
   sortOrder?: "asc" | "desc";
 }
@@ -76,10 +78,17 @@ function saveBase64File(fileName: string, base64: string): { filePath: string; f
   return { filePath: rel, fileSize: bytesToHuman(buf.length) };
 }
 
-export async function listPolicies(query: ListPoliciesQuery) {
+/**
+ * @param employeeId when given, each row is annotated with `myAcknowledged` — whether this
+ * employee has acknowledged that policy's *current* version (GET /hr/policies?active spec §4).
+ */
+export async function listPolicies(query: ListPoliciesQuery, employeeId?: string) {
   const conditions = [];
   if (query.category) conditions.push(eq(hr_policies.category, query.category));
   if (query.status) conditions.push(eq(hr_policies.status, query.status));
+  if (query.active) {
+    conditions.push(eq(hr_policies.status, "PUBLISHED"), eq(hr_policies.is_active, true));
+  }
   const whereClause = conditions.length ? and(...conditions) : undefined;
 
   const countRows = await db.select().from(hr_policies).where(whereClause);
@@ -108,6 +117,26 @@ export async function listPolicies(query: ListPoliciesQuery) {
     .limit(query.limit)
     .offset((query.page - 1) * query.limit);
 
+  let ackedKeys = new Set<string>();
+  if (employeeId && rows.length) {
+    const acks = await db
+      .select({
+        policyId: hr_policy_acknowledgements.policy_id,
+        version: hr_policy_acknowledgements.version,
+      })
+      .from(hr_policy_acknowledgements)
+      .where(
+        and(
+          eq(hr_policy_acknowledgements.employee_id, employeeId),
+          inArray(
+            hr_policy_acknowledgements.policy_id,
+            rows.map((p) => p.id),
+          ),
+        ),
+      );
+    ackedKeys = new Set(acks.map((a) => `${a.policyId}:${a.version}`));
+  }
+
   const data = rows.map((p) => ({
     id: p.id,
     title: p.title,
@@ -122,6 +151,7 @@ export async function listPolicies(query: ListPoliciesQuery) {
     createdById: p.created_by_employee_id,
     modifiedAt: p.updated_at,
     createdAt: p.created_at,
+    ...(employeeId ? { myAcknowledged: ackedKeys.has(`${p.id}:${parseInt(p.version, 10)}`) } : {}),
   }));
 
   return { data, total };
@@ -295,22 +325,35 @@ export async function publishPolicy(policyId: string) {
   }
 
   return await withDbTransaction(async (tx) => {
-    // Deactivate previous version (if any)
-    await tx
-      .update(hr_policies)
-      .set({ is_active: false })
+    // Deactivate predecessor (if any) and bump the version past it — publishing is what actually
+    // advances the version number, not the draft edit itself.
+    const [predecessor] = await tx
+      .select({ id: hr_policies.id, version: hr_policies.version })
+      .from(hr_policies)
       .where(
         and(
           eq(hr_policies.title, policy.title),
           eq(hr_policies.status, "PUBLISHED"),
           eq(hr_policies.is_active, true),
         ),
-      );
+      )
+      .limit(1);
+
+    if (predecessor) {
+      await tx
+        .update(hr_policies)
+        .set({ is_active: false })
+        .where(eq(hr_policies.id, predecessor.id));
+    }
+
+    const predecessorVersion = predecessor ? parseInt(predecessor.version, 10) || 0 : 0;
+    const draftVersion = parseInt(policy.version, 10) || 0;
+    const nextVersion = String(Math.max(predecessorVersion + 1, draftVersion));
 
     // Publish current version
     const [published] = await tx
       .update(hr_policies)
-      .set({ status: "PUBLISHED", is_active: true, updated_at: new Date() })
+      .set({ status: "PUBLISHED", is_active: true, version: nextVersion, updated_at: new Date() })
       .where(eq(hr_policies.id, policyId))
       .returning();
 
@@ -376,11 +419,12 @@ export async function getAcknowledgementReport(policyId: string) {
 
   if (!policy) throw new AppError("Policy not found", 404);
 
-  // Get all active employees
+  // Departed employees are excluded from the missing list (spec: status exited); everyone else
+  // (onboarding, active, on_leave, offboarding) is still expected to acknowledge.
   const allActiveEmployees = await db
     .select({ id: employees.id, first_name: employees.first_name, last_name: employees.last_name })
     .from(employees)
-    .where(eq(employees.status, "active"));
+    .where(ne(employees.status, "exited"));
 
   const versionNum = parseInt(policy.version, 10);
 

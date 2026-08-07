@@ -43,6 +43,33 @@ export function isHrManager(roleNames: string[]): boolean {
   return roleNames.includes("hr") || roleNames.includes("admin");
 }
 
+export interface AccessContext {
+  roles: string[];
+  employeeId: string | null;
+  department: string | null;
+}
+
+/**
+ * Best-effort ACL context for a platform user — used by document/policy access checks.
+ * Never throws on a missing employee profile: HR/admin accounts legitimately may not have
+ * one, and still need `roles` to pass the hr/admin bypass in canReadDocument.
+ */
+export async function getAccessContext(
+  userId: number,
+  roleNames: string[],
+): Promise<AccessContext> {
+  const [emp] = await db
+    .select({ id: employees.id, department: employees.department })
+    .from(employees)
+    .where(eq(employees.user_id, userId))
+    .limit(1);
+  return {
+    roles: roleNames.map((r) => r.toLowerCase()),
+    employeeId: emp?.id ?? null,
+    department: emp?.department ?? null,
+  };
+}
+
 /**
  * Fetch an employees row by id or 404. The employees-model replacement for the legacy
  * `getActiveEmployee` (which read hr_users) — it does NOT assert active status, because contracts

@@ -132,18 +132,30 @@ export const listPolicies = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const q = req.query as unknown as Record<string, string | undefined>;
-    const page = q.page ? parseInt(q.page, 10) : 1;
-    const limit = q.limit ? parseInt(q.limit, 10) : 10;
+    const q = req.query as unknown as Record<string, string | boolean | undefined>;
+    const page = q.page ? parseInt(q.page as string, 10) : 1;
+    const limit = q.limit ? parseInt(q.limit as string, 10) : 10;
 
-    const { data, total } = await policyService.listPolicies({
-      page,
-      limit,
-      category: q.category,
-      status: q.status as policyService.PolicyStatus | undefined,
-      sortBy: q.sortBy as policyService.ListPoliciesQuery["sortBy"],
-      sortOrder: (q.sortOrder as "asc" | "desc" | undefined) ?? "desc",
-    });
+    // Best-effort: hr/admin callers managing policies may have no employees row of their own.
+    let employeeId: string | undefined;
+    try {
+      employeeId = (await getEmployeeForUser(Number(req.user!.id))).employeeId;
+    } catch {
+      employeeId = undefined;
+    }
+
+    const { data, total } = await policyService.listPolicies(
+      {
+        page,
+        limit,
+        category: q.category as string | undefined,
+        status: q.status as policyService.PolicyStatus | undefined,
+        active: q.active === true || q.active === "true",
+        sortBy: q.sortBy as policyService.ListPoliciesQuery["sortBy"],
+        sortOrder: (q.sortOrder as "asc" | "desc" | undefined) ?? "desc",
+      },
+      employeeId,
+    );
 
     sendResponse(res, {
       success: true,

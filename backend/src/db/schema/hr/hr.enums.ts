@@ -49,7 +49,7 @@ export const assetStatusEnum = pgEnum("asset_status", [
   "DISPOSED",
 ]);
 
-export const documentStatusEnum = pgEnum("policy_status", ["PUBLISHED", "DRAFT"]);
+export const documentStatusEnum = pgEnum("policy_status", ["PUBLISHED", "DRAFT", "ARCHIVED"]);
 
 export const documentCategoryEnum = pgEnum("policy_category", [
   "Contract Templates",

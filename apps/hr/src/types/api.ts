@@ -376,4 +376,96 @@ export interface Policy {
   country?: string;
   allowance?: string;
   carryover?: string;
+  // Real hr_policies fields (MOD-05) — coexist with the mock-shaped fields above until the
+  // settings/policies UI is fully migrated off them.
+  title?: string;
+  content?: string | null;
+  category?: string;
+  policyCategory?: string;
+  version?: string;
+  fileSize?: string;
+  downloads?: number;
+  isActive?: boolean;
+  createdById?: string | null;
+  modifiedAt?: string;
+  createdAt?: string;
+  myAcknowledged?: boolean;
+}
+
+export interface PolicyAcknowledgementDetail {
+  employee_id: string;
+  employee_name: string;
+  acknowledged: boolean;
+}
+
+export interface PolicyAcknowledgementReport {
+  policy_id: string;
+  policy_title: string;
+  version: string;
+  total_active_employees: number;
+  acknowledged_count: number;
+  missing_count: number;
+  details: PolicyAcknowledgementDetail[];
+}
+
+// --- DOCUMENTS (MOD-05) ---
+export interface DocumentACL {
+  roles?: string[];
+  employee_ids?: string[];
+  departments?: string[];
+}
+
+export interface DocumentVersionEntry {
+  key: string;
+  version: string;
+  uploaded_at: string;
+}
+
+export const DOCUMENT_CATEGORIES = [
+  "Contract Templates",
+  "Policies & Procedures",
+  "Forms & Applications",
+  "Training Materials",
+  "Compliance & Legal",
+  "Onboarding Materials",
+] as const;
+export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
+export type DocumentStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
+
+export interface HrDocument {
+  id: string;
+  document_name: string;
+  category: DocumentCategory;
+  version: string;
+  description: string;
+  department: string;
+  fileSize: string;
+  downloads: number;
+  status: DocumentStatus;
+  access: DocumentACL;
+  versions?: DocumentVersionEntry[];
+  contract_id: string | null;
+  modifiedAt: string;
+  createdAt?: string;
+  createdBy: { id: string | null; fullName: string };
+}
+
+export interface CreateDocumentRequest {
+  document_name: string;
+  category: DocumentCategory;
+  description: string;
+  department: string;
+  status?: "PUBLISHED" | "DRAFT";
+  access: DocumentACL;
+  contractId?: string;
+}
+
+export interface UpdateDocumentRequest {
+  document_name?: string;
+  category?: DocumentCategory;
+  description?: string;
+  department?: string;
+  status?: DocumentStatus;
+  access?: DocumentACL;
+  contractId?: string;
 }
