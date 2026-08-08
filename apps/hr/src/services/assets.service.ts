@@ -10,6 +10,11 @@ import type {
   AssetMaintenance,
   CreateMaintenanceRequest,
   UpdateMaintenanceRequest,
+  AssignAssetRequest,
+  ReturnAssetRequest,
+  FlagAssetRequest,
+  AssetHistory,
+  EmployeeAssetRow,
 } from "@/types/api";
 
 const BASE = "/hr/assets";
@@ -50,9 +55,10 @@ export const assetsService = {
         }
       });
       imageFiles.forEach((file) => form.append("images", file));
-      const result = await httpClient.post<{ success: boolean; data: Asset }>(BASE, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // No explicit Content-Type here — the browser must set it itself so it can append
+      // the multipart boundary; a manually-set "multipart/form-data" header has no
+      // boundary param and the backend's multer/busboy parser can't split the parts.
+      const result = await httpClient.post<{ success: boolean; data: Asset }>(BASE, form);
       return result.data.data;
     }
     const result = await httpClient.post<{ success: boolean; data: Asset }>(BASE, payload);
@@ -76,12 +82,10 @@ export const assetsService = {
         }
       });
       imageFiles.forEach((file) => form.append("images", file));
+      // See createAsset above — no manual Content-Type for the same boundary reason.
       const response = await httpClient.patch<{ success: boolean; data: Asset }>(
         `${BASE}/${id}`,
         form,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
       );
       return response.data.data;
     }
@@ -98,6 +102,71 @@ export const assetsService = {
 
   async deleteAssetImage(assetId: string, imageId: string): Promise<void> {
     await httpClient.delete(`${BASE}/${assetId}/images/${imageId}`);
+  },
+
+  // ── Assignment / return / flags / history (MOD-04) ──────────────────────────
+
+  async assignAsset(id: string, payload: AssignAssetRequest): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `${BASE}/${id}/assign`,
+      payload,
+    );
+    return result.data.data;
+  },
+
+  async returnAsset(id: string, payload: ReturnAssetRequest): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `${BASE}/${id}/return`,
+      payload,
+    );
+    return result.data.data;
+  },
+
+  async flagAsset(id: string, payload: FlagAssetRequest = {}): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `${BASE}/${id}/flag`,
+      payload,
+    );
+    return result.data.data;
+  },
+
+  async unflagAsset(id: string): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `${BASE}/${id}/unflag`,
+      {},
+    );
+    return result.data.data;
+  },
+
+  async getAssetHistory(id: string): Promise<AssetHistory> {
+    const result = await httpClient.get<{ success: boolean; data: AssetHistory }>(
+      `${BASE}/${id}/history`,
+    );
+    return result.data.data;
+  },
+
+  // ── Self-service + LCM-02 gate ──────────────────────────────────────────────
+
+  async getMyAssets(): Promise<Asset[]> {
+    const result = await httpClient.get<{ success: boolean; data: Asset[] }>("/hr/me/assets");
+    return result.data.data;
+  },
+
+  /** Employee self-service: report an issue on one of their own currently-assigned assets. */
+  async reportAssetIssue(id: string, note?: string): Promise<Asset> {
+    const result = await httpClient.post<{ success: boolean; data: Asset }>(
+      `/hr/me/assets/${id}/report-issue`,
+      { note },
+    );
+    return result.data.data;
+  },
+
+  async getEmployeeAssets(employeeId: string, open?: boolean): Promise<EmployeeAssetRow[]> {
+    const result = await httpClient.get<{ success: boolean; data: EmployeeAssetRow[] }>(
+      `/hr/employees/${employeeId}/assets`,
+      { params: open !== undefined ? { open: String(open) } : undefined },
+    );
+    return result.data.data;
   },
 
   // ── Categories ────────────────────────────────────────────────────────────

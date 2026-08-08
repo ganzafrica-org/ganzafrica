@@ -11,6 +11,10 @@ import * as retention from "../../src/services/hr/document-retention.service";
 const daysAgo = (n: number) => new Date(Date.now() - n * 86400_000);
 const daysFromNow = (n: number) => new Date(Date.now() + n * 86400_000);
 
+// These tests exercise the service layer directly; canReadDocument's hr/admin bypass means this
+// context sees everything, same as the routes' `read`/`manage` gates would for an hr caller.
+const hrCtx = { roles: ["hr"], employeeId: null, department: null };
+
 describe("DOC-plus search-in-file", () => {
   let hrId: string;
   beforeEach(async () => {
@@ -31,7 +35,10 @@ describe("DOC-plus search-in-file", () => {
       extractedText: "office parking rules",
     });
 
-    const { data, total } = await docs.searchDocuments({ q: "annual leave", page: 1, limit: 10 });
+    const { data, total } = await docs.searchDocuments(
+      { q: "annual leave", page: 1, limit: 10 },
+      hrCtx,
+    );
     expect(total).toBe(1);
     expect(data[0].document_name).toBe("Leave Policy");
     expect(data[0].snippet).toContain("annual leave");
@@ -39,7 +46,7 @@ describe("DOC-plus search-in-file", () => {
 
   it("also matches on name and description, case-insensitively", async () => {
     await makeDocument({ createdById: hrId, name: "Onboarding Handbook" });
-    const { total } = await docs.searchDocuments({ q: "HANDBOOK", page: 1, limit: 10 });
+    const { total } = await docs.searchDocuments({ q: "HANDBOOK", page: 1, limit: 10 }, hrCtx);
     expect(total).toBe(1);
   });
 
@@ -50,13 +57,16 @@ describe("DOC-plus search-in-file", () => {
       extractedText: "confidential retention rules",
       archivedAt: new Date(),
     });
-    const { total } = await docs.searchDocuments({ q: "retention rules", page: 1, limit: 10 });
+    const { total } = await docs.searchDocuments(
+      { q: "retention rules", page: 1, limit: 10 },
+      hrCtx,
+    );
     expect(total).toBe(0);
   });
 
   it("returns nothing for an empty query", async () => {
     await makeDocument({ createdById: hrId, extractedText: "anything" });
-    const { total } = await docs.searchDocuments({ q: "   ", page: 1, limit: 10 });
+    const { total } = await docs.searchDocuments({ q: "   ", page: 1, limit: 10 }, hrCtx);
     expect(total).toBe(0);
   });
 });
@@ -142,7 +152,7 @@ describe("DOC-plus retention", () => {
   it("archived documents drop out of the normal list", async () => {
     await makeDocument({ createdById: hrId, name: "Visible" });
     await makeDocument({ createdById: hrId, name: "Hidden", archivedAt: new Date() });
-    const { data, total } = await docs.listDocuments({ page: 1, limit: 50 });
+    const { data, total } = await docs.listDocuments({ page: 1, limit: 50 }, hrCtx);
     expect(total).toBe(1);
     expect(data.every((d) => d.document_name !== "Hidden")).toBe(true);
   });

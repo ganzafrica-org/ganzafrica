@@ -1,14 +1,15 @@
-﻿import fs from "fs";
 import path from "path";
-import { and, asc, desc, eq, ilike, inArray, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, ne, or } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
 import { employees } from "@/db/schema/hr/employees";
-import { requireEmployee } from "./employee-context";
+import { requireEmployee, type AccessContext } from "./employee-context";
 import { hr_contracts } from "@/db/schema/hr/contract";
 import { hr_documents } from "@/db/schema/hr/document";
 import { AppError } from "@/middlewares";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
 import { extractText } from "@/services/text-extraction.service";
+import { getObjectBuffer, getPresignedDownload } from "@/services/storage.service";
+import { DocumentACL, DocumentVersionEntry } from "@/types/hr";
 import { Logger } from "@/config";
 
 const logger = new Logger("DocumentService");
@@ -21,13 +22,15 @@ export type DocumentCategory =
   | "Compliance & Legal"
   | "Onboarding Materials";
 
-export type DocumentStatus = "PUBLISHED" | "DRAFT";
+export type DocumentStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
 
-export interface DocumentAccessRule {
-  type: "department" | "individual";
-  target: string; // department name or user_id
-  permission: "see" | "edit" | "see_only";
-  owner?: string; // Specific value in case category is 'Contract Templates'
+export type DocumentAccessContext = AccessContext;
+
+/** Metadata for a file already stored by the `privateUpload` middleware (multer-s3). */
+export interface UploadedFile {
+  key: string;
+  size: number;
+  originalName: string;
 }
 
 export interface ListDocumentsQuery {
@@ -35,6 +38,9 @@ export interface ListDocumentsQuery {
   limit: number;
   category?: DocumentCategory;
   status?: DocumentStatus;
+  search?: string;
+  /** documents:manage callers only — filter to documents relevant to one employee. */
+  employeeId?: string;
   sortBy?: "document_name" | "version" | "updatedAt" | "downloads";
   sortOrder?: "asc" | "desc";
 }
@@ -42,27 +48,23 @@ export interface ListDocumentsQuery {
 export interface CreateDocumentInput {
   document_name: string;
   category: DocumentCategory;
-  version: string;
   description: string;
   department: string;
   status?: DocumentStatus;
-  fileName: string;
-  fileContentBase64: string;
+  file: UploadedFile;
   createdById: string;
-  access: DocumentAccessRule;
-  contractId?: string; // Optional Foreign Key link to hr_contracts
+  access?: DocumentACL;
+  contractId?: string;
 }
 
 export interface UpdateDocumentInput {
   document_name?: string;
   category?: DocumentCategory;
-  version?: string;
   description?: string;
   department?: string;
   status?: DocumentStatus;
-  fileName?: string;
-  fileContentBase64?: string;
-  access?: DocumentAccessRule;
+  file?: UploadedFile;
+  access?: DocumentACL;
   contractId?: string;
 }
 
@@ -75,10 +77,6 @@ const VALID_CATEGORIES: DocumentCategory[] = [
   "Onboarding Materials",
 ];
 
-function uploadsDir(): string {
-  return path.resolve(process.cwd(), "uploads", "documents");
-}
-
 function bytesToHuman(bytes: number): string {
   const mb = bytes / (1024 * 1024);
   if (mb >= 1) return `${mb.toFixed(1)} MB`;
@@ -87,36 +85,13 @@ function bytesToHuman(bytes: number): string {
   return `${bytes} B`;
 }
 
-function safeFileName(original: string): string {
-  const base = path.basename(original).replace(/[^\w.\-() ]+/g, "_");
-  const stamp = Date.now().toString();
-  return `${stamp}-${base}`;
-}
-
-function saveBase64File(
-  fileName: string,
-  base64: string,
-): { filePath: string; fileSize: string; buffer: Buffer } {
-  const dir = uploadsDir();
-  fs.mkdirSync(dir, { recursive: true });
-
-  const buf = Buffer.from(base64, "base64");
-  if (!buf.length) throw new AppError("Invalid file content", 400);
-
-  const finalName = safeFileName(fileName);
-  const absolutePath = path.join(dir, finalName);
-  fs.writeFileSync(absolutePath, buf);
-
-  const rel = path.join("uploads", "documents", finalName).replace(/\\/g, "/");
-  return { filePath: rel, fileSize: bytesToHuman(buf.length), buffer: buf };
-}
-
 /**
  * Index a document's file text for search-in-file (DOC-plus). Best-effort and non-blocking:
  * extraction failures (unsupported type, scanned image with no OCR wired) leave the document
  * searchable by name/description only and never fail the upload.
  */
-async function indexDocumentText(documentId: string, buffer: Buffer, fileName: string) {
+async function indexDocumentText(documentId: string, key: string, fileName: string) {
+  const buffer = await getObjectBuffer(key);
   const contentType = fileName.toLowerCase().endsWith(".pdf") ? "application/pdf" : undefined;
   const result = await extractText(buffer, contentType);
   await db
@@ -134,15 +109,131 @@ async function assertContractExists(contractId: string): Promise<void> {
   if (!rows.length) throw new AppError("Linked contract record not found in DB", 404);
 }
 
-export async function listDocuments(query: ListDocumentsQuery) {
-  // Archived documents (past retention) are hidden from the normal list.
-  const conditions = [isNull(hr_documents.archived_at)];
+async function contractOwnerEmployeeId(contractId: string | null): Promise<string | null> {
+  if (!contractId) return null;
+  const [row] = await db
+    .select({ employeeId: hr_contracts.employee_ref_id })
+    .from(hr_contracts)
+    .where(eq(hr_contracts.id, contractId))
+    .limit(1);
+  return row?.employeeId ?? null;
+}
+
+export interface DocumentACLSubject {
+  access: DocumentACL | null;
+  /** The employee_ref_id of the linked contract, resolved by the caller (or null/undefined if none). */
+  contractEmployeeId?: string | null;
+}
+
+/**
+ * ACL enforcement: single source of truth for document access checks, used by both the list
+ * filter and the download check.
+ *
+ * Rules (MOD-05 §3, frozen):
+ * - hr / admin roles -> always readable.
+ * - Document linked to a contract owned by this employee -> always readable.
+ * - ACL null/empty -> readable only by hr/admin (already handled above).
+ * - Any-clause match on roles / employee_ids / departments -> readable.
+ * - Otherwise -> not readable.
+ */
+export function canReadDocument(ctx: DocumentAccessContext, doc: DocumentACLSubject): boolean {
+  if (ctx.roles.includes("hr") || ctx.roles.includes("admin")) return true;
+
+  if (doc.contractEmployeeId && ctx.employeeId && doc.contractEmployeeId === ctx.employeeId) {
+    return true;
+  }
+
+  const acl = doc.access;
+  if (!acl) return false;
+
+  if (acl.roles?.some((role) => ctx.roles.includes(role.toLowerCase()))) return true;
+  if (ctx.employeeId && acl.employee_ids?.includes(ctx.employeeId)) return true;
+  if (ctx.department && acl.departments?.includes(ctx.department)) return true;
+
+  return false;
+}
+
+type DocumentRow = typeof hr_documents.$inferSelect;
+
+/**
+ * Shared ACL-checked fetch: 404 if missing/archived, 403 if the ACL denies. Used by every read
+ * path that touches the underlying file (download, view-url, content) so the check never drifts.
+ * `executor` accepts either `db` or an open transaction — both expose the same `.select()` API.
+ */
+async function fetchReadableDocument(
+  executor: Pick<typeof db, "select">,
+  id: string,
+  ctx: DocumentAccessContext,
+): Promise<DocumentRow> {
+  const rows = await executor.select().from(hr_documents).where(eq(hr_documents.id, id)).limit(1);
+  if (!rows.length) throw new AppError("Document not found", 404);
+  const doc = rows[0];
+  if (doc.status === "ARCHIVED") throw new AppError("Document not found", 404);
+
+  const contractEmployeeId = await contractOwnerEmployeeId(doc.contract_id);
+  if (!canReadDocument(ctx, { access: doc.access as DocumentACL, contractEmployeeId })) {
+    throw new AppError("Access denied: you do not have permission to access this document", 403);
+  }
+  return doc;
+}
+
+function toListItem(p: DocumentRow, creatorMap: Map<string, string>) {
+  return {
+    id: p.id,
+    document_name: p.document_name,
+    category: p.category,
+    version: p.version,
+    description: p.description,
+    department: p.department,
+    fileSize: p.file_size,
+    downloads: p.downloads,
+    status: p.status,
+    access: p.access as DocumentACL,
+    contract_id: p.contract_id,
+    modifiedAt: p.updated_at,
+    createdBy: {
+      id: p.created_by_employee_id,
+      fullName: p.created_by_employee_id ? (creatorMap.get(p.created_by_employee_id) ?? "") : "",
+    },
+  };
+}
+
+async function creatorNameMap(rows: DocumentRow[]): Promise<Map<string, string>> {
+  const creatorIds = [
+    ...new Set(rows.map((p) => p.created_by_employee_id).filter((id): id is string => !!id)),
+  ];
+  if (!creatorIds.length) return new Map();
+  const creators = await db
+    .select({ id: employees.id, first: employees.first_name, last: employees.last_name })
+    .from(employees)
+    .where(inArray(employees.id, creatorIds));
+  return new Map(creators.map((c) => [c.id, `${c.first} ${c.last}`]));
+}
+
+/** Contract owners for every contract_id present in `rows`, keyed by contract id. */
+async function contractOwnerMap(rows: DocumentRow[]): Promise<Map<string, string>> {
+  const contractIds = [
+    ...new Set(rows.map((p) => p.contract_id).filter((id): id is string => !!id)),
+  ];
+  if (!contractIds.length) return new Map();
+  const contracts = await db
+    .select({ id: hr_contracts.id, employeeId: hr_contracts.employee_ref_id })
+    .from(hr_contracts)
+    .where(inArray(hr_contracts.id, contractIds));
+  return new Map(contracts.filter((c) => c.employeeId).map((c) => [c.id, c.employeeId as string]));
+}
+
+export async function listDocuments(query: ListDocumentsQuery, ctx: DocumentAccessContext) {
+  const conditions = [isNull(hr_documents.archived_at), ne(hr_documents.status, "ARCHIVED")];
   if (query.category) conditions.push(eq(hr_documents.category, query.category));
   if (query.status) conditions.push(eq(hr_documents.status, query.status));
+  if (query.search) {
+    const like = `%${query.search}%`;
+    conditions.push(
+      or(ilike(hr_documents.document_name, like), ilike(hr_documents.description, like))!,
+    );
+  }
   const whereClause = and(...conditions);
-
-  const countRows = await db.select().from(hr_documents).where(whereClause);
-  const total = countRows.length;
 
   const sortColumn = (() => {
     switch (query.sortBy) {
@@ -159,44 +250,63 @@ export async function listDocuments(query: ListDocumentsQuery) {
   })();
   const order = (query.sortOrder ?? "desc") === "asc" ? asc(sortColumn) : desc(sortColumn);
 
+  const isManager = ctx.roles.includes("hr") || ctx.roles.includes("admin");
+
+  // Non-managers only ever see what their own ACL admits; fine at this scale (internal HR tool,
+  // not a high-volume document store) to filter in application code and paginate the result.
+  const allRows = await db.select().from(hr_documents).where(whereClause).orderBy(order);
+  const owners = await contractOwnerMap(allRows);
+
+  let visible = isManager
+    ? allRows
+    : allRows.filter((row) =>
+        canReadDocument(ctx, {
+          access: row.access as DocumentACL,
+          contractEmployeeId: row.contract_id ? (owners.get(row.contract_id) ?? null) : null,
+        }),
+      );
+
+  if (isManager && query.employeeId) {
+    visible = visible.filter((row) => {
+      const acl = row.access as DocumentACL | null;
+      const contractOwner = row.contract_id ? owners.get(row.contract_id) : undefined;
+      return contractOwner === query.employeeId || acl?.employee_ids?.includes(query.employeeId!);
+    });
+  }
+
+  const total = visible.length;
+  const page = visible.slice((query.page - 1) * query.limit, query.page * query.limit);
+
+  const creatorMap = await creatorNameMap(page);
+  const data = page.map((p) => toListItem(p, creatorMap));
+
+  return { data, total };
+}
+
+/** GET /hr/me/documents — ACL-admitted + own-contract docs for the authenticated employee. */
+export async function listMyDocuments(
+  ctx: DocumentAccessContext,
+  paging: { page: number; limit: number },
+) {
+  const conditions = [isNull(hr_documents.archived_at), ne(hr_documents.status, "ARCHIVED")];
   const rows = await db
     .select()
     .from(hr_documents)
-    .where(whereClause)
-    .orderBy(order)
-    .limit(query.limit)
-    .offset((query.page - 1) * query.limit);
+    .where(and(...conditions))
+    .orderBy(desc(hr_documents.updated_at));
 
-  const creatorIds = [
-    ...new Set(rows.map((p) => p.created_by_employee_id).filter((id): id is string => !!id)),
-  ];
-  const creators = creatorIds.length
-    ? await db
-        .select({ id: employees.id, first: employees.first_name, last: employees.last_name })
-        .from(employees)
-        .where(inArray(employees.id, creatorIds))
-    : [];
+  const owners = await contractOwnerMap(rows);
+  const visible = rows.filter((row) =>
+    canReadDocument(ctx, {
+      access: row.access as DocumentACL,
+      contractEmployeeId: row.contract_id ? (owners.get(row.contract_id) ?? null) : null,
+    }),
+  );
 
-  const creatorMap = new Map(creators.map((c) => [c.id, `${c.first} ${c.last}`]));
-
-  const data = rows.map((p) => ({
-    id: p.id,
-    document_name: p.document_name,
-    category: p.category,
-    version: p.version,
-    description: p.description,
-    department: p.department,
-    fileSize: p.file_size,
-    downloads: p.downloads,
-    status: p.status,
-    access: p.access as DocumentAccessRule,
-    contract_id: p.contract_id,
-    modifiedAt: p.updated_at,
-    createdBy: {
-      id: p.created_by_employee_id,
-      fullName: p.created_by_employee_id ? (creatorMap.get(p.created_by_employee_id) ?? "") : "",
-    },
-  }));
+  const total = visible.length;
+  const page = visible.slice((paging.page - 1) * paging.limit, paging.page * paging.limit);
+  const creatorMap = await creatorNameMap(page);
+  const data = page.map((p) => toListItem(p, creatorMap));
 
   return { data, total };
 }
@@ -212,7 +322,7 @@ export interface SearchDocumentsQuery {
  * text extracted from its file. Case-insensitive; archived documents are excluded. Returns a short
  * snippet around the first in-file hit so the UI can show why a result matched.
  */
-export async function searchDocuments(query: SearchDocumentsQuery) {
+export async function searchDocuments(query: SearchDocumentsQuery, ctx: DocumentAccessContext) {
   const q = query.q.trim();
   if (!q) return { data: [], total: 0 };
   const like = `%${q}%`;
@@ -222,20 +332,33 @@ export async function searchDocuments(query: SearchDocumentsQuery) {
     ilike(hr_documents.description, like),
     ilike(hr_documents.extracted_text, like),
   );
-  const whereClause = and(isNull(hr_documents.archived_at), match);
+  const whereClause = and(
+    isNull(hr_documents.archived_at),
+    ne(hr_documents.status, "ARCHIVED"),
+    match,
+  );
 
-  const countRows = await db.select({ id: hr_documents.id }).from(hr_documents).where(whereClause);
-  const total = countRows.length;
-
+  const isManager = ctx.roles.includes("hr") || ctx.roles.includes("admin");
   const rows = await db
     .select()
     .from(hr_documents)
     .where(whereClause)
-    .orderBy(desc(hr_documents.updated_at))
-    .limit(query.limit)
-    .offset((query.page - 1) * query.limit);
+    .orderBy(desc(hr_documents.updated_at));
 
-  const data = rows.map((p) => ({
+  const owners = await contractOwnerMap(rows);
+  const visible = isManager
+    ? rows
+    : rows.filter((row) =>
+        canReadDocument(ctx, {
+          access: row.access as DocumentACL,
+          contractEmployeeId: row.contract_id ? (owners.get(row.contract_id) ?? null) : null,
+        }),
+      );
+
+  const total = visible.length;
+  const page = visible.slice((query.page - 1) * query.limit, query.page * query.limit);
+
+  const data = page.map((p) => ({
     id: p.id,
     document_name: p.document_name,
     category: p.category,
@@ -263,10 +386,15 @@ function snippetAround(text: string | null, q: string): string | null {
   return `${start > 0 ? "…" : ""}${text.slice(start, end)}${end < text.length ? "…" : ""}`;
 }
 
-export async function getDocument(id: string) {
+export async function getDocument(id: string, ctx: DocumentAccessContext) {
   const rows = await db.select().from(hr_documents).where(eq(hr_documents.id, id)).limit(1);
   if (!rows.length) throw new AppError("Document not found", 404);
   const p = rows[0];
+
+  const contractEmployeeId = await contractOwnerEmployeeId(p.contract_id);
+  if (!canReadDocument(ctx, { access: p.access as DocumentACL, contractEmployeeId })) {
+    throw new AppError("Access denied: you do not have permission to view this document", 403);
+  }
 
   const creators = p.created_by_employee_id
     ? await db
@@ -285,11 +413,11 @@ export async function getDocument(id: string) {
     version: p.version,
     description: p.description,
     department: p.department,
-    filePath: p.file_path,
     fileSize: p.file_size,
     downloads: p.downloads,
     status: p.status,
-    access: p.access as DocumentAccessRule,
+    access: p.access as DocumentACL,
+    versions: p.versions as DocumentVersionEntry[],
     contract_id: p.contract_id,
     modifiedAt: p.updated_at,
     createdBy: { id: p.created_by_employee_id, fullName },
@@ -304,33 +432,28 @@ export async function createDocument(input: CreateDocumentInput) {
     throw new AppError(`Invalid category. Must be one of: ${VALID_CATEGORIES.join(", ")}`, 400);
   }
 
-  // Verification requirements specifically for Contracts
   if (input.category === "Contract Templates") {
-    if (!input.access?.owner) {
-      throw new AppError("Contracts must specify an owner in the access configuration.", 400);
-    }
     if (!input.contractId) {
       throw new AppError("Contract details must be linked. contractId is required.", 400);
     }
     await assertContractExists(input.contractId);
   }
 
-  const saved = saveBase64File(input.fileName, input.fileContentBase64);
-
   const inserted = await db
     .insert(hr_documents)
     .values({
       document_name: input.document_name,
       category: input.category,
-      version: input.version,
+      version: "1",
       description: input.description,
       department: input.department,
       status: input.status ?? "PUBLISHED",
-      file_path: saved.filePath,
-      file_size: saved.fileSize,
+      file_path: input.file.key,
+      file_size: bytesToHuman(input.file.size),
       downloads: 0,
+      versions: [],
       created_by_employee_id: input.createdById,
-      access: input.access, // Handled as JSONB or Text inside DB Schema mapping
+      access: input.access ?? {},
       contract_id: input.category === "Contract Templates" ? input.contractId : null,
     })
     .returning();
@@ -338,7 +461,7 @@ export async function createDocument(input: CreateDocumentInput) {
   if (!inserted.length) throw new AppError("Failed to create document", 400);
 
   // Index the file text out-of-band so a slow/large extraction never blocks the upload response.
-  void indexDocumentText(inserted[0].id, saved.buffer, input.fileName).catch((err) =>
+  void indexDocumentText(inserted[0].id, input.file.key, input.file.originalName).catch((err) =>
     logger.warn("Document text indexing failed (non-fatal)", err as Error),
   );
 
@@ -348,19 +471,10 @@ export async function createDocument(input: CreateDocumentInput) {
 export async function updateDocument(id: string, input: UpdateDocumentInput) {
   const rows = await db.select().from(hr_documents).where(eq(hr_documents.id, id)).limit(1);
   if (!rows.length) throw new AppError("Document not found", 404);
+  const existing = rows[0];
 
   if (input.category && !VALID_CATEGORIES.includes(input.category)) {
     throw new AppError("Invalid category type provided", 400);
-  }
-
-  let filePatch: Partial<{ file_path: string; file_size: string }> = {};
-  let replacedFile: { buffer: Buffer; fileName: string } | null = null;
-  if (input.fileName && input.fileContentBase64) {
-    const saved = saveBase64File(input.fileName, input.fileContentBase64);
-    filePatch = { file_path: saved.filePath, file_size: saved.fileSize };
-    replacedFile = { buffer: saved.buffer, fileName: input.fileName };
-  } else if (input.fileName || input.fileContentBase64) {
-    throw new AppError("Both fileName and fileContentBase64 are required to replace file", 400);
   }
 
   if (input.contractId) {
@@ -373,14 +487,26 @@ export async function updateDocument(id: string, input: UpdateDocumentInput) {
 
   if (input.document_name !== undefined) patch.document_name = input.document_name;
   if (input.category !== undefined) patch.category = input.category;
-  if (input.version !== undefined) patch.version = input.version;
   if (input.description !== undefined) patch.description = input.description;
   if (input.department !== undefined) patch.department = input.department;
   if (input.status !== undefined) patch.status = input.status;
   if (input.access !== undefined) patch.access = input.access;
   if (input.contractId !== undefined) patch.contract_id = input.contractId;
-  if (filePatch.file_path !== undefined) patch.file_path = filePatch.file_path;
-  if (filePatch.file_size !== undefined) patch.file_size = filePatch.file_size;
+
+  // Versioning: a new file bumps `version` and appends the outgoing file to `versions` history.
+  if (input.file) {
+    const nextVersion = String((parseInt(existing.version, 10) || 0) + 1);
+    const history = (existing.versions as DocumentVersionEntry[] | null) ?? [];
+    const outgoing: DocumentVersionEntry = {
+      key: existing.file_path,
+      version: existing.version,
+      uploaded_at: (existing.updated_at ?? existing.created_at).toISOString(),
+    };
+    patch.versions = [...history, outgoing];
+    patch.file_path = input.file.key;
+    patch.file_size = bytesToHuman(input.file.size);
+    patch.version = nextVersion;
+  }
 
   const updated = await db
     .update(hr_documents)
@@ -390,20 +516,19 @@ export async function updateDocument(id: string, input: UpdateDocumentInput) {
 
   if (!updated.length) throw new AppError("Document not found", 404);
 
-  // Re-index when the underlying file was replaced (out-of-band, non-blocking).
-  if (replacedFile) {
-    void indexDocumentText(updated[0].id, replacedFile.buffer, replacedFile.fileName).catch((err) =>
+  if (input.file) {
+    void indexDocumentText(updated[0].id, input.file.key, input.file.originalName).catch((err) =>
       logger.warn("Document re-indexing failed (non-fatal)", err as Error),
     );
   }
 
-  const wasPublished = rows[0].status === "PUBLISHED";
+  const wasPublished = existing.status === "PUBLISHED";
   const isNowPublished = updated[0].status === "PUBLISHED";
 
   if (!wasPublished && isNowPublished) {
     try {
       await sendNotification({
-        type: "DOCUMENT_PUBLISHED", // Retained for compatibility with notification engine
+        type: "DOCUMENT_PUBLISHED",
         triggeredBy: 0,
         relatedEntity: { documentId: updated[0].id },
         title: "New document published",
@@ -418,36 +543,75 @@ export async function updateDocument(id: string, input: UpdateDocumentInput) {
   return updated[0];
 }
 
+/** Soft delete: status -> ARCHIVED. The file key is kept for audit; never hard-deleted. */
 export async function deleteDocument(id: string): Promise<void> {
   const rows = await db.select().from(hr_documents).where(eq(hr_documents.id, id)).limit(1);
   if (!rows.length) throw new AppError("Document not found", 404);
-  const p = rows[0];
+  if (rows[0].status === "ARCHIVED") return; // idempotent
 
-  await db.delete(hr_documents).where(eq(hr_documents.id, id));
-
-  const absolute = path.resolve(process.cwd(), p.file_path);
-  try {
-    fs.unlinkSync(absolute);
-  } catch {
-    // catch missing files gracefully
-  }
+  await db
+    .update(hr_documents)
+    .set({ status: "ARCHIVED", updated_at: new Date() })
+    .where(eq(hr_documents.id, id));
 }
 
-export async function incrementDownloadsAndGetPath(
+/**
+ * ACL check + presigned download link. Single source of truth for the read check (shared with
+ * listDocuments/listMyDocuments via canReadDocument), 5-minute expiry, increments `downloads`.
+ */
+export async function getDownloadUrl(
   id: string,
-): Promise<{ absolutePath: string; fileName: string }> {
+  ctx: DocumentAccessContext,
+): Promise<{ url: string; fileName: string }> {
   return await withDbTransaction(async (tx) => {
-    const rows = await tx.select().from(hr_documents).where(eq(hr_documents.id, id)).limit(1);
-    if (!rows.length) throw new AppError("Document not found", 404);
-    const p = rows[0];
+    const doc = await fetchReadableDocument(tx, id, ctx);
 
     await tx
       .update(hr_documents)
-      .set({ downloads: p.downloads + 1, updated_at: new Date() })
+      .set({ downloads: doc.downloads + 1, updated_at: new Date() })
       .where(eq(hr_documents.id, id));
 
-    const absolutePath = path.resolve(process.cwd(), p.file_path);
-    const fileName = path.basename(p.file_path);
-    return { absolutePath, fileName };
+    const url = await getPresignedDownload(doc.file_path, 300);
+    return { url, fileName: doc.document_name };
   });
+}
+
+// Inline preview needs longer than a download link: the viewing session (an Office Online Viewer
+// iframe, or just someone reading a long PDF) can run past 5 minutes without a re-fetch, but a
+// fresh URL is minted every time the viewer mounts, so this never needs to reach the 7-day cap.
+const VIEW_URL_EXPIRY_SECONDS = 15 * 60;
+// Text/CSV preview reads the whole object into memory — cap it so a huge file can't blow up the
+// request. Comfortably above any real policy/form document; larger files still download fine.
+const MAX_INLINE_TEXT_BYTES = 2 * 1024 * 1024;
+
+/**
+ * ACL check + presigned URL for *inline viewing* (not a download): does not increment
+ * `downloads`, and returns the real stored filename (the S3 key's basename) rather than the
+ * user-facing document_name, since the caller needs the actual extension to pick a renderer.
+ */
+export async function getViewUrl(
+  id: string,
+  ctx: DocumentAccessContext,
+): Promise<{ url: string; fileName: string }> {
+  const doc = await fetchReadableDocument(db, id, ctx);
+  const url = await getPresignedDownload(doc.file_path, VIEW_URL_EXPIRY_SECONDS);
+  return { url, fileName: path.basename(doc.file_path) };
+}
+
+/**
+ * ACL-checked raw text content for formats the frontend renders itself (csv/txt/json/xml/css/js)
+ * rather than embedding. Goes through our own API (not a direct S3 fetch from the browser) so it
+ * works regardless of whether the Spaces bucket has CORS configured for cross-origin `fetch()` —
+ * <img>/<iframe>/<video> tags don't need CORS to load a URL, but reading a response body via JS
+ * does, and DO Spaces buckets don't have CORS enabled by default.
+ */
+export async function getViewableText(
+  id: string,
+  ctx: DocumentAccessContext,
+): Promise<{ text: string; fileName: string; truncated: boolean }> {
+  const doc = await fetchReadableDocument(db, id, ctx);
+  const buffer = await getObjectBuffer(doc.file_path);
+  const truncated = buffer.length > MAX_INLINE_TEXT_BYTES;
+  const text = buffer.subarray(0, MAX_INLINE_TEXT_BYTES).toString("utf-8");
+  return { text, fileName: path.basename(doc.file_path), truncated };
 }

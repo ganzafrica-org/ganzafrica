@@ -4,6 +4,7 @@
  * copies — are all served via short-lived expiring links rather than public URLs.
  */
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import type { Readable } from "stream";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import env from "../config/env";
 import { Logger } from "../config";
@@ -30,4 +31,16 @@ export async function getPresignedDownload(key: string, expiresIn = 300): Promis
   const url = await getSignedUrl(s3Client as never, command as never, { expiresIn });
   logger.info(`Presigned download for ${key}, expires in ${expiresIn}s`);
   return url;
+}
+
+/** Fetch a private object's full bytes (out-of-band text extraction, never the request path). */
+export async function getObjectBuffer(key: string): Promise<Buffer> {
+  const command = new GetObjectCommand({ Bucket: env.DO_SPACES_BUCKET, Key: key });
+  const response = await s3Client.send(command);
+  const stream = response.Body as Readable;
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
 }

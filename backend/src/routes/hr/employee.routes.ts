@@ -11,6 +11,8 @@ import { authenticate, requirePermission } from "@/middlewares/auth.middleware";
 import { validate } from "@/middlewares/validation.middleware";
 import * as c from "@/controllers/hr/employees-core.controller";
 import * as v from "@/validations/hr/employees-core.validation";
+import * as assetsController from "@/controllers/hr/assets.controller";
+import * as assetsValidation from "@/validations/hr/assets.validation";
 
 const router: Router = Router();
 
@@ -48,6 +50,15 @@ router.patch(
   requirePermission("employees:manage"),
   validate(v.updateEmployeeSchema),
   c.updateEmployee,
+);
+
+// MOD-04 §4 — LCM-02's offboarding gate query. Response shape (assetId, assignedAt,
+// returnedAt, ...) is frozen once LCM-02 consumes it — see MOD-04 spec §Coordination.
+router.get(
+  "/:id/assets",
+  requirePermission("assets:read", "assets:manage"),
+  validate(assetsValidation.employeeAssetsSchema),
+  assetsController.getEmployeeAssets,
 );
 
 export default router;

@@ -17,6 +17,9 @@ import {
   opportunity_funnel_events,
   offers,
   hr_documents,
+  hr_contracts,
+  hr_policies,
+  hr_policy_acknowledgements,
   employees,
   hr_leave_policies,
   hr_leave_balances,
@@ -24,6 +27,9 @@ import {
   hr_leaves,
   process_templates,
   process_template_tasks,
+  hr_assets,
+  hr_asset_categories,
+  hr_asset_assignments,
 } from "../../src/db/schema";
 import { eq } from "drizzle-orm";
 import * as authService from "../../src/services/auth.service";
@@ -36,11 +42,19 @@ const uniq = () => `${Date.now()}_${seq++}`;
 export async function ensureRole(name: string) {
   const existing = await db.select().from(roles).where(eq(roles.name, name)).limit(1);
   if (existing[0]) return existing[0];
-  const [row] = await db
+
+  // Try to insert; use onConflictDoNothing to tolerate concurrent test workers.
+  const inserted = await db
     .insert(roles)
     .values({ name, description: `${name} (test)` })
+    .onConflictDoNothing()
     .returning();
-  return row;
+  if (inserted && inserted.length) return inserted[0];
+
+  // If concurrent insert happened, select the existing row now.
+  const [row2] = await db.select().from(roles).where(eq(roles.name, name)).limit(1);
+  if (!row2) throw new Error(`Failed to ensure role ${name}`);
+  return row2;
 }
 
 export interface MakeUserOptions {
@@ -114,31 +128,101 @@ export interface MakeDocumentOptions {
   createdById: string; // employees.id (created_by_employee_id FK)
   name?: string;
   category?: string;
+  status?: "PUBLISHED" | "DRAFT" | "ARCHIVED";
+  access?: { roles?: string[]; employee_ids?: string[]; departments?: string[] };
+  contractId?: string | null;
+  version?: string;
+  versions?: { key: string; version: string; uploaded_at: string }[];
   extractedText?: string | null;
   retainUntil?: Date | null;
   archivedAt?: Date | null;
 }
 
-/** Insert an hr_documents row (DOC-plus search/retention tests). */
+/** Insert an hr_documents row (MOD-05 ACL / versioning / DOC-plus search-retention tests). */
 export async function makeDocument(opts: MakeDocumentOptions) {
   const [row] = await db
     .insert(hr_documents)
     .values({
       document_name: opts.name ?? `Doc ${uniq()}`,
       category: (opts.category ?? "Policies & Procedures") as never,
-      version: "1.0",
+      version: opts.version ?? "1",
       description: "A test document",
       department: "Operations",
       file_path: `uploads/documents/${uniq()}.pdf`,
       file_size: "12 KB",
-      status: "PUBLISHED",
-      access: { type: "department", target: "Operations", permission: "see" },
+      status: opts.status ?? "PUBLISHED",
+      access: opts.access ?? {},
+      versions: opts.versions ?? [],
+      contract_id: opts.contractId ?? null,
       extracted_text: opts.extractedText ?? null,
       indexed_at: opts.extractedText !== undefined ? new Date() : null,
       retain_until: opts.retainUntil ?? null,
       archived_at: opts.archivedAt ?? null,
       created_by_employee_id: opts.createdById,
     })
+    .returning();
+  return row;
+}
+
+export interface MakeContractOptions {
+  employeeId: string; // employees.id (employee_ref_id FK)
+  jobTitle?: string;
+}
+
+/** Insert a minimal hr_contracts row (contract-owner ACL override tests). */
+export async function makeContract(opts: MakeContractOptions) {
+  const [row] = await db
+    .insert(hr_contracts)
+    .values({
+      employee_ref_id: opts.employeeId,
+      job_title: opts.jobTitle ?? "Software Engineer",
+      start_date: new Date("2024-01-01"),
+      employment_term: "indefinite",
+      employment_type: "full-time",
+      compensation_type: "salaried",
+      currency: "RWF",
+    })
+    .returning();
+  return row;
+}
+
+export interface MakePolicyOptions {
+  createdById: string; // employees.id
+  title?: string;
+  version?: string;
+  status?: "PUBLISHED" | "DRAFT";
+  isActive?: boolean;
+}
+
+/** Insert an hr_policies row. */
+export async function makePolicy(opts: MakePolicyOptions) {
+  const [row] = await db
+    .insert(hr_policies)
+    .values({
+      title: opts.title ?? `Policy ${uniq()}`,
+      content: "Policy body text",
+      category: "General",
+      policy_category: "GENERAL",
+      version: opts.version ?? "1",
+      file_path: `uploads/policies/${uniq()}.pdf`,
+      file_size: "8 KB",
+      status: opts.status ?? "PUBLISHED",
+      is_active: opts.isActive ?? true,
+      created_by_employee_id: opts.createdById,
+    })
+    .returning();
+  return row;
+}
+
+/** Insert an hr_policy_acknowledgements row directly (bypassing the idempotency endpoint). */
+export async function makeAcknowledgement(opts: {
+  policyId: string;
+  employeeId: string;
+  version: number;
+}) {
+  const [row] = await db
+    .insert(hr_policy_acknowledgements)
+    .values({ policy_id: opts.policyId, employee_id: opts.employeeId, version: opts.version })
     .returning();
   return row;
 }
@@ -500,6 +584,73 @@ export async function makeFunnelEvent(opts: {
       session_key: opts.sessionKey,
     })
     .onConflictDoNothing()
+    .returning();
+  return row;
+}
+
+/** Insert an hr_asset_categories row (MOD-04 tests). */
+export async function makeAssetCategory(opts: { name?: string; slug?: string } = {}) {
+  const [row] = await db
+    .insert(hr_asset_categories)
+    .values({
+      name: opts.name ?? "Laptop",
+      slug: opts.slug ?? `laptop_${uniq()}`,
+      spec_schema: [],
+    })
+    .returning();
+  return row;
+}
+
+export interface MakeAssetOptions {
+  categoryId?: string; // hr_asset_categories.id — created if omitted
+  deviceName?: string;
+  serialNumber?: string;
+  status?: "AVAILABLE" | "ASSIGNED" | "UNDER_MAINTENANCE" | "DISPOSED";
+  assignedToEmployeeId?: string | null;
+  hasIssue?: "YES" | "NO";
+  isFlagged?: boolean;
+}
+
+/** Insert an hr_assets row (MOD-04 tests). Creates a category if none is given. */
+export async function makeAsset(opts: MakeAssetOptions = {}) {
+  const categoryId = opts.categoryId ?? (await makeAssetCategory()).id;
+  const [row] = await db
+    .insert(hr_assets)
+    .values({
+      device_name: opts.deviceName ?? `Test Laptop ${uniq()}`,
+      serial_number: opts.serialNumber ?? `SN-${uniq()}`,
+      category_id: categoryId,
+      status: opts.status ?? "AVAILABLE",
+      assigned_to_employee_id: opts.assignedToEmployeeId ?? null,
+      assigned_at: opts.assignedToEmployeeId ? new Date() : null,
+      has_issue: opts.hasIssue ?? "NO",
+      is_flagged: opts.isFlagged ?? false,
+    })
+    .returning();
+  return row;
+}
+
+/** Insert an hr_asset_assignments row directly (MOD-04 history tests). */
+export async function makeAssetAssignment(opts: {
+  assetId: string;
+  employeeId: string;
+  assignedBy?: number | null;
+  assignedAt?: Date;
+  returnedAt?: Date | null;
+  returnCondition?: string | null;
+  notes?: string | null;
+}) {
+  const [row] = await db
+    .insert(hr_asset_assignments)
+    .values({
+      asset_id: opts.assetId,
+      employee_id: opts.employeeId,
+      assigned_by: opts.assignedBy ?? null,
+      assigned_at: opts.assignedAt ?? new Date(),
+      returned_at: opts.returnedAt ?? null,
+      return_condition: opts.returnCondition ?? null,
+      notes: opts.notes ?? null,
+    })
     .returning();
   return row;
 }

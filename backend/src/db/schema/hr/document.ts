@@ -18,6 +18,9 @@ export const hr_documents = pgTable(
     downloads: integer("downloads").default(0).notNull(),
     status: documentStatusEnum("status").default("DRAFT").notNull(),
     access: jsonb("access").notNull(), // Stores rules containing types, targets, permissions, and owners
+    // Version history: appended on each replace-file PATCH — [{ key, version, uploaded_at }, ...]
+    // (oldest first). Current file stays in file_path/version; this is prior versions only.
+    versions: jsonb("versions").default([]).notNull(),
     contract_id: uuid("contract_id").references(() => hr_contracts.id), // The dynamic Foreign Key link requested
     // DOC-plus: search-in-file — extracted (normalized) text + when it was indexed. Populated
     // out-of-band after upload via the shared text-extraction service (OCR seam for scans).

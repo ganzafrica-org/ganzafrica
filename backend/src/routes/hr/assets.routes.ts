@@ -38,6 +38,28 @@ router.delete(
   assetsController.deactivateCategory,
 );
 
+// Maintenance routes — mount BEFORE /:id to avoid route shadowing (same reason as
+// categories above: /:id would otherwise swallow GET/POST /maintenance with id="maintenance").
+router.get("/maintenance", read, assetsController.listMaintenance);
+router.post(
+  "/maintenance",
+  manage,
+  validate(assetsValidation.createMaintenanceSchema),
+  assetsController.createMaintenance,
+);
+router.patch(
+  "/maintenance/:id",
+  manage,
+  validate(assetsValidation.updateMaintenanceSchema),
+  assetsController.updateMaintenance,
+);
+router.delete(
+  "/maintenance/:id",
+  manage,
+  validate(assetsValidation.maintenanceIdParamSchema),
+  assetsController.deleteMaintenance,
+);
+
 // Asset routes
 router.post(
   "/",
@@ -70,25 +92,36 @@ router.delete(
   assetsController.deleteAssetImage,
 );
 
-// Maintenance routes
-router.get("/maintenance", read, assetsController.listMaintenance);
+// Assignment / return / flags / history (MOD-04 §4)
 router.post(
-  "/maintenance",
+  "/:id/assign",
   manage,
-  validate(assetsValidation.createMaintenanceSchema),
-  assetsController.createMaintenance,
+  validate(assetsValidation.assignAssetSchema),
+  assetsController.assignAsset,
 );
-router.patch(
-  "/maintenance/:id",
+router.post(
+  "/:id/return",
   manage,
-  validate(assetsValidation.updateMaintenanceSchema),
-  assetsController.updateMaintenance,
+  validate(assetsValidation.returnAssetSchema),
+  assetsController.returnAsset,
 );
-router.delete(
-  "/maintenance/:id",
+router.post(
+  "/:id/flag",
   manage,
-  validate(assetsValidation.maintenanceIdParamSchema),
-  assetsController.deleteMaintenance,
+  validate(assetsValidation.flagAssetSchema),
+  assetsController.flagAsset,
+);
+router.post(
+  "/:id/unflag",
+  manage,
+  validate(assetsValidation.assetIdParamSchema),
+  assetsController.unflagAsset,
+);
+router.get(
+  "/:id/history",
+  read,
+  validate(assetsValidation.assetIdParamSchema),
+  assetsController.getAssetHistory,
 );
 
 export default router;

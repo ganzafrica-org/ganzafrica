@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -13,9 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { assetsService } from "@/services/assets.service";
-import { useAssets } from "@/hooks/useAssets";
-import { useAuth } from "@/hooks/useAuth";
+import { useAssets, useCreateMaintenance, useUpdateMaintenance } from "@/hooks/useAssets";
+import { useMe } from "@/hooks/useEmployees";
 import type {
   AssetMaintenance,
   CreateMaintenanceRequest,
@@ -28,22 +28,25 @@ interface MaintenanceFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   maintenance?: AssetMaintenance | null;
-  onSuccess?: () => void;
 }
 
 export function MaintenanceFormSheet({
   open,
   onOpenChange,
   maintenance,
-  onSuccess,
 }: MaintenanceFormSheetProps) {
   const isEdit = !!maintenance;
-  const { user } = useAuth();
+  // requesterId must be the hr_employees.id the backend's requireEmployee() checks
+  // against — useAuth() only exposes the platform user id, which isn't that.
+  const { data: me } = useMe();
 
   const { data } = useAssets();
   const assets = data ?? [];
+  const createMaintenance = useCreateMaintenance();
+  const updateMaintenance = useUpdateMaintenance();
 
-  const [submitting, setSubmitting] = useState(false);
+  const submitting = createMaintenance.isPending || updateMaintenance.isPending;
+  const [closeEntry, setCloseEntry] = useState(false);
 
   const [formData, setFormData] = useState({
     assetId: maintenance?.assetId || "",
@@ -81,40 +84,47 @@ export function MaintenanceFormSheet({
         rejectionReason: "",
       });
     }
+    setCloseEntry(false);
   }, [maintenance, open]);
 
+  const canCloseEntry = isEdit && maintenance?.status === "APPROVED" && !maintenance?.completedAt;
+
   const handleSubmit = async () => {
-    if (!formData.assetId || !formData.title || !user?.id) {
+    if (!formData.assetId || !formData.title || !me?.id) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    setSubmitting(true);
+    // The <input type="date"> below only ever produces a date-only "YYYY-MM-DD" value,
+    // but the backend's z.string().datetime() requires a full ISO timestamp and rejects
+    // anything shorter — so this always needs converting before it's sent.
+    const maintenanceDateIso = new Date(formData.maintenanceDate).toISOString();
+
     try {
       if (isEdit && maintenance) {
         // Modified payload layout to safely align with Update rules
         const payload: UpdateMaintenanceRequest = {
           ...formData,
+          maintenanceDate: maintenanceDateIso,
           price: formData.price || undefined,
+          completedAt: closeEntry ? new Date().toISOString() : undefined,
         };
-        await assetsService.updateMaintenance(maintenance.id, payload);
+        await updateMaintenance.mutateAsync({ id: maintenance.id, payload });
         toast.success("Maintenance record updated");
       } else {
         const payload: CreateMaintenanceRequest = {
           ...formData,
-          requesterId: user.id,
+          maintenanceDate: maintenanceDateIso,
+          requesterId: me.id,
           price: formData.price || undefined,
         };
-        await assetsService.createMaintenance(payload);
+        await createMaintenance.mutateAsync(payload);
         toast.success("Maintenance scheduled successfully");
       }
-      onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
       const message = error.response?.data?.message || "Something went wrong";
       toast.error(message);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -246,6 +256,20 @@ export function MaintenanceFormSheet({
                 setFormData((prev) => ({ ...prev, rejectionReason: e.target.value }))
               }
             />
+          </div>
+        )}
+
+        {canCloseEntry && (
+          <div className="flex items-center gap-2 p-3 rounded-lg border border-emerald-200 bg-emerald-50">
+            <Checkbox
+              id="closeEntry"
+              checked={closeEntry}
+              onCheckedChange={(v) => setCloseEntry(v === true)}
+            />
+            <Label htmlFor="closeEntry" className="text-sm text-emerald-900">
+              Close this maintenance entry (returns the asset to Available if this was the last open
+              entry)
+            </Label>
           </div>
         )}
       </div>

@@ -30,8 +30,9 @@ export const employeesService = {
     return response.data;
   },
   async getMe() {
-    const response = await httpClient.get<Employee>("/hr/employees/me");
-    return response.data;
+    // Backend wraps the payload as { me: Employee }, unlike every other endpoint here.
+    const response = await httpClient.get<{ me: Employee }>("/hr/employees/me");
+    return response.data.me;
   },
   async getEmployeeLeaves(employeeId: string) {
     const response = await httpClient.get<Leave[]>(`/hr/employees/${employeeId}/leaves`);

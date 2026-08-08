@@ -253,4 +253,34 @@ const upload = multer({
   },
 });
 
+// Private upload variant for documents and other sensitive files (ACL: private)
+const privateSpacesStorage = multerS3({
+  s3: s3Client,
+  bucket: env.DO_SPACES_BUCKET,
+  acl: "private", // Private access - no public read
+  key: function (req, file, cb) {
+    const subdir = getFileSubdirectory(file.mimetype);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
+    const filename = uniqueSuffix + "-" + originalName;
+    const key = `uploads/${subdir}/${filename}`;
+    cb(null, key);
+  },
+  contentType: multerS3.AUTO_CONTENT_TYPE,
+  metadata: function (req, file, cb) {
+    cb(null, {
+      originalName: file.originalname,
+      uploadedAt: new Date().toISOString(),
+    });
+  },
+});
+
+export const privateUpload = multer({
+  storage: privateSpacesStorage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  },
+});
+
 export default upload;

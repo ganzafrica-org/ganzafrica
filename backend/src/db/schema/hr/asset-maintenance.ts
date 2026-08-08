@@ -17,6 +17,11 @@ export const hr_asset_maintenance = pgTable("hr_asset_maintenance", {
   price: numeric("price", { precision: 12, scale: 2 }),
   maintenance_date: timestamp("maintenance_date", { withTimezone: true }).defaultNow(),
 
+  // MOD-04: when set, this entry is "closed" — it no longer holds the asset in
+  // UNDER_MAINTENANCE. Only meaningful once status is APPROVED (PENDING/REJECTED
+  // entries never affect asset status regardless of this column).
+  completed_at: timestamp("completed_at", { withTimezone: true }),
+
   ...timestampFields,
 });
 

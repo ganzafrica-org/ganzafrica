@@ -1,17 +1,20 @@
-﻿import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { sendResponse } from "@/utils/sendResponse";
-import { getEmployeeForUser } from "@/services/hr/employee-context";
+import { getEmployeeForUser, getAccessContext } from "@/services/hr/employee-context";
 import * as documentService from "../../services/hr/document.service";
 import * as retentionService from "../../services/hr/document-retention.service";
 import { AppError } from "@/middlewares";
 
-// Helper to assert user context contains IT or HR clearance roles
-const assertAdminControlRole = (req: Request) => {
-  const userRole = (req as any).user?.role; // Assuming authorization middleware appends user profile
-  if (userRole !== "HR" && userRole !== "IT") {
-    throw new AppError("Forbidden: Only HR and IT roles can control the Documents API.", 403);
-  }
-};
+/** multer-s3 augments the uploaded file with `location`/`key` (not part of Express.Multer.File). */
+function uploadedFile(req: Request): documentService.UploadedFile | undefined {
+  const file = req.file as unknown as { key?: string; size?: number; originalname?: string };
+  if (!file?.key) return undefined;
+  return { key: file.key, size: file.size ?? 0, originalName: file.originalname ?? file.key };
+}
+
+async function accessContext(req: Request) {
+  return getAccessContext(Number(req.user!.id), req.user?.roles ?? []);
+}
 
 export const listDocuments = async (
   req: Request,
@@ -19,23 +22,52 @@ export const listDocuments = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    // Open visibility list checks can be left unrestricted or constrained based on permissions setup
+    const ctx = await accessContext(req);
     const q = req.query as unknown as Record<string, string | undefined>;
     const page = q.page ? parseInt(q.page, 10) : 1;
     const limit = q.limit ? parseInt(q.limit, 10) : 10;
 
-    const { data, total } = await documentService.listDocuments({
-      page,
-      limit,
-      category: q.category as documentService.DocumentCategory | undefined,
-      status: q.status as documentService.DocumentStatus | undefined,
-      sortBy: q.sortBy as documentService.ListDocumentsQuery["sortBy"],
-      sortOrder: (q.sortOrder as "asc" | "desc" | undefined) ?? "desc",
-    });
+    const { data, total } = await documentService.listDocuments(
+      {
+        page,
+        limit,
+        category: q.category as documentService.DocumentCategory | undefined,
+        status: q.status as documentService.DocumentStatus | undefined,
+        search: q.search,
+        employeeId: q.employee,
+        sortBy: q.sortBy as documentService.ListDocumentsQuery["sortBy"],
+        sortOrder: (q.sortOrder as "asc" | "desc" | undefined) ?? "desc",
+      },
+      ctx,
+    );
 
     sendResponse(res, {
       success: true,
       message: "Documents fetched successfully",
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const listMyDocuments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const ctx = await accessContext(req);
+    const q = req.query as unknown as Record<string, string | undefined>;
+    const page = q.page ? parseInt(q.page, 10) : 1;
+    const limit = q.limit ? parseInt(q.limit, 10) : 10;
+
+    const { data, total } = await documentService.listMyDocuments(ctx, { page, limit });
+
+    sendResponse(res, {
+      success: true,
+      message: "Your documents fetched successfully",
       data,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 },
     });
@@ -50,15 +82,15 @@ export const searchDocuments = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
+    const ctx = await accessContext(req);
     const q = req.query as unknown as Record<string, string | undefined>;
     const page = q.page ? parseInt(q.page, 10) : 1;
     const limit = q.limit ? parseInt(q.limit, 10) : 10;
 
-    const { data, total } = await documentService.searchDocuments({
-      q: q.q ?? "",
-      page,
-      limit,
-    });
+    const { data, total } = await documentService.searchDocuments(
+      { q: q.q ?? "", page, limit },
+      ctx,
+    );
 
     sendResponse(res, {
       success: true,
@@ -77,7 +109,6 @@ export const previewRetention = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    assertAdminControlRole(req);
     const { due, count } = await retentionService.previewRetention();
     sendResponse(res, {
       success: true,
@@ -96,7 +127,6 @@ export const setRetention = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    assertAdminControlRole(req);
     const { id } = req.params;
     const raw = (req.body as { retain_until?: string | null }).retain_until;
     // undefined → derive from category default; null → clear; string → explicit date.
@@ -118,7 +148,8 @@ export const getDocument = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const document = await documentService.getDocument(req.params.id);
+    const ctx = await accessContext(req);
+    const document = await documentService.getDocument(req.params.id, ctx);
     sendResponse(res, { success: true, message: "Document details retrieved", data: document });
   } catch (err) {
     next(err);
@@ -131,19 +162,23 @@ export const createDocument = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    assertAdminControlRole(req);
+    const file = uploadedFile(req);
+    if (!file) throw new AppError("A file is required", 400);
+
     // The creator is the authenticated user's employee record, not the platform user id.
     const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
 
     const created = await documentService.createDocument({
       ...req.body,
+      access: req.body.access ?? {},
       createdById: employeeId,
+      file,
     });
 
     res.status(201);
     sendResponse(res, {
       success: true,
-      message: "Document structure created successfully",
+      message: "Document created successfully",
       data: created,
     });
   } catch (err) {
@@ -157,8 +192,8 @@ export const updateDocument = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    assertAdminControlRole(req);
-    const updated = await documentService.updateDocument(req.params.id, req.body);
+    const file = uploadedFile(req);
+    const updated = await documentService.updateDocument(req.params.id, { ...req.body, file });
     sendResponse(res, { success: true, message: "Document updated successfully", data: updated });
   } catch (err) {
     next(err);
@@ -171,9 +206,8 @@ export const deleteDocument = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    assertAdminControlRole(req);
     await documentService.deleteDocument(req.params.id);
-    sendResponse(res, { success: true, message: "Document deleted successfully", data: {} });
+    sendResponse(res, { success: true, message: "Document archived successfully", data: {} });
   } catch (err) {
     next(err);
   }
@@ -185,12 +219,43 @@ export const downloadDocument = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { absolutePath, fileName } = await documentService.incrementDownloadsAndGetPath(
-      req.params.id,
-    );
+    const ctx = await accessContext(req);
+    const { url } = await documentService.getDownloadUrl(req.params.id, ctx);
+    res.redirect(302, url);
+  } catch (err) {
+    next(err);
+  }
+};
 
-    res.download(absolutePath, fileName, (err) => {
-      if (err) next(err);
+/** JSON (not a redirect): the frontend needs the raw URL string to embed in a native <iframe>/
+ * <img>/<video> or hand to the Office Online Viewer — a 302 only helps a top-level navigation. */
+export const getDocumentViewUrl = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const ctx = await accessContext(req);
+    const { url, fileName } = await documentService.getViewUrl(req.params.id, ctx);
+    sendResponse(res, { success: true, message: "View URL generated", data: { url, fileName } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/** Raw text content for formats the frontend renders itself (csv/txt/json/xml/css/js). */
+export const getDocumentContent = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const ctx = await accessContext(req);
+    const { text, fileName, truncated } = await documentService.getViewableText(req.params.id, ctx);
+    sendResponse(res, {
+      success: true,
+      message: "Document content fetched",
+      data: { text, fileName, truncated },
     });
   } catch (err) {
     next(err);

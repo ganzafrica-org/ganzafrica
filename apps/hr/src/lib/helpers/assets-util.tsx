@@ -108,6 +108,34 @@ export const getUrgencyBadge = (urgency: string) => {
   }
 };
 
+const CATEGORY_CHART_COLORS = [
+  "#10b981",
+  "#3b82f6",
+  "#f59e0b",
+  "#8b5cf6",
+  "#ef4444",
+  "#14b8a6",
+  "#f97316",
+  "#6366f1",
+];
+
+/** Groups the real asset list by category_id into {category, count} pairs for the analytics pie chart. */
+export const computeCategoryDistribution = (
+  assets: { categoryId: string }[],
+  categories: { id: string; name: string }[],
+): { category: string; count: number; fill: string }[] => {
+  const counts = new Map<string, number>();
+  for (const asset of assets) {
+    counts.set(asset.categoryId, (counts.get(asset.categoryId) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries()).map(([categoryId, count], index) => ({
+    category: categories.find((c) => c.id === categoryId)?.name ?? "Uncategorized",
+    count,
+    fill: CATEGORY_CHART_COLORS[index % CATEGORY_CHART_COLORS.length],
+  }));
+};
+
 export const getCategoryIcon = (category: string) => {
   switch (category) {
     case "laptop":

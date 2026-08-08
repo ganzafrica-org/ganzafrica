@@ -15,6 +15,10 @@ export const listPoliciesSchema = z.object({
     limit: z.string().optional(),
     category: z.string().optional(),
     status: z.enum(POLICY_STATUSES).optional(),
+    active: z
+      .string()
+      .optional()
+      .transform((v) => v === "true"),
     sortBy: z.enum(["title", "version", "updatedAt", "downloads"]).optional(),
     sortOrder: z.enum(["asc", "desc"]).optional(),
   }),
