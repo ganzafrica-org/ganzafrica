@@ -110,3 +110,84 @@ describe("MOD-01 employees API", () => {
     expect((await subject.agent.get(`${API}/me`)).status).toBe(200);
   });
 });
+
+describe("MOD-01 field-set matrix — every field x {self, hr} x {200, 422}", () => {
+  let hrOwnedFields: [string, unknown][];
+
+  beforeEach(async () => {
+    await resetDb();
+    clearPermissionCache();
+    await ensureRole("employee");
+    await ensureRole("hr");
+    await grant("hr", "employees", "read");
+    await grant("hr", "employees", "manage");
+    await grant("employee", "employees_self", "read");
+
+    // manager_id needs a real, distinct employee row to point at (self-management is its own guard).
+    const manager = await loginAsEmployee();
+
+    hrOwnedFields = [
+      ["first_name", "Zoe"],
+      ["last_name", "Zephyr"],
+      ["employee_number", `EMP-${Date.now()}`],
+      ["work_email", `hr-owned-${Date.now()}@example.com`],
+      ["job_title", "Engineer II"],
+      ["department", "Ops"],
+      ["employment_type", "contractor"],
+      ["status", "on_leave"],
+      ["manager_id", manager.employee.id],
+      ["hired_at", "2020-01-01"],
+    ];
+  });
+
+  const selfOwnedFields: [string, unknown][] = [
+    ["phone", "0788111222"],
+    ["picture", "https://cdn.example.com/avatar.png"],
+    ["personal_email", `self-owned-${Date.now()}@example.com`],
+    ["home_city", "Kigali"],
+    ["home_country", "Rwanda"],
+    ["citizenship", "Rwandan"],
+  ];
+
+  it.each([
+    ["first_name"],
+    ["last_name"],
+    ["employee_number"],
+    ["work_email"],
+    ["job_title"],
+    ["department"],
+    ["employment_type"],
+    ["status"],
+    ["manager_id"],
+    ["hired_at"],
+  ])("HR-owned field '%s': 200 via HR PATCH, 422 via self PATCH", async (fieldName) => {
+    const subject = await loginAsEmployee();
+    const hr = await loginAsEmployee("hr");
+    const [, value] = hrOwnedFields.find(([f]) => f === fieldName)!;
+
+    const asHr = await hr.agent.patch(`${API}/${subject.employee.id}`).send({ [fieldName]: value });
+    expect(asHr.status).toBe(200);
+
+    const asSelf = await subject.agent.patch(`${API}/me/profile`).send({ [fieldName]: value });
+    expect(asSelf.status).toBe(422);
+    expect(asSelf.body.code).toBe("FIELD_NOT_EDITABLE");
+  });
+
+  it.each(selfOwnedFields.map(([f]) => [f]))(
+    "self-owned field '%s': 200 via self PATCH, 422 via HR PATCH",
+    async (fieldName) => {
+      const subject = await loginAsEmployee();
+      const hr = await loginAsEmployee("hr");
+      const [, value] = selfOwnedFields.find(([f]) => f === fieldName)!;
+
+      const asSelf = await subject.agent.patch(`${API}/me/profile`).send({ [fieldName]: value });
+      expect(asSelf.status).toBe(200);
+
+      const asHr = await hr.agent
+        .patch(`${API}/${subject.employee.id}`)
+        .send({ [fieldName]: value });
+      expect(asHr.status).toBe(422);
+      expect(asHr.body.code).toBe("FIELD_NOT_EDITABLE");
+    },
+  );
+});

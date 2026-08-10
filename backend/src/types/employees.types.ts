@@ -57,6 +57,10 @@ export interface DirectoryRow {
   employment_type: string;
   status: string;
   picture: string | null;
+  phone: string | null;
+  citizenship: string | null;
+  home_country: string | null;
+  home_city: string | null;
   hired_at: string | null;
   manager: { id: string; first_name: string; last_name: string } | null;
   /** Null when the employees row has no linked users account (a data gap HR can repair). */

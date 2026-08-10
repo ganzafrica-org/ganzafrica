@@ -20,6 +20,7 @@ import {
 import { AppError } from "@/middlewares";
 import { hashPassword } from "../auth.service";
 import { randomBytes } from "crypto";
+import { getEmployeeForUser } from "./employee-context";
 import {
   HR_EDITABLE_FIELDS,
   HR_SETTABLE_STATUSES,
@@ -48,13 +49,18 @@ async function hasAnyRole(userId: number, names: string[]): Promise<boolean> {
 
 export const canManageEmployees = (userId: number) => hasAnyRole(userId, ["hr", "admin"]);
 
+/**
+ * Delegates to the shared `getEmployeeForUser` seam (employee-context.ts) rather than querying
+ * `employees` directly, so FND-07's swap to `getEmployeeForUser` touches only that one file.
+ * Nullable here (unlike the seam, which throws) because callers use this for an own-row check
+ * that must tolerate "no profile" rather than fail the whole request.
+ */
 async function employeeIdForUser(userId: number): Promise<string | null> {
-  const [row] = await db
-    .select({ id: employees.id })
-    .from(employees)
-    .where(eq(employees.user_id, userId))
-    .limit(1);
-  return row?.id ?? null;
+  try {
+    return (await getEmployeeForUser(userId)).employeeId;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -89,6 +95,10 @@ const DIRECTORY_COLUMNS = {
   employment_type: employees.employment_type,
   status: employees.status,
   picture: employees.picture,
+  phone: employees.phone,
+  citizenship: employees.citizenship,
+  home_country: employees.home_country,
+  home_city: employees.home_city,
   hired_at: employees.hired_at,
   manager_id: employees.manager_id,
   account_email: users.email,
@@ -130,6 +140,10 @@ async function attachManagers(rows: DirectoryQueryRow[]): Promise<DirectoryRow[]
     employment_type: r.employment_type as string,
     status: r.status as string,
     picture: r.picture as string | null,
+    phone: r.phone as string | null,
+    citizenship: r.citizenship as string | null,
+    home_country: r.home_country as string | null,
+    home_city: r.home_city as string | null,
     hired_at: r.hired_at as string | null,
     manager: byId.get(r.manager_id as string) ?? null,
     account: r.account_email

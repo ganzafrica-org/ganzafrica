@@ -2,7 +2,10 @@
 export type EmploymentType = "full-time" | "part-time";
 export type CompensationType = "hourly" | "salaried";
 export type SalaryScale = "annual" | "monthly" | "weekly" | "daily";
-export type ContractStatus = "ACTIVE" | "EXPIRED" | "TERMINATED";
+export type ContractStatus = "DRAFT" | "ACTIVE" | "EXPIRED" | "TERMINATED";
+
+/** Statuses HR may set directly via PATCH. TERMINATED belongs to LCM-02's offboarding flow. */
+export const HR_SETTABLE_CONTRACT_STATUSES: ContractStatus[] = ["DRAFT", "ACTIVE", "EXPIRED"];
 
 export interface ContractRecord {
   id: string;

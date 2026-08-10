@@ -306,7 +306,7 @@ export default function AssetsPage() {
             </Avatar>
             <div>
               <div className="text-sm font-medium truncate max-w-[120px]">
-                {emp ? `${emp.firstName} ${emp.lastName}` : (assignedToId as string)}
+                {emp ? `${emp.first_name} ${emp.last_name}` : (assignedToId as string)}
               </div>
             </div>
           </div>

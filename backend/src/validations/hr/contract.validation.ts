@@ -30,7 +30,7 @@ const contractBodyBase = {
     .nullable()
     .optional(),
   employmentAgreementUrl: z.string().url().nullable().optional(),
-  status: z.enum(["ACTIVE", "EXPIRED", "TERMINATED"]).optional(),
+  status: z.enum(["DRAFT", "ACTIVE", "EXPIRED", "TERMINATED"]).optional(),
   notes: z.string().nullable().optional(),
 };
 

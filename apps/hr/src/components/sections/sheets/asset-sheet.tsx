@@ -601,7 +601,7 @@ export const AssetSheet = ({ assetId, onAssign, onReturn }: AssetSheetProps) => 
                 value={
                   asset.assignedToId
                     ? assignedEmployee
-                      ? `${assignedEmployee.firstName} ${assignedEmployee.lastName}`
+                      ? `${assignedEmployee.first_name} ${assignedEmployee.last_name}`
                       : asset.assignedToId
                     : "—"
                 }

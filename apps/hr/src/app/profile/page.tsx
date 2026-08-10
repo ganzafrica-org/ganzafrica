@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import ProfileTab from "@/components/sections/user-profile//profile-tab";
 import LeaveTab from "@/components/sections/user-profile//leave-tab";
 import EditProfileModal from "@/components/sections/user-profile/edit-profile-modal";
@@ -12,16 +12,16 @@ import { useMe, useEmployeeLeaves } from "@/hooks/useEmployees";
 import type { Employee, Leave } from "@/types/api";
 
 const mapEmployeeToProfile = (emp: Employee) => ({
-  id: emp.employeeId ?? emp.id ?? "—",
-  name: emp.name || `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim() || "—",
-  title: emp.position ?? "—",
+  id: emp.employee_number ?? emp.id,
+  name: `${emp.first_name} ${emp.last_name}`.trim(),
+  title: emp.job_title ?? "—",
   department: emp.department ?? "—",
-  status: emp.status ?? "—",
-  hireDate: emp.joinDate ?? "—",
+  status: emp.status,
+  hireDate: emp.hired_at ? new Date(emp.hired_at).toLocaleDateString() : "—",
   workPhone: emp.phone ?? "—",
-  workEmail: emp.email ?? "—",
-  officeLocation: emp.location ?? "—",
-  avatar: emp.avatarUrl ?? "",
+  workEmail: emp.work_email ?? "—",
+  officeLocation: [emp.home_city, emp.home_country].filter(Boolean).join(", ") || "—",
+  avatar: emp.picture ?? "",
 });
 
 const mapLeaveToCard = (leave: Leave) => ({
@@ -40,7 +40,6 @@ const mapLeaveToCard = (leave: Leave) => ({
 export default function ProfileDashboard() {
   const [activeTab, setActiveTab] = useState<"profile" | "leave">("profile");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [employee, setEmployee] = useState<any>(null);
 
   const { data: meData, isLoading: isLoadingProfile, isError: isErrorProfile } = useMe();
   const employeeId = meData?.id ?? "";
@@ -50,18 +49,12 @@ export default function ProfileDashboard() {
     isError: isErrorLeaves,
   } = useEmployeeLeaves(employeeId);
 
-  const leaveList = Array.isArray(leavesResponse) ? leavesResponse : [];
-  const leaves = useMemo(() => leaveList.map(mapLeaveToCard), [leaveList]);
+  const leaves = useMemo(() => {
+    const leaveList = Array.isArray(leavesResponse) ? leavesResponse : [];
+    return leaveList.map(mapLeaveToCard);
+  }, [leavesResponse]);
 
-  useEffect(() => {
-    if (meData) {
-      setEmployee(mapEmployeeToProfile(meData));
-    }
-  }, [meData]);
-
-  const handleSaveProfile = (updatedEmployee: any) => {
-    setEmployee(updatedEmployee);
-  };
+  const employee = useMemo(() => (meData ? mapEmployeeToProfile(meData) : null), [meData]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -128,12 +121,13 @@ export default function ProfileDashboard() {
         )}
       </div>
 
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        employee={employee}
-        onSave={handleSaveProfile}
-      />
+      {meData && (
+        <EditProfileModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          employee={meData}
+        />
+      )}
     </div>
   );
 }

@@ -82,8 +82,8 @@ export function AssignAssetDialog({ asset, onOpenChange }: AssignAssetDialogProp
               <SelectContent>
                 {employees.map((emp) => (
                   <SelectItem key={emp.id} value={emp.id}>
-                    {emp.firstName} {emp.lastName}
-                    <span className="ml-2 text-xs text-slate-400">{emp.position}</span>
+                    {emp.first_name} {emp.last_name}
+                    <span className="ml-2 text-xs text-slate-400">{emp.job_title}</span>
                   </SelectItem>
                 ))}
               </SelectContent>

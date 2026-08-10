@@ -132,7 +132,7 @@ describe("MOD-01 field-set enforcement", () => {
     expect((await updateEmployeeAsHr(employee.id, { status: "on_leave" })).status).toBe("on_leave");
   });
 
-  it("lets an employee edit their own personal fields", async () => {
+  it("lets an employee edit their own personal fields, and reads them back on detail", async () => {
     const { user, employee } = await makeEmployeeUser({ employmentType: "staff" });
     const updated = await updateMyProfile(user.id, { phone: "0788123456", home_city: "Kigali" });
     expect(updated.phone).toBe("0788123456");
@@ -140,6 +140,11 @@ describe("MOD-01 field-set enforcement", () => {
     // Unchanged HR field.
     const [row] = await db.select().from(employees).where(eq(employees.id, employee.id));
     expect(row.status).toBe("active");
+
+    // The self-editable fields must round-trip through the detail/me response, not just the DB row.
+    const detail = await getEmployeeDetail(user.id, employee.id);
+    expect(detail.phone).toBe("0788123456");
+    expect(detail.home_city).toBe("Kigali");
   });
 
   it("rejects an employee editing an HR-owned field", async () => {

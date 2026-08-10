@@ -3,15 +3,16 @@ import { db } from "@/db/client";
 import { hr_contracts } from "@/db/schema";
 import { AppError } from "@/middlewares";
 import { requireEmployee } from "./employee-context";
-import type {
-  CompensationType,
-  ContractRecord,
-  ContractStatus,
-  CreateContractInput,
-  EmploymentTerm,
-  EmploymentType,
-  SalaryScale,
-  UpdateContractInput,
+import {
+  HR_SETTABLE_CONTRACT_STATUSES,
+  type CompensationType,
+  type ContractRecord,
+  type ContractStatus,
+  type CreateContractInput,
+  type EmploymentTerm,
+  type EmploymentType,
+  type SalaryScale,
+  type UpdateContractInput,
 } from "@/types/contract.types";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
 
@@ -80,6 +81,14 @@ export async function createContract(
   await requireEmployee(employeeId);
   validateDateRange(input.startDate, input.endDate);
 
+  if (input.status !== undefined && !HR_SETTABLE_CONTRACT_STATUSES.includes(input.status)) {
+    throw new AppError(
+      `Status '${input.status}' is set by the offboarding process, not directly`,
+      422,
+      "CONTRACT_STATUS_NOT_SETTABLE",
+    );
+  }
+
   // DRAFT → ACTIVE requires the signed agreement on file.
   if ((input.status ?? "ACTIVE") === "ACTIVE" && !input.employmentAgreementUrl) {
     throw new AppError(
@@ -144,6 +153,17 @@ export async function updateContract(
     .limit(1);
 
   if (!rows.length) throw new AppError("Contract not found", 404);
+
+  if (
+    input.status !== undefined &&
+    !HR_SETTABLE_CONTRACT_STATUSES.includes(input.status as ContractStatus)
+  ) {
+    throw new AppError(
+      `Status '${input.status}' is set by the offboarding process, not directly`,
+      422,
+      "CONTRACT_STATUS_NOT_SETTABLE",
+    );
+  }
 
   const startDate = input.startDate ?? rows[0].start_date;
   const endDate = input.endDate !== undefined ? input.endDate : rows[0].end_date;

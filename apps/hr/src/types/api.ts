@@ -53,59 +53,155 @@ export interface RefreshTokenResponse {
   refreshToken: string;
 }
 
-// --- EMPLOYEE ---
-export type EmployeeType = "STAFF" | "FELLOW" | "CONSULTANT";
+// --- EMPLOYEE (matches backend/src/types/employees.types.ts) ---
+export type EmploymentType = "fellow" | "analyst" | "staff" | "contractor" | "intern";
+export type EmployeeLifecycleStatus =
+  | "onboarding"
+  | "active"
+  | "on_leave"
+  | "offboarding"
+  | "exited";
 
-export interface Employee {
-  name: string;
-  role: string;
+export interface EmployeeManagerRef {
   id: string;
-  employeeId: string; // e.g. "GZ001"
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
+}
+
+export interface EmployeeAccountRef {
   email: string;
-  phone: string;
-  position: string;
-  department: string;
-  location: string;
-  country: string;
-  status: "Active" | "On Leave" | "Inactive" | "Terminated";
-  joinDate: string; // ISO date string
-  age?: number;
-  gender?: string;
-  address?: string;
-  managerId?: string;
-  managerName?: string;
-  salary?: number;
-  skills?: string[];
-  avatarUrl?: string;
-  contractId?: string;
-  type: EmployeeType;
+  is_active: boolean;
 }
 
+export interface EmployeeContractSummary {
+  id: string;
+  job_title: string;
+  status: string;
+  start_date: string;
+  end_date: string | null;
+}
+
+/** The shape GET /hr/employees, GET /hr/employees/:id, and GET /hr/employees/me all return. */
+export interface Employee {
+  id: string;
+  user_id: number;
+  first_name: string;
+  last_name: string;
+  work_email: string | null;
+  personal_email: string | null;
+  employee_number: string | null;
+  job_title: string | null;
+  department: string | null;
+  employment_type: EmploymentType;
+  status: EmployeeLifecycleStatus;
+  picture: string | null;
+  phone: string | null;
+  citizenship: string | null;
+  home_country: string | null;
+  home_city: string | null;
+  hired_at: string | null;
+  manager: EmployeeManagerRef | null;
+  /** Null when the employees row has no linked users account (a data gap HR can repair). */
+  account: EmployeeAccountRef | null;
+  /** Present on detail/me responses only (GET /hr/employees, the directory list, omits these). */
+  counts?: { assets: number; open_leave: number; documents: number };
+  contract?: EmployeeContractSummary | null;
+  /** Present on GET /hr/employees/me only. */
+  roles?: string[];
+}
+
+/** POST /hr/employees body — legacy staff manual add. */
 export interface CreateEmployeeRequest {
-  firstName: string;
-  lastName: string;
-  personalEmail: string;
-  workEmail?: string | null;
+  first_name: string;
+  last_name: string;
+  personal_email: string;
+  work_email?: string | null;
+  employee_number?: string | null;
+  job_title?: string | null;
+  department?: string | null;
+  employment_type?: EmploymentType;
+  hired_at?: string | null;
   phone?: string | null;
-  picture?: string | null;
-  citizenship?: string | null;
-  homeCountry?: string | null;
-  homeCity?: string | null;
-  role?: "EMPLOYEE" | "IT" | "HR";
-  platformUserId?: number;
 }
 
-export type UpdateEmployeeRequest = Partial<CreateEmployeeRequest>;
+/** PATCH /hr/employees/:id body — HR-editable fields only (employees-core.service.ts HR_EDITABLE_FIELDS). */
+export type UpdateEmployeeRequest = Partial<{
+  first_name: string;
+  last_name: string;
+  employee_number: string | null;
+  work_email: string | null;
+  job_title: string | null;
+  department: string | null;
+  employment_type: EmploymentType;
+  status: "active" | "on_leave";
+  hired_at: string | null;
+}>;
 
+/** PATCH /hr/employees/me/profile body — self-editable fields only (SELF_EDITABLE_FIELDS). */
+export type UpdateMyProfileRequest = Partial<{
+  phone: string | null;
+  picture: string | null;
+  personal_email: string;
+  home_city: string | null;
+  home_country: string | null;
+  citizenship: string | null;
+}>;
+
+/** Computed client-side from the directory response — there is no backend /hr/employees/stats route. */
 export interface EmployeeStats {
   total: number;
   active: number;
   onLeave: number;
   newThisMonth: number;
-  [key: string]: number; // any other stats the backend returns
 }
+
+/**
+ * GET /hr/employees response shape. Deliberately not PaginatedResponse<T> above — this endpoint
+ * returns `pages`, not `totalPages`.
+ */
+export interface EmployeeDirectoryResponse {
+  data: Employee[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+// --- CONTRACTS (matches backend/src/types/contract.types.ts — camelCase, unlike Employee above) ---
+export type ContractEmploymentTerm = "indefinite" | "definite";
+export type ContractEmploymentType = "full-time" | "part-time";
+export type ContractCompensationType = "hourly" | "salaried";
+export type ContractSalaryScale = "annual" | "monthly" | "weekly" | "daily";
+export type ContractStatus = "DRAFT" | "ACTIVE" | "EXPIRED" | "TERMINATED";
+
+export interface Contract {
+  id: string;
+  employeeId: string;
+  jobTitle: string;
+  department: string | null;
+  workLocation: string | null;
+  manager: string | null;
+  reportTo: string | null;
+  startDate: string;
+  employmentTerm: ContractEmploymentTerm;
+  endDate: string | null;
+  employmentType: ContractEmploymentType;
+  daysPerWeek: number | null;
+  compensationType: ContractCompensationType;
+  salaryScale: ContractSalaryScale | null;
+  currency: string;
+  baseMonthlyRate: string | null;
+  grossAnnualRate: string | null;
+  employmentAgreementUrl: string | null;
+  status: ContractStatus;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateContractRequest = Omit<Contract, "id" | "employeeId" | "createdAt" | "updatedAt">;
+
+export type UpdateContractRequest = Partial<CreateContractRequest>;
 
 // --- LEAVE ---
 export interface Leave {

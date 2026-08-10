@@ -1,18 +1,5 @@
 import React from "react";
-import {
-  Search,
-  Users,
-  Building,
-  FileText,
-  Mail,
-  MoreVertical,
-  Eye,
-  Edit,
-  Trash2,
-  UserX,
-  UserCheck,
-  Plus,
-} from "lucide-react";
+import { Search, Building, FileText, Mail, MoreVertical, Eye, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,13 +16,24 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTable, ColumnDef } from "../table-component";
 import DepartmentChartPage from "./department-chart";
-import { getStatusBadge } from "../attendance/attendance-table";
+import { getInitialsFromName } from "@/lib/helpers/employee-util";
+
+interface DisplayEmployeeRow {
+  id: string;
+  name: string;
+  email: string;
+  position: string;
+  department: string;
+  status: string;
+  joinDate: string;
+  avatar: string;
+  manager: string;
+  hasAccount: boolean;
+}
 
 export const EmployeeManagementContent = ({
   searchTerm,
@@ -44,19 +42,24 @@ export const EmployeeManagementContent = ({
   setStatusFilter,
   departmentFilter,
   setDepartmentFilter,
-  countryFilter,
-  setCountryFilter,
+  departments,
   filteredEmployees,
-  setSelectedEmployee,
-  setShowDetailsDialog,
-  setIsEditing,
-  setEditForm,
-  handleDeleteEmployee,
-  countries,
-  getCountryFlag,
+  onSelectEmployee,
   setShowAddSheet,
-  employeeStats,
-}: any) => {
+  getStatusBadge,
+}: {
+  searchTerm: string;
+  setSearchTerm: (v: string) => void;
+  statusFilter: string;
+  setStatusFilter: (v: string) => void;
+  departmentFilter: string;
+  setDepartmentFilter: (v: string) => void;
+  departments: string[];
+  filteredEmployees: DisplayEmployeeRow[];
+  onSelectEmployee: (row: DisplayEmployeeRow) => void;
+  setShowAddSheet: (v: boolean) => void;
+  getStatusBadge: (status: string) => React.ReactNode;
+}) => {
   // 1. FILTER BAR SECTION
   const renderFilterBar = () => (
     <Card className="mb-6 rounded-lg">
@@ -73,36 +76,27 @@ export const EmployeeManagementContent = ({
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px] border-slate-200 rounded-lg">
+              <SelectTrigger className="w-[150px] border-slate-200 rounded-lg">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent className="rounded-lg">
                 <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="onboarding">Onboarding</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="on_leave">On Leave</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="offboarding">Offboarding</SelectItem>
+                <SelectItem value="exited">Exited</SelectItem>
               </SelectContent>
             </Select>
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger className="w-[160px] border-slate-200 rounded-lg">
+              <SelectTrigger className="w-[180px] border-slate-200 rounded-lg">
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                <SelectItem value="Human Resources">Human Resources</SelectItem>
-                <SelectItem value="East Africa Operations">East Africa Ops</SelectItem>
-                {/* Add other departments here */}
-              </SelectContent>
-            </Select>
-            <Select value={countryFilter} onValueChange={setCountryFilter}>
-              <SelectTrigger className="w-[140px] border-slate-200 rounded-lg">
-                <SelectValue placeholder="Country" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Countries</SelectItem>
-                {countries.map((country: string) => (
-                  <SelectItem key={country} value={country}>
-                    {getCountryFlag(country)} {country}
+                {departments.map((dept) => (
+                  <SelectItem key={dept} value={dept}>
+                    {dept}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -124,7 +118,7 @@ export const EmployeeManagementContent = ({
   );
 
   // 2. EMPLOYEE DIRECTORY SECTION
-  const employeeColumns: ColumnDef<any>[] = [
+  const employeeColumns: ColumnDef<DisplayEmployeeRow>[] = [
     {
       key: "name",
       header: "Employee",
@@ -134,14 +128,18 @@ export const EmployeeManagementContent = ({
           <Avatar className="h-8 w-8">
             <AvatarImage src={employee.avatar} />
             <AvatarFallback className="bg-green-100 text-green-600 text-xs">
-              {employee.name
-                .split(" ")
-                .map((n: any) => n[0])
-                .join("")}
+              {getInitialsFromName(employee.name)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-medium">{employee.name}</div>
+            <div className="font-medium flex items-center gap-1.5">
+              {employee.name}
+              {!employee.hasAccount && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600">
+                  no account
+                </Badge>
+              )}
+            </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Mail className="h-3 w-3" /> {employee.email}
             </div>
@@ -152,40 +150,32 @@ export const EmployeeManagementContent = ({
     {
       key: "position",
       header: "Position",
-      sortable: true,
       className: "text-sm",
     },
     {
       key: "department",
       header: "Department",
-      sortable: true,
       render: (val) => <Badge variant="outline">{val}</Badge>,
     },
     {
-      key: "location",
-      header: "Location",
-      render: (_, employee) => (
-        <div className="text-xs">
-          {getCountryFlag(employee.country)} {employee.location}
-        </div>
-      ),
+      key: "manager",
+      header: "Manager",
+      className: "text-sm",
     },
     {
       key: "status",
       header: "Status",
-      sortable: true,
       render: (val) => getStatusBadge(val),
     },
     {
       key: "joinDate",
-      header: "Join Date",
-      sortable: true,
+      header: "Hired",
       className: "text-sm",
-      render: (val) => new Date(val).toLocaleDateString(),
+      render: (val) => (val ? new Date(val).toLocaleDateString() : "—"),
     },
     {
       key: "actions",
-      header: "Actions",
+      header: "",
       render: (_, employee) => (
         <div onClick={(e) => e.stopPropagation()}>
           <DropdownMenu>
@@ -195,31 +185,8 @@ export const EmployeeManagementContent = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => {
-                  setSelectedEmployee(employee);
-                  setShowDetailsDialog(true);
-                  setIsEditing(false);
-                }}
-              >
+              <DropdownMenuItem onClick={() => onSelectEmployee(employee)}>
                 <Eye className="mr-2 h-4 w-4" /> View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setSelectedEmployee(employee);
-                  setEditForm({ ...employee });
-                  setShowDetailsDialog(true);
-                  setIsEditing(true);
-                }}
-              >
-                <Edit className="mr-2 h-4 w-4" /> Edit Profile
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => handleDeleteEmployee(employee.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -232,12 +199,9 @@ export const EmployeeManagementContent = ({
     <DataTable
       columns={employeeColumns}
       data={filteredEmployees}
-      onRowClick={(employee) => {
-        setSelectedEmployee(employee);
-        setShowDetailsDialog(true);
-        setIsEditing(false);
-      }}
-      showToolbar={false} // Since filter bar is rendered separately
+      onRowClick={onSelectEmployee}
+      showToolbar={false}
+      showPagination={false}
       className="mb-5"
     />
   );
@@ -252,7 +216,15 @@ export const EmployeeManagementContent = ({
         </CardTitle>
         <CardDescription>Employee distribution and statistics</CardDescription>
       </CardHeader>
-      <CardContent className="p-6">{/*<StatGrid stats={employeeStats} />*/}</CardContent>
+      <CardContent className="p-6">
+        <div className="flex flex-wrap gap-2">
+          {departments.map((dept) => (
+            <Badge key={dept} variant="outline" className="text-sm">
+              {dept}
+            </Badge>
+          ))}
+        </div>
+      </CardContent>
     </Card>
   );
 

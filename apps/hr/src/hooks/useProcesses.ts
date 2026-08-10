@@ -22,7 +22,9 @@ function invalidateProcessViews(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: [MY_TASKS] });
 }
 
-export function useProcesses(params: { type?: ProcessType; status?: string } = {}) {
+export function useProcesses(
+  params: { type?: ProcessType; status?: string; employee_id?: string } = {},
+) {
   return useQuery({
     queryKey: [LIST, params],
     queryFn: () => processesService.list(params),

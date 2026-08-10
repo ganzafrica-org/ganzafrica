@@ -2,16 +2,24 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { employeesService } from "@/services/employees.service";
-import type { CreateEmployeeRequest, UpdateEmployeeRequest } from "@/types/api";
+import type {
+  CreateEmployeeRequest,
+  UpdateEmployeeRequest,
+  UpdateMyProfileRequest,
+} from "@/types/api";
 
-export function useEmployees(params?: {
+export interface EmployeesQueryParams {
   search?: string;
-  status?: string;
   department?: string;
-  country?: string;
+  status?: string;
+  employment_type?: string;
   page?: number;
   limit?: number;
-}) {
+  sortBy?: "name" | "department" | "hired_at";
+  sortOrder?: "asc" | "desc";
+}
+
+export function useEmployees(params?: EmployeesQueryParams) {
   return useQuery({
     queryKey: ["employees", params],
     queryFn: () => employeesService.getEmployees(params),
@@ -26,17 +34,17 @@ export function useEmployee(id: string) {
   });
 }
 
-export function useEmployeeStats() {
-  return useQuery({
-    queryKey: ["employeeStats"],
-    queryFn: () => employeesService.getEmployeeStats(),
-  });
-}
-
 export function useMe() {
   return useQuery({
     queryKey: ["employees", "me"],
     queryFn: () => employeesService.getMe(),
+  });
+}
+
+export function useDepartments() {
+  return useQuery({
+    queryKey: ["employees", "departments"],
+    queryFn: () => employeesService.listDepartments(),
   });
 }
 
@@ -54,7 +62,6 @@ export function useCreateEmployee() {
     mutationFn: (payload: CreateEmployeeRequest) => employeesService.createEmployee(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
     },
   });
 }
@@ -67,18 +74,16 @@ export function useUpdateEmployee() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       queryClient.invalidateQueries({ queryKey: ["employee", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
     },
   });
 }
 
-export function useDeleteEmployee() {
+export function useUpdateMyProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => employeesService.deleteEmployee(id),
+    mutationFn: (payload: UpdateMyProfileRequest) => employeesService.updateMyProfile(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["employees"] });
-      queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
+      queryClient.invalidateQueries({ queryKey: ["employees", "me"] });
     },
   });
 }

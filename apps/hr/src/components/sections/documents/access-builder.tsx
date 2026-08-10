@@ -116,7 +116,7 @@ export function AccessBuilder({ value, onChange }: AccessBuilderProps) {
           <div className="flex flex-wrap gap-1.5">
             {selectedEmployees.map((e) => (
               <Badge key={e.id} variant="secondary" className="gap-1 pr-1">
-                {e.firstName} {e.lastName}
+                {e.first_name} {e.last_name}
                 <button
                   type="button"
                   onClick={() => setEmployeeIds(selectedEmployeeIds.filter((id) => id !== e.id))}
@@ -153,7 +153,7 @@ export function AccessBuilder({ value, onChange }: AccessBuilderProps) {
                       onCheckedChange={() => setEmployeeIds(toggle(value.employee_ids, e.id))}
                     />
                     <span>
-                      {e.firstName} {e.lastName}
+                      {e.first_name} {e.last_name}
                     </span>
                     <span className="text-xs text-slate-400 ml-auto">{e.department}</span>
                   </label>
