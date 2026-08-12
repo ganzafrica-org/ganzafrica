@@ -1,7 +1,5 @@
-// ✅ Data integrated — uses useLeaves()
-// Fake data removed: leaveRequests from @/data/employee-data
-// Fields not in API response: department, days (calculated), appliedDate, approver, coveringEmployee (fallbacks)
-
+// Copy of app/leave/page.tsx, with Approvals brought in as a sheet (LeaveApprovalsSheet)
+// instead of a separate /leave/approvals route.
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -20,9 +18,9 @@ import { LeaveProvider } from "@/components/sections/calendar/LeaveContext";
 import { LeaveCalendar } from "@/components/sections/calendar/LeaveCalendar";
 import { Button } from "@/components/ui/button";
 import { Calendar, CircleUser, ClipboardList, Plus, Search } from "lucide-react";
-import Link from "next/link";
 import { BalanceCards } from "@/components/sections/leave/balance-cards";
 import { RequestLeaveDialog } from "@/components/sections/leave/request-leave-dialog";
+import { LeaveApprovalsSheet } from "@/components/sections/leave/leave-approvals-sheet";
 import { useMyLeave } from "@/hooks/useLeaveBalances";
 import { TimeOffStats } from "@/data/Header-data";
 import { StatsHeader } from "@/components/sections/header";
@@ -86,6 +84,7 @@ const Page = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
+  const [approvalsOpen, setApprovalsOpen] = useState(false);
 
   const { data: leavesResponse, isLoading, isError } = useLeaves();
   const { data: myLeave } = useMyLeave();
@@ -150,8 +149,8 @@ const Page = () => {
           stats={TimeOffStats}
           ClassName="w-full"
         />
-        {/* Tab I want */}
-        <Tabs defaultValue="requests" className="w-full flex flex-col">
+
+        <Tabs defaultValue="mine" className="w-full flex flex-col">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <TabsList className="h-auto w-fit gap-1 rounded-xl bg-slate-200 p-1.5">
               <TabsTrigger
@@ -161,13 +160,7 @@ const Page = () => {
                 <CircleUser className="size-4 shrink-0" />
                 My Time Off
               </TabsTrigger>
-              <TabsTrigger
-                value="requests"
-                className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
-              >
-                <ClipboardList className="size-4 shrink-0" />
-                Leave Requests
-              </TabsTrigger>
+
               <TabsTrigger
                 value="calendar"
                 className="inline-flex items-center gap-2 rounded-lg border-0 bg-transparent px-4 py-2.5 text-sm font-medium text-slate-600 shadow-none transition-all duration-200 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm"
@@ -177,8 +170,8 @@ const Page = () => {
               </TabsTrigger>
             </TabsList>
             <div className="flex gap-2">
-              <Button variant="outline" asChild>
-                <Link href="/leave/approvals">Approvals</Link>
+              <Button variant="outline" onClick={() => setApprovalsOpen(true)}>
+                Approvals
               </Button>
               <Button onClick={() => setRequestOpen(true)}>
                 <Plus className="mr-1.5 size-4" /> Request time off
@@ -190,76 +183,9 @@ const Page = () => {
             <BalanceCards balances={myLeave?.balances ?? []} />
           </TabsContent>
 
-          <TabsContent value="requests" className="space-y-6">
-            <Card className="shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                  <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                    <div className="relative flex-1 max-w-sm">
-                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search requests..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400"
-                      />
-                    </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[150px] border-slate-200">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={typeFilter} onValueChange={setTypeFilter}>
-                      <SelectTrigger className="w-[180px] border-slate-200">
-                        <SelectValue placeholder="Leave Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        <SelectItem value="Annual Leave">Annual Leave</SelectItem>
-                        <SelectItem value="Sick Leave">Sick Leave</SelectItem>
-                        <SelectItem value="Personal Leave">Personal Leave</SelectItem>
-                        <SelectItem value="Maternity Leave">Maternity Leave</SelectItem>
-                        <SelectItem value="Study Leave">Study Leave</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm">
-              <CardContent className="p-6 overflow-x-auto">
-                {isLoading && (
-                  <div className="flex items-center justify-center py-12 text-muted-foreground">
-                    Loading...
-                  </div>
-                )}
-
-                {isError && (
-                  <div className="flex items-center justify-center py-12 text-red-500">
-                    Failed to load data. Please try again.
-                  </div>
-                )}
-
-                {!isLoading && !isError && (
-                  <LeaveRequestsTable
-                    data={filteredRequests}
-                    onRowClick={openLeaveSheet}
-                    onViewDetails={openLeaveSheet}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
           <TabsContent value="calendar">
-            <Card className="shadow-sm bg-transparent">
-              <CardContent className="p-0">
+            <Card className="shadow-sm bg-transparent p-0">
+              <CardContent>
                 <LeaveProvider>
                   <LeaveCalendar />
                 </LeaveProvider>
@@ -270,6 +196,7 @@ const Page = () => {
       </div>
 
       <RequestLeaveDialog open={requestOpen} onOpenChange={setRequestOpen} />
+      <LeaveApprovalsSheet open={approvalsOpen} onOpenChange={setApprovalsOpen} />
 
       {selectedRequest && (
         <LeaveDetailSheet

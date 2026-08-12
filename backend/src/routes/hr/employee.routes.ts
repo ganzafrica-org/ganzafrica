@@ -13,6 +13,8 @@ import * as c from "@/controllers/hr/employees-core.controller";
 import * as v from "@/validations/hr/employees-core.validation";
 import * as assetsController from "@/controllers/hr/assets.controller";
 import * as assetsValidation from "@/validations/hr/assets.validation";
+import * as orgController from "@/controllers/hr/org.controller";
+import * as orgValidation from "@/validations/hr/org.validation";
 
 const router: Router = Router();
 
@@ -59,6 +61,24 @@ router.get(
   requirePermission("assets:read", "assets:manage"),
   validate(assetsValidation.employeeAssetsSchema),
   assetsController.getEmployeeAssets,
+);
+
+// MOD-02: reassign/clear a manager (cycle-checked in org.service.ts::setManager).
+router.patch(
+  "/:id/manager",
+  requirePermission("employees:manage"),
+  validate(orgValidation.setManagerSchema),
+  orgController.setManager,
+);
+// MOD-02: employees:read/manage see anyone's reports; the controller also lets a manager read
+// their own (ownership check, not a permission — no bare `authenticate` per auth-and-rbac.md §7,
+// so this still declares the same permission set as the read-adjacent detail route above and the
+// controller widens it for the self case).
+router.get(
+  "/:id/reports",
+  requirePermission("employees:read", "employees:manage", "employees_self:read"),
+  validate(orgValidation.getReportsSchema),
+  orgController.getReports,
 );
 
 export default router;

@@ -12,6 +12,15 @@ export function useContracts(employeeId: string) {
   });
 }
 
+/** Self-service equivalent of useContracts — for a viewer looking at their own record. */
+export function useMyContracts(enabled = true) {
+  return useQuery({
+    queryKey: ["contracts", "me"],
+    queryFn: () => contractsService.listMyContracts(),
+    enabled,
+  });
+}
+
 export function useCreateContract(employeeId: string) {
   const queryClient = useQueryClient();
   return useMutation({

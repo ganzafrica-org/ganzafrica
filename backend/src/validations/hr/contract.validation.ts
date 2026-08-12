@@ -29,7 +29,9 @@ const contractBodyBase = {
     .regex(/^\d+(\.\d{1,2})?$/)
     .nullable()
     .optional(),
-  employmentAgreementUrl: z.string().url().nullable().optional(),
+  // Holds either an hr_documents id (once uploaded via the document module) or a bare external
+  // URL (contracts created before the uploader existed) — no longer strictly a URL.
+  employmentAgreementUrl: z.string().min(1).nullable().optional(),
   status: z.enum(["DRAFT", "ACTIVE", "EXPIRED", "TERMINATED"]).optional(),
   notes: z.string().nullable().optional(),
 };

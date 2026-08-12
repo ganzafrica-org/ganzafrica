@@ -13,7 +13,6 @@ import {
   LogOut,
   Sun,
   Moon,
-  Calendar,
   Settings as SettingsIcon,
   HelpCircle,
   Eye,
@@ -25,6 +24,8 @@ import {
   UserCircle,
   Clock,
 } from "lucide-react";
+import { NotificationList } from "@/components/shared/notification-list";
+import { useUnreadNotificationCount, useMarkAllNotificationsRead } from "@/hooks/useNotifications";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,8 @@ export function Navbar() {
   const pathname = usePathname();
   const isDashboardPage = pathname === "/";
   const useExpandedNavbar = isDashboardPage && !scrolled;
+  const { data: unreadCount } = useUnreadNotificationCount();
+  const markAllRead = useMarkAllNotificationsRead();
 
   useEffect(() => {
     setMounted(true);
@@ -107,7 +110,7 @@ export function Navbar() {
     return [
       { id: "home", label: "Home", href: "/" },
       { id: "my-onboarding", label: "My Onboarding", href: "/onboarding/me" },
-      { id: "time-offs", label: "Time Offs", href: "/leave" },
+      { id: "leave", label: "Time Off", href: "/leave" },
       { id: "documents", label: "Documents", href: "/documents" },
       { id: "signing", label: "Sign", href: "/signing" },
       { id: "my-assets", label: "My Assets", href: "/asset/me" },
@@ -225,7 +228,9 @@ export function Navbar() {
                 className="relative h-10 w-10 rounded-full bg-white/10 text-white hover:bg-brand-accent border-none"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-red-500 rounded-full border-[#134e48]"></span>
+                {!!unreadCount && (
+                  <span className="absolute top-2.5 right-2.5 h-2 w-2 bg-red-500 rounded-full border-[#134e48]"></span>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -234,64 +239,27 @@ export function Navbar() {
             >
               <DropdownMenuLabel className="p-4 flex items-center justify-between">
                 <span className="font-bold text-base">Notifications</span>
-                <Badge
-                  variant="secondary"
-                  className="bg-[#00df82]/10 text-brand-accent border-none"
-                >
-                  3 New
-                </Badge>
+                {!!unreadCount && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-[#00df82]/10 text-brand-accent border-none"
+                  >
+                    {unreadCount} New
+                  </Badge>
+                )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="m-0 bg-white/10" />
               <div className="max-h-80 overflow-y-auto">
-                <div className="p-4 border-b border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                  <div className="flex gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#00df82]/10 flex items-center justify-center shrink-0">
-                      <User className="h-5 w-5 text-brand-accent" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">New application received</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Agricultural Specialist position
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">5 minutes ago</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 border-b border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                  <div className="flex gap-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                      <Calendar className="h-5 w-5 text-blue-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Leave request approved</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Marie Claire Nsengimana
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">1 hour ago</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                  <div className="flex gap-3">
-                    <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
-                      <Settings className="h-5 w-5 text-orange-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">System Update</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Version 2.4 is now live
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">3 hours ago</p>
-                    </div>
-                  </div>
-                </div>
+                <NotificationList />
               </div>
               <DropdownMenuSeparator className="m-0 bg-white/10" />
               <Button
                 variant="ghost"
+                disabled={!unreadCount || markAllRead.isPending}
+                onClick={() => markAllRead.mutate()}
                 className="w-full rounded-none h-12 text-sm text-[#00df82] hover:text-[#00df82] hover:bg-slate-50 dark:hover:bg-white/5"
               >
-                View all notifications
+                Mark all as read
               </Button>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -446,45 +414,37 @@ export function Navbar() {
                 className="relative h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-none"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+                {!!unreadCount && (
+                  <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
               className="w-80 mt-2 p-0 overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-lg"
             >
-              {/* Reuse notification content if needed, for now keeping it simple or consistent */}
               <DropdownMenuLabel className="p-4 flex items-center justify-between">
                 <span className="font-bold text-base">Notifications</span>
-                <Badge
-                  variant="secondary"
-                  className="bg-[#00df82]/10 text-brand-accent border-none"
-                >
-                  3 New
-                </Badge>
+                {!!unreadCount && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-[#00df82]/10 text-brand-accent border-none"
+                  >
+                    {unreadCount} New
+                  </Badge>
+                )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="m-0 bg-slate-100 dark:bg-white/10" />
               <div className="max-h-80 overflow-y-auto">
-                {/* Sample notification items for mobile too */}
-                <div className="p-4 border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                  <div className="flex gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#00df82]/10 flex items-center justify-center shrink-0">
-                      <User className="h-5 w-5 text-brand-accent" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">New application received</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Agricultural Specialist
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <NotificationList />
               </div>
               <Button
                 variant="ghost"
+                disabled={!unreadCount || markAllRead.isPending}
+                onClick={() => markAllRead.mutate()}
                 className="w-full rounded-none h-12 text-sm text-[#00df82] hover:text-[#00df82] hover:bg-slate-50 dark:hover:bg-white/5"
               >
-                View all notifications
+                Mark all as read
               </Button>
             </DropdownMenuContent>
           </DropdownMenu>

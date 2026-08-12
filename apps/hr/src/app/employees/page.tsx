@@ -1,35 +1,20 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Briefcase } from "lucide-react";
 import { EmployeeManagementContent } from "@/components/sections/employee/employee-tabs-management";
 import { StatsHeader } from "@/components/sections/header";
 import { useEmployees, useDepartments } from "@/hooks/useEmployees";
-import { Badge } from "@/components/ui/badge";
-import type { Employee, EmployeeLifecycleStatus, EmployeeStats } from "@/types/api";
+import { getStatusBadge } from "@/lib/helpers/employee-util";
+import type { Employee, EmployeeStats } from "@/types/api";
 import { AddEmployeeSheet } from "@/components/sections/sheets/add-employee-sheet";
+import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
+import { EmployeeSheet } from "@/components/sections/sheets/employee-sheet";
 
 const PAGE_SIZE = 25;
-
-export const getStatusBadge = (status: EmployeeLifecycleStatus | string) => {
-  switch (status) {
-    case "onboarding":
-      return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Onboarding</Badge>;
-    case "active":
-      return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
-    case "on_leave":
-      return <Badge className="bg-amber-100 text-amber-800 border-amber-200">On Leave</Badge>;
-    case "offboarding":
-      return <Badge className="bg-orange-100 text-orange-800 border-orange-200">Offboarding</Badge>;
-    case "exited":
-      return <Badge className="bg-gray-100 text-gray-700 border-gray-200">Exited</Badge>;
-    default:
-      return <Badge variant="outline">{status ?? "—"}</Badge>;
-  }
-};
 
 /** DataTable/employee-tabs-management still expect a flat display row — this is the only place that shape is built. */
 const mapEmployeeForDisplay = (emp: Employee) => ({
@@ -56,14 +41,15 @@ function computeStats(data: Employee[], total: number): EmployeeStats {
   };
 }
 
-const Page = () => {
-  const router = useRouter();
+const PageContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   const {
     data: employeesResponse,
@@ -101,7 +87,7 @@ const Page = () => {
     setDepartmentFilter,
     departments: departments ?? [],
     filteredEmployees: displayEmployees,
-    onSelectEmployee: (row: { id: string }) => router.push(`/employees/${row.id}`),
+    onSelectEmployee: (row: { id: string }) => setSelectedEmployeeId(row.id),
     setShowAddSheet,
     getStatusBadge,
   });
@@ -109,6 +95,12 @@ const Page = () => {
   useEffect(() => {
     setPage(1);
   }, [searchTerm, statusFilter, departmentFilter]);
+
+  // Deep link from the org chart (or anywhere else): /employees?employee=<id> opens the sheet.
+  useEffect(() => {
+    const employeeId = searchParams.get("employee");
+    if (employeeId) setSelectedEmployeeId(employeeId);
+  }, [searchParams]);
 
   useEffect(() => {
     const mainEl = document.querySelector("main.overflow-auto") as HTMLElement | null;
@@ -142,7 +134,7 @@ const Page = () => {
           stats={mappedStats}
           isLoading={isLoading}
         />
-        <Tabs defaultValue="employees" className="flex flex-col">
+        <Tabs defaultValue="employees" className="w-full flex flex-col">
           <div>{sections.renderFilterBar()}</div>
 
           <TabsContent value="employees">
@@ -196,9 +188,25 @@ const Page = () => {
         </Tabs>
 
         <AddEmployeeSheet open={showAddSheet} onOpenChange={setShowAddSheet} />
+
+        <ReusableSheet
+          open={!!selectedEmployeeId}
+          onOpenChange={(open) => !open && setSelectedEmployeeId(null)}
+          maxWidth="w-full sm:max-w-4xl"
+        >
+          {selectedEmployeeId && (
+            <EmployeeSheet employeeId={selectedEmployeeId} onOpenEmployee={setSelectedEmployeeId} />
+          )}
+        </ReusableSheet>
       </div>
     </div>
   );
 };
+
+const Page = () => (
+  <Suspense fallback={null}>
+    <PageContent />
+  </Suspense>
+);
 
 export default Page;

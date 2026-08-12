@@ -12,6 +12,7 @@ const API = "http://localhost:3002/api";
 const pushMock = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 import EmployeesPage from "@/app/employees/page";

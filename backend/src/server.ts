@@ -1,7 +1,14 @@
-// Resolve the "@/*" path alias in the compiled output. tsc emits the aliases
-// verbatim, so without this the built server crashes on the first "@/..." require.
-// Dev (tsx) resolves them natively; this line is what makes `node dist/server.js` work.
-import "module-alias/register";
+import path from "path";
+
+// Resolve the "@/*" path alias in the compiled output. tsc emits the aliases verbatim, so
+// without this the built server crashes on the first "@/..." require. Only register it for the
+// compiled build (dist/server.js): module-alias hooks Node's resolver globally, and since it
+// remaps to dist/ unconditionally, registering it under `tsx watch` too makes any "@/..." import
+// that already has a (possibly stale) dist/ counterpart resolve there instead of tsx's own,
+// correct, live src/ resolution — silently serving stale compiled code in dev.
+if (path.basename(__dirname) === "dist") {
+  require("module-alias/register");
+}
 import app from "./app";
 import { env, Logger } from "./config";
 import cron from "node-cron";

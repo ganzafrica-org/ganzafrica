@@ -147,6 +147,35 @@ export type UpdateMyProfileRequest = Partial<{
   citizenship: string | null;
 }>;
 
+/** GET /hr/org-chart node shape (MOD-02) — recursive, roots have no implicit parent. */
+export interface OrgTreeNode {
+  id: string;
+  name: string;
+  job_title: string | null;
+  department: string | null;
+  picture: string | null;
+  children: OrgTreeNode[];
+}
+
+/** PATCH /hr/employees/:id/manager body. */
+export interface SetManagerRequest {
+  manager_id: string | null;
+}
+
+/** 422 body on a cycle rejection: `{"error":"cycle","path":[names]}`. */
+export interface CycleErrorResponse {
+  error: "cycle";
+  path: string[];
+}
+
+/** GET /hr/org-chart/unresolved row (MOD-02 backfill worklist). */
+export interface UnresolvedManagerRow {
+  id: string;
+  employee_id: string;
+  raw_text: string;
+  employee_name: string;
+}
+
 /** Computed client-side from the directory response — there is no backend /hr/employees/stats route. */
 export interface EmployeeStats {
   total: number;
@@ -409,12 +438,27 @@ export interface HelpdeskAnswerPayload {
   status?: TicketStatus;
 }
 
+/**
+ * The actual GET /hr/notifications row shape (raw hr_notifications columns) — not the
+ * `{title, body, createdAt, read}` shape this type previously declared, which never matched
+ * what the backend returns (found while mounting the notification UI, MOD-02 Phase 2).
+ */
 export interface NotificationItem {
   id: string;
+  type: string;
+  priority: "LOW" | "NORMAL" | "HIGH" | "CRITICAL";
+  status: "UNREAD" | "READ" | "ARCHIVED";
   title: string;
-  body: string;
-  createdAt: string;
-  read: boolean;
+  message: string;
+  read_at: string | null;
+  created_at: string;
+}
+
+/** GET /hr/notifications response — not PaginatedResponse<T>, it has no page/limit/totalPages. */
+export interface NotificationListResponse {
+  data: NotificationItem[];
+  total: number;
+  unreadCount: number;
 }
 
 export interface AssetMaintenance {

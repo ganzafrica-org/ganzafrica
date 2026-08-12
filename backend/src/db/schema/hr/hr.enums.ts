@@ -108,6 +108,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "PROCESS_TASK_ASSIGNED",
   "PROCESS_TASK_OVERDUE",
   "PROCESS_COMPLETED",
+  "MANAGER_CHANGED",
 ]);
 
 export const notificationStatusEnum = pgEnum("notification_status", ["UNREAD", "READ", "ARCHIVED"]);

@@ -2,6 +2,7 @@
 import { constants, Logger } from "../../config";
 import { AppError } from "../../middlewares";
 import * as contractService from "../../services/hr/contract.service";
+import { getEmployeeForUser } from "../../services/hr/employee-context";
 import type {
   CompensationType,
   ContractStatus,
@@ -245,6 +246,33 @@ export const updateContract = async (req: Request, res: Response): Promise<void>
   } catch (error) {
     logger.error("Update contract error", error);
     handleErrorResponse(error, res, "Update Contract Error");
+  }
+};
+
+/**
+ * Self-service — same pattern as GET /hr/me/assets and /hr/me/documents: authenticate-only,
+ * scoped in the service to the caller's own employee row (resolved via getEmployeeForUser), no
+ * contracts:* permission grant required. `contracts:read`/`manage` stay HR-only in seed-rbac.ts.
+ */
+export const getMyContracts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
+    const contracts = await contractService.listContractsByEmployee(employeeId);
+    res.status(200).json(contracts);
+  } catch (error) {
+    logger.error("Get my contracts error", error);
+    handleErrorResponse(error, res, "Get My Contracts Error");
+  }
+};
+
+export const getMyContract = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { employeeId } = await getEmployeeForUser(Number(req.user!.id));
+    const contract = await contractService.getContractById(employeeId, req.params.contractId);
+    res.status(200).json(contract);
+  } catch (error) {
+    logger.error("Get my contract error", error);
+    handleErrorResponse(error, res, "Get My Contract Error");
   }
 };
 

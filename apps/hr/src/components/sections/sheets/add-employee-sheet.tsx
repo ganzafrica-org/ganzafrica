@@ -16,13 +16,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { useCreateEmployee } from "@/hooks/useEmployees";
-import { contractsService } from "@/services/contracts.service";
 import {
   ContractFormFields,
-  isContractFormComplete,
-  toCreateContractRequest,
+  getMissingContractFields,
   type ContractFormState,
 } from "@/components/sections/contracts/contract-form-fields";
+import { saveContractWithAgreement } from "@/lib/helpers/contract-agreement";
 import type { CreateEmployeeRequest, EmploymentType } from "@/types/api";
 
 type StepType = "profile" | "contract";
@@ -81,6 +80,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   const [profile, setProfile] = useState<ProfileFormState>(emptyProfile);
   const [addContractNow, setAddContractNow] = useState(false);
   const [contract, setContract] = useState<ContractFormState>({ currency: "RWF" });
+  const [agreementFile, setAgreementFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
@@ -92,6 +92,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
     setProfile(emptyProfile);
     setAddContractNow(false);
     setContract({ currency: "RWF" });
+    setAgreementFile(null);
     setError(null);
   };
 
@@ -115,9 +116,13 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   };
 
   const handleSubmit = async () => {
-    if (addContractNow && !isContractFormComplete(contract)) {
+    const missingContractFields = addContractNow
+      ? getMissingContractFields(contract, !!agreementFile)
+      : [];
+    if (missingContractFields.length > 0) {
       setError(
-        "Fill in job title, start date, term, type and compensation, or turn the contract step off.",
+        `Missing required contract field${missingContractFields.length > 1 ? "s" : ""}: ` +
+          `${missingContractFields.join(", ")} — or turn the contract step off.`,
       );
       return;
     }
@@ -142,7 +147,11 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
       if (addContractNow) {
         setIsSubmittingContract(true);
         try {
-          await contractsService.createContract(employee.id, toCreateContractRequest(contract));
+          await saveContractWithAgreement({
+            employeeId: employee.id,
+            form: contract,
+            agreementFile,
+          });
         } finally {
           setIsSubmittingContract(false);
         }
@@ -362,6 +371,8 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
                       <ContractFormFields
                         value={contract}
                         onChange={(patch) => setContract((c) => ({ ...c, ...patch }))}
+                        agreementFile={agreementFile}
+                        onAgreementFileChange={setAgreementFile}
                       />
                     )}
                     {!addContractNow && (

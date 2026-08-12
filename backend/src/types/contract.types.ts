@@ -27,6 +27,8 @@ export interface ContractRecord {
   currency: string;
   baseMonthlyRate: string | null;
   grossAnnualRate: string | null;
+  /** An `hr_documents.id` once the signed agreement is uploaded (MOD-05's document module owns
+   *  the file); a bare external URL for contracts created before the uploader existed. */
   employmentAgreementUrl: string | null;
   status: ContractStatus;
   notes: string | null;

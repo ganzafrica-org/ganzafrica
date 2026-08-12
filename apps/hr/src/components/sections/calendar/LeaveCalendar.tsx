@@ -152,7 +152,7 @@ export function LeaveCalendar() {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex flex-col w-full p-2 bg-orange-500 text-white rounded-lg shadow-sm border-l-4 border-orange-700 overflow-hidden cursor-pointer">
+            <div className="flex flex-col w-full bg-orange-500 text-white rounded-lg shadow-sm border-l-4 border-orange-700 overflow-hidden cursor-pointer">
               <div className="flex items-center gap-1 font-bold text-xs">
                 <span>{emoji}</span>
                 <span className="truncate">{employee?.name}</span>
@@ -176,7 +176,7 @@ export function LeaveCalendar() {
   };
 
   return (
-    <div className="flex overflow-hidden">
+    <div className="flex overflow-hidden py-6">
       {/* Left Sidebar */}
       <div className="w-80 bg-white border border-gray-200 rounded-lg overflow-y-auto shrink-0 flex flex-col">
         <div className="p-6 space-y-8 flex-1">
@@ -236,7 +236,7 @@ export function LeaveCalendar() {
       </div>
 
       {/* Main Content - FullCalendar */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 pl-6">
         <div className="bg-white rounded-lg border p-4 h-full">
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}

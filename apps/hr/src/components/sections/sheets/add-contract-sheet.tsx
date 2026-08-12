@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { Button } from "@/components/ui/button";
-import { useCreateContract, useUpdateContract } from "@/hooks/useContracts";
+import { documentsService } from "@/services/documents.service";
 import {
   ContractFormFields,
-  isContractFormComplete,
-  toCreateContractRequest,
+  getMissingContractFields,
   type ContractFormState,
 } from "@/components/sections/contracts/contract-form-fields";
-import type { Contract } from "@/types/api";
+import { isAgreementDocumentId, saveContractWithAgreement } from "@/lib/helpers/contract-agreement";
+import type { Contract, HrDocument } from "@/types/api";
 
 interface ContractSheetProps {
   employeeId: string;
@@ -47,38 +48,60 @@ function toFormState(contract?: Contract | null): ContractFormState {
 /** Add/edit sheet for a single employee's contract, reused by the employee detail page's Contract tab. */
 export function ContractSheet({ employeeId, open, onOpenChange, contract }: ContractSheetProps) {
   const isEditing = !!contract;
-  const createContract = useCreateContract(employeeId);
-  const updateContract = useUpdateContract(employeeId);
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<ContractFormState>(toFormState(contract));
+  const [agreementFile, setAgreementFile] = useState<File | null>(null);
+  const [existingDocument, setExistingDocument] = useState<HrDocument | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setForm(toFormState(contract));
+    setAgreementFile(null);
+    setExistingDocument(null);
     setError(null);
+
+    if (contract && isAgreementDocumentId(contract.employmentAgreementUrl)) {
+      documentsService
+        .getDocument(contract.employmentAgreementUrl)
+        .then(setExistingDocument)
+        .catch(() => setExistingDocument(null));
+    }
   }, [contract, open]);
 
-  const isSaving = createContract.isPending || updateContract.isPending;
+  const hasAgreement = !!agreementFile || !!existingDocument || !!contract?.employmentAgreementUrl;
+
+  const handleViewExistingAgreement = async () => {
+    if (!existingDocument) return;
+    const { url } = await documentsService.getViewUrl(existingDocument.id);
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   const handleSave = async () => {
-    if (!isContractFormComplete(form)) {
-      setError("Job title, start date, term, type and compensation are required.");
+    const missing = getMissingContractFields(form, hasAgreement);
+    if (missing.length > 0) {
+      setError(`Missing required field${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}.`);
       return;
     }
     setError(null);
+    setIsSaving(true);
     try {
-      if (isEditing && contract) {
-        await updateContract.mutateAsync({
-          contractId: contract.id,
-          payload: toCreateContractRequest(form),
-        });
-      } else {
-        await createContract.mutateAsync(toCreateContractRequest(form));
-      }
+      await saveContractWithAgreement({
+        employeeId,
+        existingContract: contract,
+        form,
+        agreementFile,
+      });
+      queryClient.invalidateQueries({ queryKey: ["contracts", employeeId] });
+      queryClient.invalidateQueries({ queryKey: ["contracts", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
       onOpenChange(false);
     } catch (err: any) {
       setError(
         err?.response?.data?.message ?? err?.response?.data?.error ?? "Failed to save contract.",
       );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -111,6 +134,10 @@ export function ContractSheet({ employeeId, open, onOpenChange, contract }: Cont
         <ContractFormFields
           value={form}
           onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
+          agreementFile={agreementFile}
+          onAgreementFileChange={setAgreementFile}
+          existingAgreementDocument={existingDocument}
+          onViewExistingAgreement={existingDocument ? handleViewExistingAgreement : undefined}
         />
         {error && <p className="text-sm text-red-600 mt-4">{error}</p>}
       </div>

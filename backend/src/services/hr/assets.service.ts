@@ -483,6 +483,19 @@ export interface UpdateMaintenanceInput {
   completedAt?: Date;
 }
 
+function mapAssignment(row: typeof hr_asset_assignments.$inferSelect) {
+  return {
+    id: row.id,
+    assetId: row.asset_id,
+    employeeId: row.employee_id,
+    assignedBy: row.assigned_by,
+    assignedAt: row.assigned_at,
+    returnedAt: row.returned_at,
+    returnCondition: row.return_condition,
+    notes: row.notes,
+  };
+}
+
 function mapMaintenance(row: typeof hr_asset_maintenance.$inferSelect) {
   return {
     id: row.id,
@@ -814,7 +827,10 @@ export async function getAssetHistory(id: string) {
     .where(eq(hr_asset_maintenance.asset_id, id))
     .orderBy(desc(hr_asset_maintenance.maintenance_date));
 
-  return { assignments, maintenance };
+  return {
+    assignments: assignments.map(mapAssignment),
+    maintenance: maintenance.map(mapMaintenance),
+  };
 }
 
 // ── Self-service + LCM-02 gate ──────────────────────────────────────────────

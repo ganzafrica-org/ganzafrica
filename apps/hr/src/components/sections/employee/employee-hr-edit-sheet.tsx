@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUpdateEmployee } from "@/hooks/useEmployees";
-import type { Employee, EmploymentType, UpdateEmployeeRequest } from "@/types/api";
+import { useSetManager } from "@/hooks/useOrg";
+import { ManagerPicker } from "@/components/sections/employee/manager-picker";
+import type {
+  CycleErrorResponse,
+  Employee,
+  EmploymentType,
+  UpdateEmployeeRequest,
+} from "@/types/api";
 
 const EMPLOYMENT_TYPES: EmploymentType[] = ["staff", "fellow", "analyst", "contractor", "intern"];
 
@@ -24,14 +32,17 @@ interface EmployeeHrEditSheetProps {
 }
 
 /**
- * HR-only edit sheet for the employee detail page's Profile tab — HR_EDITABLE_FIELDS exactly.
- * `manager_id` is deliberately absent: the backend supports it, but MOD-01 keeps manager editing
- * out of the UI until MOD-02 ships manager validation.
+ * HR-only edit sheet for the employee detail page's Profile tab — HR_EDITABLE_FIELDS exactly,
+ * plus the manager reassignment MOD-02 adds via its own dedicated, cycle-checked endpoint
+ * (PATCH /hr/employees/:id/manager) rather than the general field-set PATCH above.
  */
 export function EmployeeHrEditSheet({ employee, open, onOpenChange }: EmployeeHrEditSheetProps) {
   const updateEmployee = useUpdateEmployee();
+  const setManager = useSetManager();
   const [form, setForm] = useState<UpdateEmployeeRequest>({});
   const [error, setError] = useState<string | null>(null);
+  const [managerId, setManagerId] = useState<string | null>(null);
+  const [managerName, setManagerName] = useState<string | null>(null);
 
   useEffect(() => {
     setForm({
@@ -45,11 +56,37 @@ export function EmployeeHrEditSheet({ employee, open, onOpenChange }: EmployeeHr
       status: employee.status === "on_leave" ? "on_leave" : "active",
       hired_at: employee.hired_at,
     });
+    setManagerId(employee.manager?.id ?? null);
+    setManagerName(
+      employee.manager
+        ? `${employee.manager.first_name} ${employee.manager.last_name}`.trim()
+        : null,
+    );
     setError(null);
   }, [employee, open]);
 
   const handleSave = async () => {
     setError(null);
+
+    if (managerId !== (employee.manager?.id ?? null)) {
+      try {
+        await setManager.mutateAsync({
+          employeeId: employee.id,
+          payload: { manager_id: managerId },
+        });
+      } catch (err: any) {
+        const data = err?.response?.data as CycleErrorResponse | undefined;
+        if (data?.error === "cycle") {
+          toast.error("That reassignment would create a reporting cycle", {
+            description: data.path.join(" → "),
+          });
+        } else {
+          toast.error(err?.response?.data?.message ?? "Failed to update manager.");
+        }
+        return;
+      }
+    }
+
     try {
       await updateEmployee.mutateAsync({ id: employee.id, payload: form });
       onOpenChange(false);
@@ -148,6 +185,17 @@ export function EmployeeHrEditSheet({ employee, open, onOpenChange }: EmployeeHr
               </SelectContent>
             </Select>
           </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Reporting Manager</Label>
+          <ManagerPicker
+            currentName={managerName}
+            excludeEmployeeId={employee.id}
+            onChange={(id, name) => {
+              setManagerId(id);
+              setManagerName(name);
+            }}
+          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">

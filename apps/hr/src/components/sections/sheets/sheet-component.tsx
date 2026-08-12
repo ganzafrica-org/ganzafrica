@@ -60,7 +60,7 @@ export function ReusableSheet({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => onOpenChange(false)}
-            className="fixed inset-0 bg-black/50 z-[100] h-full border border-green-500"
+            className="fixed inset-0 bg-black/50 z-[100] h-full"
           />
           {/* Sheet Content */}
           <motion.div
@@ -81,7 +81,7 @@ export function ReusableSheet({
               className,
             )}
           >
-            <div className="flex-1 flex flex-col h-full relative border border-red-500">
+            <div className="flex-1 flex flex-col h-full relative">
               {/* Close Button */}
               <button
                 onClick={() => onOpenChange(false)}

@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -9,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { CreateContractRequest } from "@/types/api";
+import { useEmployees } from "@/hooks/useEmployees";
+import type { CreateContractRequest, HrDocument } from "@/types/api";
 
 export type ContractFormState = Partial<CreateContractRequest>;
 
@@ -26,6 +28,13 @@ const CURRENCIES: [string, string][] = [
 interface ContractFormFieldsProps {
   value: ContractFormState;
   onChange: (patch: ContractFormState) => void;
+  /** Newly-picked agreement file, not yet uploaded (upload happens on save — see
+   *  lib/helpers/contract-agreement.ts). Kept out of `value` because it isn't JSON-serializable. */
+  agreementFile: File | null;
+  onAgreementFileChange: (file: File | null) => void;
+  /** The document currently on file when editing an existing contract, if any. */
+  existingAgreementDocument?: HrDocument | null;
+  onViewExistingAgreement?: () => void;
 }
 
 /**
@@ -33,8 +42,26 @@ interface ContractFormFieldsProps {
  * sheet's optional "create a contract now" step and the standalone contract sheet used from the
  * employee detail page's Contract tab.
  */
-export function ContractFormFields({ value, onChange }: ContractFormFieldsProps) {
+export function ContractFormFields({
+  value,
+  onChange,
+  agreementFile,
+  onAgreementFileChange,
+  existingAgreementDocument,
+  onViewExistingAgreement,
+}: ContractFormFieldsProps) {
   const set = (patch: ContractFormState) => onChange({ ...value, ...patch });
+  const { data: employeesData } = useEmployees({ limit: 200 });
+  const managerOptions = (employeesData?.data ?? [])
+    .map((emp) => `${emp.first_name} ${emp.last_name}`.trim())
+    .filter((name, index, all) => name && all.indexOf(name) === index)
+    .sort((a, b) => a.localeCompare(b));
+  // The field is a free-text name on the backend (hr_contracts.manager, not an FK) — a
+  // previously-typed or since-departed name won't be in the fetched list, so keep it
+  // selectable rather than silently dropping it from the picker.
+  if (value.manager && !managerOptions.includes(value.manager)) {
+    managerOptions.unshift(value.manager);
+  }
   const handleBaseMonthlyChange = (val: string) => {
     const monthly = parseFloat(val);
     const annual = isNaN(monthly) ? "" : (monthly * 12).toFixed(2);
@@ -72,11 +99,18 @@ export function ContractFormFields({ value, onChange }: ContractFormFieldsProps)
         </div>
         <div className="space-y-1.5">
           <Label>Manager</Label>
-          <Input
-            placeholder="e.g. Jane Smith"
-            value={value.manager ?? ""}
-            onChange={(e) => set({ manager: e.target.value })}
-          />
+          <Select value={value.manager ?? ""} onValueChange={(v) => set({ manager: v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a manager" />
+            </SelectTrigger>
+            <SelectContent>
+              {managerOptions.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -228,16 +262,44 @@ export function ContractFormFields({ value, onChange }: ContractFormFieldsProps)
 
       <div className="space-y-1.5">
         <Label>
-          Employment Agreement URL{" "}
+          Employment Agreement{" "}
           <span className="text-xs text-gray-400 font-normal">
             (required to set status to Active)
           </span>
         </Label>
-        <Input
-          placeholder="https://…"
-          value={value.employmentAgreementUrl ?? ""}
-          onChange={(e) => set({ employmentAgreementUrl: e.target.value || null })}
-        />
+
+        {existingAgreementDocument && !agreementFile && (
+          <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+            <span className="flex items-center gap-2 text-sm text-gray-700 truncate">
+              <FileText className="h-4 w-4 shrink-0 text-gray-400" />
+              {existingAgreementDocument.document_name}
+            </span>
+            {onViewExistingAgreement && (
+              <button
+                type="button"
+                onClick={onViewExistingAgreement}
+                className="shrink-0 text-xs font-medium text-brand-accent hover:underline"
+              >
+                View
+              </button>
+            )}
+          </div>
+        )}
+
+        <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-500 hover:border-gray-400 hover:bg-gray-50">
+          <Upload className="h-4 w-4 shrink-0" />
+          {agreementFile
+            ? agreementFile.name
+            : existingAgreementDocument
+              ? "Replace file…"
+              : "Upload signed agreement (PDF or Word)…"}
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            className="hidden"
+            onChange={(e) => onAgreementFileChange(e.target.files?.[0] ?? null)}
+          />
+        </label>
       </div>
 
       <div className="space-y-1.5">
@@ -259,14 +321,32 @@ export function ContractFormFields({ value, onChange }: ContractFormFieldsProps)
   );
 }
 
-export function isContractFormComplete(value: ContractFormState): boolean {
-  return !!(
-    value.jobTitle &&
-    value.startDate &&
-    value.employmentTerm &&
-    value.employmentType &&
-    value.compensationType
-  );
+const REQUIRED_FIELDS: { key: keyof ContractFormState; label: string }[] = [
+  { key: "jobTitle", label: "Job title" },
+  { key: "startDate", label: "start date" },
+  { key: "employmentTerm", label: "employment term" },
+  { key: "employmentType", label: "employment type" },
+  { key: "compensationType", label: "compensation type" },
+];
+
+/**
+ * Names of the required fields still missing from `value`, e.g. ["start date", "employment term"].
+ * `hasAgreement` should be true when either a new file was picked or an existing document/URL is
+ * already on file — mirrors the backend's AGREEMENT_URL_REQUIRED check for DRAFT → ACTIVE.
+ */
+export function getMissingContractFields(
+  value: ContractFormState,
+  hasAgreement: boolean,
+): string[] {
+  const missing = REQUIRED_FIELDS.filter((f) => !value[f.key]).map((f) => f.label);
+  if ((value.status ?? "DRAFT") === "ACTIVE" && !hasAgreement) {
+    missing.push("employment agreement");
+  }
+  return missing;
+}
+
+export function isContractFormComplete(value: ContractFormState, hasAgreement: boolean): boolean {
+  return getMissingContractFields(value, hasAgreement).length === 0;
 }
 
 export function toCreateContractRequest(value: ContractFormState): CreateContractRequest {

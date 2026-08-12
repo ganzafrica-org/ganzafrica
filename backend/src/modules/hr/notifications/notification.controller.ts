@@ -10,6 +10,12 @@ import type {
 
 const logger = new Logger("NotificationController");
 
+// `req.user.id` is already the platform `users.id` (auth.middleware.ts), not an `employees.id` —
+// resolvePlatformUserIdFromHrUser expects the latter, so routing through it here always 400'd
+// ("Platform account not linked to HR user"). Found while wiring these routes up for MOD-02/
+// Phase 2; that helper is for the opposite direction (an employees.id -> its linked user).
+const actorId = (req: Request) => Number(req.user!.id);
+
 function handleErrorResponse(error: unknown, res: Response, errorType: string): void {
   if (error instanceof AppError) {
     res.status(error.statusCode).json({ error: errorType, message: error.message });
@@ -23,7 +29,7 @@ function handleErrorResponse(error: unknown, res: Response, errorType: string): 
 
 export const listNotifications = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = await notificationService.resolvePlatformUserIdFromHrUser(req.user!.id);
+    const userId = actorId(req);
     const q = req.query as Record<string, string | undefined>;
 
     const filters: NotificationFilters = {
@@ -43,7 +49,7 @@ export const listNotifications = async (req: Request, res: Response): Promise<vo
 
 export const getUnreadCount = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = await notificationService.resolvePlatformUserIdFromHrUser(req.user!.id);
+    const userId = actorId(req);
     const count = await notificationService.getUnreadCount(userId);
     res.status(200).json({ count });
   } catch (error) {
@@ -54,7 +60,7 @@ export const getUnreadCount = async (req: Request, res: Response): Promise<void>
 
 export const markNotificationRead = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = await notificationService.resolvePlatformUserIdFromHrUser(req.user!.id);
+    const userId = actorId(req);
     await notificationService.markAsRead(req.params.id, userId);
     res.status(200).json({ message: "Notification marked as read" });
   } catch (error) {
@@ -65,7 +71,7 @@ export const markNotificationRead = async (req: Request, res: Response): Promise
 
 export const markAllNotificationsRead = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = await notificationService.resolvePlatformUserIdFromHrUser(req.user!.id);
+    const userId = actorId(req);
     await notificationService.markAllAsRead(userId);
     res.status(200).json({ message: "All notifications marked as read" });
   } catch (error) {
@@ -76,7 +82,7 @@ export const markAllNotificationsRead = async (req: Request, res: Response): Pro
 
 export const archiveNotification = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = await notificationService.resolvePlatformUserIdFromHrUser(req.user!.id);
+    const userId = actorId(req);
     await notificationService.archiveNotification(req.params.id, userId);
     res.status(200).json({ message: "Notification archived" });
   } catch (error) {
@@ -87,7 +93,7 @@ export const archiveNotification = async (req: Request, res: Response): Promise<
 
 export const getNotificationPreferences = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = await notificationService.resolvePlatformUserIdFromHrUser(req.user!.id);
+    const userId = actorId(req);
     const preferences = await notificationService.getPreferences(userId);
     res.status(200).json(preferences);
   } catch (error) {
@@ -98,7 +104,7 @@ export const getNotificationPreferences = async (req: Request, res: Response): P
 
 export const updateNotificationPreferences = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = await notificationService.resolvePlatformUserIdFromHrUser(req.user!.id);
+    const userId = actorId(req);
     const preferences = await notificationService.updatePreferences(userId, req.body);
     res.status(200).json(preferences);
   } catch (error) {

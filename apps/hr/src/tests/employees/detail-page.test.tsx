@@ -1,6 +1,6 @@
 /**
- * MOD-01 §6 item 7 — detail tabs render per role fixture: HR sees edit affordances on HR-set
- * fields, an employee viewing their own record does not.
+ * MOD-01 §6 item 7 — the employee sheet renders per role fixture: HR sees edit affordances on
+ * HR-set fields, an employee viewing their own record does not.
  */
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { screen, cleanup } from "@testing-library/react";
@@ -12,11 +12,6 @@ import { renderWithClient } from "@/tests/recruitment/test-utils";
 const API = "http://localhost:3002/api";
 const EMPLOYEE_ID = "11111111-1111-1111-1111-111111111111";
 
-vi.mock("next/navigation", () => ({
-  useParams: () => ({ id: EMPLOYEE_ID }),
-  useRouter: () => ({ push: vi.fn() }),
-}));
-
 const authState: { roles: string[] } = { roles: ["hr"] };
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({
@@ -27,7 +22,7 @@ vi.mock("@/hooks/useAuth", () => ({
   }),
 }));
 
-import EmployeeDetailPage from "@/app/employees/[id]/page";
+import { EmployeeSheet } from "@/components/sections/sheets/employee-sheet";
 
 afterEach(() => {
   cleanup();
@@ -67,24 +62,26 @@ function mockCommon(meId: string) {
       HttpResponse.json({ me: employeeDetail({ id: meId, roles: authState.roles }) }),
     ),
     http.get(`${API}/hr/employees/${EMPLOYEE_ID}/contracts`, () => HttpResponse.json([])),
-    http.get(`${API}/hr/processes`, () => HttpResponse.json({ processes: [] })),
-    http.get(`${API}/hr/me/process`, () =>
-      HttpResponse.json({ instance: null, tasks: [], progress: null, can_manage: false }),
-    ),
+    http.get(`${API}/hr/me/contracts`, () => HttpResponse.json([])),
+    http.get(`${API}/hr/me/leave`, () => HttpResponse.json({ balances: [], requests: [] })),
   );
 }
 
-describe("Employee detail page", () => {
+describe("Employee sheet", () => {
   it("HR viewing another employee sees the HR edit affordance", async () => {
     authState.roles = ["hr"];
     mockCommon("hr-own-employee-id");
 
-    renderWithClient(<EmployeeDetailPage />);
+    renderWithClient(<EmployeeSheet employeeId={EMPLOYEE_ID} />);
 
-    expect(await screen.findByText("Ada Lovelace")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^edit$/i })).toBeInTheDocument();
+    // The Overview tab's Profile card also renders the name in a "Name" row, so scope to the
+    // sheet header (the only <h2>) rather than a plain findByText, which would match both.
+    expect(await screen.findByRole("heading", { name: "Ada Lovelace" })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("tab", { name: /contract/i }));
+    await userEvent.click(screen.getByRole("button", { name: /profile/i }));
+    expect(await screen.findByRole("button", { name: /^edit$/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /contracts/i }));
     expect(await screen.findByRole("button", { name: /add contract/i })).toBeInTheDocument();
   });
 
@@ -92,13 +89,17 @@ describe("Employee detail page", () => {
     authState.roles = ["employee"];
     mockCommon(EMPLOYEE_ID); // /me resolves to the same id as the record being viewed
 
-    renderWithClient(<EmployeeDetailPage />);
+    renderWithClient(<EmployeeSheet employeeId={EMPLOYEE_ID} />);
 
-    expect(await screen.findByText("Ada Lovelace")).toBeInTheDocument();
+    // The Overview tab's Profile card also renders the name in a "Name" row, so scope to the
+    // sheet header (the only <h2>) rather than a plain findByText, which would match both.
+    expect(await screen.findByRole("heading", { name: "Ada Lovelace" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /profile/i }));
     expect(screen.queryByRole("button", { name: /^edit$/i })).not.toBeInTheDocument();
     expect(screen.getByText(/edit them from your profile page/i)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("tab", { name: /contract/i }));
+    await userEvent.click(screen.getByRole("button", { name: /contracts/i }));
     await screen.findByText("No contracts yet.");
     expect(screen.queryByRole("button", { name: /add contract/i })).not.toBeInTheDocument();
   });
