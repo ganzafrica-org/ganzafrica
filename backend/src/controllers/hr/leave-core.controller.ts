@@ -109,6 +109,18 @@ export const pendingApprovals = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Role-scoped leave request list (any status): the employee's own plus their reports' for a
+ * regular user, or every request in the org for HR/admin. Backs the "Leave Requests" table.
+ */
+export const visibleLeaves = async (req: Request, res: Response) => {
+  try {
+    return res.json({ leaves: await leave.listVisibleLeaves(actorId(req)) });
+  } catch (e) {
+    return handleError(res, e, "List Visible Leaves Error");
+  }
+};
+
 export const approveLeave = async (req: Request, res: Response) => {
   try {
     const decided = await leave.decideLeave(actorId(req), req.params.id, "APPROVED", req.body.note);

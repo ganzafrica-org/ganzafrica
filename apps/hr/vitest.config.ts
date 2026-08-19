@@ -23,6 +23,8 @@ export default defineConfig({
         "src/lib/recruitment/**",
         "src/services/recruitment.service.ts",
         "src/hooks/useRecruitment.ts",
+        "src/services/leaves.service.ts",
+        "src/components/sections/documents/access-builder.tsx",
       ],
       reporter: ["text-summary"],
       thresholds: {

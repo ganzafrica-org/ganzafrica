@@ -435,6 +435,63 @@ export async function listPendingApprovals(actorUserId: number) {
     .orderBy(asc(hr_leaves.start_date));
 }
 
+const employeeFullName = sql<string>`${employees.first_name} || ' ' || ${employees.last_name}`;
+
+/** DB stores "PENDING"/"APPROVED"/etc; the frontend `Leave` type wants "Pending"/"Approved". */
+function titleCaseStatus(status: string): string {
+  return status.charAt(0) + status.slice(1).toLowerCase();
+}
+
+export interface VisibleLeave {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  type: LeaveTypeName;
+  startDate: Date;
+  endDate: Date;
+  status: string;
+  reason: string;
+}
+
+/**
+ * Leave requests (any status) this user may see: their own plus their reports' — the same
+ * manager-chain scope as `listPendingApprovals`, just not filtered to PENDING — or every request
+ * in the org for HR/admin. Backs the "Leave Requests" table; distinct from `getLeaveCalendar`,
+ * which is approved-only and feeds the calendar widget.
+ */
+export async function listVisibleLeaves(actorUserId: number): Promise<VisibleLeave[]> {
+  const select = () =>
+    db
+      .select({ leave: hr_leaves, employeeName: employeeFullName })
+      .from(hr_leaves)
+      .leftJoin(employees, eq(employees.id, hr_leaves.employee_id));
+
+  const rows = await (async () => {
+    if (await isHrOrAdmin(actorUserId)) {
+      return select().orderBy(desc(hr_leaves.start_date));
+    }
+
+    const actor = await employeeForUser(actorUserId);
+    if (!actor) return [];
+
+    const visible = [actor.id, ...(await reportIdsUnder(actor.id))];
+    return select()
+      .where(inArray(hr_leaves.employee_id, visible))
+      .orderBy(desc(hr_leaves.start_date));
+  })();
+
+  return rows.map((r) => ({
+    id: r.leave.id,
+    employeeId: r.leave.employee_id ?? "",
+    employeeName: r.employeeName ?? "—",
+    type: r.leave.type as LeaveTypeName,
+    startDate: r.leave.start_date,
+    endDate: r.leave.end_date,
+    status: titleCaseStatus(r.leave.status),
+    reason: r.leave.reason,
+  }));
+}
+
 export interface CalendarRange {
   from: Date;
   to: Date;

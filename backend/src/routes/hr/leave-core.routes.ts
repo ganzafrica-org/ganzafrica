@@ -24,6 +24,10 @@ router.post("/me/leave/validate", ...self, validate(v.requestLeaveSchema), c.val
 
 // Approvals — authority resolved in the service (manager chain or leave:manage).
 router.get("/leave/pending-approvals", authenticate, c.pendingApprovals);
+
+// Role-scoped request list (any status) — visibility resolved in the service (own + reports, or
+// everyone for HR/admin). Backs the "Leave Requests" table.
+router.get("/leave/requests", authenticate, c.visibleLeaves);
 router.post("/leave/:id/approve", authenticate, validate(v.decideLeaveSchema), c.approveLeave);
 router.post("/leave/:id/reject", authenticate, validate(v.decideLeaveSchema), c.rejectLeave);
 router.post("/leave/:id/cancel", authenticate, validate(v.uuidIdSchema), c.cancelLeave);
