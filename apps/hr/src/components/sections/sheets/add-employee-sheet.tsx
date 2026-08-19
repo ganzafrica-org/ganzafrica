@@ -188,6 +188,18 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
         return;
       }
       setError(null);
+      // Carry over the fields step 2 genuinely shares with step 1 (job title, department, start
+      // date — the same real-world facts, not re-typed) — but only fill what the contract step
+      // doesn't already have, so an edit made in step 2 survives navigating back and forth rather
+      // than being clobbered by profile's value again. Employment Type is deliberately excluded:
+      // profile.employment_type (staff/contractor/analyst/fellow/intern) and the contract's
+      // employmentType (full-time/part-time) share a label but are different fields entirely.
+      setContract((c) => ({
+        ...c,
+        jobTitle: c.jobTitle || profile.job_title || undefined,
+        department: c.department || profile.department || undefined,
+        startDate: c.startDate || profile.hired_at || undefined,
+      }));
       setCurrentStep("contract");
       return;
     }
