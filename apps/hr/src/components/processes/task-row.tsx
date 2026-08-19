@@ -16,10 +16,12 @@ import {
   CalendarClock,
   Check,
   CircleDot,
+  Eye,
   EyeOff,
   FileSignature,
   Laptop,
   Lock,
+  PenLine,
   SkipForward,
   Umbrella,
   Upload,
@@ -32,8 +34,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCompleteTask, useSkipTask, usePatchTask } from "@/hooks/useProcesses";
-import { useContracts } from "@/hooks/useContracts";
+import { useContracts, useMyContracts } from "@/hooks/useContracts";
+import { useMySignatures } from "@/hooks/useSigning";
 import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
+import { ContractViewSheet } from "@/components/sections/contracts/contract-view-sheet";
+import { TaskSignDialog } from "@/components/processes/task-sign-dialog";
 import type { ProcessTask, TaskKind } from "@/services/processes.service";
 
 const KIND_ICON: Record<TaskKind, React.ComponentType<{ className?: string }>> = {
@@ -73,6 +78,8 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
   const [skipOpen, setSkipOpen] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [viewingContract, setViewingContract] = useState(false);
+  const [signingRequestId, setSigningRequestId] = useState<number | null>(null);
 
   const complete = useCompleteTask();
   const skip = useSkipTask();
@@ -85,10 +92,31 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
   const linkedContractId = (task.link_ref as { contract_id?: string } | null)?.contract_id ?? null;
   const showContractLinking =
     task.kind === "contract_signing" && canManage && !!employeeId && !resolved;
+  const needsLinkedContract = task.kind === "contract_signing" && !!linkedContractId;
   // Only unsent contracts make sense to send for signature — an ACTIVE one is already signed
   // (probably via the manual Contracts-tab path), and a TERMINATED/EXPIRED one shouldn't be.
-  const { data: employeeContracts } = useContracts(showContractLinking ? employeeId! : "");
+  const { data: employeeContracts } = useContracts(
+    employeeId && (showContractLinking || needsLinkedContract) ? employeeId : "",
+  );
   const linkableContracts = employeeContracts?.filter((c) => c.status === "DRAFT") ?? [];
+  // Self-viewing (no employeeId — see app/employees/onboarding/me/page.tsx) needs their own
+  // contract list instead of the HR-only /hr/employees/:id/contracts one above.
+  const { data: myContracts } = useMyContracts(!employeeId && needsLinkedContract);
+  const linkedContract = needsLinkedContract
+    ? ((employeeId ? employeeContracts : myContracts)?.find((c) => c.id === linkedContractId) ??
+      null)
+    : null;
+
+  // "My turn to sign" — independent of isMine/canManage: in the sequential HR-then-employee
+  // flow, whoever's turn it is has a "sent" request against this same contract ref, regardless
+  // of whether they're the onboarding task's assignee.
+  const { data: mySignatures } = useMySignatures();
+  const myPendingSignature =
+    needsLinkedContract && linkedContractId
+      ? (mySignatures?.find(
+          (r) => r.ref_kind === "contract" && r.ref_id === linkedContractId && r.status === "sent",
+        ) ?? null)
+      : null;
 
   async function onLinkContract(contractId: string) {
     setError(null);
@@ -174,12 +202,31 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
           )}
 
           {task.kind === "contract_signing" && linkedContractId && (
-            <div className="mt-1.5">
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
               <ContractSigningStatus
                 refKind="contract"
                 refId={linkedContractId}
                 variant="compact"
               />
+              {linkedContract && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setViewingContract(true)}
+                >
+                  <Eye className="mr-1 size-3" /> View
+                </Button>
+              )}
+              {myPendingSignature && (
+                <Button
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setSigningRequestId(myPendingSignature.id)}
+                >
+                  <PenLine className="mr-1 size-3" /> Sign
+                </Button>
+              )}
             </div>
           )}
           {showContractLinking && !linkedContractId && (
@@ -267,6 +314,23 @@ export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {needsLinkedContract && (
+        <ContractViewSheet
+          contract={linkedContract}
+          open={viewingContract}
+          onOpenChange={setViewingContract}
+          isHr={canManage}
+        />
+      )}
+      {needsLinkedContract && (
+        <TaskSignDialog
+          request={
+            signingRequestId ? (mySignatures?.find((r) => r.id === signingRequestId) ?? null) : null
+          }
+          onClose={() => setSigningRequestId(null)}
+        />
+      )}
     </div>
   );
 }
