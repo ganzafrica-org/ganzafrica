@@ -5,6 +5,7 @@
 
 export type EmploymentType = "fellow" | "analyst" | "staff" | "contractor" | "intern";
 export type EmployeeLifecycleStatus =
+  | "pending"
   | "onboarding"
   | "active"
   | "on_leave"
@@ -39,8 +40,9 @@ export type HrEditableField = (typeof HR_EDITABLE_FIELDS)[number];
 export type SelfEditableField = (typeof SELF_EDITABLE_FIELDS)[number];
 
 /**
- * Statuses HR may set directly. `onboarding` is set by the hire flow and cleared by LCM-01;
- * `offboarding`/`exited` belong to LCM-02, so HR cannot jump an employee straight to exited.
+ * Statuses HR may set directly. `pending`/`onboarding` are set by the hire flow and advanced by
+ * LCM-01 as the employee acts on their checklist; `offboarding`/`exited` belong to LCM-02. HR
+ * cannot jump an employee straight to any of those — all four are system-owned.
  */
 export const HR_SETTABLE_STATUSES: EmployeeLifecycleStatus[] = ["active", "on_leave"];
 

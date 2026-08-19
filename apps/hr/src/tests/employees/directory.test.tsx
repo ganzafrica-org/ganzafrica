@@ -79,6 +79,12 @@ describe("Employees directory", () => {
         last_name: "Onboard",
         status: "onboarding",
       }),
+      employee({
+        id: "66666666-6666-6666-6666-666666666666",
+        first_name: "Penny",
+        last_name: "Pending",
+        status: "pending",
+      }),
     ]);
 
     renderWithClient(<EmployeesPage />);
@@ -86,12 +92,15 @@ describe("Employees directory", () => {
     expect(await screen.findByText("Ada Lovelace")).toBeInTheDocument();
     expect(screen.getByText("Grace Hopper")).toBeInTheDocument();
     expect(screen.getByText("Bea Onboard")).toBeInTheDocument();
+    expect(screen.getByText("Penny Pending")).toBeInTheDocument();
 
     const adaRow = screen.getByText("Ada Lovelace").closest("tr")!;
     const graceRow = screen.getByText("Grace Hopper").closest("tr")!;
     const beaRow = screen.getByText("Bea Onboard").closest("tr")!;
+    const pennyRow = screen.getByText("Penny Pending").closest("tr")!;
     expect(within(adaRow).getByText("Active")).toBeInTheDocument();
     expect(within(graceRow).getByText("On Leave")).toBeInTheDocument();
+    expect(within(pennyRow).getByText("Pending")).toBeInTheDocument();
     expect(within(beaRow).getByText("Onboarding")).toBeInTheDocument();
   });
 

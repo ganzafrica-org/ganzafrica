@@ -3,6 +3,8 @@ import type { EmployeeLifecycleStatus } from "@/types/api";
 
 export const getStatusBadge = (status: EmployeeLifecycleStatus | string) => {
   switch (status) {
+    case "pending":
+      return <Badge className="bg-slate-100 text-slate-700 border-slate-200">Pending</Badge>;
     case "onboarding":
       return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Onboarding</Badge>;
     case "active":

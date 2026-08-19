@@ -357,11 +357,18 @@ export async function linkOrCreateUserForEmployee(
 }
 
 /**
- * Manual create for legacy staff / HR-entered hires. Mirrors REC-05's offer-accept path
- * (offers.service.ts): lands the employee in `onboarding`, not `active`, and instantiates the
- * default onboarding process in the same transaction — a hire that can't get a checklist (no
- * active template for the employment type) shouldn't silently create an employee with nothing
- * to do, so a missing-template 422 rolls back the whole creation, same as REC-05's.
+ * Manual create for legacy staff / HR-entered hires. Instantiates the default onboarding process
+ * in the same transaction as REC-05's offer-accept path (offers.service.ts) does — a hire that
+ * can't get a checklist (no active template for the employment type) shouldn't silently create an
+ * employee with nothing to do, so a missing-template 422 rolls back the whole creation, same as
+ * REC-05's.
+ *
+ * Status starts at `pending`, not `onboarding` — the checklist exists immediately (so there's
+ * something to act on right away), but the employee doesn't count as actively onboarding until
+ * they've done something on it. process.service.ts's completeTask/skipTask flip pending→onboarding
+ * on that first action; maybeCompleteInstance flips onboarding→active when the checklist is done.
+ * (REC-05's offer-accept path still lands new hires straight in `onboarding` — left as-is here,
+ * out of this change's scope; flagging the inconsistency rather than silently touching that file.)
  */
 export async function createEmployee(input: CreateEmployeeInput, actorUserId: number) {
   const email = input.personal_email.toLowerCase();
@@ -407,7 +414,7 @@ export async function createEmployee(input: CreateEmployeeInput, actorUserId: nu
         manager_id: input.manager_id ?? null,
         hired_at: input.hired_at ?? null,
         phone: input.phone ?? null,
-        status: "onboarding",
+        status: "pending",
       })
       .returning();
 

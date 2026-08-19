@@ -376,6 +376,28 @@ async function runKindHook(
   }
 }
 
+/**
+ * An employee starts at `pending` (employees-core.service.ts::createEmployee) even though their
+ * onboarding checklist already exists — they haven't done anything yet. The first action on any
+ * task of that checklist (done or skipped, doesn't matter which) is what "starting onboarding"
+ * means, so that's the hook point; onboarding→active is the existing maybeCompleteInstance path
+ * below, unchanged.
+ */
+async function maybeStartOnboarding(instance: typeof process_instances.$inferSelect) {
+  if (instance.type !== "onboarding") return;
+  const [employee] = await db
+    .select({ status: employees.status })
+    .from(employees)
+    .where(eq(employees.id, instance.employee_id))
+    .limit(1);
+  if (employee?.status === "pending") {
+    await db
+      .update(employees)
+      .set({ status: "onboarding", updated_at: new Date() })
+      .where(eq(employees.id, instance.employee_id));
+  }
+}
+
 export async function completeTask(actorUserId: number, taskId: number, notes?: string) {
   const { task, instance } = await requireTask(db, taskId);
   if (task.status !== "pending") {
@@ -383,6 +405,7 @@ export async function completeTask(actorUserId: number, taskId: number, notes?: 
   }
   await assertCanActOnTask(db, actorUserId, task);
   await runKindHook(task, instance);
+  await maybeStartOnboarding(instance);
 
   const [updated] = await db
     .update(process_tasks)
@@ -414,6 +437,7 @@ export async function skipTask(actorUserId: number, taskId: number, notes: strin
   if (task.is_blocking && !(await isHrOrAdmin(db, actorUserId))) {
     throw new AppError("Only HR can skip a blocking task", 403, "BLOCKING_SKIP_FORBIDDEN");
   }
+  await maybeStartOnboarding(instance);
 
   const [updated] = await db
     .update(process_tasks)

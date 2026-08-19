@@ -66,7 +66,7 @@ describe("MOD-01 employees API", () => {
       employment_type: "staff",
     });
     expect(created.status).toBe(201);
-    expect(created.body.employee.status).toBe("onboarding");
+    expect(created.body.employee.status).toBe("pending");
 
     const list = await hr.agent.get(`${API}?search=Grace`);
     expect(list.body.total).toBe(1);

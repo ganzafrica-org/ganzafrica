@@ -169,6 +169,13 @@
       "when": 1787171471999,
       "tag": "0023_funny_pet_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1787178622184,
+      "tag": "0024_yielding_thunderbolt",
+      "breakpoints": true
     }
   ]
 }

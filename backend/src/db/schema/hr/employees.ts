@@ -45,7 +45,11 @@ export const employees = pgTable(
 
     // 'fellow' | 'analyst' | 'staff' | 'contractor' | 'intern'
     employment_type: text("employment_type").notNull().default("staff"),
-    // 'onboarding' | 'active' | 'on_leave' | 'offboarding' | 'exited'
+    // 'pending' | 'onboarding' | 'active' | 'on_leave' | 'offboarding' | 'exited'
+    // `pending`: just created, hasn't acted on any onboarding task yet. Flips to `onboarding` on
+    // their first task action (process.service.ts's completeTask/skipTask), then `active` once
+    // the onboarding process instance completes (maybeCompleteInstance) — both system-owned, not
+    // HR-settable (see HR_SETTABLE_STATUSES in employees.types.ts).
     status: text("status").notNull().default("active"),
     // Deactivation (reversible — "delete employee" was replaced with this). Independent of
     // `status`, which is HR-lifecycle state owned by the onboarding/offboarding process engine
@@ -64,7 +68,7 @@ export const employees = pgTable(
     ),
     statusCheck: check(
       "employees_status_check",
-      sql`${t.status} IN ('onboarding','active','on_leave','offboarding','exited')`,
+      sql`${t.status} IN ('pending','onboarding','active','on_leave','offboarding','exited')`,
     ),
   }),
 );

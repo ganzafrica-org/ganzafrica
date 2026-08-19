@@ -56,6 +56,7 @@ export interface RefreshTokenResponse {
 // --- EMPLOYEE (matches backend/src/types/employees.types.ts) ---
 export type EmploymentType = "fellow" | "analyst" | "staff" | "contractor" | "intern";
 export type EmployeeLifecycleStatus =
+  | "pending"
   | "onboarding"
   | "active"
   | "on_leave"

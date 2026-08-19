@@ -10,6 +10,7 @@ import { getFileUrl } from "@/middlewares/upload";
 import { sendEmail } from "@/services/email.service";
 import { welcomeEmail } from "@/services/recruitment/offer-emails";
 import { sendPasswordReset } from "@/services/auth.service";
+import { sendNotification } from "@/modules/hr/notifications/notification.service";
 
 const logger = new Logger("EmployeesCoreController");
 
@@ -70,6 +71,17 @@ export const createEmployee = async (req: Request, res: Response) => {
     await sendInviteIfNewAccount(employee, req.ip).catch((e) =>
       logger.error("employee invite email failed (non-fatal)", e),
     );
+    // EMPLOYEE_CREATED already existed as a routed notification type (IT+HR, not the new hire —
+    // they get the email invite above instead) but nothing ever sent one. Surfaces in the same
+    // notification bell/feed every other event type already uses — no new frontend surface needed.
+    await sendNotification({
+      type: "EMPLOYEE_CREATED",
+      triggeredBy: actorId(req),
+      relatedEntity: { employeeId: employee.id },
+      title: "New employee added",
+      message: `${employee.first_name} ${employee.last_name} was added to the system.`,
+      priority: "NORMAL",
+    }).catch((e) => logger.error("employee created notification failed (non-fatal)", e));
     return res.status(201).json({ employee });
   } catch (e) {
     return handleError(res, e, "Create Employee Error");

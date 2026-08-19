@@ -275,7 +275,7 @@ describe("MOD-01 manual create with user linking", () => {
       hrUserId,
     );
 
-    expect(created.status).toBe("onboarding");
+    expect(created.status).toBe("pending");
 
     const [account] = await db.select().from(users).where(eq(users.email, "new.hire@example.com"));
     expect(account).toBeTruthy();
