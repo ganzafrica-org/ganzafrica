@@ -27,6 +27,7 @@ export default defineConfig({
         "src/services/text-extraction.service.ts",
         "src/services/signing.service.ts",
         "src/services/hr/document-retention.service.ts",
+        "src/services/hr/document-category-template.service.ts",
         "src/services/hr/leave-core.service.ts",
         "src/services/hr/leave-days.ts",
         "src/services/hr/process.service.ts",
@@ -62,6 +63,14 @@ export default defineConfig({
         "src/services/hr/process.service.ts": {
           statements: 90,
           branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+        // Document category templates (additive v1 entity) — 90% statements/functions/lines,
+        // 85% branches per this task's test discipline.
+        "src/services/hr/document-category-template.service.ts": {
+          statements: 90,
+          branches: 85,
           functions: 90,
           lines: 90,
         },

@@ -43,6 +43,7 @@ import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { DataTable, ColumnDef } from "@/components/sections/table-component";
 import { DocumentFormSheet } from "@/components/sections/documents/document-form-sheet";
 import { DocumentDetailSheet } from "@/components/sections/documents/document-detail-sheet";
+import { CategoryTemplateEntryPoint } from "@/components/sections/documents/category-template-sheet";
 import { StatsHeader } from "@/components/sections/header";
 import { useDocuments, useArchiveDocument } from "@/hooks/useDocuments";
 import { usePolicies } from "@/hooks/usePolicies";
@@ -483,6 +484,12 @@ export default function DocumentManagementPage() {
           </TabsContent>
 
           <TabsContent value="categories" className="space-y-4">
+            {/* MOD-05-plus: HR can design a per-category document template (name + one of the
+                four brand colors + simple branding fields). Self-contained — see
+                category-template-sheet.tsx — so this is the only line this feature needs here. */}
+            <div className="flex justify-end">
+              <CategoryTemplateEntryPoint />
+            </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {DOCUMENT_CATEGORIES.map((category) => {
                 const Icon = CATEGORY_ICONS[category] ?? File;

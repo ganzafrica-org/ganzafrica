@@ -51,6 +51,17 @@ export const assetStatusEnum = pgEnum("asset_status", [
 
 export const documentStatusEnum = pgEnum("policy_status", ["PUBLISHED", "DRAFT", "ARCHIVED"]);
 
+// Document category *templates* (additive, v1 — see document-category-template.ts): the four
+// brand colors HR can pick when designing how a category should look. Deliberately a separate
+// enum from documentCategoryEnum below — templates are a standalone entity, not a replacement
+// for the fixed hr_documents.category enum.
+export const documentCategoryTemplateColorEnum = pgEnum("document_category_template_color", [
+  "green",
+  "yellow",
+  "blue",
+  "orange",
+]);
+
 export const documentCategoryEnum = pgEnum("policy_category", [
   "Contract Templates",
   "Policies & Procedures",

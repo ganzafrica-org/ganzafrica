@@ -6,6 +6,7 @@ import assetsRoutes from "./assets.routes";
 // import meRoutes from "./me.routes";
 import leaveRoutes from "./leave.routes";
 import documentRoutes from "./document.routes";
+import documentCategoryTemplateRoutes from "./document-category-template.routes";
 import helpdeskRoutes from "./helpdesk.routes";
 import policyRoutes from "./policy.routes";
 import recruitmentRoutes from "./recruitment.routes";
@@ -52,6 +53,9 @@ router.use("/assets", assetsRoutes);
 // router.use("/me", meRoutes);
 router.use("/leaves", leaveRoutes);
 router.use("/documents", documentRoutes);
+// Additive, standalone v1 entity — see backend/src/db/schema/hr/document-category-template.ts.
+// Not nested under /documents/categories since it's deliberately decoupled from hr_documents.
+router.use("/document-category-templates", documentCategoryTemplateRoutes);
 router.use("/helpdesk", helpdeskRoutes);
 router.use("/policies", policyRoutes);
 router.use("/signing", signingRoutes);

@@ -613,3 +613,31 @@ export interface UpdateDocumentRequest {
   access?: DocumentACL;
   contractId?: string;
 }
+
+// --- DOCUMENT CATEGORY TEMPLATES (v1, additive) ---
+// A standalone entity ("Add the option to create a document template", Things-to-work-on.md),
+// deliberately decoupled from DOCUMENT_CATEGORIES/HrDocument.category above — lets HR design how
+// documents in a category should look (a name + one of four brand colors + simple branding
+// fields). Auto-generating an hr_documents row from one of these templates is deferred follow-up
+// work, not built here.
+export const DOCUMENT_CATEGORY_TEMPLATE_COLORS = ["green", "yellow", "blue", "orange"] as const;
+export type DocumentCategoryTemplateColor = (typeof DOCUMENT_CATEGORY_TEMPLATE_COLORS)[number];
+
+export interface DocumentCategoryTemplate {
+  id: string;
+  name: string;
+  color: DocumentCategoryTemplateColor;
+  header_text: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateDocumentCategoryTemplateRequest {
+  name: string;
+  color: DocumentCategoryTemplateColor;
+  header_text?: string;
+  description?: string;
+}
+
+export interface UpdateDocumentCategoryTemplateRequest extends Partial<CreateDocumentCategoryTemplateRequest> {}

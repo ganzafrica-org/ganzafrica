@@ -9,6 +9,7 @@ export * from "./asset-maintenance";
 export * from "./asset-assignments";
 export * from "./leave";
 export * from "./document";
+export * from "./document-category-template";
 export * from "./policy";
 export * from "./helpdesk";
 export * from "./notification";
