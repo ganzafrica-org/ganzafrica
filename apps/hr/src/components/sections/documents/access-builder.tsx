@@ -63,7 +63,7 @@ export function AccessBuilder({ value, onChange }: AccessBuilderProps) {
   const isEmpty = !value.roles?.length && !value.employee_ids?.length && !value.departments?.length;
 
   return (
-    <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+    <div className="space-y-5 p-5 bg-slate-50 rounded-lg border border-slate-200">
       <div>
         <h4 className="font-medium text-slate-700">Who can see this document</h4>
         <p className="text-xs text-slate-500 mt-1">
@@ -75,10 +75,13 @@ export function AccessBuilder({ value, onChange }: AccessBuilderProps) {
 
       {/* Roles */}
       <div className="space-y-2">
-        <Label className="text-xs font-medium text-slate-600">Roles</Label>
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
+        <Label className="text-sm font-medium text-slate-700">Roles</Label>
+        <div className="flex flex-wrap gap-x-5 gap-y-3">
           {ASSIGNABLE_ROLES.map((role) => (
-            <label key={role} className="flex items-center gap-1.5 text-sm text-slate-700">
+            <label
+              key={role}
+              className="flex items-center gap-2 text-sm font-medium text-slate-700"
+            >
               <Checkbox
                 checked={(value.roles ?? []).includes(role)}
                 onCheckedChange={() => setRoles(toggle(value.roles, role))}
@@ -91,13 +94,16 @@ export function AccessBuilder({ value, onChange }: AccessBuilderProps) {
 
       {/* Departments */}
       <div className="space-y-2">
-        <Label className="text-xs font-medium text-slate-600">Departments</Label>
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
+        <Label className="text-sm font-medium text-slate-700">Departments</Label>
+        <div className="flex flex-wrap gap-x-5 gap-y-3">
           {departments.length === 0 ? (
-            <span className="text-xs text-slate-400">No departments found.</span>
+            <span className="text-sm text-slate-400">No departments found.</span>
           ) : (
             departments.map((dept) => (
-              <label key={dept} className="flex items-center gap-1.5 text-sm text-slate-700">
+              <label
+                key={dept}
+                className="flex items-center gap-2 text-sm font-medium text-slate-700"
+              >
                 <Checkbox
                   checked={(value.departments ?? []).includes(dept)}
                   onCheckedChange={() => setDepartments(toggle(value.departments, dept))}
@@ -111,7 +117,7 @@ export function AccessBuilder({ value, onChange }: AccessBuilderProps) {
 
       {/* Employees */}
       <div className="space-y-2">
-        <Label className="text-xs font-medium text-slate-600">Specific employees</Label>
+        <Label className="text-sm font-medium text-slate-700">Specific employees</Label>
         {selectedEmployees.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {selectedEmployees.map((e) => (

@@ -12,6 +12,27 @@ function uploadedFile(req: Request): documentService.UploadedFile | undefined {
   return { key: file.key, size: file.size ?? 0, originalName: file.originalname ?? file.key };
 }
 
+/**
+ * `access` travels as a JSON-stringified form field over multipart/form-data (see
+ * documentsService.toFormData on the frontend). The `validate` middleware's Zod schema parses
+ * and shape-checks that string for a good error message, but it validates a throwaway payload
+ * object and never writes the parsed result back onto `req.body` — so by the time it reaches
+ * here `req.body.access` is still the raw string. Parse it for real before it hits the service,
+ * otherwise a stringified ACL gets written straight into the jsonb column and `canReadDocument`
+ * silently treats it as empty (no `.roles`/`.employee_ids`/`.departments` on a string).
+ */
+function parseAccessField(raw: unknown): documentService.CreateDocumentInput["access"] {
+  if (raw === undefined || raw === null || raw === "") return {};
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  return raw as documentService.CreateDocumentInput["access"];
+}
+
 async function accessContext(req: Request) {
   return getAccessContext(Number(req.user!.id), req.user?.roles ?? []);
 }
@@ -170,7 +191,7 @@ export const createDocument = async (
 
     const created = await documentService.createDocument({
       ...req.body,
-      access: req.body.access ?? {},
+      access: parseAccessField(req.body.access),
       createdById: employeeId,
       file,
     });
@@ -193,7 +214,11 @@ export const updateDocument = async (
 ): Promise<void> => {
   try {
     const file = uploadedFile(req);
-    const updated = await documentService.updateDocument(req.params.id, { ...req.body, file });
+    const updated = await documentService.updateDocument(req.params.id, {
+      ...req.body,
+      access: req.body.access !== undefined ? parseAccessField(req.body.access) : undefined,
+      file,
+    });
     sendResponse(res, { success: true, message: "Document updated successfully", data: updated });
   } catch (err) {
     next(err);
