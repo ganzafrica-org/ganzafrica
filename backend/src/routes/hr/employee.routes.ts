@@ -62,11 +62,17 @@ router.patch(
   validate(v.updateEmployeeSchema),
   c.updateEmployee,
 );
-router.delete(
-  "/:id",
+router.patch(
+  "/:id/deactivate",
   requirePermission("employees:manage"),
   validate(v.employeeIdSchema),
-  c.deleteEmployee,
+  c.deactivateEmployee,
+);
+router.patch(
+  "/:id/reactivate",
+  requirePermission("employees:manage"),
+  validate(v.employeeIdSchema),
+  c.reactivateEmployee,
 );
 
 // MOD-04 §4 — LCM-02's offboarding gate query. Response shape (assetId, assignedAt,

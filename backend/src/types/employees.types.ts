@@ -67,6 +67,8 @@ export interface DirectoryRow {
   account: { email: string; is_active: boolean } | null;
   /** Currency of the employee's ACTIVE contract, if any — the directory's country-flag proxy. */
   contract_currency: string | null;
+  /** Reversible deactivation (replaces the old hard-delete action) — independent of `status`. */
+  is_active: boolean;
 }
 
 export interface ListEmployeesQuery {
@@ -78,6 +80,8 @@ export interface ListEmployeesQuery {
   limit?: number;
   sortBy?: "name" | "department" | "hired_at";
   sortOrder?: "asc" | "desc";
+  /** Directory scope by activation state — default "active" (deactivated employees hidden). */
+  active?: "active" | "inactive" | "all";
 }
 
 export interface EmployeeDetail extends DirectoryRow {

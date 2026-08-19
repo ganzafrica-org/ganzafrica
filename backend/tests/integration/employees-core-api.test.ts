@@ -153,15 +153,32 @@ describe("MOD-01 employees API", () => {
     expect((await subject.agent.get(`${API}/me`)).status).toBe(200);
   });
 
-  it("lets HR delete an employee, but 403s a plain employee attempting the same", async () => {
+  it("lets HR deactivate/reactivate an employee, but 403s a plain employee attempting the same", async () => {
     const hr = await loginAsEmployee("hr");
     const subject = await loginAsEmployee();
 
-    expect((await subject.agent.delete(`${API}/${subject.employee.id}`)).status).toBe(403);
+    expect((await subject.agent.patch(`${API}/${subject.employee.id}/deactivate`)).status).toBe(
+      403,
+    );
 
-    const del = await hr.agent.delete(`${API}/${subject.employee.id}`);
-    expect(del.status).toBe(204);
-    expect((await hr.agent.get(`${API}/${subject.employee.id}`)).status).toBe(404);
+    // loginAsEmployee also creates HR's own employee row, so the default (active-only) list
+    // still has that one row after `subject` is deactivated — not zero.
+    const deactivated = await hr.agent.patch(`${API}/${subject.employee.id}/deactivate`);
+    expect(deactivated.status).toBe(204);
+    // Still viewable directly by id — deactivation hides from the default list, not the record.
+    expect((await hr.agent.get(`${API}/${subject.employee.id}`)).status).toBe(200);
+    expect((await hr.agent.get(`${API}?active=inactive`)).body.data).toHaveLength(1);
+    expect((await hr.agent.get(API)).body.data).toHaveLength(1);
+
+    // Deactivation blocks login (users.is_active = false 401s at POST /api/auth/login).
+    const loginAttempt = await subject.agent
+      .post("/api/auth/login")
+      .send({ email: subject.user.email, password: subject.user.password });
+    expect(loginAttempt.status).toBe(401);
+
+    const reactivated = await hr.agent.patch(`${API}/${subject.employee.id}/reactivate`);
+    expect(reactivated.status).toBe(204);
+    expect((await hr.agent.get(API)).body.data).toHaveLength(2);
   });
 });
 

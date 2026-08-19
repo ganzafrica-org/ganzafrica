@@ -18,6 +18,7 @@ export const employeesService = {
     limit?: number;
     sortBy?: "name" | "department" | "hired_at";
     sortOrder?: "asc" | "desc";
+    active?: "active" | "inactive" | "all";
   }) {
     const response = await httpClient.get<EmployeeDirectoryResponse>("/hr/employees", { params });
     return response.data;
@@ -47,8 +48,11 @@ export const employeesService = {
     const response = await httpClient.patch<{ employee: Employee }>(`/hr/employees/${id}`, payload);
     return response.data.employee;
   },
-  async deleteEmployee(id: string) {
-    await httpClient.delete(`/hr/employees/${id}`);
+  async deactivateEmployee(id: string) {
+    await httpClient.patch(`/hr/employees/${id}/deactivate`);
+  },
+  async reactivateEmployee(id: string) {
+    await httpClient.patch(`/hr/employees/${id}/reactivate`);
   },
   /**
    * Sends as multipart/form-data when a new picture file is provided (same pattern as

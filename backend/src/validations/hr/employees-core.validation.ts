@@ -12,6 +12,7 @@ export const listEmployeesSchema = z.object({
     limit: z.coerce.number().int().min(1).max(200).optional(),
     sortBy: z.enum(["name", "department", "hired_at"]).optional(),
     sortOrder: z.enum(["asc", "desc"]).optional(),
+    active: z.enum(["active", "inactive", "all"]).optional(),
   }),
 });
 

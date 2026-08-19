@@ -1,4 +1,13 @@
-import { pgTable, uuid, integer, text, date, check, type AnyPgColumn } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  integer,
+  text,
+  date,
+  boolean,
+  check,
+  type AnyPgColumn,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { timestampFields } from "../common";
 import { users } from "../users";
@@ -38,6 +47,11 @@ export const employees = pgTable(
     employment_type: text("employment_type").notNull().default("staff"),
     // 'onboarding' | 'active' | 'on_leave' | 'offboarding' | 'exited'
     status: text("status").notNull().default("active"),
+    // Deactivation (reversible — "delete employee" was replaced with this). Independent of
+    // `status`, which is HR-lifecycle state owned by the onboarding/offboarding process engine
+    // (`exited` is reserved for LCM-02, not yet built) — a deactivated employee keeps whatever
+    // status they had, they're just hidden from the active roster and can't sign in.
+    is_active: boolean("is_active").notNull().default(true),
 
     hired_at: date("hired_at"),
     exited_at: date("exited_at"),

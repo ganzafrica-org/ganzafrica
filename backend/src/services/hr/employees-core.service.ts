@@ -102,6 +102,7 @@ const DIRECTORY_COLUMNS = {
   home_city: employees.home_city,
   hired_at: employees.hired_at,
   manager_id: employees.manager_id,
+  is_active: employees.is_active,
   account_email: users.email,
   account_active: users.is_active,
 };
@@ -169,6 +170,7 @@ async function attachManagers(rows: DirectoryQueryRow[]): Promise<DirectoryRow[]
       ? { email: r.account_email as string, is_active: r.account_active as boolean }
       : null,
     contract_currency: currencyByEmployeeId.get(r.id as string) ?? null,
+    is_active: r.is_active as boolean,
   }));
 }
 
@@ -178,6 +180,12 @@ export async function listEmployees(query: ListEmployeesQuery = {}) {
   const limit = Math.min(200, Math.max(1, query.limit ?? 25));
 
   const conditions = [];
+  // Default to the active roster — deactivated employees (former "delete") are opt-in via
+  // ?active=inactive|all, never silently mixed into the default list.
+  const activeFilter = query.active ?? "active";
+  if (activeFilter !== "all") {
+    conditions.push(eq(employees.is_active, activeFilter === "active"));
+  }
   if (query.status) conditions.push(eq(employees.status, query.status));
   if (query.department) conditions.push(eq(employees.department, query.department));
   if (query.employment_type) conditions.push(eq(employees.employment_type, query.employment_type));
@@ -476,43 +484,51 @@ export async function updateMyProfile(userId: number, patch: Record<string, unkn
 }
 
 /**
- * Hard delete (HR-explicit, destructive — not the "exited" lifecycle status, which the
- * onboarding/offboarding process engine owns). Cascades onto contracts, leave records/balances,
- * process instances/tasks, org links, and policy acknowledgements (all `onDelete: cascade`) —
- * genuinely erases that history. Blocked with a clear 409 if the employee has documents, assets,
- * or policies that reference them with `onDelete: restrict`, rather than surfacing a raw FK
- * error. The linked `users` account is deactivated, never hard-deleted — a DB trigger
- * unconditionally blocks hard deletes on `users` — so it would otherwise be left orphaned.
+ * Deactivate (reversible — replaces the old hard-delete action). Never touches the row itself or
+ * any related data: contracts, documents, leave, assets, process history all stay intact. Sets
+ * `employees.is_active = false` (hides them from the default directory) and deactivates the
+ * linked `users` account (blocks login — `auth.ts::login` already 401s on `!user.is_active`).
+ * Deliberately independent of `status`, which the onboarding/offboarding process engine owns
+ * (`exited` is reserved for LCM-02, not yet built) — deactivation doesn't touch it.
  */
-export async function deleteEmployee(employeeId: string, actorUserId: number): Promise<void> {
+export async function deactivateEmployee(employeeId: string, actorUserId: number): Promise<void> {
   const row = await requireEmployeeRow(employeeId);
 
   const selfEmployeeId = await employeeIdForUser(actorUserId);
   if (selfEmployeeId === employeeId) {
-    throw new AppError("You cannot delete your own employee record", 422, "SELF_DELETE");
+    throw new AppError("You cannot deactivate your own employee record", 422, "SELF_DEACTIVATE");
   }
 
-  try {
-    await withDbTransaction(async (tx) => {
-      await tx.delete(employees).where(eq(employees.id, employeeId));
-      if (row.user_id) {
-        await tx
-          .update(users)
-          .set({ is_active: false })
-          .where(eq(users.id, row.user_id as number));
-      }
-    });
-  } catch (error) {
-    if (error instanceof AppError) throw error;
-    if (error && typeof error === "object" && "code" in error && error.code === "23503") {
-      throw new AppError(
-        "Cannot delete: this employee has documents, assets, or policies on record that reference them. Reassign or remove those first.",
-        409,
-        "EMPLOYEE_HAS_DEPENDENTS",
-      );
+  await withDbTransaction(async (tx) => {
+    await tx
+      .update(employees)
+      .set({ is_active: false, updated_at: new Date() })
+      .where(eq(employees.id, employeeId));
+    if (row.user_id) {
+      await tx
+        .update(users)
+        .set({ is_active: false })
+        .where(eq(users.id, row.user_id as number));
     }
-    throw error;
-  }
+  });
+}
+
+/** Reverse of `deactivateEmployee` — restores directory visibility and login access. */
+export async function reactivateEmployee(employeeId: string): Promise<void> {
+  const row = await requireEmployeeRow(employeeId);
+
+  await withDbTransaction(async (tx) => {
+    await tx
+      .update(employees)
+      .set({ is_active: true, updated_at: new Date() })
+      .where(eq(employees.id, employeeId));
+    if (row.user_id) {
+      await tx
+        .update(users)
+        .set({ is_active: true })
+        .where(eq(users.id, row.user_id as number));
+    }
+  });
 }
 
 /** Distinct departments — powers the directory filter without a separate table. */

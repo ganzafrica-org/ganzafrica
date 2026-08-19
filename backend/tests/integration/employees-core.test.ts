@@ -23,14 +23,14 @@ import {
   updateMyProfile,
   getMyEmployeeRecord,
   listDepartments,
-  deleteEmployee,
+  deactivateEmployee,
+  reactivateEmployee,
 } from "../../src/services/hr/employees-core.service";
 import {
   makeUser,
   makeEmployee,
   makeEmployeeUser,
   makeContract,
-  makeDocument,
   makeProcessTemplate,
   ensureRole,
 } from "../factories";
@@ -396,7 +396,7 @@ describe("MOD-01 manual create with user linking", () => {
   });
 });
 
-describe("MOD-01 delete employee (hard delete)", () => {
+describe("MOD-01 deactivate/reactivate employee (replaces the old hard delete)", () => {
   let hrUserId: number;
 
   beforeEach(async () => {
@@ -406,45 +406,67 @@ describe("MOD-01 delete employee (hard delete)", () => {
     hrUserId = (await makeUser({ role: "hr" })).id;
   });
 
-  it("deletes the employee row, cascades their contract, and deactivates (not deletes) their linked account", async () => {
+  it("deactivates the employee and their account, without touching the row or their contract", async () => {
     const { user, employee } = await makeEmployeeUser({ employmentType: "staff" });
     await makeContract({ employeeId: employee.id });
 
-    await deleteEmployee(employee.id, hrUserId);
+    await deactivateEmployee(employee.id, hrUserId);
 
-    expect(await db.select().from(employees).where(eq(employees.id, employee.id))).toHaveLength(0);
+    const [row] = await db.select().from(employees).where(eq(employees.id, employee.id));
+    expect(row).toBeTruthy(); // still exists — this is reversible, not a delete
+    expect(row.is_active).toBe(false);
     expect(
       await db.select().from(hr_contracts).where(eq(hr_contracts.employee_ref_id, employee.id)),
-    ).toHaveLength(0);
+    ).toHaveLength(1); // contract history untouched
 
     const [account] = await db.select().from(users).where(eq(users.id, user.id));
-    expect(account).toBeTruthy(); // still exists — never hard-deleted
-    expect(account.is_active).toBe(false);
+    expect(account.is_active).toBe(false); // login blocked
   });
 
-  it("404s deleting an unknown employee", async () => {
-    await expect(
-      deleteEmployee("00000000-0000-0000-0000-000000000000", hrUserId),
-    ).rejects.toMatchObject({ statusCode: 404 });
+  it("reactivate flips both employee and account back to active", async () => {
+    const { user, employee } = await makeEmployeeUser({ employmentType: "staff" });
+    await deactivateEmployee(employee.id, hrUserId);
+
+    await reactivateEmployee(employee.id);
+
+    const [row] = await db.select().from(employees).where(eq(employees.id, employee.id));
+    expect(row.is_active).toBe(true);
+    const [account] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(account.is_active).toBe(true);
   });
 
-  it("refuses to let HR delete their own employee record", async () => {
+  it("404s deactivating/reactivating an unknown employee", async () => {
+    const badId = "00000000-0000-0000-0000-000000000000";
+    await expect(deactivateEmployee(badId, hrUserId)).rejects.toMatchObject({ statusCode: 404 });
+    await expect(reactivateEmployee(badId)).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("refuses to let HR deactivate their own employee record", async () => {
     const employee = await makeEmployee({ userId: hrUserId, employmentType: "staff" });
-    await expect(deleteEmployee(employee.id, hrUserId)).rejects.toMatchObject({
+    await expect(deactivateEmployee(employee.id, hrUserId)).rejects.toMatchObject({
       statusCode: 422,
-      code: "SELF_DELETE",
+      code: "SELF_DEACTIVATE",
     });
   });
 
-  it("409s with a clear message instead of a raw FK error when the employee has documents on record", async () => {
-    const { employee } = await makeEmployeeUser({ employmentType: "staff" });
-    await makeDocument({ createdById: employee.id });
-
-    await expect(deleteEmployee(employee.id, hrUserId)).rejects.toMatchObject({
-      statusCode: 409,
-      code: "EMPLOYEE_HAS_DEPENDENTS",
+  it("directory: hides deactivated employees by default, surfaces them under ?active=inactive|all", async () => {
+    const { employee: activeOne } = await makeEmployeeUser({
+      firstName: "Ada",
+      employmentType: "staff",
     });
-    // Nothing was torn down mid-way — the failed delete rolled back inside its own transaction.
-    expect(await db.select().from(employees).where(eq(employees.id, employee.id))).toHaveLength(1);
+    const { employee: inactiveOne } = await makeEmployeeUser({
+      firstName: "Grace",
+      employmentType: "staff",
+    });
+    await deactivateEmployee(inactiveOne.id, hrUserId);
+
+    const defaultList = await listEmployees({});
+    expect(defaultList.data.map((r) => r.id)).toEqual([activeOne.id]);
+
+    const inactiveList = await listEmployees({ active: "inactive" });
+    expect(inactiveList.data.map((r) => r.id)).toEqual([inactiveOne.id]);
+
+    const allList = await listEmployees({ active: "all" });
+    expect(allList.data.map((r) => r.id).sort()).toEqual([activeOne.id, inactiveOne.id].sort());
   });
 });

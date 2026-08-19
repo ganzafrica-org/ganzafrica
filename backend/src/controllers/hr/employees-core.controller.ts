@@ -104,12 +104,21 @@ export const updateEmployee = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteEmployee = async (req: Request, res: Response) => {
+export const deactivateEmployee = async (req: Request, res: Response) => {
   try {
-    await employees.deleteEmployee(req.params.id, actorId(req));
+    await employees.deactivateEmployee(req.params.id, actorId(req));
     return res.status(204).send();
   } catch (e) {
-    return handleError(res, e, "Delete Employee Error");
+    return handleError(res, e, "Deactivate Employee Error");
+  }
+};
+
+export const reactivateEmployee = async (req: Request, res: Response) => {
+  try {
+    await employees.reactivateEmployee(req.params.id);
+    return res.status(204).send();
+  } catch (e) {
+    return handleError(res, e, "Reactivate Employee Error");
   }
 };
 

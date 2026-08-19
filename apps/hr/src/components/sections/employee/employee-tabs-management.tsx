@@ -1,5 +1,15 @@
 import React from "react";
-import { Search, Building, FileText, Mail, MoreVertical, Eye, Plus, Trash2 } from "lucide-react";
+import {
+  Search,
+  Building,
+  FileText,
+  Mail,
+  MoreVertical,
+  Eye,
+  Plus,
+  UserX,
+  UserCheck,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +45,7 @@ interface DisplayEmployeeRow {
   manager: string;
   hasAccount: boolean;
   contractCurrency: string | null;
+  isActive: boolean;
 }
 
 export const EmployeeManagementContent = ({
@@ -44,11 +55,14 @@ export const EmployeeManagementContent = ({
   setStatusFilter,
   departmentFilter,
   setDepartmentFilter,
+  activeFilter,
+  setActiveFilter,
   departments,
   filteredEmployees,
   onSelectEmployee,
-  onDeleteEmployee,
-  canDeleteEmployee,
+  onDeactivateEmployee,
+  onReactivateEmployee,
+  canManageActivation,
   setShowAddSheet,
   getStatusBadge,
 }: {
@@ -58,11 +72,14 @@ export const EmployeeManagementContent = ({
   setStatusFilter: (v: string) => void;
   departmentFilter: string;
   setDepartmentFilter: (v: string) => void;
+  activeFilter: string;
+  setActiveFilter: (v: string) => void;
   departments: string[];
   filteredEmployees: DisplayEmployeeRow[];
   onSelectEmployee: (row: DisplayEmployeeRow) => void;
-  onDeleteEmployee: (row: { id: string; name: string }) => void;
-  canDeleteEmployee: boolean;
+  onDeactivateEmployee: (row: { id: string; name: string }) => void;
+  onReactivateEmployee: (row: { id: string; name: string }) => void;
+  canManageActivation: boolean;
   setShowAddSheet: (v: boolean) => void;
   getStatusBadge: (status: string) => React.ReactNode;
 }) => {
@@ -107,6 +124,16 @@ export const EmployeeManagementContent = ({
                 ))}
               </SelectContent>
             </Select>
+            <Select value={activeFilter} onValueChange={setActiveFilter}>
+              <SelectTrigger className="w-[150px] border-slate-200 rounded-lg">
+                <SelectValue placeholder="Active" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="ml-auto">
             <Button
@@ -143,6 +170,11 @@ export const EmployeeManagementContent = ({
               {!employee.hasAccount && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-amber-600">
                   no account
+                </Badge>
+              )}
+              {!employee.isActive && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-slate-500">
+                  inactive
                 </Badge>
               )}
             </div>
@@ -212,15 +244,23 @@ export const EmployeeManagementContent = ({
               <DropdownMenuItem onClick={() => onSelectEmployee(employee)}>
                 <Eye className="mr-2 h-4 w-4" /> View Details
               </DropdownMenuItem>
-              {canDeleteEmployee && (
+              {canManageActivation && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600"
-                    onClick={() => onDeleteEmployee({ id: employee.id, name: employee.name })}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                  </DropdownMenuItem>
+                  {employee.isActive ? (
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onClick={() => onDeactivateEmployee({ id: employee.id, name: employee.name })}
+                    >
+                      <UserX className="mr-2 h-4 w-4" /> Deactivate
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => onReactivateEmployee({ id: employee.id, name: employee.name })}
+                    >
+                      <UserCheck className="mr-2 h-4 w-4" /> Reactivate
+                    </DropdownMenuItem>
+                  )}
                 </>
               )}
             </DropdownMenuContent>

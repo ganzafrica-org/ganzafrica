@@ -48,6 +48,7 @@ const employee = (over: Record<string, unknown> = {}) => ({
   hired_at: "2024-01-15",
   manager: null,
   account: { email: "ada@example.com", is_active: true },
+  is_active: true,
   ...over,
 });
 
@@ -120,13 +121,13 @@ describe("Employees directory", () => {
     expect(await screen.findByText("no account")).toBeInTheDocument();
   });
 
-  it("deletes an employee after confirmation, and surfaces the backend's message if it's blocked", async () => {
+  it("deactivates an employee after confirmation", async () => {
     const { default: userEvent } = await import("@testing-library/user-event");
-    let deleteCalls = 0;
+    let deactivateCalls = 0;
     mockDirectory([employee()]);
     server.use(
-      http.delete(`${API}/hr/employees/11111111-1111-1111-1111-111111111111`, () => {
-        deleteCalls += 1;
+      http.patch(`${API}/hr/employees/11111111-1111-1111-1111-111111111111/deactivate`, () => {
+        deactivateCalls += 1;
         return new HttpResponse(null, { status: 204 });
       }),
     );
@@ -134,18 +135,41 @@ describe("Employees directory", () => {
     renderWithClient(<EmployeesPage />);
     const row = (await screen.findByText("Ada Lovelace")).closest("tr")!;
     await userEvent.click(within(row).getByRole("button"));
-    await userEvent.click(await screen.findByRole("menuitem", { name: /delete/i }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /deactivate/i }));
 
-    expect(await screen.findByText(/delete employee\?/i)).toBeInTheDocument();
-    expect(screen.getByText(/permanently deletes ada lovelace/i)).toBeInTheDocument();
+    expect(await screen.findByText(/deactivate employee\?/i)).toBeInTheDocument();
+    expect(screen.getByText(/ada lovelace will be hidden/i)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: /delete employee/i }));
+    await userEvent.click(screen.getByRole("button", { name: /deactivate employee/i }));
 
-    await waitFor(() => expect(deleteCalls).toBe(1));
-    await waitFor(() => expect(screen.queryByText(/delete employee\?/i)).not.toBeInTheDocument());
+    await waitFor(() => expect(deactivateCalls).toBe(1));
+    await waitFor(() =>
+      expect(screen.queryByText(/deactivate employee\?/i)).not.toBeInTheDocument(),
+    );
   });
 
-  it("hides the delete action for a viewer with employees:read but not employees:manage", async () => {
+  it("reactivates a deactivated employee directly, no confirmation needed", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    let reactivateCalls = 0;
+    mockDirectory([employee({ is_active: false })]);
+    server.use(
+      http.patch(`${API}/hr/employees/11111111-1111-1111-1111-111111111111/reactivate`, () => {
+        reactivateCalls += 1;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    renderWithClient(<EmployeesPage />);
+    expect(await screen.findByText("inactive")).toBeInTheDocument();
+
+    const row = screen.getByText("Ada Lovelace").closest("tr")!;
+    await userEvent.click(within(row).getByRole("button"));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /reactivate/i }));
+
+    await waitFor(() => expect(reactivateCalls).toBe(1));
+  });
+
+  it("hides the deactivate/reactivate actions for a viewer with employees:read but not employees:manage", async () => {
     authState.roles = ["director"];
     const { default: userEvent } = await import("@testing-library/user-event");
     mockDirectory([employee()]);
@@ -155,7 +179,7 @@ describe("Employees directory", () => {
     await userEvent.click(within(row).getByRole("button"));
 
     expect(await screen.findByRole("menuitem", { name: /view details/i })).toBeInTheDocument();
-    expect(screen.queryByRole("menuitem", { name: /delete/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /deactivate/i })).not.toBeInTheDocument();
   });
 
   it("shows a country flag derived from the employee's contract currency, and a dash when there is none", async () => {

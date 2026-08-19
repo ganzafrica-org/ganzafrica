@@ -7,7 +7,12 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Briefcase } from "lucide-react";
 import { EmployeeManagementContent } from "@/components/sections/employee/employee-tabs-management";
 import { StatsHeader } from "@/components/sections/header";
-import { useEmployees, useDepartments, useDeleteEmployee } from "@/hooks/useEmployees";
+import {
+  useEmployees,
+  useDepartments,
+  useDeactivateEmployee,
+  useReactivateEmployee,
+} from "@/hooks/useEmployees";
 import { getStatusBadge } from "@/lib/helpers/employee-util";
 import type { Employee, EmployeeStats } from "@/types/api";
 import { AddEmployeeSheet } from "@/components/sections/sheets/add-employee-sheet";
@@ -31,6 +36,7 @@ const mapEmployeeForDisplay = (emp: Employee) => ({
   manager: emp.manager ? `${emp.manager.first_name} ${emp.manager.last_name}`.trim() : "—",
   hasAccount: !!emp.account,
   contractCurrency: emp.contract_currency,
+  isActive: emp.is_active,
 });
 
 function computeStats(data: Employee[], total: number): EmployeeStats {
@@ -48,18 +54,22 @@ const PageContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState("active");
   const [page, setPage] = useState(1);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const [deletingEmployee, setDeletingEmployee] = useState<{ id: string; name: string } | null>(
-    null,
-  );
+  const [deactivatingEmployee, setDeactivatingEmployee] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const searchParams = useSearchParams();
-  const deleteEmployee = useDeleteEmployee();
+  const deactivateEmployee = useDeactivateEmployee();
+  const reactivateEmployee = useReactivateEmployee();
   const { roles } = useAuth();
   // employees:manage (HR only) — director/program_manager have employees:read and can view this
-  // page's directory, but the backend 403s them on delete, so don't offer an action that'll fail.
+  // page's directory, but the backend 403s them on activation changes, so don't offer an action
+  // that'll fail.
   const canManageEmployees = roles.includes("hr") || roles.includes("admin");
 
   const {
@@ -70,6 +80,7 @@ const PageContent = () => {
     search: searchTerm || undefined,
     status: statusFilter === "all" ? undefined : statusFilter,
     department: departmentFilter === "all" ? undefined : departmentFilter,
+    active: activeFilter as "active" | "inactive" | "all",
     page,
     limit: PAGE_SIZE,
   });
@@ -96,18 +107,21 @@ const PageContent = () => {
     setStatusFilter,
     departmentFilter,
     setDepartmentFilter,
+    activeFilter,
+    setActiveFilter,
     departments: departments ?? [],
     filteredEmployees: displayEmployees,
     onSelectEmployee: (row: { id: string }) => setSelectedEmployeeId(row.id),
-    onDeleteEmployee: (row: { id: string; name: string }) => setDeletingEmployee(row),
-    canDeleteEmployee: canManageEmployees,
+    onDeactivateEmployee: (row: { id: string; name: string }) => setDeactivatingEmployee(row),
+    onReactivateEmployee: (row: { id: string; name: string }) => reactivateEmployee.mutate(row.id),
+    canManageActivation: canManageEmployees,
     setShowAddSheet,
     getStatusBadge,
   });
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, statusFilter, departmentFilter]);
+  }, [searchTerm, statusFilter, departmentFilter, activeFilter]);
 
   // Deep link from the org chart (or anywhere else): /employees?employee=<id> opens the sheet.
   useEffect(() => {
@@ -213,20 +227,20 @@ const PageContent = () => {
         </ReusableSheet>
 
         <ConfirmDialog
-          open={!!deletingEmployee}
-          onOpenChange={(open) => !open && setDeletingEmployee(null)}
-          title="Delete employee?"
+          open={!!deactivatingEmployee}
+          onOpenChange={(open) => !open && setDeactivatingEmployee(null)}
+          title="Deactivate employee?"
           description={
-            deletingEmployee
-              ? `This permanently deletes ${deletingEmployee.name}'s employee record, including their contracts, leave history, and onboarding/offboarding progress. Their login is deactivated, not deleted. This cannot be undone.`
+            deactivatingEmployee
+              ? `${deactivatingEmployee.name} will be hidden from the active directory and won't be able to sign in. Their contracts, documents, leave history, and assets all stay intact — you can reactivate them anytime.`
               : ""
           }
-          confirmLabel="Delete employee"
-          isConfirming={deleteEmployee.isPending}
+          confirmLabel="Deactivate employee"
+          isConfirming={deactivateEmployee.isPending}
           onConfirm={() => {
-            if (!deletingEmployee) return;
-            deleteEmployee.mutate(deletingEmployee.id, {
-              onSuccess: () => setDeletingEmployee(null),
+            if (!deactivatingEmployee) return;
+            deactivateEmployee.mutate(deactivatingEmployee.id, {
+              onSuccess: () => setDeactivatingEmployee(null),
             });
           }}
         />

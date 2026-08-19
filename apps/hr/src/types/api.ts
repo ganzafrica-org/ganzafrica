@@ -105,6 +105,8 @@ export interface Employee {
   account: EmployeeAccountRef | null;
   /** Currency of the employee's ACTIVE contract, if any — the directory's country-flag proxy. */
   contract_currency: string | null;
+  /** Reversible deactivation (replaces the old delete action) — independent of `status`. */
+  is_active: boolean;
   /** Present on detail/me responses only (GET /hr/employees, the directory list, omits these). */
   counts?: { assets: number; open_leave: number; documents: number };
   contract?: EmployeeContractSummary | null;

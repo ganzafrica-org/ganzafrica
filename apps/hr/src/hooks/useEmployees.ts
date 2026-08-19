@@ -18,6 +18,7 @@ export interface EmployeesQueryParams {
   limit?: number;
   sortBy?: "name" | "department" | "hired_at";
   sortOrder?: "asc" | "desc";
+  active?: "active" | "inactive" | "all";
 }
 
 export function useEmployees(params?: EmployeesQueryParams) {
@@ -80,13 +81,24 @@ export function useUpdateEmployee() {
   });
 }
 
-export function useDeleteEmployee() {
+export function useDeactivateEmployee() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => employeesService.deleteEmployee(id),
+    mutationFn: (id: string) => employeesService.deactivateEmployee(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
-      toast.success("Employee deleted");
+      toast.success("Employee deactivated");
+    },
+  });
+}
+
+export function useReactivateEmployee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => employeesService.reactivateEmployee(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Employee reactivated");
     },
   });
 }
