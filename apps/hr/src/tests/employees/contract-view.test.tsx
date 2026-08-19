@@ -112,6 +112,10 @@ function mockCommon(meId: string) {
     ),
     http.get(`${API}/hr/me/contracts`, () => HttpResponse.json([contractFixture])),
     http.get(`${API}/hr/me/leave`, () => HttpResponse.json({ balances: [], requests: [] })),
+    http.get(`${API}/hr/processes`, () => HttpResponse.json({ processes: [] })),
+    http.get(`${API}/hr/me/process`, () =>
+      HttpResponse.json({ instance: null, tasks: [], progress: null, can_manage: false }),
+    ),
     http.get(`${API}/hr/documents/${DOCUMENT_ID}`, () =>
       HttpResponse.json({ data: documentFixture }),
     ),

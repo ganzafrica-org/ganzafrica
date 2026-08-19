@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Flag, MoreVertical, Search } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import { useRecruitmentApplications, useTransition } from "@/hooks/useRecruitment";
 import type { ApplicationListItem, PipelineStage } from "@/services/recruitment.service";
 import { ALLOWED_TRANSITIONS, BOARD_STAGES } from "@/lib/recruitment/stages";
@@ -26,7 +26,6 @@ import { RankingCriteriaEditor } from "@/components/recruitment/ranking-criteria
 export default function PipelineBoardPage() {
   const params = useParams<{ id: string }>();
   const opportunityId = Number(params.id);
-  const { toast } = useToast();
   const transition = useTransition();
 
   const [search, setSearch] = useState("");
@@ -60,13 +59,10 @@ export default function PipelineBoardPage() {
     } catch (err: unknown) {
       const allowed = (err as { response?: { data?: { allowed?: string[] } } })?.response?.data
         ?.allowed;
-      toast({
-        title: "Move not allowed",
-        description: allowed
-          ? `Allowed: ${allowed.join(", ")}`
-          : "That transition isn't permitted.",
-        variant: "destructive",
-      });
+      toast.danger(
+        "Move not allowed",
+        allowed ? `Allowed: ${allowed.join(", ")}` : "That transition isn't permitted.",
+      );
       refetch(); // rollback optimistic UI to server truth
     }
   }
@@ -168,7 +164,7 @@ export default function PipelineBoardPage() {
               });
               setRejectFor(null);
             } catch {
-              toast({ title: "Reject failed", variant: "destructive" });
+              toast.danger("Reject failed");
               refetch();
             }
           }}

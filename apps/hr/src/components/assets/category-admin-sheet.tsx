@@ -22,7 +22,7 @@ import {
 } from "@/hooks/useAssets";
 import type { AssetCategory, SpecFieldDefinition, SpecFieldType } from "@/types/api";
 import { Plus, Trash2, Pencil, Loader2, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface CategoryAdminSheetProps {
   open: boolean;
@@ -104,7 +104,7 @@ export function CategoryAdminSheet({ open, onOpenChange }: CategoryAdminSheetPro
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.slug.trim()) {
-      toast.error("Name and slug are required");
+      toast.danger("Name and slug are required");
       return;
     }
     const payload = {
@@ -123,8 +123,8 @@ export function CategoryAdminSheet({ open, onOpenChange }: CategoryAdminSheetPro
         toast.success("Category created");
       }
       cancelForm();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Failed to save category");
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 
@@ -133,8 +133,8 @@ export function CategoryAdminSheet({ open, onOpenChange }: CategoryAdminSheetPro
     try {
       await deactivateCategory.mutateAsync(cat.id);
       toast.success("Category deactivated");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Failed to deactivate category");
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 

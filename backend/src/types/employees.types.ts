@@ -65,6 +65,8 @@ export interface DirectoryRow {
   manager: { id: string; first_name: string; last_name: string } | null;
   /** Null when the employees row has no linked users account (a data gap HR can repair). */
   account: { email: string; is_active: boolean } | null;
+  /** Currency of the employee's ACTIVE contract, if any — the directory's country-flag proxy. */
+  contract_currency: string | null;
 }
 
 export interface ListEmployeesQuery {

@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { contractsService } from "@/services/contracts.service";
 import type { CreateContractRequest, UpdateContractRequest } from "@/types/api";
+import { toast } from "@/lib/toast";
 
 export function useContracts(employeeId: string) {
   return useQuery({
@@ -29,6 +30,7 @@ export function useCreateContract(employeeId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts", employeeId] });
       queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
+      toast.success("Contract created");
     },
   });
 }
@@ -41,6 +43,7 @@ export function useUpdateContract(employeeId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts", employeeId] });
       queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
+      toast.success("Contract updated");
     },
   });
 }
@@ -52,6 +55,7 @@ export function useDeleteContract(employeeId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts", employeeId] });
       queryClient.invalidateQueries({ queryKey: ["employee", employeeId] });
+      toast.success("Contract deleted");
     },
   });
 }

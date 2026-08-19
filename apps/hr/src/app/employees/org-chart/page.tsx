@@ -77,15 +77,26 @@ export default function OrgChartPage() {
   const { data: unresolved } = useUnresolvedManagers(canManage);
 
   useEffect(() => {
+    // primereact's lara-light-green theme (imported above) hardcodes its own light-mode
+    // colors for chrome our custom nodeTemplate doesn't cover (the node-content wrapper,
+    // the expand/collapse toggle). dark: utility classes can't reach into that internal
+    // DOM, so this overrides it with the same CSS custom properties globals.css already
+    // defines per-theme — they resolve correctly under next-themes' .dark class same as
+    // every bg-card/border-border/text-foreground utility elsewhere in the app.
     const style = document.createElement("style");
     style.innerHTML = `
             .p-organizationchart .p-organizationchart-line-down {
-                background: #cbd5e1;
+                background: var(--border);
             }
             .p-organizationchart .p-organizationchart-line-left,
             .p-organizationchart .p-organizationchart-line-right,
             .p-organizationchart .p-organizationchart-line-top {
-                border-color: #cbd5e1;
+                border-color: var(--border);
+            }
+            .p-organizationchart .p-organizationchart-node-content {
+                background: var(--card);
+                border-color: var(--border);
+                color: var(--foreground);
             }
         `;
     document.head.appendChild(style);

@@ -6,6 +6,10 @@ import { Request, Response } from "express";
 import * as employees from "@/services/hr/employees-core.service";
 import { AppError } from "@/middlewares";
 import { constants, Logger } from "@/config";
+import { getFileUrl } from "@/middlewares/upload";
+import { sendEmail } from "@/services/email.service";
+import { welcomeEmail } from "@/services/recruitment/offer-emails";
+import { sendPasswordReset } from "@/services/auth.service";
 
 const logger = new Logger("EmployeesCoreController");
 
@@ -61,11 +65,34 @@ export const getEmployee = async (req: Request, res: Response) => {
 
 export const createEmployee = async (req: Request, res: Response) => {
   try {
-    return res.status(201).json({ employee: await employees.createEmployee(req.body) });
+    const employee = await employees.createEmployee(req.body, actorId(req));
+    // Post-commit, non-fatal: mirrors REC-05's offer-accept invite (offers.ts::sendWelcome).
+    await sendInviteIfNewAccount(employee, req.ip).catch((e) =>
+      logger.error("employee invite email failed (non-fatal)", e),
+    );
+    return res.status(201).json({ employee });
   } catch (e) {
     return handleError(res, e, "Create Employee Error");
   }
 };
+
+/**
+ * `invited` is only true for a brand-new `users` row (not one linked to an existing account) —
+ * that account got a random, never-revealed password, so it needs the set-password link to be
+ * usable. Reuses the password-reset token machinery rather than inventing a separate one.
+ */
+async function sendInviteIfNewAccount(
+  employee: Awaited<ReturnType<typeof employees.createEmployee>>,
+  ip?: string,
+) {
+  if (!employee.invited || !employee.personal_email) return;
+  const { subject, html } = welcomeEmail({
+    firstName: employee.first_name,
+    positionTitle: employee.job_title ?? "your new role",
+  });
+  await sendEmail(employee.personal_email, subject, html);
+  await sendPasswordReset(employee.user_id, employee.personal_email, ip ?? "0.0.0.0");
+}
 
 export const updateEmployee = async (req: Request, res: Response) => {
   try {
@@ -74,6 +101,15 @@ export const updateEmployee = async (req: Request, res: Response) => {
     });
   } catch (e) {
     return handleError(res, e, "Update Employee Error");
+  }
+};
+
+export const deleteEmployee = async (req: Request, res: Response) => {
+  try {
+    await employees.deleteEmployee(req.params.id, actorId(req));
+    return res.status(204).send();
+  } catch (e) {
+    return handleError(res, e, "Delete Employee Error");
   }
 };
 
@@ -87,7 +123,11 @@ export const getMe = async (req: Request, res: Response) => {
 
 export const updateMyProfile = async (req: Request, res: Response) => {
   try {
-    return res.json({ me: await employees.updateMyProfile(actorId(req), req.body) });
+    // multer-s3 augments the file with `location` (not part of Express.Multer.File) — same
+    // shape assets.controller.ts's buildImageInputs reads from req.files.
+    const file = req.file as (Express.Multer.File & { location?: string }) | undefined;
+    const patch = file ? { ...req.body, picture: getFileUrl(file.location!) } : req.body;
+    return res.json({ me: await employees.updateMyProfile(actorId(req), patch) });
   } catch (e) {
     return handleError(res, e, "Update Profile Error");
   }

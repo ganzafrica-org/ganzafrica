@@ -17,12 +17,12 @@ export function SettingsSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 mb-4">
+    <div className="bg-card rounded-lg border border-border mb-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition"
+        className="w-full flex items-center justify-between p-6 hover:bg-muted/50 transition"
       >
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
         <div className="flex items-center gap-3">
           {onEdit && (
             <button
@@ -37,12 +37,12 @@ export function SettingsSection({
           )}
           <ChevronDown
             size={20}
-            className={`text-gray-400 transition ${isOpen ? "rotate-180" : ""}`}
+            className={`text-muted-foreground transition ${isOpen ? "rotate-180" : ""}`}
           />
         </div>
       </button>
 
-      {isOpen && <div className="border-t border-gray-200 p-6 bg-gray-50">{children}</div>}
+      {isOpen && <div className="border-t border-border p-6 bg-muted/30">{children}</div>}
     </div>
   );
 }

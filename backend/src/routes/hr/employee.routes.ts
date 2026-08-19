@@ -15,6 +15,7 @@ import * as assetsController from "@/controllers/hr/assets.controller";
 import * as assetsValidation from "@/validations/hr/assets.validation";
 import * as orgController from "@/controllers/hr/org.controller";
 import * as orgValidation from "@/validations/hr/org.validation";
+import upload from "@/middlewares/upload";
 
 const router: Router = Router();
 
@@ -22,7 +23,15 @@ router.use(authenticate);
 
 // Self-service — must precede /:id so "me" is not parsed as a uuid.
 router.get("/me", c.getMe);
-router.patch("/me/profile", validate(v.updateProfileSchema), c.updateMyProfile);
+// upload.single("picture") is a no-op when the request is plain JSON (no "picture" file part) —
+// same multer-S3 middleware assets.routes.ts uses for asset images, reused here rather than
+// standing up separate upload infrastructure for a single profile-photo field.
+router.patch(
+  "/me/profile",
+  upload.single("picture"),
+  validate(v.updateProfileSchema),
+  c.updateMyProfile,
+);
 
 router.get(
   "/",
@@ -52,6 +61,12 @@ router.patch(
   requirePermission("employees:manage"),
   validate(v.updateEmployeeSchema),
   c.updateEmployee,
+);
+router.delete(
+  "/:id",
+  requirePermission("employees:manage"),
+  validate(v.employeeIdSchema),
+  c.deleteEmployee,
 );
 
 // MOD-04 §4 — LCM-02's offboarding gate query. Response shape (assetId, assignedAt,

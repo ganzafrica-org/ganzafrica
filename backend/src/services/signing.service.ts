@@ -4,11 +4,11 @@
  * trail — the document hash + signer identity + timestamp + IP — which is the signature.
  */
 import crypto from "crypto";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { AppError } from "../middlewares";
 import { env } from "../config";
-import { users } from "../db/schema";
+import { users, roles, user_roles } from "../db/schema";
 import {
   signature_templates,
   signature_template_fields,
@@ -17,6 +17,7 @@ import {
   type SignatureRequest,
 } from "../db/schema/signing";
 import { mintLink, consumeLink, peekLink, revokeLinks } from "./secure-links.service";
+import { activateViaSignature } from "./hr/contract.service";
 
 const DEFAULT_SIGN_TTL_DAYS = 30;
 
@@ -105,7 +106,9 @@ export type CreateRequestInput = {
   signer_email?: string | null;
   signer_name?: string | null;
   ref_kind?: string | null;
-  ref_id?: number | null;
+  ref_id?: string | null;
+  /** Position in a multi-signer sequence sharing (ref_kind, ref_id, template_id). Default 1. */
+  sequence_no?: number;
   expires_at?: string | null;
 };
 
@@ -140,10 +143,116 @@ export async function createRequest(
       signer_name: input.signer_name ?? null,
       ref_kind: input.ref_kind ?? null,
       ref_id: input.ref_id ?? null,
+      sequence_no: input.sequence_no ?? 1,
       created_by: createdBy,
     })
     .returning();
   return row;
+}
+
+export async function getTemplateByName(name: string) {
+  const [tpl] = await db
+    .select()
+    .from(signature_templates)
+    .where(and(eq(signature_templates.name, name), eq(signature_templates.is_active, true)))
+    .limit(1);
+  return tpl ?? null;
+}
+
+/**
+ * Creates one signature_request per signer, in order, all sharing (ref_kind, ref_id,
+ * template_id). Only the first is sent immediately; the rest stay 'draft' until their turn —
+ * completeSequenceStep advances the chain as each signer finishes.
+ */
+export async function createSequentialRequests(
+  input: {
+    template_id: number;
+    subject: string;
+    ref_kind: string;
+    ref_id: string;
+    signerUserIds: number[];
+  },
+  createdBy: number,
+): Promise<SignatureRequest[]> {
+  if (input.signerUserIds.length === 0) {
+    throw new AppError("At least one signer is required", 422);
+  }
+
+  const created: SignatureRequest[] = [];
+  for (let i = 0; i < input.signerUserIds.length; i++) {
+    const req = await createRequest(
+      {
+        template_id: input.template_id,
+        subject: input.subject,
+        signer_type: "internal",
+        signer_user_id: input.signerUserIds[i],
+        ref_kind: input.ref_kind,
+        ref_id: input.ref_id,
+        sequence_no: i + 1,
+      },
+      createdBy,
+    );
+    created.push(req);
+  }
+
+  await sendRequest(created[0].id);
+  return created;
+}
+
+/** Every request sharing (ref_kind, ref_id, template_id), in sequence order, freshly read. */
+async function getSequenceSiblings(
+  refKind: string,
+  refId: string,
+  templateId: number,
+): Promise<SignatureRequest[]> {
+  return db
+    .select()
+    .from(signature_requests)
+    .where(
+      and(
+        eq(signature_requests.ref_kind, refKind),
+        eq(signature_requests.ref_id, refId),
+        eq(signature_requests.template_id, templateId),
+      ),
+    )
+    .orderBy(signature_requests.sequence_no);
+}
+
+/**
+ * Internal-signer-only: called after a signature transaction commits (so this reads the
+ * just-signed state fresh). Sends the next signer in the sequence if one is still draft, and —
+ * once every signer in the sequence has signed — dispatches by ref_kind. Never called from the
+ * external/token signing path (signExternal) — sequential multi-party signing is an
+ * internal-signer feature for this ticket; external requests are always a lone signer
+ * (sequence_no=1, no siblings), so this would be a no-op for them anyway, but the guardrail is
+ * "don't touch that path" so it's simply never wired there.
+ */
+async function completeSequenceStep(requestId: number): Promise<void> {
+  const signedReq = await getRequest(requestId);
+  if (!signedReq.ref_kind || !signedReq.ref_id) return; // not part of a sequence
+
+  const siblings = await getSequenceSiblings(
+    signedReq.ref_kind,
+    signedReq.ref_id,
+    signedReq.template_id,
+  );
+  if (siblings.length <= 1) return; // not part of a sequence
+
+  const nextDraft = siblings.find((s) => s.status === "draft");
+  if (nextDraft) {
+    await sendRequest(nextDraft.id);
+    return;
+  }
+
+  const allSigned = siblings.every((s) => s.status === "signed");
+  if (!allSigned) return; // someone declined/voided/expired — not a clean full execution
+
+  if (signedReq.ref_kind === "contract") {
+    // Deliberate cross-module call, not an event bus: this is the only place a contract's full
+    // signature sequence completes, and the contract needs to know. See contract.service.ts's
+    // activateViaSignature for why this bypasses the manual employment_agreement_url guard.
+    await activateViaSignature(signedReq.ref_id, signedReq.signed_file_key);
+  }
 }
 
 export interface SentRequest {
@@ -262,7 +371,7 @@ export async function signInternal(
   fieldValues: Record<string, unknown>,
   ctx: { ip?: string; userAgent?: string } = {},
 ): Promise<{ signed: true }> {
-  return db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     const [req] = await tx
       .select()
       .from(signature_requests)
@@ -274,8 +383,10 @@ export async function signInternal(
     }
     if (req.status !== "sent") throw new AppError(`Request is ${req.status}`, 409);
     await completeSigning(tx, req, fieldValues, `user:${userId}`, ctx.ip, ctx.userAgent);
-    return { signed: true };
   });
+  // Outside the transaction — advancing the sequence reads the just-committed state.
+  await completeSequenceStep(requestId);
+  return { signed: true };
 }
 
 export type SignViewState = "valid" | "signed" | "expired" | "not_found";
@@ -363,6 +474,51 @@ export async function getAuditTrail(requestId: number) {
     .from(signature_events)
     .where(eq(signature_events.request_id, requestId))
     .orderBy(signature_events.created_at);
+}
+
+/**
+ * The full signer sequence for a reference (e.g. a contract), in order — what
+ * ContractSigningStatus renders as "whose turn" / fully executed. Ownership (self vs.
+ * signing:manage) is the caller's job, same convention as employees-core.service.ts.
+ */
+export async function listByRef(refKind: string, refId: string) {
+  const rows = await db
+    .select()
+    .from(signature_requests)
+    .where(and(eq(signature_requests.ref_kind, refKind), eq(signature_requests.ref_id, refId)))
+    .orderBy(signature_requests.template_id, signature_requests.sequence_no);
+  if (!rows.length) return [];
+
+  return rows.map((r) => ({
+    id: r.id,
+    sequence_no: r.sequence_no,
+    signer_user_id: r.signer_user_id,
+    signer_name: r.signer_name,
+    status: r.status,
+    completed_at: r.completed_at,
+  }));
+}
+
+async function hasAnyRole(userId: number, names: string[]): Promise<boolean> {
+  const rows = await db
+    .select({ name: roles.name })
+    .from(user_roles)
+    .innerJoin(roles, eq(user_roles.role_id, roles.id))
+    .where(eq(user_roles.user_id, userId));
+  return rows.some((r) => names.includes(r.name));
+}
+
+/**
+ * Ownership-checked read: HR/admin see any sequence; anyone else only their own (they're one of
+ * the signers) — same "own row or manage" convention as employees-core.service.ts.
+ */
+export async function listByRefForViewer(viewerUserId: number, refKind: string, refId: string) {
+  const sequence = await listByRef(refKind, refId);
+  const isSigner = sequence.some((s) => s.signer_user_id === viewerUserId);
+  if (!isSigner && !(await hasAnyRole(viewerUserId, ["hr", "admin"]))) {
+    throw new AppError("You cannot view this signature sequence", 403);
+  }
+  return sequence;
 }
 
 export { documentHash };

@@ -6,6 +6,9 @@ import {
   Briefcase,
   Calendar,
   Edit,
+  FileSignature,
+  FileText,
+  Package,
   Plus,
   Settings,
   Trash2,
@@ -18,6 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useContracts, useMyContracts, useDeleteContract } from "@/hooks/useContracts";
 import { useMyLeave } from "@/hooks/useLeaveBalances";
+import { useProcesses, useMyProcess, useProcess } from "@/hooks/useProcesses";
+import { ProcessStatus } from "@/components/processes/process-status";
+import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
 import { remainingDays } from "@/services/leave-balances.service";
 import { getInitials, getStatusBadge } from "@/lib/helpers/employee-util";
 import { EmployeeHrEditSheet } from "@/components/sections/employee/employee-hr-edit-sheet";
@@ -94,9 +100,39 @@ export const Overview = ({
   const selfContracts = useMyContracts(isSelf);
   const { data: contracts } = isSelf ? selfContracts : otherContracts;
   const activeContract = contracts?.find((c) => c.status === "ACTIVE") ?? null;
+  // DRAFT is the only status a signature sequence is ever relevant for — ACTIVE is already
+  // signed (or activated manually), EXPIRED/TERMINATED don't route through signing at all.
+  const pendingContract = contracts?.find((c) => c.status === "DRAFT") ?? null;
+
+  // LCM-01 process instances — processes:manage is HR-only, so a self-viewer reads their own via
+  // /hr/me/process instead. Naturally 404/empty-tolerant: no active instance just means no card.
+  const otherOnboarding = useProcesses(
+    { employee_id: employee.id, type: "onboarding", status: "in_progress" },
+    !isSelf,
+  );
+  const selfOnboarding = useMyProcess("onboarding", isSelf);
+  const otherOnboardingId = !isSelf ? (otherOnboarding.data?.[0]?.id ?? null) : null;
+  // HR's list query above has progress but not the per-task breakdown — fetch the instance detail
+  // once we know its id, same data ProcessStatus renders on the onboarding detail page.
+  const otherOnboardingDetail = useProcess(otherOnboardingId);
+  const onboarding = isSelf
+    ? selfOnboarding.data?.instance
+      ? {
+          id: selfOnboarding.data.instance.id,
+          progress: selfOnboarding.data.progress,
+          tasks: selfOnboarding.data.tasks,
+        }
+      : null
+    : otherOnboardingId
+      ? {
+          id: otherOnboardingId,
+          progress: otherOnboarding.data![0].progress,
+          tasks: otherOnboardingDetail.data?.tasks ?? [],
+        }
+      : null;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex-1 overflow-y-auto p-6 space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div className="overflow-hidden rounded-lg shadow-lg bg-[color:var(--color-background-primary)]">
           <CardHeader
@@ -220,6 +256,94 @@ export const Overview = ({
             </div>
           )}
         </div>
+
+        {/* MOD-04/MOD-05 read summaries — counts from the detail response, linking to the owning module rather than duplicating its UI here. */}
+        <div className="col-span-2 overflow-hidden rounded-lg shadow-lg bg-[color:var(--color-background-primary)]">
+          <CardHeader
+            icon={Package}
+            iconBg="bg-[#FDEBEA]"
+            iconColor="text-[#B3261E]"
+            title="Assets & documents"
+          />
+          <div>
+            <Row
+              label="Assigned assets"
+              value={
+                <Link href="/asset" className="text-brand-accent hover:underline">
+                  {employee.counts?.assets ?? 0}
+                </Link>
+              }
+            />
+            <Row
+              label="Documents"
+              value={
+                <Link href="/documents" className="text-brand-accent hover:underline">
+                  {employee.counts?.documents ?? 0}
+                </Link>
+              }
+            />
+          </div>
+        </div>
+
+        {onboarding && (
+          <div className="col-span-2 overflow-hidden rounded-lg shadow-lg bg-[color:var(--color-background-primary)]">
+            <CardHeader
+              icon={FileText}
+              iconBg="bg-[#E6F1FB]"
+              iconColor="text-[#185FA5]"
+              title="Onboarding in progress"
+            />
+            <div className="px-4 pb-3">
+              <p className="mb-2 text-xs text-slate-500">
+                {onboarding.progress?.done ?? 0} of {onboarding.progress?.total ?? 0} tasks complete
+                ({onboarding.progress?.percent ?? 0}%)
+              </p>
+              <ProcessStatus
+                tasks={onboarding.tasks}
+                progress={onboarding.progress ?? null}
+                canManage={false}
+                variant="summary"
+              />
+            </div>
+            <div className="flex gap-2 px-4 py-3">
+              <Link
+                href={
+                  isSelf ? "/employees/onboarding/me" : `/employees/onboarding/${onboarding.id}`
+                }
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-secondary)] px-2 py-2 text-[12px] text-[color:var(--color-text-primary)]"
+              >
+                View onboarding checklist
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {pendingContract && (
+          <div className="col-span-2 overflow-hidden rounded-lg shadow-lg bg-[color:var(--color-background-primary)]">
+            <CardHeader
+              icon={FileSignature}
+              iconBg="bg-[#FDEBEA]"
+              iconColor="text-[#B3261E]"
+              title="Contract signing"
+            />
+            <div className="flex items-center justify-between px-4 pb-3">
+              <span className="text-xs text-slate-500">{pendingContract.jobTitle}</span>
+              <ContractSigningStatus
+                refKind="contract"
+                refId={pendingContract.id}
+                variant="compact"
+              />
+            </div>
+            <div className="flex gap-2 px-4 py-3">
+              <button
+                onClick={() => onNavigateTab("contracts")}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-[color:var(--color-border-tertiary)] bg-[color:var(--color-background-secondary)] px-2 py-2 text-[12px] text-[color:var(--color-text-primary)]"
+              >
+                View contract
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -460,6 +584,9 @@ export const Contracts = ({ employee, isHr, isSelf }: TabProps) => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {c.status === "DRAFT" && (
+                <ContractSigningStatus refKind="contract" refId={c.id} variant="compact" />
+              )}
               <Badge variant={c.status === "ACTIVE" ? "default" : "outline"} className="capitalize">
                 {c.status.toLowerCase()}
               </Badge>

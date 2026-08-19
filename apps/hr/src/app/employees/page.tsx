@@ -7,12 +7,14 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Briefcase } from "lucide-react";
 import { EmployeeManagementContent } from "@/components/sections/employee/employee-tabs-management";
 import { StatsHeader } from "@/components/sections/header";
-import { useEmployees, useDepartments } from "@/hooks/useEmployees";
+import { useEmployees, useDepartments, useDeleteEmployee } from "@/hooks/useEmployees";
 import { getStatusBadge } from "@/lib/helpers/employee-util";
 import type { Employee, EmployeeStats } from "@/types/api";
 import { AddEmployeeSheet } from "@/components/sections/sheets/add-employee-sheet";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { EmployeeSheet } from "@/components/sections/sheets/employee-sheet";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAuth } from "@/hooks/useAuth";
 
 const PAGE_SIZE = 25;
 
@@ -28,6 +30,7 @@ const mapEmployeeForDisplay = (emp: Employee) => ({
   avatar: emp.picture ?? "",
   manager: emp.manager ? `${emp.manager.first_name} ${emp.manager.last_name}`.trim() : "—",
   hasAccount: !!emp.account,
+  contractCurrency: emp.contract_currency,
 });
 
 function computeStats(data: Employee[], total: number): EmployeeStats {
@@ -49,7 +52,15 @@ const PageContent = () => {
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [deletingEmployee, setDeletingEmployee] = useState<{ id: string; name: string } | null>(
+    null,
+  );
   const searchParams = useSearchParams();
+  const deleteEmployee = useDeleteEmployee();
+  const { roles } = useAuth();
+  // employees:manage (HR only) — director/program_manager have employees:read and can view this
+  // page's directory, but the backend 403s them on delete, so don't offer an action that'll fail.
+  const canManageEmployees = roles.includes("hr") || roles.includes("admin");
 
   const {
     data: employeesResponse,
@@ -88,6 +99,8 @@ const PageContent = () => {
     departments: departments ?? [],
     filteredEmployees: displayEmployees,
     onSelectEmployee: (row: { id: string }) => setSelectedEmployeeId(row.id),
+    onDeleteEmployee: (row: { id: string; name: string }) => setDeletingEmployee(row),
+    canDeleteEmployee: canManageEmployees,
     setShowAddSheet,
     getStatusBadge,
   });
@@ -198,6 +211,25 @@ const PageContent = () => {
             <EmployeeSheet employeeId={selectedEmployeeId} onOpenEmployee={setSelectedEmployeeId} />
           )}
         </ReusableSheet>
+
+        <ConfirmDialog
+          open={!!deletingEmployee}
+          onOpenChange={(open) => !open && setDeletingEmployee(null)}
+          title="Delete employee?"
+          description={
+            deletingEmployee
+              ? `This permanently deletes ${deletingEmployee.name}'s employee record, including their contracts, leave history, and onboarding/offboarding progress. Their login is deactivated, not deleted. This cannot be undone.`
+              : ""
+          }
+          confirmLabel="Delete employee"
+          isConfirming={deleteEmployee.isPending}
+          onConfirm={() => {
+            if (!deletingEmployee) return;
+            deleteEmployee.mutate(deletingEmployee.id, {
+              onSuccess: () => setDeletingEmployee(null),
+            });
+          }}
+        />
       </div>
     </div>
   );

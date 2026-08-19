@@ -97,9 +97,7 @@ export function Navbar() {
         { id: "home", label: "Home", href: "/" },
         { id: "employees", label: "Employees", href: "/employees" },
         { id: "recruitment", label: "Recruitment", href: "/recruitment" },
-        { id: "onboarding", label: "Onboarding", href: "/onboarding" },
         { id: "document", label: "Documents", href: "/documents" },
-        { id: "signing", label: "Sign", href: "/signing" },
         { id: "assets", label: "Assets", href: "/asset" },
         // { id: "help-desk", label: "Help Desk", href: "/help-desk" },
       ];
@@ -109,7 +107,7 @@ export function Navbar() {
     // director, program_manager, finance) gets the self-service nav.
     return [
       { id: "home", label: "Home", href: "/" },
-      { id: "my-onboarding", label: "My Onboarding", href: "/onboarding/me" },
+      { id: "my-onboarding", label: "My Onboarding", href: "/employees/onboarding/me" },
       { id: "leave", label: "Time Off", href: "/leave" },
       { id: "documents", label: "Documents", href: "/documents" },
       { id: "signing", label: "Sign", href: "/signing" },

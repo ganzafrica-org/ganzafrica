@@ -45,9 +45,36 @@ import { DocumentFormSheet } from "@/components/sections/documents/document-form
 import { DocumentDetailSheet } from "@/components/sections/documents/document-detail-sheet";
 import { StatsHeader } from "@/components/sections/header";
 import { useDocuments, useArchiveDocument } from "@/hooks/useDocuments";
+import { usePolicies } from "@/hooks/usePolicies";
 import { documentsService } from "@/services/documents.service";
+import { policiesService } from "@/services/policies.service";
 import { useAuth } from "@/hooks/useAuth";
-import { DOCUMENT_CATEGORIES, type HrDocument } from "@/types/api";
+import { DOCUMENT_CATEGORIES, type HrDocument, type Policy } from "@/types/api";
+
+/** A row from another module (currently just policies) shown in the unified feed read-only —
+ *  it isn't an hr_documents row, so document-specific actions (edit/archive/versioned view) are
+ *  swapped for a plain download + a link back to the owning module (see `documentColumns`). */
+type DocRow = HrDocument & { source: "document" | "policy"; sourceId: string };
+
+function policyToDocRow(p: Policy): DocRow {
+  return {
+    id: `policy-${p.id}`,
+    document_name: p.title ?? p.policy_name ?? p.name ?? "Untitled policy",
+    category: "Policies & Procedures",
+    version: p.version ?? "1",
+    description: p.content ?? "",
+    department: "—",
+    fileSize: p.fileSize ?? "—",
+    downloads: p.downloads ?? 0,
+    status: (p.status as HrDocument["status"]) ?? "PUBLISHED",
+    access: {},
+    contract_id: null,
+    modifiedAt: p.modifiedAt ?? p.last_edited ?? new Date().toISOString(),
+    createdBy: { id: null, fullName: "" },
+    source: "policy",
+    sourceId: p.id,
+  };
+}
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   "Contract Templates": File,
@@ -90,11 +117,19 @@ export default function DocumentManagementPage() {
   const [viewingDocument, setViewingDocument] = useState<HrDocument | null>(null);
 
   const { data, isLoading, isError } = useDocuments({ limit: 200 });
+  const { data: policiesResponse } = usePolicies({ limit: 200 });
   const archiveDocument = useArchiveDocument();
 
-  const allDocuments = data?.data ?? [];
+  const policyRows: DocRow[] = (
+    Array.isArray(policiesResponse) ? policiesResponse : (policiesResponse?.data ?? [])
+  ).map(policyToDocRow);
 
-  const documentColumns: ColumnDef<HrDocument>[] = [
+  const allDocuments: DocRow[] = [
+    ...(data?.data ?? []).map((d): DocRow => ({ ...d, source: "document", sourceId: d.id })),
+    ...policyRows,
+  ];
+
+  const documentColumns: ColumnDef<DocRow>[] = [
     {
       key: "document_name",
       header: "Document",
@@ -161,65 +196,94 @@ export default function DocumentManagementPage() {
     {
       key: "actions",
       header: "Actions",
-      render: (_, doc) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => {
-                setViewingDocument(doc);
-              }}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a
-                href={documentsService.downloadUrl(doc.id)}
-                target="_blank"
-                rel="noopener noreferrer"
+      render: (_, doc) =>
+        doc.source === "policy" ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a
+                  href={policiesService.downloadUrl(doc.sourceId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </a>
+              </DropdownMenuItem>
+              {canManage && (
+                <DropdownMenuItem asChild>
+                  <a href="/settings/policies">
+                    <FileCog className="mr-2 h-4 w-4" />
+                    Manage in Policies
+                  </a>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0" onClick={(e) => e.stopPropagation()}>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setViewingDocument(doc);
+                }}
               >
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </a>
-            </DropdownMenuItem>
-            {canManage && (
-              <>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setEditingDocument(doc);
-                    setFormOpen(true);
-                  }}
+                <Eye className="mr-2 h-4 w-4" />
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a
+                  href={documentsService.downloadUrl(doc.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-red-600"
-                  disabled={doc.status === "ARCHIVED"}
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Archive "${doc.document_name}"? It will be hidden from lists.`,
-                      )
-                    ) {
-                      archiveDocument.mutate(doc.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Archive
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </a>
+              </DropdownMenuItem>
+              {canManage && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setEditingDocument(doc);
+                      setFormOpen(true);
+                    }}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600"
+                    disabled={doc.status === "ARCHIVED"}
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Archive "${doc.document_name}"? It will be hidden from lists.`,
+                        )
+                      ) {
+                        archiveDocument.mutate(doc.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Archive
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
     },
   ];
 
@@ -408,7 +472,11 @@ export default function DocumentManagementPage() {
               <DataTable
                 columns={visibleColumns}
                 data={filteredDocuments}
-                onRowClick={(doc) => setViewingDocument(doc)}
+                onRowClick={(doc) =>
+                  doc.source === "policy"
+                    ? window.open(policiesService.downloadUrl(doc.sourceId), "_blank")
+                    : setViewingDocument(doc)
+                }
                 searchable={false}
               />
             )}

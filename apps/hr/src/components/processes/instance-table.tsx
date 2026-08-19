@@ -30,6 +30,13 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
   cancelled: "outline",
 };
 
+// Onboarding lives nested under Employees; offboarding (LCM-02) hasn't shipped a route yet, so
+// it falls back to a top-level guess until that ships and this gets a real entry.
+const BASE_PATH: Record<ProcessType, string> = {
+  onboarding: "/employees/onboarding",
+  offboarding: "/offboarding",
+};
+
 interface Props {
   rows: ProcessListRow[];
   type: ProcessType;
@@ -69,7 +76,7 @@ export function InstanceTable({ rows, type, isLoading, isError }: Props) {
           <TableRow key={row.id} className="cursor-pointer">
             <TableCell>
               <Link
-                href={`/${type}/${row.id}`}
+                href={`${BASE_PATH[type]}/${row.id}`}
                 className="font-medium text-slate-900 hover:underline"
               >
                 {row.employee.first_name} {row.employee.last_name}

@@ -109,6 +109,8 @@ export function useOfferMutations(applicationId: number) {
       mutationFn: (payload: Parameters<typeof recruitmentService.createOffer>[1]) =>
         recruitmentService.createOffer(applicationId, payload),
       onSuccess: invalidate,
+      // offer-tab.tsx shows its own contextual error toast for this mutation.
+      meta: { silentError: true },
     }),
     setLetter: useMutation({
       mutationFn: (args: { offerId: number; key: string }) =>
@@ -118,6 +120,8 @@ export function useOfferMutations(applicationId: number) {
     send: useMutation({
       mutationFn: (offerId: number) => recruitmentService.sendOffer(offerId),
       onSuccess: invalidate,
+      // offer-tab.tsx shows its own contextual error toast for this mutation.
+      meta: { silentError: true },
     }),
     withdraw: useMutation({
       mutationFn: (offerId: number) => recruitmentService.withdrawOffer(offerId),
@@ -175,6 +179,8 @@ export function useTransition() {
       qc.invalidateQueries({ queryKey: keys.opportunities });
       qc.invalidateQueries({ queryKey: keys.application(args.id) });
     },
+    // The pipeline board shows its own contextual error toast (allowed transitions, etc).
+    meta: { silentError: true },
   });
 }
 

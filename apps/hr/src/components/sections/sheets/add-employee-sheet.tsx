@@ -1,8 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, ChevronLeft, ChevronRight, Check, User, CheckCircle } from "lucide-react";
+import {
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  User,
+  CheckCircle,
+  FileSignature,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,7 +31,9 @@ import {
   type ContractFormState,
 } from "@/components/sections/contracts/contract-form-fields";
 import { saveContractWithAgreement } from "@/lib/helpers/contract-agreement";
-import type { CreateEmployeeRequest, EmploymentType } from "@/types/api";
+import { useProcesses, useProcess, usePatchTask } from "@/hooks/useProcesses";
+import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
+import type { CreateEmployeeRequest, EmploymentType, Contract } from "@/types/api";
 
 type StepType = "profile" | "contract";
 
@@ -74,6 +85,76 @@ interface AddEmployeeSheetProps {
   onOpenChange: (val: boolean) => void;
 }
 
+interface CreatedResult {
+  employeeId: string;
+  contract: Contract;
+}
+
+/**
+ * Shown once employee + DRAFT contract creation both succeed. The contract_signing task and its
+ * signature request already exist server-side the moment the onboarding instance is instantiated
+ * (createEmployee now does this) — this just links the freshly-created contract to that task via
+ * the existing PATCH /process-tasks/:id (usePatchTask), the same mechanism the onboarding task
+ * card's own contract picker uses. No new signing/onboarding backend logic — this only calls
+ * endpoints that already exist and were already exercised from a different entry point.
+ */
+function SendForSignaturePanel({ employeeId, contract }: CreatedResult) {
+  const queryClient = useQueryClient();
+  const { data: instances } = useProcesses({ employee_id: employeeId, type: "onboarding" });
+  const instanceId = instances?.[0]?.id ?? null;
+  const { data: detail, isLoading: loadingDetail } = useProcess(instanceId);
+  const patchTask = usePatchTask();
+  const [sent, setSent] = useState(false);
+
+  const signingTask = detail?.tasks.find(
+    (t) =>
+      t.kind === "contract_signing" &&
+      !(t.link_ref as { contract_id?: string } | null)?.contract_id,
+  );
+
+  async function handleSend() {
+    if (!signingTask) return;
+    await patchTask.mutateAsync({
+      taskId: signingTask.id,
+      link_ref: { contract_id: contract.id },
+    });
+    await queryClient.invalidateQueries({
+      queryKey: ["signing", "by-ref", "contract", contract.id],
+    });
+    setSent(true);
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <FileSignature className="w-4 h-4 text-brand-accent" />
+        <h3 className="text-sm font-semibold text-gray-900">Route for signature</h3>
+      </div>
+      <ContractSigningStatus refKind="contract" refId={contract.id} variant="compact" />
+
+      {!sent && !loadingDetail && instances && !signingTask && (
+        <p className="text-xs text-gray-500">
+          This employee&apos;s onboarding checklist has no unlinked &ldquo;sign contract&rdquo; step
+          — send this from the Contracts tab or the onboarding task card instead.
+        </p>
+      )}
+
+      <Button
+        size="sm"
+        onClick={handleSend}
+        disabled={!signingTask || patchTask.isPending || sent}
+        className="bg-brand-accent hover:bg-brand-accent/90 text-white"
+      >
+        {sent
+          ? "Sent to HR for signature"
+          : patchTask.isPending
+            ? "Sending…"
+            : "Send for signature"}
+      </Button>
+    </div>
+  );
+}
+
 export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) => {
   const createEmployeeMutation = useCreateEmployee();
   const [currentStep, setCurrentStep] = useState<StepType>("profile");
@@ -82,6 +163,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
   const [contract, setContract] = useState<ContractFormState>({ currency: "RWF" });
   const [agreementFile, setAgreementFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [createdResult, setCreatedResult] = useState<CreatedResult | null>(null);
 
   const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
   const [isSubmittingContract, setIsSubmittingContract] = useState(false);
@@ -94,6 +176,7 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
     setContract({ currency: "RWF" });
     setAgreementFile(null);
     setError(null);
+    setCreatedResult(null);
   };
 
   const profileValid = !!(profile.first_name && profile.last_name && profile.personal_email);
@@ -146,14 +229,21 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
 
       if (addContractNow) {
         setIsSubmittingContract(true);
+        let createdContract: Contract;
         try {
-          await saveContractWithAgreement({
+          createdContract = await saveContractWithAgreement({
             employeeId: employee.id,
             form: contract,
             agreementFile,
           });
         } finally {
           setIsSubmittingContract(false);
+        }
+        // Stay open on a DRAFT contract so HR can route it for signature right here — closing
+        // immediately would mean going to find the onboarding task card just to do this.
+        if (createdContract.status === "DRAFT") {
+          setCreatedResult({ employeeId: employee.id, contract: createdContract });
+          return;
         }
       }
 
@@ -166,6 +256,42 @@ export const AddEmployeeSheet = ({ open, onOpenChange }: AddEmployeeSheetProps) 
 
   const isStepCompleted = (stepIndex: number) => stepIndex < currentStepIndex;
   const isStepActive = (stepIndex: number) => stepIndex === currentStepIndex;
+
+  if (createdResult) {
+    return (
+      <ReusableSheet
+        open={open}
+        onOpenChange={(v) => {
+          if (!v) reset();
+          onOpenChange(v);
+        }}
+        title="Employee created"
+        description="A draft contract was attached — route it for signature now, or do it later from the Contracts tab."
+        footer={
+          <Button
+            className="w-full bg-black text-white hover:bg-gray-900"
+            onClick={() => {
+              reset();
+              onOpenChange(false);
+            }}
+          >
+            Done
+          </Button>
+        }
+      >
+        <div className="p-6 space-y-4">
+          <div className="flex items-center gap-2 text-sm text-emerald-700">
+            <CheckCircle className="w-4 h-4" />
+            Employee and contract created.
+          </div>
+          <SendForSignaturePanel
+            employeeId={createdResult.employeeId}
+            contract={createdResult.contract}
+          />
+        </div>
+      </ReusableSheet>
+    );
+  }
 
   return (
     <ReusableSheet

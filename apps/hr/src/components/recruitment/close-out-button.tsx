@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/lib/toast";
 import { recruitmentService } from "@/services/recruitment.service";
 
 /**
@@ -21,7 +21,6 @@ import { recruitmentService } from "@/services/recruitment.service";
  * live (HR can run more rounds), so the button explains why it's disabled.
  */
 export function CloseOutButton({ opportunityId }: { opportunityId: number }) {
-  const { toast } = useToast();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState(
@@ -36,12 +35,13 @@ export function CloseOutButton({ opportunityId }: { opportunityId: number }) {
   const mutation = useMutation({
     mutationFn: () => recruitmentService.closeOut(opportunityId, reason),
     onSuccess: (res) => {
-      toast({ title: `Closed out ${res.closed} remaining candidate(s)` });
+      toast.success(`Closed out ${res.closed} remaining candidate(s)`);
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["recruitment", "applications"] });
       qc.invalidateQueries({ queryKey: ["recruitment", "close-out", opportunityId] });
     },
-    onError: () => toast({ title: "Couldn't close out", variant: "destructive" }),
+    onError: () => toast.danger("Couldn't close out"),
+    meta: { silentError: true },
   });
 
   if (!preview) return null;

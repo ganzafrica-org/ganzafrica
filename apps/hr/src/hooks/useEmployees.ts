@@ -7,6 +7,7 @@ import type {
   UpdateEmployeeRequest,
   UpdateMyProfileRequest,
 } from "@/types/api";
+import { toast } from "@/lib/toast";
 
 export interface EmployeesQueryParams {
   search?: string;
@@ -62,6 +63,7 @@ export function useCreateEmployee() {
     mutationFn: (payload: CreateEmployeeRequest) => employeesService.createEmployee(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Employee created");
     },
   });
 }
@@ -78,12 +80,30 @@ export function useUpdateEmployee() {
   });
 }
 
+export function useDeleteEmployee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => employeesService.deleteEmployee(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Employee deleted");
+    },
+  });
+}
+
 export function useUpdateMyProfile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: UpdateMyProfileRequest) => employeesService.updateMyProfile(payload),
+    mutationFn: ({
+      payload,
+      pictureFile,
+    }: {
+      payload: UpdateMyProfileRequest;
+      pictureFile?: File;
+    }) => employeesService.updateMyProfile(payload, pictureFile),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees", "me"] });
+      toast.success("Profile updated");
     },
   });
 }

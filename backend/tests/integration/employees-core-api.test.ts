@@ -8,11 +8,11 @@ import { eq } from "drizzle-orm";
 import app from "../../src/app";
 import { resetDb } from "../setup";
 import { db } from "../../src/db/client";
-import { roles, user_roles } from "../../src/db/schema";
+import { roles, user_roles, password_reset_tokens } from "../../src/db/schema";
 import { loginAs } from "../helpers/auth";
 import { grant } from "../helpers/rbac";
 import { clearPermissionCache } from "../../src/middlewares/auth.middleware";
-import { makeEmployee, ensureRole } from "../factories";
+import { makeEmployee, makeUser, makeProcessTemplate, ensureRole } from "../factories";
 
 const API = "/api/hr/employees";
 
@@ -54,6 +54,8 @@ describe("MOD-01 employees API", () => {
 
   it("creates an employee via HR and lists it", async () => {
     const hr = await loginAsEmployee("hr");
+    // createEmployee now instantiates onboarding in the same transaction — needs a template.
+    await makeProcessTemplate({ createdBy: hr.user.id, employmentTypes: null });
 
     const created = await hr.agent.post(API).send({
       first_name: "Grace",
@@ -64,10 +66,51 @@ describe("MOD-01 employees API", () => {
       employment_type: "staff",
     });
     expect(created.status).toBe(201);
+    expect(created.body.employee.status).toBe("onboarding");
 
     const list = await hr.agent.get(`${API}?search=Grace`);
     expect(list.body.total).toBe(1);
     expect(list.body.data[0].first_name).toBe("Grace");
+  });
+
+  it("sends a set-password invite for a newly created account, but not when linking an existing one", async () => {
+    const hr = await loginAsEmployee("hr");
+    await makeProcessTemplate({ createdBy: hr.user.id, employmentTypes: null });
+
+    const created = await hr.agent.post(API).send({
+      first_name: "Ada",
+      last_name: "Lovelace",
+      personal_email: "ada.invite@example.com",
+      employment_type: "staff",
+    });
+    expect(created.status).toBe(201);
+
+    // sendPasswordReset mints and persists the token before attempting to email it, so the
+    // token row is a reliable, email-provider-independent signal that the invite fired.
+    const tokens = await db
+      .select()
+      .from(password_reset_tokens)
+      .where(eq(password_reset_tokens.user_id, created.body.employee.user_id));
+    expect(tokens).toHaveLength(1);
+
+    // Linking to an existing account (a `users` row with no `employees` row yet — e.g. a former
+    // applicant) must NOT touch its password or send an invite.
+    const existingUser = await makeUser({ email: "reuse.invite@example.com", role: "staff" });
+
+    const linked = await hr.agent.post(API).send({
+      first_name: "Re",
+      last_name: "Used",
+      personal_email: "reuse.invite@example.com",
+      employment_type: "staff",
+    });
+    expect(linked.status).toBe(201);
+    expect(linked.body.employee.user_id).toBe(existingUser.id);
+
+    const tokensForReused = await db
+      .select()
+      .from(password_reset_tokens)
+      .where(eq(password_reset_tokens.user_id, existingUser.id));
+    expect(tokensForReused).toHaveLength(0);
   });
 
   it("enforces the HR field set over HTTP (phone -> 422)", async () => {
@@ -108,6 +151,17 @@ describe("MOD-01 employees API", () => {
     const subject = await loginAsEmployee();
     // Would 400 (invalid uuid) if the /:id route shadowed /me.
     expect((await subject.agent.get(`${API}/me`)).status).toBe(200);
+  });
+
+  it("lets HR delete an employee, but 403s a plain employee attempting the same", async () => {
+    const hr = await loginAsEmployee("hr");
+    const subject = await loginAsEmployee();
+
+    expect((await subject.agent.delete(`${API}/${subject.employee.id}`)).status).toBe(403);
+
+    const del = await hr.agent.delete(`${API}/${subject.employee.id}`);
+    expect(del.status).toBe(204);
+    expect((await hr.agent.get(`${API}/${subject.employee.id}`)).status).toBe(404);
   });
 });
 

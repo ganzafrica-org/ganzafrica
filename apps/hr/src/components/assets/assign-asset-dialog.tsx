@@ -23,7 +23,7 @@ import { useAssignAsset } from "@/hooks/useAssets";
 import { useEmployees } from "@/hooks/useEmployees";
 import type { Asset } from "@/types/api";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 interface AssignAssetDialogProps {
   asset: Asset | null;
@@ -47,7 +47,7 @@ export function AssignAssetDialog({ asset, onOpenChange }: AssignAssetDialogProp
 
   const handleSubmit = async () => {
     if (!asset || !employeeId) {
-      toast.error("Select an employee to assign this asset to");
+      toast.danger("Select an employee to assign this asset to");
       return;
     }
     try {
@@ -57,8 +57,8 @@ export function AssignAssetDialog({ asset, onOpenChange }: AssignAssetDialogProp
       });
       toast.success("Asset assigned");
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Failed to assign asset");
+    } catch {
+      // Global mutation error handler shows the toast.
     }
   };
 

@@ -96,6 +96,18 @@ export const auditTrail = async (req: Request, res: Response) => {
     return handleError(res, e, "Audit Trail Error");
   }
 };
+export const listByRef = async (req: Request, res: Response) => {
+  try {
+    const requests = await signing.listByRefForViewer(
+      Number(req.user!.id),
+      req.query.ref_kind as string,
+      req.query.ref_id as string,
+    );
+    return res.json({ requests });
+  } catch (e) {
+    return handleError(res, e, "List By Ref Error");
+  }
+};
 
 // --- Internal signer (authenticated) ---
 export const mySignatures = async (req: Request, res: Response) => {

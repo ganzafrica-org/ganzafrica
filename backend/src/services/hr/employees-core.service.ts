@@ -5,7 +5,7 @@
  * *disjoint* sets of columns, enforced server-side. An employee cannot promote themselves by
  * PATCHing `job_title`, and HR does not silently overwrite someone's personal phone number.
  */
-import { and, asc, desc, eq, ilike, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { db, withDbTransaction } from "@/db/client";
 import {
   employees,
@@ -21,6 +21,7 @@ import { AppError } from "@/middlewares";
 import { hashPassword } from "../auth.service";
 import { randomBytes } from "crypto";
 import { getEmployeeForUser } from "./employee-context";
+import { instantiateProcess } from "./process.service";
 import {
   HR_EDITABLE_FIELDS,
   HR_SETTABLE_STATUSES,
@@ -127,6 +128,24 @@ async function attachManagers(rows: DirectoryQueryRow[]): Promise<DirectoryRow[]
 
   const byId = new Map(managerRows.map((m) => [m.id, m]));
 
+  // Country-flag proxy for the directory (MOD-01 follow-up): the employee's ACTIVE contract's
+  // currency, batched to avoid an N+1 query. No real country column exists on hr_contracts.
+  const employeeIds = rows.map((r) => r.id as string);
+  const contractRows = employeeIds.length
+    ? await db
+        .select({ employee_ref_id: hr_contracts.employee_ref_id, currency: hr_contracts.currency })
+        .from(hr_contracts)
+        .where(
+          and(
+            inArray(hr_contracts.employee_ref_id, employeeIds),
+            eq(hr_contracts.status, "ACTIVE"),
+          ),
+        )
+    : [];
+  const currencyByEmployeeId = new Map(
+    contractRows.map((c) => [c.employee_ref_id, c.currency] as const),
+  );
+
   return rows.map((r) => ({
     id: r.id as string,
     user_id: r.user_id as number,
@@ -149,6 +168,7 @@ async function attachManagers(rows: DirectoryQueryRow[]): Promise<DirectoryRow[]
     account: r.account_email
       ? { email: r.account_email as string, is_active: r.account_active as boolean }
       : null,
+    contract_currency: currencyByEmployeeId.get(r.id as string) ?? null,
   }));
 }
 
@@ -328,8 +348,14 @@ export async function linkOrCreateUserForEmployee(
   return { userId: created.id, created: true };
 }
 
-/** Manual create for staff who predate REC-05. Future hires arrive through the offer flow. */
-export async function createEmployee(input: CreateEmployeeInput) {
+/**
+ * Manual create for legacy staff / HR-entered hires. Mirrors REC-05's offer-accept path
+ * (offers.service.ts): lands the employee in `onboarding`, not `active`, and instantiates the
+ * default onboarding process in the same transaction — a hire that can't get a checklist (no
+ * active template for the employment type) shouldn't silently create an employee with nothing
+ * to do, so a missing-template 422 rolls back the whole creation, same as REC-05's.
+ */
+export async function createEmployee(input: CreateEmployeeInput, actorUserId: number) {
   const email = input.personal_email.toLowerCase();
 
   const [dup] = await db
@@ -352,7 +378,7 @@ export async function createEmployee(input: CreateEmployeeInput) {
   }
 
   return withDbTransaction(async (tx) => {
-    const { userId } = await linkOrCreateUserForEmployee(tx, {
+    const { userId, created: invited } = await linkOrCreateUserForEmployee(tx, {
       email,
       first_name: input.first_name,
       last_name: input.last_name,
@@ -373,11 +399,19 @@ export async function createEmployee(input: CreateEmployeeInput) {
         manager_id: input.manager_id ?? null,
         hired_at: input.hired_at ?? null,
         phone: input.phone ?? null,
-        status: "active",
+        status: "onboarding",
       })
       .returning();
 
-    return row;
+    await instantiateProcess("onboarding", row.id, {
+      actorUserId,
+      tx,
+      startedAt: input.hired_at ? new Date(input.hired_at) : undefined,
+    });
+
+    // `invited` (true only for a brand-new account, not one linked to an existing user) tells
+    // the controller whether to send the set-password invite email, post-commit.
+    return { ...row, invited };
   });
 }
 
@@ -439,6 +473,46 @@ export async function updateMyProfile(userId: number, patch: Record<string, unkn
     .returning();
 
   return row;
+}
+
+/**
+ * Hard delete (HR-explicit, destructive — not the "exited" lifecycle status, which the
+ * onboarding/offboarding process engine owns). Cascades onto contracts, leave records/balances,
+ * process instances/tasks, org links, and policy acknowledgements (all `onDelete: cascade`) —
+ * genuinely erases that history. Blocked with a clear 409 if the employee has documents, assets,
+ * or policies that reference them with `onDelete: restrict`, rather than surfacing a raw FK
+ * error. The linked `users` account is deactivated, never hard-deleted — a DB trigger
+ * unconditionally blocks hard deletes on `users` — so it would otherwise be left orphaned.
+ */
+export async function deleteEmployee(employeeId: string, actorUserId: number): Promise<void> {
+  const row = await requireEmployeeRow(employeeId);
+
+  const selfEmployeeId = await employeeIdForUser(actorUserId);
+  if (selfEmployeeId === employeeId) {
+    throw new AppError("You cannot delete your own employee record", 422, "SELF_DELETE");
+  }
+
+  try {
+    await withDbTransaction(async (tx) => {
+      await tx.delete(employees).where(eq(employees.id, employeeId));
+      if (row.user_id) {
+        await tx
+          .update(users)
+          .set({ is_active: false })
+          .where(eq(users.id, row.user_id as number));
+      }
+    });
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    if (error && typeof error === "object" && "code" in error && error.code === "23503") {
+      throw new AppError(
+        "Cannot delete: this employee has documents, assets, or policies on record that reference them. Reassign or remove those first.",
+        409,
+        "EMPLOYEE_HAS_DEPENDENTS",
+      );
+    }
+    throw error;
+  }
 }
 
 /** Distinct departments — powers the directory filter without a separate table. */

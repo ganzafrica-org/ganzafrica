@@ -19,7 +19,7 @@ import { helpdeskService } from "@/services/helpdesk.service";
 import { ASSET_STATUS_BADGE_STYLES, getCategoryIcon } from "@/lib/helpers/assets-util";
 import type { Asset } from "@/types/api";
 import { AlertTriangle, Loader2, Package } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 export function MyAssets() {
   const { data: assets, isLoading, isError, refetch } = useMyAssets();
@@ -31,7 +31,7 @@ export function MyAssets() {
 
   const handleReportIssue = async () => {
     if (!reportTarget || !description.trim()) {
-      toast.error("Describe the issue before submitting");
+      toast.danger("Describe the issue before submitting");
       return;
     }
     setSubmitting(true);
@@ -47,7 +47,9 @@ export function MyAssets() {
       setReportTarget(null);
       setDescription("");
     } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? "Failed to report issue");
+      // helpdeskService.createTicket() is a raw call, not a tracked mutation, so the
+      // global mutation error handler won't see failures that originate from it.
+      toast.danger(error?.response?.data?.message ?? "Failed to report issue");
     } finally {
       setSubmitting(false);
     }

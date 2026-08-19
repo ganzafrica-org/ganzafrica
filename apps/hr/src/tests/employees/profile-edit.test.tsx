@@ -36,6 +36,7 @@ const employee: Employee = {
   hired_at: "2024-01-15",
   manager: null,
   account: { email: "ada@example.com", is_active: true },
+  contract_currency: null,
 };
 
 const SELF_EDITABLE_FIELDS = [

@@ -23,14 +23,17 @@ export function SettingsModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
-        className={`bg-white rounded-lg shadow-xl ${maxWidth} w-full mx-4 max-h-[90vh] overflow-y-auto`}
+        className={`bg-card rounded-lg shadow-xl ${maxWidth} w-full mx-4 max-h-[90vh] overflow-y-auto`}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-start justify-between">
+        <div className="sticky top-0 bg-card border-b border-border p-6 flex items-start justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-            {subtitle && <p className="text-gray-600 mt-1">{subtitle}</p>}
+            <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+            {subtitle && <p className="text-muted-foreground mt-1">{subtitle}</p>}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground transition"
+          >
             <X size={24} />
           </button>
         </div>

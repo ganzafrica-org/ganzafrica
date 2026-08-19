@@ -31,3 +31,23 @@ export function getInitialsFromName(fullName?: string | null): string {
   const [first, last] = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
   return getInitials(first, last);
 }
+
+/**
+ * There's no real country column on a contract — currency is the closest proxy available today
+ * (hr_contracts.currency). Only the regional currencies map to one specific country; USD/EUR are
+ * used across many countries so they get a neutral globe rather than a wrong flag.
+ */
+const CURRENCY_COUNTRY: Record<string, { flag: string; country: string }> = {
+  RWF: { flag: "🇷🇼", country: "Rwanda" },
+  KES: { flag: "🇰🇪", country: "Kenya" },
+  UGX: { flag: "🇺🇬", country: "Uganda" },
+  TZS: { flag: "🇹🇿", country: "Tanzania" },
+  GBP: { flag: "🇬🇧", country: "United Kingdom" },
+};
+
+export function currencyToFlag(currency?: string | null): { flag: string; label: string } | null {
+  if (!currency) return null;
+  const known = CURRENCY_COUNTRY[currency];
+  if (known) return { flag: known.flag, label: known.country };
+  return { flag: "🌍", label: currency };
+}

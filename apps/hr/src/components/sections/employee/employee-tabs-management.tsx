@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, Building, FileText, Mail, MoreVertical, Eye, Plus } from "lucide-react";
+import { Search, Building, FileText, Mail, MoreVertical, Eye, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,11 +16,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTable, ColumnDef } from "../table-component";
 import DepartmentChartPage from "./department-chart";
-import { getInitialsFromName } from "@/lib/helpers/employee-util";
+import { getInitialsFromName, currencyToFlag } from "@/lib/helpers/employee-util";
 
 interface DisplayEmployeeRow {
   id: string;
@@ -33,6 +34,7 @@ interface DisplayEmployeeRow {
   avatar: string;
   manager: string;
   hasAccount: boolean;
+  contractCurrency: string | null;
 }
 
 export const EmployeeManagementContent = ({
@@ -45,6 +47,8 @@ export const EmployeeManagementContent = ({
   departments,
   filteredEmployees,
   onSelectEmployee,
+  onDeleteEmployee,
+  canDeleteEmployee,
   setShowAddSheet,
   getStatusBadge,
 }: {
@@ -57,6 +61,8 @@ export const EmployeeManagementContent = ({
   departments: string[];
   filteredEmployees: DisplayEmployeeRow[];
   onSelectEmployee: (row: DisplayEmployeeRow) => void;
+  onDeleteEmployee: (row: { id: string; name: string }) => void;
+  canDeleteEmployee: boolean;
   setShowAddSheet: (v: boolean) => void;
   getStatusBadge: (status: string) => React.ReactNode;
 }) => {
@@ -163,6 +169,24 @@ export const EmployeeManagementContent = ({
       className: "text-sm",
     },
     {
+      key: "contractCurrency",
+      header: "Flag",
+      render: (val) => {
+        const flag = currencyToFlag(val as string | null);
+        if (!flag)
+          return (
+            <span className="text-slate-300" title="No active contract">
+              —
+            </span>
+          );
+        return (
+          <span className="text-lg" title={flag.label}>
+            {flag.flag}
+          </span>
+        );
+      },
+    },
+    {
       key: "status",
       header: "Status",
       render: (val) => getStatusBadge(val),
@@ -188,6 +212,17 @@ export const EmployeeManagementContent = ({
               <DropdownMenuItem onClick={() => onSelectEmployee(employee)}>
                 <Eye className="mr-2 h-4 w-4" /> View Details
               </DropdownMenuItem>
+              {canDeleteEmployee && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600"
+                    onClick={() => onDeleteEmployee({ id: employee.id, name: employee.name })}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

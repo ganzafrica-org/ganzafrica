@@ -45,8 +45,8 @@ export default function PolicyDetailsPage() {
 
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{policy.title}</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-3xl font-bold text-foreground">{policy.title}</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               v{policy.version} ·{" "}
               <Badge
                 className={
@@ -79,12 +79,12 @@ export default function PolicyDetailsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6 whitespace-pre-wrap text-sm text-gray-700">
+        <div className="bg-card rounded-lg border border-border p-6 mb-6 whitespace-pre-wrap text-sm text-muted-foreground">
           {policy.content || "No content provided."}
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200">
-          <h2 className="text-lg font-semibold px-6 pt-6">Acknowledgements</h2>
+        <div className="bg-card rounded-lg border border-border">
+          <h2 className="text-lg font-semibold px-6 pt-6 text-foreground">Acknowledgements</h2>
           <PolicyAckReport policy={policy} />
         </div>
       </div>

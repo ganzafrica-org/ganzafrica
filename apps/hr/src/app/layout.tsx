@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider } from "@/providers/app-provider";
 import { ConditionalAppShell } from "@/components/layout/conditional-app-shell";
+import { AppToastProvider } from "@/components/toast/toast-provider";
 
 import { PrimeReactProvider } from "primereact/api";
 
@@ -60,6 +61,7 @@ export default function RootLayout({
               <TooltipProvider>
                 <ConditionalAppShell>{children}</ConditionalAppShell>
               </TooltipProvider>
+              <AppToastProvider />
             </AppProvider>
           </ThemeProvider>
         </PrimeReactProvider>

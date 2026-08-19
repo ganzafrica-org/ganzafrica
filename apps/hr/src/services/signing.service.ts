@@ -31,6 +31,20 @@ export interface MySignatureRequest {
   completed_at: string | null;
   created_at: string;
   fields: SignatureField[];
+  /** Position in a multi-signer sequence (e.g. HR=1, employee=2). 1 for a lone-signer request. */
+  sequence_no: number;
+  ref_kind: string | null;
+  ref_id: string | null;
+}
+
+/** One signer's position in a sequence — what ContractSigningStatus renders as "whose turn". */
+export interface SequenceSigner {
+  id: number;
+  sequence_no: number;
+  signer_user_id: number | null;
+  signer_name: string | null;
+  status: SignatureRequestStatus;
+  completed_at: string | null;
 }
 
 export const signingService = {
@@ -44,5 +58,13 @@ export const signingService = {
       field_values: fieldValues,
     });
     return data;
+  },
+
+  /** HR-only: the full signer sequence for a reference (e.g. a contract). */
+  async listByRef(refKind: string, refId: string): Promise<SequenceSigner[]> {
+    const { data } = await httpClient.get<{ requests: SequenceSigner[] }>("/hr/signing/requests", {
+      params: { ref_kind: refKind, ref_id: refId },
+    });
+    return data.requests;
   },
 };

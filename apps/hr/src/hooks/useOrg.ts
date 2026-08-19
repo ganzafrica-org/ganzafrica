@@ -38,5 +38,8 @@ export function useSetManager() {
       queryClient.invalidateQueries({ queryKey: ["employee", variables.employeeId] });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
+    // Both callers already show a specific toast for this (including the "would
+    // create a reporting cycle" case), so the global handler would just double up.
+    meta: { silentError: true },
   });
 }

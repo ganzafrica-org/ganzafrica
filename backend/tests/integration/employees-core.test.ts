@@ -3,10 +3,18 @@
  * promoting themselves or HR clobbering personal fields.
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { resetDb } from "../setup";
 import { db } from "../../src/db/client";
-import { employees, users, user_roles, roles } from "../../src/db/schema";
+import {
+  employees,
+  process_instances,
+  process_tasks,
+  hr_contracts,
+  users,
+  user_roles,
+  roles,
+} from "../../src/db/schema";
 import {
   listEmployees,
   getEmployeeDetail,
@@ -15,8 +23,17 @@ import {
   updateMyProfile,
   getMyEmployeeRecord,
   listDepartments,
+  deleteEmployee,
 } from "../../src/services/hr/employees-core.service";
-import { makeUser, makeEmployee, makeEmployeeUser, ensureRole } from "../factories";
+import {
+  makeUser,
+  makeEmployee,
+  makeEmployeeUser,
+  makeContract,
+  makeDocument,
+  makeProcessTemplate,
+  ensureRole,
+} from "../factories";
 import { AppError } from "../../src/middlewares";
 
 describe("MOD-01 directory", () => {
@@ -87,6 +104,23 @@ describe("MOD-01 directory", () => {
     const row = list.data[0];
     expect(row.manager?.first_name).toBe("Manny");
     expect(row.account?.email).toBe(report.user.email);
+  });
+
+  it("surfaces the ACTIVE contract's currency as contract_currency, batched (no N+1)", async () => {
+    const withActive = await makeEmployeeUser({ firstName: "Kesi", employmentType: "staff" });
+    await makeContract({ employeeId: withActive.employee.id, currency: "KES", status: "ACTIVE" });
+    const withDraftOnly = await makeEmployeeUser({
+      firstName: "Draftonly",
+      employmentType: "staff",
+    });
+    await makeContract({ employeeId: withDraftOnly.employee.id, currency: "UGX", status: "DRAFT" });
+    await makeEmployeeUser({ firstName: "Nocontract", employmentType: "staff" });
+
+    const list = await listEmployees({ search: "" });
+    const byName = (n: string) => list.data.find((r) => r.first_name === n);
+    expect(byName("Kesi")?.contract_currency).toBe("KES");
+    expect(byName("Draftonly")?.contract_currency).toBeNull();
+    expect(byName("Nocontract")?.contract_currency).toBeNull();
   });
 
   it("lists distinct departments", async () => {
@@ -211,23 +245,37 @@ describe("MOD-01 detail and access", () => {
 });
 
 describe("MOD-01 manual create with user linking", () => {
+  let hrUserId: number;
+
   beforeEach(async () => {
     await resetDb();
     await ensureRole("employee");
     await ensureRole("hr");
+    hrUserId = (await makeUser({ role: "hr" })).id;
+    await makeProcessTemplate({
+      createdBy: hrUserId,
+      employmentTypes: null,
+      tasks: [
+        { title: "Sign employment contract", kind: "contract_signing", is_blocking: true },
+        { title: "Welcome", kind: "checklist" },
+      ],
+    });
   });
 
   it("creates a fresh users account with the employee role", async () => {
-    const created = await createEmployee({
-      first_name: "New",
-      last_name: "Hire",
-      personal_email: "new.hire@example.com",
-      job_title: "Analyst",
-      department: "Data",
-      employment_type: "analyst",
-    });
+    const created = await createEmployee(
+      {
+        first_name: "New",
+        last_name: "Hire",
+        personal_email: "new.hire@example.com",
+        job_title: "Analyst",
+        department: "Data",
+        employment_type: "analyst",
+      },
+      hrUserId,
+    );
 
-    expect(created.status).toBe("active");
+    expect(created.status).toBe("onboarding");
 
     const [account] = await db.select().from(users).where(eq(users.email, "new.hire@example.com"));
     expect(account).toBeTruthy();
@@ -244,11 +292,14 @@ describe("MOD-01 manual create with user linking", () => {
     const existing = await makeUser({ email: "reuse@example.com", role: "staff" });
     const [before] = await db.select().from(users).where(eq(users.id, existing.id));
 
-    const created = await createEmployee({
-      first_name: "Reuse",
-      last_name: "Account",
-      personal_email: "reuse@example.com",
-    });
+    const created = await createEmployee(
+      {
+        first_name: "Reuse",
+        last_name: "Account",
+        personal_email: "reuse@example.com",
+      },
+      hrUserId,
+    );
 
     const [linked] = await db.select().from(employees).where(eq(employees.id, created.id));
     expect(linked.user_id).toBe(existing.id);
@@ -262,17 +313,138 @@ describe("MOD-01 manual create with user linking", () => {
   });
 
   it("409s on a duplicate employee email", async () => {
-    await createEmployee({
-      first_name: "First",
-      last_name: "Person",
-      personal_email: "dup@example.com",
-    });
-    await expect(
-      createEmployee({
-        first_name: "Second",
+    await createEmployee(
+      {
+        first_name: "First",
         last_name: "Person",
         personal_email: "dup@example.com",
-      }),
+      },
+      hrUserId,
+    );
+    await expect(
+      createEmployee(
+        {
+          first_name: "Second",
+          last_name: "Person",
+          personal_email: "dup@example.com",
+        },
+        hrUserId,
+      ),
     ).rejects.toMatchObject({ statusCode: 409, code: "EMPLOYEE_EMAIL_TAKEN" });
+  });
+
+  it("instantiates the default onboarding process, snapshotting its tasks (incl. contract_signing)", async () => {
+    const created = await createEmployee(
+      {
+        first_name: "Ona",
+        last_name: "Boarding",
+        personal_email: "ona.boarding@example.com",
+        employment_type: "staff",
+      },
+      hrUserId,
+    );
+
+    const [instance] = await db
+      .select()
+      .from(process_instances)
+      .where(
+        and(
+          eq(process_instances.employee_id, created.id),
+          eq(process_instances.type, "onboarding"),
+        ),
+      );
+    expect(instance).toBeTruthy();
+    expect(instance.status).toBe("in_progress");
+
+    const tasks = await db
+      .select()
+      .from(process_tasks)
+      .where(eq(process_tasks.instance_id, instance.id));
+    expect(tasks.map((t) => t.title)).toEqual(
+      expect.arrayContaining(["Sign employment contract", "Welcome"]),
+    );
+    expect(tasks.find((t) => t.title === "Sign employment contract")?.kind).toBe(
+      "contract_signing",
+    );
+  });
+
+  it("rolls back the whole creation when no active onboarding template applies", async () => {
+    await resetDb();
+    await ensureRole("employee");
+    await ensureRole("hr");
+    hrUserId = (await makeUser({ role: "hr" })).id;
+    // No template seeded this time.
+
+    await expect(
+      createEmployee(
+        {
+          first_name: "No",
+          last_name: "Template",
+          personal_email: "no.template@example.com",
+        },
+        hrUserId,
+      ),
+    ).rejects.toMatchObject({ statusCode: 422, code: "TEMPLATE_UNAVAILABLE" });
+
+    // Nothing survives: no employee, no linked user.
+    expect(await db.select().from(employees)).toHaveLength(0);
+    const accounts = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, "no.template@example.com"));
+    expect(accounts).toHaveLength(0);
+  });
+});
+
+describe("MOD-01 delete employee (hard delete)", () => {
+  let hrUserId: number;
+
+  beforeEach(async () => {
+    await resetDb();
+    await ensureRole("employee");
+    await ensureRole("hr");
+    hrUserId = (await makeUser({ role: "hr" })).id;
+  });
+
+  it("deletes the employee row, cascades their contract, and deactivates (not deletes) their linked account", async () => {
+    const { user, employee } = await makeEmployeeUser({ employmentType: "staff" });
+    await makeContract({ employeeId: employee.id });
+
+    await deleteEmployee(employee.id, hrUserId);
+
+    expect(await db.select().from(employees).where(eq(employees.id, employee.id))).toHaveLength(0);
+    expect(
+      await db.select().from(hr_contracts).where(eq(hr_contracts.employee_ref_id, employee.id)),
+    ).toHaveLength(0);
+
+    const [account] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(account).toBeTruthy(); // still exists — never hard-deleted
+    expect(account.is_active).toBe(false);
+  });
+
+  it("404s deleting an unknown employee", async () => {
+    await expect(
+      deleteEmployee("00000000-0000-0000-0000-000000000000", hrUserId),
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("refuses to let HR delete their own employee record", async () => {
+    const employee = await makeEmployee({ userId: hrUserId, employmentType: "staff" });
+    await expect(deleteEmployee(employee.id, hrUserId)).rejects.toMatchObject({
+      statusCode: 422,
+      code: "SELF_DELETE",
+    });
+  });
+
+  it("409s with a clear message instead of a raw FK error when the employee has documents on record", async () => {
+    const { employee } = await makeEmployeeUser({ employmentType: "staff" });
+    await makeDocument({ createdById: employee.id });
+
+    await expect(deleteEmployee(employee.id, hrUserId)).rejects.toMatchObject({
+      statusCode: 409,
+      code: "EMPLOYEE_HAS_DEPENDENTS",
+    });
+    // Nothing was torn down mid-way — the failed delete rolled back inside its own transaction.
+    expect(await db.select().from(employees).where(eq(employees.id, employee.id))).toHaveLength(1);
   });
 });

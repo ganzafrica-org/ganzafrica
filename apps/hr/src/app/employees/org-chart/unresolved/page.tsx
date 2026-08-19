@@ -1,6 +1,6 @@
 "use client";
 
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnresolvedManagers, useSetManager } from "@/hooks/useOrg";
 import { ManagerPicker } from "@/components/sections/employee/manager-picker";
@@ -21,11 +21,9 @@ export default function UnresolvedManagersPage() {
     } catch (err: any) {
       const data = err?.response?.data as CycleErrorResponse | undefined;
       if (data?.error === "cycle") {
-        toast.error("That assignment would create a reporting cycle", {
-          description: data.path.join(" → "),
-        });
+        toast.danger("That assignment would create a reporting cycle", data.path.join(" → "));
       } else {
-        toast.error(err?.response?.data?.message ?? "Failed to assign manager.");
+        toast.danger(err?.response?.data?.message ?? "Failed to assign manager.");
       }
     }
   };

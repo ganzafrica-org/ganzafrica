@@ -148,6 +148,13 @@
       "when": 1786524775315,
       "tag": "0020_steady_frank_castle",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1787045129459,
+      "tag": "0021_open_killraven",
+      "breakpoints": true
     }
   ]
 }

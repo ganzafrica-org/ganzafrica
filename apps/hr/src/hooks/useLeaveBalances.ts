@@ -7,6 +7,7 @@ import {
   type LeaveDraft,
   type LeaveTypeName,
 } from "@/services/leave-balances.service";
+import { toast } from "@/lib/toast";
 
 const MY_LEAVE = "my-leave";
 const APPROVALS = "leave-approvals";
@@ -28,6 +29,7 @@ export function useRequestLeave() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [MY_LEAVE] });
       qc.invalidateQueries({ queryKey: [APPROVALS] });
+      toast.success("Leave request submitted");
     },
   });
 }
@@ -36,6 +38,9 @@ export function useRequestLeave() {
 export function useValidateLeave() {
   return useMutation({
     mutationFn: (payload: LeaveDraft) => leaveBalancesService.validate(payload),
+    // Fires on every date/type change while the user is still picking a range —
+    // an error toast per keystroke would be noise, not feedback.
+    meta: { silentError: true },
   });
 }
 
@@ -61,10 +66,11 @@ export function useDecideLeave() {
       decision === "approve"
         ? leaveBalancesService.approve(id, note)
         : leaveBalancesService.reject(id, note ?? ""),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: [APPROVALS] });
       qc.invalidateQueries({ queryKey: [MY_LEAVE] });
       qc.invalidateQueries({ queryKey: [CALENDAR] });
+      toast.success(variables.decision === "approve" ? "Leave approved" : "Leave rejected");
     },
   });
 }
@@ -102,7 +108,10 @@ export function useSavePolicy() {
       annual_days: number;
       max_carry_over?: number;
     }) => leaveBalancesService.savePolicy(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [POLICIES] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [POLICIES] });
+      toast.success("Leave policy saved");
+    },
   });
 }
 
@@ -110,7 +119,10 @@ export function useDeletePolicy() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => leaveBalancesService.deletePolicy(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [POLICIES] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [POLICIES] });
+      toast.success("Leave policy deleted");
+    },
   });
 }
 
@@ -126,7 +138,10 @@ export function useCreateHoliday() {
   return useMutation({
     mutationFn: (payload: { date: string; name: string }) =>
       leaveBalancesService.createHoliday(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [HOLIDAYS] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [HOLIDAYS] });
+      toast.success("Holiday added");
+    },
   });
 }
 
@@ -134,6 +149,9 @@ export function useDeleteHoliday() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => leaveBalancesService.deleteHoliday(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: [HOLIDAYS] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [HOLIDAYS] });
+      toast.success("Holiday removed");
+    },
   });
 }

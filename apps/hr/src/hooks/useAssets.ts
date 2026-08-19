@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { assetsService } from "@/services/assets.service";
+import { toast } from "@/lib/toast";
 import type {
   Asset,
   AssetCategory,
@@ -65,6 +66,7 @@ export function useUpdateAsset() {
       queryClient.invalidateQueries({ queryKey: ["assets"] });
       queryClient.invalidateQueries({ queryKey: ["asset", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["assetStats"] });
+      toast.success("Asset updated");
     },
   });
 }
@@ -132,7 +134,10 @@ export function useUnflagAsset() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => assetsService.unflagAsset(id),
-    onSuccess: (_, id) => invalidateAfterAssetChange(queryClient, id),
+    onSuccess: (_, id) => {
+      invalidateAfterAssetChange(queryClient, id);
+      toast.success("Flag cleared");
+    },
   });
 }
 

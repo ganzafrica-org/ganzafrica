@@ -47,7 +47,25 @@ export const employeesService = {
     const response = await httpClient.patch<{ employee: Employee }>(`/hr/employees/${id}`, payload);
     return response.data.employee;
   },
-  async updateMyProfile(payload: UpdateMyProfileRequest) {
+  async deleteEmployee(id: string) {
+    await httpClient.delete(`/hr/employees/${id}`);
+  },
+  /**
+   * Sends as multipart/form-data when a new picture file is provided (same pattern as
+   * assetsService.createAsset), JSON otherwise.
+   */
+  async updateMyProfile(payload: UpdateMyProfileRequest, pictureFile?: File) {
+    if (pictureFile) {
+      const form = new FormData();
+      Object.entries(payload).forEach(([key, value]) => {
+        if (key === "picture" || value === undefined || value === null) return;
+        form.append(key, String(value));
+      });
+      form.append("picture", pictureFile);
+      // No explicit Content-Type — see assetsService.createAsset for why.
+      const response = await httpClient.patch<{ me: Employee }>("/hr/employees/me/profile", form);
+      return response.data.me;
+    }
     const response = await httpClient.patch<{ me: Employee }>("/hr/employees/me/profile", payload);
     return response.data.me;
   },

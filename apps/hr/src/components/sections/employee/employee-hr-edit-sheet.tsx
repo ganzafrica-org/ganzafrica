@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { ReusableSheet } from "@/components/sections/sheets/sheet-component";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,11 +77,9 @@ export function EmployeeHrEditSheet({ employee, open, onOpenChange }: EmployeeHr
       } catch (err: any) {
         const data = err?.response?.data as CycleErrorResponse | undefined;
         if (data?.error === "cycle") {
-          toast.error("That reassignment would create a reporting cycle", {
-            description: data.path.join(" → "),
-          });
+          toast.danger("That reassignment would create a reporting cycle", data.path.join(" → "));
         } else {
-          toast.error(err?.response?.data?.message ?? "Failed to update manager.");
+          toast.danger(err?.response?.data?.message ?? "Failed to update manager.");
         }
         return;
       }
@@ -89,6 +87,7 @@ export function EmployeeHrEditSheet({ employee, open, onOpenChange }: EmployeeHr
 
     try {
       await updateEmployee.mutateAsync({ id: employee.id, payload: form });
+      toast.success("Employee updated");
       onOpenChange(false);
     } catch (err: any) {
       setError(err?.response?.data?.message ?? "Failed to save.");

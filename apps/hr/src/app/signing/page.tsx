@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileSignature, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useMySignatures, useSignDocument } from "@/hooks/useSigning";
+import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
 import type { MySignatureRequest, SignatureRequestStatus } from "@/services/signing.service";
 
 const STATUS_STYLES: Record<SignatureRequestStatus, { label: string; className: string }> = {
@@ -120,6 +121,9 @@ function RequestRow({ req, onSign }: { req: MySignatureRequest; onSign?: () => v
           </CardDescription>
         </div>
         <div className="flex shrink-0 items-center gap-3">
+          {req.ref_kind === "contract" && req.ref_id && (
+            <ContractSigningStatus refKind={req.ref_kind} refId={req.ref_id} variant="compact" />
+          )}
           <Badge className={status.className} variant="secondary">
             {status.label}
           </Badge>

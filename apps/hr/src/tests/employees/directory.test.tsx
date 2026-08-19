@@ -15,11 +15,17 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+const authState: { roles: string[] } = { roles: ["hr"] };
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ roles: authState.roles, user: { name: "Test User" }, isAuthenticated: true }),
+}));
+
 import EmployeesPage from "@/app/employees/page";
 
 afterEach(() => {
   cleanup();
   pushMock.mockClear();
+  authState.roles = ["hr"];
 });
 
 const employee = (over: Record<string, unknown> = {}) => ({
@@ -112,5 +118,73 @@ describe("Employees directory", () => {
     mockDirectory([employee({ account: null })]);
     renderWithClient(<EmployeesPage />);
     expect(await screen.findByText("no account")).toBeInTheDocument();
+  });
+
+  it("deletes an employee after confirmation, and surfaces the backend's message if it's blocked", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    let deleteCalls = 0;
+    mockDirectory([employee()]);
+    server.use(
+      http.delete(`${API}/hr/employees/11111111-1111-1111-1111-111111111111`, () => {
+        deleteCalls += 1;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    renderWithClient(<EmployeesPage />);
+    const row = (await screen.findByText("Ada Lovelace")).closest("tr")!;
+    await userEvent.click(within(row).getByRole("button"));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /delete/i }));
+
+    expect(await screen.findByText(/delete employee\?/i)).toBeInTheDocument();
+    expect(screen.getByText(/permanently deletes ada lovelace/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /delete employee/i }));
+
+    await waitFor(() => expect(deleteCalls).toBe(1));
+    await waitFor(() => expect(screen.queryByText(/delete employee\?/i)).not.toBeInTheDocument());
+  });
+
+  it("hides the delete action for a viewer with employees:read but not employees:manage", async () => {
+    authState.roles = ["director"];
+    const { default: userEvent } = await import("@testing-library/user-event");
+    mockDirectory([employee()]);
+    renderWithClient(<EmployeesPage />);
+
+    const row = (await screen.findByText("Ada Lovelace")).closest("tr")!;
+    await userEvent.click(within(row).getByRole("button"));
+
+    expect(await screen.findByRole("menuitem", { name: /view details/i })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it("shows a country flag derived from the employee's contract currency, and a dash when there is none", async () => {
+    mockDirectory([
+      employee({ contract_currency: "KES" }),
+      employee({
+        id: "44444444-4444-4444-4444-444444444444",
+        first_name: "No",
+        last_name: "Contract",
+        contract_currency: null,
+      }),
+      employee({
+        id: "55555555-5555-5555-5555-555555555555",
+        first_name: "Uses",
+        last_name: "Dollars",
+        contract_currency: "USD",
+      }),
+    ]);
+
+    renderWithClient(<EmployeesPage />);
+
+    const adaRow = (await screen.findByText("Ada Lovelace")).closest("tr")!;
+    expect(within(adaRow).getByTitle("Kenya")).toHaveTextContent("🇰🇪");
+
+    const noContractRow = screen.getByText("No Contract").closest("tr")!;
+    expect(within(noContractRow).getByTitle("No active contract")).toBeInTheDocument();
+
+    // USD isn't tied to one country — falls back to a neutral globe rather than a wrong flag.
+    const dollarsRow = screen.getByText("Uses Dollars").closest("tr")!;
+    expect(within(dollarsRow).getByTitle("USD")).toHaveTextContent("🌍");
   });
 });

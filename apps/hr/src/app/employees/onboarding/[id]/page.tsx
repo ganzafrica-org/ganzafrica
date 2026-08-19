@@ -3,11 +3,10 @@
 import React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Ban } from "lucide-react";
-import { TaskRow } from "@/components/processes/task-row";
+import { ProcessStatus } from "@/components/processes/process-status";
 import { useProcess, useCancelProcess } from "@/hooks/useProcesses";
 
 export default function OnboardingDetailPage() {
@@ -25,14 +24,12 @@ export default function OnboardingDetailPage() {
   }
 
   const { instance, tasks, progress, can_manage } = data;
-  const pending = tasks.filter((t) => t.status === "pending");
-  const resolved = tasks.filter((t) => t.status !== "pending");
 
   return (
     <div className="flex w-full flex-col gap-6">
       <div>
         <Button variant="ghost" size="sm" asChild className="mb-2 -ml-2">
-          <Link href="/onboarding">
+          <Link href="/employees/onboarding">
             <ArrowLeft className="mr-1.5 size-4" /> All onboarding
           </Link>
         </Button>
@@ -63,44 +60,13 @@ export default function OnboardingDetailPage() {
         </div>
       </div>
 
-      {progress && progress.total > 0 && (
-        <Card className="shadow-sm">
-          <CardContent className="p-5">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
-                style={{ width: `${progress.percent}%` }}
-              />
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {progress.percent}% complete — the employee becomes active once every required step is
-              done.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {pending.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Outstanding
-          </h2>
-          {pending.map((task) => (
-            <TaskRow key={task.id} task={task} canManage={can_manage} isMine={false} />
-          ))}
-        </section>
-      )}
-
-      {resolved.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Completed
-          </h2>
-          {resolved.map((task) => (
-            <TaskRow key={task.id} task={task} canManage={can_manage} isMine={false} />
-          ))}
-        </section>
-      )}
+      <ProcessStatus
+        tasks={tasks}
+        progress={progress}
+        canManage={can_manage}
+        variant="full"
+        employeeId={instance.employee_id}
+      />
     </div>
   );
 }

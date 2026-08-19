@@ -103,6 +103,8 @@ export interface Employee {
   manager: EmployeeManagerRef | null;
   /** Null when the employees row has no linked users account (a data gap HR can repair). */
   account: EmployeeAccountRef | null;
+  /** Currency of the employee's ACTIVE contract, if any — the directory's country-flag proxy. */
+  contract_currency: string | null;
   /** Present on detail/me responses only (GET /hr/employees, the directory list, omits these). */
   counts?: { assets: number; open_leave: number; documents: number };
   contract?: EmployeeContractSummary | null;

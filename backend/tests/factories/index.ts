@@ -168,6 +168,8 @@ export async function makeDocument(opts: MakeDocumentOptions) {
 export interface MakeContractOptions {
   employeeId: string; // employees.id (employee_ref_id FK)
   jobTitle?: string;
+  currency?: string;
+  status?: "ACTIVE" | "DRAFT" | "EXPIRED" | "TERMINATED";
 }
 
 /** Insert a minimal hr_contracts row (contract-owner ACL override tests). */
@@ -181,7 +183,8 @@ export async function makeContract(opts: MakeContractOptions) {
       employment_term: "indefinite",
       employment_type: "full-time",
       compensation_type: "salaried",
-      currency: "RWF",
+      currency: opts.currency ?? "RWF",
+      status: opts.status ?? "ACTIVE",
     })
     .returning();
   return row;

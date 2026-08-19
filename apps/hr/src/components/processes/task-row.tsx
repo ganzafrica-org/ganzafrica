@@ -24,7 +24,16 @@ import {
   Umbrella,
   Upload,
 } from "lucide-react";
-import { useCompleteTask, useSkipTask } from "@/hooks/useProcesses";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCompleteTask, useSkipTask, usePatchTask } from "@/hooks/useProcesses";
+import { useContracts } from "@/hooks/useContracts";
+import { ContractSigningStatus } from "@/components/processes/contract-signing-status";
 import type { ProcessTask, TaskKind } from "@/services/processes.service";
 
 const KIND_ICON: Record<TaskKind, React.ComponentType<{ className?: string }>> = {
@@ -56,19 +65,42 @@ interface Props {
   canManage: boolean;
   /** Viewer is the assignee, so they may complete it. */
   isMine: boolean;
+  /** Only needed to link a contract to a contract_signing task (HR viewing the detail page). */
+  employeeId?: string;
 }
 
-export function TaskRow({ task, canManage, isMine }: Props) {
+export function TaskRow({ task, canManage, isMine, employeeId }: Props) {
   const [skipOpen, setSkipOpen] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const complete = useCompleteTask();
   const skip = useSkipTask();
+  const patchTask = usePatchTask();
 
   const Icon = KIND_ICON[task.kind] ?? CircleDot;
   const resolved = task.status !== "pending";
   const actionable = !resolved && (isMine || canManage);
+
+  const linkedContractId = (task.link_ref as { contract_id?: string } | null)?.contract_id ?? null;
+  const showContractLinking =
+    task.kind === "contract_signing" && canManage && !!employeeId && !resolved;
+  // Only unsent contracts make sense to send for signature — an ACTIVE one is already signed
+  // (probably via the manual Contracts-tab path), and a TERMINATED/EXPIRED one shouldn't be.
+  const { data: employeeContracts } = useContracts(showContractLinking ? employeeId! : "");
+  const linkableContracts = employeeContracts?.filter((c) => c.status === "DRAFT") ?? [];
+
+  async function onLinkContract(contractId: string) {
+    setError(null);
+    try {
+      await patchTask.mutateAsync({ taskId: task.id, link_ref: { contract_id: contractId } });
+    } catch (e) {
+      setError(
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          "Could not link this contract.",
+      );
+    }
+  }
 
   async function onComplete() {
     setError(null);
@@ -140,6 +172,39 @@ export function TaskRow({ task, canManage, isMine }: Props) {
           {!resolved && KIND_HINT[task.kind] && (
             <p className="mt-0.5 text-xs text-muted-foreground">{KIND_HINT[task.kind]}</p>
           )}
+
+          {task.kind === "contract_signing" && linkedContractId && (
+            <div className="mt-1.5">
+              <ContractSigningStatus
+                refKind="contract"
+                refId={linkedContractId}
+                variant="compact"
+              />
+            </div>
+          )}
+          {showContractLinking && !linkedContractId && (
+            <div className="mt-1.5 max-w-xs">
+              {linkableContracts.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No draft contract to send yet — create one on the Contracts tab first.
+                </p>
+              ) : (
+                <Select onValueChange={onLinkContract} disabled={patchTask.isPending}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Link a contract to send for signature" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {linkableContracts.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.jobTitle} — {new Date(c.startDate).toLocaleDateString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+
           {task.notes && task.status === "skipped" && (
             <p className="mt-1 text-sm text-slate-600">Note: {task.notes}</p>
           )}

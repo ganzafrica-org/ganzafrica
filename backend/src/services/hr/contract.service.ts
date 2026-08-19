@@ -216,6 +216,32 @@ export async function updateContract(
   return mapContract(updated);
 }
 
+/**
+ * Activates a contract because its onboarding signature sequence fully executed — called only
+ * from signing.service.ts's completeSequenceStep. Bypasses the manual employment_agreement_url
+ * guard in createContract/updateContract on purpose: a fully-executed, cryptographically audited
+ * signature request is the same (arguably stronger) evidence that guard exists to require, and
+ * the Contracts-tab manual create/edit path is left completely unchanged for contracts outside
+ * the onboarding flow.
+ */
+export async function activateViaSignature(
+  contractId: string,
+  signedFileKey: string | null,
+): Promise<ContractRecord> {
+  const [updated] = await db
+    .update(hr_contracts)
+    .set({
+      status: "ACTIVE",
+      employment_agreement_url: signedFileKey,
+      updated_at: new Date(),
+    })
+    .where(eq(hr_contracts.id, contractId))
+    .returning();
+
+  if (!updated) throw new AppError("Contract not found", 404);
+  return mapContract(updated);
+}
+
 export async function deleteContract(employeeId: string, contractId: string): Promise<void> {
   const deleted = await db
     .delete(hr_contracts)

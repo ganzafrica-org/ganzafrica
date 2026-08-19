@@ -14,8 +14,8 @@ const subNavConfig: Record<string, SubNavItem[]> = {
   "/employees": [
     { label: "People", href: "/employees" },
     { label: "Org Chart", href: "/employees/org-chart" },
+    { label: "Onboarding", href: "/employees/onboarding" },
     { label: "Time Off", href: "/employees/time-off" },
-    { label: "Documents", href: "/employees/documents" },
     { label: "Performance", href: "/employees/performance" },
     { label: "Department", href: "/employees/department" },
   ],
