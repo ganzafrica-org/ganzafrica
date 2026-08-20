@@ -1,16 +1,9 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
+import React, { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable, ColumnDef } from "@/components/sections/table-component";
 import type { ProcessListRow, ProcessType } from "@/services/processes.service";
 
 function ProgressBar({ percent }: { percent: number }) {
@@ -44,8 +37,102 @@ interface Props {
   isError?: boolean;
 }
 
-/** Shared by the onboarding and offboarding index pages (LCM-02 reuses this). */
+/** Flat, sortable/searchable shape the shared DataTable (employees/page.tsx's table) expects. */
+interface DisplayRow {
+  id: number;
+  employeeName: string;
+  jobTitle: string;
+  employmentType: string;
+  overdueCount: number;
+  progressPercent: number;
+  progressDone: number;
+  progressTotal: number;
+  startedAt: string;
+  status: ProcessListRow["status"];
+}
+
+/** Shared by the onboarding and offboarding index pages (LCM-02 reuses this) — same DataTable as
+ * the employees directory, for a uniform table look/feel across the HR app. */
 export function InstanceTable({ rows, type, isLoading, isError }: Props) {
+  const router = useRouter();
+
+  const displayRows = useMemo<DisplayRow[]>(
+    () =>
+      rows.map((row) => ({
+        id: row.id,
+        employeeName: `${row.employee.first_name} ${row.employee.last_name}`.trim(),
+        jobTitle: row.employee.job_title ?? "—",
+        employmentType: row.employee.employment_type,
+        overdueCount: row.overdue_count,
+        progressPercent: row.progress.percent,
+        progressDone: row.progress.done,
+        progressTotal: row.progress.total,
+        startedAt: row.started_at,
+        status: row.status,
+      })),
+    [rows],
+  );
+
+  const columns: ColumnDef<DisplayRow>[] = [
+    {
+      key: "employeeName",
+      header: "Employee",
+      sortable: true,
+      render: (name, row) => (
+        <>
+          <span className="font-medium text-slate-900">{name}</span>
+          {row.overdueCount > 0 && (
+            <Badge variant="outline" className="ml-2 border-red-200 text-red-600">
+              {row.overdueCount} overdue
+            </Badge>
+          )}
+        </>
+      ),
+    },
+    {
+      key: "jobTitle",
+      header: "Role",
+      sortable: true,
+      className: "text-muted-foreground",
+      render: (jobTitle, row) => (
+        <>
+          {jobTitle}
+          <span className="ml-1 capitalize text-xs">({row.employmentType})</span>
+        </>
+      ),
+    },
+    {
+      key: "progressPercent",
+      header: "Progress",
+      sortable: true,
+      render: (percent, row) => (
+        <div>
+          <ProgressBar percent={percent} />
+          <span className="text-xs text-muted-foreground">
+            {row.progressDone}/{row.progressTotal} required
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "startedAt",
+      header: "Started",
+      sortable: true,
+      className: "text-muted-foreground",
+      render: (startedAt) => String(startedAt).slice(0, 10),
+    },
+    {
+      key: "status",
+      header: "Status",
+      sortable: true,
+      render: (status) => (
+        <Badge variant={STATUS_VARIANT[status] ?? "outline"}>
+          {String(status).replace("_", " ")}
+        </Badge>
+      ),
+    },
+  ];
+
   if (isLoading) {
     return <p className="py-12 text-center text-muted-foreground">Loading…</p>;
   }
@@ -61,51 +148,11 @@ export function InstanceTable({ rows, type, isLoading, isError }: Props) {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Employee</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Progress</TableHead>
-          <TableHead>Started</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((row) => (
-          <TableRow key={row.id} className="cursor-pointer">
-            <TableCell>
-              <Link
-                href={`${BASE_PATH[type]}/${row.id}`}
-                className="font-medium text-slate-900 hover:underline"
-              >
-                {row.employee.first_name} {row.employee.last_name}
-              </Link>
-              {row.overdue_count > 0 && (
-                <Badge variant="outline" className="ml-2 border-red-200 text-red-600">
-                  {row.overdue_count} overdue
-                </Badge>
-              )}
-            </TableCell>
-            <TableCell className="text-muted-foreground">
-              {row.employee.job_title ?? "—"}
-              <span className="ml-1 capitalize text-xs">({row.employee.employment_type})</span>
-            </TableCell>
-            <TableCell>
-              <ProgressBar percent={row.progress.percent} />
-              <span className="text-xs text-muted-foreground">
-                {row.progress.done}/{row.progress.total} required
-              </span>
-            </TableCell>
-            <TableCell className="text-muted-foreground">{row.started_at.slice(0, 10)}</TableCell>
-            <TableCell>
-              <Badge variant={STATUS_VARIANT[row.status] ?? "outline"}>
-                {row.status.replace("_", " ")}
-              </Badge>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <DataTable
+      columns={columns}
+      data={displayRows}
+      onRowClick={(row) => router.push(`${BASE_PATH[type]}/${row.id}`)}
+      searchPlaceholder="Search employees…"
+    />
   );
 }
