@@ -87,3 +87,79 @@ Every full-suite frontend run tonight (before _and_ independent of any of these 
 No collisions. Wave 1's five tasks (and Wave 2's three) touched disjoint files as pre-checked; the one near-miss was `apps/hr/vitest.config.ts`'s `access-builder.tsx` coverage-include line landing inside the 1B commit instead of 1E's own (both were mid-flight editing that file's `include` array within seconds of each other) — cosmetic attribution only, the line itself is correct and wanted either way.
 
 ## Not pushed, no PR opened, per instructions.
+
+---
+
+## Follow-up fixes (2026-08-20)
+
+Two issues reported after testing in the browser.
+
+### Employee-creation invite email didn't reach onboarding
+
+Investigated the manual-create invite path (`employees-core.controller.ts`) end to end before
+changing anything, and found three separate real bugs stacked on top of each other — not just
+the one you could see:
+
+1. **Why you saw nothing in the browser:** `RESEND_API_KEY` isn't set in `backend/.env`, so
+   `sendEmail` was silently no-op'ing (a one-line `logger.warn`, nothing else) — this is a config/
+   secret, not something I can set for you. Until a real key is added, no email leaves the server
+   in this environment. To make local dev usable without one, `sendEmail`'s no-op path now also
+   logs every link the email would have contained, so you can copy the invite link straight out of
+   the backend console.
+2. **The link was pointed at the wrong app.** `email.service.ts` built the reset-password/verify/
+   login links from `env.WEBSITE_URL` (`localhost:3000`, the public marketing site, `apps/web` —
+   no login or reset-password route exists there). Those routes actually live in the portal app.
+   Fixed to use the existing, already-correct `env.PORTAL_URL` (`localhost:3001`) instead — this
+   also fixes the general "forgot password" and email-verification links, not just the invite.
+3. **No email had ever said "log in and land on onboarding."** The invite fired two separate,
+   generic emails (a "Welcome" email with no link, plus a bare "Reset your password" email) and
+   neither carried any destination beyond the portal's own login/platform-selection screen.
+
+**Fix, matching your stated goal** ("a link that logs them in and lands exactly on the onboarding
+page"): the invite now sends one combined, branded email — reusing the existing password-reset
+token machinery to mint the link (`auth.service.ts::createSetPasswordLink`), but folding it into
+`welcomeEmail()`'s own "Set up your account" button instead of a second, separate email.
+
+Landing exactly on `/employees/onboarding/me` required threading a `next` parameter through the
+portal's existing (but previously incomplete) SSO chain, all additive:
+
+- The set-password link now carries `?next=/employees/onboarding/me`.
+- `reset-password-form.tsx`: on success, forwards `next` into `/login?next=...` instead of a bare
+  `/login` (previously dropped it on the floor).
+- `login-form.tsx`: previously ignored any `next` entirely and always sent every login to the
+  platform-selection chooser. It now reads `next`; if present and validated as a same-app relative
+  path (never an absolute/protocol-relative URL — avoids turning this into an open redirect), it
+  calls the portal's existing `redirectToApp("hr", ...)` SSO-handoff helper directly with that
+  path, skipping the chooser screen entirely. No `next` (the normal login case) is unchanged.
+- `employees-core.controller.ts`: `sendPasswordReset` (which always sent its own separate email)
+  was replaced with the new `createSetPasswordLink`, which only mints the token/link.
+
+Net effect: HR clicks Add Employee → the new hire gets one email → sets a password → logs in →
+lands exactly on `/employees/onboarding/me`, no chooser screen, no second email. Verified live
+against the running dev stack (curl through the real create-employee endpoint, confirmed exactly
+one `password_reset_tokens` row and one logged link in the correct
+`http://localhost:3001/reset-password?token=...&next=%2Femployees%2Fonboarding%2Fme` shape); the
+existing `employees-core-api.test.ts` invite assertion and the full recruitment-offers suites
+(which share the underlying token machinery) still pass unchanged, plus the full 532-test backend
+suite. **Still needs a real `RESEND_API_KEY`** in whichever environment you want actual delivery
+from — that part is a config step, not a code fix.
+
+Out of scope, left untouched: REC-05's own offer-accept welcome email (`offers.ts::sendWelcome`)
+still sends its old two-email pattern with no onboarding target — it wasn't part of this ask, but
+now that `createSetPasswordLink` exists, folding it in later is a small, isolated change.
+
+### Onboarding table now matches the employees table
+
+`apps/hr/src/app/employees/onboarding/page.tsx`'s table (`instance-table.tsx`) was a bespoke,
+one-off `<Table>` — different look, no search box, no pagination, no sortable columns, and a
+`cursor-pointer` row style with no click handler actually wired to it (rows silently did nothing
+except the employee-name text, which was a real link). Rewrote it to use the same shared
+`DataTable` component the employees directory (`table-component.tsx`) already uses, keeping the
+same public props (`rows`, `type`, `isLoading`, `isError`) so the page that renders it needed no
+changes, and any future offboarding index page (LCM-02, not shipped yet) gets the same look for
+free. Same visual columns as before (Employee + overdue badge, Role, Progress bar, Started,
+Status), now with the employees table's search/sort/pagination toolbar, and the whole row is
+genuinely clickable through to that onboarding checklist (fixing the latent dead-click bug).
+Verified: typecheck and lint clean, no regressions in the full frontend suite (the one full-suite
+failure, `approvals-page.test.tsx`, is the same pre-existing MOD-06 gap noted above — confirmed
+unrelated by running it in isolation).
