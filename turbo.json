@@ -15,7 +15,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "env": ["DATABASE_URL_TEST", "DATABASE_URL", "NODE_ENV"]
+      "env": ["DATABASE_URL_TEST", "DATABASE_URL", "NODE_ENV", "RESEND_API_KEY"]
     },
     "dev": {
       "cache": false,

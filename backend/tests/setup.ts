@@ -27,6 +27,13 @@ const TEST_ENV: Record<string, string> = {
 for (const [k, v] of Object.entries(TEST_ENV)) {
   if (!process.env[k]) process.env[k] = v;
 }
+// Real secrets never touch tests (see file doc above). RESEND_API_KEY needs the same "set it here
+// first" treatment as everything above: config/env.ts's dotenv.config() only fills in vars that
+// aren't already present in process.env, and this file's setupFiles hook runs before that — so
+// pre-setting it to "" here (falsy, same as unset) blocks the developer's real backend/.env value
+// from ever reaching a test run, the same way it would if we'd never run dotenv at all.
+if (!process.env.RESEND_API_KEY) process.env.RESEND_API_KEY = "";
+
 // DATABASE_URL comes from global-setup; fall back to the conventional local test DB.
 if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL =
