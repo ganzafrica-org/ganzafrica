@@ -59,6 +59,9 @@ export const employeesService = {
   async reactivateEmployee(id: string) {
     await httpClient.patch(`/hr/employees/${id}/reactivate`);
   },
+  async resendInvite(id: string) {
+    await httpClient.post(`/hr/employees/${id}/resend-invite`);
+  },
   /**
    * Sends as multipart/form-data when a new picture file is provided (same pattern as
    * assetsService.createAsset), JSON otherwise.

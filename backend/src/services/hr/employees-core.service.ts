@@ -13,6 +13,7 @@ import {
   hr_contracts,
   hr_documents,
   hr_leaves,
+  password_reset_tokens,
   roles,
   user_roles,
   users,
@@ -536,6 +537,76 @@ export async function reactivateEmployee(employeeId: string): Promise<void> {
         .where(eq(users.id, row.user_id as number));
     }
   });
+}
+
+const RESEND_INVITE_COOLDOWN_MS = 2 * 60 * 1000;
+
+export interface ResendInviteInfo {
+  user_id: number;
+  first_name: string;
+  personal_email: string;
+  job_title: string | null;
+}
+
+/**
+ * Eligible only for a still-pending hire whose account was originally invited (has at least one
+ * `password_reset_tokens` row) — linking to an existing account at creation never mints one, so
+ * its absence means this employee already has real, working credentials and shouldn't get a
+ * set-password link. Cooldown reuses that same token history rather than a dedicated column.
+ */
+export async function requireResendInviteEligible(employeeId: string): Promise<ResendInviteInfo> {
+  const row = await requireEmployeeRow(employeeId);
+  if (!row.is_active) {
+    throw new AppError(
+      "Cannot resend an invite to a deactivated employee",
+      422,
+      "EMPLOYEE_INACTIVE",
+    );
+  }
+  if (row.status !== "pending") {
+    throw new AppError(
+      "This employee already has account access or has started onboarding",
+      422,
+      "NOT_PENDING",
+    );
+  }
+  if (!row.user_id) {
+    throw new AppError("Employee has no linked account", 422, "NO_ACCOUNT");
+  }
+  if (!row.personal_email) {
+    throw new AppError("Employee has no personal email on file", 422, "NO_PERSONAL_EMAIL");
+  }
+
+  const [lastToken] = await db
+    .select({ created_at: password_reset_tokens.created_at })
+    .from(password_reset_tokens)
+    .where(eq(password_reset_tokens.user_id, row.user_id as number))
+    .orderBy(desc(password_reset_tokens.created_at))
+    .limit(1);
+  if (!lastToken) {
+    throw new AppError(
+      "This employee's account was linked to an existing user, not invited — there is no invite to resend",
+      422,
+      "NOT_INVITED",
+    );
+  }
+
+  const elapsedMs = Date.now() - lastToken.created_at.getTime();
+  if (elapsedMs < RESEND_INVITE_COOLDOWN_MS) {
+    const retryInSec = Math.ceil((RESEND_INVITE_COOLDOWN_MS - elapsedMs) / 1000);
+    throw new AppError(
+      `An invite was already sent recently. Try again in ${retryInSec}s.`,
+      429,
+      "INVITE_COOLDOWN",
+    );
+  }
+
+  return {
+    user_id: row.user_id as number,
+    first_name: row.first_name as string,
+    personal_email: row.personal_email as string,
+    job_title: row.job_title as string | null,
+  };
 }
 
 /** Distinct departments — powers the directory filter without a separate table. */

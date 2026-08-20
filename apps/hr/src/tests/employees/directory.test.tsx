@@ -178,6 +178,36 @@ describe("Employees directory", () => {
     await waitFor(() => expect(reactivateCalls).toBe(1));
   });
 
+  it("resends the invite for a pending employee, but not for one who's already active", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    let resendCalls = 0;
+    mockDirectory([
+      employee({ status: "pending" }),
+      employee({
+        id: "22222222-2222-2222-2222-222222222222",
+        first_name: "Grace",
+        last_name: "Hopper",
+        status: "active",
+      }),
+    ]);
+    server.use(
+      http.post(`${API}/hr/employees/11111111-1111-1111-1111-111111111111/resend-invite`, () => {
+        resendCalls += 1;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    renderWithClient(<EmployeesPage />);
+    const pendingRow = (await screen.findByText("Ada Lovelace")).closest("tr")!;
+    await userEvent.click(within(pendingRow).getByRole("button"));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /resend invite/i }));
+    await waitFor(() => expect(resendCalls).toBe(1));
+
+    const activeRow = screen.getByText("Grace Hopper").closest("tr")!;
+    await userEvent.click(within(activeRow).getByRole("button"));
+    expect(screen.queryByRole("menuitem", { name: /resend invite/i })).not.toBeInTheDocument();
+  });
+
   it("hides the deactivate/reactivate actions for a viewer with employees:read but not employees:manage", async () => {
     authState.roles = ["director"];
     const { default: userEvent } = await import("@testing-library/user-event");

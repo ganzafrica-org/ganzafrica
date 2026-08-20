@@ -111,6 +111,15 @@ export function useReactivateEmployee() {
   });
 }
 
+export function useResendInvite() {
+  return useMutation({
+    mutationFn: (id: string) => employeesService.resendInvite(id),
+    onSuccess: () => {
+      toast.success("Invite email resent");
+    },
+  });
+}
+
 export function useUpdateMyProfile() {
   const queryClient = useQueryClient();
   return useMutation({

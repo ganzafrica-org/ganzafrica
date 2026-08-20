@@ -9,6 +9,7 @@ import {
   Plus,
   UserX,
   UserCheck,
+  MailPlus,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,7 @@ export const EmployeeManagementContent = ({
   onSelectEmployee,
   onDeactivateEmployee,
   onReactivateEmployee,
+  onResendInvite,
   canManageActivation,
   setShowAddSheet,
   getStatusBadge,
@@ -79,6 +81,7 @@ export const EmployeeManagementContent = ({
   onSelectEmployee: (row: DisplayEmployeeRow) => void;
   onDeactivateEmployee: (row: { id: string; name: string }) => void;
   onReactivateEmployee: (row: { id: string; name: string }) => void;
+  onResendInvite: (row: { id: string; name: string }) => void;
   canManageActivation: boolean;
   setShowAddSheet: (v: boolean) => void;
   getStatusBadge: (status: string) => React.ReactNode;
@@ -244,6 +247,13 @@ export const EmployeeManagementContent = ({
               <DropdownMenuItem onClick={() => onSelectEmployee(employee)}>
                 <Eye className="mr-2 h-4 w-4" /> View Details
               </DropdownMenuItem>
+              {canManageActivation && employee.isActive && employee.status === "pending" && (
+                <DropdownMenuItem
+                  onClick={() => onResendInvite({ id: employee.id, name: employee.name })}
+                >
+                  <MailPlus className="mr-2 h-4 w-4" /> Resend invite
+                </DropdownMenuItem>
+              )}
               {canManageActivation && (
                 <>
                   <DropdownMenuSeparator />

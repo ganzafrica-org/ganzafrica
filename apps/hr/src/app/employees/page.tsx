@@ -12,6 +12,7 @@ import {
   useDepartments,
   useDeactivateEmployee,
   useReactivateEmployee,
+  useResendInvite,
 } from "@/hooks/useEmployees";
 import { getStatusBadge } from "@/lib/helpers/employee-util";
 import type { Employee, EmployeeStats } from "@/types/api";
@@ -66,6 +67,7 @@ const PageContent = () => {
   const searchParams = useSearchParams();
   const deactivateEmployee = useDeactivateEmployee();
   const reactivateEmployee = useReactivateEmployee();
+  const resendInvite = useResendInvite();
   const { roles } = useAuth();
   // employees:manage (HR only) — director/program_manager have employees:read and can view this
   // page's directory, but the backend 403s them on activation changes, so don't offer an action
@@ -114,6 +116,7 @@ const PageContent = () => {
     onSelectEmployee: (row: { id: string }) => setSelectedEmployeeId(row.id),
     onDeactivateEmployee: (row: { id: string; name: string }) => setDeactivatingEmployee(row),
     onReactivateEmployee: (row: { id: string; name: string }) => reactivateEmployee.mutate(row.id),
+    onResendInvite: (row: { id: string; name: string }) => resendInvite.mutate(row.id),
     canManageActivation: canManageEmployees,
     setShowAddSheet,
     getStatusBadge,

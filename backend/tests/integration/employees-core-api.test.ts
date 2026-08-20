@@ -200,6 +200,83 @@ describe("MOD-01 employees API", () => {
     expect(reactivated.status).toBe(204);
     expect((await hr.agent.get(API)).body.data).toHaveLength(2);
   });
+
+  describe("resend-invite", () => {
+    it("mints a fresh token once the cooldown has passed, but 429s inside it", async () => {
+      const hr = await loginAsEmployee("hr");
+      await makeProcessTemplate({ createdBy: hr.user.id, employmentTypes: null });
+
+      const created = await hr.agent.post(API).send({
+        first_name: "Ada",
+        last_name: "Lovelace",
+        personal_email: "ada.resend@example.com",
+        employment_type: "staff",
+      });
+      const employeeId = created.body.employee.id;
+      const userId = created.body.employee.user_id;
+
+      // Immediately inside the cooldown window (the invite above just minted a token).
+      const tooSoon = await hr.agent.post(`${API}/${employeeId}/resend-invite`);
+      expect(tooSoon.status).toBe(429);
+      expect(tooSoon.body.code).toBe("INVITE_COOLDOWN");
+
+      // Backdate the existing token past the cooldown rather than the test sleeping for real.
+      await db
+        .update(password_reset_tokens)
+        .set({ created_at: new Date(Date.now() - 3 * 60 * 1000) })
+        .where(eq(password_reset_tokens.user_id, userId));
+
+      const resent = await hr.agent.post(`${API}/${employeeId}/resend-invite`);
+      expect(resent.status).toBe(204);
+
+      const tokens = await db
+        .select()
+        .from(password_reset_tokens)
+        .where(eq(password_reset_tokens.user_id, userId));
+      expect(tokens).toHaveLength(2);
+    });
+
+    it("422s for a deactivated employee, a non-pending one, or one linked to an existing account", async () => {
+      const hr = await loginAsEmployee("hr");
+      await makeProcessTemplate({ createdBy: hr.user.id, employmentTypes: null });
+
+      const deactivateTarget = await hr.agent.post(API).send({
+        first_name: "Off",
+        last_name: "Boarded",
+        personal_email: "off.boarded@example.com",
+        employment_type: "staff",
+      });
+      await hr.agent.patch(`${API}/${deactivateTarget.body.employee.id}/deactivate`);
+      const deactivatedResp = await hr.agent.post(
+        `${API}/${deactivateTarget.body.employee.id}/resend-invite`,
+      );
+      expect(deactivatedResp.status).toBe(422);
+      expect(deactivatedResp.body.code).toBe("EMPLOYEE_INACTIVE");
+
+      // Linking to an existing account never mints an invite token (see the invite test above) —
+      // there is nothing to resend.
+      const existingUser = await makeUser({ email: "reuse.resend@example.com", role: "staff" });
+      const linked = await hr.agent.post(API).send({
+        first_name: "Re",
+        last_name: "Used",
+        personal_email: "reuse.resend@example.com",
+        employment_type: "staff",
+      });
+      expect(linked.body.employee.user_id).toBe(existingUser.id);
+      const linkedResp = await hr.agent.post(`${API}/${linked.body.employee.id}/resend-invite`);
+      expect(linkedResp.status).toBe(422);
+      expect(linkedResp.body.code).toBe("NOT_INVITED");
+    });
+
+    it("403s a plain employee attempting to resend", async () => {
+      const hr = await loginAsEmployee("hr");
+      const subject = await loginAsEmployee();
+      await makeProcessTemplate({ createdBy: hr.user.id, employmentTypes: null });
+
+      const resp = await subject.agent.post(`${API}/${subject.employee.id}/resend-invite`);
+      expect(resp.status).toBe(403);
+    });
+  });
 });
 
 describe("MOD-01 field-set matrix — every field x {self, hr} x {200, 422}", () => {

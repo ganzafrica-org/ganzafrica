@@ -76,6 +76,12 @@ router.patch(
   validate(v.employeeIdSchema),
   c.reactivateEmployee,
 );
+router.post(
+  "/:id/resend-invite",
+  requirePermission("employees:manage"),
+  validate(v.employeeIdSchema),
+  c.resendInvite,
+);
 
 // MOD-04 §4 — LCM-02's offboarding gate query. Response shape (assetId, assignedAt,
 // returnedAt, ...) is frozen once LCM-02 consumes it — see MOD-04 spec §Coordination.
