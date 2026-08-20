@@ -55,7 +55,7 @@ Notification: `EMPLOYEE_CREATED` was already a fully-routed notification type (H
 
 ### 2C — Sign from the onboarding checklist
 
-Corrected mid-task: the reference screenshot (`img.png`) is the onboarding **task checklist** page, not the main documents list as the original brief assumed. Added, scoped to `contract_signing` task rows only: a "View" button (opens the linked contract read-only via the existing `ContractViewSheet`, reusing 1C's confirmed-correct viewer) and a "Sign" button (shown whenever the current viewer has a pending signature request against that contract, via the existing `useMySignatures()` — independent of task assignee, since the sequential HR-then-employee flow means either party's turn can land on the same row). No signing-backend changes — this only wires an existing, working system onto a surface that couldn't reach it before.
+Corrected mid-task: the reference screenshot (`my-status.png`) is the onboarding **task checklist** page, not the main documents list as the original brief assumed. Added, scoped to `contract_signing` task rows only: a "View" button (opens the linked contract read-only via the existing `ContractViewSheet`, reusing 1C's confirmed-correct viewer) and a "Sign" button (shown whenever the current viewer has a pending signature request against that contract, via the existing `useMySignatures()` — independent of task assignee, since the sequential HR-then-employee flow means either party's turn can land on the same row). No signing-backend changes — this only wires an existing, working system onto a surface that couldn't reach it before.
 
 ---
 
@@ -163,3 +163,58 @@ genuinely clickable through to that onboarding checklist (fixing the latent dead
 Verified: typecheck and lint clean, no regressions in the full frontend suite (the one full-suite
 failure, `approvals-page.test.tsx`, is the same pre-existing MOD-06 gap noted above — confirmed
 unrelated by running it in isolation).
+
+---
+
+## Follow-up: resend invite, and two real bugs found while building it (2026-08-20)
+
+### Feature: "Resend invite" from the employees table
+
+Requested after testing the invite email fix: a way for HR to nudge a hire who hasn't logged in
+yet. New `POST /hr/employees/:id/resend-invite` (`employees:manage`-gated), reusing the same
+`createSetPasswordLink` + combined-email helper the original invite uses (extracted into a shared
+`sendInviteEmail()` in the controller). Eligible only when `status === "pending"` **and** the
+account was originally invited rather than linked to a pre-existing user — detected by checking
+whether any `password_reset_tokens` row exists for that user at all (linking never mints one, per
+the existing invite test), so re-sending never touches a real, already-working account's password
+flow. A 2-minute cooldown reuses that same token history's `created_at` rather than a new column —
+no schema change needed. Frontend: a "Resend invite" row action next to Deactivate/Reactivate,
+shown only for active, still-pending employees; errors (cooldown, ineligibility) surface via the
+app's existing global mutation-error toast, no new UI needed for that. 3 new backend integration
+tests, 1 new frontend test extending the existing directory suite.
+
+### Bug found: expiry cleanup triggers compared timestamps in the wrong timezone
+
+While testing the cooldown, an update to `password_reset_tokens` made an unrelated, definitely-
+not-expired token vanish. Root cause: the DB's Postgres session timezone is `Africa/Kigali`
+(UTC+2), but `expires_at`/`created_at` are `timestamp without time zone` columns. The app writes
+`expires_at` using UTC-numbered digits (correct), but the cleanup trigger's bare `NOW()` gets
+implicitly cast to a naive timestamp using the _session_ timezone — shifting it forward by 2 hours
+relative to the app's UTC convention, so every token looked expired almost immediately. The very
+next `UPDATE` on the table (which happens on every single invite/reset mint, since minting first
+marks prior tokens `used`) would delete it — and since the trigger's `DELETE` has no per-user
+scope, it could silently purge _other_ users' still-valid tokens in the same sweep too. Same exact
+pattern existed on 3 more tables (`sessions`, `verification_tokens`, `two_factor_temp_tokens`) —
+all four cleanup triggers came from the same migration. **Not a new bug — this predates tonight's
+work entirely** and likely explains any prior "the reset link stopped working" reports.
+
+Fixed with a new migration (`drizzle/0025_fix-cleanup-trigger-timezone.sql`, hand-authored
+`--custom`, applied to both `ga_hr` and `ganzafrica_test`): all four trigger functions now compare
+against `NOW() AT TIME ZONE 'UTC'` instead of bare `NOW()`, matching how the app already stores
+these columns — no column type changes, no app code changes. Verified directly: the same
+update-an-existing-token repro that used to wipe the row now leaves it intact.
+
+### Bug found: the test suite wasn't isolated from the real `.env`
+
+Surfaced immediately after the trigger fix — a resend-invite test started getting real Resend API
+error responses. `tests/setup.ts`'s own doc comment says "real secrets never touch tests," but
+`RESEND_API_KEY` was the one var it never actually blocked: `config/env.ts`'s `dotenv.config()`
+only fills in a var if it's _not already present_ in `process.env`, and since a real key now sits
+in the developer's local `backend/.env`, tests were silently picking it up and calling the live
+API. Fixed by pre-setting `RESEND_API_KEY=""` in `tests/setup.ts`, the same way every other
+would-be-real secret in that file is already blocked — so a real local key can never reach a test
+run again, while CI can still legitimately override it if it ever needs to. Also declared the var
+in `turbo.json`'s `test` task (a lint warning caught the gap).
+
+Full re-verification after all three changes: backend 54 files / 535 tests passing (532 + 3 new);
+frontend 197/197 (the one pre-existing `approvals-page.test.tsx` failure unchanged, unrelated).
