@@ -4,8 +4,6 @@ import { AppError } from "../middlewares";
 
 const logger = new Logger("EmailService");
 
-const FROM_ADDRESS = "no-reply@ganzafrica.org";
-
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 const isEmailConfigured = () => !!resend;
@@ -25,7 +23,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
 
   try {
     const { data, error } = await resend.emails.send({
-      from: `GanzAfrica <${FROM_ADDRESS}>`,
+      from: env.RESEND_FROM_EMAIL,
       to,
       subject,
       html,

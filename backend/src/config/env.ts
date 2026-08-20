@@ -47,6 +47,7 @@ const envSchema = z.object({
 
   // Email (optional - only required if email functionality is used)
   RESEND_API_KEY: z.string().nullish(),
+  RESEND_FROM_EMAIL: z.string().default("GanzAfrica <no-reply@ganzafrica.org>"),
   EMAIL_FROM: z.string().nullish(),
   EMAIL_PASSWORD: z.string().nullish(),
   SMTP_HOST: z.string().nullish(),
