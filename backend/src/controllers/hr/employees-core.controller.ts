@@ -9,7 +9,7 @@ import { constants, Logger } from "@/config";
 import { getFileUrl } from "@/middlewares/upload";
 import { sendEmail } from "@/services/email.service";
 import { welcomeEmail } from "@/services/recruitment/offer-emails";
-import { sendPasswordReset } from "@/services/auth.service";
+import { createSetPasswordLink } from "@/services/auth.service";
 import { sendNotification } from "@/modules/hr/notifications/notification.service";
 
 const logger = new Logger("EmployeesCoreController");
@@ -99,19 +99,27 @@ export const createEmployee = async (req: Request, res: Response) => {
 /**
  * `invited` is only true for a brand-new `users` row (not one linked to an existing account) —
  * that account got a random, never-revealed password, so it needs the set-password link to be
- * usable. Reuses the password-reset token machinery rather than inventing a separate one.
+ * usable. Reuses the password-reset token machinery to mint the link, but sends it as one
+ * combined "welcome, set your password, and start onboarding" email rather than a separate
+ * generic reset email — `next` carries the reader straight to their onboarding checklist once
+ * they've set a password and logged in.
  */
 async function sendInviteIfNewAccount(
   employee: Awaited<ReturnType<typeof employees.createEmployee>>,
   ip?: string,
 ) {
   if (!employee.invited || !employee.personal_email) return;
+  const setPasswordLink = await createSetPasswordLink(
+    employee.user_id,
+    ip ?? "0.0.0.0",
+    "/employees/onboarding/me",
+  );
   const { subject, html } = welcomeEmail({
     firstName: employee.first_name,
     positionTitle: employee.job_title ?? "your new role",
+    setPasswordLink,
   });
   await sendEmail(employee.personal_email, subject, html);
-  await sendPasswordReset(employee.user_id, employee.personal_email, ip ?? "0.0.0.0");
 }
 
 export const updateEmployee = async (req: Request, res: Response) => {

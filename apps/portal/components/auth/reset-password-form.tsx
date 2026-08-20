@@ -32,6 +32,7 @@ export function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
+  const next = searchParams.get("next") || "";
   const [isLoading, setIsLoading] = useState(false);
 
   // Reset password form
@@ -69,7 +70,7 @@ export function ResetPasswordForm() {
 
       if (response.data.success) {
         toast.success("Password reset successfully");
-        router.push("/login");
+        router.push(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
       } else {
         toast.error("Failed to reset password");
       }
