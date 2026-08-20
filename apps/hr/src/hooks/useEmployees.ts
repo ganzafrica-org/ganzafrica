@@ -50,6 +50,14 @@ export function useDepartments() {
   });
 }
 
+export function useEmployeeStatusCounts(enabled = true) {
+  return useQuery({
+    queryKey: ["employees", "stats"],
+    queryFn: () => employeesService.getStatusCounts(),
+    enabled,
+  });
+}
+
 export function useEmployeeLeaves(employeeId: string) {
   return useQuery({
     queryKey: ["employeeLeaves", employeeId],

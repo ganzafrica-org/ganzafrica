@@ -3,6 +3,7 @@ import type {
   CreateEmployeeRequest,
   Employee,
   EmployeeDirectoryResponse,
+  EmployeeStatusCounts,
   Leave,
   UpdateEmployeeRequest,
   UpdateMyProfileRequest,
@@ -39,6 +40,10 @@ export const employeesService = {
   async listDepartments() {
     const response = await httpClient.get<{ departments: string[] }>("/hr/employees/departments");
     return response.data.departments;
+  },
+  async getStatusCounts() {
+    const response = await httpClient.get<EmployeeStatusCounts>("/hr/employees/stats");
+    return response.data;
   },
   async createEmployee(payload: CreateEmployeeRequest) {
     const response = await httpClient.post<{ employee: Employee }>("/hr/employees", payload);

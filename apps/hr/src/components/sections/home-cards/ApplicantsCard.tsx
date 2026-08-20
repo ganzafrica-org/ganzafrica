@@ -1,18 +1,43 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreHorizontal, Info, PawPrint, TrendingDown } from "lucide-react";
+import { MoreHorizontal, Info } from "lucide-react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { useRecruitmentOpportunities } from "@/hooks/useRecruitment";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+const TERMINAL_STAGES = new Set(["hired", "rejected", "withdrawn"]);
+
 export function ApplicantsCard() {
+  const { data: opportunities, isLoading } = useRecruitmentOpportunities();
+
+  const { hireRate, remaining, totalApplications, openOpportunities } = useMemo(() => {
+    const rows = opportunities ?? [];
+    let total = 0;
+    let hired = 0;
+    let active = 0;
+    for (const opp of rows) {
+      total += opp.total;
+      hired += opp.stages.hired ?? 0;
+      for (const [stage, count] of Object.entries(opp.stages)) {
+        if (!TERMINAL_STAGES.has(stage)) active += count ?? 0;
+      }
+    }
+    return {
+      hireRate: total > 0 ? Math.round((hired / total) * 1000) / 10 : 0,
+      remaining: active,
+      totalApplications: total,
+      openOpportunities: rows.filter((o) => o.status === "published").length,
+    };
+  }, [opportunities]);
+
   const data = {
     datasets: [
       {
-        data: [78.19, 21.81],
+        data: [hireRate, Math.max(0, 100 - hireRate)],
         backgroundColor: ["#22c55e", "#f1f5f9"],
         borderWidth: 0,
         cutout: "70%",
@@ -49,19 +74,20 @@ export function ApplicantsCard() {
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-4">
             <div>
-              <div className="text-4xl font-bold text-slate-900 leading-tight">78.19%</div>
-              <div className="text-sm text-slate-400 mt-1">Jan, 2022</div>
+              <div className="text-4xl font-bold text-slate-900 leading-tight">
+                {isLoading ? "—" : `${hireRate}%`}
+              </div>
+              <div className="text-sm text-slate-400 mt-1">Hire rate, all time</div>
             </div>
 
             <div className="space-y-1">
               <div className="text-sm font-medium text-slate-500">
-                Remaining <span className="text-slate-900 font-bold">3,992</span>
+                In progress{" "}
+                <span className="text-slate-900 font-bold">{isLoading ? "—" : remaining}</span>
               </div>
-              <div className="flex items-center gap-1 text-white font-medium">
-                <div className="rounded-full bg-brand-accent p-1">
-                  <TrendingDown size={12} className="rotate-180" />
-                </div>
-                <span>1.25% vs Last month</span>
+              <div className="text-sm text-slate-500">
+                {isLoading ? "—" : totalApplications} applications across{" "}
+                {isLoading ? "—" : openOpportunities} open roles
               </div>
             </div>
           </div>

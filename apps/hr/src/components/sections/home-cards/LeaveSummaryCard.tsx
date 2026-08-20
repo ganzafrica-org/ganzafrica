@@ -1,21 +1,73 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ResponsiveContainer, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
 import { MoreHorizontal } from "lucide-react";
+import { useLeaves } from "@/hooks/useLeaves";
 
-const data = [
-  { month: "Jan", annual: 2, sick: 1 },
-  { month: "Feb", annual: 3, sick: 0 },
-  { month: "Mar", annual: 1, sick: 2 },
-  { month: "Apr", annual: 4, sick: 1 },
-  { month: "May", annual: 2, sick: 1 },
-  { month: "Jun", annual: 3, sick: 0 },
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
 ];
 
+function isSameDayOrBetween(date: Date, start: Date, end: Date): boolean {
+  return date >= start && date <= end;
+}
+
 export function LeaveSummaryCard() {
+  // HR-wide: /hr/leave/requests returns every employee's requests for an HR/admin caller
+  // (listVisibleLeaves), so this is org-wide leave activity, not one person's balance.
+  const { data: leaves, isLoading } = useLeaves();
+
+  const { chartData, pendingCount, awayTodayCount } = useMemo(() => {
+    const rows = leaves ?? [];
+    const now = new Date();
+
+    // Last 6 months, oldest first, counting APPROVED requests by type per month.
+    const months: { key: string; label: string; annual: number; sick: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: MONTH_LABELS[d.getMonth()],
+        annual: 0,
+        sick: 0,
+      });
+    }
+    const byKey = new Map(months.map((m) => [m.key, m]));
+
+    let pending = 0;
+    let away = 0;
+    for (const leave of rows) {
+      if (leave.status === "Pending") pending += 1;
+
+      const start = new Date(leave.startDate);
+      const end = new Date(leave.endDate);
+      if (leave.status === "Approved" && isSameDayOrBetween(now, start, end)) away += 1;
+
+      if (leave.status !== "Approved") continue;
+      const key = `${start.getFullYear()}-${start.getMonth()}`;
+      const bucket = byKey.get(key);
+      if (!bucket) continue;
+      if (leave.type === "ANNUAL") bucket.annual += 1;
+      else if (leave.type === "SICK") bucket.sick += 1;
+    }
+
+    return { chartData: months, pendingCount: pending, awayTodayCount: away };
+  }, [leaves]);
+
   return (
     <Card className="border-0 shadow-sm rounded-lg">
       <CardHeader className="flex flex-row justify-between">
@@ -29,8 +81,8 @@ export function LeaveSummaryCard() {
       <CardContent className="pt-0">
         <div className="h-fit w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={11} />
+            <LineChart data={chartData}>
+              <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={11} />
               <YAxis hide domain={[0, "dataMax + 1"]} />
               <Tooltip
                 cursor={{ stroke: "rgba(15,118,110,0.15)", strokeWidth: 2 }}
@@ -54,21 +106,21 @@ export function LeaveSummaryCard() {
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border bg-white/60 dark:bg-white/10 p-3">
-            <div className="text-[11px] text-slate-500 dark:text-white">Annual leave</div>
+            <div className="text-[11px] text-slate-500 dark:text-white">Pending requests</div>
             <div className="mt-1 text-lg font-semibold text-slate-900  dark:text-white">
-              34 Days
+              {isLoading ? "—" : pendingCount}
             </div>
-            <Badge className="mt-2 bg-emerald-100 text-emerald-800 border-0 rounded-md">
-              Request leave
+            <Badge className="mt-2 bg-amber-100 text-amber-800 border-0 rounded-md">
+              Needs review
             </Badge>
           </div>
           <div className="rounded-2xl border bg-white/60 dark:bg-white/10 p-3">
-            <div className="text-[11px] text-slate-500  dark:text-white">Sick leave used</div>
+            <div className="text-[11px] text-slate-500  dark:text-white">On leave today</div>
             <div className="mt-1 text-lg font-semibold text-slate-900  dark:text-white">
-              78 Days
+              {isLoading ? "—" : awayTodayCount}
             </div>
             <Badge className="mt-2 bg-emerald-100 text-emerald-800 border-0 rounded-md">
-              Request leave
+              Away today
             </Badge>
           </div>
         </div>

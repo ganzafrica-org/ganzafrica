@@ -153,6 +153,26 @@ describe("MOD-01 employees API", () => {
     expect((await subject.agent.get(`${API}/me`)).status).toBe(200);
   });
 
+  it("GET /stats returns real status counts, gated the same as the directory (would 400 if /:id shadowed it)", async () => {
+    const hr = await loginAsEmployee("hr");
+    const employee = await loginAsEmployee();
+
+    const res = await hr.agent.get(`${API}/stats`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      pending: expect.any(Number),
+      onboarding: expect.any(Number),
+      active: expect.any(Number),
+      on_leave: expect.any(Number),
+      offboarding: expect.any(Number),
+      exited: expect.any(Number),
+      total: expect.any(Number),
+    });
+    expect(res.body.total).toBeGreaterThanOrEqual(2); // hr + employee's own seeded rows
+
+    expect((await employee.agent.get(`${API}/stats`)).status).toBe(403);
+  });
+
   it("lets HR deactivate/reactivate an employee, but 403s a plain employee attempting the same", async () => {
     const hr = await loginAsEmployee("hr");
     const subject = await loginAsEmployee();

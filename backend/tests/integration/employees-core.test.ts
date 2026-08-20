@@ -25,6 +25,7 @@ import {
   listDepartments,
   deactivateEmployee,
   reactivateEmployee,
+  getEmployeeStatusCounts,
 } from "../../src/services/hr/employees-core.service";
 import {
   makeUser,
@@ -126,6 +127,23 @@ describe("MOD-01 directory", () => {
   it("lists distinct departments", async () => {
     await seedDirectory();
     expect((await listDepartments()).sort()).toEqual(["Engineering", "Programs"]);
+  });
+
+  it("counts employees by status, excluding deactivated ones, for the landing page", async () => {
+    await seedDirectory(); // 2 active, 1 on_leave, 1 onboarding
+    const { employee: toDeactivate } = await makeEmployeeUser({ employmentType: "staff" });
+    await deactivateEmployee(toDeactivate.id, hrUserId);
+
+    const counts = await getEmployeeStatusCounts();
+    expect(counts).toMatchObject({
+      active: 2,
+      on_leave: 1,
+      onboarding: 1,
+      pending: 0,
+      offboarding: 0,
+      exited: 0,
+    });
+    expect(counts.total).toBe(4); // the deactivated one is excluded
   });
 });
 

@@ -201,6 +201,17 @@ export interface EmployeeDirectoryResponse {
   pages: number;
 }
 
+/** GET /hr/employees/stats response shape — real counts for the HR landing page. */
+export interface EmployeeStatusCounts {
+  pending: number;
+  onboarding: number;
+  active: number;
+  on_leave: number;
+  offboarding: number;
+  exited: number;
+  total: number;
+}
+
 // --- CONTRACTS (matches backend/src/types/contract.types.ts — camelCase, unlike Employee above) ---
 export type ContractEmploymentTerm = "indefinite" | "definite";
 export type ContractEmploymentType = "full-time" | "part-time";

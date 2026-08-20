@@ -547,3 +547,44 @@ export async function listDepartments(): Promise<string[]> {
     .orderBy(asc(employees.department));
   return rows.map((r) => r.department!).filter(Boolean);
 }
+
+export interface EmployeeStatusCounts {
+  pending: number;
+  onboarding: number;
+  active: number;
+  on_leave: number;
+  offboarding: number;
+  exited: number;
+  total: number;
+}
+
+/**
+ * Real counts by lifecycle status, for the HR landing page's headerStats and employee-status
+ * circles — one grouped query rather than the client fetching the whole directory (or one
+ * request per status) just to count. Scoped to the active roster (deactivated employees excluded,
+ * same default as the directory list) since a deactivated employee's stale status shouldn't
+ * inflate these numbers.
+ */
+export async function getEmployeeStatusCounts(): Promise<EmployeeStatusCounts> {
+  const rows = await db
+    .select({ status: employees.status, n: sql<number>`count(*)::int` })
+    .from(employees)
+    .where(eq(employees.is_active, true))
+    .groupBy(employees.status);
+
+  const counts: EmployeeStatusCounts = {
+    pending: 0,
+    onboarding: 0,
+    active: 0,
+    on_leave: 0,
+    offboarding: 0,
+    exited: 0,
+    total: 0,
+  };
+  for (const row of rows) {
+    if (row.status in counts)
+      counts[row.status as keyof Omit<EmployeeStatusCounts, "total">] = row.n;
+    counts.total += row.n;
+  }
+  return counts;
+}

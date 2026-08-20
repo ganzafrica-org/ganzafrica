@@ -54,6 +54,14 @@ export const listDepartments = async (_req: Request, res: Response) => {
   }
 };
 
+export const getStatusCounts = async (_req: Request, res: Response) => {
+  try {
+    return res.json(await employees.getEmployeeStatusCounts());
+  } catch (e) {
+    return handleError(res, e, "Get Employee Status Counts Error");
+  }
+};
+
 export const getEmployee = async (req: Request, res: Response) => {
   try {
     return res.json({

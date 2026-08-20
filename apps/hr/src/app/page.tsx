@@ -1,12 +1,21 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ClipboardCheck, Package, Wallet } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  ClipboardCheck,
+  Package,
+  UserCheck,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { LeaveSummaryCard } from "@/components/sections/home-cards/LeaveSummaryCard";
 import { ScheduleCard } from "@/components/sections/home-cards/ScheduleCard";
 import { EmploymentStatusCard } from "@/components/sections/home-cards/EmploymentStatusCard";
 import { ApplicantsCard } from "@/components/sections/home-cards/ApplicantsCard";
 import { SystemAlertsCard } from "@/components/sections/home-cards/SystemAlertsCard";
+import { OngoingOnboardingCard } from "@/components/sections/home-cards/OngoingOnboardingCard";
 import { MyAssetsCard } from "@/components/sections/home-cards/MyAssetsCard";
 import { MyOnboardingCard } from "@/components/sections/home-cards/MyOnboardingCard";
 import { StatsHeader } from "@/components/sections/header";
@@ -15,6 +24,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMyAssets } from "@/hooks/useAssets";
 import { useMyLeave } from "@/hooks/useLeaveBalances";
 import { useMyProcess } from "@/hooks/useProcesses";
+import { useEmployeeStatusCounts } from "@/hooks/useEmployees";
 import { remainingDays } from "@/services/leave-balances.service";
 
 const getGreeting = (name?: string): string => {
@@ -35,6 +45,7 @@ export default function Dashboard() {
   const { data: myAssets } = useMyAssets();
   const { data: myLeave } = useMyLeave();
   const { data: myOnboarding } = useMyProcess("onboarding");
+  const { data: statusCounts } = useEmployeeStatusCounts(isHrManager);
 
   useEffect(() => {
     const mainEl = document.querySelector("main.overflow-auto") as HTMLElement | null;
@@ -82,12 +93,24 @@ export default function Dashboard() {
   const showOnboardingCard =
     !!myOnboarding?.instance && myOnboarding.instance.status === "in_progress";
 
+  // Real backend counts (employees/stats). "Alerts" is an inert placeholder tile — the feature
+  // itself is explicitly out of scope for now (System Alerts card below is likewise untouched).
+  const hrStats = useMemo(
+    () => [
+      { icon: Users, label: "Total Employees", value: String(statusCounts?.total ?? 0) },
+      { icon: UserCheck, label: "Active", value: String(statusCounts?.active ?? 0) },
+      { icon: ClipboardCheck, label: "Onboarding", value: String(statusCounts?.onboarding ?? 0) },
+      { icon: Bell, label: "Alerts", value: "—" },
+    ],
+    [statusCounts],
+  );
+
   return (
     <div className="flex flex-col gap-6 w-full pb-6">
       <StatsHeader
         title={title}
         scrolled={scrolled}
-        stats={isHrManager ? undefined : employeeStats}
+        stats={isHrManager ? hrStats : employeeStats}
         ClassName="w-full"
       />
       {isHrManager ? (
@@ -95,6 +118,7 @@ export default function Dashboard() {
           <div className="grid gap-6 md:grid-cols-2 flex-1">
             <LeaveSummaryCard />
             <EmploymentStatusCard />
+            <OngoingOnboardingCard />
             <ApplicantsCard />
             <SystemAlertsCard />
           </div>
