@@ -64,6 +64,27 @@ export async function getTemplate(templateId: number) {
   return { template: tpl, fields };
 }
 
+/**
+ * Fields belonging to ONE signer's position in a multi-party sequence. `signer_index` (0-based,
+ * set at template-authoring time — see addField) and `sequence_no` (1-based, a request's position
+ * in the signer sequence) refer to the same slot, so `signer_index = sequence_no - 1`. Returning
+ * the full unfiltered template field list to every signer let each party see — and be required to
+ * fill in — the other party's fields in one form/one POST, which is what let one signature look
+ * like it completed both.
+ */
+async function fieldsForSigner(templateId: number, sequenceNo: number) {
+  return db
+    .select()
+    .from(signature_template_fields)
+    .where(
+      and(
+        eq(signature_template_fields.template_id, templateId),
+        eq(signature_template_fields.signer_index, sequenceNo - 1),
+      ),
+    )
+    .orderBy(signature_template_fields.sort_order, signature_template_fields.id);
+}
+
 export async function addField(
   templateId: number,
   input: {
@@ -399,7 +420,7 @@ export async function viewByToken(rawToken: string) {
   if (peek.state === "expired" || peek.state === "revoked") return { state: "expired" as const };
 
   const req = await getRequest(peek.subjectId!);
-  const { fields } = await getTemplate(req.template_id);
+  const fields = await fieldsForSigner(req.template_id, req.sequence_no);
   return {
     state: "valid" as const,
     request: { id: req.id, subject: req.subject, signer_name: req.signer_name },
@@ -448,11 +469,7 @@ export async function listForSigner(userId: number) {
 
   return Promise.all(
     requests.map(async (req) => {
-      const fields = await db
-        .select()
-        .from(signature_template_fields)
-        .where(eq(signature_template_fields.template_id, req.template_id))
-        .orderBy(signature_template_fields.sort_order, signature_template_fields.id);
+      const fields = await fieldsForSigner(req.template_id, req.sequence_no);
       return {
         ...req,
         fields: fields.map((f) => ({

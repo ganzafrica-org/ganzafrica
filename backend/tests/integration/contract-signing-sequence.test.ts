@@ -120,6 +120,42 @@ describe("onboarding contract-signing sequence", () => {
     expect(second.status).toBe("draft"); // not yet the employee's turn
   });
 
+  it("scopes each signer's fields to their own signer_index — neither sees or can be required to fill the other's fields", async () => {
+    await seedEmploymentContractTemplate(hrUserId);
+    const subject = await makeEmployeeUser({ employmentType: "staff" });
+    await makeProcessTemplate({
+      createdBy: hrUserId,
+      employmentTypes: null,
+      tasks: [{ title: "Sign contract", kind: "contract_signing", is_blocking: true }],
+    });
+    const contract = await makeDraftContract(subject.employee.id);
+    const instance = await instantiateProcess("onboarding", subject.employee.id, {
+      actorUserId: hrUserId,
+    });
+    const task = await taskNamed(instance.id, "Sign contract");
+    await reassignTask(task.id, { link_ref: { contract_id: contract.id } }, hrUserId);
+
+    const hrRequests = await signing.listForSigner(hrUserId);
+    const hrReq = hrRequests.find((r) => r.ref_id === contract.id)!;
+    expect(hrReq.fields.map((f) => f.key)).toEqual(["hr_signature"]);
+
+    const employeeRequests = await signing.listForSigner(subject.user.id);
+    const employeeReq = employeeRequests.find((r) => r.ref_id === contract.id)!;
+    expect(employeeReq.fields.map((f) => f.key)).toEqual(["employee_signature"]);
+
+    // HR signing must not flip the employee's request nor write into the employee's own event.
+    await signing.signInternal(hrReq.id, hrUserId, { hr_signature: "HR" });
+    const afterHr = await signing.listByRef("contract", contract.id);
+    expect(afterHr[0].status).toBe("signed");
+    expect(afterHr[1].status).toBe("sent"); // still pending, independently, until the employee acts
+
+    // Re-fetch: the employee's own fields are still scoped to just their field, now that it's
+    // their turn (sequence_no advanced their request from draft to sent).
+    const employeeRequestsAfter = await signing.listForSigner(subject.user.id);
+    const employeeReqAfter = employeeRequestsAfter.find((r) => r.ref_id === contract.id)!;
+    expect(employeeReqAfter.fields.map((f) => f.key)).toEqual(["employee_signature"]);
+  });
+
   it("advances to the employee once HR signs, and stays gated until then", async () => {
     await seedEmploymentContractTemplate(hrUserId);
     const subject = await makeEmployeeUser({ employmentType: "staff" });

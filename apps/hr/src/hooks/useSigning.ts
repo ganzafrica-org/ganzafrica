@@ -27,6 +27,9 @@ export function useSignDocument() {
       signingService.sign(id, fieldValues),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["signing", "my"] });
+      // Also refetch any open per-signer sequence view (e.g. ContractSigningStatus) — otherwise its
+      // badge for the just-signed party stays stale until something else happens to refetch it.
+      queryClient.invalidateQueries({ queryKey: ["signing", "by-ref"] });
       toast.success("Document signed");
     },
   });
