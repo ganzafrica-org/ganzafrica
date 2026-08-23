@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { CalendarDays, Check, Inbox, X } from "lucide-react";
 import { usePendingApprovals, useDecideLeave } from "@/hooks/useLeaveBalances";
+import { LeaveAttachments } from "@/components/sections/leave/leave-attachments";
 import type { LeaveRequest } from "@/services/leave-balances.service";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -116,6 +117,7 @@ export function LeaveApprovalsSheet({ open, onOpenChange }: LeaveApprovalsSheetP
                   {formatDate(leave.start_date)} → {formatDate(leave.end_date)}
                 </p>
                 {leave.reason && <p className="text-sm text-slate-600">{leave.reason}</p>}
+                <LeaveAttachments leaveId={leave.id} />
               </div>
 
               <div className="flex shrink-0 gap-2">

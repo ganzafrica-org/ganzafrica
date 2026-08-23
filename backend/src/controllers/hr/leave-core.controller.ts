@@ -99,6 +99,33 @@ export const cancelLeave = async (req: Request, res: Response) => {
   }
 };
 
+/** multer-s3 augments the uploaded file with `location`/`key` (not part of Express.Multer.File). */
+function uploadedFile(req: Request) {
+  const file = req.file as unknown as { key?: string; size?: number; originalname?: string };
+  if (!file?.key) return undefined;
+  return { key: file.key, size: file.size ?? 0, originalName: file.originalname ?? file.key };
+}
+
+export const addLeaveAttachment = async (req: Request, res: Response) => {
+  try {
+    const file = uploadedFile(req);
+    if (!file) throw new AppError("A file is required", 400);
+    const document = await leave.addLeaveAttachment(actorId(req), req.params.id, file);
+    return res.status(201).json({ document });
+  } catch (e) {
+    return handleError(res, e, "Add Leave Attachment Error");
+  }
+};
+
+export const listLeaveAttachments = async (req: Request, res: Response) => {
+  try {
+    const attachments = await leave.listLeaveAttachments(actorId(req), req.params.id);
+    return res.json({ attachments });
+  } catch (e) {
+    return handleError(res, e, "List Leave Attachments Error");
+  }
+};
+
 // --- Approvals ---
 
 export const pendingApprovals = async (req: Request, res: Response) => {

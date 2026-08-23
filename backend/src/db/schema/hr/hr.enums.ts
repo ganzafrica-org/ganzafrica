@@ -69,6 +69,7 @@ export const documentCategoryEnum = pgEnum("policy_category", [
   "Training Materials",
   "Compliance & Legal",
   "Onboarding Materials",
+  "Leave Attachment",
 ]);
 
 /** HR policies module (distinct PG types from document enums above) */

@@ -14,6 +14,7 @@ import {
   hr_leave_policies,
   hr_leaves,
   hr_org_holidays,
+  hr_documents,
   leave_emails,
   user_roles,
   roles,
@@ -26,6 +27,7 @@ import { sendEmail } from "../email.service";
 import { leaveSubmittedEmail, leaveDecidedEmail } from "./leave-emails";
 import { countWorkingDays, toIsoDate } from "./leave-days";
 import { getManagerUserId, isManagerOf } from "./employee-context";
+import { createDocument } from "./document.service";
 
 /** Types whose usage draws down a balance. UNPAID/OTHER are tracked but never blocked. */
 const BALANCE_TRACKED = new Set(["ANNUAL", "SICK", "MATERNITY", "PATERNITY"]);
@@ -474,6 +476,66 @@ export async function cancelLeaveRequest(actorUserId: number, leaveId: string) {
     }
     return row;
   });
+}
+
+/**
+ * Punch-list #5 — optional leave-request attachments. Stored as ordinary hr_documents rows
+ * (category "Leave Attachment", leave_id set) so upload/storage/versioning/ACL and the shared
+ * document viewer are all reused as-is rather than building parallel plumbing. Access is enforced
+ * here (relationship check), not at the route: the requester, HR/admin, and the leave's resolved
+ * approver (manager chain) may add/list attachments; nobody else.
+ */
+export async function addLeaveAttachment(
+  actorUserId: number,
+  leaveId: string,
+  file: { key: string; size: number; originalName: string },
+) {
+  const leave = await requireLeave(leaveId);
+  const actor = await employeeForUser(actorUserId);
+  const isOwner = actor?.id === leave.employee_id;
+  const privileged = await isHrOrAdmin(actorUserId);
+
+  if (!isOwner && !privileged) {
+    throw new AppError(
+      "Cannot add an attachment to another employee's leave request",
+      403,
+      "FORBIDDEN",
+    );
+  }
+
+  const owner = await requireEmployee(leave.employee_id!);
+  return createDocument({
+    document_name: file.originalName,
+    category: "Leave Attachment",
+    description: `Attachment for ${owner.first_name} ${owner.last_name}'s ${leave.type.toLowerCase()} leave request`,
+    department: owner.department ?? "",
+    createdById: actor?.id ?? owner.id,
+    file,
+    leaveId,
+  });
+}
+
+export async function listLeaveAttachments(actorUserId: number, leaveId: string) {
+  const leave = await requireLeave(leaveId);
+  const actor = await employeeForUser(actorUserId);
+  const isOwner = actor?.id === leave.employee_id;
+  const privileged = await isHrOrAdmin(actorUserId);
+  const isApprover = actor && !isOwner ? await isManagerOf(actor.id, leave.employee_id!) : false;
+
+  if (!isOwner && !privileged && !isApprover) {
+    throw new AppError("You cannot view this leave's attachments", 403, "FORBIDDEN");
+  }
+
+  return db
+    .select({
+      id: hr_documents.id,
+      document_name: hr_documents.document_name,
+      file_size: hr_documents.file_size,
+      created_at: hr_documents.created_at,
+    })
+    .from(hr_documents)
+    .where(eq(hr_documents.leave_id, leaveId))
+    .orderBy(hr_documents.created_at);
 }
 
 /** Everyone at or below `employeeId` in the org tree (bounded breadth-first walk). */

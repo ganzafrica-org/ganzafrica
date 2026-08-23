@@ -61,6 +61,7 @@ const mapLeaveToRequest = (leave: Leave, index: number): EmployeeLeaveRequest =>
 
   return {
     id: Number.parseInt(leave.id, 10) || index + 1,
+    realId: leave.id,
     employeeId: leave.employeeId ?? "—",
     name: leave.employeeName ?? "—",
     department: "—",

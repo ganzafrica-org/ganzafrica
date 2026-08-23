@@ -42,6 +42,14 @@ export interface OrgHoliday {
   name: string;
 }
 
+/** Lightweight attachment metadata — open it via documentsService.getDocument(id) + DocumentViewer. */
+export interface LeaveAttachment {
+  id: string;
+  document_name: string;
+  file_size: string;
+  created_at: string;
+}
+
 export interface LeaveDraft {
   type: LeaveTypeName;
   startDate: string;
@@ -106,6 +114,24 @@ export const leaveBalancesService = {
   async cancel(id: string) {
     const { data } = await httpClient.post<{ leave: LeaveRequest }>(`/hr/leave/${id}/cancel`, {});
     return data.leave;
+  },
+
+  async listAttachments(leaveId: string) {
+    const { data } = await httpClient.get<{ attachments: LeaveAttachment[] }>(
+      `/hr/leave/${leaveId}/attachments`,
+    );
+    return data.attachments;
+  },
+
+  /** Optional — a leave request is fully submittable with none of these. */
+  async uploadAttachment(leaveId: string, file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    const { data } = await httpClient.post<{ document: { id: string } }>(
+      `/hr/leave/${leaveId}/attachments`,
+      form,
+    );
+    return data.document;
   },
 
   async calendar(from: string, to: string) {

@@ -9,6 +9,7 @@
 import { Router } from "express";
 import { authenticate, requirePermission } from "@/middlewares/auth.middleware";
 import { validate } from "@/middlewares/validation.middleware";
+import { privateUpload } from "@/middlewares/upload";
 import * as c from "@/controllers/hr/leave-core.controller";
 import * as v from "@/validations/hr/leave-core.validation";
 
@@ -31,6 +32,22 @@ router.get("/leave/requests", authenticate, c.visibleLeaves);
 router.post("/leave/:id/approve", authenticate, validate(v.decideLeaveSchema), c.approveLeave);
 router.post("/leave/:id/reject", authenticate, validate(v.decideLeaveSchema), c.rejectLeave);
 router.post("/leave/:id/cancel", authenticate, validate(v.uuidIdSchema), c.cancelLeave);
+
+// Attachments (optional) — relationship check (owner/approver/HR) resolved in the service, same
+// convention as approve/reject above.
+router.post(
+  "/leave/:id/attachments",
+  authenticate,
+  privateUpload.single("file"),
+  validate(v.uuidIdSchema),
+  c.addLeaveAttachment,
+);
+router.get(
+  "/leave/:id/attachments",
+  authenticate,
+  validate(v.uuidIdSchema),
+  c.listLeaveAttachments,
+);
 
 router.get("/leave/calendar", authenticate, validate(v.calendarQuerySchema), c.calendar);
 

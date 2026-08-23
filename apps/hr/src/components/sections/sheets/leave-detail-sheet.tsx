@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { LeaveRequestsTable } from "@/components/sections/leave/leave-requests-table";
+import { LeaveAttachments } from "@/components/sections/leave/leave-attachments";
 import type { EmployeeLeaveRequest } from "@/types/employee-leave";
 
 export interface LeaveDetailSheetProps {
@@ -72,6 +73,8 @@ export function LeaveDetailSheet({
               <p className="text-sm text-muted-foreground">{request.coveringEmployee}</p>
             </div>
           </div>
+
+          <LeaveAttachments leaveId={request.realId} />
         </div>
 
         <SheetFooter className="border-t bg-slate-50/50 px-6 py-4 sm:flex-row sm:justify-end sm:gap-2">

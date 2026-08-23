@@ -87,6 +87,25 @@ export function useCancelLeave() {
   });
 }
 
+export function useLeaveAttachments(leaveId: string | null) {
+  return useQuery({
+    queryKey: ["leave-attachments", leaveId],
+    queryFn: () => leaveBalancesService.listAttachments(leaveId as string),
+    enabled: Boolean(leaveId),
+  });
+}
+
+export function useUploadLeaveAttachment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ leaveId, file }: { leaveId: string; file: File }) =>
+      leaveBalancesService.uploadAttachment(leaveId, file),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["leave-attachments", variables.leaveId] });
+    },
+  });
+}
+
 export function useLeaveCalendar(from: string, to: string) {
   return useQuery({
     queryKey: [CALENDAR, from, to],
