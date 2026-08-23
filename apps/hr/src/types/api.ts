@@ -591,7 +591,10 @@ export type DocumentStatus = "PUBLISHED" | "DRAFT" | "ARCHIVED";
 export interface HrDocument {
   id: string;
   document_name: string;
-  category: DocumentCategory;
+  // "Leave Attachment" (punch-list #5) is created only via POST /hr/leave/:id/attachments, not
+  // the generic Create Document form, so it's a valid read value without being in
+  // DOCUMENT_CATEGORIES (that list drives the form's category dropdown).
+  category: DocumentCategory | "Leave Attachment";
   version: string;
   description: string;
   department: string;
